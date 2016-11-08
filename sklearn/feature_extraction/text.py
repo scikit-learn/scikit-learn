@@ -609,12 +609,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         This parameter is ignored if vocabulary is not None.
 
     max_features : float in range [0.0, 1.0] or int, default=1.0
-        Build a vocabulary that only consider the top max_features ordered
+        Build a vocabulary that only considers the top max_features ordered
         by term frequency across the corpus.
         If float the parameter represents a proportion of the features, integer
         absolute counts.
 
         This parameter is ignored if vocabulary is not None.
+
+        .. versionchanged:: 0.19
+           Added percentage option.
 
     vocabulary : Mapping or iterable, optional
         Either a Mapping (e.g., a dict) where keys are terms and values are
@@ -1190,12 +1193,15 @@ class TfidfVectorizer(CountVectorizer):
         This parameter is ignored if vocabulary is not None.
 
     max_features : float in range [0.0, 1.0] or int, default=1.0
-        Build a vocabulary that only consider the top max_features ordered
+        Build a vocabulary that only considers the top max_features ordered
         by term frequency across the corpus.
         If float the parameter represents a proportion of the features, integer
         absolute counts.
 
         This parameter is ignored if vocabulary is not None.
+
+        .. versionchanged:: 0.19
+           Added percentage option.
 
     vocabulary : Mapping or iterable, optional
         Either a Mapping (e.g., a dict) where keys are terms and values are
