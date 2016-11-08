@@ -89,10 +89,10 @@ def f(x, noise_amount):
     noise = np.random.normal(0, 1, len(x))
     return y + noise_amount * noise
 
-degree = 30
+degree = 10
 X = np.linspace(0, 10, 100)
 y = f(X, noise_amount=1)
-clf_poly = ARDRegression()
+clf_poly = ARDRegression(threshold_lambda=1e5)
 clf_poly.fit(np.vander(X, degree), y)
 
 X_plot = np.linspace(0, 11, 25)
@@ -100,7 +100,7 @@ y_plot = f(X_plot, noise_amount=0)
 y_mean, y_std = clf_poly.predict(np.vander(X_plot, degree), return_std=True)
 plt.figure(figsize=(6, 5))
 plt.errorbar(X_plot, y_mean, y_std, color='navy',
-        label="Polynomial Bayesian Ridge Regression", linewidth=2)
+        label="Polynomial ARD", linewidth=2)
 plt.plot(X_plot, y_plot, color='gold', linewidth=2, 
          label="Ground Truth")
 plt.ylabel("Output y")
