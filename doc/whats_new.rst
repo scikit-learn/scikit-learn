@@ -34,6 +34,17 @@ Bug fixes
      parameters were not being utilised by :class:`manifold.TSNE`.
      :issue:`6497` by :user:`Sebastian Säger <ssaeger>`
 
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
+     `Peng Meng`_.
+
+   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
+     integer inputs
+     (`#6282 <https://github.com/scikit-learn/scikit-learn/pull/6282>`_) by
+     `Jake Vanderplas`_.
+
    - Fix bug for svm's decision values when ``decision_function_shape``
      is ``ovr`` in :class:`svm.SVC`.
      :class:`svm.SVC`'s decision_function was incorrect from versions
@@ -4674,4 +4685,10 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
 
+<<<<<<< HEAD
 .. _Ron Weiss: http://www.ee.columbia.edu/~ronw
+=======
+.. _Narine Kokhlikyan: https://github.com/NarineK
+
+.. _Peng Meng: https://github.com/mpjlu
+>>>>>>> 2caa144... [MGR + 2] fix selectFdr bug (#7490)
