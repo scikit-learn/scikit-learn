@@ -97,6 +97,10 @@ Bug fixes
      attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
      Krivich <kiote>`.
 
+   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
+     string labels. :issue:`5874` by `Raghav RV`_.
+
+
 .. _changes_0_18_1:
 
 Version 0.18.1
