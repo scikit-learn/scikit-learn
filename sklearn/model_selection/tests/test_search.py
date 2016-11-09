@@ -60,6 +60,8 @@ from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import SGDClassifier
 
+from sklearn.model_selection.tests.common import OneTimeSplitter
+
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
@@ -1154,3 +1156,58 @@ def test_search_train_scores_set_to_false():
     gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]},
                       return_train_score=False)
     gs.fit(X, y)
+
+
+def test_grid_search_cv_splits_consistency():
+    # Check if a one time iterable is accepted as a cv parameter.
+    n_samples = 100
+    n_splits = 5
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+
+    gs = GridSearchCV(LinearSVC(random_state=0),
+                      param_grid={'C': [0.1, 0.2, 0.3]},
+                      cv=OneTimeSplitter(n_splits=n_splits,
+                                         n_samples=n_samples))
+    gs.fit(X, y)
+
+    gs2 = GridSearchCV(LinearSVC(random_state=0),
+                       param_grid={'C': [0.1, 0.2, 0.3]},
+                       cv=KFold(n_splits=n_splits))
+    gs2.fit(X, y)
+
+    def _pop_time_keys(cv_results):
+        for key in ('mean_fit_time', 'std_fit_time',
+                    'mean_score_time', 'std_score_time'):
+            cv_results.pop(key)
+        return cv_results
+
+    # OneTimeSplitter is a non-re-entrant cv where split can be called only
+    # once if ``cv.split`` is called once per param setting in GridSearchCV.fit
+    # the 2nd and 3rd parameter will not be evaluated as no train/test indices
+    # will be generated for the 2nd and subsequent cv.split calls.
+    # This is a check to make sure cv.split is not called once per param
+    # setting.
+    np.testing.assert_equal(_pop_time_keys(gs.cv_results_),
+                            _pop_time_keys(gs2.cv_results_))
+
+    # Check consistency of folds across the parameters
+    gs = GridSearchCV(LinearSVC(random_state=0),
+                      param_grid={'C': [0.1, 0.1, 0.2, 0.2]},
+                      cv=KFold(n_splits=n_splits, shuffle=True))
+    gs.fit(X, y)
+
+    # As the first two param settings (C=0.1) and the next two param
+    # settings (C=0.2) are same, the test and train scores must also be
+    # same as long as the same train/test indices are generated for all
+    # the cv splits, for both param setting
+    for score_type in ('train', 'test'):
+        per_param_scores = {}
+        for param_i in range(4):
+            per_param_scores[param_i] = list(
+                gs.cv_results_['split%d_%s_score' % (s, score_type)][param_i]
+                for s in range(5))
+
+        assert_array_almost_equal(per_param_scores[0],
+                                  per_param_scores[1])
+        assert_array_almost_equal(per_param_scores[2],
+                                  per_param_scores[3])

@@ -18,6 +18,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
@@ -552,17 +553,14 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
 
     """
     n_samples = X.shape[0]
-    k = centers.shape[0]
-    all_distances = euclidean_distances(centers, X, x_squared_norms,
-                                        squared=True)
-    labels = np.empty(n_samples, dtype=np.int32)
-    labels.fill(-1)
-    mindist = np.empty(n_samples)
-    mindist.fill(np.infty)
-    for center_id in range(k):
-        dist = all_distances[center_id]
-        labels[dist < mindist] = center_id
-        mindist = np.minimum(dist, mindist)
+
+    # Breakup nearest neighbor distance computation into batches to prevent
+    # memory blowup in the case of a large number of samples and clusters.
+    # TODO: Once PR #7383 is merged use check_inputs=False in metric_kwargs.
+    labels, mindist = pairwise_distances_argmin_min(
+        X=X, Y=centers, metric='euclidean', metric_kwargs={'squared': True})
+    # cython k-means code assumes int32 inputs
+    labels = labels.astype(np.int32)
     if n_samples == distances.shape[0]:
         # distances will be changed in-place
         distances[:] = mindist
@@ -876,6 +874,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Training instances to cluster.
         """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
@@ -1310,8 +1309,8 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Coordinates of the data points to cluster
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Training instances to cluster.
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',

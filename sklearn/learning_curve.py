@@ -32,6 +32,10 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    error_score='raise'):
     """Learning curve.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.learning_curve` instead.
+
     Determines cross-validated training and test scores for different training
     set sizes.
 
@@ -258,6 +262,10 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 def validation_curve(estimator, X, y, param_name, param_range, cv=None,
                      scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
     """Validation curve.
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.validation_curve` instead.
 
     Determine training and test scores for varying parameter values.
 
