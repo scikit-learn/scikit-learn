@@ -224,8 +224,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         if self.prefit:
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")
-        if not hasattr(self, "estimator_"):
-            self.estimator_ = clone(self.estimator)
+        self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
         return self
 

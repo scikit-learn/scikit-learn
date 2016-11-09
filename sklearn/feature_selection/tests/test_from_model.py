@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -118,14 +119,13 @@ def test_partial_fit():
     assert_array_equal(X_transform, transformer.transform(data))
 
 
-def test_warm_start():
-    est = PassiveAggressiveClassifier(warm_start=True, random_state=0)
+def test_calling_fit_reinitializes():
+    est = LinearSVC(random_state=0)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
-    old_model = transformer.estimator_
+    transformer.set_params(estimator__C=100)
     transformer.fit(data, y)
-    new_model = transformer.estimator_
-    assert_true(old_model is new_model)
+    assert_equal(transformer.estimator_.C, 100)
 
 
 def test_prefit():

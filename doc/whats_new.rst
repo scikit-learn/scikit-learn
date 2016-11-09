@@ -60,6 +60,9 @@ Bug fixes
      functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
+   - Fixed setting parameters when calling ``fit`` multiple times on
+     :class:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
+
    - Fixes issue in ``partial_fit`` method of
      :class:`multiclass.OneVsRestClassifier` when number of classes used in
      ``partial_fit`` was less than the total number of classes in the
