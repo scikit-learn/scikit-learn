@@ -1831,7 +1831,7 @@ Pedregosa, Florian Wilhelm, floydsoft, Félix-Antoine Fortin, Gael Varoquaux,
 Garrett-R, Gilles Louppe, gpassino, gwulfs, Hampus Bengtsson, Hamzeh Alsalhi,
 Hanna Wallach, Harry Mavroforakis, Hasil Sharma, Helder, Herve Bredin,
 Hsiang-Fu Yu, Hugues SALAMIN, Ian Gilmore, Ilambharathi Kanniah, Imran Haque,
-isms, Jake Vanderplas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
+isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
 Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
 Helmus, Joseph, Kaicheng Zhang, Kevin Markham, Kyle Beauchamp, Kyle Kastner,
 Lagacherie Matthieu, Lars Buitinck, Laurent Direr, leepei, Loic Esteve, Luis
@@ -1913,7 +1913,7 @@ Bug fixes
 
    - Support unseen labels :class:`preprocessing.LabelBinarizer` to restore
      the default behavior of 0.14.1 for backward compatibility. By
-     :user:`Hamzeh Alsalhi<hamsal>`.
+     :user:`Hamzeh Alsalhi <hamsal>`.
 
    - Fixed the :class:`cluster.KMeans` stopping criterion that prevented early
      convergence detection. By Edward Raff and `Gael Varoquaux`_.
@@ -2329,7 +2329,7 @@ List of contributors for release 0.15 by number of commits.
 *  21	Maheshakya Wijewardena
 *  21	Brooke Osborn
 *  21	Hamzeh Alsalhi
-*  21	Jake Vanderplas
+*  21	Jake VanderPlas
 *  21	Philippe Gervais
 *  19	Bala Subrahmanyam Varanasi
 *  12	Ronald Phlypo
@@ -2563,7 +2563,7 @@ Changelog
      estimates when trained under log loss or modified Huber loss.
 
    - Hyperlinks to documentation in example code on the website by
-     :user:`Martin Luessi<mluessi>`.
+     :user:`Martin Luessi <mluessi>`.
 
    - Fixed bug in :class:`preprocessing.MinMaxScaler` causing incorrect scaling
      of the features for non-default ``feature_range`` settings. By `Andreas
@@ -2776,7 +2776,7 @@ List of contributors for release 0.14 by number of commits.
  * 102  Noel Dawe
  *  99  Kemal Eren
  *  79  Joel Nothman
- *  75  Jake Vanderplas
+ *  75  Jake VanderPlas
  *  73  Nelle Varoquaux
  *  71  Vlad Niculae
  *  65  Peter Prettenhofer
