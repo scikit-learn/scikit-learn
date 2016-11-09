@@ -255,7 +255,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
     X : array-like, shape (n_samples, n_features)
         The input data array.
 
-    resp : array-like, shape (n_samples, n_features)
+    resp : array-like, shape (n_samples, n_components)
         The responsibilities for each data sample in X.
 
     reg_covar : float
