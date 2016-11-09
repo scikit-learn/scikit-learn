@@ -4610,11 +4610,8 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
-<<<<<<< HEAD
 .. _Mikhail Korobov: http://kmike.ru/pages/about/
 
-=======
->>>>>>> c56925a... [MRG + 1] DOC adding :user: role to whats_new (#7818)
 .. _Kyle Kastner: http://kastnerkyle.github.io
 
 .. _Daniel Nouri: http://danielnouri.org
