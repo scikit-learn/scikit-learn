@@ -404,7 +404,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # resize the coefs and alphas array
                 add_features = 2 * max(1, (max_features - n_active))
                 coefs = np.concatenate((coefs,
-                                       np.zeros((add_features, n_features))),
+                                        np.zeros((add_features, n_features))),
                                        axis=0)
                 alphas = np.concatenate((alphas, np.zeros(add_features)),
                                         axis=0)
