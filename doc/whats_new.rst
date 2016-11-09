@@ -13,33 +13,22 @@ Version 0.18.1
 Changelog
 ---------
 
+Enhancements
+.........
+   - Improved ``sample_without_replacement`` speed by utilizing
+     numpy.random.permutation for most cases. As a result,
+     samples may differ in this release for a fixed random state.
+     Affected estimators:
+      - :class:`ensemble.BaggingClassifier`
+      - :class:`ensemble.BaggingRegressor`
+      - :class:`linear_model.RANSACRegressor`
+      - :class:`model_selection.RandomizedSearchCV`
+      - :class:`random_projection.SparseRandomProjection`
+     This also affects the :meth:`datasets.make_classification`
+     method.
+
 Bug fixes
 .........
-
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
-     exactly implement Benjamini-Hochberg procedure. It formerly may have
-     selected fewer features than it should.
-     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
-
-   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
-     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
-
-   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
-     regressors now assumes uniform sample weights by default if the
-     ``sample_weight`` argument is not passed to the ``fit`` function.
-     Previously, the parameter was silently ignored. :issue:`7301`
-     by :user:`Nelson Liu <nelson-liu>`.
-
-   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
-     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
-
-   - Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
-     fewer constraints: they must take two 1d-arrays and return a float.
-     (`#6288 <https://github.com/scikit-learn/scikit-learn/pull/6288>`_) by
-     `Jake VanderPlas`_.
-
-   - Tree splitting criterion classes' cloning/pickling is now memory safe
-     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
 
    - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
      parameters were not being utilised by :class:`manifold.TSNE`.
@@ -74,21 +63,12 @@ Bug fixes
      has less number of classes than the total data. :issue:`7799` by
      `Srivatsan Ramesh`_
 
+   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
+     attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
+     Krivich <kiote>`.
 
-Enhancements
-.............
-
-   - Improved ``sample_without_replacement`` speed by utilizing
-     numpy.random.permutation for most cases. As a result,
-     samples may differ in this release for a fixed random state.
-     Affected estimators:
-      - :class:`ensemble.BaggingClassifier`
-      - :class:`ensemble.BaggingRegressor`
-      - :class:`linear_model.RANSACRegressor`
-      - :class:`model_selection.RandomizedSearchCV`
-      - :class:`random_projection.SparseRandomProjection`
-     This also affects the :meth:`datasets.make_classification`
-     method.
+   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
+     string labels. :issue:`5874` by `Raghav RV`_.
 
 API changes summary
 -------------------
