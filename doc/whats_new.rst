@@ -34,17 +34,6 @@ Bug fixes
      parameters were not being utilised by :class:`manifold.TSNE`.
      :issue:`6497` by :user:`Sebastian Säger <ssaeger>`
 
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
-     exactly implement Benjamini-Hochberg procedure. It formerly may have
-     selected fewer features than it should.
-     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
-     `Peng Meng`_.
-
-   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
-     integer inputs
-     (`#6282 <https://github.com/scikit-learn/scikit-learn/pull/6282>`_) by
-     `Jake Vanderplas`_.
-
    - Fix bug for svm's decision values when ``decision_function_shape``
      is ``ovr`` in :class:`svm.SVC`.
      :class:`svm.SVC`'s decision_function was incorrect from versions
@@ -74,12 +63,34 @@ Bug fixes
      has less number of classes than the total data. :issue:`7799` by
      `Srivatsan Ramesh`_
 
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
+   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
+     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. :issue:`7301`
+     by :user:`Nelson Liu <nelson-liu>`.
+
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
+
    - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
      attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
      Krivich <kiote>`.
 
    - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
      string labels. :issue:`5874` by `Raghav RV`_.
+
+
 
 API changes summary
 -------------------
@@ -99,6 +110,12 @@ Trees and forests
 
 
 Linear, kernelized and related models
+
+   - Length of `explained_variance_ratio` of
+     :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+     changed for both Eigen and SVD solvers. The attribute has now a length
+     of min(n_components, n_classes - 1). :issue:`7632`
+     by :user:`JPFrancoia <JPFrancoia>`
 
    - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
      `n_features > n_samples`. (`#6178
