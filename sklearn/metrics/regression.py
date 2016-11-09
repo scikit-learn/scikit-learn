@@ -14,6 +14,7 @@ the lower the better
 #          Jochen Wersdorfer <jochen@wersdoerfer.de>
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Karan Desai <karandesai281196@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
@@ -33,6 +34,7 @@ import warnings
 __ALL__ = [
     "mean_absolute_error",
     "mean_squared_error",
+    "mean_squared_log_error",
     "median_absolute_error",
     "r2_score",
     "explained_variance_score"
@@ -231,6 +233,28 @@ def mean_squared_error(y_true, y_pred,
         y_true, y_pred, multioutput)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
+    if isinstance(multioutput, string_types):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
+def mean_squared_log_error(y_true, y_pred,
+                           sample_weight=None,
+                           multioutput='uniform_average'):
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput)
+
+    if not (y_true >= 0).all() and not (y_pred >= 0).all():
+        raise ValueError("Mean Squared Logarithmic Error cannot be used when "
+                         "targets contain negative values.")
+
+    output_errors = np.average((np.log(y_true + 1) - np.log(y_pred + 1)) ** 2,
+                               axis=0, weights=sample_weight)
     if isinstance(multioutput, string_types):
         if multioutput == 'raw_values':
             return output_errors
