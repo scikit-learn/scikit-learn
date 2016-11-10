@@ -184,6 +184,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(BaseEstimator, TransformerMixin):
+
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -447,6 +448,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
 
 class StandardScaler(BaseEstimator, TransformerMixin):
+
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen independently on each feature by computing
@@ -697,6 +699,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
+
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -896,6 +899,7 @@ def maxabs_scale(X, axis=0, copy=True):
 
 
 class RobustScaler(BaseEstimator, TransformerMixin):
+
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1137,6 +1141,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
+
     """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
@@ -1199,6 +1204,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
+
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1375,6 +1381,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
 
 class Normalizer(BaseEstimator, TransformerMixin):
+
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1485,6 +1492,7 @@ def binarize(X, threshold=0.0, copy=True):
 
 
 class Binarizer(BaseEstimator, TransformerMixin):
+
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     Values greater than the threshold map to 1, while values less than
@@ -1552,6 +1560,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
+
     """Center a kernel matrix
 
     Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
@@ -1726,6 +1735,7 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
+
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
     The input to this transformer should be a matrix of integers, denoting
@@ -1821,6 +1831,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
+
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values
@@ -1958,7 +1969,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
 
-
 class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     """
@@ -2024,24 +2034,25 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     --------
     WIP, I will make the documentation .rst afterwards 
     """
-    def __init__(self, inclusion='all', removal_policy=None):  
+
+    def __init__(self, inclusion='all', removal_policy=None):
         # removal policy currently not implemented, but the method
-        # signatures are set 
-        CountFeaturizer._check_params(inclusion=inclusion, \
-            removal_policy=removal_policy)
+        # signatures are set
+        CountFeaturizer._check_params(inclusion=inclusion,
+                                      removal_policy=removal_policy)
         if type(inclusion) == str:
             self.inclusion = inclusion
         elif inclusion == None:
-            self.inclusion = np.array([]) 
+            self.inclusion = np.array([])
         else:
-            self.inclusion = np.array(inclusion) 
+            self.inclusion = np.array(inclusion)
         if removal_policy == None or type(removal_policy) == str:
             self.removal_policy = removal_policy
         else:
             self.removal_policy = np.array(removal_policy)
         self.count_cache = {}
 
-        # the num_feature variable acts as a way to ensure that the number of 
+        # the num_feature variable acts as a way to ensure that the number of
         # columns of X going into fit() is the same as the number of columns
         # of X going into transform()
         self.num_features = 0
@@ -2054,7 +2065,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                 raise ValueError("Illegal data type in inclusion")
 
         if removal_policy != None and removal_policy != 'inclusion' and \
-            not CountFeaturizer._valid_data_type(removal_policy):
+                not CountFeaturizer._valid_data_type(removal_policy):
             raise ValueError("Illegal data type in removal_policy")
 
     @staticmethod
@@ -2064,7 +2075,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Currently, only Python lists and numpy arrays are accepted
         """
         return type(type_check) == np.ndarray or type(type_check) == list \
-            or type(type_check) == set 
+            or type(type_check) == set
 
     @staticmethod
     def _check_well_formed(X):
@@ -2078,7 +2089,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         # This is a temporary method but I am unsure whether there already
         # exists something similar in the utils.validation.py
         # There did not seem to be anything I could use to check well-formed
-        # in utils.validation.check_array() 
+        # in utils.validation.check_array()
 
         num_columns = len(X[0])
         for i in range(1, len(X)):
@@ -2094,8 +2105,9 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             return tuple(data_row)
         else:
             num_features = len(data_row)
-            return tuple([data_row[i] \
-                for i in range(num_features) if (i in self.inclusion)])
+            return tuple([data_row[i]
+                          for i in range(num_features)
+                          if (i in self.inclusion)])
 
     def _final_num_features(self, cols_X):
         """
@@ -2104,16 +2116,15 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         features in the output of transform()
         """
         if type(self.removal_policy) == str \
-            and self.removal_policy == 'inclusion':
+                and self.removal_policy == 'inclusion':
             if type(self.inclusion) == str and \
-                self.inclusion == 'all':
+                    self.inclusion == 'all':
                 return 1
             else:
-                return num_features - inclusion.size + 1
+                return cols_X - inclusion.size + 1
         elif self.removal_policy != None:
-            return num_features - removal_policy + 1
+            return cols_X - len(self.removal_policy) + 1
         return cols_X + 1
-
 
     def fit(self, X, y=None):
         """
@@ -2125,10 +2136,10 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         if self._final_num_features(cols_X) <= 0:
             # the removal_policy and inclusion were set such that the output
             # array of transform() is expected to have 0 or a negative
-            # number of columns 
+            # number of columns
             raise ValueError("inclusion or removal_policy incompatible")
         self.num_features = cols_X
-        self.count_cache = {} 
+        self.count_cache = {}
         for data_i in X:
             data_i_tuple = self._extract_tuple(data_i)
             if data_i_tuple not in self.count_cache:
@@ -2142,8 +2153,9 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Transforms the inputted data with the new 'count' feature (column)
         and returns it 
         The data set returned from the transformation will always be a 
-        numpy.ndarray 
+        numpy.ndarray     
         """
+
         if not self.count_cache:
             raise ValueError("Transformer must be fit() before transform()")
         X = check_array(X)
@@ -2151,27 +2163,28 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         len_data = len(X)
         num_features = len(X[0])
         if self.num_features != num_features:
-            raise ValueError("transform() must have same number of" + \
-                " features as it was fitted with")
+            raise ValueError("transform() must have same number of" +
+                             " features as it was fitted with")
         num_features_transform = self._final_num_features(num_features)
+        removal_policy_list = []
         if type(self.removal_policy) == str \
-            and self.removal_policy == 'inclusion':
+                and self.removal_policy == 'inclusion':
             if type(self.inclusion) == str and \
-                self.inclusion == 'all':
+                    self.inclusion == 'all':
                 removal_policy_list = range(num_features)
             else:
                 removal_policy_list = self.inclusion
-        elif self.removal_policy == None:
-            removal_policy_list = []
+        elif not (self.removal_policy is None):
+            removal_policy_list = self.removal_policy
         transformed = np.zeros((len_data, num_features_transform))
         transformed[:, :-1] = \
             X[:, list(set(range(num_features)) - set(removal_policy_list))]
         for i in range(len_data):
             data_i_tuple = self._extract_tuple(X[i])
             if data_i_tuple in self.count_cache:
-                transformed[i, num_features] = self.count_cache[data_i_tuple]
+                transformed[
+                    i, num_features_transform - 1] = \
+                        self.count_cache[data_i_tuple]
             else:
-                transformed[i, num_features] = 0
-        return transformed 
-
-
+                transformed[i, num_features_transform - 1] = 0
+        return transformed

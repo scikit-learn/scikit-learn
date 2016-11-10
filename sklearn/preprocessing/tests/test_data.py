@@ -124,7 +124,7 @@ def test_polynomial_features():
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
     assert_equal(interact.powers_.shape, (interact.n_output_features_,
-                 interact.n_input_features_))
+                                          interact.n_input_features_))
 
 
 def test_polynomial_feature_names():
@@ -143,7 +143,8 @@ def test_polynomial_feature_names():
                         'b c^2', 'c^3'], feature_names)
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names([u"\u0001F40D", u"\u262E", u"\u05D0"])
+    feature_names = poly.get_feature_names(
+        [u"\u0001F40D", u"\u262E", u"\u05D0"])
     assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
                        feature_names)
 
@@ -1637,6 +1638,7 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
 
+
 def test_fit_cold_start():
     X = iris.data
     X_2d = X[:, :2]
@@ -1652,37 +1654,44 @@ def test_fit_cold_start():
         # state is reset
         scaler.fit_transform(X_2d)
 
+
 def test_count_featurizer_ft_standard():
     # test count featurizer fit-transform on a very standard data
     cf_1 = CountFeaturizer()
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
-    assert_array_equal( \
-        cf_1.fit_transform(X), \
+    assert_array_equal(
+        cf_1.fit_transform(X),
         np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
+
 
 def test_count_featurizer_ft_standard_inclusion():
     # test count featurizer fit-transform on a very standard data
     # with different inclusion parameters
-    
+
     cf_inclusion_1 = CountFeaturizer(inclusion=[0])
     cf_inclusion_2 = CountFeaturizer(inclusion=[])
     cf_inclusion_3 = CountFeaturizer(inclusion=[0, 1, 2])
     cf_inclusion_4 = CountFeaturizer(inclusion=[0, 1])
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
     X2 = np.array([[0, 2, 1], [0, 2, 3], [1, 0, 5], [1, 1, 5]])
-    assert_array_equal( \
-        cf_inclusion_1.fit_transform(X), \
+    assert_array_equal(
+        cf_inclusion_1.fit_transform(X),
         np.array([[0, 2, 1, 1], [1, 0, 3, 3], [1, 0, 2, 3], [1, 0, 2, 3]]))
 
-    assert_array_equal( \
-        cf_inclusion_2.fit_transform(X), \
+    assert_array_equal(
+        cf_inclusion_2.fit_transform(X),
         np.array([[0, 2, 1, 4], [1, 0, 3, 4], [1, 0, 2, 4], [1, 0, 2, 4]]))
 
-    assert_array_equal( \
-        cf_inclusion_3.fit_transform(X), \
+    assert_array_equal(
+        cf_inclusion_3.fit_transform(X),
         np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
 
-    assert_array_equal( \
-        cf_inclusion_4.fit_transform(X2), \
+    assert_array_equal(
+        cf_inclusion_4.fit_transform(X2),
         np.array([[0, 2, 1, 2], [0, 2, 3, 2], [1, 0, 5, 1], [1, 1, 5, 1]]))
 
+
+def test_count_featurizer_standard_removal():
+    cf_removal = CountFeaturizer(removal_policy=[0, 1])
+    X = np.array([[1, 1], [1, 2], [1, 1]])
+    assert_array_equal(cf_removal.fit_transform(X), np.array([[2], [1], [2]]))
