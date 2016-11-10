@@ -858,11 +858,15 @@ def test_search_cv_results_rank_tie_breaking():
                                 cv_results['mean_test_score'][2])
         except AssertionError:
             pass
+        else:
+            raise AssertionError("The values are not different.")
         try:
             assert_almost_equal(cv_results['mean_train_score'][1],
                                 cv_results['mean_train_score'][2])
         except AssertionError:
             pass
+        else:
+            raise AssertionError("The values are not different.")
         # 'min' rank should be assigned to the tied candidates
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
