@@ -1328,14 +1328,11 @@ def test_normalize():
             assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
 
     X_sparse = sparse.csr_matrix(X_dense)
-    for norm in ('l1', 'l2', 'max'):
-        _, norms = normalize(X_sparse, norm=norm,
-                             return_norm=True)
-        if norm == 'l1' or norm == 'l2':
-            assert_equal(norms, NotImplemented)
-        else:
-            assert_array_almost_equal(norms,
-                                      np.array([4.0, 4.0, 1.0, 3.0, 3.0]))
+    for norm in ('l1', 'l2'):
+        assert_raises(NotImplementedError, normalize, X_sparse,
+                      norm=norm, return_norm=True)
+    _, norms = normalize(X_sparse, norm='max', return_norm=True)
+    assert_array_almost_equal(norms, np.array([4.0, 4.0, 1.0, 3.0, 3.0]))
 
 
 def test_binarizer():
