@@ -1066,7 +1066,7 @@ cdef class ArccosDistance(DistanceMetric):
             d += x1[j] * x2[j]
             norm1 += x1[j] * x1[j]
             norm2 += x2[j] * x2[j]
-        return acos(1.0 - d / sqrt(norm1 * norm2)) / M_PI
+        return acos(d / sqrt(norm1 * norm2)) / M_PI
 
 
 #------------------------------------------------------------
