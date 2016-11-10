@@ -562,10 +562,10 @@ def test_lasso_lars_vs_R_implementation():
 
     X = x.T
 
-    ############################################################################
+    ###########################################################################
     # Scenario 1: Let's compare R vs sklearn when fit_intercept=False and
     # normalize=False
-    ############################################################################
+    ###########################################################################
     #
     # The R result was obtained using the following code:
     #
@@ -587,9 +587,10 @@ def test_lasso_lars_vs_R_implementation():
                    2.811549786389614, 2.813766976061531, 2.817462468949557,
                    2.817368178703816, 2.816221090636795],
                   [0, 0, -1.218422599914637, -3.457726183014808,
-                   -4.021304522060710, -45.827461592423745, -47.776608869312305,
-                   -47.911561610746404, -47.914845922736234, -48.039562334265717
-                   ]])
+                   -4.021304522060710, -45.827461592423745,
+                   -47.776608869312305,
+                   -47.911561610746404, -47.914845922736234,
+                   -48.039562334265717]])
 
     model_lasso_lars = linear_model.LassoLars(alpha=0, fit_intercept=False,
                                               normalize=False)
@@ -597,17 +598,17 @@ def test_lasso_lars_vs_R_implementation():
     skl_betas = model_lasso_lars.coef_path_
 
     assert_array_almost_equal(r, skl_betas, decimal=13)
-    ############################################################################
+    ###########################################################################
 
-    ############################################################################
+    ###########################################################################
     # Scenario 2: Let's compare R vs sklearn when fit_intercept=True and
     # normalize=True
     #
-    # Note: When normalize is equal to True, R returns the coefficients in their
-    # original units, that is, they are rescaled back, whereas sklearn does not
-    # do that, therefore, we need to do this step before comparing their
-    # results.
-    ############################################################################
+    # Note: When normalize is equal to True, R returns the coefficients in
+    # their original units, that is, they are rescaled back, whereas sklearn
+    # does not do that, therefore, we need to do this step before comparing
+    # their results.
+    ###########################################################################
     #
     # The R result was obtained using the following code:
     #
@@ -619,8 +620,8 @@ def test_lasso_lars_vs_R_implementation():
     r2 = np.array([[0, 0, 0, 0, 0],
                    [0, 0, 0, 8.371887668009453, 19.463768371044026],
                    [0, 0, 0, 0, 9.901611055290553],
-                   [0, 7.495923132833733, 9.245133544334507, 17.389369207545062,
-                    26.971656815643499],
+                   [0, 7.495923132833733, 9.245133544334507,
+                    17.389369207545062, 26.971656815643499],
                    [0, 0, -1.569380717440311, -5.924804108067312,
                     -7.996385265061972]])
 
@@ -636,4 +637,4 @@ def test_lasso_lars_vs_R_implementation():
     skl_betas2 /= normx[:, np.newaxis]
 
     assert_array_almost_equal(r2, skl_betas2, decimal=13)
-    ############################################################################
+    ###########################################################################
