@@ -4721,10 +4721,8 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
 
-<<<<<<< HEAD
 .. _Ron Weiss: http://www.ee.columbia.edu/~ronw
-=======
+
 .. _Narine Kokhlikyan: https://github.com/NarineK
 
 .. _Peng Meng: https://github.com/mpjlu
->>>>>>> 2caa144... [MGR + 2] fix selectFdr bug (#7490)
