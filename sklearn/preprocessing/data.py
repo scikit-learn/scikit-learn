@@ -1331,9 +1331,10 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         Normalized input X.
 
     norms : array
-        When X is sparse, an NotImplementedError will be raised for norm 'l1' or 'l2';
-        an array with same shape with X.data, where each element replaced by the maximum
-        element along given axis in X for norm 'max'.
+        When X is sparse, an NotImplementedError will be raised for
+        norm 'l1' or 'l2'; an array with same shape with X.data,
+        where each element is replaced by the maximum element
+        along given axis in X for norm 'max'.
 
         When X is dense, an array of norms along given axis for dense matrix X.
 
@@ -1361,7 +1362,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     if sparse.issparse(X):
         if return_norm and norm in ('l1', 'l2'):
-            raise NotImplementedError("Currently 'return_norm' isn't implemented for "
+            raise NotImplementedError("'return_norm' isn't implemented for"
                                       "sparse matrix with norm 'l1' or 'l2'")
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
