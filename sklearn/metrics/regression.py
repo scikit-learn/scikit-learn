@@ -246,6 +246,59 @@ def mean_squared_error(y_true, y_pred,
 def mean_squared_log_error(y_true, y_pred,
                            sample_weight=None,
                            multioutput='uniform_average'):
+    """Mean squared logarithmic error regression loss
+
+    Read more in the :ref:`User Guide <mean_squared_log_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape = (n_samples), optional
+        Sample weights.
+
+    multioutput : string in ['raw_values', 'uniform_average'] \
+            or array-like of shape = (n_outputs)
+
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors when the input is of multioutput
+            format.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        A non-negative floating point value (the best value is 0.0), or an
+        array of floating point values, one for each individual target.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_squared_log_error
+    >>> y_true = [3, 5, 2.5, 7]
+    >>> y_pred = [2.5, 5, 4, 8]
+    >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.039...
+    >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
+    >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
+    >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.044...
+    >>> mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
+    ... # doctest: +ELLIPSIS
+    array([ 0.004...,  0.083...])
+    >>> mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.060...
+
+    """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
 
@@ -253,16 +306,8 @@ def mean_squared_log_error(y_true, y_pred,
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
-    output_errors = np.average((np.log(y_true + 1) - np.log(y_pred + 1)) ** 2,
-                               axis=0, weights=sample_weight)
-    if isinstance(multioutput, string_types):
-        if multioutput == 'raw_values':
-            return output_errors
-        elif multioutput == 'uniform_average':
-            # pass None as weights to np.average: uniform mean
-            multioutput = None
-
-    return np.average(output_errors, weights=multioutput)
+    return mean_squared_error(np.log(y_true + 1), np.log(y_pred + 1),
+                              sample_weight, multioutput)
 
 
 def median_absolute_error(y_true, y_pred):

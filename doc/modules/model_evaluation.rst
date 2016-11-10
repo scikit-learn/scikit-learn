@@ -1360,7 +1360,7 @@ Mean squared error
 
 The :func:`mean_squared_error` function computes `mean square
 error <https://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
-metric corresponding to the expected value of the squared (quadratic) error loss or
+metric corresponding to the expected value of the squared (quadratic) error or
 loss.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
@@ -1389,6 +1389,43 @@ function::
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
+
+.. _mean_squared_log_error:
+
+Mean squared logarithmic error
+------------------------------
+
+The :func:`mean_squared_log_error` function computes a risk metric
+corresponding to the expected value of the squared logarithmic (quadratic)
+error or loss.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean squared
+logarithmic error (MSLE) estimated over :math:`n_{\text{samples}}` is
+defined as
+
+.. math::
+
+  \text{MSLE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (\log_e (1 + y_i) - \log_e (1 + \hat{y}_i) )^2.
+
+Where :math:`\log_e (x)` means the natural logarithm of :math:`x`. This metric
+is best to use when targets having exponential growth, such as population
+counts, average sales of a commodity over a span of years etc. Note that this
+metric penalizes an under-predicted estimate greater than an over-predicted
+estimate.
+
+Here is a small example of usage of the :func:`mean_squared_log_error`
+function::
+
+  >>> from sklearn.metrics import mean_squared_log_error
+  >>> y_true = [3, 5, 2.5, 7]
+  >>> y_pred = [2.5, 5, 4, 8]
+  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.039...
+  >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
+  >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
+  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.044...
 
 .. _median_absolute_error:
 
