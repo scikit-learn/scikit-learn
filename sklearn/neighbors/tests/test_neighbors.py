@@ -1014,7 +1014,7 @@ def test_non_euclidean_kneighbors():
     radius = dist_array[15]
 
     # Test kneighbors_graph
-    for metric in ['manhattan', 'chebyshev', 'cosine']:
+    for metric in ['manhattan', 'chebyshev']:
         nbrs_graph = neighbors.kneighbors_graph(
             X, 3, metric=metric, mode='connectivity',
             include_self=True).toarray()
