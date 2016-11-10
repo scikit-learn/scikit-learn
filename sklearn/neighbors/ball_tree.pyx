@@ -19,7 +19,7 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
                  'DiceDistance', 'KulsinskiDistance',
                  'RogersTanimotoDistance', 'RussellRaoDistance',
                  'SokalMichenerDistance', 'SokalSneathDistance',
-                 'ArccosDistance', 'HaversineDistance'
+                 'ArccosDistance', 'HaversineDistance',
                  'PyFuncDistance']
 
 
