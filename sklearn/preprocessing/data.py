@@ -1330,16 +1330,14 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     X : {array-like, sparse matrix}, shape [n_samples, n_features]
         Normalized input X.
 
-    norms :
-        NotImplemented
-        Currently not implemented for sparse matrix X with norm 'l1' or 'l2'.
+    norms : array or NotImplemented
+        When X is sparse,  NotImplemented for norm 'l1' or 'l2', an array
+        with same shape with X.data, where each element replaced by the maximum
+        element along given axis in X for norm 'max'.
 
-        array, shape X.data.shape
-        an array of nnz element of X replaced by the maximum element along
-        given axis in input X for sparse matrix X with norm 'max'.
+        When X is dense, an array of norms along given axis for dense matrix X.
 
-        array, length n_samples (n_features if axis=0)
-        an array of norms along given axis for dense matrix X.
+
 
     See also
     --------
@@ -1362,7 +1360,9 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         X = X.T
 
     if sparse.issparse(X):
-        norms = NotImplemented
+        if return_norm and norm in ('l1', 'l2'):
+            raise NotImplementedError("Currently 'return_norm' isn't supported for "
+                                      "sparse matrix with norm 'l1' or 'l2'")
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
