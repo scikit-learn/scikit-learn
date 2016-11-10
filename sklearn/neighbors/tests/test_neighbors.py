@@ -933,6 +933,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                ('minkowski', dict(p=3)),
                ('minkowski', dict(p=np.inf)),
                ('chebyshev', {}),
+               ('arccos', {}),
                ('seuclidean', dict(V=rng.rand(n_features))),
                ('wminkowski', dict(p=3, w=rng.rand(n_features))),
                ('mahalanobis', dict(VI=VI))]
@@ -1014,7 +1015,7 @@ def test_non_euclidean_kneighbors():
     radius = dist_array[15]
 
     # Test kneighbors_graph
-    for metric in ['manhattan', 'chebyshev']:
+    for metric in ['manhattan', 'chebyshev', 'arccos']:
         nbrs_graph = neighbors.kneighbors_graph(
             X, 3, metric=metric, mode='connectivity',
             include_self=True).toarray()
@@ -1022,7 +1023,7 @@ def test_non_euclidean_kneighbors():
         assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
 
     # Test radiusneighbors_graph
-    for metric in ['manhattan', 'chebyshev']:
+    for metric in ['manhattan', 'chebyshev', 'arccos']:
         nbrs_graph = neighbors.radius_neighbors_graph(
             X, radius, metric=metric, mode='connectivity',
             include_self=True).toarray()
