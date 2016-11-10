@@ -356,9 +356,11 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
 
     for cv in (kf, skf):
         for data in zip((X, X2), (y, y2)):
+            # Test if the two splits are different
+            # numpy's assert_equal properly compares nested lists
             try:
-                np.testing.assert_equal(list(cv.split(*data)),
-                                        list(cv.split(*data)))
+                np.testing.assert_array_equal(list(cv.split(*data)),
+                                              list(cv.split(*data)))
             except AssertionError:
                 pass
             else:
@@ -880,6 +882,7 @@ def test_cv_iterable_wrapper():
     # results
     kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
+    # numpy's assert_array_equal properly compares nested lists
     np.testing.assert_array_equal(
         list(kf_randomized_iter_wrapped.split(X, y)),
         list(kf_randomized_iter_wrapped.split(X, y)))
