@@ -597,7 +597,7 @@ def test_lasso_lars_vs_R_implementation():
     model_lasso_lars.fit(X, y)
     skl_betas = model_lasso_lars.coef_path_
 
-    assert_array_almost_equal(r, skl_betas, decimal=13)
+    assert_array_almost_equal(r, skl_betas, decimal=12)
     ###########################################################################
 
     ###########################################################################
@@ -636,5 +636,5 @@ def test_lasso_lars_vs_R_implementation():
     normx = np.sqrt(np.sum(temp ** 2, axis=0))
     skl_betas2 /= normx[:, np.newaxis]
 
-    assert_array_almost_equal(r2, skl_betas2, decimal=13)
+    assert_array_almost_equal(r2, skl_betas2, decimal=12)
     ###########################################################################
