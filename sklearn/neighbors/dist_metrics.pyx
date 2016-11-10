@@ -86,7 +86,6 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'sokalmichener': SokalMichenerDistance,
                   'sokalsneath': SokalSneathDistance,
                   'haversine': HaversineDistance,
-                  'cosine': ArccosDistance,
                   'arccos': ArccosDistance,
                   'angular': ArccosDistance,
                   'pyfunc': PyFuncDistance}

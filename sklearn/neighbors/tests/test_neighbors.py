@@ -933,7 +933,6 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                ('minkowski', dict(p=3)),
                ('minkowski', dict(p=np.inf)),
                ('chebyshev', {}),
-               ('cosine', {}),
                ('seuclidean', dict(V=rng.rand(n_features))),
                ('wminkowski', dict(p=3, w=rng.rand(n_features))),
                ('mahalanobis', dict(VI=VI))]
