@@ -1022,7 +1022,7 @@ def test_non_euclidean_kneighbors():
         assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
 
     # Test radiusneighbors_graph
-    for metric in ['manhattan', 'chebyshev', 'cosine']:
+    for metric in ['manhattan', 'chebyshev']:
         nbrs_graph = neighbors.radius_neighbors_graph(
             X, radius, metric=metric, mode='connectivity',
             include_self=True).toarray()
