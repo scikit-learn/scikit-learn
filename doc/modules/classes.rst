@@ -572,7 +572,7 @@ Kernels:
 
 .. autosummary::
   :toctree: generated/
-  :template: class.rst
+  :template: class_with_call.rst
 
   gaussian_process.kernels.Kernel
   gaussian_process.kernels.Sum
