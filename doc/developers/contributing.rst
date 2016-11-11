@@ -383,6 +383,11 @@ documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
+You may also be asked to show your changes when it's built. When you create
+a pull request or make changes in an existing one, circleci automatically
+builds the docs. Thus, you can easily view your changes in the build
+artifacts.
+
 Finally, follow the formatting rules below to make it consistently good:
 
     * Add "See also" in docstrings for related classes/functions.
