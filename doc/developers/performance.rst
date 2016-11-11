@@ -292,38 +292,17 @@ install the latest version::
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%memit`` and ``%mprun`` magics::
-
-    import memory_profiler
-    ip.expose_magic('memit', memory_profiler.magic_memit)
-    ip.expose_magic('mprun', memory_profiler.magic_mprun)
-
 - **Under IPython 0.11+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/memory_profiler_ext.py``
-  with the following content::
-
-    import memory_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('memit', memory_profiler.magic_memit)
-        ip.define_magic('mprun', memory_profiler.magic_mprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
+  Then register the extension in ``~/.ipython/profile_default/ipython_config.py`` alongside the line profiler::
 
     c.TerminalIPythonApp.extensions = [
-        'memory_profiler_ext',
+        'line_profiler', 'memory_profiler',
     ]
     c.InteractiveShellApp.extensions = [
-        'memory_profiler_ext',
+        'line_profiler', 'memory_profiler',
     ]
 
   This will register the ``%memit`` and ``%mprun`` magic commands in the
