@@ -31,6 +31,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import skip_if_32bit
 
 from sklearn.utils.validation import check_random_state
 
@@ -362,6 +363,7 @@ def test_numerical_stability():
             reg.fit(-X, -y)
 
 
+@skip_if_32bit
 def test_importances():
     # Check variable importances.
     X, y = datasets.make_classification(n_samples=2000,
