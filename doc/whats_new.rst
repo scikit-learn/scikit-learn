@@ -100,6 +100,9 @@ Bug fixes
    - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
      string labels. :issue:`5874` by `Raghav RV`_.
 
+   - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
+     the same result as the LassoLars implementation available
+     in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
 
 .. _changes_0_18_1:
 
