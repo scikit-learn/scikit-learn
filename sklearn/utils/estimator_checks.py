@@ -49,6 +49,7 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
+from sklearn.utils.validation import has_fit_parameter
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -80,6 +81,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_dtype_object
+    yield check_pandas_series
     yield check_estimators_fit_returns_self
 
     # Check that all estimator yield informative messages when
@@ -102,7 +104,7 @@ def _yield_non_meta_checks(name, Estimator):
         yield check_estimators_overwrite_params
     if hasattr(Estimator, 'sparsify'):
         yield check_sparsify_coefficients
-
+    
     yield check_estimator_sparse_data
 
     # Test that estimators can be pickled, and once pickled
@@ -379,6 +381,27 @@ def check_estimator_sparse_data(name, Estimator):
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
             raise
+
+
+@ignore_warnings(category=(DeprecationWarning, UserWarning))
+def check_pandas_series(name, Estimator):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type pandas.Series in the 'fit' function.
+    try:
+        import pandas as pd
+        X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+        y = pd.Series([1, 1, 1, 2, 2, 2])
+        weights = pd.Series([1] * 6)
+        estimator = Estimator()
+        if has_fit_parameter(estimator, "sample_weight"):
+            try:
+                estimator.fit(X, y, sample_weight=weights)
+            except:
+                raise ValueError("Estimator {0} raises error if "
+                                 "'sample_weight' parameter is type "
+                                 "pandas.Series.".format(name))
+    except ImportError:
+        print("Could not import package 'pandas'")
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))

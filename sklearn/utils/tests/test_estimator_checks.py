@@ -5,13 +5,11 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_raises_regex, assert_true
-from sklearn.utils.testing import SkipTest, all_estimators
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
-from sklearn.utils.validation import has_fit_parameter
 
 
 class CorrectNotFittedError(ValueError):
@@ -75,6 +73,19 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return np.ones(X.shape[0])
 
 
+class NoSampleWeightPandasSeriesType(BaseBadClassifier):
+    def fit(self, X, y, sample_weight=None):
+        # Convert data
+        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
+                         y_numeric=True)
+        # Loosely based on _solve_cholesky_kernel (called in KernelRidge.fit)
+        has_sw = isinstance(sample_weight, np.ndarray) \
+            or sample_weight not in [1.0, None]
+        if has_sw:
+            np.sqrt(np.atleast_1d(sample_weight))
+        return self
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -88,6 +99,11 @@ def test_check_estimator():
     # check that fit does input validation
     msg = "TypeError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
+    # check that sample_weights in fit accepts pandas.Series type
+    msg = "Estimator NoSampleWeightPandasSeriesType raises error if " + \
+          "'sample_weight' parameter is type pandas.Series."
+    assert_raises_regex(
+        ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
@@ -128,28 +144,3 @@ def test_check_estimators_unfitted():
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
-
-
-def test_common():
-    # check that the fit function of an estimator will accept
-    # a 'sample_weight' parameter of type pandas.Series
-    try:
-        import pandas as pd
-    except ImportError:
-        raise SkipTest("Pandas not found")
-    X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
-    y = pd.Series([1, 1, 1, 2, 2, 2])
-    weights = pd.Series([1] * 6)
-    for estimator_name, Estimator in all_estimators():
-        estimator = Estimator()
-        if has_fit_parameter(estimator, "sample_weight"):
-            try:
-                # default solver liblinear doesn't support this parameter
-                if estimator_name is "LogisticRegression":
-                    Estimator(solver="lbfgs").fit(X, y, sample_weight=weights)
-                else:
-                    estimator.fit(X, y, sample_weight=weights)
-            except:
-                raise ValueError("Estimator {0} raises error if "
-                                 "'sample_weight' parameter is type "
-                                 "pandas.Series.".format(estimator_name))
