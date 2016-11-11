@@ -1,9 +1,10 @@
 """
 ====================================================================
-Linear and Quadratic Discriminant Analysis with confidence ellipsoid
+Linear and Quadratic Discriminant Analysis with covariance ellipsoid
 ====================================================================
 
-Plot the confidence ellipsoids of each class and decision boundary
+The ellipsoids display the double standard deviation for each class.
+Plot the covariance ellipsoids of each class and decision boundary
 """
 print(__doc__)
 
