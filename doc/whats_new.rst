@@ -97,6 +97,10 @@ Bug fixes
      attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
      Krivich <kiote>`.
 
+   - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
+     the same result as the LassoLars implementation available
+     in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
