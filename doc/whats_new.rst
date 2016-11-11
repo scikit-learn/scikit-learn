@@ -10,6 +10,8 @@ Release history
 Version 0.18.1
 ==============
 
+**November 11, 2016**
+
 .. topic:: Last release with Python 2.6 support
 
     Scikit-learn 0.18 is the last major release of scikit-learn to support Python 2.6.
@@ -127,6 +129,26 @@ Linear, kernelized and related models
      `n_features > n_samples`. (`#6178
      <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
      Thirion`_
+
+
+Code Contributors
+-----------------
+Aashi, affanv14, Alexander Junge, Alexandre Gramfort, Aman Dalmia, Andreas
+Mueller, Andrew Jackson, Andrew Smith, Angus Williams, Artem Golubin, Arthur
+Douillard, Artsiom, Bertrand Thirion, Bing Tian Dai, Brian Burns, CJ Carey,
+Charlton Austin, chkoar, Dave Elliott, David Kirkby, Deborah Gertrude Digges,
+ditenberg, E. Lynch-Klarup, Ekaterina Krivich, Fabian Egli, ferria, fukatani,
+Gael Varoquaux, Giorgio Patrini, Grzegorz Szpak, He Chen, guoci, Ibraim Ganiev,
+Iván Vallés, JPFrancoia, Jake VanderPlas, Joel Nothman, Jon Crall, Jonathan
+Rahn, Jonathan Striebel, Josh Karnofsky, Julien Aubert, Kathy Chen, Kaushik
+Lakshmikanth, Kevin Yap, Kyle Gilliam, ljwolf, Loic Esteve, Mainak Jas,
+Maniteja Nandana, Mathieu Blondel, Mehul Ahuja, Michele Lacchia, Mikhail
+Korobov, Nelle Varoquaux, Nelson Liu, Nicole Vavrova, nuffe, Olivier Grisel, Om
+Prakash, Patrick Carlson, Pieter Arthur de Jong, polmauri, Rafael Possas,
+Raghav R V, Ruifeng Zheng, Sam Shleifer, Sebastian Saeger, Sourav Singh,
+Srivatsan, Thierry Guillemot, toastedcornflakes, Tom Dupré la Tour,
+vibrantabhi19, waterponey
+
 
 .. _changes_0_18:
 
