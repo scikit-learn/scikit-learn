@@ -97,6 +97,10 @@ Bug fixes
      attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
      Krivich <kiote>`.
 
+   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
+     string labels. :issue:`5874` by `Raghav RV`_.
+
+
 .. _changes_0_18_1:
 
 Version 0.18.1
@@ -140,6 +144,9 @@ Bug fixes
    - Fixes issue in :ref:`univariate_feature_selection` where score 
      functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
+
+   - Fixed setting parameters when calling ``fit`` multiple times on
+     :class:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
 
    - Fixes issue in ``partial_fit`` method of
      :class:`multiclass.OneVsRestClassifier` when number of classes used in
