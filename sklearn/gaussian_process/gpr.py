@@ -128,6 +128,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
+    rng_ : numpy.RandomState
+
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
@@ -161,7 +163,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.kernel_ = clone(self.kernel)
 
-        self.rng = check_random_state(self.random_state)
+        self.rng_ = check_random_state(self.random_state)
 
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
@@ -211,7 +213,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 bounds = self.kernel_.bounds
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
-                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
+                        self.rng_.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
