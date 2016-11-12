@@ -85,6 +85,10 @@ class NoSampleWeightPandasSeriesType(BaseBadClassifier):
             np.sqrt(np.atleast_1d(sample_weight))
         return self
 
+    def predict(self, X):
+        X = check_array(X)
+        return np.ones(X.shape[0])
+
 
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
