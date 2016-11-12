@@ -1,4 +1,4 @@
-f.. _linear_model:
+.. _linear_model:
 
 =========================
 Generalized Linear Models
