@@ -71,12 +71,17 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     ----------
     components_ : array, shape (n_components, n_features)
 
-    explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components.
-
-    explained_variance_ : array, [n_components]
+    explained_variance_ : array, shape (n_components,)
         The variance of the training samples transformed by a projection to
         each component.
+
+    explained_variance_ratio_ : array, shape (n_components,)
+        Percentage of variance explained by each of the selected components.
+
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
 
     Examples
     --------
@@ -84,13 +89,15 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     >>> from sklearn.random_projection import sparse_random_matrix
     >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
-    >>> svd.fit(X) # doctest: +NORMALIZE_WHITESPACE
+    >>> svd.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
             random_state=42, tol=0.0)
-    >>> print(svd.explained_variance_ratio_) # doctest: +ELLIPSIS
-    [ 0.0782... 0.0552... 0.0544... 0.0499... 0.0413...]
-    >>> print(svd.explained_variance_ratio_.sum()) # doctest: +ELLIPSIS
-    0.279...
+    >>> print(svd.explained_variance_ratio_)  # doctest: +ELLIPSIS
+    [ 0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
+    >>> print(svd.explained_variance_ratio_.sum())  # doctest: +ELLIPSIS
+    0.249...
+    >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
+    [ 2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
 
     See also
     --------
@@ -185,6 +192,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         else:
             full_var = np.var(X, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
+        self.singular_values_ = Sigma  # Store the singular values.
+
         return X_transformed
 
     def transform(self, X):
