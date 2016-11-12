@@ -4,7 +4,7 @@ Linear and Quadratic Discriminant Analysis with covariance ellipsoid
 ====================================================================
 
 The ellipsoids display the double standard deviation for each class.
-Plot the covariance ellipsoids of each class and decision boundary
+Plot the covariance ellipsoids of each class and decision boundary.
 """
 print(__doc__)
 
