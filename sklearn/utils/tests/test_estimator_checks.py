@@ -73,7 +73,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return np.ones(X.shape[0])
 
 
-class NoSampleWeightPandasSeriesType(BaseBadClassifier):
+class NoSampleWeightPandasSeriesType(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         # Convert data
         X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
