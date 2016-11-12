@@ -1,4 +1,4 @@
-.. _linear_model:
+f.. _linear_model:
 
 =========================
 Generalized Linear Models
@@ -266,6 +266,11 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
+.. note:: **Comparison with the regularization parameter of SVM**
+
+      The equivalence between ``alpha`` and the regularization parameter of SVM,
+      ``C``, varies with different estimators and depends on the exact objective
+      function optimized by the model.
 
 .. _multi_task_lasso:
 
