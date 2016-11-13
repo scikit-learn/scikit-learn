@@ -43,8 +43,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        `self.estimators_`. An estimator can be set to `None` using
-        `set_params`.
+        ``self.estimators_``. An estimator can be set to `None` using
+        ``set_params``.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -64,7 +64,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     Attributes
     ----------
     estimators_ : list of classifiers
-        The collection of fitted sub-estimators.
+        The collection of fitted sub-estimators as defined in ``estimators``
+        that are not `None`.
 
     classes_ : array-like, shape = [n_predictions]
         The classes labels.
@@ -102,10 +103,13 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1):
         self.estimators = estimators
-        self.named_estimators = dict(estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
+
+    @property
+    def named_estimators(self):
+        return dict(self.estimators)
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -149,16 +153,17 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         if sample_weight is not None:
             for name, step in self.estimators:
                 if not has_fit_parameter(step, 'sample_weight'):
-                    raise ValueError('Underlying estimator \'%s\' does not support'
-                                     ' sample weights.' % name)
+                    raise ValueError('Underlying estimator \'%s\' does not'
+                                     ' support sample weights.' % name)
+        names, clfs = zip(*self.estimators)
+        self._validate_names(names)
 
         isnone = np.array([1 if clf is None else 0
                            for _, clf in self.estimators])
         if isnone.sum() == len(self.estimators):
-            raise ValueError('All estimators is None. At least one is required'
-                             ' to be a classifier!')
-        self.le_ = LabelEncoder()
-        self.le_.fit(y)
+            raise ValueError('All estimators are None. At least one is '
+                             'required to be a classifier!')
+        self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
 
@@ -167,12 +172,12 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
                                                  sample_weight)
-                for _, clf in self.estimators if clf is not None)
+                for clf in clfs if clf is not None)
 
         return self
 
     @property
-    def _narej_weights(self):
+    def _weights_not_none(self):
         """Get the weights of not `None` estimators"""
         if self.weights is None:
             return None
@@ -200,11 +205,10 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            maj = np.apply_along_axis(lambda x:
-                                      np.argmax(np.bincount(x,
-                                                weights=self._narej_weights)),
-                                      axis=1,
-                                      arr=predictions.astype('int'))
+            maj = np.apply_along_axis(
+                lambda x: np.argmax(
+                    np.bincount(x, weights=self._weights_not_none)),
+                axis=1, arr=predictions.astype('int'))
 
         maj = self.le_.inverse_transform(maj)
 
@@ -221,7 +225,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
                                  " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
         avg = np.average(self._collect_probas(X), axis=0,
-                         weights=self._narej_weights)
+                         weights=self._weights_not_none)
         return avg
 
     @property

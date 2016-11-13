@@ -735,9 +735,9 @@ def test_step_name_validation():
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
-            (bad_steps1, "Step names must not contain __: got ['a__q']"),
+            (bad_steps1, "Estimator names must not contain __: got ['a__q']"),
             (bad_steps2, "Names provided are not unique: ['a', 'a']"),
-            (bad_steps3, "Step names conflict with constructor "
+            (bad_steps3, "Estimator names conflict with constructor "
                          "arguments: ['%s']" % param),
         ]:
             # three ways to make invalid:

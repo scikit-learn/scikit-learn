@@ -40,6 +40,19 @@ def test_estimator_init():
            '; got 2 weights, 1 estimators')
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
+    eclf = VotingClassifier(estimators=[('lr', clf), ('lr', clf)],
+                            weights=[1, 2])
+    msg = "Names provided are not unique: ['lr', 'lr']"
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
+    eclf = VotingClassifier(estimators=[('lr__', clf)])
+    msg = "Estimator names must not contain __: got ['lr__']"
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
+    eclf = VotingClassifier(estimators=[('estimators', clf)])
+    msg = "Estimator names conflict with constructor arguments: ['estimators']"
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
 
 def test_predictproba_hardvoting():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
@@ -283,6 +296,7 @@ def test_set_params():
 
 def test_set_estimator_none():
     """VotingClassifier set_params should be able to set estimators as None"""
+    # Test predict
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -300,7 +314,20 @@ def test_set_estimator_none():
     eclf2.set_params(voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-    msg = ('All estimators is None. At least one is required'
+    msg = ('All estimators are None. At least one is required'
            ' to be a classifier!')
-    assert_raise_message(ValueError, msg,
-                         eclf2.set_params(lr=None, rf=None, nb=None).fit, X, y)
+    assert_raise_message(
+        ValueError, msg, eclf2.set_params(lr=None, rf=None, nb=None).fit, X, y)
+
+    # Test soft voting transform
+    X1 = np.array([[1], [2]])
+    y1 = np.array([1, 2])
+    eclf1 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
+                             voting='soft', weights=[0, 0.5]).fit(X1, y1)
+
+    eclf2 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
+                             voting='soft', weights=[1, 0.5])
+    eclf2.set_params(rf=None).fit(X1, y1)
+    assert_array_equal(eclf1.transform(X1), np.array([[[0.7, 0.3], [0.3, 0.7]],
+                                                      [[1., 0.], [0., 1.]]]))
+    assert_array_equal(eclf2.transform(X1), np.array([[[1., 0.], [0., 1.]]]))
