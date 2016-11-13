@@ -385,8 +385,10 @@ opposed to how it works "under the hood".
 
 You may also be asked to show your changes when it's built. When you create
 a pull request or make changes in an existing one, circleci automatically
-builds the docs. Thus, you can easily view your changes in the build
-artifacts.
+builds the docs. Thus, you can easily view your changes in the built
+artifacts using the following formula:
+
+``https://{BUILD_NUMBER}-843222-gh.circle-artifacts.com/0//home/ubuntu/scikit-learn/doc/_build/html/stable/index.html``
 
 Finally, follow the formatting rules below to make it consistently good:
 
