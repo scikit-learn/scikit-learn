@@ -809,7 +809,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             missing_mask=missing_mask)
         return self
 
-
     def predict_proba(self, X, check_input=True, missing_mask=None):
         """Predict class probabilities of the input samples X.
 

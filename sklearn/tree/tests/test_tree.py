@@ -1902,6 +1902,7 @@ def test_tree_missing_value_handling_corner_cases_random_splitter():
         except AssertionError:
             pass
 
+
 def test_tree_explicit_missing_mask():
     # All the missing values belong to a single class
     rng = np.random.RandomState(42)
@@ -1931,4 +1932,4 @@ def test_tree_explicit_missing_mask():
                                           X, y, missing_mask=missing_mask)
         # No nan thresholds (INF can be a threshold however)
         assert_false(np.any(np.isnan(dtc.tree_.threshold)))
-        assert_array_equal(dtc.predict(X), dtc.predict(X))
+        assert_array_equal(dtc.predict(X), dtc2.predict(X))
