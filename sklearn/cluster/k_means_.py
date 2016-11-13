@@ -77,6 +77,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """
     n_samples, n_features = X.shape
 
+    centers = np.empty((n_clusters, n_features), dtype=X.dtype)
+
     assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
 
     # Set the number of local seeding trials if none is given
@@ -85,17 +87,6 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         # specific results for other than mentioning in the conclusion
         # that it helped.
         n_local_trials = 2 + int(np.log(n_clusters))
-
-    # Do type checks before the critical loop
-    X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                    warn_on_dtype=False, estimator='kmeans++',
-                    force_all_finite=True)
-    x_squared_norms = check_array(x_squared_norms, dtype=FLOAT_DTYPES,
-                                  warn_on_dtype=False,
-                                  estimator='kmeans++',
-                                  force_all_finite=True)
-
-    centers = np.empty((n_clusters, n_features), dtype=X.dtype)
 
     # Pick first center randomly
     center_id = random_state.randint(n_samples)

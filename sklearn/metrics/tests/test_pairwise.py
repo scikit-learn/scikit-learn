@@ -714,10 +714,26 @@ def test_check_preserve_type():
     assert_equal(XB_checked.dtype, np.float)
 
 
+def test_euclidean_check_shapes():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((20, 4))
+    X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
+    Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
+    # Errors in transposed shapes should always be fixed
+    euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
+    euclidean_distances(X, Y, X_norm_squared=X_norm_sq.T)
+    euclidean_distances(X, Y, X_norm_squared=X_norm_sq.ravel())
+    euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
+    euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq.T)
+    euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq.ravel())
+
+
 def test_euclidean_no_check_input_with_bad_input():
-    # Ensure failure when check_input is False and the inputs are bad
     X = [[0]]
     Y = [[1], [2]]
+    # Even though check_input is False, taking the dot product should fail
+    # because the inputs have incompatible shapes
     assert_raises(AttributeError, euclidean_distances, X, Y,
                   check_input=False)
 
@@ -737,20 +753,6 @@ def test_euclidean_no_check_input_with_bad_input():
         euclidean_distances(X, Y, check_input=False)
     except TypeError:
         pass
-
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 4))
-    Y = rng.random_sample((20, 4))
-    X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
-    Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
-
-    assert_raises(ValueError, euclidean_distances, X, Y,
-                  X_norm_squared=X_norm_sq, check_input=False)
-    assert_raises(ValueError, euclidean_distances, X, Y,
-                  Y_norm_squared=Y_norm_sq.T, check_input=False)
-    assert_raises(ValueError, euclidean_distances, X, Y,
-                  X_norm_squared=X_norm_sq, Y_norm_squared=Y_norm_sq,
-                  check_input=False)
 
 
 def test_euclidean_no_check_input_with_good_input():

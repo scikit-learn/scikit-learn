@@ -187,14 +187,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
 
-    Y_norm_squared : array-like, shape (1, n_samples_2), optional
+    Y_norm_squared : array-like, shape (n_samples_2, ), optional
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
 
     squared : boolean, optional
         Return squared Euclidean distances.
 
-    X_norm_squared : array-like, shape = (n_samples_1, 1), optional
+    X_norm_squared : array-like, shape = [n_samples_1], optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
 
@@ -226,15 +226,16 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         X, Y = check_pairwise_arrays(X, Y)
 
     if X_norm_squared is not None:
+        XX = X_norm_squared
         if check_input:
-            XX = check_array(X_norm_squared)
-            if XX.shape == (1, X.shape[0]):
-                XX = XX.T
-            elif XX.shape != (X.shape[0], 1):
-                raise ValueError(
-                    "Incompatible dimensions for X and X_norm_squared")
-        else:
-            XX = X_norm_squared
+            XX = check_array(XX)
+
+        XX = np.atleast_2d(XX)
+        if XX.shape == (1, X.shape[0]):
+            XX = XX.T
+        elif XX.shape != (X.shape[0], 1):
+            raise ValueError(
+                "Incompatible dimensions for X and X_norm_squared")
     else:
         XX = row_norms(X, squared=True)[:, np.newaxis]
 
@@ -243,7 +244,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     elif Y_norm_squared is not None:
         YY = np.atleast_2d(Y_norm_squared)
 
-        if YY.shape != (1, Y.shape[0]):
+        if YY.shape == (Y.shape[0], 1):
+            YY = YY.T
+        elif YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
     else:
@@ -1031,9 +1034,9 @@ def additive_chi2_kernel(X, Y=None, check_input=True):
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
     """
+    if issparse(X) or issparse(Y):
+        raise ValueError("additive_chi2 does not support sparse matrices.")
     if check_input:
-        if issparse(X) or issparse(Y):
-            raise ValueError("additive_chi2 does not support sparse matrices.")
         X, Y = check_pairwise_arrays(X, Y)
     if (X < 0).any():
         raise ValueError("X contains negative values.")
