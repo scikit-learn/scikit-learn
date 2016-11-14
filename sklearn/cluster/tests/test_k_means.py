@@ -824,3 +824,26 @@ def test_KMeans_init_centers():
         km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
         km.fit(X_test)
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
+
+
+def test_sparseX_with_cluster_centroids():
+    from sklearn.datasets import load_iris
+
+    iris = load_iris()
+    X = iris.data
+
+    # Get a local optimum
+    centers = KMeans(n_clusters=3).fit(X).cluster_centers_
+
+    # Fit starting from a local optimum shouldn't change the solution
+    np.testing.assert_allclose(
+        centers,
+        KMeans(n_clusters=3, init=centers, n_init=1).fit(X).cluster_centers_
+    )
+
+    # The same should be true when X is sparse
+    X_sparse = sp.csr_matrix(X)
+    np.testing.assert_allclose(
+        centers,
+        KMeans(n_clusters=3, init=centers, n_init=1).fit(X_sparse).cluster_centers_
+    )
