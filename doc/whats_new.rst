@@ -104,6 +104,23 @@ Bug fixes
      the same result as the LassoLars implementation available
      in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
 
+   - Fixed a bug where :func:`sklearn.model_selection.train_test_split` raised
+     an error when ``stratify`` is a list of string labels. :issue:`7593` by
+     `Raghav RV`_.
+
+   - Fixed a bug where :class:`sklearn.model_selection.GridSearchCV` and
+     :class:`sklearn.model_selection.RandomizedSearchCV` were not pickleable
+     because of a pickling bug in ``np.ma.MaskedArray``. :issue:`7594` by
+     `Raghav RV`_.
+
+   - All cross-validation utilities in :mod:`sklearn.model_selection` now
+     permit one time cross-validation splitters for the ``cv`` parameter. Also
+     non-deterministic cross-validation splitters (where multiple calls to
+     ``split`` produce dissimilar splits) can be used as ``cv`` parameter.
+     The :class:`sklearn.model_selection.GridSearchCV` will cross-validate each
+     parameter setting on the split produced by the first ``split`` call
+     to the cross-validation splitter.  :issue:`7660` by `Raghav RV`_.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
