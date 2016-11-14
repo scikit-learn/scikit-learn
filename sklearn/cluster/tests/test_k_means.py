@@ -826,7 +826,7 @@ def test_KMeans_init_centers():
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
 
 
-def test_sparseX_with_cluster_centroids():
+def test_sparseX_KMeans_init_centers():
     from sklearn.datasets import load_iris
 
     iris = load_iris()
