@@ -246,7 +246,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     (gallery).
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Parameters
     ----------
@@ -418,7 +418,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
 
