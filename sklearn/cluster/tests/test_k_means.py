@@ -845,5 +845,7 @@ def test_sparseX_KMeans_init_centers():
     X_sparse = sp.csr_matrix(X)
     np.testing.assert_allclose(
         centers,
-        KMeans(n_clusters=3, init=centers, n_init=1).fit(X_sparse).cluster_centers_
+        KMeans(n_clusters=3,
+               init=centers,
+               n_init=1).fit(X_sparse).cluster_centers_
     )
