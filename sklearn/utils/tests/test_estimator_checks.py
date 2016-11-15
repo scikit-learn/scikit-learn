@@ -76,7 +76,9 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
 class NoSampleWeightPandasSeriesType(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         # Convert data
-        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
                          y_numeric=True)
         # Loosely based on _solve_cholesky_kernel (called in KernelRidge.fit)
         has_sw = isinstance(sample_weight, np.ndarray) \
@@ -104,10 +106,14 @@ def test_check_estimator():
     msg = "TypeError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
     # check that sample_weights in fit accepts pandas.Series type
-    msg = "Estimator NoSampleWeightPandasSeriesType raises error if " + \
-          "'sample_weight' parameter is type pandas.Series."
-    assert_raises_regex(
-        ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+    try:
+        from pandas import Series
+        msg = "Estimator NoSampleWeightPandasSeriesType raises error if " + \
+              "'sample_weight' parameter is type pandas.Series."
+        assert_raises_regex(
+            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+    except ImportError:
+        pass
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)

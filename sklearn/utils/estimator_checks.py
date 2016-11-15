@@ -104,7 +104,7 @@ def _yield_non_meta_checks(name, Estimator):
         yield check_estimators_overwrite_params
     if hasattr(Estimator, 'sparsify'):
         yield check_sparsify_coefficients
-    
+
     yield check_estimator_sparse_data
 
     # Test that estimators can be pickled, and once pickled
@@ -198,7 +198,6 @@ def _yield_transformer_checks(name, Transformer):
                        'RandomizedLasso', 'LogisticRegressionCV']
     if name not in external_solver:
         yield check_transformer_n_iter
-
 
 
 def _yield_clustering_checks(name, Clusterer):
