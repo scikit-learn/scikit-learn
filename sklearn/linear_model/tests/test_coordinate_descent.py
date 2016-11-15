@@ -437,8 +437,9 @@ def test_enet_multitarget():
 
 
 def test_multioutput_enetcv_error():
-    X = np.random.randn(10, 2)
-    y = np.random.randn(10, 2)
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    y = rng.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
 
