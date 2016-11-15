@@ -96,7 +96,7 @@ Environment also funds several students to work on the project part-time.
    :target: http://cds.nyu.edu/mooresloan/
 
 `Télécom Paristech <http://www.telecom-paristech.com>`_ funds Manoj Kumar (2014),
-Tom Dupré la Tour (2015), Raghav R V (2015-2016) and Thierry Guillemot (2016) to
+Tom Dupré la Tour (2015), Raghav RV (2015-2016) and Thierry Guillemot (2016) to
 work on scikit-learn.
 
 .. image:: themes/scikit-learn/static/img/telecom.png
@@ -114,7 +114,7 @@ program.
 - 2012 - `Vlad Niculae`_, Immanuel Bayer.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
-- 2015 - `Raghav R V <https://github.com/raghavrv>`_, Wei Xue
+- 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
 - 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <http://yclin.me>`_
 
 It also provided funding for sprints and events around scikit-learn. If
