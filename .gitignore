@@ -55,7 +55,6 @@ benchmarks/bench_covertype_data/
 .pydevproject
 .idea
 
-cythonize.dat
 *.c
 *.cpp
 
