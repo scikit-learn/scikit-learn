@@ -117,7 +117,7 @@ interact with tests that use ``multiprocessing``::
 
     C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
-See the web page http://scikit-learn.org/stable/install.html#testing
+See the web page http://scikit-learn.org/stable/developers/advanced_installation.html#testing
 for more information.
 
     Random number generation can be controlled during testing by setting
