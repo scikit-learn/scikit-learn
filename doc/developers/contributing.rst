@@ -976,7 +976,6 @@ The easiest and recommended way to accomplish this is to
 **not do any parameter validation in** ``__init__``.
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
-
 While it is possible to pass parameters into the ``fit`` method, these
 should be restricted to variables that need to be sliced during
 cross-validation. These variables need to be arrays with shape[0]==n_samples (see
@@ -989,10 +988,9 @@ All other parameters should be passed to
 ``__init__`` or set after construction using ``set_params``.
 
 As a general rule, ``transform`` and ``predict`` should not take additional
-parameters. In cases where additional parameters would be useful, e.g.
-when setting a threshold value for feature selection, the custom parameters
-should be passed to ``__init__`` or ``set_params`` in order to maintain a
-consistent interface.
+parameters. In cases where additional parameters would be useful, e.g. when
+setting a threshold value for feature selection, the custom parameters
+should be passed to ``__init__``. In case parameters need to be changed after the call to __init__, e.g. when setting a threshold value for feature selection, this can be done by setting the attribute directly on the estimator or calling set_parms.
 
 Also it is expected that parameters with trailing ``_`` are **not to be set
 inside the** ``__init__`` **method**. All and only the public attributes set by
