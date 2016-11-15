@@ -386,21 +386,21 @@ def check_estimator_sparse_data(name, Estimator):
 def check_pandas_series(name, Estimator):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
-    try:
-        import pandas as pd
-        X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
-        y = pd.Series([1, 1, 1, 2, 2, 2])
-        weights = pd.Series([1] * 6)
-        estimator = Estimator()
-        if has_fit_parameter(estimator, "sample_weight"):
+    estimator = Estimator()
+    if has_fit_parameter(estimator, "sample_weight"):
+        try:
+            import pandas as pd
+            X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+            y = pd.Series([1, 1, 1, 2, 2, 2])
+            weights = pd.Series([1] * 6)
             try:
                 estimator.fit(X, y, sample_weight=weights)
             except:
                 raise ValueError("Estimator {0} raises error if "
                                  "'sample_weight' parameter is type "
                                  "pandas.Series.".format(name))
-    except ImportError:
-        print("Could not import package 'pandas'")
+        except ImportError:
+            print("Could not import package 'pandas'")
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
