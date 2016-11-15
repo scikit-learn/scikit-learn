@@ -18,8 +18,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-* tree-based models using ``min_weight_fraction_leaf``
-* :class:`feature_selection.SelectFdr`
+* *to be listed*
 
 Details are listed in the changelog below.
 
