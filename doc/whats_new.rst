@@ -162,6 +162,22 @@ Bug fixes
      has less number of classes than the total data. :issue:`7799` by
      `Srivatsan Ramesh`_
 
+   - Fixed a bug where :func:`sklearn.model_selection.train_test_split` raised
+     an error when ``stratify`` is a list of string labels. :issue:`7593` by
+     `Raghav RV`_.
+
+   - Fixed a bug where :class:`sklearn.model_selection.GridSearchCV` and
+     :class:`sklearn.model_selection.RandomizedSearchCV` were not pickleable
+     because of a pickling bug in ``np.ma.MaskedArray``. :issue:`7594` by
+     `Raghav RV`_.
+
+   - All cross-validation utilities in :mod:`sklearn.model_selection` now
+     permit one time cross-validation splitters for the ``cv`` parameter. Also
+     non-deterministic cross-validation splitters (where multiple calls to
+     ``split`` produce dissimilar splits) can be used as ``cv`` parameter.
+     The :class:`sklearn.model_selection.GridSearchCV` will cross-validate each
+     parameter setting on the split produced by the first ``split`` call
+     to the cross-validation splitter.  :issue:`7660` by `Raghav RV`_.
 
 API changes summary
 -------------------
@@ -357,7 +373,7 @@ Model selection and evaluation
    - The cross-validation iterators are replaced by cross-validation splitters
      available from :mod:`sklearn.model_selection`, allowing for nested
      cross-validation. See :ref:`model_selection_changes` for more information.
-     :issue:`4294` by `Raghav R V`_.
+     :issue:`4294` by `Raghav RV`_.
 
 Enhancements
 ............
@@ -474,7 +490,7 @@ Model evaluation and meta-estimators
    - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
      into pandas as a ``DataFrame``. Ref :ref:`model_selection_changes` for
-     more information. :issue:`6697` by `Raghav R V`_.
+     more information. :issue:`6697` by `Raghav RV`_.
 
    - Generalization of :func:`model_selection.cross_val_predict`.
      One can pass method names such as `predict_proba` to be used in the cross
@@ -484,7 +500,7 @@ Model evaluation and meta-estimators
    - The training scores and time taken for training followed by scoring for
      each search candidate are now available at the ``cv_results_`` dict.
      See :ref:`model_selection_changes` for more information.
-     :issue:`7325` by :user:`Eugene Chen <eyc88>` and `Raghav R V`_.
+     :issue:`7325` by :user:`Eugene Chen <eyc88>` and `Raghav RV`_.
 
 Metrics
 
@@ -499,7 +515,7 @@ Metrics
      :issue:`7419` by :user:`Gregory Stupp <stuppie>` and `Joel Nothman`_.
 
    - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
-     By :user:`Jatin Shah <jatinshah>` and `Raghav R V`_.
+     By :user:`Jatin Shah <jatinshah>` and `Raghav RV`_.
 
    - Speed up :func:`metrics.silhouette_score` by using vectorized operations.
      By `Manoj Kumar`_.
@@ -730,13 +746,13 @@ Model evaluation and meta-estimators
      :mod:`sklearn.learning_curve` have been deprecated and the classes and
      functions have been reorganized into the :mod:`sklearn.model_selection`
      module. Ref :ref:`model_selection_changes` for more information.
-     :issue:`4294` by `Raghav R V`_.
+     :issue:`4294` by `Raghav RV`_.
 
    - The ``grid_scores_`` attribute of :class:`model_selection.GridSearchCV`
      and :class:`model_selection.RandomizedSearchCV` is deprecated in favor of
      the attribute ``cv_results_``.
      Ref :ref:`model_selection_changes` for more information.
-     :issue:`6697` by `Raghav R V`_.
+     :issue:`6697` by `Raghav RV`_.
 
    - The parameters ``n_iter`` or ``n_folds`` in old CV splitters are replaced
      by the new parameter ``n_splits`` since it can provide a consistent
@@ -757,7 +773,7 @@ Model evaluation and meta-estimators
      :class:`model_selection.LeavePGroupsOut` is renamed to
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
      the parameter ``n_labels`` is renamed to ``n_groups``.
-     :issue:`6660` by `Raghav R V`_.
+     :issue:`6660` by `Raghav RV`_.
 
 Code Contributors
 -----------------
@@ -1314,7 +1330,7 @@ Mathieu Blondel, Matt Krump, Matti Lyra, Maxim Kolganov, mbillinger, mhg,
 Michael Heilman, Michael Patterson, Miroslav Batchkarov, Nelle Varoquaux,
 Nicolas, Nikolay Mayorov, Olivier Grisel, Omer Katz, Óscar Nájera, Pauli
 Virtanen, Peter Fischer, Peter Prettenhofer, Phil Roth, pianomania, Preston
-Parry, Raghav R V, Rob Zinkov, Robert Layton, Rohan Ramanath, Saket Choudhary,
+Parry, Raghav RV, Rob Zinkov, Robert Layton, Rohan Ramanath, Saket Choudhary,
 Sam Zhang, santi, saurabh.bansod, scls19fr, Sebastian Raschka, Sebastian
 Saeger, Shivan Sornarajah, SimonPL, sinhrks, Skipper Seabold, Sonny Hu, sseg,
 Stephen Hoover, Steven De Gryze, Steven Seguin, Theodore Vasiloudis, Thomas
@@ -1542,7 +1558,7 @@ Enhancements
      in their constructor. By `Manoj Kumar`_.
 
    - Added decision function for :class:`multiclass.OneVsOneClassifier`
-     By `Raghav R V`_ and :user:`Kyle Beauchamp <kyleabeauchamp>`.
+     By `Raghav RV`_ and :user:`Kyle Beauchamp <kyleabeauchamp>`.
 
    - :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
      support non-Euclidean metrics. By `Manoj Kumar`_
@@ -1789,7 +1805,7 @@ API changes summary
 
     - From now onwards, all estimators will uniformly raise ``NotFittedError``
       (:class:`utils.validation.NotFittedError`), when any of the ``predict``
-      like methods are called before the model is fit. By `Raghav R V`_.
+      like methods are called before the model is fit. By `Raghav RV`_.
 
     - Input data validation was refactored for more consistent input
       validation. The ``check_arrays`` function was replaced by ``check_array``
@@ -4751,7 +4767,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Noel Dawe: https://github.com/ndawe
 
-.. _Raghav R V: https://github.com/raghavrv
+.. _Raghav RV: https://github.com/raghavrv
 
 .. _Tom Dupre la Tour: https://github.com/TomDLT
 
