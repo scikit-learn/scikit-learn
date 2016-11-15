@@ -1,5 +1,6 @@
 from itertools import product
 import numpy as np
+import scipy.sparse as sp
 from numpy.testing import (assert_almost_equal, assert_array_almost_equal,
                            assert_equal)
 
@@ -8,6 +9,7 @@ from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
+from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_less
 
 eigen_solvers = ['auto', 'dense', 'arpack']
@@ -122,3 +124,23 @@ def test_isomap_clone_bug():
         model.fit(np.random.rand(50, 2))
         assert_equal(model.nbrs_.n_neighbors,
                      n_neighbors)
+
+
+def test_sparse_formats():
+    # Make an X that looks somewhat like a small tf-idf matrix.
+    # XXX newer versions of SciPy have scipy.sparse.rand for this.
+    shape = 60, 55
+    n_samples, n_features = shape
+    rng = check_random_state(42)
+    X = rng.randint(-100, 20, np.product(shape)).reshape(shape)
+    X = sp.csr_matrix(np.maximum(X, 0), dtype=np.float64)
+    X.data[:] = 1 + np.log(X.data)
+    Xdense = X.A
+
+    for fmt in ("array", "csr", "csc", "coo", "lil"):
+        Xfmt = Xdense if fmt == "dense" else getattr(X, "to" + fmt)()
+        iso = manifold.Isomap(n_components=11)
+        Xtrans = iso.fit_transform(Xfmt)
+        assert_equal(Xtrans.shape, (n_samples, 11))
+        Xtrans = iso.transform(Xfmt)
+        assert_equal(Xtrans.shape, (n_samples, 11))
