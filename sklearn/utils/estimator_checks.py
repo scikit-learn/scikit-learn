@@ -400,7 +400,7 @@ def check_pandas_series(name, Estimator):
                                  "'sample_weight' parameter is type "
                                  "pandas.Series.".format(name))
         except ImportError:
-            print("Could not import package 'pandas'")
+            pass
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
