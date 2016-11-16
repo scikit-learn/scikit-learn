@@ -398,7 +398,7 @@ def check_sample_weights_pandas_series(name, Estimator):
             except ValueError:
                 raise ValueError("Estimator {0} raises error if "
                                  "'sample_weight' parameter is type "
-                                 "pandas.Series.".format(name))
+                                 "{1}".format(name, pd.Series))
         except ImportError:
             pass
 

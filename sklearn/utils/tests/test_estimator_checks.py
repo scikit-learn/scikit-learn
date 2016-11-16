@@ -80,13 +80,12 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
                          accept_sparse=("csr", "csc"),
                          multi_output=True,
                          y_numeric=True)
-        try:
-            from pandas import Series
-            if isinstance(sample_weight, Series):
-                raise ValueError("Estimator does not accept 'sample_weight'"
-                                 "of type pandas.Series")
-        except ImportError:
-            return self
+        # Function is only called after we verify that pandas is installed
+        from pandas import Series
+        if isinstance(sample_weight, Series):
+            raise ValueError(("Estimator does not accept 'sample_weight'"
+                             "of type {0}").format(Series))
+        return self
 
     def predict(self, X):
         X = check_array(X)
@@ -107,10 +106,14 @@ def test_check_estimator():
     msg = "TypeError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
     # check that sample_weights in fit accepts pandas.Series type
-    msg = "Estimator NoSampleWeightPandasSeriesType raises error if " + \
-          "'sample_weight' parameter is type pandas.Series."
-    assert_raises_regex(
-        ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+    try:
+        from pandas import Series
+        msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
+               "'sample_weight' parameter is type {0}").format(Series)
+        assert_raises_regex(
+            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+    except ImportError:
+        pass
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
