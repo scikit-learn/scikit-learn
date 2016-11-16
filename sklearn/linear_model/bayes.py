@@ -112,7 +112,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Notes
     -----
     See examples/linear_model/plot_bayesian_ridge.py for an example.
-    
+
     References
     ----------
     D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
@@ -374,15 +374,16 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     References
     ----------
-    D. J. C. MacKay, Bayesian nonlinear modeling for the prediction competition,
-    ASHRAE Transactions, 1994.
+    D. J. C. MacKay, Bayesian nonlinear modeling for the prediction
+    competition, ASHRAE Transactions, 1994.
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
     Their beta is our self.beta_
     Their alpha is our self.lambda_
-    ARD is a little different than the slide: only dimensions/features for which
-    self.lambda_ < self.threshold_lambda are kept and the rest are discarded.
+    ARD is a little different than the slide: only dimensions/features for 
+    which self.lambda_ < self.threshold_lambda are kept and the rest are 
+    discarded.
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
