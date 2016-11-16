@@ -482,8 +482,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         class_map = dict()
         for i in range(len(classes)):
             class_map[i] = classes[i]
-        sorted_indices=[x for (x,y) in sorted(class_map.items(), key=operator.itemgetter(1))]
-        predictions=predictions[sorted_indices]
+        sorted_indices = [i for i, j in sorted(class_map.items(),
+                                               key=operator.itemgetter(1))]
+        predictions = predictions[sorted_indices]
     return predictions, test
 
 
