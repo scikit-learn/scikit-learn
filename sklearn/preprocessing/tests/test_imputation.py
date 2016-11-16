@@ -5,6 +5,7 @@ from scipy import sparse
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false
 
 from sklearn.preprocessing.imputation import Imputer
@@ -357,3 +358,12 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
+
+    # Raise a proper error message if input contains infinity
+    X = [[np.inf, 8, 9, np.nan], [np.nan, 10, 10, 0], [10, 11, 9, 11]]
+    assert_raise_message(ValueError, "Input contains infinity",
+                         Imputer(axis=0, missing_values="NaN").fit_transform,
+                         X)
+    assert_raise_message(ValueError, "Input contains infinity",
+                         Imputer(axis=1, missing_values=np.nan).fit_transform,
+                         X)
