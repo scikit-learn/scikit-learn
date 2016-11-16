@@ -81,7 +81,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_dtype_object
-    yield check_pandas_series
+    yield check_sample_weights_pandas_series
     yield check_estimators_fit_returns_self
 
     # Check that all estimator yield informative messages when
@@ -383,7 +383,7 @@ def check_estimator_sparse_data(name, Estimator):
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
-def check_pandas_series(name, Estimator):
+def check_sample_weights_pandas_series(name, Estimator):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
     estimator = Estimator()
@@ -395,7 +395,7 @@ def check_pandas_series(name, Estimator):
             weights = pd.Series([1] * 6)
             try:
                 estimator.fit(X, y, sample_weight=weights)
-            except:
+            except ValueError:
                 raise ValueError("Estimator {0} raises error if "
                                  "'sample_weight' parameter is type "
                                  "pandas.Series.".format(name))
