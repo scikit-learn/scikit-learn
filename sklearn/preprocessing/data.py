@@ -1972,16 +1972,16 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     """
-    Adds in a new feature column containing the number of occurences of 
+    Adds in a new feature column containing the number of occurences of
     each row in the given data set.
 
-    Formally, for each data point X_i in the dataset X, it will add in 
-    a new feature count_X_i to the end of X_i where count_X_i is the number of 
+    Formally, for each data point X_i in the dataset X, it will add in
+    a new feature count_X_i to the end of X_i where count_X_i is the number of
     occurences of X_i in the dataset X given the equality indicator
     'inclusion'
 
     This preprocessing step is useful when the number of occurences
-    of a particular piece of data is helpful in computing the prediction. 
+    of a particular piece of data is helpful in computing the prediction.
 
     Parameters
     ----------
@@ -1993,19 +1993,19 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         'inclusion', then the vth feature will be put into the equality checks when
         counting how often each row occurs.
 
-    removal_policy: set, list, numpy.ndarray, or None, default=None 
+    removal_policy: set, list, numpy.ndarray, or None, default=None
         - None (default): No features are removed on transformation.
-        - 'inclusion': Every feature counted will be removed and replaced with 
+        - 'inclusion': Every feature counted will be removed and replaced with
         the count feature. This is equivalent to having the 'inclusion' and
         'removal_policy' parameter being set to the exact same collection.
-        - collection of indices: For each index v in 'removal_policy', the vth 
+        - collection of indices: For each index v in 'removal_policy', the vth
         feature will be removed in the transformation (and be replaced with
         the new count feature).
 
     Examples
     --------
     Given a dataset with two features and four samples, we let the transformer
-    find the number of occurences of each data point in the dataset 
+    find the number of occurences of each data point in the dataset
 
     >>> from sklearn.preprocessing.data import CountFeaturizer
     >>> data = [[1, 1], [1, 1], [3, 1], [0, 0]]
@@ -2015,7 +2015,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
            [ 1.,  1.,  2.],
            [ 3.,  1.,  1.],
            [ 0.,  0.,  1.]])
-    >>> cf = CountFeaturizer(inclusion=[1]) 
+    >>> cf = CountFeaturizer(inclusion=[1])
     >>> cf.fit_transform(data)      # doctest: +NORMALIZE_WHITESPACE
     array([[ 1.,  1.,  3.],
            [ 1.,  1.,  3.],
@@ -2026,13 +2026,12 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     >>> cf.fit(data).transform(data_2)
     array([[ 1.,  1.,  2.]])
 
-
     Notice how on the second fit, we set the inclusion to [0, 1]
-    which made it only count the number of instances of the second feature 
+    which made it only count the number of instances of the second feature
 
     See also
     --------
-    WIP, I will make the documentation .rst afterwards 
+    WIP, I will make the documentation .rst afterwards
     """
 
     def __init__(self, inclusion='all', removal_policy=None):
@@ -2080,11 +2079,11 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     @staticmethod
     def _check_well_formed(X):
         """
-        Ensures that X is well formed, meaning that every single row of X must 
-        have the same number of elements 
+        Ensures that X is well formed, meaning that every single row of X must
+        have the same number of elements
         [[1, 2], [3, 4]] is "well formed"
         but [[1], [3, 5, 7]] is not "well formed"
-        Assumes that check_array(X) has already been called 
+        Assumes that check_array(X) has already been called
         """
         # This is a temporary method but I am unsure whether there already
         # exists something similar in the utils.validation.py
@@ -2099,7 +2098,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     def _extract_tuple(self, data_row):
         """
         Extracts the values of the data_row[inclusion] into an ordered tuple
-        for use as a dictionary key 
+        for use as a dictionary key
         """
         if type(self.inclusion) == str and self.inclusion == 'all':
             return tuple(data_row)
@@ -2111,8 +2110,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     def _final_num_features(self, cols_X):
         """
-        Given the number of columns of X, uses the number of elements in 
-        'inclusion' and 'removal_policy' to calclulate the number of 
+        Given the number of columns of X, uses the number of elements in
+        'inclusion' and 'removal_policy' to calclulate the number of
         features in the output of transform()
         """
         if type(self.removal_policy) == str \
@@ -2121,7 +2120,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                     self.inclusion == 'all':
                 return 1
             else:
-                return cols_X - inclusion.size + 1
+                return cols_X - self.inclusion.size + 1
         elif self.removal_policy != None:
             return cols_X - len(self.removal_policy) + 1
         return cols_X + 1
@@ -2151,9 +2150,9 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """
         Transforms the inputted data with the new 'count' feature (column)
-        and returns it 
-        The data set returned from the transformation will always be a 
-        numpy.ndarray     
+        and returns it
+        The data set returned from the transformation will always be a
+        numpy.ndarray
         """
 
         if not self.count_cache:
@@ -2182,9 +2181,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         for i in range(len_data):
             data_i_tuple = self._extract_tuple(X[i])
             if data_i_tuple in self.count_cache:
-                transformed[
-                    i, num_features_transform - 1] = \
-                        self.count_cache[data_i_tuple]
+                transformed[i, num_features_transform - 1] = \
+                    self.count_cache[data_i_tuple]
             else:
                 transformed[i, num_features_transform - 1] = 0
         return transformed
