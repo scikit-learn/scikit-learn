@@ -12,17 +12,24 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 RANDOM_STATE = 123
 
-n_datapoints = 500 # 500
-n_informative = 15 # 15
-n_features = 25 # 25
+n_datapoints = 500  # 500
+n_informative = 10  # 15
+n_features = 10  # 25
+n_redundant = 0
 
 # Generate a binary classification dataset.
 X, y = make_classification(n_samples=n_datapoints, n_features=n_features,
                            n_clusters_per_class=1, n_informative=n_informative,
-                           random_state=RANDOM_STATE)
+                           n_redundant=n_redundant, random_state=RANDOM_STATE)
+
+X = X * 10
+# only make these selected features "categorical"
+discretized_features = [0, 1]
+for feature in discretized_features:
+    X[:, feature] = (X[:, feature]).astype(int)
 
 # X_count is X with an additional feature column 'count'
-cf = CountFeaturizer()
+cf = CountFeaturizer(inclusion=discretized_features)
 X_count = cf.fit_transform(X)
 
 # NOTE: Setting the `warm_start` construction parameter to `True` disables
@@ -35,17 +42,17 @@ def init_clfs():
     global ensemble_clfs
     ensemble_clfs = [
         ("RandomForestClassifier, max_features='sqrt'",
-            RandomForestClassifier(warm_start=True, oob_score=True,
-                                   max_features="sqrt",
-                                   random_state=RANDOM_STATE)),
+         RandomForestClassifier(warm_start=True, oob_score=True,
+                                max_features="sqrt",
+                                random_state=RANDOM_STATE)),
         ("RandomForestClassifier, max_features='log2'",
-            RandomForestClassifier(warm_start=True, max_features='log2',
-                                   oob_score=True,
-                                   random_state=RANDOM_STATE)),
+         RandomForestClassifier(warm_start=True, max_features='log2',
+                                oob_score=True,
+                                random_state=RANDOM_STATE)),
         ("RandomForestClassifier, max_features=None",
-            RandomForestClassifier(warm_start=True, max_features=None,
-                                   oob_score=True,
-                                   random_state=RANDOM_STATE))
+         RandomForestClassifier(warm_start=True, max_features=None,
+                                oob_score=True,
+                                random_state=RANDOM_STATE))
     ]
 
 classifiers_used = [1]
@@ -66,7 +73,7 @@ error_rate = OrderedDict((label, []) for index, label in
 
 # Range of `n_estimators` values to explore.
 min_estimators = 15
-max_estimators = 175 # 175
+max_estimators = 175  # 175
 
 index = 0
 time_start = time.time()
