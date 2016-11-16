@@ -112,6 +112,16 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Notes
     -----
     See examples/linear_model/plot_bayesian_ridge.py for an example.
+    
+    References
+    -------
+    D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
+    Vol. 4, No. 3, 1992.
+
+    See also: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
+    Slide 15, titled "Predictive Distribution"
+    Their beta is our self.beta_
+    Their alpha is our self.lambda_
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -231,11 +241,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
     def predict(self, X, return_std=False):
         """Predict using the linear model. In addition to the mean of the
         predictive distribution, also its standard deviation can be returned.
-
-        See: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
-        Slide 15, titled "Predictive Distribution"
-        Russ's beta is our self.beta_
-        Russ's alpha is our self.lambda_
 
         Parameters
         ----------
@@ -366,6 +371,18 @@ class ARDRegression(LinearModel, RegressorMixin):
     Notes
     --------
     See examples/linear_model/plot_ard.py for an example.
+
+    References
+    -------
+    D. J. C. MacKay, Bayesian nonlinear modeling for the prediction competition,
+    ASHRAE Transactions, 1994.
+
+    See also: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
+    Slide 15, titled "Predictive Distribution"
+    Their beta is our self.beta_
+    Their alpha is our self.lambda_
+    ARD is a little different than the slide: only dimensions/features for which
+    self.lambda_ < self.threshold_lambda are kept and the rest are discarded.
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -481,14 +498,6 @@ class ARDRegression(LinearModel, RegressorMixin):
     def predict(self, X, return_std=False):
         """Predict using the linear model. In addition to the mean of the
         predictive distribution, also its standard deviation can be returned.
-
-        See: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
-        Slide 15, titled "Predictive Distribution"
-        Russ's beta is our self.beta_
-        Russ's alpha is our self.lambda_
-        ARD is only a little different: only dimensions/features for which
-        self.lambda_ < self.threshold_lambda are kept and the rest are
-        discarded.
 
         Parameters
         ----------
