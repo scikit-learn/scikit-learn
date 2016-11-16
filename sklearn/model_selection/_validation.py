@@ -15,6 +15,7 @@ from __future__ import division
 import warnings
 import numbers
 import time
+import operator
 
 import numpy as np
 import scipy.sparse as sp
@@ -365,7 +366,9 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
               as in '2*n_jobs'
 
     method : string, optional, default: 'predict'
-        Invokes the passed method name of the passed estimator.
+        Invokes the passed method name of the passed estimator. For
+        method='predict_proba', the columns correspond to the classes
+        in sorted order.
 
     Returns
     -------
@@ -474,6 +477,20 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
+    if method is 'predict_proba' and is callable(getattr(estimator, 'classes_')):
+        class_func = getattr(estimator, 'classes_')
+        classes = class_func(X_test)
+        class_map = dict()
+        for i in range(len(classes)):
+            class_map[i] = classes[i]
+       
+        #pred = np.empty(predictions.shape)
+        #for i,(x,y) in enumerate(sorted(class_map.items(), key=operator.itemgetter(1))):
+        #    pred[i] = predictions[x]
+        #predictions = pred
+        
+        sorted_indices=[x for (x,y) in sorted(class_map.items(), key=operator.itemgetter(1))]
+        predictions=predictions[sorted_indices]
     return predictions, test
 
 
