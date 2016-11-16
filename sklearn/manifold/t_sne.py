@@ -297,7 +297,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
                       n_iter_check=1, n_iter_without_progress=30,
-                      momentum=0.5, learning_rate=200.0, min_gain=0.01,
+                      momentum=0.5, learning_rate=1000.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
     """Batch gradient descent with momentum and individual gains.
@@ -336,7 +336,7 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 200.0)
+    learning_rate : float, optional (default: 1000.0)
         The learning rate should be extremely high for t-SNE! Values in the
         range [100.0, 1000.0] are common.
 
@@ -534,14 +534,14 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, optional (default: 200)
+    learning_rate : float, optional (default: 1000)
         The learning rate can be a critical parameter. It should be
         between 100 and 1000. If the cost function increases during initial
         optimization, the early exaggeration factor or the learning rate
         might be too high. If the cost function gets stuck in a bad local
         minimum increasing the learning rate helps sometimes.
 
-    n_iter : int, optional (default: 2000)
+    n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
         least 200.
 
@@ -645,10 +645,11 @@ class TSNE(BaseEstimator):
     """
 
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=200.0, n_iter=2000,
+                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5, degrees_of_freedom=1, min_error_diff=1e-7):
+                 random_state=None, method='barnes_hut', angle=0.5,
+                 degrees_of_freedom=1, min_error_diff=1e-7):
         if not ((isinstance(init, string_types) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
@@ -667,7 +668,10 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
-        self.degrees_of_freedom = degrees_of_freedom
+        if degrees_of_freedom is None:
+            self.degrees_of_freedom = max(self.n_components - 1.0, 1)
+        else:
+            self.degrees_of_freedom = degrees_of_freedom
         self.embedding_ = None
         self.min_error_diff = min_error_diff
 
@@ -737,9 +741,7 @@ class TSNE(BaseEstimator):
             raise ValueError("All distances should be positive, either "
                              "the metric or precomputed distances given "
                              "as X are not correct")
-
-        # Degrees of freedom of the Student's t-distribution. 
-
+        # Degrees of freedom of the Student's t-distribution.
         degrees_of_freedom = self.degrees_of_freedom
         n_samples = X.shape[0]
         # the number of nearest neighbors to find

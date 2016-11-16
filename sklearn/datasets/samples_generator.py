@@ -1351,42 +1351,6 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
 
     return X, t
 
-def make_trefoil_knot(n_samples=100, noise=0.0, random_state=None):
-    """Generate an Uniform Trefoil Knot 
-
-    Read more in the :ref:`User Guide <sample_generators>`.
-
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The number of sample points on the Trefoil Knot.
-
-    noise : float, optional (default=0.0)
-        The standard deviation of the gaussian noise.
-
-    Returns
-    -------
-    X : array of shape [n_samples, 3]
-        The points.
-
-    t : array of shape [n_samples]
-        The univariate position of the sample according to the main dimension
-        of the points in the manifold.
-    """
-    generator = check_random_state(random_state)
-    
-    t = np.array([np.arange(0,2*np.pi,(2*np.pi)/n_samples)])
-
-    x = np.sin(t) + 2 * np.sin(2*t)
-    y = np.cos(t) - 2 * np.cos(2*t)
-    z = -3 * np.sin(3*t)
-
-    X = np.concatenate((x, y, z))
-    X += noise * generator.randn(3, n_samples)
-    X = X.T
-    t = np.squeeze(t)
-
-    return X, t
 
 def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
                             n_features=2, n_classes=3,
