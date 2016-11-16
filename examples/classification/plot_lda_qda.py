@@ -3,10 +3,11 @@
 Linear and Quadratic Discriminant Analysis with covariance ellipsoid
 ====================================================================
 
-The ellipsoids display the double standard deviation for each class.
-With LDA, the standard deviation is the same for all the classes,
-while each class has its own standard deviation with QDA.
-Plot the covariance ellipsoids of each class and decision boundary.
+This example plots the covariance ellipsoids of each class and
+decision boundary learned by LDA and QDA. The ellipsoids display
+the double standard deviation for each class. With LDA, the
+standard deviation is the same for all the classes, while each
+class has its own standard deviation with QDA.
 """
 print(__doc__)
 
