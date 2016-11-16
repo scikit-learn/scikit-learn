@@ -388,7 +388,7 @@ a pull request or make changes in an existing one modifying the docs, circleci
 automatically builds them. Thus, you can easily view your changes in the built
 artifacts using the following formula:
 
-``https://{BUILD_NUMBER}-843222-gh.circle-artifacts.com/0//home/ubuntu/scikit-learn/doc/_build/html/stable/index.html``
+``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 
 Note: When you visit the details page of the circleci tests, you can find your
 BUILD_NUMBER mentioned as 'build #' which is different from your pull request number
