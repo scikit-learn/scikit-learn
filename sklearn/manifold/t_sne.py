@@ -161,7 +161,8 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     for i in range(skip_num_points, n_samples):
         np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded, out=grad[i])
     grad = grad.ravel()
-
+    grad *= 2
+    
     return kl_divergence, grad
 
 
