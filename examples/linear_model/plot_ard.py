@@ -16,7 +16,8 @@ prior is implied on the weights.
 The estimation of the model is done by iteratively maximizing the
 marginal log-likelihood of the observations.
 
-We also plot predictions and uncertainties for polynomial ARD.
+We also plot predictions and uncertainties for ARD
+for one dimensional regression using polynomial feature expansion.
 Note the uncertainty starts going up on the right side of the plot.
 This is because these test samples are outside of the range of the training
 samples.
