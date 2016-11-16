@@ -142,10 +142,12 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     # Q is a heavy-tailed distribution: Student's t-distribution
     n = pdist(X_embedded, "sqeuclidean")
-    n += 1.
+    o = n + degrees_of_freedom
     n /= degrees_of_freedom
+    n += 1.
     n **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
+    o = (degrees_of_freedom + 1) / o
 
     # Optimization trick below: np.dot(x, y) is faster than
     # np.sum(x * y) because it calls BLAS
@@ -155,12 +157,10 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     # Gradient: dC/dY
     grad = np.ndarray((n_samples, n_components))
-    PQd = squareform((P - Q) * n)
+    PQd = squareform((P - Q) * o)
     for i in range(skip_num_points, n_samples):
         np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded, out=grad[i])
     grad = grad.ravel()
-    c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
-    grad *= c
 
     return kl_divergence, grad
 
@@ -205,8 +205,8 @@ def _kl_divergence_error(params, P, neighbors, degrees_of_freedom, n_samples,
 
     # Q is a heavy-tailed distribution: Student's t-distribution
     n = pdist(X_embedded, "sqeuclidean")
-    n += 1.
     n /= degrees_of_freedom
+    n += 1.
     n **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
 
@@ -648,7 +648,7 @@ class TSNE(BaseEstimator):
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5):
+                 random_state=None, method='barnes_hut', angle=0.5, degrees_of_freedom=1):
         if not ((isinstance(init, string_types) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
@@ -667,6 +667,8 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
+        self.degrees_of_freedom = degrees_of_freedom
+        self.embedding_ = None
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -735,11 +737,9 @@ class TSNE(BaseEstimator):
                              "the metric or precomputed distances given "
                              "as X are not correct")
 
-        # Degrees of freedom of the Student's t-distribution. The suggestion
-        # degrees_of_freedom = n_components - 1 comes from
-        # "Learning a Parametric Embedding by Preserving Local Structure"
-        # Laurens van der Maaten, 2009.
-        degrees_of_freedom = max(self.n_components - 1.0, 1)
+        # Degrees of freedom of the Student's t-distribution. 
+
+        degrees_of_freedom = self.degrees_of_freedom
         n_samples = X.shape[0]
         # the number of nearest neighbors to find
         k = min(n_samples - 1, int(3. * self.perplexity + 1))
