@@ -296,7 +296,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
 
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
-                      n_iter_check=1, n_iter_without_progress=50,
+                      n_iter_check=1, n_iter_without_progress=30,
                       momentum=0.5, learning_rate=1000.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
@@ -648,7 +648,7 @@ class TSNE(BaseEstimator):
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5, degrees_of_freedom=1):
+                 random_state=None, method='barnes_hut', angle=0.5, degrees_of_freedom=1, min_error_diff=1e-7):
         if not ((isinstance(init, string_types) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
@@ -669,6 +669,7 @@ class TSNE(BaseEstimator):
         self.angle = angle
         self.degrees_of_freedom = degrees_of_freedom
         self.embedding_ = None
+        self.min_error_diff = min_error_diff
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -821,7 +822,7 @@ class TSNE(BaseEstimator):
                     self.n_components]
             opt_args['args'] = args
             opt_args['min_grad_norm'] = 1e-3
-            opt_args['n_iter_without_progress'] = 30
+            opt_args['n_iter_without_progress'] = self.n_iter_without_progress
             # Don't always calculate the cost since that calculation
             # can be nearly as expensive as the gradient
             opt_args['objective_error'] = objective_error
@@ -831,7 +832,7 @@ class TSNE(BaseEstimator):
             obj_func = _kl_divergence
             opt_args['args'] = [P, degrees_of_freedom, n_samples,
                                 self.n_components]
-            opt_args['min_error_diff'] = 0.0
+            opt_args['min_error_diff'] = self.min_error_diff
             opt_args['min_grad_norm'] = self.min_grad_norm
 
         # Early exaggeration
