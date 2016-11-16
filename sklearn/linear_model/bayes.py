@@ -114,12 +114,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
     See examples/linear_model/plot_bayesian_ridge.py for an example.
     
     References
-    -------
+    ----------
     D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
     Vol. 4, No. 3, 1992.
 
-    See also: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
-    Slide 15, titled "Predictive Distribution"
+    R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
+    http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
     Their beta is our self.beta_
     Their alpha is our self.lambda_
     """
@@ -373,12 +373,12 @@ class ARDRegression(LinearModel, RegressorMixin):
     See examples/linear_model/plot_ard.py for an example.
 
     References
-    -------
+    ----------
     D. J. C. MacKay, Bayesian nonlinear modeling for the prediction competition,
     ASHRAE Transactions, 1994.
 
-    See also: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
-    Slide 15, titled "Predictive Distribution"
+    R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
+    http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
     Their beta is our self.beta_
     Their alpha is our self.lambda_
     ARD is a little different than the slide: only dimensions/features for which
