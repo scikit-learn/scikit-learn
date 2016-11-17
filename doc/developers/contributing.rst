@@ -391,8 +391,8 @@ artifacts using the following formula:
 ``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 
 Note: When you visit the details page of the CircleCI tests, you can find your
-BUILD_NUMBER mentioned as 'build #' which is different from your pull request number
-present as 'pull/#'.
+BUILD_NUMBER mentioned as 'build #' which is different from your pull request
+number, which is presented as 'pull/#'.
 
 Finally, follow the formatting rules below to make it consistently good:
 
