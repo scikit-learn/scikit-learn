@@ -752,7 +752,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     degree : int, default 3
 
     gamma : float, default None
-        if None, defaults to 1.0 / n_samples_1
+        if None, defaults to 1.0 / n_features
 
     coef0 : int, default 1
 
@@ -786,7 +786,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     Y : ndarray of shape (n_samples_2, n_features)
 
     gamma : float, default None
-        If None, defaults to 1.0 / n_samples_1
+        If None, defaults to 1.0 / n_features
 
     coef0 : int, default 1
 
@@ -822,7 +822,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     Y : array of shape (n_samples_Y, n_features)
 
     gamma : float, default None
-        If None, defaults to 1.0 / n_samples_X
+        If None, defaults to 1.0 / n_features
 
     Returns
     -------
@@ -857,7 +857,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
     Y : array of shape (n_samples_Y, n_features)
 
     gamma : float, default None
-        If None, defaults to 1.0 / n_samples_X
+        If None, defaults to 1.0 / n_features
 
     Returns
     -------
