@@ -1439,15 +1439,17 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     estimator = Estimator()
     for attr in dir(estimator):
-        if attr.endswith("_") and not attr.startswith("_"):
+        if attr.endswith("_") and not attr.startswith("__"):
             # This check is for properties, they can be listed in dir
             # while at the same time have hasattr return False as long
             # as the property getter raises an AttributeError
             assert_false(
                 hasattr(estimator, attr),
-                "Fitted attributes ending with '_' should not be initialized "
-                'in the constructor of an estimator but instead in the '
-                'fit method itself. Attribute {0!r} was found'
+                "By convention, attributes ending with '_' are "
+                'estimated from data in scikit-learn. Consequently they '
+                'should not be initialized in the constructor of an '
+                'estimator but instead in the fit method '
+                'itself. Attribute {0!r} was found '
                 ' in estimator {1}'.format(estimator, attr))
 
 
