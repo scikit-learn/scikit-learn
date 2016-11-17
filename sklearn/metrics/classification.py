@@ -430,8 +430,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
             pred_or_true = count_nonzero(y_true + y_pred, axis=1)
             pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
             score = pred_and_true / pred_or_true
-
-            score[np.isnan(score)] = 1.0
+            score[pred_or_true == 0.0] = 1.0
     else:
         score = y_true == y_pred
 
