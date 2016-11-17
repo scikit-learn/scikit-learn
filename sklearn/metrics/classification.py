@@ -1369,6 +1369,14 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report : string
         Text summary of the precision, recall, F1 score for each class.
 
+        The reported averages are a prevalence-weighted micro-average across
+        classes (equivalent to :func:`precision_recall_fscore_support` with
+        ``average='weighted'``).
+
+        Note that in binary classification, recall of the positive class
+        is also known as "sensitivity"; recall of the negative class is
+        "specificity".
+
     Examples
     --------
     >>> from sklearn.metrics import classification_report
@@ -1400,37 +1408,30 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     width = max(name_width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
-    fmt = '%% %ds' % width  # first column: class name
-    fmt += '  '
-    fmt += ' '.join(['% 9s' for _ in headers])
-    fmt += '\n'
-
-    headers = [""] + headers
-    report = fmt % tuple(headers)
-    report += '\n'
+    head_fmt = ('{:>{width}s} ' + ' {:>9}' * len(headers))
+    report = head_fmt.format('', *headers, width=width)
+    report += '\n\n'
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
                                                   sample_weight=sample_weight)
 
-    for i, label in enumerate(labels):
-        values = [target_names[i]]
-        for v in (p[i], r[i], f1[i]):
-            values += ["{0:0.{1}f}".format(v, digits)]
-        values += ["{0}".format(s[i])]
-        report += fmt % tuple(values)
+    row_fmt = '{:>{width}s} ' + ' {:>9.{digits}f}' * 3 + ' {:>9}\n'
+    rows = zip(target_names, p, r, f1, s)
+    for row in rows:
+        report += row_fmt.format(*row, width=width, digits=digits)
 
     report += '\n'
 
     # compute averages
-    values = [last_line_heading]
-    for v in (np.average(p, weights=s),
-              np.average(r, weights=s),
-              np.average(f1, weights=s)):
-        values += ["{0:0.{1}f}".format(v, digits)]
-    values += ['{0}'.format(np.sum(s))]
-    report += fmt % tuple(values)
+    report += row_fmt.format(last_line_heading,
+                             np.average(p, weights=s),
+                             np.average(r, weights=s),
+                             np.average(f1, weights=s),
+                             np.sum(s),
+                             width=width, digits=digits)
+
     return report
 
 
