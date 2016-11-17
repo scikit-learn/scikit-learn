@@ -83,7 +83,7 @@ same range as before.
 
 Since a model internal representation may be different on two different
 architectures, dumping a model on one architecture and loading it on
-another is not supported.
+another architecture is not supported.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
