@@ -112,6 +112,16 @@ Bug fixes
      when a numpy array is passed in for weights. :issue:`7983` by
      :user:`Vincent Pham <vincentpham1991>`.
 
+API changes summary
+-------------------
+
+   - Ensure that estimators' attributes ending with ``_`` are not set
+     in the constructor but only in the ``fit`` method. Most notably
+     if you implemented your own estimator deriving from
+     :class:`ensemble.BaseEnsemble` you may be affected by this if you
+     were using `self.estimators_` in your constructor.
+
+
 .. _changes_0_18_1:
 
 Version 0.18.1
