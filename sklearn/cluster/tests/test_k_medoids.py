@@ -54,7 +54,6 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
             continue
 
         model = KMedoids(n_clusters=3, distance_metric=distance_metric)
-
         Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
         model.fit(Xnaive)
@@ -108,13 +107,10 @@ def test_kmedoids_fit_predict():
     model = KMedoids()
 
     labels1 = model.fit_predict(X)
-
     assert_equal(len(labels1), 100)
-
     assert_array_equal(labels1, model.labels_)
 
     labels2 = model.predict(X)
-
     assert_array_equal(labels1, labels2)
 
 
@@ -122,11 +118,9 @@ def test_kmedoids_fit_transform():
     model = KMedoids()
 
     Xt1 = model.fit_transform(X)
-
     assert_array_equal(Xt1.shape, (100, model.n_clusters))
 
     Xt2 = model.transform(X)
-
     assert_array_equal(Xt1, Xt2)
 
 

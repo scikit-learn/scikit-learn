@@ -53,7 +53,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     inertia_ : float
         Sum of distances of samples to their closest cluster center.
 
-
     Examples
     --------
 
@@ -72,19 +71,25 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
            [4, 2]])
     >>> kmedoids.inertia_
     8.0
+
+    >>> kmedoids = KMedoids(n_clusters=2, random_state=0, distance_metric='manhattan').fit(X)
+    >>> kmedoids.labels_
+    array([0, 0, 0, 1, 1, 1])
+    >>> kmedoids.predict([[0,0], [4,4]])
+    array([0, 1])
+    >>> kmedoids.cluster_centers_
+    array([[1, 2],
+           [4, 2]])
+    >>> kmedoids.inertia_
+    8.0
     """
 
     def __init__(self, n_clusters=8, distance_metric='euclidean',
                  init='heuristic', max_iter=300, random_state=None):
-
         self.n_clusters = n_clusters
-
         self.distance_metric = distance_metric
-
         self.init = init
-
         self.max_iter = max_iter
-
         self.random_state = random_state
 
     def _check_init_args(self):
@@ -227,8 +232,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 # Find data points that belong to cluster_idx,
                 # and assign the newly found medoid as the medoid
                 # for cluster c
-                medoid_ics[cluster_idx] = \
-                    np.where(cluster_ics == cluster_idx)[0][min_cost_idx]
+                medoid_ics[cluster_idx] = np.where(
+                    cluster_ics == cluster_idx)[0][min_cost_idx]
 
     def transform(self, X):
         """Transforms X to cluster-distance space.
@@ -299,34 +304,28 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         """
 
         # Map the original X to the distance-space
-        Xt = self.transform(X)
+        distances = self.transform(X)
 
         # Define inertia as the sum of the sample-distances
         # to closest cluster centers
-        inertia = np.sum(np.min(Xt, axis=1))
+        inertia = np.sum(np.min(distances, axis=1))
 
         return inertia
 
     def _get_initial_medoid_indices(self, distances, n_clusters):
         """Initialize medoid indices using either a random or
         heuristic approach.
-
         """
 
         if self.init == 'random':  # Random initialization
-
             # Pick random k medoids as the initial ones.
             medoids = self.random_state_.permutation(
                 distances.shape[0])[:n_clusters]
-
         elif self.init == 'heuristic':  # Initialization by heuristic
-
             # Pick K first data points that have the smallest sum distance
             # to every other point. These are the initial medoids.
             medoids = list(np.argsort(np.sum(distances, axis=1))[:n_clusters])
-
         else:
-
             raise ValueError("Initialization not implemented for method: '%s'"
                              % self.init)
 

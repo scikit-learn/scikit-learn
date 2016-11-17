@@ -5,7 +5,14 @@ A demo of K-Medoids clustering on the handwritten digits data
 
 In this example we compare different pairwise distance
 metrics for K-Medoids.
+
 """
+print(__doc__)
+
+# Authors: Timo Erkkilä <timo.erkkila@gmail.com>
+#          Antti Lehmussola <antti.lehmussola@gmail.com>
+#          Kornel Kiełczewski <kornel.k@plusnet.pl>
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,8 +22,6 @@ from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-
-print(__doc__)
 
 np.random.seed(42)
 
