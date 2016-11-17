@@ -70,6 +70,10 @@ and security. Because of this,
   also be kept in mind that operations performed on such data could give
   different and unexpected results.
 
+Since the internal representations are different on two different
+architectures, dumping on one architecture and loading on another is not
+supported.
+
 In order to rebuild a similar model with future versions of scikit-learn,
 additional metadata should be saved along the pickled model:
 
