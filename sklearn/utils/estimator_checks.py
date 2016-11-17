@@ -1448,9 +1448,8 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 "By convention, attributes ending with '_' are "
                 'estimated from data in scikit-learn. Consequently they '
                 'should not be initialized in the constructor of an '
-                'estimator but instead in the fit method '
-                'itself. Attribute {0!r} was found '
-                ' in estimator {1}'.format(estimator, attr))
+                'estimator but in the fit method. Attribute {0!r} '
+                'was found in estimator {1}'.format(estimator, attr))
 
 
 def check_sparsify_coefficients(name, Estimator):
