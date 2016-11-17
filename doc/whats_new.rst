@@ -119,7 +119,7 @@ API changes summary
      in the constructor but only in the ``fit`` method. Most notably
      if you implemented your own estimator deriving from
      :class:`ensemble.BaseEnsemble` you may be affected by this if you
-     were using `self.estimators_` in your constructor.
+     are using ``self.estimators_`` in your constructor.
 
 
 .. _changes_0_18_1:
