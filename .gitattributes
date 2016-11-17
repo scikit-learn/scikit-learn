@@ -28,3 +28,4 @@
 /sklearn/utils/seq_dataset.c -diff
 /sklearn/utils/sparsefuncs_fast.c -diff
 /sklearn/utils/weight_vector.c -diff
+/doc/whats_new.rst merge=union
