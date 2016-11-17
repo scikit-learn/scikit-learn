@@ -1408,7 +1408,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     width = max(name_width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
-    head_fmt = (u'{:>{width}s} ' + u' {:>9}' * len(headers))
+    head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
     report = head_fmt.format(u'', *headers, width=width)
     report += u'\n\n'
 
