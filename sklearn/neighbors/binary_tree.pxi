@@ -623,7 +623,7 @@ cdef class NeighborsHeap:
         dist_arr[0] = val
         ind_arr[0] = i_val
 
-        #descend the heap, swapping values until the max heap criterion is met
+        # descend the heap, swapping values until the max heap criterion is met
         i = 0
         while True:
             ic1 = 2 * i + 1
