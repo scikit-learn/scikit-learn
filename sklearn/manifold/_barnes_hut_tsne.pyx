@@ -528,7 +528,7 @@ cdef float compute_gradient_positive(float[:,:] val_P,
             for ax in range(n_dimensions):
                 buff[ax] = pos_reference[i, ax] - pos_reference[j, ax]
                 D += buff[ax] ** 2.0  
-            Q = (((1.0 + D) / dof) ** exponent)
+            Q = ((1.0 + (D / dof)) ** exponent)
             D = pij * Q
             Q /= sum_Q
             C += pij * log((pij + EPSILON) / (Q + EPSILON))
@@ -601,7 +601,7 @@ cdef void compute_gradient_negative(float[:,:] val_P,
         # following for loop
         exponent = (dof + 1.0) / -2.0
         for j in range(l[0]):
-            qijZ = ((1.0 + dist2s[j]) / dof) ** exponent
+            qijZ = (1.0 + (dist2s[j] / dof)) ** exponent
             sum_Q[0] += sizes[j] * qijZ
             mult = sizes[j] * qijZ * qijZ
             for ax in range(n_dimensions):
