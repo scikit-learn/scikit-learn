@@ -1332,7 +1332,7 @@ def test_normalize():
         assert_raises(NotImplementedError, normalize, X_sparse,
                       norm=norm, return_norm=True)
     _, norms = normalize(X_sparse, norm='max', return_norm=True)
-    assert_array_almost_equal(norms, np.array([4.0, 4.0, 1.0, 3.0, 3.0]))
+    assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
 
 
 def test_binarizer():
