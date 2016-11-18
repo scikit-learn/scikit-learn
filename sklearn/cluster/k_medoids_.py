@@ -72,7 +72,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> kmedoids.inertia_
     8.0
 
-    >>> kmedoids = KMedoids(n_clusters=2, random_state=0, distance_metric='manhattan').fit(X)
+    >>> kmedoids = KMedoids(n_clusters=2, random_state=0,
+    ...                     distance_metric='manhattan').fit(X)
     >>> kmedoids.labels_
     array([0, 0, 0, 1, 1, 1])
     >>> kmedoids.predict([[0,0], [4,4]])
