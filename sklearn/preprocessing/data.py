@@ -1370,9 +1370,9 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
             _, norms = min_max_axis(X, 1)
-            norms = norms.repeat(np.diff(X.indptr))
-            mask = norms != 0
-            X.data[mask] /= norms[mask]
+            norms_elementwise = norms.repeat(np.diff(X.indptr))
+            mask = norms_elementwise != 0
+            X.data[mask] /= norms_elementwise[mask]
     else:
         if norm == 'l1':
             norms = np.abs(X).sum(axis=1)
