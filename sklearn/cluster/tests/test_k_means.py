@@ -826,7 +826,7 @@ def test_KMeans_init_centers():
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
 
 
-def test_sparseX_KMeans_init_centers():
+def test_sparse_KMeans_init_centers():
     from sklearn.datasets import load_iris
 
     iris = load_iris()
@@ -838,7 +838,9 @@ def test_sparseX_KMeans_init_centers():
     # Fit starting from a local optimum shouldn't change the solution
     np.testing.assert_allclose(
         centers,
-        KMeans(n_clusters=3, init=centers, n_init=1).fit(X).cluster_centers_
+        KMeans(n_clusters=3,
+               init=centers,
+               n_init=1).fit(X).cluster_centers_
     )
 
     # The same should be true when X is sparse
@@ -849,3 +851,17 @@ def test_sparseX_KMeans_init_centers():
                init=centers,
                n_init=1).fit(X_sparse).cluster_centers_
     )
+
+
+def test_sparse_validate_centers():
+    from sklearn.datasets import load_iris
+
+    iris = load_iris()
+    X = iris.data
+
+    # Get a local optimum
+    centers = KMeans(n_clusters=4).fit(X).cluster_centers_
+
+    # Test that a ValueError is raised for validate_center_shape
+    classifier = KMeans(n_clusters=3, init=centers, n_init=1)
+    assert_raises(ValueError, classifier.fit, X)
