@@ -757,9 +757,7 @@ by black points below.
     triangular inequality, those two core samples must be more distant than
     ``eps`` from each other, or they would be in the same cluster. The non-core
     sample is assigned to whichever cluster is generated first in a pass
-    through the data, and so the results will depend on the data ordering. 
-    As long as the dataset ordering is constant, the algorithm is deterministic, 
-    making the results stable between runs on the same data.
+    through the data, and so the results will depend on the data ordering.
 
     The current implementation uses ball trees and kd-trees
     to determine the neighborhood of points,
