@@ -512,7 +512,7 @@ cdef float compute_gradient_positive(float[:,:] val_P,
         float[3] buff
         float D, Q, pij
         float C = 0.0
-        float exponent = (dof + 1.0) / -2.0
+        float exponent = (dof + 1.0) / 2.0
     cdef clock_t t1, t2
     t1 = clock()
     for i in range(start, n):
@@ -528,8 +528,9 @@ cdef float compute_gradient_positive(float[:,:] val_P,
             for ax in range(n_dimensions):
                 buff[ax] = pos_reference[i, ax] - pos_reference[j, ax]
                 D += buff[ax] ** 2.0  
-            Q = ((1.0 + (D / dof)) ** exponent)
+            Q = ((((D) / dof) + 1.0) ** -1)
             D = pij * Q
+            Q = Q ** exponent
             Q /= sum_Q
             C += pij * log((pij + EPSILON) / (Q + EPSILON))
             for ax in range(n_dimensions):
@@ -565,7 +566,7 @@ cdef void compute_gradient_negative(float[:,:] val_P,
         float* deltas
         long* l
         int n_dimensions = root_node.tree.n_dimensions
-        float qijZ, mult
+        float qijZ, mult, oijZ
         long idx, 
         long dta = 0
         long dtb = 0
@@ -599,11 +600,12 @@ cdef void compute_gradient_negative(float[:,:] val_P,
         # for the digits dataset, walking the tree
         # is about 10-15x more expensive than the 
         # following for loop
-        exponent = (dof + 1.0) / -2.0
+        exponent = (dof + 1.0) / 2.0
         for j in range(l[0]):
-            qijZ = (1.0 + (dist2s[j] / dof)) ** exponent
+            oijZ = ((1.0 + (dist2s[j]) / dof)) ** -1
+            qijZ = oijZ ** exponent
             sum_Q[0] += sizes[j] * qijZ
-            mult = sizes[j] * qijZ * qijZ
+            mult = sizes[j] * oijZ * qijZ
             for ax in range(n_dimensions):
                 idx = j * n_dimensions + ax
                 neg_force[ax] += mult * deltas[idx]

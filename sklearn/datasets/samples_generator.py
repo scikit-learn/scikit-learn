@@ -1640,4 +1640,3 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
                      for label in range(n_col_clusters))
 
     return result, rows, cols
-

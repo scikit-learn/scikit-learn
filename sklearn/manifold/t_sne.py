@@ -289,8 +289,9 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     error = _barnes_hut_tsne.gradient(sP, X_embedded, neighbors,
                                       grad, angle, n_components, verbose,
                                       dof=degrees_of_freedom)
+    c = 2 * (degrees_of_freedom + 1) / degrees_of_freedom
     grad = grad.ravel()
-    grad *= 2
+    grad *= c
 
     return error, grad
 
