@@ -1089,7 +1089,8 @@ class _BaseRidgeCV(LinearModel):
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
             fit_params = {'sample_weight': sample_weight}
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
+            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
+                                    normalize=self.normalize),
                               parameters, fit_params=fit_params, cv=self.cv,
                               scoring=self.scoring)
             gs.fit(X, y)
