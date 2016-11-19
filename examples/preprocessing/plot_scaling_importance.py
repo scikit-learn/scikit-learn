@@ -64,7 +64,7 @@ import pandas as pd
 
 df = pd.read_csv(
     'https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data',
-    header = None
+    header=None
     )
 
 # Assign features and target. Target is a class label with 3 classes.
