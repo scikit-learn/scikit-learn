@@ -46,7 +46,6 @@ print(__doc__)
 
 # License: BSD 3 clause
 
-import pandas as pd
 from sklearn.cross_validation import train_test_split
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
@@ -54,22 +53,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.naive_bayes import GaussianNB
 from sklearn import metrics
 import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
 
 # Contants
 RAN_STATE = 42
 FIG_SIZE = (10, 7)
 
-# Read in Data
-import pandas as pd
 
-df = pd.read_csv(
-    'https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data',
-    header=None
-    )
-
-# Assign features and target. Target is a class label with 3 classes.
-features = df.values[:, 1:]
-target = df.values[:, 0]
+features, target = load_wine(return_X_y=True)
 
 # Make a train/test split using 30% test size
 X_train, X_test, y_train, y_test = train_test_split(features, target,
@@ -114,7 +105,7 @@ print('{:.2%}\n'.format(metrics.accuracy_score(y_test, pred_test_std)))
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=FIG_SIZE)
 
 
-for l, c, m in zip(range(1, 4), ('blue', 'red', 'green'), ('^', 's', 'o')):
+for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
     ax1.scatter(X_train[y_train == l, 0], X_train[y_train == l, 1],
                 color=c,
                 label='class %s' % l,
@@ -122,7 +113,7 @@ for l, c, m in zip(range(1, 4), ('blue', 'red', 'green'), ('^', 's', 'o')):
                 marker=m
                 )
 
-for l, c, m in zip(range(1, 4), ('blue', 'red', 'green'), ('^', 's', 'o')):
+for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
     ax2.scatter(X_train_std[y_train == l, 0], X_train_std[y_train == l, 1],
                 color=c,
                 label='class %s' % l,
