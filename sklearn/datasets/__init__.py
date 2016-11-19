@@ -7,6 +7,7 @@ features some artificial data generators.
 from .base import load_diabetes
 from .base import load_digits
 from .base import load_files
+from .base import load_wine
 from .base import load_iris
 from .base import load_breast_cancer
 from .base import load_linnerud
@@ -66,6 +67,7 @@ __all__ = ['clear_data_home',
            'fetch_rcv1',
            'fetch_kddcup99',
            'get_data_home',
+           'load_wine',
            'load_boston',
            'load_diabetes',
            'load_digits',
