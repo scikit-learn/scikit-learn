@@ -2,7 +2,9 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import scipy.sparse as ssp
 from sklearn.preprocessing.data import CountFeaturizer
+from sklearn.preprocessing.data import OneHotEncoder
 from collections import OrderedDict
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
@@ -19,98 +21,88 @@ n_redundant = 0
 
 # Generate a binary classification dataset.
 X, y = make_classification(n_samples=n_datapoints, n_features=n_features,
-                           n_clusters_per_class=1, n_informative=n_informative,
-                           n_redundant=n_redundant, random_state=RANDOM_STATE)
+						   n_clusters_per_class=1, n_informative=n_informative,
+						   n_redundant=n_redundant, random_state=RANDOM_STATE)
 
-X = X * 10
+
 # only make these selected features "categorical"
 discretized_features = [0, 1]
+non_discretized_features = \
+	list(set(range(n_features)) - set(discretized_features))
+
+X_non_discretized = X[:, non_discretized_features]
+
 for feature in discretized_features:
-    X[:, feature] = (X[:, feature]).astype(int)
+	X_transform_col = (X[:, feature]).astype(int)
+	# to make all categorical variables non-negative 
+	col_min = min(np.amin(X_transform_col), 0)
+	X[:, feature] = X_transform_col - col_min
+
+time_start = time.time()
 
 # X_count is X with an additional feature column 'count'
 cf = CountFeaturizer(inclusion=discretized_features)
 X_count = cf.fit_transform(X)
 
-# NOTE: Setting the `warm_start` construction parameter to `True` disables
-# support for parallelized ensembles but is necessary for tracking the OOB
-# error trajectory during training.
-ensemble_clfs = None
+cf_time_preprocessing = time.time() - time_start
+time_start = time.time()
+
+ohe = OneHotEncoder()
+X_one_hot_part = ohe.fit_transform(X[:, discretized_features])
+
+# build the original matrix with back 
+X_one_hot = ssp.hstack([X_one_hot_part, X_non_discretized]).toarray()
+
+ohe_time_preprocessing = time.time() - time_start
+
+def get_classifier():
+	return RandomForestClassifier(warm_start=True, max_features='log2', \
+	oob_score=True, random_state=RANDOM_STATE)
 
 
-def init_clfs():
-    global ensemble_clfs
-    ensemble_clfs = [
-        ("RandomForestClassifier, max_features='sqrt'",
-         RandomForestClassifier(warm_start=True, oob_score=True,
-                                max_features="sqrt",
-                                random_state=RANDOM_STATE)),
-        ("RandomForestClassifier, max_features='log2'",
-         RandomForestClassifier(warm_start=True, max_features='log2',
-                                oob_score=True,
-                                random_state=RANDOM_STATE)),
-        ("RandomForestClassifier, max_features=None",
-         RandomForestClassifier(warm_start=True, max_features=None,
-                                oob_score=True,
-                                random_state=RANDOM_STATE))
-    ]
+clf = get_classifier()
+labels = ['CountFeaturizer + RandomForestClassifier', 
+	'OneHotEncoder + RandomForestClassifier', 'Only RandomForestClassifier']
+error_rate = OrderedDict((label, []) for label in labels)
 
-classifiers_used = [1]
-init_clfs()
-
-label_list = ["RandomForestClassifier, max_features='sqrt', with_count",
-              "RandomForestClassifier, max_features='log2', with_count",
-              "RandomForestClassifier, max_features=None, with_count",
-              "RandomForestClassifier, max_features='sqrt', no_count",
-              "RandomForestClassifier, max_features='log2', no_count",
-              "RandomForestClassifier, max_features=None, no_count"]
-
-# Map a classifier name to a list of (<n_estimators>, <error rate>) pairs.
-error_rate = OrderedDict((label, []) for index, label in
-                         enumerate(label_list)
-                         if index in classifiers_used
-                         or (index - 3) in classifiers_used)
-
-# Range of `n_estimators` values to explore.
 min_estimators = 15
-max_estimators = 175  # 175
-
-index = 0
+max_estimators = 175
 time_start = time.time()
 
-for label, clf in ensemble_clfs:
-    if index in classifiers_used:
-        for i in range(min_estimators, max_estimators + 1):
-            clf.set_params(n_estimators=i)
-            clf.fit(X_count, y)
-            # Record the OOB error for each `n_estimators=i` setting.
-            oob_error = 1 - clf.oob_score_
-            error_rate[label + ", with_count"].append((i, oob_error))
-    index = index + 1
+for i in range(min_estimators, max_estimators + 1):
+ 	clf.set_params(n_estimators=i)
+ 	clf.fit(X_count, y)
+ 	oob_error = 1 - clf.oob_score_
+ 	error_rate[labels[0]].append((i, oob_error));
 
-index = 0
-print("Time taken using CountFeaturizer: ", (time.time() - time_start))
+print("Time taken on CountFeaturizer: ", \
+	(time.time() - time_start + cf_time_preprocessing))
+clf = get_classifier()
 time_start = time.time()
 
-# reinitialize the clfs for another test run with no counts
-init_clfs()
+for i in range(min_estimators, max_estimators + 1):
+ 	clf.set_params(n_estimators=i)
+ 	clf.fit(X_one_hot, y)
+ 	oob_error = 1 - clf.oob_score_
+ 	error_rate[labels[1]].append((i, oob_error));
 
-for label, clf in ensemble_clfs:
-    if index in classifiers_used:
-        for i in range(min_estimators, max_estimators + 1):
-            clf.set_params(n_estimators=i)
-            clf.fit(X, y)
-            # Record the OOB error for each `n_estimators=i` setting.
-            oob_error = 1 - clf.oob_score_
-            error_rate[label + ", no_count"].append((i, oob_error))
-    index = index + 1
+print("Time taken on OneHotEncoder: ", \
+	(time.time() - time_start + ohe_time_preprocessing))
+clf = get_classifier()
+time_start = time.time()
 
-print("Time taken without CountFeaturizer: ", (time.time() - time_start))
+for i in range(min_estimators, max_estimators + 1):
+ 	clf.set_params(n_estimators=i)
+ 	clf.fit(X_non_discretized, y)
+ 	oob_error = 1 - clf.oob_score_
+ 	error_rate[labels[2]].append((i, oob_error));
+
+print("Time taken on No Encoding: ", (time.time() - time_start))
 
 # Generate the "OOB error rate" vs. "n_estimators" plot.
 for label, clf_err in error_rate.items():
-    xs, ys = zip(*clf_err)
-    plt.plot(xs, ys, label=label)
+	xs, ys = zip(*clf_err)
+	plt.plot(xs, ys, label=label)
 
 plt.xlim(min_estimators, max_estimators)
 plt.xlabel("n_estimators")

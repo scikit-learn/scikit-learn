@@ -2041,11 +2041,11 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                                       removal_policy=removal_policy)
         if type(inclusion) == str:
             self.inclusion = inclusion
-        elif inclusion == None:
+        elif inclusion is None:
             self.inclusion = np.array([])
         else:
             self.inclusion = np.array(inclusion)
-        if removal_policy == None or type(removal_policy) == str:
+        if removal_policy is None or type(removal_policy) == str:
             self.removal_policy = removal_policy
         else:
             self.removal_policy = np.array(removal_policy)
@@ -2059,11 +2059,11 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     @staticmethod
     def _check_params(inclusion=None, removal_policy=None):
 
-        if inclusion != None and inclusion != 'all':
+        if inclusion is not None and inclusion != 'all':
             if not CountFeaturizer._valid_data_type(inclusion):
                 raise ValueError("Illegal data type in inclusion")
 
-        if removal_policy != None and removal_policy != 'inclusion' and \
+        if removal_policy is not None and removal_policy != 'inclusion' and \
                 not CountFeaturizer._valid_data_type(removal_policy):
             raise ValueError("Illegal data type in removal_policy")
 
@@ -2121,7 +2121,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                 return 1
             else:
                 return cols_X - self.inclusion.size + 1
-        elif self.removal_policy != None:
+        elif self.removal_policy is not None:
             return cols_X - len(self.removal_policy) + 1
         return cols_X + 1
 
