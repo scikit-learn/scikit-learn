@@ -1,11 +1,11 @@
 """
 ==========================================
-One-class SVM with non-linear kernel (RBF)
+One-Class SVM with non-linear kernel (RBF)
 ==========================================
 
-An example using a one-class SVM for novelty detection.
+An example using a One-Class SVM for novelty detection.
 
-:ref:`One-class SVM <svm_outlier_detection>` is an unsupervised
+:ref:`One-Class SVM <svm_outlier_detection>` is an unsupervised
 algorithm that learns a decision function for novelty detection:
 classifying new data as similar or different to the training set.
 

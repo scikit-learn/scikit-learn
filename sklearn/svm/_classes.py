@@ -1523,9 +1523,12 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
-    """Unsupervised Outlier Detection.
+    """One-Class SVM for Unsupervised Outlier Detection.
 
-    Estimate the support of a high-dimensional distribution.
+    Estimate the support of a high-dimensional distribution by finding the
+    maximum margin soft boundary hyperplane separating a data set from the
+    origin. At most the fraction ``nu`` (``0 < nu <= 1``) of the data
+    are permitted to be outliers.
 
     The implementation is based on libsvm.
 
@@ -1817,3 +1820,147 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
                 ),
             }
         }
+
+
+class SVDD(BaseLibSVM):
+    """Support Vector Data Description (SVDD) for Unsupervised Outlier Detection.
+
+    Estimate the support of a high-dimensional distribution by finding the
+    tightest soft boundary hypersphere around a data set, which permits at
+    most the fraction ``nu`` (``0 < nu <= 1``) of the data as outliers.
+
+    The implementation is based on libsvm.
+
+    Read more in the :ref:`User Guide <svm_outlier_detection>`.
+
+    Parameters
+    ----------
+    kernel : string, optional (default='rbf')
+         Specifies the kernel type to be used in the algorithm.
+         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'
+         or a callable.
+         If none is given, 'rbf' will be used. If a callable is given it is
+         used to precompute the kernel matrix.
+
+    nu : float, optional
+        An upper bound on the fraction of training errors and a lower bound
+        of the fraction of support vectors. Should be in the interval (0, 1].
+        By default 0.5 will be taken.
+
+    degree : int, optional (default=3)
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
+
+    gamma : float, optional (default='auto')
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 'auto' then 1/n_features will be used instead.
+
+    coef0 : float, optional (default=0.0)
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
+
+    tol : float, optional
+        Tolerance for stopping criterion.
+
+    shrinking : boolean, optional
+        Whether to use the shrinking heuristic.
+
+    cache_size : float, optional
+        Specify the size of the kernel cache (in MB).
+
+    verbose : bool, default: False
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in libsvm that, if enabled, may not work
+        properly in a multithreaded context.
+
+    max_iter : int, optional (default=-1)
+        Hard limit on iterations within solver, or -1 for no limit.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
+
+    Attributes
+    ----------
+    support_ : array-like, shape = [n_SV]
+        Indices of support vectors.
+
+    support_vectors_ : array-like, shape = [nSV, n_features]
+        Support vectors.
+
+    dual_coef_ : array, shape = [n_classes-1, n_SV]
+        Coefficients of the support vectors in the decision function.
+
+    coef_ : array, shape = [n_classes-1, n_features]
+        Weights assigned to the features (coefficients in the primal
+        problem). This is only available in the case of a linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
+    intercept_ : array, shape = [n_classes-1]
+        Constants in decision function.
+
+    References
+    ----------
+    .. [1] Tax, D.M. and Duin, R.P., 2004. "Support vector data
+           description." Machine learning, 54(1), pp.45-66.
+           doi:10.1023/B:MACH.0000008084.60811.49
+
+    .. [2] Chang, W.C., Lee, C.P. and Lin, C.J., 2013. "A revisit
+           to support vector data description (SVDD)." Technical
+           Report, Department of Computer Science, National Taiwan
+           University.
+    """
+    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
+                 verbose=False, max_iter=-1, random_state=None):
+        super(SVDD, self).__init__(
+            'svdd_l1', kernel, degree, gamma, coef0, tol, 0., nu, 0.,
+            shrinking, False, cache_size, None, verbose, max_iter,
+            random_state)
+
+    def fit(self, X, y=None, sample_weight=None, **params):
+        """Detects the soft minimum volume hypersphere around the sample X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Set of samples, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        sample_weight : array-like, shape (n_samples,)
+            Per-sample weights. Higher weights force the novelty detector
+            to put more emphasis on these points.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        Notes
+        -----
+        If X is not a C-ordered contiguous array it is copied.
+
+        """
+        super(SVDD, self).fit(X, np.ones(_num_samples(X)),
+                              sample_weight=sample_weight, **params)
+        return self
+
+    def decision_function(self, X):
+        """Distance of the samples X to the separating hyperplane.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        X : array-like, shape (n_samples,)
+            Returns the decision function of the samples.
+        """
+        dec = self._decision_function(X)
+        return dec

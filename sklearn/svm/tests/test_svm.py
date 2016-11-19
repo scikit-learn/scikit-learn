@@ -362,6 +362,94 @@ def test_oneclass_fit_params_is_deprecated():
         clf.fit(X, **params)
 
 
+def test_svdd():
+    # Test the output of libsvm for the SVDD problem with default parameters
+    clf = svm.SVDD()
+    clf.fit(X)
+    pred = clf.predict(T)
+
+    assert_array_almost_equal(pred, [-1, -1, -1])
+    assert_array_almost_equal(clf.intercept_, [0.491], decimal=3)
+    assert_array_almost_equal(clf.dual_coef_,
+                              [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
+                              decimal=3)
+    assert_false(hasattr(clf, "coef_"))
+
+
+def test_svdd_decision_function():
+    # For the RBF (stationary) kernel the SVDD and the OneClass SVM
+    #  are identical. Therefore here the test is run on a non-stationary
+    #  kernel.
+
+    # Test SVDD decision function
+    rnd = check_random_state(2)
+
+    # Generate train data
+    X = 0.3 * rnd.randn(100, 2)
+    X_train = np.r_[X + 2, X - 2]
+
+    # Generate some regular novel observations
+    X = 0.3 * rnd.randn(20, 2)
+    X_test = np.r_[X + 2, X - 2]
+
+    # Generate some abnormal novel observations
+    X_outliers = rnd.uniform(low=-4, high=4, size=(20, 2))
+
+    # fit the model
+    clf = svm.SVDD(nu=0.1, kernel="poly", degree=2, coef0=1.0).fit(X_train)
+
+    # predict and validate things
+    y_pred_test = clf.predict(X_test)
+    assert_greater(np.mean(y_pred_test == 1), .9)
+
+    y_pred_outliers = clf.predict(X_outliers)
+    assert_greater(np.mean(y_pred_outliers == -1), .8)
+
+    dec_func_test = clf.decision_function(X_test)
+    assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
+
+    dec_func_outliers = clf.decision_function(X_outliers)
+    assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
+
+
+def test_oneclass_and_svdd():
+    # Generate a sample: two symmetrically placed clusters
+    rnd = check_random_state(2)
+
+    X = 0.3 * rnd.randn(100, 2)
+    X_train = np.r_[X + 2, X - 2]
+
+    # Test the output of libsvm for the SVDD and the One-Class SVM
+    nu = 0.15
+
+    svdd = svm.SVDD(nu=nu, kernel="rbf")
+    svdd.fit(X_train)
+
+    ocsvm = svm.OneClassSVM(nu=nu, kernel="rbf")
+    ocsvm.fit(X_train)
+
+    # The intercept of the SVDD differs from that of the One-Class SVM:
+    #   `rho_svdd = (aTQa * (nu * l)^(-2) - R) * (nu * l) / 2` ,
+    # and
+    #   `rho_oc = (C0 + aTQa * (nu * l)^(-2) - R) * (nu * l) / 2` ,
+    # since `R = C0 - 2 rho_oc / (nu l) + aTQa * (nu l)^(-2)`,
+    # where `C0 = K(x,x) = K(x-x)` for a stationary K.
+    # >>> The intercept_ value is negative rho!
+    # For the RBF kernel: K(x,y) = exp(-theta * |x-y|^2), the C0 is 1.
+    C0 = 1.0
+    svdd_intercept = (2 * ocsvm.intercept_ + C0 * (nu * X_train.shape[0])) / 2
+    assert_array_almost_equal(svdd.intercept_, svdd_intercept, decimal=3)
+
+    # Evaluate the decision function on a uniformly spaced 2-d mesh
+    xx, yy = np.meshgrid(np.linspace(-5, 5, num=101),
+                         np.linspace(-5, 5, num=101))
+    mesh = np.c_[xx.ravel(), yy.ravel()]
+
+    svdd_df = svdd.decision_function(mesh)
+    ocsvm_df = ocsvm.decision_function(mesh)
+    assert_array_almost_equal(svdd_df, ocsvm_df)
+
+
 def test_tweak_params():
     # Make sure some tweaking of parameters works.
     # We change clf.dual_coef_ at run time and expect .predict() to change
@@ -969,6 +1057,7 @@ def test_immutable_coef_property():
         svm.SVR(kernel="linear").fit(iris.data, iris.target),
         svm.NuSVR(kernel="linear").fit(iris.data, iris.target),
         svm.OneClassSVM(kernel="linear").fit(iris.data),
+        svm.SVDD(kernel='linear').fit(iris.data),
     ]
     for clf in svms:
         with pytest.raises(AttributeError):

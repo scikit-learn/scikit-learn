@@ -157,8 +157,8 @@ coming from the same population than the initial
 observations. Otherwise, if they lay outside the frontier, we can say
 that they are abnormal with a given confidence in our assessment.
 
-The One-Class SVM has been introduced by Schölkopf et al. for that purpose
-and implemented in the :ref:`svm` module in the
+The :ref:`svm_one_class_svm` has been introduced by Schölkopf et al.
+for that purpose and implemented in the :ref:`svm` module in the
 :class:`svm.OneClassSVM` object. It requires the choice of a
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exists no exact formula or algorithm to
@@ -167,11 +167,28 @@ implementation. The `nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
+The Support Vector Data Description (:ref:`svm_svdd`) is an alternative
+model for estimating the support of a data distribution. It was proposed
+by Tax and Duin, and later reformulated by Chang et al. The reparametrized
+SVDD model, which has better parameter interpretability, is implemented
+in the :class:`svm.SVDD` object in the  :ref:`svm` module. The interface
+as well as the interpretation of the parameters is similar to the
+:ref:`svm_one_class_svm` model.
+
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
       <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf>`_
       Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+
+    * `Support vector data description
+      <http://dx.doi.org/10.1023/B:MACH.0000008084.60811.49>`_
+      Tax, and Duin. Machine learning, 54(1) (2004), pp.45-66.
+
+    * `A revisit to support vector data description (SVDD).
+      <http://w.csie.org/~cjlin/papers/svdd.pdf>`_ Chang, Lee,
+      and Lin. Technical Report (2013), Dept. of Computer Science,
+      National Taiwan University.
 
 .. topic:: Examples:
 
@@ -415,3 +432,28 @@ Novelty detection with Local Outlier Factor is illustrated below.
      :target: ../auto_examples/neighbors/plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
+
+.. _outlier_detection_ocsvm_vs_svdd:
+
+One-Class SVM versus SVDD-L1
+----------------------------
+
+The :ref:`svm_one_class_svm` and :ref:`svm_svdd` models, though apparently
+different, both try to construct a hypersurface, enveloping the densest regions
+of the training sample. In the case of a stationary kernel :math:`K(x,y)=K(x-y)`,
+such as RBF (see :ref:`svm_kernels`), for :math:`\nu\in (0,1)` the decision
+functions are identical:
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_vs_svdd_001.png
+   :target: ../auto_examples/svm/plot_oneclass_vs_svdd.html
+   :align: center
+   :scale: 75%
+
+But for a non-stationary kernel :math:`K(x,y)`, such as polynomial, the decision
+functions may be dramatically different:
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_vs_svdd_002.png
+   :target: ../auto_examples/svm/plot_oneclass_vs_svdd.html
+   :align: center
+   :scale: 75%
+

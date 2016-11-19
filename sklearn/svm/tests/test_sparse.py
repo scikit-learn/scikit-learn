@@ -335,6 +335,24 @@ def test_sparse_oneclasssvm(datasets_index, kernel):
     check_svm_model_equal(clf, sp_clf, *dataset)
 
 
+def test_sparse_svdd():
+    """Check that sparse SVDD gives the same result as dense SVDD
+    """
+    # many class dataset:
+    X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
+    X_blobs = sparse.csr_matrix(X_blobs)
+
+    datasets = [[X_sp, None, T], [X2_sp, None, T2],
+                [X_blobs[:80], None, X_blobs[80:]],
+                [iris.data, None, iris.data]]
+    kernels = ["linear", "poly", "rbf", "sigmoid"]
+    for dataset in datasets:
+        for kernel in kernels:
+            clf = svm.SVDD(kernel=kernel, random_state=0)
+            sp_clf = svm.SVDD(kernel=kernel, random_state=0)
+            check_svm_model_equal(clf, sp_clf, *dataset)
+
+
 def test_sparse_realdata():
     # Test on a subset from the 20newsgroups dataset.
     # This catches some bugs if input is not correctly converted into

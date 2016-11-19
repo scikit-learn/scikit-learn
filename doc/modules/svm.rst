@@ -271,7 +271,7 @@ with and without weight correction.
 
 
 :class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR`, :class:`LinearSVC`,
-:class:`LinearSVR` and :class:`OneClassSVM` implement also weights for
+:class:`LinearSVR`, :class:`OneClassSVM` and :class:`SVDD` implement also weights for
 individual samples in the `fit` method through the ``sample_weight`` parameter.
 Similar to ``class_weight``, this sets the parameter ``C`` for the i-th
 example to ``C * sample_weight[i]``, which will encourage the classifier to
@@ -338,6 +338,28 @@ Density estimation, novelty detection
 
 The class :class:`OneClassSVM` implements a One-Class SVM which is used in
 outlier detection.
+
+:ref:`svm_one_class_svm` and :ref:`svm_svdd` models can be used for novelty
+detection: given a set of samples, the model detects a soft boundary of that
+set so as to classify new points as belonging to that set or not. The
+classes that implement these models are :class:`OneClassSVM` and
+:class:`SVDD` respectively.
+
+Since novelty detection is a type of unsupervised learning, the ``fit`` method
+requires only an array X as input, as there are no class labels.
+
+See section :ref:`outlier_detection` for more details on this usage.
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
+   :target: ../auto_examples/svm/plot_oneclass.html
+   :align: center
+   :scale: 75
+
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
+ * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
 See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
@@ -422,8 +444,9 @@ Tips on Practical Use
     using a large stopping tolerance), the code without using shrinking may
     be much faster*
 
-  * Parameter ``nu`` in :class:`NuSVC`/:class:`OneClassSVM`/:class:`NuSVR`
-    approximates the fraction of training errors and support vectors.
+  * Parameter ``nu`` in :class:`NuSVC`, :class:`OneClassSVM`, :class:`NuSVR`,
+    and :class:`SVDD` approximates the fraction of training errors and support
+    vectors.
 
   * In :class:`SVC`, if the data is unbalanced (e.g. many
     positive and few negative), set ``class_weight='balanced'`` and/or try
@@ -759,6 +782,177 @@ The primal problem can be equivalently formulated as
 where we make use of the epsilon-insensitive loss, i.e. errors of less than
 :math:`\varepsilon` are ignored. This is the form that is directly optimized
 by :class:`LinearSVR`.
+
+.. _svm_one_class_svm:
+
+One-Class SVM
+-------------
+
+This model, proposed by Schölkopf et al. (2001), estimates the support
+of a high-dimensional distribution by constructing a supporting hyperplane
+in the feature space corresponding to the kernel, which effectively
+separates the data set from the origin with maximum margin.
+
+For the training sample :math:`(x_i)_{i=1}^{n}` with weights :math:`(w_i)_{i=1}^{n}`,
+:math:`\sum_{i=1}^{n} w_i>0`, the One-Class SVM solves the following primal problem:
+
+
+.. math::
+
+   \min_{\rho,\xi,w} \frac12 w^Tw - \rho + \frac{1}{\nu W} \sum_{i=1}^{n} w_i \xi_i \,, \\
+
+   \textrm {subject to } & w^T\phi(x_i) \geq \rho - \xi_i \,, \\
+                         & \xi_i \geq 0\,,\, i=1, \ldots, n \,,
+
+
+where :math:`\phi(\cdot)` is the feature map associated with the
+kernel :math:`K(\cdot,\cdot)`, and :math:`W = \sum_{i=1}^{n} w_i`.
+
+The dual problem is
+
+
+.. math::
+
+   \min_\alpha \frac12 \alpha^T Q\alpha\,\\
+
+   \textrm {subject to } & 0\leq \alpha_i \leq w_i\,,\, i=1, \ldots, n \,,\\
+                         & e^T\alpha = \nu W \,,
+
+
+where :math:`e\in \mathbb{R}^{n\times 1}` is the vector of ones and
+:math:`Q_{ij} = K(x_i, x_j)` is the kernel Gram matrix.
+
+The optimal decision function is given by:
+
+.. math:: x\mapsto \operatorname{sgn}(\sum_{i=1}^{n} \alpha_i K(x_i, x) - \rho) \,,
+
+where :math:`+1` indicates an inliner and :math:`-1` an outlier.
+
+The parameter :math:`\nu\in(0,1]` determines the fraction of outliers
+in the training dataset. More technically :math:`\nu` is:
+  * an upper bound on the fraction of the training points lying outside
+    the estimated region;
+
+  * a lower bound on the fraction of support vectors.
+
+.. topic:: References:
+
+  * `Estimating the support of a high-dimensional distribution
+    <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
+    Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+    doi:10.1162/089976601750264965
+
+
+.. _svm_svdd:
+
+SVDD
+----
+
+Support Vector Data Description (SVDD), proposed by Tax and Duin (2004),
+aims at finding a spherically shaped boundary around a data set. Specifially,
+it computes a minimum volume hypersphere containing the most of the data with
+the number of outliers controlled by the parameter of the model.
+
+The original formulation suffered from non-convexity issues related to optimality of 
+the attained solution for certain values of the regularization parameter :math:`C`.
+Chang, Lee, and Lin (2013) suggested a reformulation of the SVDD model
+which had a well-defined and provably unique global solution for any :math:`C>0`.
+
+The implementation in the class :class:`SVDD` is based on a modified version
+of the 2013 SVDD formulation. The following changes were made to problem (7)
+in Chang et al. (2013):
+
+  * **sample weights**: instead of a uniform penalty :math:`C>0` sample
+    observations are allowed to have different costs :math:`(C_i)_{i=1}^{n}`,
+    :math:`\sum_{i=1}^{n} C_i > 0`;
+
+  * :math:`\nu`-**parametrization**: the penalties are determined by
+    :math:`C_i = \frac{w_i}{\nu \sum_{i=1}^{n} w_i}`, where :math:`\nu\in(0, 1]`
+    and :math:`(w_i)_{i=1}^{n}` are non-negative sample weights.
+
+Straightforward extension of theorems 2-4 of Chang et al. (2013) to the case
+of different penalty yielded the :math:`\sum_{i=1}^{n} C_i > 1`, or equivalently
+:math:`\nu < 1`, as the condition, which distinguishes the case of :math:`R>0`
+(theorem 4 case 1) from :math:`R=0` (theorem 4 case 2).
+
+The main benefit of the :math:`\nu`-parametrization is a clearer interpretation
+and a unified interface to the :ref:`svm_one_class_svm` model: :math:`\nu` is an
+upper bound on the fraction of the training points lying outside the estimated
+region, and a lower bound on the fraction of support vectors. Under the original
+:math:`C`-parametrization the value :math:`\frac{1}{n C}` served as these bounds.
+
+Note that in a typical run of the SVDD model the weights are set to :math:`w_i = 1`,
+which is equivalent to the original 2013 SVDD formulation for :math:`C = \frac{1}{\nu n}`.
+
+The primal problem of this modified version of SVDD for the training sample
+:math:`(x_i)_{i=1}^{n}` with weights :math:`(w_i)_{i=1}^{n}`,
+:math:`\sum_{i=1}^{n} w_i>0`, is:
+
+
+.. math::
+
+   \min_{R,\xi,a} R + \frac{1}{\nu W} \sum_{i=1}^{n} w_i \xi_i\,,\\
+
+   \textrm {subject to } & \|\phi(x_i) - a\|^2 \leq R + \xi_i\,,\\
+                         & \xi_i \geq 0\,,\, i=1, \ldots, n\,,\\
+                         & R \geq 0\,,
+
+
+where :math:`\phi(\cdot)` is the feature map associated with the kernel
+:math:`K(\cdot,\cdot)`, and :math:`W = \sum_{i=1}^{n} w_i`.
+
+When :math:`\nu \geq 1`, the optimal :math:`R=0` and the primal problem
+reduces to an unconstrained convex optimization problem independent of
+:math:`\nu`:
+
+.. math :: \min_a \sum_{i=1}^{n} w_i \|\phi(x_i) - a\|^2\,.
+
+Note that in this case every observation is an outlier.
+
+In the case when :math:`\nu < 1` the constraint :math:`R\geq 0` is redundant,
+strong duality holds, and the dual problem has the form:
+
+
+.. math ::
+
+   \min_\alpha \frac12 \alpha^T Q\alpha - \frac{\nu W}{2} \sum_{i=1}^{n} \alpha_i Q_{ii}\,,\\
+
+   \textrm {subject to } & 0 \leq \alpha_i \leq w_i\,,\, i=1, \ldots, n\,,\\
+                         & e^T \alpha = \nu W\,,
+
+
+where :math:`e\in \mathbb{R}^{n\times 1}` is the vector of ones and
+:math:`Q_{ij} = K(x_i, x_j)` is the kernel Gram matrix.
+
+The decision function of the SVDD is given by:
+
+.. math:: x\mapsto \operatorname{sgn}(R - \|\phi(x) - a\|^2) \,,
+
+where :math:`+1` indicates an inliner and :math:`-1` an outlier. The
+distances in the feature space and :math:`R` are computed implicitly through
+the coefficients and the optimal value of the objective of the corresponding
+dual problem.
+
+It is worth noting, that in the case of a stationary kernel :math:`K(x,y)=K(x-y)`
+the SVDD and One-Class SVM models are provably equivalent. Indeed, the values
+:math:`Q_{ii} = K(x_i, x_i)` in the last term in the dual of the SVDD are all
+equal to :math:`K(0)`, which makes the whole term independent of :math:`\alpha`.
+Therefore the objective functions of the dual problems of the One-Class SVM
+and the SVDD are equivalent up to a constant. This, however, **does not imply**
+that one model generalizes the other: their solutions just happen to coincide
+for a particular family of kernels (see :ref:`outlier_detection_ocsvm_vs_svdd`).
+
+.. topic:: References:
+
+  * `Support vector data description
+    <http://dx.doi.org/10.1023/B:MACH.0000008084.60811.49>`_
+    Tax, and Duin. Machine learning, 54(1) (2004), pp.45-66.
+
+  * `A revisit to support vector data description (SVDD).
+    <http://w.csie.org/~cjlin/papers/svdd.pdf>`_ Chang, Lee,
+    and Lin. Technical Report (2013), Dept. of Computer Science,
+    National Taiwan University.
+
 
 .. _svm_implementation_details:
 

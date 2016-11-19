@@ -1838,6 +1838,118 @@ static void solve_nu_svr(
 	delete[] y;
 }
 
+static void solve_svdd_l1(
+	const PREFIX(problem) *prob, const svm_parameter *param,
+	double *alpha, Solver::SolutionInfo* si)
+{
+	int l = prob->l;
+	int i, j;
+
+	double r_square;
+
+	ONE_CLASS_Q Q = ONE_CLASS_Q(*prob, *param);
+
+	if(param->nu < 1) {
+		// case \nu < 1: the dual problem is
+		//	min 0.5(\alpha^T Q \alpha) + (-0.5 \nu W diag Q)^T \alpha
+		//		e^T \alpha = \nu W
+		//		0 <= alpha_i <= W_i
+		//  W = sum W_i
+
+		schar *ones = new schar[l];
+		double *QD = new double[l];
+		double *linear_term = new double[l];
+			double *C = new double[l];
+
+		double nu_W = 0;
+		for(i=0;i<l;i++)
+		{
+			C[i] = prob->W[i];
+			nu_W += C[i] * param->nu;
+		}
+
+		for(i=0;i<l;i++)
+		{
+			QD[i] = nu_W * Q.get_QD()[i];
+			linear_term[i] = - QD[i] / 2;
+		}
+
+		for(i=0;i<l;i++)
+			ones[i] = 1;
+
+		double sum_alpha = nu_W;
+		i = 0;
+		while(sum_alpha > 0)
+		{
+			alpha[i] = min(C[i], sum_alpha);
+			sum_alpha -= alpha[i];
+			++i;
+		}
+		for(;i<l;i++)
+			alpha[i] = 0;
+
+		Solver s;
+		s.Solve(l, Q, linear_term, ones, alpha, C, param->eps,
+			si, param->shrinking, param->max_iter);
+
+		// Compute R: the solver returns
+		//  obj = 0.5 \alpha^T Q \alpha - 0.5 \nu W sum_i K_{ii}*\alpha_i
+		//  rho = 0.5 \nu W (\alpha^T Q \alpha / (\nu W)^2 - R)
+		r_square = 2*(si->obj - nu_W * si->rho);
+		for(i=0;i<l;i++)
+			r_square += alpha[i] * QD[i];
+		r_square /= nu_W * nu_W;
+
+	        delete[] C;
+		delete[] linear_term;
+		delete[] QD;
+		delete[] ones;
+	} else {
+		// case \nu >= 1: then R = 0, and the SVDD-L1 problem is reduced to
+		//  a quadratic problem with a unique solution independent of \nu.
+		// The centre of the sphere is the average of feature maps with weights W_i.
+
+		info("*\nSVDD-L1 solution independent of nu\n");
+
+		double sum_W = 0;
+		for(i=0;i<l;i++)
+		{
+			alpha[i] = prob->W[i];
+			si->upper_bound[i] = prob->W[i];
+			sum_W += prob->W[i];
+		}
+
+		// Simulate the run of the Solver by computing the objective
+		//  and the intercept:
+		//    obj = 0.5 \alpha^T Q \alpha - 0.5 W sum_i K_{ii}*\alpha_i
+		//    rho = 0.5 \alpha^T Q \alpha / W
+		// note that \sum_i \alpha_i = W.
+		double rho = 0;
+		double obj = 0;
+		double sum;
+		for(i=0;i<l;i++)
+		{
+			const Qfloat *Q_i = Q.get_Q(i,l);
+
+			obj -= sum_W * alpha[i] * Q_i[i] / 2;
+
+			// Utilize the symmetry of Q
+			sum = alpha[i] * Q_i[i] / 2;
+			for(j=i+1;j<l;j++)
+				sum += alpha[j] * Q_i[j];
+			rho += alpha[i] * sum;
+		}
+		si->obj = rho + obj;
+		si->rho = rho / sum_W;
+
+		si->solve_timed_out = false;
+
+		r_square = 0.0;
+	}
+
+	info("R^2 = %f\n",r_square);
+}
+
 //
 // decision_function
 //
@@ -1876,6 +1988,10 @@ static decision_function svm_train_one(
 			si.upper_bound = Malloc(double,2*prob->l); 
  			solve_nu_svr(prob,param,alpha,&si,blas_functions);
  			break;
+		case SVDD_L1:
+			si.upper_bound = Malloc(double,prob->l);
+			solve_svdd_l1(prob,param,alpha,&si);
+			break;
 	}
 
         *status |= si.solve_timed_out;
@@ -2377,9 +2493,10 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 
 	if(param->svm_type == ONE_CLASS ||
 	   param->svm_type == EPSILON_SVR ||
-	   param->svm_type == NU_SVR)
+	   param->svm_type == NU_SVR ||
+	   param->svm_type == SVDD_L1)
 	{
-		// regression or one-class-svm
+		// regression or novelty detection
 		model->nr_class = 2;
 		model->label = NULL;
 		model->nSV = NULL;
@@ -2820,11 +2937,19 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
-	   model->param.svm_type == NU_SVR)
+	   model->param.svm_type == NU_SVR ||
+	   model->param.svm_type == SVDD_L1)
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
-		
+
+		if(model->param.svm_type == SVDD_L1)
+		{
+			double K_xx = NAMESPACE::Kernel::k_function(x,x,model->param) / 2;
+			for(int i=0;i<model->l;i++)
+				sum -= sv_coef[i] * K_xx;
+		}
+
 		for(i=0;i<model->l;i++)
 #ifdef _DENSE_REP
                     sum += sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV+i,model->param,blas_functions);
@@ -2834,7 +2959,8 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		sum -= model->rho[0];
 		*dec_values = sum;
 
-		if(model->param.svm_type == ONE_CLASS)
+		if(model->param.svm_type == ONE_CLASS ||
+		   model->param.svm_type == SVDD_L1)
 			return (sum>0)?1:-1;
 		else
 			return sum;
@@ -2906,7 +3032,8 @@ double PREFIX(predict)(const PREFIX(model) *model, const PREFIX(node) *x, BlasFu
 	double *dec_values;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
-	   model->param.svm_type == NU_SVR)
+	   model->param.svm_type == NU_SVR ||
+	   model->param.svm_type == SVDD_L1)
 		dec_values = Malloc(double, 1);
 	else 
 		dec_values = Malloc(double, nr_class*(nr_class-1)/2);
@@ -3024,7 +3151,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	   svm_type != NU_SVC &&
 	   svm_type != ONE_CLASS &&
 	   svm_type != EPSILON_SVR &&
-	   svm_type != NU_SVR)
+	   svm_type != NU_SVR &&
+	   svm_type != SVDD_L1)
 		return "unknown svm type";
 	
 	// kernel_type, degree
@@ -3059,7 +3187,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 
 	if(svm_type == NU_SVC ||
 	   svm_type == ONE_CLASS ||
-	   svm_type == NU_SVR)
+	   svm_type == NU_SVR ||
+	   svm_type == SVDD_L1)
 		if(param->nu <= 0 || param->nu > 1)
 			return "nu <= 0 or nu > 1";
 
@@ -3076,7 +3205,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 		return "probability != 0 and probability != 1";
 
 	if(param->probability == 1 &&
-	   svm_type == ONE_CLASS)
+	   (svm_type == ONE_CLASS || svm_type == SVDD_L1))
 		return "one-class SVM probability output not supported yet";
 
 
