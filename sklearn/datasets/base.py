@@ -242,6 +242,101 @@ def load_files(container_path, description=None, categories=None,
                  DESCR=description)
 
 
+def load_wine(return_X_y=False):
+    """Load and return the wine dataset (classification).
+
+    The wine dataset is a classic and very easy multi-class classification
+    dataset.
+
+    =================   ==============
+    Classes                          3
+    Samples per class               [59,71,48]
+    Samples total                  178
+    Dimensionality                  13
+    Features            real, positive
+    =================   ==============
+
+    Read more in the :ref:`User Guide <datasets>`.
+
+    Parameters
+    ----------
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.18
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
+        full description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.18
+
+    The copy of UCI ML Wine Data Set dataset is
+    downloaded from:
+    https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
+
+    Examples
+    --------
+    Let's say you are interested in the samples 10, 25, and 50, and want to
+    know their class name.
+
+    >>> from sklearn.datasets import load_wine
+    >>> data = load_wine()
+    >>> data.target[[10, 25, 50]]
+    array([0, 0, 1])
+    >>> list(data.target_names)
+    ['class_0', 'class_1', 'class_2']
+    """
+    module_path = dirname(__file__)
+    with open(join(module_path, 'data', 'wine_data.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        target_names = np.array(temp[2:])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
+
+        for i, ir in enumerate(data_file):
+            data[i] = np.asarray(ir[:-1], dtype=np.float64)
+            target[i] = np.asarray(ir[-1], dtype=np.int)
+
+    with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    if return_X_y:
+        return data, target
+
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 DESCR=fdescr,
+                 feature_names=['alcohol', 
+                                'malic_acid',
+                                'ash',
+                                'alcalinity_of_ash',
+                                'magnesium',
+                                'total_phenols',
+                                'flavanoids',
+                                'nonflavanoid_phenols',
+                                'proanthocyanins',
+                                'color_intensity',
+                                'hue',
+                                'od280/od315_of_diluted_wines',
+                                'proline'])
+
+
+
+
+
+
 def load_iris(return_X_y=False):
     """Load and return the iris dataset (classification).
 
