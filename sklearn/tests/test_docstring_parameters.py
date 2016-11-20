@@ -1,4 +1,4 @@
-"""Script to check the discrepancies between docstring parameters and function signature."""
+"""Check discrepancies between docstring parameters and function signature."""
 
 from pkgutil import walk_packages
 from sklearn.externals.numpy_ext import docscrape
@@ -111,8 +111,7 @@ def test_docstring_parameters():
         if name.endswith('tests'):
             continue
 
-        module = __import__(name, globals())
-
+        module = __import__(name, globals(), locals(), ['object'], -1)
         # check for classes in the module
         classes = inspect.getmembers(module, inspect.isclass)
         for cname, cls in classes:
