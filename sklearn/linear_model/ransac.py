@@ -302,7 +302,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             sample_weight = np.asarray(sample_weight)
 
         n_inliers_best = 1
-        score_best = np.inf
+        score_best = -np.inf
         inlier_mask_best = None
         X_inlier_best = None
         y_inlier_best = None
