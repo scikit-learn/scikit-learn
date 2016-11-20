@@ -185,7 +185,7 @@ class BaseRBM(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         n_samples = X.shape[0]
 
-        self.init_params(X.shape[1], **init_settings)
+        rng = self.init_params(X.shape[1], **init_settings)
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
@@ -255,7 +255,12 @@ class BaseRBM(BaseEstimator, TransformerMixin):
         raise NotImplementedError
 
     def init_params(self, **settings):
-        """Initialize network parameters"""
+        """Initialize network parameters
+
+        Returns
+        -------
+        rng : random state
+        """
         raise NotImplementedError
 
     def _fit(self, v_pos, rng):
@@ -441,6 +446,7 @@ class BernoulliRBM(BaseRBM, TransformerMixin):
         self.intercept_hidden_ = np.zeros(self.n_components, )
         self.intercept_visible_ = np.zeros(n_feature, )
         self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+        return rng
 
 
 class GaussianBernoulliRBM(BernoulliRBM, TransformerMixin):
