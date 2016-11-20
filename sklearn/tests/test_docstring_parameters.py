@@ -1,5 +1,6 @@
+"""Script to check the discrepancies between docstring parameters and function signature."""
+
 from pkgutil import walk_packages
-from importlib import import_module
 from sklearn.externals.numpy_ext import docscrape
 
 import inspect
@@ -12,9 +13,10 @@ _docstring_ignores = [
     'sklearn.externals'
 ]
 
+
 def get_name(func):
     """
-    Returns name of a function
+    Return name of a function.
 
     Parameters
     ----------
@@ -36,11 +38,10 @@ def get_name(func):
 
 
 def get_all_modules():
-    """
-    Returns all module names of sklearn as an array
-    """
+    """Return all module names of sklearn as an array."""
     modules = []
-    for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix='sklearn.'):
+    for importer, modname, ispkg in \
+            walk_packages(sklearn.__path__, prefix='sklearn.'):
         if ispkg:
             modules.append(modname)
     return modules
@@ -48,7 +49,7 @@ def get_all_modules():
 
 def check_parameters_match(func, doc=None):
     """
-    Checks docstring for given function
+    Check docstring for given function.
 
     Parameters
     ----------
@@ -65,7 +66,7 @@ def check_parameters_match(func, doc=None):
 
     # skip deprecated and data descriptors
     if not name_.startswith('sklearn.') or inspect.isdatadescriptor(func) or \
-        any(d in name_ for d in _docstring_ignores):
+            any(d in name_ for d in _docstring_ignores):
         return incorrect
 
     args = inspect.getargspec(func)[0]
@@ -78,7 +79,7 @@ def check_parameters_match(func, doc=None):
         with warnings.catch_warnings(record=True) as w:
             doc = docscrape.FunctionDoc(func)
         if len(w):
-            raise RuntimeError('Error for %s:%s' % (name, w[0]))
+            raise RuntimeError('Error for %s:%s' % (name_, w[0]))
 
     param_names = [name for name, _, _ in doc['Parameters']]
     param_names = [name.split(':')[0].strip('` ') for name in param_names]
@@ -87,24 +88,22 @@ def check_parameters_match(func, doc=None):
     # parameters that are present in docstring but not in signature
     sign_missing_params = sorted(list(set(param_names) - set(args)))
     if len(sign_missing_params):
-        incorrect += [name_ +
-            ' => params present in docstring but not in signature: ' +
+        incorrect += [
+            name_ + ' => params present in docstring but not in signature: ' +
             ', '.join(sign_missing_params)]
 
     # parameters that are present in signature but not in docstring
     doc_missing_params = sorted(list(set(args) - set(param_names)))
     if len(doc_missing_params):
-        incorrect += [name_ +
-            ' => params present in signature but not in docstring: ' +
+        incorrect += [
+            name_ + ' => params present in signature but not in docstring: ' +
             ', '.join(doc_missing_params)]
 
     return incorrect
 
 
 def test_docstring_parameters():
-    """
-    Test module docstring formatting
-    """
+    """Test module docstring formatting."""
     public_modules = get_all_modules()
     incorrect = []
 
@@ -112,7 +111,7 @@ def test_docstring_parameters():
         if name.endswith('tests'):
             continue
 
-        module = import_module(name, globals())
+        module = __import__(name, globals())
 
         # check for classes in the module
         classes = inspect.getmembers(module, inspect.isclass)
@@ -123,8 +122,8 @@ def test_docstring_parameters():
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
             if len(w):
-                raise RuntimeError('Error for __init__ of %s in %s:\n%s'
-                                    % (cls, name, w[0]))
+                raise RuntimeError(
+                    'Error for __init__ of %s in %s:\n%s' % (cls, name, w[0]))
 
             # check for __init__ method of class
             if hasattr(cls, '__init__'):
