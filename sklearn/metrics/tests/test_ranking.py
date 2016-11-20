@@ -435,15 +435,22 @@ def test_auc_score_multi_error():
     rng = check_random_state(404)
     y_pred = rng.rand(10)
     y_true = rng.randint(0, 3, size=10)
-    assert_raise_message(ValueError,
-                         "average has to be one of ('macro', 'weighted')",
+    average_error_msg = ("Parameter 'average' must be one of " +
+                         "('macro', 'weighted').")
+    assert_raise_message(ValueError, average_error_msg,
                          roc_auc_score, y_true, y_pred, average="sample")
-    assert_raise_message(ValueError,
-                         "average has to be one of ('macro', 'weighted')",
+    assert_raise_message(ValueError, average_error_msg,
                          roc_auc_score, y_true, y_pred, average="micro")
-    assert_raise_message(ValueError,
-                         "'invalid' is not supported for multiclass ROC AUC",
+    multiclass_error_msg = ("Parameter multiclass='invalid' is not " +
+                            "supported for multiclass ROC AUC. 'multiclass' " +
+                            "must be one of ('ovo', 'ovr').")
+    assert_raise_message(ValueError, multiclass_error_msg,
                          roc_auc_score, y_true, y_pred, multiclass="invalid")
+    sample_weight_error_msg = ("Parameter 'sample_weight' is not supported " +
+                               "for multiclass ROC AUC. 'sample_weight' " +
+                               "must be None.")
+    assert_raise_message(ValueError, sample_weight_error_msg,
+                         roc_auc_score, y_true, y_pred, sample_weight=[])
 
 
 def test_auc_score_non_binary_class():
