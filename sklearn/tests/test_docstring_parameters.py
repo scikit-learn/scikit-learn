@@ -111,7 +111,7 @@ def test_docstring_parameters():
         if name.endswith('tests'):
             continue
 
-        module = __import__(name, globals(), locals(), ['object'], -1)
+        module = __import__(name, globals(), locals(), ['object'], 0)
         # check for classes in the module
         classes = inspect.getmembers(module, inspect.isclass)
         for cname, cls in classes:
