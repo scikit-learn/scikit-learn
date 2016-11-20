@@ -359,3 +359,4 @@
     auto_examples/index
     modules/classes
     developers/index
+    documentation
