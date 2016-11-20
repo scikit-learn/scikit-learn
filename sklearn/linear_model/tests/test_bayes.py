@@ -62,7 +62,7 @@ def test_return_std_bayesian():
     def f(X):
         return np.dot(X, w) + b
 
-    def f_noise(X):
+    def f_noise(X, noise_mult):
         return f(X) + np.random.randn(X.shape[0])*noise_mult
 
     d = 5
@@ -75,20 +75,20 @@ def test_return_std_bayesian():
 
     X = np.random.random((n_train, d))
     X_test = np.random.random((n_test, d))
-    y = f_noise(X)
+    y = f_noise(X, noise_mult)
 
     m1 = BayesianRidge()
     m1.fit(X, y)
     X_test = np.random.random((n_test, d))
     y_mean, y_std = m1.predict(X_test, return_std=True)
-    assert_array_almost_equal(y_std, 0.1, decimal=1)
+    assert_array_almost_equal(y_std, noise_mult, decimal=1)
 
 
 def test_return_std_ard():
     def f(X):
         return np.dot(X, w) + b
 
-    def f_noise(X):
+    def f_noise(X, noise_mult):
         return f(X) + np.random.randn(X.shape[0])*noise_mult
 
     d = 5
@@ -101,10 +101,10 @@ def test_return_std_ard():
 
     X = np.random.random((n_train, d))
     X_test = np.random.random((n_test, d))
-    y = f_noise(X)
+    y = f_noise(X, noise_mult)
 
     m1 = ARDRegression()
     m1.fit(X, y)
     X_test = np.random.random((n_test, d))
     y_mean, y_std = m1.predict(X_test, return_std=True)
-    assert_array_almost_equal(y_std, 0.1, decimal=1)
+    assert_array_almost_equal(y_std, noise_mult, decimal=1)
