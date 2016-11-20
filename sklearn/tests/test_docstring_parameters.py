@@ -1,12 +1,16 @@
 from pkgutil import walk_packages
 from importlib import import_module
-from numpydoc import docscrape
+from sklearn.externals.numpy_ext import docscrape
 
 import inspect
 import warnings
 
 import sklearn
 
+
+_docstring_ignores = [
+    'sklearn.externals'
+]
 
 def get_name(func):
     """
@@ -60,7 +64,8 @@ def check_parameters_match(func, doc=None):
     name_ = get_name(func)
 
     # skip deprecated and data descriptors
-    if not name_.startswith('sklearn.') or 'deprecation' in name_ or inspect.isdatadescriptor(func):
+    if not name_.startswith('sklearn.') or inspect.isdatadescriptor(func) or \
+        any(d in name_ for d in _docstring_ignores):
         return incorrect
 
     args = inspect.getargspec(func)[0]
