@@ -301,7 +301,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         if sample_weight is not None:
             sample_weight = np.asarray(sample_weight)
 
-        n_inliers_best = 0
+        n_inliers_best = 1
         score_best = np.inf
         inlier_mask_best = None
         X_inlier_best = None
@@ -357,10 +357,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # less inliers -> skip current random sample
             if n_inliers_subset < n_inliers_best:
                 continue
-            if n_inliers_subset == 0:
-                raise ValueError("No inliers found, possible cause is "
-                    "setting residual_threshold ({0}) too low.".format(
-                    self.residual_threshold))
 
             # extract inlier data set
             inlier_idxs_subset = sample_idxs[inlier_mask_subset]
