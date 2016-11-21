@@ -42,12 +42,12 @@ def test_value_dropper_mnar_clf():
                             float(n_values), 0.1)
 
         # All the missing values are from y == 0
-        assert_almost_equal(np.isnan(X_dropped[y == classes[0]]).ravel().sum() /
-                            float(n_values), 0.1)
+        assert_almost_equal(np.isnan(
+            X_dropped[y == classes[0]]).ravel().sum() / float(n_values), 0.1)
 
         # and no missing values from y != 0
-        assert_almost_equal(np.isnan(X_dropped[y != classes[0]]).ravel().sum() /
-                            float(n_values), 0.)
+        assert_almost_equal(np.isnan(
+            X_dropped[y != classes[0]]).ravel().sum() / float(n_values), 0.)
 
         # Samples from class 0 will have a drop probabilty of 0.3
         # but spread unevenly across features as given by the
