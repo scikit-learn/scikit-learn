@@ -153,15 +153,15 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
 
         Returns
         -------
-        self: object
+        self : object
             Returns the instance itself.
         """
         self.components_ = None
@@ -192,13 +192,13 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
         Returns
         -------
-        self: object
+        self : object
             Returns the instance itself.
         """
         if check_input:

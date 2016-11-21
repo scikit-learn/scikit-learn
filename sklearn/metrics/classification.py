@@ -714,7 +714,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    beta: float
+    beta : float
         Weight of precision in harmonic mean.
 
     labels : list, optional
