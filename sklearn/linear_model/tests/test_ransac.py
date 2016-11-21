@@ -54,8 +54,9 @@ def test_ransac_is_data_valid():
         assert_equal(y.shape[0], 2)
         return False
 
-    X = np.random.rand(10, 2)
-    y = np.random.rand(10, 1)
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 2)
+    y = rng.rand(10, 1)
 
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
