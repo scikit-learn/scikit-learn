@@ -184,11 +184,15 @@ class BaseRBM(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         n_samples = X.shape[0]
+        if n_samples < self.batch_size:
+            self.batch_size_ = n_samples
+        else:
+            self.batch_size_ = self.batch_size
 
         rng = self.init_params(X.shape[1], **init_settings)
 
-        n_batches = int(np.ceil(float(n_samples) / self.batch_size))
-        batch_slices = list(gen_even_slices(n_batches * self.batch_size,
+        n_batches = int(np.ceil(float(n_samples) / self.batch_size_))
+        batch_slices = list(gen_even_slices(n_batches * self.batch_size_,
                                             n_batches, n_samples))
         verbose = self.verbose
         begin = time.time()
@@ -404,9 +408,9 @@ class BernoulliRBM(BaseRBM, TransformerMixin):
         free_energy : array-like, shape (n_samples,)
             The value of the free energy.
         """
-        return (- safe_sparse_dot(v, self.intercept_visible_)
-                - np.logaddexp(0, safe_sparse_dot(v, self.components_.T)
-                               + self.intercept_hidden_).sum(axis=1))
+        return (- safe_sparse_dot(v, self.intercept_visible_) -
+                np.logaddexp(0, safe_sparse_dot(v, self.components_.T) +
+                             self.intercept_hidden_).sum(axis=1))
 
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
@@ -445,7 +449,7 @@ class BernoulliRBM(BaseRBM, TransformerMixin):
             order='F')
         self.intercept_hidden_ = np.zeros(self.n_components, )
         self.intercept_visible_ = np.zeros(n_feature, )
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+        self.h_samples_ = np.zeros((self.batch_size_, self.n_components))
         return rng
 
 
@@ -508,10 +512,10 @@ class GaussianBernoulliRBM(BernoulliRBM, TransformerMixin):
     >>> import numpy as np
     >>> from sklearn.neural_network import GaussianBernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = GaussianBernoulliRBM(n_components=2)
+    >>> model = GaussianBernoulliRBM(n_components=2, batch_size=3)
     >>> model.fit(X)
-    GaussianBernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2,
-           n_iter=10, random_state=None, sigma=1, verbose=False)
+    GaussianBernoulliRBM(batch_size=3, learning_rate=0.1, n_components=2,
+               n_iter=10, random_state=None, sigma=1, verbose=False)
 
     References
     ----------
@@ -590,7 +594,7 @@ class GaussianBernoulliRBM(BernoulliRBM, TransformerMixin):
 
         t3 = safe_sparse_dot(h, self.components_)
 
-        return t1 - (t2 * t3)
+        return check_array(t1 - (t2 * t3))
 
     def _fit(self, v_pos, rng):
         """trains gaussian RBM"""
@@ -619,5 +623,7 @@ class GaussianBernoulliRBM(BernoulliRBM, TransformerMixin):
         self.h_samples_ = np.floor(h_neg, h_neg)
 
     def init_params(self, n_feature, **settings):
-        super(GaussianBernoulliRBM, self).init_params(n_feature, **settings)
+        rng = super(GaussianBernoulliRBM, self).init_params(
+            n_feature, **settings)
         self.sigma_ = np.ones(n_feature) * self.sigma
+        return rng
