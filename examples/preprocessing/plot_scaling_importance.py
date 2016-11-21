@@ -1,13 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-from sklearn.cross_validation import train_test_split
-from sklearn import preprocessing
-from sklearn.decomposition import PCA
-from sklearn.naive_bayes import GaussianNB
-from sklearn import metrics
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_wine
 """
 =========================================================
 Importance of Feature Scaling
@@ -43,8 +35,16 @@ The results will then be used to train a naive Bayes classifier, and a clear
 difference the prediction accuracies will be observed.
 
 """
-
+from __future__ import print_function
 print(__doc__)
+
+from sklearn.cross_validation import train_test_split
+from sklearn import preprocessing
+from sklearn.decomposition import PCA
+from sklearn.naive_bayes import GaussianNB
+from sklearn import metrics
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
 
 
 # Code source: Tyler Lanigan <tylerlanigan@gmail.com>
