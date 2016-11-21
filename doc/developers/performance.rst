@@ -221,12 +221,8 @@ us install ``line-profiler`` and wire it to IPython::
 
   Then register the line-profiler extension in ``~/.ipython/profile_default/ipython_config.py``::
 
-    c.TerminalIPythonApp.extensions = [
-        'line_profiler',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'line_profiler',
-    ]
+    c.TerminalIPythonApp.extensions.append('line_profiler')
+    c.InteractiveShellApp.extensions.append('line_profiler')
 
   This will register the ``%lprun`` magic command in the IPython terminal
   application and the other frontends such as qtconsole and notebook.
@@ -298,12 +294,8 @@ Then, setup the magics in a manner similar to ``line_profiler``.
 
   Then register the extension in ``~/.ipython/profile_default/ipython_config.py`` alongside the line profiler::
 
-    c.TerminalIPythonApp.extensions = [
-        'line_profiler', 'memory_profiler',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'line_profiler', 'memory_profiler',
-    ]
+    c.TerminalIPythonApp.extensions.append('memory_profiler')
+    c.InteractiveShellApp.extensions.append('memory_profiler')
 
   This will register the ``%memit`` and ``%mprun`` magic commands in the
   IPython terminal application and the other frontends such as qtconsole and
