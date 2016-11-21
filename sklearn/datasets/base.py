@@ -318,7 +318,7 @@ def load_wine(return_X_y=False):
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=['alcohol', 
+                 feature_names=['alcohol',
                                 'malic_acid',
                                 'ash',
                                 'alcalinity_of_ash',

@@ -1,6 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from sklearn.cross_validation import train_test_split
+from sklearn import preprocessing
+from sklearn.decomposition import PCA
+from sklearn.naive_bayes import GaussianNB
+from sklearn import metrics
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
 """
 =========================================================
 Importance of Feature Scaling
@@ -29,15 +36,14 @@ the primary components are computed using the correlation matrix as opposed
 to the covariance matrix.
 
 In order to illustrate this in an example, PCA will be performed on a dataset
-which has been standardized using :class:`StandardScaler <sklearn.preprocessing.StandardScaler>`,
-and a copy which has remained untouched. The results with be visualized and
-a clear difference noted.
+which has been standardized using StandardScalerand a copy which has remained
+untouched. The results with be visualized and a clear difference noted.
 
 The results will then be used to train a naive Bayes classifier, and a clear
 difference the prediction accuracies will be observed.
 
 """
-from __future__ import print_function
+
 print(__doc__)
 
 
@@ -46,14 +52,6 @@ print(__doc__)
 
 # License: BSD 3 clause
 
-from sklearn.cross_validation import train_test_split
-from sklearn import preprocessing
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.naive_bayes import GaussianNB
-from sklearn import metrics
-import matplotlib.pyplot as plt
-from sklearn.datasets import load_wine
 
 # Contants
 RAN_STATE = 42
@@ -64,7 +62,8 @@ features, target = load_wine(return_X_y=True)
 
 # Make a train/test split using 30% test size
 X_train, X_test, y_train, y_test = train_test_split(features, target,
-                                                    test_size=0.30, random_state=RAN_STATE)
+                                                    test_size=0.30,
+                                                    random_state=RAN_STATE)
 
 # Apply Scaling to X_train and X_test
 std_scale = preprocessing.StandardScaler().fit(X_train)

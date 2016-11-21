@@ -210,6 +210,7 @@ def test_load_iris():
     assert_array_equal(X_y_tuple[0], bunch.data)
     assert_array_equal(X_y_tuple[1], bunch.target)
 
+
 def test_load_wine():
     res = load_wine()
     assert_equal(res.data.shape, (178, 13))
