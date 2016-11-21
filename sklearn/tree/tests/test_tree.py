@@ -1696,9 +1696,6 @@ def test_criterion_copy():
 def test_tree_missing_value_handling_corner_cases_best_splitter():
     # All the missing values should be sent to a separate child in one of the
     # nodes
-
-    rng = np.random.RandomState(42)
-
     X_de = np.array([[np.nan], [np.nan], [np.nan], [np.nan],
                     [0], [1], [2], [3], [4], [5],
                     [10], [11], [12], [13], [15]])
@@ -1818,7 +1815,6 @@ def test_tree_missing_value_handling_corner_cases_random_splitter():
     # the structure of the data exactly.
 
     # All the missing values belong to a single class
-    rng = np.random.RandomState(42)
     X_de = np.array([[np.nan], [np.nan], [np.nan], [np.nan],
                     [0], [1], [2], [3], [4], [5],
                     [10], [11], [12], [13], [15]])
@@ -1905,7 +1901,6 @@ def test_tree_missing_value_handling_corner_cases_random_splitter():
 
 def test_tree_explicit_missing_mask():
     # All the missing values belong to a single class
-    rng = np.random.RandomState(42)
     X_de = np.array([[np.nan], [np.nan], [np.nan], [np.nan],
                     [0], [1], [2], [3], [4], [5],
                     [10], [11], [12], [13], [15]])
