@@ -252,6 +252,7 @@ Some also work in the multilabel case:
    precision_recall_fscore_support
    precision_score
    recall_score
+   roc_auc_score
    zero_one_loss
 
 
@@ -261,14 +262,6 @@ Some work with binary and multilabel (but not multiclass) problems:
    :template: function.rst
 
    average_precision_score
-
-
-And some work with binary, multilabel, and multiclass problems:
-
-.. autosummary::
-   :template: function.rst
-
-    roc_auc_score
 
 
 In the following sub-sections, we will describe each of those functions,
@@ -987,8 +980,12 @@ Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.
 
 The :func:`roc_auc_score` function can also be used in multi-class
-classification, where the predicted class labels are provided in
-an array with values from 0 to `n_classes`, and the scores are the
+classification. Two averaging strategies are currently supported: the
+Hand & Till (2001) one-vs-one algorithm computes the average of the pairwise
+ROC AUC scores, and the Provost & Domingos (2001) one-vs-rest algorithm
+computes the average of the ROC AUC scores for each class against
+all other classes. In both cases, the predicted class labels are provided in
+an array with values from 0 to `n_classes`, and the scores correspond to the
 probability estimates that a sample belongs to a particular class.
 
 
