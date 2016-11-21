@@ -41,7 +41,7 @@ distribution. After describing these tools we detail
 
 Note that it is common that a small subset of those parameters can have a large
 impact on the predictive or computation performance of the model while others
-can be left to their default values. It is recommend to read the docstring of
+can be left to their default values. It is recommended to read the docstring of
 the estimator class to get a finer understanding of their expected behavior,
 possibly by reading the enclosed reference to the literature.  
 
