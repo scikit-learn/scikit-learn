@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import lasso_path, enet_path
 from sklearn import datasets
-from scipy import sparse
 
 print(__doc__)
 
@@ -27,29 +26,24 @@ y = diabetes.target
 
 X /= X.std(axis=0)  # Standardize data (easier to set the l1_ratio parameter)
 
-X = sparse.csr_matrix(X)
-
 # Compute paths
 
 eps = 5e-3  # the smaller it is the longer is the path
-tol = 1e-10
 
 print("Computing regularization path using the lasso...")
-alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps, fit_intercept=False,
-                                          tol=tol)
+alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps, fit_intercept=False)
 
 print("Computing regularization path using the positive lasso...")
 alphas_positive_lasso, coefs_positive_lasso, _ = lasso_path(
-    X, y, eps, positive=True, fit_intercept=False, tol=tol)
+    X, y, eps, positive=True, fit_intercept=False)
 
 print("Computing regularization path using the elastic net...")
 alphas_enet, coefs_enet, _ = enet_path(
-    X, y, eps=eps, l1_ratio=0.8, fit_intercept=False, tol=tol)
+    X, y, eps=eps, l1_ratio=0.8, fit_intercept=False)
 
 print("Computing regularization path using the positive elastic net...")
 alphas_positive_enet, coefs_positive_enet, _ = enet_path(
-    X, y, eps=eps, l1_ratio=0.8, positive=True, fit_intercept=False,
-    tol=tol)
+    X, y, eps=eps, l1_ratio=0.8, positive=True, fit_intercept=False)
 
 # Display results
 
