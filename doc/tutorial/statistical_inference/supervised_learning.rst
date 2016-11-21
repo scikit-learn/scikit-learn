@@ -329,9 +329,9 @@ application of Occam's razor: *prefer simpler models*.
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute=False,
-       random_state=None, screening=10, selection='cyclic', tol=0.0001,
+       random_state=None, screening=5, selection='cyclic', tol=0.0001,
        warm_start=False)
-    >>> print(regr.coef_)
+    >>> print(regr.coef_)  # doctest: +ELLIPSIS
     [   0.         -212.4615439   517.14942464  313.76767275 -160.36000547
        -0.         -187.8051221    68.75996676  508.58796057   71.84608071]
 

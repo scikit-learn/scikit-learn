@@ -278,7 +278,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
-              check_input=True, screening=10, **params):
+              check_input=True, screening=5, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -359,10 +359,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Skip input validation checks, including the Gram matrix when provided
         assuming there are handled by the caller when check_input=False.
 
-    screening : int
+    screening : int, default 5
         If screening is not zero, variable screening is performed every
-        screening iterations, e.g. every 10 iterations if screening
-        is set to 10.
+        screening iterations, e.g. every 5 iterations if screening
+        is set to 5. In a vast majority of cases 5 is a good default value.
 
     Returns
     -------
@@ -626,8 +626,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     screening : int
         If screening is not zero, variable screening is performed every
-        screening iterations, e.g. every 10 iterations if screening
-        is set to 10.
+        screening iterations, e.g. every 5 iterations if screening
+        is set to 5. In a vast majority of cases 5 is a good default value.
 
     Attributes
     ----------
@@ -674,7 +674,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic',
-                 screening=10):
+                 screening=5):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
@@ -902,8 +902,8 @@ class Lasso(ElasticNet):
 
     screening : int
         If screening is not zero, variable screening is performed every
-        screening iterations, e.g. every 10 iterations if screening
-        is set to 10.
+        screening iterations, e.g. every 5 iterations if screening
+        is set to 5. In a vast majority of cases 5 is a good default value.
 
     Attributes
     ----------
@@ -928,7 +928,7 @@ class Lasso(ElasticNet):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
-       screening=10, selection='cyclic', tol=0.0001, warm_start=False)
+       screening=5, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
     >>> print(clf.intercept_)
@@ -968,7 +968,7 @@ class Lasso(ElasticNet):
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic',
-                 screening=10):
+                 screening=5):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
@@ -1093,7 +1093,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
                  positive=False, random_state=None, selection='cyclic',
-                 screening=10):
+                 screening=5):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1423,7 +1423,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
                  positive=False, random_state=None, selection='cyclic',
-                 screening=10):
+                 screening=5):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,

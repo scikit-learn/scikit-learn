@@ -631,7 +631,8 @@ def test_random_descent():
     clf_random = ElasticNet(selection='random', tol=1e-8, random_state=42)
     clf_random.fit(X.T, y[:20])
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
-    assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
+    assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_,
+                        decimal=6)
 
     # Sparse Case
     clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8)

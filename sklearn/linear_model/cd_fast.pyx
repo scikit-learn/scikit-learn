@@ -255,7 +255,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                             np.ndarray[floating, ndim=1, mode='c'] y,
                             int max_iter, floating tol,
                             object rng, bint random=0,
-                            bint positive=0, int screening=10):
+                            bint positive=0, int screening=5):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -524,13 +524,14 @@ cdef inline floating sparse_enet_duality_gap(unsigned int n_samples,
             if R_norm2 == 0:
                 dual_scaling[0] = 1. / alpha
             else:
-                dual_scaling[0] = yTA / R_norm2 / alpha
+                dual_scaling[0] = yTA / (R_norm2 * alpha) 
         elif positive:
             dual_scaling[0] = fmin(yTA / (alpha * R_norm2),
                                    1. / dual_norm_XtA)
         else:
-            dual_scaling[0] = fmin(fmax(yTA / (alpha * R_norm2),
-                              -1. / dual_norm_XtA), 1. / dual_norm_XtA)
+            dual_scaling[0] = fmin(
+                fmax(yTA / (alpha * R_norm2), -1. / dual_norm_XtA),
+                1. / dual_norm_XtA)
 
     dual_scaling[0] = 1. / dual_scaling[0]
 
@@ -560,7 +561,7 @@ def sparse_enet_coordinate_descent(floating[:] w,
                             np.ndarray[floating, ndim=1] y,
                             floating[:] X_mean, int max_iter,
                             floating tol, object rng, bint random=0,
-                            bint positive=0, int screening=0):
+                            bint positive=0, int screening=5):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
