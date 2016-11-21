@@ -6,15 +6,17 @@ from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
 from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
                                    assert_true)
 
-from sklearn.datasets import load_digits
+from sklearn.datasets import load_digits, fetch_olivetti_faces
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.neural_network import BernoulliRBM
+from sklearn.neural_network import BernoulliRBM, GaussianBernoulliRBM
 from sklearn.utils.validation import assert_all_finite
 np.seterr(all='warn')
 
 Xdigits = load_digits().data
 Xdigits -= Xdigits.min()
 Xdigits /= Xdigits.max()
+
+faces = fetch_olivetti_faces()
 
 
 def test_fit():
@@ -28,6 +30,9 @@ def test_fit():
 
     # in-place tricks shouldn't have modified X
     assert_array_equal(X, Xdigits)
+
+    rbm = GaussianBernoulliRBM(n_components=2, batch_size=10)
+    rbm.fit(faces['data'])
 
 
 def test_partial_fit():
