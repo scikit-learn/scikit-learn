@@ -183,6 +183,9 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
     X: CSR matrix, dtype float
         The complete (pre allocated) training set as a CSR matrix.
 
+    x_squared_norms: array, shape (n_samples,)
+        Squared Euclidean norm of each data point.
+
     centers: array, shape (n_clusters, n_features)
         The cluster centers
 
@@ -190,19 +193,23 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
          The vector in which we keep track of the numbers of elements in a
          cluster
 
+    nearest_center: array, shape (n_samples,)
+        The vector in which we keep track of the nearest center of each
+        sample
+
+    old_center: array, shape (n_features,)
+        The vector in which we keep track of the old center of each feature
+
+    compute_squared_diff: integer
+
     Returns
     -------
-    inertia: float
-        The inertia of the batch prior to centers update, i.e. the sum
-        distances to the closest center for each sample. This is the objective
-        function being minimized by the k-means algorithm.
-
     squared_diff: float
         The sum of squared update (squared norm of the centers position
         change). If compute_squared_diff is 0, this computation is skipped and
         0.0 is returned instead.
 
-    Both squared diff and inertia are commonly used to monitor the convergence
+    Squared diff is commonly used to monitor the convergence
     of the algorithm.
     """
     cdef:

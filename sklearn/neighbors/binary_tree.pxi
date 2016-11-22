@@ -748,10 +748,13 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
     node_indices : int pointer
         Pointer to a 1D array of length n_points.  This lists the indices of
         each of the points within the current node.
-
+    n_features : int
+        The number of features in data.
+    n_points : int
+        The number of points in the current node.
     Returns
     -------
-    i_max : int
+    j_max : int
         The index of the feature (dimension) within the node that has the
         largest spread.
 
@@ -820,7 +823,10 @@ cdef int partition_node_indices(DTYPE_t* data,
         the routine ``find_node_split_dim``
     split_index : int
         the index within node_indices around which to split the points.
-
+    n_features : int
+        The number of features in data
+    n_points : int
+        The number of points in the current node.
     Returns
     -------
     status : int
