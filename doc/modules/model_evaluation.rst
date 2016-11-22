@@ -1133,6 +1133,12 @@ are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
 of this metrics is thus the average number of true labels.
 
+.. note::
+
+    Our implementation's score is 1 greater than the one given in Tsoumakas
+    et al., 2010. This extends it to handle the degenerate case in which an
+    instance has 0 true labels.
+
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
 score associated with each label
@@ -1235,6 +1241,12 @@ Here is a small example of usage of this function::
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
     >>> label_ranking_loss(y_true, y_score)
     0.0
+
+
+.. topic:: References:
+
+  * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
+    Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
 
 .. _regression_metrics:
 
