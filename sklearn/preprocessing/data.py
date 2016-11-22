@@ -1330,14 +1330,10 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     X : {array-like, sparse matrix}, shape [n_samples, n_features]
         Normalized input X.
 
-    norms :
-        When X is sparse, an NotImplementedError will be raised for
-        norm 'l1' or 'l2'; an array of maximum elements along given axis
-        for norm 'max'.
-
-        When X is dense, an array of norms along given axis for dense matrix X.
-
-
+    norms : array, shape [n_samples] if axis=1 else [n_features]
+        An array of norms along given axis for X.
+        When X is sparse, an NotImplementedError will be raised
+        for norm 'l1' or 'l2'.
 
     See also
     --------
