@@ -603,8 +603,8 @@ The decision function is:
     regularization parameter, most other estimators use ``alpha``. The exact
     equivalence between the amount of regularization of two models depends on
     the exact objective function optimized by the model. For example, when the
-    estimator used is ``Ridge Regression``, the relation between both is given as
-    :math:`C = \frac{n\_samples}{alpha}`.
+    estimator used is :class:`Ridge` regression``, the relation between them is given as
+    :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 
