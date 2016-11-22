@@ -1357,8 +1357,8 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     if sparse.issparse(X):
         if return_norm and norm in ('l1', 'l2'):
-            raise NotImplementedError("return_norm=True is not implemented "
-                                      "for sparse matrices with norm 'l1' or 'l2'")
+            raise NotImplementedError("return_norm=True is not implemented for "
+                                      "sparse matrices with norm 'l1' or 'l2'")
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
