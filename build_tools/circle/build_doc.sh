@@ -2,18 +2,32 @@
 set -x
 set -e
 
-# Introspect the commit to know whether or not we should skip building the
+# Inspect the commit to know whether or not we should skip building the
 # documentation: a pull request that does not change any file in doc/ or
 # examples/ folder should be skipped unless the "[doc: build]" is found the
 # commit message.
-BUILD_DOC=`python build_tools/circle/check_build_doc.py`
-echo -e $BUILD_DOC
-if [[ $BUILD_DOC == "SKIP:"* ]]; then
-    touch ~/log.txt  # the "test" segment needs that file
+python build_tools/circle/check_build_doc.py
+build_type=$?
+touch ~/log.txt  # the "test" segment needs this file
+BUILD=0
+QUICK=1
+SKIP=2
+if [ $build_type = $SKIP ]
+then
     exit 0
 fi
 
-# Installing required system packages to support the rendering of match
+if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+then
+    MAKE_TARGET=dist  # PDF linked into HTML
+elif [ $build_type = $QUICK ]
+then
+	MAKE_TARGET=html-noplot
+else
+    MAKE_TARGET=html
+fi
+
+# Installing required system packages to support the rendering of math
 # notation in the HTML documentation
 sudo -E apt-get -yq update
 sudo -E apt-get -yq remove texlive-binaries --purge
@@ -53,11 +67,5 @@ source activate testenv
 # Build and install scikit-learn in dev mode
 python setup.py develop
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
-then
-    MAKE_TARGET=dist
-else
-    MAKE_TARGET=html
-fi
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt
