@@ -16,7 +16,7 @@ from sklearn.preprocessing.data import CountFeaturizer
 from sklearn.preprocessing.data import OneHotEncoder
 from collections import OrderedDict
 from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 # with reference to auto_examples/ensemble/plot_ensemble_oob
 

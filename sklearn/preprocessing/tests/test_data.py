@@ -27,7 +27,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
 
