@@ -1330,11 +1330,10 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     X : {array-like, sparse matrix}, shape [n_samples, n_features]
         Normalized input X.
 
-    norms : array
+    norms :
         When X is sparse, an NotImplementedError will be raised for
-        norm 'l1' or 'l2'; an array with same shape with X.data,
-        where each element is replaced by the maximum element
-        along given axis in X for norm 'max'.
+        norm 'l1' or 'l2'; an array of maximum elements along given axis
+        for norm 'max'.
 
         When X is dense, an array of norms along given axis for dense matrix X.
 
