@@ -64,6 +64,11 @@ Enhancements
      (`#7723 <https://github.com/scikit-learn/scikit-learn/pull/7723>`_)
      by `Mikhail Korobov`_.
 
+   - For sparse matrices, :func:`preprocessing.normalize with ``return_norm=True``
+     will now raise a NotImplementedError with 'l1' or 'l2' norm and with norm 'max'
+     the norms returned will be the same as for dense matrices (:issue:`7771`).
+     By `Ang Lu <https://github.com/luang008>`_.
+
 Bug fixes
 .........
 
@@ -582,11 +587,6 @@ Preprocessing and feature selection
     - :func:`preprocessing.data._transform_selected` now always passes a copy
       of ``X`` to transform function when ``copy=True`` (:issue:`7194`). By `Caio
       Oliveira <https://github.com/caioaao>`_.
-
-    - For sparse matrices, :func:`preprocessing.normalize with ``return_norm=True``
-      will now raise a NotImplementedError with 'l1' or 'l2' norm and with norm 'max'
-      the norms returned will be the same as for dense matrices (:issue:`7771`).
-      By `Ang Lu <https://github.com/luang008>`_.
 
 Model evaluation and meta-estimators
 
