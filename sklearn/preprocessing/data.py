@@ -1989,9 +1989,9 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         The inclusion criteria for counting
         - 'all' (default): Every feature is taken into consideration when
         counting how many of each row is in the dataset.
-        - collection of indices: A collection of values where if the index v is in
-        'inclusion', then the vth feature will be put into the equality checks when
-        counting how often each row occurs.
+        - collection of indices: A collection of values where if the index v is
+        in 'inclusion', then the vth feature will be put into the equality
+        checks when counting how often each row occurs.
 
     removal_policy: set, list, numpy.ndarray, or None, default=None
         - None (default): No features are removed on transformation.
