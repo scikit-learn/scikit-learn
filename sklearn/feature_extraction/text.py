@@ -611,8 +611,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     max_features : float in range [0.0, 1.0] or int, default=1.0
         Build a vocabulary that only considers the top max_features ordered
         by term frequency across the corpus.
-        If float the parameter represents a proportion of the features, integer
-        absolute counts.
+        If float, the parameter represents a proportion of the features after
+        stop words removal, integer absolute counts.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -1195,8 +1195,8 @@ class TfidfVectorizer(CountVectorizer):
     max_features : float in range [0.0, 1.0] or int, default=1.0
         Build a vocabulary that only considers the top max_features ordered
         by term frequency across the corpus.
-        If float the parameter represents a proportion of the features, integer
-        absolute counts.
+        If float, the parameter represents a proportion of the features after
+        stop words removal, integer absolute counts.
 
         This parameter is ignored if vocabulary is not None.
 
