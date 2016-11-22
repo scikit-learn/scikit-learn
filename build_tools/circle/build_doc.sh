@@ -6,13 +6,55 @@ set -e
 # documentation: a pull request that does not change any file in doc/ or
 # examples/ folder should be skipped unless the "[doc: build]" is found the
 # commit message.
-python build_tools/circle/check_build_doc.py
-build_type=$?
+
+get_build_type() {
+	if [ -z "$CIRCLE_SHA1" ]
+	then
+		echo SKIP: undefined CIRCLE_SHA1
+		return
+	fi
+	commit_msg=$(git log --format=%B -n 1 $CIRCLE_SHA1)
+	if [ -z "$commit_msg" ]
+	then
+		echo QUICK BUILD: failed to inspect commit $CIRCLE_SHA1
+		return
+	fi
+	if [[ "$commit_msg" =~ '.*[doc skip].*' ]]
+	then
+		echo SKIP: [doc skip] marker found
+		return
+	fi
+	if [[ "$commit_msg" =~ '.*[doc build].*' ]]
+	then
+		echo BUILD: [doc build] marker found
+		return
+	fi
+	if [ -z "$CI_PULL_REQUEST" ]
+	then
+		echo BUILD: not a pull request
+		return
+	fi
+	git_range="origin/master...$CIRCLE_SHA1"
+	git fetch origin master >&2
+	filenames=$(git diff --name-only $git_range)
+	if [ -z "$filenames" ]
+	then
+		echo QUICK BUILD: failed to get changed filenames for $git_range
+		return
+	fi
+	if echo "$filenames" | grep -q -e ^examples/ -e ^doc/
+	then
+		echo BUILD: detected doc/ or examples/ filename modified in $git_range: $(echo "$filenames" | grep -e ^examples/ -e ^doc/ | head -n1)
+		return
+	fi
+	echo QUICK BUILD: no doc/ or examples/ filename modified in $git_range:
+	echo "$filenames"
+}
+
 touch ~/log.txt  # the "test" segment needs this file
-BUILD=0
-QUICK=1
-SKIP=2
-if [ $build_type = $SKIP ]
+
+build_type=$(get_build_type)
+if [[ "$build_type" =~ ^SKIP ]]
 then
     exit 0
 fi
@@ -20,7 +62,7 @@ fi
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
     MAKE_TARGET=dist  # PDF linked into HTML
-elif [ $build_type = $QUICK ]
+elif [[ "$build_type" =~ ^QUICK ]]
 then
 	MAKE_TARGET=html-noplot
 else
