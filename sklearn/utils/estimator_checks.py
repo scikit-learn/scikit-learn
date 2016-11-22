@@ -253,7 +253,12 @@ def check_estimator(Estimator):
     name = Estimator.__name__
     check_parameters_default_constructible(name, Estimator)
     for check in _yield_all_checks(name, Estimator):
-        check(name, Estimator)
+        try:
+            check(name, Estimator)
+        except SkipTest as message:
+            # the only SkipTest thrown currently results from not
+            # being able to import pandas.
+            warnings.warn(message, ImportWarning)
 
 
 def _boston_subset(n_samples=200):
