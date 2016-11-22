@@ -1332,7 +1332,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     norms : array, shape [n_samples] if axis=1 else [n_features]
         An array of norms along given axis for X.
-        When X is sparse, an NotImplementedError will be raised
+        When X is sparse, a NotImplementedError will be raised
         for norm 'l1' or 'l2'.
 
     See also

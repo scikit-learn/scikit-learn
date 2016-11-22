@@ -1318,8 +1318,7 @@ def test_normalize():
     # Test return_norm
     X_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
     for norm in ('l1', 'l2', 'max'):
-        _, norms = normalize(X_dense, norm=norm,
-                             return_norm=True)
+        _, norms = normalize(X_dense, norm=norm, return_norm=True)
         if norm == 'l1':
             assert_array_almost_equal(norms, np.array([7.0, 1.0, 5.0]))
         elif norm == 'l2':
