@@ -1315,6 +1315,24 @@ def test_normalize():
 
                 assert_array_almost_equal(row_sums, ones)
 
+    # Test return_norm
+    X_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
+    for norm in ('l1', 'l2', 'max'):
+        _, norms = normalize(X_dense, norm=norm, return_norm=True)
+        if norm == 'l1':
+            assert_array_almost_equal(norms, np.array([7.0, 1.0, 5.0]))
+        elif norm == 'l2':
+            assert_array_almost_equal(norms, np.array([5.0, 1.0, 3.60555127]))
+        else:
+            assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
+
+    X_sparse = sparse.csr_matrix(X_dense)
+    for norm in ('l1', 'l2'):
+        assert_raises(NotImplementedError, normalize, X_sparse,
+                      norm=norm, return_norm=True)
+    _, norms = normalize(X_sparse, norm='max', return_norm=True)
+    assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
+
 
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
