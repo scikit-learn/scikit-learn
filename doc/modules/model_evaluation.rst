@@ -1135,11 +1135,9 @@ of this metrics is thus the average number of true labels.
 
 .. note::
 
-    This definition of coverage error differs from the standard one, which describes
-    it as the number of steps needed, on average, to move down the ranked label list
-    in order to cover all the relevant labels of the example. This difference introduces
-    an additional factor of :math:`-1` in the original coverage formula which is
-    not present here.
+    Our implementation's score is 1 greater than the one given in Tsoumakas
+    et al., 2010. This extends it to handle the degenerate case in which an
+    instance has 0 true labels.
 
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
