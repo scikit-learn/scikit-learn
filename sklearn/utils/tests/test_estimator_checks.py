@@ -83,8 +83,8 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         # Function is only called after we verify that pandas is installed
         from pandas import Series
         if isinstance(sample_weight, Series):
-            raise ValueError(("Estimator does not accept 'sample_weight'"
-                             "of type {0}").format(Series))
+            raise ValueError("Estimator does not accept 'sample_weight'"
+                             "of type pandas.Series")
         return self
 
     def predict(self, X):
@@ -107,9 +107,9 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
     # check that sample_weights in fit accepts pandas.Series type
     try:
-        from pandas import Series
+        from pandas import Series  # noqa
         msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
-               "'sample_weight' parameter is type {0}").format(Series)
+               "'sample_weight' parameter is of type pandas.Series")
         assert_raises_regex(
             ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
     except ImportError:

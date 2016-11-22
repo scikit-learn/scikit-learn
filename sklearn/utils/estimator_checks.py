@@ -382,7 +382,7 @@ def check_estimator_sparse_data(name, Estimator):
             raise
 
 
-@ignore_warnings(category=(DeprecationWarning, UserWarning))
+@ignore_warnings(category=(DeprecationWarning))
 def check_sample_weights_pandas_series(name, Estimator):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
@@ -397,10 +397,11 @@ def check_sample_weights_pandas_series(name, Estimator):
                 estimator.fit(X, y, sample_weight=weights)
             except ValueError:
                 raise ValueError("Estimator {0} raises error if "
-                                 "'sample_weight' parameter is type "
-                                 "{1}".format(name, pd.Series))
+                                 "'sample_weight' parameter is of "
+                                 "type pandas.Series".format(name))
         except ImportError:
-            pass
+            raise SkipTest("pandas is not installed: not testing for "
+                           "input of type pandas.Series to class weight.")
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
