@@ -311,7 +311,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         Whether to raise an error on np.inf and np.nan in X.
 
     ensure_2d : boolean (default=True)
-        Whether to make X at least 2d.
+        Whether to raise a value error if X is not 2d.
 
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
@@ -383,16 +383,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
         if ensure_2d:
             if array.ndim == 1:
-                if ensure_min_samples >= 2:
-                    raise ValueError("%s expects at least 2 samples provided "
-                                     "in a 2 dimensional array-like input"
-                                     % estimator_name)
-                warnings.warn(
-                    "Passing 1d arrays as data is deprecated in 0.17 and will "
-                    "raise ValueError in 0.19. Reshape your data either using "
+                raise ValueError(
+                    "Got X with X.ndim=1. Reshape your data either using "
                     "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.",
-                    DeprecationWarning)
+                    "X.reshape(1, -1) if it contains a single sample.")
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)

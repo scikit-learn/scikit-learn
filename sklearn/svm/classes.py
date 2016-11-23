@@ -454,14 +454,14 @@ class SVC(BaseSVC):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    decision_function_shape : 'ovo', 'ovr' or None, default=None
+    decision_function_shape : 'ovo', 'ovr', default='ovr'
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).
-        The default of None will currently behave as 'ovo' for backward
-        compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.19.
+
+        .. versionchanged:: 0.19
+            decision_function_shape is 'ovr' by default.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.
@@ -510,7 +510,7 @@ class SVC(BaseSVC):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -531,7 +531,7 @@ class SVC(BaseSVC):
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1, decision_function_shape=None,
+                 verbose=False, max_iter=-1, decision_function_shape='ovr',
                  random_state=None):
 
         super(SVC, self).__init__(
@@ -595,8 +595,8 @@ class NuSVC(BaseSVC):
     class_weight : {dict, 'balanced'}, optional
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
-        weight one. The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies as
+        weight one. The "balanced" mode uses the values of y to automatically
+        adjust weights inversely proportional to class frequencies as
         ``n_samples / (n_classes * np.bincount(y))``
 
     verbose : bool, default: False
@@ -607,14 +607,14 @@ class NuSVC(BaseSVC):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    decision_function_shape : 'ovo', 'ovr' or None, default=None
+    decision_function_shape : 'ovo', 'ovr', default='ovr'
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).
-        The default of None will currently behave as 'ovo' for backward
-        compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.19.
+
+        .. versionchanged:: 0.19
+            decision_function_shape is 'ovr' by default.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.

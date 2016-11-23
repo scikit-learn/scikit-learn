@@ -124,7 +124,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
+    X = check_array(X, accept_sparse='csc', copy=copy,
                     warn_on_dtype=True, estimator='the scale function',
                     dtype=FLOAT_DTYPES)
     if sparse.issparse(X):
@@ -314,11 +314,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, copy=self.copy, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         data_min = np.min(X, axis=0)
         data_max = np.max(X, axis=0)
@@ -351,9 +348,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
         X *= self.scale_
         X += self.min_
@@ -369,9 +364,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
         X -= self.min_
         X /= self.scale_
@@ -419,20 +412,9 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    # To allow retro-compatibility, we handle here the case of 1D-input
-    # From 0.17, 1D-input are deprecated in scaler objects
-    # Although, we want to allow the users to keep calling this function
-    # with 1D-input.
-
-    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
-    # done inside the scaler object fit_transform.
-    # If copy is required, it will be done inside the scaler object.
-    X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
+    X = check_array(X, copy=False,  warn_on_dtype=True,
                     dtype=FLOAT_DTYPES)
     original_ndim = X.ndim
-
-    if original_ndim == 1:
-        X = X.reshape(X.shape[0], 1)
 
     s = MinMaxScaler(feature_range=feature_range, copy=copy)
     if axis == 0:
@@ -579,11 +561,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -641,12 +619,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy,
-                        ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -779,10 +753,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             mins, maxs = min_max_axis(X, axis=0)
@@ -812,10 +783,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
@@ -833,9 +801,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             inplace_column_scale(X, self.scale_)
@@ -877,20 +843,13 @@ def maxabs_scale(X, axis=0, copy=True):
     # done inside the scaler object fit_transform.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
-                    ensure_2d=False, dtype=FLOAT_DTYPES)
-    original_ndim = X.ndim
-
-    if original_ndim == 1:
-        X = X.reshape(X.shape[0], 1)
+                    dtype=FLOAT_DTYPES)
 
     s = MaxAbsScaler(copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
         X = s.fit_transform(X.T).T
-
-    if original_ndim == 1:
-        X = X.ravel()
 
     return X
 
@@ -980,10 +939,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     def _check_array(self, X, copy):
         """Makes sure centering is not enabled for sparse matrices."""
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             if self.with_centering:
