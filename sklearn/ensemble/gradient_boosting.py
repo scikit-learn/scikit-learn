@@ -31,7 +31,6 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -55,7 +54,6 @@ from ..utils import check_array
 from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
-from ..utils import deprecated
 from ..utils.extmath import logsumexp
 from ..utils.fixes import expit
 from ..utils.fixes import bincount
@@ -715,8 +713,7 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
-                                              _LearntSelectorMixin)):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod

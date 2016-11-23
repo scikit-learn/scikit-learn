@@ -29,7 +29,6 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -71,8 +70,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
-                                          _LearntSelectorMixin)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -738,7 +736,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
-
 
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
