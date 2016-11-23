@@ -324,6 +324,22 @@ def test_check_array_dtype_warning():
     assert_equal(X_checked.format, 'csr')
 
 
+def test_check_array_accept_sparse_type_exception():
+    X = [[1, 2], [3, 4]]
+    X_csr = sp.csr_matrix(X)
+    garbage_param = SVR()
+
+    assert_raises(TypeError, check_array, X_csr, accept_sparse=False)
+    assert_raises(TypeError, check_array, X_csr, accept_sparse=None)
+    assert_raises(ValueError, check_array, X_csr, accept_sparse=garbage_param)
+
+    # don't raise errors
+    check_array(X_csr, accept_sparse=True)
+    check_array(X_csr, accept_sparse='csr')
+    check_array(X_csr, accept_sparse=['csr'])
+    check_array(X_csr, accept_sparse=('csr'))
+
+
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."

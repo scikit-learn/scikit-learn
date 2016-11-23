@@ -218,11 +218,12 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     spmatrix : scipy sparse matrix
         Input to validate and convert.
 
-    accept_sparse : string, list of string or None (default=None)
+    accept_sparse : string, list of string, boolean or None (default=None)
         String[s] representing allowed sparse matrix formats ('csc',
-        'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). None means that sparse
-        matrix input will raise an error.  If the input is sparse but not in
-        the allowed format, it will be converted to the first listed format.
+        'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). If the input is sparse but
+        not in the allowed format, it will be converted to the first listed
+        format. True allows the input to be any format. False or None means
+        that a sparse matrix input will raise an error.
 
     dtype : string, type or None (default=none)
         Data type of result. If None, the dtype of the input is preserved.
@@ -239,19 +240,28 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     spmatrix_converted : scipy sparse matrix.
         Matrix that is ensured to have an allowed type.
     """
-    if accept_sparse in [None, False]:
-        raise TypeError('A sparse matrix was passed, but dense '
-                        'data is required. Use X.toarray() to '
-                        'convert to a dense numpy array.')
     if dtype is None:
         dtype = spmatrix.dtype
 
     changed_format = False
-    if (isinstance(accept_sparse, (list, tuple))
-            and spmatrix.format not in accept_sparse):
-        # create new with correct sparse
-        spmatrix = spmatrix.asformat(accept_sparse[0])
-        changed_format = True
+
+    if isinstance(accept_sparse, str):
+        accept_sparse = [accept_sparse]
+
+    if accept_sparse in [None, False]:
+        raise TypeError('A sparse matrix was passed, but dense '
+                        'data is required. Use X.toarray() to '
+                        'convert to a dense numpy array.')
+    elif isinstance(accept_sparse, (list, tuple)):
+        # ensure correct sparse format
+        if spmatrix.format not in accept_sparse:
+            # create new with correct sparse
+            spmatrix = spmatrix.asformat(accept_sparse[0])
+            changed_format = True
+    elif accept_sparse is not True:
+        # any other type
+        raise ValueError('The parameter \'accept_sparse\' was '
+                         'not a correct type.')
 
     if dtype != spmatrix.dtype:
         # convert dtype
@@ -284,11 +294,12 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     array : object
         Input object to check / convert.
 
-    accept_sparse : string, list of string or None (default=None)
+    accept_sparse : string, list of string, boolean or None (default=None)
         String[s] representing allowed sparse matrix formats, such as 'csc',
-        'csr', etc.  None means that sparse matrix input will raise an error.
-        If the input is sparse but not in the allowed format, it will be
-        converted to the first listed format.
+        'csr', etc. If the input is sparse but not in the allowed format,
+        it will be converted to the first listed format. True allows the input
+        to be any format. False or None means that a sparse matrix input will
+        raise an error.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -339,9 +350,6 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     X_converted : object
         The converted and validated X.
     """
-    if isinstance(accept_sparse, str):
-        accept_sparse = [accept_sparse]
-
     # store whether originally we wanted numeric dtype
     dtype_numeric = dtype == "numeric"
 
