@@ -10,6 +10,7 @@
 # License: BSD 3 clause
 
 import itertools
+from functools import partial
 
 import numpy as np
 from scipy.spatial import distance
@@ -19,7 +20,6 @@ from scipy.sparse import issparse
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches
-from ..utils.fixes import partial
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
