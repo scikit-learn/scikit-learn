@@ -2,10 +2,20 @@
 set -x
 set -e
 
-# Inspect the commit to know whether or not we should skip building the
-# documentation: a pull request that does not change any file in doc/ or
-# examples/ folder should be skipped unless the "[doc: build]" is found the
-# commit message.
+# Decide what kind of documentation build to run, and run it.
+#
+# If the last commit message has a "[doc skip]" marker, do not build
+# the doc. On the contrary if a "[doc build]" marker is found, build the doc
+# instead of relying on the subsequent rules.
+#
+# We always build the documentation for jobs that are not related to a specific
+# PR (e.g. a merge to master or a maintenance branch).
+#
+# If this is a PR, do a full build if there are some files in this PR that are
+# under the "doc/" or "examples/" folders, otherwise perform a quick build.
+#
+# If the inspection of the current commit fails for any reason, the default
+# behavior is to quick build the documentation.
 
 get_build_type() {
 	if [ -z "$CIRCLE_SHA1" ]
@@ -50,8 +60,6 @@ get_build_type() {
 	echo QUICK BUILD: no doc/ or examples/ filename modified in $git_range:
 	echo "$filenames"
 }
-
-touch ~/log.txt  # the "test" segment needs this file
 
 build_type=$(get_build_type)
 if [[ "$build_type" =~ ^SKIP ]]
