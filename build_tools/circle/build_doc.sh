@@ -29,12 +29,12 @@ get_build_type() {
 		echo QUICK BUILD: failed to inspect commit $CIRCLE_SHA1
 		return
 	fi
-	if [[ "$commit_msg" =~ '.*[doc skip].*' ]]
+	if [[ "$commit_msg" =~ '[doc skip]' ]]
 	then
 		echo SKIP: [doc skip] marker found
 		return
 	fi
-	if [[ "$commit_msg" =~ '.*[doc build].*' ]]
+	if [[ "$commit_msg" =~ '[doc build]' ]]
 	then
 		echo BUILD: [doc build] marker found
 		return
@@ -45,11 +45,11 @@ get_build_type() {
 		return
 	fi
 	git_range="origin/master...$CIRCLE_SHA1"
-	git fetch origin master >&2
+	git fetch origin master >&2 || (echo QUICK BUILD: failed to get changed filenames for $git_range; return)
 	filenames=$(git diff --name-only $git_range)
 	if [ -z "$filenames" ]
 	then
-		echo QUICK BUILD: failed to get changed filenames for $git_range
+		echo QUICK BUILD: no changed filenames for $git_range
 		return
 	fi
 	if echo "$filenames" | grep -q -e ^examples/ -e ^doc/
