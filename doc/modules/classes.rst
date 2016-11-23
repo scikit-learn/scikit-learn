@@ -40,6 +40,7 @@ Functions
    :template: function.rst
 
    base.clone
+   set_config
 
 
 .. _cluster_ref:

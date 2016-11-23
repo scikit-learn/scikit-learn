@@ -16,8 +16,48 @@ import sys
 import re
 import warnings
 import os
+from contextlib import contextmanager as _contextmanager
 
 ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
+
+
+@_contextmanager
+def set_config(assume_finite=None):
+    """Context manager for global scikit-learn settings
+
+    Parameters
+    ----------
+    assume_finite : bool, optional
+        If True, validation for finiteness will be skipped, saving time.
+        If False, validation for finiteness will be performed, avoiding error.
+
+    Notes
+    -----
+    Settings will be returned to previous values when the context manager
+    is exited. This is not thread-safe.
+
+    Examples
+    --------
+    >>> import sklearn
+    >>> from sklearn.utils.validation import assert_all_finite
+    >>> with sklearn.set_config(assume_finite=True):
+    ...     assert_all_finite([float('nan')])
+    >>> with sklearn.set_config(assume_finite=True):
+    ...     with sklearn.set_config(assume_finite=False):
+    ...         assert_all_finite([float('nan')])
+    ... # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+    ...
+    ValueError: Input contains NaN, ...
+    """
+    global ASSUME_FINITE
+    prev_assume_finite = ASSUME_FINITE
+    if assume_finite is not None:
+        ASSUME_FINITE = assume_finite
+
+    yield
+    ASSUME_FINITE = prev_assume_finite
+
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,

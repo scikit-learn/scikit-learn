@@ -79,10 +79,11 @@ you an estimate of the order of magnitude of the prediction latency.
     scikit-learn, or configure it in Python with::
 
       >>> import sklearn
-      >>> sklearn.ASSUME_FINITE = True                 # doctest: +SKIP
+      >>> with sklearn.set_config(assume_finite=True):
+      ...    pass  # do learning/prediction here with reduced validation
 
     Note that this will affect all uses of
-    :func:`sklearn.utils.assert_all_finite`.
+    :func:`sklearn.utils.assert_all_finite` within the context.
 
 Influence of the Number of Features
 -----------------------------------
