@@ -41,6 +41,7 @@ Functions
 
    base.clone
    set_config
+   get_config
 
 
 .. _cluster_ref:

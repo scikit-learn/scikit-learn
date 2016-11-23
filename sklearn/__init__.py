@@ -18,7 +18,18 @@ import warnings
 import os
 from contextlib import contextmanager as _contextmanager
 
-ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
+_ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
+
+
+def get_config():
+    """Retrieve current values for configuration set by :func:`set_config`
+
+    Returns
+    -------
+    config : dict
+        Keys are parameter names that can be passed to :func:`set_config`.
+    """
+    return {'assume_finite': _ASSUME_FINITE}
 
 
 @_contextmanager
@@ -50,13 +61,13 @@ def set_config(assume_finite=None):
     ...
     ValueError: Input contains NaN, ...
     """
-    global ASSUME_FINITE
-    prev_assume_finite = ASSUME_FINITE
+    global _ASSUME_FINITE
+    prev_assume_finite = _ASSUME_FINITE
     if assume_finite is not None:
-        ASSUME_FINITE = assume_finite
+        _ASSUME_FINITE = assume_finite
 
     yield
-    ASSUME_FINITE = prev_assume_finite
+    _ASSUME_FINITE = prev_assume_finite
 
 
 # Make sure that DeprecationWarning within this package always gets printed
