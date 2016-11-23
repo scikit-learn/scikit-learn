@@ -789,12 +789,12 @@ def test_scale_sparse_with_mean_raise_exception():
 
 def test_scale_input_finiteness_validation():
     # Check if non finite inputs raise ValueError
-    X = [np.nan, 5, 6, 7, 8]
+    X = [[np.nan, 5, 6, 7, 8]]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
                         scale, X)
 
-    X = [np.inf, 5, 6, 7, 8]
+    X = [[np.inf, 5, 6, 7, 8]]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
                         scale, X)

@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings, assert_raises
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.multiclass import OneVsRestClassifier
@@ -379,13 +378,6 @@ def test_decision_function_shape():
     clf = svm.SVC(kernel='linear', C=0.1,
                   decision_function_shape='ovo').fit(X_train, y_train)
     dec = clf.decision_function(X_train)
-    assert_equal(dec.shape, (len(X_train), 10))
-
-    # check deprecation warning
-    clf = svm.SVC(kernel='linear', C=0.1).fit(X_train, y_train)
-    msg = "change the shape of the decision function"
-    dec = assert_warns_message(ChangedBehaviorWarning, msg,
-                               clf.decision_function, X_train)
     assert_equal(dec.shape, (len(X_train), 10))
 
 
