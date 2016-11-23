@@ -208,12 +208,6 @@ def check_importances(name, criterion, X, y):
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
-    # XXX: Remove this test in 0.19 after transform support to estimators
-    # is removed.
-    X_new = assert_warns(
-        DeprecationWarning, est.transform, X, threshold="mean")
-    assert_less(0 < X_new.shape[1], X.shape[1])
-
     # Check with parallel
     importances = est.feature_importances_
     est.set_params(n_jobs=2)

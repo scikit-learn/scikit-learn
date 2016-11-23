@@ -16,34 +16,16 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
-from .deprecation import deprecated
-from ..exceptions import DataConversionWarning as _DataConversionWarning
-from ..exceptions import NonBLASDotWarning as _NonBLASDotWarning
-from ..exceptions import NotFittedError as _NotFittedError
+from ..exceptions import NonBLASDotWarning
+from ..exceptions import NotFittedError
+from ..exceptions import DataConversionWarning
 
-
-@deprecated("DataConversionWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class DataConversionWarning(_DataConversionWarning):
-    pass
-
-
-@deprecated("NonBLASDotWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class NonBLASDotWarning(_NonBLASDotWarning):
-    pass
-
-
-@deprecated("NotFittedError has been moved into the sklearn.exceptions module."
-            " It will not be available here from version 0.19")
-class NotFittedError(_NotFittedError):
-    pass
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
-warnings.simplefilter('ignore', _NonBLASDotWarning)
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -420,7 +402,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, _DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning)
     return array
 
 
@@ -550,7 +532,7 @@ def column_or_1d(y, warn=False):
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
                           "(n_samples, ), for example using ravel().",
-                          _DataConversionWarning, stacklevel=2)
+                          DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
     raise ValueError("bad input shape {0}".format(shape))
@@ -680,8 +662,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        # FIXME NotFittedError_ --> NotFittedError in 0.19
-        raise _NotFittedError(msg % {'name': type(estimator).__name__})
+        raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
 def check_non_negative(X, whom):

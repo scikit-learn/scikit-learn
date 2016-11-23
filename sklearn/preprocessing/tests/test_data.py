@@ -27,7 +27,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
 
@@ -1019,22 +1018,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
 
 
-def test_deprecation_minmax_scaler():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    scaler = MinMaxScaler().fit(X)
-
-    depr_message = ("Attribute data_range will be removed in "
-                    "0.19. Use ``data_range_`` instead")
-    assert_warns_message(DeprecationWarning, depr_message, getattr, scaler,
-                         "data_range")
-
-    depr_message = ("Attribute data_min will be removed in "
-                    "0.19. Use ``data_min_`` instead")
-    assert_warns_message(DeprecationWarning, depr_message, getattr, scaler,
-                         "data_min")
-
-
 def test_warning_scaling_integers():
     # Check warning when scaling integer data
     X = np.array([[1, 2, 0],
@@ -1441,17 +1424,6 @@ def test_fit_transform():
         X_transformed = obj.fit(X).transform(X)
         X_transformed2 = obj.fit_transform(X)
         assert_array_equal(X_transformed, X_transformed2)
-
-
-def test_deprecation_standard_scaler():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    scaler = StandardScaler().fit(X)
-    depr_message = ("Function std_ is deprecated; Attribute ``std_`` will be "
-                    "removed in 0.19. Use ``scale_`` instead")
-    std_ = assert_warns_message(DeprecationWarning, depr_message, getattr,
-                                scaler, "std_")
-    assert_array_equal(std_, scaler.scale_)
 
 
 def test_add_dummy_feature():

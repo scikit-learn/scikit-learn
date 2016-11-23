@@ -67,16 +67,6 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-# Estimators with deprecated transform methods. Should be removed in 0.19 when
-# _LearntSelectorMixin is removed.
-DEPRECATED_TRANSFORM = [
-    "RandomForestClassifier", "RandomForestRegressor", "ExtraTreesClassifier",
-    "ExtraTreesRegressor", "DecisionTreeClassifier",
-    "DecisionTreeRegressor", "ExtraTreeClassifier", "ExtraTreeRegressor",
-    "LinearSVC", "SGDClassifier", "SGDRegressor", "Perceptron",
-    "LogisticRegression", "LogisticRegressionCV",
-    "GradientBoostingClassifier", "GradientBoostingRegressor"]
-
 
 def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_dtypes
@@ -221,9 +211,8 @@ def _yield_all_checks(name, Estimator):
         for check in _yield_regressor_checks(name, Estimator):
             yield check
     if issubclass(Estimator, TransformerMixin):
-        if name not in DEPRECATED_TRANSFORM:
-            for check in _yield_transformer_checks(name, Estimator):
-                yield check
+        for check in _yield_transformer_checks(name, Estimator):
+            yield check
     if issubclass(Estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, Estimator):
             yield check
@@ -424,8 +413,7 @@ def check_dtype_object(name, Estimator):
     if hasattr(estimator, "predict"):
         estimator.predict(X)
 
-    if (hasattr(estimator, "transform") and
-            name not in DEPRECATED_TRANSFORM):
+    if hasattr(estimator, "transform"):
         estimator.transform(X)
 
     try:
@@ -725,10 +713,7 @@ def check_pipeline_consistency(name, Estimator):
     estimator.fit(X, y)
     pipeline.fit(X, y)
 
-    if name in DEPRECATED_TRANSFORM:
-        funcs = ["score"]
-    else:
-        funcs = ["score", "fit_transform"]
+    funcs = ["score", "fit_transform"]
 
     for func_name in funcs:
         func = getattr(estimator, func_name, None)
@@ -751,11 +736,7 @@ def check_fit_score_takes_y(name, Estimator):
     set_testing_parameters(estimator)
     set_random_state(estimator)
 
-    if name in DEPRECATED_TRANSFORM:
-        funcs = ["fit", "score", "partial_fit", "fit_predict"]
-    else:
-        funcs = [
-            "fit", "score", "partial_fit", "fit_predict", "fit_transform"]
+    funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
     for func_name in funcs:
         func = getattr(estimator, func_name, None)
         if func is not None:
@@ -777,11 +758,7 @@ def check_estimators_dtypes(name, Estimator):
     y = X_train_int_64[:, 0]
     y = multioutput_estimator_convert_y_2d(name, y)
 
-    if name in DEPRECATED_TRANSFORM:
-        methods = ["predict", "decision_function", "predict_proba"]
-    else:
-        methods = [
-            "predict", "transform", "decision_function", "predict_proba"]
+    methods = ["predict", "transform", "decision_function", "predict_proba"]
 
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         estimator = Estimator()
@@ -869,8 +846,7 @@ def check_estimators_nan_inf(name, Estimator):
                     raise AssertionError(error_string_predict, Estimator)
 
             # transform
-            if (hasattr(estimator, "transform") and
-                    name not in DEPRECATED_TRANSFORM):
+            if hasattr(estimator, "transform"):
                 try:
                     estimator.transform(X_train)
                 except ValueError as e:
@@ -888,11 +864,8 @@ def check_estimators_nan_inf(name, Estimator):
 @ignore_warnings
 def check_estimators_pickle(name, Estimator):
     """Test that we can pickle all estimators"""
-    if name in DEPRECATED_TRANSFORM:
-        check_methods = ["predict", "decision_function", "predict_proba"]
-    else:
-        check_methods = ["predict", "transform", "decision_function",
-                         "predict_proba"]
+    check_methods = ["predict", "transform", "decision_function",
+                     "predict_proba"]
 
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)

@@ -17,7 +17,6 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
-from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import bincount
@@ -50,13 +49,6 @@ __all__ = [
     'maxabs_scale',
     'minmax_scale',
 ]
-
-DEPRECATION_MSG_1D = (
-    "Passing 1d arrays as data is deprecated in 0.17 and will "
-    "raise ValueError in 0.19. Reshape your data either using "
-    "X.reshape(-1, 1) if your data has a single feature or "
-    "X.reshape(1, -1) if it contains a single sample."
-)
 
 
 def _handle_zeros_in_scale(scale, copy=True):
@@ -248,18 +240,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     def __init__(self, feature_range=(0, 1), copy=True):
         self.feature_range = feature_range
         self.copy = copy
-
-    @property
-    @deprecated("Attribute data_range will be removed in "
-                "0.19. Use ``data_range_`` instead")
-    def data_range(self):
-        return self.data_range_
-
-    @property
-    @deprecated("Attribute data_min will be removed in "
-                "0.19. Use ``data_min_`` instead")
-    def data_min(self):
-        return self.data_min_
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -504,12 +484,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.with_mean = with_mean
         self.with_std = with_std
         self.copy = copy
-
-    @property
-    @deprecated("Attribute ``std_`` will be removed in 0.19. "
-                "Use ``scale_`` instead")
-    def std_(self):
-        return self.scale_
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -960,8 +934,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             raise TypeError("RobustScaler cannot be fitted on sparse inputs")
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
         if self.with_centering:
             self.center_ = np.median(X, axis=0)
 
@@ -989,8 +961,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1015,8 +985,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_scaling:

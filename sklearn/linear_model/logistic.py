@@ -445,7 +445,7 @@ def _check_solver_option(solver, multi_class, penalty, dual):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='lbfgs', coef=None, copy=False,
+                             solver='lbfgs', coef=None,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
@@ -501,10 +501,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coef : array-like, shape (n_features,), default None
         Initialization value for coefficients of logistic regression.
         Useless for liblinear solver.
-
-    copy : bool, default False
-        Whether or not to produce a copy of the data. A copy is not required
-        anymore. This parameter is deprecated and will be removed in 0.19.
 
     class_weight : dict or 'balanced', optional
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -579,21 +575,19 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     -----
     You might get slightly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
-    """
-    if copy:
-        warnings.warn("A copy is not required anymore. The 'copy' parameter "
-                      "is deprecated and will be removed in 0.19.",
-                      DeprecationWarning)
 
+    .. versionchanged:: 0.19
+        The "copy" parameter was removed.
+    """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
     _check_solver_option(solver, multi_class, penalty, dual)
 
     # Preprocessing.
-    if check_input or copy:
+    if check_input:
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
     classes = np.unique(y)
@@ -632,8 +626,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         y_bin[~mask] = -1.
         # for compute_class_weight
 
-        # 'auto' is deprecated and will be removed in 0.19
-        if class_weight in ("auto", "balanced"):
+        if class_weight == "balanced":
             class_weight_ = compute_class_weight(class_weight, mask_classes,
                                                  y_bin)
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
@@ -1559,11 +1552,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         check_classification_targets(y)
 
         class_weight = self.class_weight
-        if class_weight and not(isinstance(class_weight, dict) or
-                                class_weight in ['balanced', 'auto']):
-            # 'auto' is deprecated and will be removed in 0.19
-            raise ValueError("class_weight provided should be a "
-                             "dict or 'balanced'")
 
         # Encode for string labels
         label_encoder = LabelEncoder().fit(y)
