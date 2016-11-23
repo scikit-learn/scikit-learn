@@ -1,7 +1,6 @@
 import numpy as np
 from scipy import linalg
-from sklearn.decomposition import (NMF, ProjectedGradientNMF,
-                                   non_negative_factorization)
+from sklearn.decomposition import NMF, non_negative_factorization
 from sklearn.decomposition import nmf   # For testing internals
 from scipy.sparse import csc_matrix
 
@@ -10,7 +9,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raise_message, assert_no_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
 from sklearn.base import clone
@@ -152,24 +150,6 @@ def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     A = np.abs(random_state.randn(30, 10))
     NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
-
-
-@ignore_warnings
-def test_projgrad_nmf_sparseness():
-    # Test sparseness
-    # Test that sparsity constraints actually increase sparseness in the
-    # part where they are applied.
-    tol = 1e-2
-    A = np.abs(random_state.randn(10, 10))
-    m = ProjectedGradientNMF(n_components=5, random_state=0, tol=tol).fit(A)
-    data_sp = ProjectedGradientNMF(n_components=5, sparseness='data',
-                                   random_state=0,
-                                   tol=tol).fit(A).data_sparseness_
-    comp_sp = ProjectedGradientNMF(n_components=5, sparseness='components',
-                                   random_state=0,
-                                   tol=tol).fit(A).comp_sparseness_
-    assert_greater(data_sp, m.data_sparseness_)
-    assert_greater(comp_sp, m.comp_sparseness_)
 
 
 @ignore_warnings
