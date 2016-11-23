@@ -29,12 +29,12 @@ get_build_type() {
 		echo QUICK BUILD: failed to inspect commit $CIRCLE_SHA1
 		return
 	fi
-	if [[ "$commit_msg" =~ '[doc skip]' ]]
+	if [[ "$commit_msg" =~ \[doc\ skip\] ]]
 	then
 		echo SKIP: [doc skip] marker found
 		return
 	fi
-	if [[ "$commit_msg" =~ '[doc build]' ]]
+	if [[ "$commit_msg" =~ \[doc\ build\] ]]
 	then
 		echo BUILD: [doc build] marker found
 		return
