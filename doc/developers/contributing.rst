@@ -702,7 +702,7 @@ Python 3.x support
 All scikit-learn code should work unchanged in both Python 2.[67]
 and 3.2 or newer. Since Python 3.x is not backwards compatible,
 that may require changes to code and it certainly requires testing
-on both 2.6 or 2.7, and 3.2 or newer.
+on both 2.7 and 3.2 or newer.
 
 For most numerical algorithms, Python 3.x support is easy:
 just remember that ``print`` is a function and

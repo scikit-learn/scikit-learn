@@ -618,14 +618,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Get generalized least squares solution
         Ft = linalg.solve_triangular(C, F, lower=True)
-        try:
-            Q, G = linalg.qr(Ft, econ=True)
-        except:
-            #/usr/lib/python2.6/dist-packages/scipy/linalg/decomp.py:1177:
-            # DeprecationWarning: qr econ argument will be removed after scipy
-            # 0.7. The economy transform will then be available through the
-            # mode='economic' argument.
-            Q, G = linalg.qr(Ft, mode='economic')
+        Q, G = linalg.qr(Ft, mode='economic')
 
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]
