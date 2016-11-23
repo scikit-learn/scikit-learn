@@ -20,6 +20,7 @@ from .deprecation import deprecated
 from ..exceptions import DataConversionWarning as _DataConversionWarning
 from ..exceptions import NonBLASDotWarning as _NonBLASDotWarning
 from ..exceptions import NotFittedError as _NotFittedError
+from .. import get_config as _get_config
 
 
 @deprecated("DataConversionWarning has been moved into the sklearn.exceptions"
@@ -48,8 +49,7 @@ warnings.simplefilter('ignore', _NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
-    from .. import ASSUME_FINITE
-    if ASSUME_FINITE:
+    if _get_config()['assume_finite']:
         return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
