@@ -783,6 +783,11 @@ def dcg_score(y_true, y_score, k=5):
     Returns
     -------
     score : float
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Discounted Cumulative Gain
+           <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
     """
     order = np.argsort(y_score)[::-1]
     y_true = np.take(y_true, order[:k])
@@ -822,6 +827,11 @@ def ndcg_score(y_true, y_score, k=5):
     >>> y_score = [[0.9, 0.5, 0.8], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
     >>> ndcg_score(y_true, y_score, k=2)
     0.66666666666666663
+
+    References
+    ----------
+    .. [1] `Kaggle entry for the Normalized Discounted Cumulative Gain
+           <https://www.kaggle.com/wiki/NormalizedDiscountedCumulativeGain>`_
     """
     y_score, y_true = check_X_y(y_score, y_true)
 
