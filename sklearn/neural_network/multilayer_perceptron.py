@@ -803,7 +803,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Only used if early_stopping is True
 
     variation_stop : int, optional, default 2
-        Count of interations to attempt before stopping if score 
+        Count of iterations to attempt before stopping if score 
         is not improving on the train set or on the validation fraction
         if early_stopping is True.
         Should be 2 or more
