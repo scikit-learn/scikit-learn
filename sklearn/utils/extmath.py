@@ -25,7 +25,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ..exceptions import ConvergenceWarning, NonBLASDotWarning
+from ..exceptions import NonBLASDotWarning
 
 
 def norm(x):
@@ -869,5 +869,5 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
                              atol=atol, equal_nan=True)):
         warnings.warn('cumsum was found to be unstable: '
                       'its last element does not correspond to sum',
-                      ConvergenceWarning)
+                      RuntimeWarning)
     return out
