@@ -31,9 +31,9 @@ class OutlierDetectionMixin(object):
 
     raw_decision : bool
         Whether or not to consider raw negated Mahalanobis distances as the
-        decision function. Otherwise returns `[-dist**(1/3) + thres**(1/3)]`.
+        decision function. Otherwise returns ``-dist**(1/3) + thres**(1/3)``.
         Must be False (default) for compatibility with the others outlier
-        detection tools (which use a threshold of 0 for outliers).
+        detection tools, which use a threshold of 0 for outliers.
 
         .. versionadded:: 0.19
 
@@ -61,7 +61,7 @@ class OutlierDetectionMixin(object):
             compatibility with the others outlier detection tools, which use a
             threshold of 0 for being an outlier.
 
-            .. depricated:: 0.19
+            .. deprecated:: 0.19
                 set self.raw_decision to return the negated distance values
                 instead
 
@@ -80,7 +80,8 @@ class OutlierDetectionMixin(object):
 
         if raw_values is not None:
             warnings.warn(
-                'raw_values keyword has been moved to class initialization',
+                'raw_values keyword has been moved to class initialization '
+                'as raw_decision. raw_values will be removed in version 0.21',
                 DeprecationWarning)
 
         check_is_fitted(self, 'threshold_')
