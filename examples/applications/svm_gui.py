@@ -319,7 +319,13 @@ def get_parser():
 
 def main(argv):
     op = get_parser()
-    opts, args = op.parse_args(argv[1:])
+
+    def is_interactive():
+        import __main__ as main
+        return not hasattr(main, '__file__')
+
+    argv = [] if is_interactive() else sys.argv[1:]
+    opts, args = op.parse_args(argv)
     root = Tk.Tk()
     model = Model()
     controller = Controller(model)
