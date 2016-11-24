@@ -86,5 +86,5 @@ def test_return_std():
 
         m2 = ARDRegression()
         m2.fit(X, y)
-        y_mean2, y_std2 = m1.predict(X_test, return_std=True)
+        y_mean2, y_std2 = m2.predict(X_test, return_std=True)
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
