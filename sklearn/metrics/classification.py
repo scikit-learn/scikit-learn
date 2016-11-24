@@ -1365,7 +1365,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report : string
         Text summary of the precision, recall, F1 score for each class.
 
-        The reported averages are a prevalence-weighted micro-average across
+        The reported averages are a prevalence-weighted macro-average across
         classes (equivalent to :func:`precision_recall_fscore_support` with
         ``average='weighted'``).
 
