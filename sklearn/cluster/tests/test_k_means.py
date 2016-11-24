@@ -864,4 +864,7 @@ def test_sparse_validate_centers():
 
     # Test that a ValueError is raised for validate_center_shape
     classifier = KMeans(n_clusters=3, init=centers, n_init=1)
-    assert_raises(ValueError, classifier.fit, X)
+
+    msg = "The shape of the initial centers ((4, 4)) " \
+          "does not match the number of clusters 3"
+    assert_raise_message(ValueError, msg, classifier.fit, X)
