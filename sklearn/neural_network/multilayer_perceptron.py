@@ -806,7 +806,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Count of interations to attempt before stopping if score 
         is not improving on the train set or on the validation fraction
         if early_stopping is True.
-        Shold be 2 or more
+        Should be 2 or more
 
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
@@ -1164,10 +1164,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Only used if early_stopping is True
 
     variation_stop : int, optional, default 2
-        Count of interations to attempt before stopping if score 
+        Count of iterations to attempt before stopping if score 
         is not improving on the train set or on the validation fraction
         if early_stopping is True.
-        Shold be 2 or more
+        Should be 2 or more
 
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
