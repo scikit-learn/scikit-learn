@@ -172,9 +172,9 @@ cdef class Criterion:
                 - self.weighted_n_left * impurity_left)
 
     cdef double impurity_improvement(self, double impurity) nogil:
-        """Computes the improvement in impurity
+        """Compute the improvement in impurity
 
-        This methods computes the improvement in impurity when a split occurs.
+        This method computes the improvement in impurity when a split occurs.
         The weighted impurity improvement equation is the following:
 
             N_t / N * (impurity - N_t_R / N_t * right_impurity
