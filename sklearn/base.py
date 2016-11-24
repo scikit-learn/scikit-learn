@@ -140,7 +140,7 @@ def _pprint(params, offset=0, printer=repr):
     offset : int
         The offset in characters to add at the begin of each line.
 
-    printer:
+    printer : callable
         The function to convert entries to strings, typically
         the builtin str or repr
 
