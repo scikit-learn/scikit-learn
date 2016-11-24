@@ -252,7 +252,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
                         'convert to a dense numpy array.')
-    elif isinstance(accept_sparse, (list, tuple)):
+    elif (isinstance(accept_sparse, (list, tuple)) and
+          isinstance(accept_sparse[0], str)):
         # ensure correct sparse format
         if spmatrix.format not in accept_sparse:
             # create new with correct sparse

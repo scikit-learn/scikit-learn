@@ -327,11 +327,20 @@ def test_check_array_dtype_warning():
 def test_check_array_accept_sparse_type_exception():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
-    garbage_param = SVR()
+    invalid_type = SVR()
 
-    assert_raises(TypeError, check_array, X_csr, accept_sparse=False)
-    assert_raises(TypeError, check_array, X_csr, accept_sparse=None)
-    assert_raises(ValueError, check_array, X_csr, accept_sparse=garbage_param)
+    msg = "A sparse matrix was passed, but dense data is required. " \
+        "Use X.toarray() to convert to a dense numpy array."
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=False)
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=None)
+
+    msg = "The parameter \'accept_sparse\' was not a correct type."
+    assert_raise_message(ValueError, msg,
+                         check_array, X_csr, accept_sparse=invalid_type)
+    assert_raise_message(ValueError, msg,
+                         check_array, X_csr, accept_sparse=[invalid_type])
 
     # don't raise errors
     check_array(X_csr, accept_sparse=True)
