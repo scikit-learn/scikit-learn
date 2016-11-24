@@ -58,7 +58,8 @@ def test_toy_ard_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
-def test_return_std_bayesian():
+def test_return_std():
+    # Test return_std option for both Bayesian regressors
     def f(X):
         return np.dot(X, w) + b
 
@@ -69,42 +70,21 @@ def test_return_std_bayesian():
     n_train = 50
     n_test = 10
 
-    noise_mult = 0.1
     w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
     b = 1.0
 
     X = np.random.random((n_train, d))
     X_test = np.random.random((n_test, d))
-    y = f_noise(X, noise_mult)
 
-    m1 = BayesianRidge()
-    m1.fit(X, y)
-    X_test = np.random.random((n_test, d))
-    y_mean, y_std = m1.predict(X_test, return_std=True)
-    assert_array_almost_equal(y_std, noise_mult, decimal=1)
+    for decimal, noise_mult in enumerate([1, 0.1, 0.01]):
+        y = f_noise(X, noise_mult)
 
+        m1 = BayesianRidge()
+        m1.fit(X, y)
+        y_mean1, y_std1 = m1.predict(X_test, return_std=True)
+        assert_array_almost_equal(y_std1, noise_mult, decimal=decimal)
 
-def test_return_std_ard():
-    def f(X):
-        return np.dot(X, w) + b
-
-    def f_noise(X, noise_mult):
-        return f(X) + np.random.randn(X.shape[0])*noise_mult
-
-    d = 5
-    n_train = 50
-    n_test = 10
-
-    noise_mult = 0.1
-    w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
-    b = 1.0
-
-    X = np.random.random((n_train, d))
-    X_test = np.random.random((n_test, d))
-    y = f_noise(X, noise_mult)
-
-    m1 = ARDRegression()
-    m1.fit(X, y)
-    X_test = np.random.random((n_test, d))
-    y_mean, y_std = m1.predict(X_test, return_std=True)
-    assert_array_almost_equal(y_std, noise_mult, decimal=1)
+        m2 = ARDRegression()
+        m2.fit(X, y)
+        y_mean2, y_std2 = m1.predict(X_test, return_std=True)
+        assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)

@@ -155,10 +155,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self : returns an instance of self.
         """
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
-        self.X_offset = X_offset
-        self.X_scale = X_scale
+        self.X_offset_ = X_offset_
+        self.X_scale_ = X_scale_
         n_samples, n_features = X.shape
 
         # Initialization of the values of the parameters
@@ -186,7 +186,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             # coef_ = sigma_^-1 * XT * y
             if n_samples > n_features:
                 coef_ = np.dot(Vh.T,
-                               Vh / (eigen_vals_ + lambda_ / alpha_)[:, None])
+                               Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis])
                 coef_ = np.dot(coef_, XT_y)
                 if self.compute_score:
                     logdet_sigma_ = - np.sum(
@@ -232,15 +232,17 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.lambda_ = lambda_
         self.coef_ = coef_
         sigma_ = np.dot(Vh.T,
-                        Vh / (eigen_vals_ + lambda_ / alpha_)[:, None])
+                        Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis])
         self.sigma_ = (1. / alpha_) * sigma_
 
-        self._set_intercept(X_offset, y_offset, X_scale)
+        self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
 
     def predict(self, X, return_std=False):
-        """Predict using the linear model. In addition to the mean of the
-        predictive distribution, also its standard deviation can be returned.
+        """Predict using the linear model.
+
+        In addition to the mean of the predictive distribution, also its
+        standard deviation can be returned.
 
         Parameters
         ----------
@@ -263,7 +265,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             return y_mean
         else:
             if self.normalize:
-                X = (X - self.X_offset) / self.X_scale
+                X = (X - self.X_offset_) / self.X_scale_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
@@ -426,7 +428,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         # Launch the convergence loop
@@ -493,12 +495,14 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
         self.lambda_ = lambda_
-        self._set_intercept(X_offset, y_offset, X_scale)
+        self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
 
     def predict(self, X, return_std=False):
-        """Predict using the linear model. In addition to the mean of the
-        predictive distribution, also its standard deviation can be returned.
+        """Predict using the linear model.
+
+        In addition to the mean of the predictive distribution, also its
+        standard deviation can be returned.
 
         Parameters
         ----------
@@ -521,7 +525,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             return y_mean
         else:
             if self.normalize:
-                X = (X - self.X_offset) / self.X_scale
+                X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
