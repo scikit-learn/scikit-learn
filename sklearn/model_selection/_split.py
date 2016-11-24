@@ -284,7 +284,16 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         self.n_splits = n_splits
         self.shuffle = shuffle
+        # For repr
         self.random_state = random_state
+        if random_state is None:
+            # This is done to ensure that the multiple calls to split
+            # are random for each initialization of splitter but consistent
+            # across multiple calls for the same initialization.
+            self._random_state = check_random_state(
+                random_state).randint(99999999)
+        else:
+            self._random_state = random_state
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -407,7 +416,7 @@ class KFold(_BaseKFold):
         n_samples = _num_samples(X)
         indices = np.arange(n_samples)
         if self.shuffle:
-            check_random_state(self.random_state).shuffle(indices)
+            check_random_state(self._random_state).shuffle(indices)
 
         n_splits = self.n_splits
         fold_sizes = (n_samples // n_splits) * np.ones(n_splits, dtype=np.int)
@@ -560,9 +569,9 @@ class StratifiedKFold(_BaseKFold):
 
     def _make_test_folds(self, X, y=None, groups=None):
         if self.shuffle:
-            rng = check_random_state(self.random_state)
+            rng = check_random_state(self._random_state)
         else:
-            rng = self.random_state
+            rng = self._random_state
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
@@ -922,7 +931,16 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
+        # For repr
         self.random_state = random_state
+        if random_state is None:
+            # This is done to ensure that the multiple calls to split
+            # are random for each initialization of splitter but consistent
+            # across multiple calls for the same initialization.
+            self._random_state = check_random_state(
+                random_state).randint(99999999)
+        else:
+            self._random_state = random_state
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1042,7 +1060,7 @@ class ShuffleSplit(BaseShuffleSplit):
         n_samples = _num_samples(X)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
-        rng = check_random_state(self.random_state)
+        rng = check_random_state(self._random_state)
         for i in range(self.n_splits):
             # random partition
             permutation = rng.permutation(n_samples)
@@ -1269,7 +1287,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (n_test, n_classes))
 
-        rng = check_random_state(self.random_state)
+        rng = check_random_state(self._random_state)
 
         for _ in range(self.n_splits):
             # if there are ties in the class-counts, we want

@@ -430,19 +430,28 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
         np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
         np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
 
+    # Tests to ensure consistent behaviour even when random_state is not set.
     kf = KFold(3, shuffle=True)
     skf = StratifiedKFold(3, shuffle=True)
-
-    for cv in (kf, skf):
+    kf1 = KFold(3, shuffle=True)
+    kf2 = KFold(3, shuffle=True)
+    skf1 = StratifiedKFold(3, shuffle=True)
+    skf2 = StratifiedKFold(3, shuffle=True)
+    for cvs in ((kf, kf1, kf2), (skf, skf1, skf2)):
         for data in zip((X, X2), (y, y2)):
+            # For the same initialilzation, splits should be same across
+            # multiple split calls, even when random_state is not set.
+            np.testing.assert_equal(list(cvs[0].split(*data)),
+                                    list(cvs[0].split(*data)))
+
             try:
-                np.testing.assert_equal(list(cv.split(*data)),
-                                        list(cv.split(*data)))
+                np.testing.assert_equal(list(cvs[1].split(*data)),
+                                        list(cvs[2].split(*data)))
             except AssertionError:
                 pass
             else:
-                raise AssertionError("The splits for data, %s, are same even "
-                                     "when random state is not set" % data)
+                raise AssertionError("When random_state is not set, the splits"
+                                     " are same for different initializations")
 
 
 def test_shuffle_stratifiedkfold():
