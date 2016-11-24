@@ -39,8 +39,10 @@ def set_config(assume_finite=None):
     Parameters
     ----------
     assume_finite : bool, optional
-        If True, validation for finiteness will be skipped, saving time.
-        If False, validation for finiteness will be performed, avoiding error.
+        If True, validation for finiteness will be skipped,
+        saving time, but leading to potential crashes. If
+        False, validation for finiteness will be performed,
+        avoiding error.
 
     Notes
     -----
