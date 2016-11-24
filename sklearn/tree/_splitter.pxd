@@ -65,9 +65,10 @@ cdef class Splitter:
     cdef DOUBLE_t* sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
-    # that the samples contained in a node are contiguous. With this setting,
-    # `node_split` reorganizes the node samples `samples[start:end]` in two
-    # subsets `samples[start:pos]` and `samples[pos:end]`.
+    # that the samples contained in a node are contiguous, which means samples
+    # of weight 0 have been filtered out. With this setting, `node_split`
+    # reorganizes the node samples `samples[start:end]` in two subsets
+    # `samples[start:pos]` and `samples[pos:end]`.
 
     # The 1-d  `features` array of size n_features contains the features
     # indices and allows fast sampling without replacement of features.
