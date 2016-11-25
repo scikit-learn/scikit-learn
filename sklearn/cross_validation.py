@@ -1810,7 +1810,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
     Returns
     -------
-    checked_cv: a cross-validation generator instance.
+    checked_cv : a cross-validation generator instance.
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """

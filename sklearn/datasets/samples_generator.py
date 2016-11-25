@@ -584,7 +584,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     n_samples : int, optional (default=100)
         The total number of points generated.
 
-    shuffle: bool, optional (default=True)
+    shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
 
     noise : double or None (default=None)
@@ -1050,7 +1050,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_samples : int
         number of samples to generate
 
-    n_components:  int,
+    n_components :  int,
         number of components in the dictionary
 
     n_features : int

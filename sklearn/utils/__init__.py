@@ -43,7 +43,7 @@ def safe_mask(X, mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask: array
+    mask : array
         Mask to be used on X.
 
     Returns

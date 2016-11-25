@@ -157,7 +157,7 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -606,14 +606,14 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
     Parameters
     ----------
-    transformer_list: list of (string, transformer) tuples
+    transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
-    transformer_weights: dict, optional
+    transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
@@ -629,7 +629,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 

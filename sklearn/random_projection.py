@@ -233,7 +233,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     Returns
     -------
-    components: numpy array or CSR matrix with shape [n_components, n_features]
+    components : array or CSR matrix with shape [n_components, n_features]
         The generated Gaussian random matrix.
 
     See Also

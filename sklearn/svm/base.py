@@ -851,7 +851,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    sample_weight: array-like, optional
+    sample_weight : array-like, optional
         Weights assigned to each sample.
 
     Returns

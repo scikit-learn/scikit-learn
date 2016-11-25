@@ -163,7 +163,7 @@ class BayesianGaussianMixture(BaseMixture):
                 (n_features)             if 'diag',
                 float                    if 'spherical'
 
-    random_state: RandomState or an int seed, defaults to None.
+    random_state : RandomState or an int seed, defaults to None.
         A random number generator instance.
 
     warm_start : bool, default to False.

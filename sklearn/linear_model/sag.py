@@ -108,15 +108,15 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     alpha : float, optional
         Constant that multiplies the regularization term. Defaults to 1.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The max number of passes over the training data if the stopping
         criteria is not reached. Defaults to 1000.
 
-    tol: double, optional
+    tol : double, optional
         The stopping criteria for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol. Defaults to .001
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level.
 
     random_state : int seed, RandomState instance, or None (default)
@@ -131,7 +131,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         going through all the samples. The value should be precomputed
         to speed up cross validation.
 
-    warm_start_mem: dict, optional
+    warm_start_mem : dict, optional
         The initialization parameters used for warm starting. Warm starting is
         currently used in LogisticRegression but not in Ridge.
         It contains:

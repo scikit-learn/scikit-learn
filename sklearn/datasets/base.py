@@ -149,7 +149,7 @@ def load_files(container_path, description=None, categories=None,
     container_path : string or unicode
         Path to the main folder holding one subfolder per category
 
-    description: string or unicode, optional (default=None)
+    description : string or unicode, optional (default=None)
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 
@@ -169,7 +169,7 @@ def load_files(container_path, description=None, categories=None,
         If not None, encoding to use to decode text files to Unicode if
         load_content is True.
 
-    decode_error: {'strict', 'ignore', 'replace'}, optional
+    decode_error : {'strict', 'ignore', 'replace'}, optional
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
@@ -703,12 +703,12 @@ def load_sample_image(image_name):
 
     Parameters
     -----------
-    image_name: {`china.jpg`, `flower.jpg`}
+    image_name : {`china.jpg`, `flower.jpg`}
         The name of the sample image loaded
 
     Returns
     -------
-    img: 3D array
+    img : 3D array
         The image as a numpy array: height x width x color
 
     Examples

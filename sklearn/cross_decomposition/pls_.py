@@ -153,7 +153,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
     mode : "A" classical PLS and "B" CCA. See notes.
 
-    norm_y_weights: boolean, normalize Y weights to one? (default False)
+    norm_y_weights : boolean, normalize Y weights to one? (default False)
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
@@ -195,7 +195,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coef_: array, [p, q]
+    coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
@@ -517,7 +517,7 @@ class PLSRegression(_PLS):
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coef_: array, [p, q]
+    coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like

@@ -485,11 +485,11 @@ class GaussianMixture(BaseMixture):
         The user-provided initial weights, defaults to None.
         If it None, weights are initialized using the `init_params` method.
 
-    means_init: array-like, shape (n_components, n_features), optional
+    means_init : array-like, shape (n_components, n_features), optional
         The user-provided initial means, defaults to None,
         If it None, means are initialized using the `init_params` method.
 
-    precisions_init: array-like, optional.
+    precisions_init : array-like, optional.
         The user-provided initial precisions (inverse of the covariance
         matrices), defaults to None.
         If it None, precisions are initialized using the 'init_params' method.
@@ -726,7 +726,7 @@ class GaussianMixture(BaseMixture):
 
         Returns
         -------
-        bic: float
+        bic : float
             The lower the better.
         """
         return (-2 * self.score(X) * X.shape[0] +
@@ -741,7 +741,7 @@ class GaussianMixture(BaseMixture):
 
         Returns
         -------
-        aic: float
+        aic : float
             The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()

@@ -89,7 +89,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        activations: list, length = n_layers - 1
+        activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
 
         with_output_activation : bool, default True
@@ -149,7 +149,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         y : array-like, shape (n_samples,)
             The target values.
 
-        activations: list, length = n_layers - 1
+        activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
 
         deltas : list, length = n_layers - 1
@@ -193,7 +193,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         y : array-like, shape (n_samples,)
             The target values.
 
-        activations: list, length = n_layers - 1
+        activations : list, length = n_layers - 1
              The ith element of the list holds the values of the ith layer.
 
         deltas : list, length = n_layers - 1

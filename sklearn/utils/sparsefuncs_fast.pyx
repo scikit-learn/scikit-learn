@@ -56,16 +56,16 @@ def csr_mean_variance_axis0(X):
 
     Parameters
     ----------
-    X: CSR sparse matrix, shape (n_samples, n_features)
+    X : CSR sparse matrix, shape (n_samples, n_features)
         Input data.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
@@ -128,16 +128,16 @@ def csc_mean_variance_axis0(X):
 
     Parameters
     ----------
-    X: CSC sparse matrix, shape (n_samples, n_features)
+    X : CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
@@ -203,25 +203,25 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
       Input data.
 
-    last_mean: float array with shape (n_features,)
+    last_mean : float array with shape (n_features,)
       Array of feature-wise means to update with the new data X.
 
-    last_var: float array with shape (n_features,)
+    last_var : float array with shape (n_features,)
       Array of feature-wise var to update with the new data X.
 
-    last_n: int
+    last_n : int
       Number of samples seen so far, before X.
 
     Returns
     -------
 
-    updated_mean: float array with shape (n_features,)
+    updated_mean : float array with shape (n_features,)
       Feature-wise means
 
-    updated_variance: float array with shape (n_features,)
+    updated_variance : float array with shape (n_features,)
       Feature-wise variances
 
     updated_n : int

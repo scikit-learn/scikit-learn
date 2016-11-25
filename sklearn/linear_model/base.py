@@ -376,7 +376,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
         check_is_fitted(self, "coef_", msg=msg)
@@ -406,7 +406,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, "coef_", msg=msg)

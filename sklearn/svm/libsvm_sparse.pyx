@@ -89,9 +89,9 @@ def libsvm_sparse_train ( int n_features,
     n_features : number of features.
         XXX: can we retrieve this from any other parameter ?
 
-    X: array-like, dtype=float, size=[N, D]
+    X : array-like, dtype=float, size=[N, D]
 
-    Y: array, dtype=float, size=[N]
+    Y : array, dtype=float, size=[N]
         target vector
 
     ...

@@ -461,7 +461,7 @@ class GraphLassoCV(GraphLasso):
         grid to be used. See the notes in the class docstring for
         more details.
 
-    n_refinements: strictly positive integer
+    n_refinements : strictly positive integer
         The number of times the grid is refined. Not used if explicit
         values of alphas are passed.
 
@@ -492,7 +492,7 @@ class GraphLassoCV(GraphLasso):
     max_iter : integer, optional
         Maximum number of iterations.
 
-    mode: {'cd', 'lars'}
+    mode : {'cd', 'lars'}
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where number of features is greater
         than number of samples. Elsewhere prefer cd which is more numerically

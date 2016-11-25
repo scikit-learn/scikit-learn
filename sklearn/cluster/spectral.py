@@ -39,7 +39,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
         of the rotation matrix
 

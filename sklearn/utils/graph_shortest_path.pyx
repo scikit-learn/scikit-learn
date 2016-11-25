@@ -494,7 +494,7 @@ cdef void dijkstra_directed_one_row(
     graph : array, shape = (N,N)
         on return, graph[i_node] contains the path lengths from
         i_node to each target
-    heap: the Fibonacci heap object to use
+    heap : the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
     cdef unsigned int N = graph.shape[0]
@@ -559,7 +559,7 @@ cdef void dijkstra_one_row(unsigned int i_node,
     graph : array, shape = (N,)
         on return, graph[i_node] contains the path lengths from
         i_node to each target
-    heap: the Fibonacci heap object to use
+    heap : the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
     cdef unsigned int N = graph.shape[0]

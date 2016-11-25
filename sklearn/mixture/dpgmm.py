@@ -146,14 +146,14 @@ class _DPGMMBase(_GMMBase):
 
     Parameters
     ----------
-    n_components: int, default 1
+    n_components : int, default 1
         Number of mixture components.
 
-    covariance_type: string, default 'diag'
+    covariance_type : string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    alpha: float, default 1
+    alpha : float, default 1
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
@@ -674,14 +674,14 @@ class VBGMM(_DPGMMBase):
 
     Parameters
     ----------
-    n_components: int, default 1
+    n_components : int, default 1
         Number of mixture components.
 
-    covariance_type: string, default 'diag'
+    covariance_type : string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    alpha: float, default 1
+    alpha : float, default 1
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
