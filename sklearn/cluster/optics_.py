@@ -9,8 +9,6 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
-# Imports #
-
 import scipy as sp
 import numpy as np
 from ..utils import check_array
@@ -18,6 +16,7 @@ from ..neighbors import BallTree
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import pairwise_distances
 
+from ._optics_inner import min_heap
 
 class SetOfObjects(BallTree):
 
@@ -43,51 +42,26 @@ class SetOfObjects(BallTree):
         # Start all points as noise ##
         self._cluster_id = -sp.ones(self._n, dtype=int)
         self._is_core = sp.zeros(self._n, dtype=bool)
-        # Ordering is important below... ###
         self.ordering_ = []
 
 
+# OPTICS helper functions; these should not be public #
 def _prep_optics(self, min_samples):
-    """Prep data set for main OPTICS loop
-
-    Parameters
-    ----------
-    min_samples: int
-        The minimum number of samples in a neighborhood to be
-        considered a core point
-
-    Returns
-    -------
-    Modified SetOfObjects tree structure"""
-
     self.core_dists_[:] = self.query(self.get_arrays()[0],
                                      k=min_samples)[0][:, -1]
 
-# Main OPTICS loop #
-
 
 def _build_optics(setofobjects, epsilon):
-    """Builds OPTICS ordered list of clustering structure
-
-    Parameters
-    ----------
-    SetofObjects: Instantiated and prepped instance of 'SetOfObjects' class
-    epsilon: float or int
-        Determines maximum object size that can be extracted. Smaller
-        epsilons reduce run time. This should be equal to epsilon
-        in 'prep_optics' """
-
+    # Main OPTICS loop. Not parallelizable. The order that entries are
+    # written to the 'ordering_' list is important!
     for point in setofobjects._index:
         if not setofobjects._processed[point]:
             _expandClusterOrder(setofobjects, point, epsilon)
 
-# OPTICS helper functions; these should not be public #
-
-# Not parallelizable. The order that entries are written to
-# the 'ordering_' is important!
-
 
 def _expandClusterOrder(setofobjects, point, epsilon):
+    # As above, not parallelizable. Parallelizing would allow items in
+    # the 'unprocessed' list to switch to 'processed'
     if setofobjects.core_dists_[point] <= epsilon:
         while not setofobjects._processed[point]:
             setofobjects._processed[point] = True
@@ -98,13 +72,7 @@ def _expandClusterOrder(setofobjects, point, epsilon):
         setofobjects._processed[point] = True
 
 
-# As above, not parallelizable. Parallelizing would allow items in
-# the 'unprocessed' list to switch to 'processed'
 def _set_reach_dist(setofobjects, point_index, epsilon):
-
-    # Assumes that the query returns ordered (smallest distance first)
-    # entries. This is the case for the balltree query...
-
     X = np.array(setofobjects.data[point_index]).reshape(1, -1)
     indices = setofobjects.query_radius(X, r=epsilon,
                                         return_distance=False,
@@ -113,43 +81,26 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
 
     # Checks to see if there more than one member in the neighborhood ##
     if sp.iterable(indices):
-
-        # Masking processed values ##
-        # n_pr is 'not processed'
+        # Masking processed values; n_pr is 'not processed'
         n_pr = indices[(setofobjects._processed[indices] < 1).ravel()]
         if len(n_pr) > 0:
             dists = pairwise_distances(X,
                                        setofobjects.get_arrays()[0][[n_pr]],
                                        setofobjects.metric, n_jobs=1).ravel()
 
-            # Fix for neighbors not being returned sorted, as in comment
-            # at top of this function alludes to...
-            # i.e., issues with rdists being tied... if the smallest rdists
-            # are tied, the point index with the smallest distance needs to
-            # be returned
-
-            # stablesortidx = dists.argsort()
-            # dists = dists[stablesortidx]
-            # n_pr = n_pr[stablesortidx]
-            c = np.rec.fromarrays([dists, n_pr])
-            c.sort()
-            # c.f0 is dists, c.f1 is n_pr
-            rdists = sp.maximum(c.f0, setofobjects.core_dists_[point_index])
-            new_reach = sp.minimum(setofobjects.reachability_[c.f1],
-                                   rdists)
-            setofobjects.reachability_[c.f1] = new_reach
+            rdists = sp.maximum(dists, setofobjects.core_dists_[point_index])
+            new_reach = sp.minimum(setofobjects.reachability_[n_pr], rdists)
+            setofobjects.reachability_[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop ##
         if n_pr.size > 0:
             # Define return order based on reachability distance ###
-            return c.f1[sp.argmin(setofobjects.reachability_[c.f1])]
+            return(min_heap(list(zip(setofobjects.reachability_[n_pr],
+                                     dists, n_pr))))
+            #return c.f1[sp.argmin(setofobjects.reachability_[c.f1])]
         else:
             return point_index
-
-# End Algorithm #
-
-# class OPTICS(object):
 
 
 class OPTICS(BaseEstimator, ClusterMixin):
@@ -217,7 +168,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         ----------
         X : array [n_samples, n_features]"""
 
-        #  Checks for sparse matrices
         X = check_array(X)
 
         # Check for valid n_samples relative to min_samples
@@ -246,7 +196,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Density based filter function
         Returns index of which points will be core at given epsilon.
         Can be run before 'fit' is called for reduced computation.
-        Note: epsilon_prime is not limited to <= epsilon for this method.
+        Note: distance_threshold is not limited to <= epsilon for this method.
 
         Parameters
         ----------
@@ -258,7 +208,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Either boolean or indexed array of core / not core points
         """
         if self.processed is False:
-            # epsilon has no impact on this method
             X = check_array(X)
             self.tree = SetOfObjects(X, self.metric)
             _prep_optics(self.tree, self.min_samples)
@@ -299,8 +248,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 # else:
                 #    print(clustering + " is not a valid clustering method")
                 self.labels_ = self._cluster_id[:]
-                # Setting following line to '1' instead of 'True' to keep
-                # line shorter than 79 characters
                 self.core_sample_indices_ = self._index[self._is_core[:] == 1]
                 self.n_clusters = max(self._cluster_id)
                 if epsilon_prime > (self.eps * 1.05):
@@ -356,12 +303,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Extraction wrapper
         RPlot = self.reachability_[self.ordering_].tolist()
         RPoints = self.ordering_
-        root_node = _automatic_cluster(RPlot, RPoints,
-                                       maxima_ratio,
-                                       rejection_ratio,
-                                       similarity_threshold,
-                                       significant_min,
-                                       min_cluster_size_ratio,
+        root_node = _automatic_cluster(RPlot, RPoints, maxima_ratio,
+                                       rejection_ratio, similarity_threshold,
+                                       significant_min, min_cluster_size_ratio,
                                        min_maxima_ratio)
         leaves = _get_leaves(root_node, [])
         # Start cluster id's at 1
@@ -376,31 +320,23 @@ class OPTICS(BaseEstimator, ClusterMixin):
             clustid += 1
 
 
-def _automatic_cluster(RPlot, RPoints,
-                       maxima_ratio,
-                       rejection_ratio,
-                       similarity_threshold,
-                       significant_min,
-                       min_cluster_size_ratio,
-                       min_maxima_ratio):
+def _automatic_cluster(RPlot, RPoints, maxima_ratio, rejection_ratio,
+                       similarity_threshold, significant_min,
+                       min_cluster_size_ratio, min_maxima_ratio):
 
-    # Main extraction function
     min_neighborhood_size = 2
-
     min_cluster_size = int(min_cluster_size_ratio * len(RPoints))
+    neighborhood_size = int(min_maxima_ratio*len(RPoints))
 
     # Should this check for < min_samples? Should this be public?
     if min_cluster_size < 5:
         min_cluster_size = 5
-
-    neighborhood_size = int(min_maxima_ratio*len(RPoints))
 
     # Again, should this check < min_samples, should the parameter be public?
     if neighborhood_size < min_neighborhood_size:
         neighborhood_size = min_neighborhood_size
 
     local_maxima_points = _find_local_maxima(RPlot, RPoints, neighborhood_size)
-
     root_node = TreeNode(RPoints, 0, len(RPoints), None)
     _cluster_tree(root_node, None, local_maxima_points,
                   RPlot, RPoints, min_cluster_size,
@@ -430,25 +366,20 @@ class TreeNode(object):
 def _is_local_maxima(index, RPlot, RPoints, neighborhood_size):
     # 0 = point at index is not local maxima
     # 1 = point at index is local maxima
-
     for i in range(1, neighborhood_size+1):
         # process objects to the right of index
         if index + i < len(RPlot):
             if (RPlot[index] < RPlot[index+i]):
                 return 0
-
         # process objects to the left of index
         if index - i >= 0:
             if (RPlot[index] < RPlot[index-i]):
                 return 0
-
     return 1
 
 
 def _find_local_maxima(RPlot, RPoints, neighborhood_size):
-
     local_maxima_points = {}
-
     # 1st and last points on Reachability Plot are not taken
     # as local maxima points
     for i in range(1, len(RPoints)-1):
@@ -460,13 +391,11 @@ def _find_local_maxima(RPlot, RPoints, neighborhood_size):
             local_maxima_points[i] = RPlot[i]
 
     return sorted(local_maxima_points,
-                  key=local_maxima_points.__getitem__,
-                  reverse=True)
+                  key=local_maxima_points.__getitem__, reverse=True)
 
 
-def _cluster_tree(node, parent_node, local_maxima_points,
-                  RPlot, RPoints, min_cluster_size,
-                  maxima_ratio, rejection_ratio,
+def _cluster_tree(node, parent_node, local_maxima_points, RPlot, RPoints,
+                  min_cluster_size, maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min):
     # node is a node or the root of the tree in the first call
     # parent_node is parent node of N or None if node is root of the tree
@@ -499,9 +428,8 @@ def _cluster_tree(node, parent_node, local_maxima_points,
     if RPlot[s] < significant_min:
         node.assign_split_point(-1)
         # if split_point is not significant, ignore this split and continue
-        _cluster_tree(node, parent_node, local_maxima_points,
-                      RPlot, RPoints, min_cluster_size,
-                      maxima_ratio, rejection_ratio,
+        _cluster_tree(node, parent_node, local_maxima_points, RPlot, RPoints,
+                      min_cluster_size, maxima_ratio, rejection_ratio,
                       similarity_threshold, significant_min)
         return
 
@@ -554,15 +482,8 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         node.assign_split_point(-1)
         return
 
-    '''
-    Check if nodes can be moved up one level - the new cluster created
-    is too "similar" to its parent, given the similarity threshold.
-    Similarity can be determined by 1)the size of the new cluster relative
-    to the size of the parent node or 2)the average of the reachability
-    values of the new cluster relative to the average of the
-    reachability values of the parent node
-    A lower value for the similarity threshold means less levels in the tree.
-    '''
+    # Check if nodes can be moved up one level - the new cluster created
+    # is too "similar" to its parent, given the similarity threshold.
     bypass_node = 0
     if parent_node is not None:
         if (float(float(node.end-node.start) /
@@ -576,8 +497,7 @@ def _cluster_tree(node, parent_node, local_maxima_points,
         if bypass_node == 1:
             parent_node.add_child(nl[0])
             _cluster_tree(nl[0], parent_node, nl[1], RPlot, RPoints,
-                          min_cluster_size, maxima_ratio,
-                          rejection_ratio,
+                          min_cluster_size, maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
         else:
             node.add_child(nl[0])
@@ -595,14 +515,9 @@ def _get_leaves(node, arr):
     return arr
 
 
-# Extract DBSCAN Equivalent cluster structure ##
-
-# Important: Epsilon prime should be less than epsilon used in OPTICS #
-
-
 def _extract_DBSCAN(setofobjects, epsilon_prime):
-
-    # Start Cluster_id at zero, incremented to '1' for first cluster
+    # Extract DBSCAN Equivalent cluster structure
+    # Important: Epsilon prime should be less than epsilon used in OPTICS
     cluster_id = 0
     for entry in setofobjects.ordering_:
         if setofobjects.reachability_[entry] > epsilon_prime:
@@ -611,14 +526,11 @@ def _extract_DBSCAN(setofobjects, epsilon_prime):
                 setofobjects._cluster_id[entry] = cluster_id
             else:
                 # This is only needed for compatibility for repeated scans.
-                # -1 is Noise points
-                setofobjects._cluster_id[entry] = -1
+                setofobjects._cluster_id[entry] = -1   # Noise points
                 setofobjects._is_core[entry] = 0
         else:
             setofobjects._cluster_id[entry] = cluster_id
             if setofobjects.core_dists_[entry] <= epsilon_prime:
-                # One (i.e., 'True') for core points #
-                setofobjects._is_core[entry] = 1
+                setofobjects._is_core[entry] = 1   # True
             else:
-                # Zero (i.e., 'False') for non-core, non-noise points #
-                setofobjects._is_core[entry] = 0
+                setofobjects._is_core[entry] = 0   # False

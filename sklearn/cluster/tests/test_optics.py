@@ -1,5 +1,5 @@
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.cluster.optics import OPTICS
+from sklearn.cluster.optics_ import OPTICS
 from sklearn.utils.testing import assert_equal, assert_greater_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from .common import generate_clustered_data
@@ -12,6 +12,7 @@ def test_optics():
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
+    print(np.shape(X))
     # Parameters chosen specifically for this task.
     # Compute OPTICS
     clust = OPTICS(eps=6.0, min_samples=4, metric='euclidean')
@@ -43,7 +44,6 @@ def test_filter():
     agree = sum(clust._is_core == bool_memb)
     assert_greater_equal(float(agree)/len(X), 0.95)
 
-
 def test_optics2():
     # Tests the optics clustering method and all functions inside it
     # 'dbscan' mode
@@ -61,7 +61,6 @@ def test_optics2():
 
     # assert samples.size == 0
     # assert labels[0] == -1
-
 
 def test_empty_extract():
     # Test extract where fit() has not yet been run.
