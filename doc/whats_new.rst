@@ -88,9 +88,9 @@ Bug fixes
    - Tree splitting criterion classes' cloning/pickling is now memory safe
      :issue:`7680` by `Ibraim Ganiev`_.
 
-   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a sparse array
-     X and initial centroids, where X's means were unnecessarily being subtracted from
-     the centroids.
+   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
+     sparse array X and initial centroids, where X's means were unnecessarily
+     being subtracted from the centroids.
 
 .. _changes_0_18_1:
 
