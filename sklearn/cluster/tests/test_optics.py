@@ -44,6 +44,7 @@ def test_filter():
     agree = sum(clust._is_core == bool_memb)
     assert_greater_equal(float(agree)/len(X), 0.95)
 
+
 def test_optics2():
     # Tests the optics clustering method and all functions inside it
     # 'dbscan' mode
@@ -61,6 +62,7 @@ def test_optics2():
 
     # assert samples.size == 0
     # assert labels[0] == -1
+
 
 def test_empty_extract():
     # Test extract where fit() has not yet been run.

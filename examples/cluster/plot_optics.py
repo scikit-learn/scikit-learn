@@ -11,12 +11,11 @@ Finds core samples of high density and expands clusters from them.
 # License: BSD 3 clause
 
 
-from sklearn.cluster.optics import OPTICS
+from sklearn.cluster.optics_ import OPTICS
 import numpy as np
 
 import matplotlib.pyplot as plt
 
-##############################################################################
 # Generate sample data
 
 np.random.seed(0)
@@ -30,8 +29,7 @@ X = np.r_[X, [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)]
 X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
 X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
 
-##############################################################################
-# plot scatterplot of points
+# Plot scatterplot of points
 
 plt.figure(figsize=(10, 10))
 
@@ -39,7 +37,6 @@ plt.subplot(221)
 plt.plot(X[:, 0], X[:, 1], 'b.', ms=2)
 plt.title("Raw Data")
 
-##############################################################################
 # Compute OPTICS
 
 clust = OPTICS(eps=30.3, min_samples=9, metric='minkowski')
@@ -47,7 +44,6 @@ clust = OPTICS(eps=30.3, min_samples=9, metric='minkowski')
 # Run the fit
 clust.fit(X)
 
-##############################################################################
 # Plot result
 
 core_samples_mask = np.zeros_like(clust.labels_, dtype=bool)
