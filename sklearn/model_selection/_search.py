@@ -12,7 +12,7 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, Sized, defaultdict, Sequence
+from collections import Mapping, namedtuple, defaultdict, Sequence
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -532,17 +532,44 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.transform(Xt)
 
-    def _fit(self, X, y, groups, parameter_iterable):
-        """Actual fitting,  performing the search over parameters."""
+    @property
+    def _param_iterable(self):
+        """To generate parameter iterables for multiple iterations"""
+        if hasattr(self, 'param_grid'):
+            return ParameterGrid(self.param_grid)
+        else:
+            return ParameterSampler(
+                self.param_distributions, self.n_iter,
+                random_state=self.random_state)
 
+    def fit(self, X, y=None, groups=None):
+        """Run fit with all sets of parameters.
+
+        Parameters
+        ----------
+
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+        """
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
-        if self.verbose > 0 and isinstance(parameter_iterable, Sized):
-            n_candidates = len(parameter_iterable)
+        # Regenerate parameter iterable for each fit
+        candidate_params = list(self._param_iterable)
+        n_candidates = len(candidate_params)
+        if self.verbose > 0:
             print("Fitting {0} folds for each of {1} candidates, totalling"
                   " {2} fits".format(n_splits, n_candidates,
                                      n_candidates * n_splits))
@@ -550,7 +577,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
 
-        cv_iter = list(cv.split(X, y, groups))
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
@@ -559,28 +585,25 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   fit_params=self.fit_params,
                                   return_train_score=self.return_train_score,
                                   return_n_test_samples=True,
-                                  return_times=True, return_parameters=True,
+                                  return_times=True, return_parameters=False,
                                   error_score=self.error_score)
-          for parameters in parameter_iterable
-          for train, test in cv_iter)
+          for train, test in cv.split(X, y, groups)
+          for parameters in candidate_params)
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_scores, test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
+            (train_scores, test_scores, test_sample_counts, fit_time,
+             score_time) = zip(*out)
         else:
-            (test_scores, test_sample_counts,
-             fit_time, score_time, parameters) = zip(*out)
-
-        candidate_params = parameters[::n_splits]
-        n_candidates = len(candidate_params)
+            (test_scores, test_sample_counts, fit_time, score_time) = zip(*out)
 
         results = dict()
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
-            array = np.array(array, dtype=np.float64).reshape(n_candidates,
-                                                              n_splits)
+            # When iterated first by splits, then by parameters
+            array = np.array(array, dtype=np.float64).reshape(n_splits,
+                                                              n_candidates).T
             if splits:
                 for split_i in range(n_splits):
                     results["split%d_%s"
@@ -600,7 +623,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Computed the (weighted) mean and std for test scores alone
         # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
+        test_sample_counts = np.array(test_sample_counts[::n_candidates],
                                       dtype=np.int)
 
         _store('test_score', test_scores, splits=True, rank=True,
@@ -924,26 +947,6 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None, groups=None):
-        """Run fit with all sets of parameters.
-
-        Parameters
-        ----------
-
-        X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
-            None for unsupervised learning.
-
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
-        """
-        return self._fit(X, y, groups, ParameterGrid(self.param_grid))
-
 
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
@@ -1166,25 +1169,3 @@ class RandomizedSearchCV(BaseSearchCV):
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
              return_train_score=return_train_score)
-
-    def fit(self, X, y=None, groups=None):
-        """Run fit on the estimator with randomly drawn parameters.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
-            None for unsupervised learning.
-
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
-        """
-        sampled_params = ParameterSampler(self.param_distributions,
-                                          self.n_iter,
-                                          random_state=self.random_state)
-        return self._fit(X, y, groups, sampled_params)
