@@ -389,7 +389,7 @@ def completeness_score(labels_true, labels_pred):
 
     Returns
     -------
-    completeness: float
+    completeness : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
     References

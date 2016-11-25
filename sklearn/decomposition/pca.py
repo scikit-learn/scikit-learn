@@ -38,18 +38,18 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
 
     Parameters
     ----------
-    spectrum: array of shape (n)
+    spectrum : array of shape (n)
         Data spectrum.
-    rank: int
+    rank : int
         Tested rank value.
-    n_samples: int
+    n_samples : int
         Number of samples.
-    n_features: int
+    n_features : int
         Number of features.
 
     Returns
     -------
-    ll: float,
+    ll : float,
         The log-likelihood
 
     Notes
@@ -307,7 +307,7 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -506,12 +506,12 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X: array, shape(n_samples, n_features)
+        X : array, shape(n_samples, n_features)
             The data.
 
         Returns
         -------
-        ll: array, shape (n_samples,)
+        ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self, 'mean_')
@@ -535,12 +535,12 @@ class PCA(_BasePCA):
 
         Parameters
         ----------
-        X: array, shape(n_samples, n_features)
+        X : array, shape(n_samples, n_features)
             The data.
 
         Returns
         -------
-        ll: float
+        ll : float
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))
@@ -658,7 +658,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -675,7 +675,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 

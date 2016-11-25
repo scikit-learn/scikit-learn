@@ -1537,7 +1537,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y: array of shape = ["n_samples]
+        y : array of shape = ["n_samples]
             The predicted values.
         """
         score = self.decision_function(X)
