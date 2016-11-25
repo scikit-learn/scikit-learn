@@ -64,23 +64,23 @@ cdef class Splitter:
         """
         Parameters
         ----------
-        criterion: Criterion
+        criterion : Criterion
             The criterion to measure the quality of a split.
 
-        max_features: SIZE_t
+        max_features : SIZE_t
             The maximal number of randomly selected features which can be
             considered for a split.
 
-        min_samples_leaf: SIZE_t
+        min_samples_leaf : SIZE_t
             The minimal number of samples each leaf can have, where splits
             which would result in having less samples in a leaf are not
             considered.
 
-        min_weight_leaf: double
+        min_weight_leaf : double
             The minimal weight each leaf can have, where the weight is the sum
             of the weights of each sample in it.
 
-        random_state: object
+        random_state : object
             The user inputted random state to be used for pseudo-randomness
         """
 
@@ -127,13 +127,13 @@ cdef class Splitter:
 
         Parameters
         ----------
-        X: object
+        X : object
             This contains the inputs. Usually it is a 2d numpy array.
 
-        y: numpy.ndarray, dtype=DOUBLE_t
+        y : numpy.ndarray, dtype=DOUBLE_t
             This is the vector of targets, or true labels, for the samples
 
-        sample_weight: numpy.ndarray, dtype=DOUBLE_t (optional)
+        sample_weight : numpy.ndarray, dtype=DOUBLE_t (optional)
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
@@ -187,11 +187,11 @@ cdef class Splitter:
 
         Parameters
         ----------
-        start: SIZE_t
+        start : SIZE_t
             The index of the first sample to consider
-        end: SIZE_t
+        end : SIZE_t
             The index of the last sample to consider
-        weighted_n_node_samples: numpy.ndarray, dtype=double pointer
+        weighted_n_node_samples : numpy.ndarray, dtype=double pointer
             The total weight of those samples
         """
 

@@ -28,7 +28,7 @@ def barycenter_weights(X, Z, reg=1e-3):
 
     Z : array-like, shape (n_samples, n_neighbors, n_dim)
 
-    reg: float, optional
+    reg : float, optional
         amount of regularization to add for the problem to be
         well-posed in the case of n_neighbors > n_dim
 
@@ -245,7 +245,7 @@ def locally_linear_embedding(
         Tolerance for modified LLE method.
         Only used if method == 'modified'
 
-    random_state: numpy.RandomState or int, optional
+    random_state : numpy.RandomState or int, optional
         The generator or seed used to determine the starting vector for arpack
         iterations.  Defaults to numpy.random.
 
@@ -568,7 +568,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
 
-    random_state: numpy.RandomState or int, optional
+    random_state : numpy.RandomState or int, optional
         The generator or seed used to determine the starting vector for arpack
         iterations.  Defaults to numpy.random.
 
@@ -662,7 +662,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self._fit_transform(X)
         return self.embedding_
