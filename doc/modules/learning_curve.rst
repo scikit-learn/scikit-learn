@@ -80,13 +80,13 @@ The function :func:`validation_curve` can help in this case::
   >>> np.random.shuffle(indices)
   >>> X, y = X[indices], y[indices]
 
-  >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
+  >>> train_scores, test_scores = validation_curve(Ridge(), X, y, "alpha",
   ...                                               np.logspace(-7, 3, 3))
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([[ 0.94...,  0.92...,  0.92...],
          [ 0.94...,  0.92...,  0.92...],
          [ 0.47...,  0.45...,  0.42...]])
-  >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  >>> test_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([[ 0.90...,  0.92...,  0.94...],
          [ 0.90...,  0.92...,  0.94...],
          [ 0.44...,  0.39...,  0.45...]])
@@ -143,7 +143,7 @@ average scores on the validation sets)::
   >>> from sklearn.model_selection import learning_curve
   >>> from sklearn.svm import SVC
 
-  >>> train_sizes, train_scores, valid_scores = learning_curve(
+  >>> train_sizes, train_scores, test_scores = learning_curve(
   ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
   >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
   array([ 50, 80, 110])
@@ -151,7 +151,7 @@ average scores on the validation sets)::
   array([[ 0.98...,  0.98 ,  0.98...,  0.98...,  0.98...],
          [ 0.98...,  1.   ,  0.98...,  0.98...,  0.98...],
          [ 0.98...,  1.   ,  0.98...,  0.98...,  0.99...]])
-  >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  >>> test_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([[ 1. ,  0.93...,  1. ,  1. ,  0.96...],
          [ 1. ,  0.96...,  1. ,  1. ,  0.96...],
          [ 1. ,  0.96...,  1. ,  1. ,  0.96...]])
