@@ -8,6 +8,8 @@ from collections import defaultdict
 import gc
 from time import time
 
+import six
+
 import numpy as np
 from scipy.linalg import norm
 
@@ -147,7 +149,7 @@ if __name__ == '__main__':
         fig = plt.figure('scikit-learn Non-Negative Matrix Factorization'
                          'benchmark results')
         ax = fig.gca(projection='3d')
-        for c, (label, timings) in zip('rbgcm', sorted(results.iteritems())):
+        for c, (label, timings) in zip('rbgcm', sorted(six.iteritems(results))):
             X, Y = np.meshgrid(samples_range, features_range)
             Z = np.asarray(timings).reshape(samples_range.shape[0],
                                             features_range.shape[0])
