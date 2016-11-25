@@ -255,3 +255,63 @@ def calinski_harabaz_score(X, labels):
     return (1. if intra_disp == 0. else
             extra_disp * (n_samples - n_labels) /
             (intra_disp * (n_labels - 1.)))
+
+
+def davies_bouldin_index(X, labels):
+    """Compute the Davies Bouldin index.
+
+    The index is defiend as the ratio of within-cluster
+    and between-cluster distances.
+
+    Parameters
+    ----------
+    X : array-like, shape (``n_samples``, ``n_features``)
+        List of ``n_features``-dimensional data points. Each row corresponds
+        to a single data point.
+
+    labels : array-like, shape (``n_samples``,)
+        Predicted labels for each sample.
+
+    Returns
+    -------
+    score : float
+        The resulting Davies-Bouldin index.
+
+    References
+    ----------
+    .. [1] `Davies, David L.; Bouldin, Donald W. (1979).
+       "A Cluster Separation Measure". IEEE Transactions on
+       Pattern Analysis and Machine Intelligence. PAMI-1 (2): 224-227`_
+    """
+
+    X, labels = check_X_y(X, labels)
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+    n_samples, _ = X.shape
+    n_labels = len(le.classes_)
+
+    check_number_of_labels(n_labels, n_samples)
+    clusters_data = {}
+    for k in range(n_labels):
+        cluster_k = X[labels == k]
+        mean_k = np.mean(cluster_k, axis=0)
+        d_k = np.average(pairwise_distances(cluster_k, mean_k))
+        clusters_data[k] = (mean_k, d_k)
+
+    score = 0
+    for i in range(n_labels):
+        max_score = 0
+        mean_i, d_i = clusters_data[i]
+        for j in range(n_labels):
+            if i == j:
+                continue
+            mean_j, d_j = clusters_data[j]
+            mean_distance = np.linalg.norm(mean_i - mean_j)
+
+            if mean_distance == 0:
+                curr_score = 0
+            else:
+                curr_score = (d_i + d_j)/mean_distance
+            max_score = max(curr_score, max_score)
+        score += max_score
+    return score/n_labels
