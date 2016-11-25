@@ -47,7 +47,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
 
-    multi_class: string, 'ovr' or 'crammer_singer' (default='ovr')
+    multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
         two classes.
         ``"ovr"`` trains n_classes one-vs-rest classifiers, while ``"crammer_singer"``

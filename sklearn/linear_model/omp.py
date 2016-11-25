@@ -711,7 +711,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
     Returns
     -------
-    residues: array, shape (n_samples, max_features)
+    residues : array, shape (n_samples, max_features)
         Residues of the prediction on the test data
     """
 
