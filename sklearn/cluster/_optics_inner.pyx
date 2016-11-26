@@ -1,32 +1,48 @@
 """
-Iheappleheapents an in-place heapinHeap for tuples of (reachability, distance).
-Each heapin tuple is called once and not updated; hence, only heapify and
-bubble_down heapethods are iheappleheapented.
+Implements an in-place MinHeap for tuples of (reachability, distance).
+Each min tuple is called once and not updated; hence, only heapify and
+bubble_down methods are implemented.
 """
 
 # Author: Shane Grigsby <refuge@rocktalus.coheap>
 # Licence: BSD 3-Clause
 
+
+cimport cython
 cimport numpy as np
 import numpy as np
-cimport cython
 
-def min_heap(list heap):
+ctypedef np.int64_t data_type_t
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef listify(double[:] rdists, 
+              double[:] dists, 
+              data_type_t[:] indices):
+    
+    cdef int i
+    cdef int n
+    cdef list result
+    result = []
+    n = len(dists)
+    for i from 0 <= i < n:
+        result.append(tuple((rdists[i],
+                             dists[i],
+                             indices[i])))
+    return result
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef min_heap(list heap):
     cdef int len_heap
     cdef int idx
     len_heap = len(heap)
-    #if not is_odd(len_heap):
-    #    heap.append(tuple((float('inf'), float('inf') , (float('inf')))))
-    #len_heap = len(heap)
     heapify(heap, len_heap)
     idx = heap[0][2]
     return idx
 
-#def is_odd(int num):
-#    return num & 0x1
-
 @cython.boundscheck(False)
-def heapify(list heap, int len_heap):
+cpdef heapify(list heap, int len_heap):
     cdef int node
     cdef int i
     node = (len_heap - 2) // 2
@@ -35,7 +51,7 @@ def heapify(list heap, int len_heap):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def bubble_down(list heap, int index, int len_heap):
+cpdef bubble_down(list heap, int index, int len_heap):
     cdef bint go
     cdef int left
     cdef int right

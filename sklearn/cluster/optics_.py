@@ -15,7 +15,7 @@ from ..utils import check_array
 from ..neighbors import BallTree
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import pairwise_distances
-from ._optics_inner import min_heap
+from ._optics_inner import min_heap, listify
 
 
 class SetOfObjects(BallTree):
@@ -96,8 +96,8 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
         # if so, return control to main loop ##
         if n_pr.size > 0:
             # Define return order based on reachability distance ###
-            return(min_heap(list(zip(setofobjects.reachability_[n_pr],
-                                     dists, n_pr))))
+            return(min_heap(listify(setofobjects.reachability_[n_pr],
+                                     dists, n_pr)))
         else:
             return point_index
 

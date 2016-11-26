@@ -26,7 +26,7 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('_optics_inner',
                          sources=['_optics_inner.c'],
                          include_dirs=[numpy.get_include()],
-                         libraries=libraries)
+                         language="c")
 
     config.add_extension('_hierarchical',
                          sources=['_hierarchical.cpp'],
