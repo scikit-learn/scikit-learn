@@ -95,12 +95,14 @@ def check_classification_toy(name, max_samples):
     """Check classification on a toy dataset."""
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    clf = ForestClassifier(n_estimators=10, random_state=1, max_samples=max_samples)
+    clf = ForestClassifier(n_estimators=10, random_state=1,
+                           max_samples=max_samples)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
-    clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1, max_samples=max_samples)
+    clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1,
+                           max_samples=max_samples)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
@@ -159,7 +161,8 @@ def check_boston_criterion(name, criterion):
 
 
 def test_boston():
-    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
+    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae",
+                                                       "friedman_mse")):
         yield check_boston_criterion, name, criterion
 
 
@@ -228,7 +231,8 @@ def check_importances(name, criterion, X, y):
     assert_true(np.all(importances >= 0.0))
 
     for scale in [0.5, 10, 100]:
-        est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
+        est = ForestEstimator(n_estimators=20, random_state=0,
+                              criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
         assert_less(np.abs(importances - importances_bis).mean(), 0.001)
@@ -244,7 +248,8 @@ def test_importances():
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
         yield check_importances, name, criterion, X, y
 
-    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
+    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse",
+                                                       "mae"]):
         yield check_importances, name, criterion, X, y
 
 
@@ -711,7 +716,8 @@ def check_min_samples_split(name):
     assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
                    "Failed with {0}".format(name))
 
-    est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
+    est = ForestEstimator(min_samples_split=0.5, n_estimators=1,
+                          random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]

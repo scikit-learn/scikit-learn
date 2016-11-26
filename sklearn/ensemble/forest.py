@@ -103,7 +103,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 
     if forest.bootstrap:
         n_samples = X.shape[0]
-        
+
         # if max_samples is float:
         if not isinstance(max_samples, (numbers.Integral, np.integer)):
             max_samples = int(max_samples * X.shape[0])
@@ -221,7 +221,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               backend="threading")(
             delayed(parallel_helper)(tree, 'decision_path', X,
-                                      check_input=False)
+                                     check_input=False)
             for tree in self.estimators_)
 
         n_nodes = [0]
@@ -236,9 +236,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The training input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csc_matrix``.
+            The training input samples. Internally, its dtype will be converted
+             to ``dtype=np.float32``. If a sparse matrix is provided, it will
+             be converted into a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -438,7 +438,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         if not (0 < max_samples <= X.shape[0]):
             raise ValueError("max_samples must be in (0, n_samples]")
-        
+
         oob_decision_function = []
         oob_score = 0.0
         predictions = []
@@ -606,7 +606,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
             delayed(parallel_helper)(e, 'predict_proba', X,
-                                      check_input=False)
+                                     check_input=False)
             for e in self.estimators_)
 
         # Reduce
@@ -733,7 +733,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         n_samples = y.shape[0]
         max_samples = self.max_samples
-        
+
         # if max_samples is float:
         if not isinstance(max_samples, (numbers.Integral, np.integer)):
             max_samples = int(max_samples * X.shape[0])
@@ -972,8 +972,8 @@ class RandomForestClassifier(ForestClassifier):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_split", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1159,8 +1159,8 @@ class RandomForestRegressor(ForestRegressor):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_split", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1373,8 +1373,8 @@ class ExtraTreesClassifier(ForestClassifier):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_split", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1559,8 +1559,8 @@ class ExtraTreesRegressor(ForestRegressor):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_split", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1697,8 +1697,8 @@ class RandomTreesEmbedding(BaseForest):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_split", "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
