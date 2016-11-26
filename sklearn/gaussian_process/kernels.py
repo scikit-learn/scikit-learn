@@ -127,7 +127,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -405,7 +405,7 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -542,7 +542,7 @@ class KernelOperator(Kernel):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -806,7 +806,7 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 

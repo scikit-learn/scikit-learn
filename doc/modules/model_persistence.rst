@@ -81,6 +81,10 @@ additional metadata should be saved along the pickled model:
 This should make it possible to check that the cross-validation score is in the
 same range as before.
 
+Since a model internal representation may be different on two different
+architectures, dumping a model on one architecture and loading it on
+another architecture is not supported.
+
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
 `talk by Alex Gaynor <http://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.

@@ -32,12 +32,6 @@ from sklearn.linear_model import LassoLarsCV, lars_path
 from sklearn.utils import check_array
 
 
-def check_warnings():
-    if version_info < (2, 6):
-        raise SkipTest("Testing for warnings is not supported in versions \
-        older than Python 2.6")
-
-
 def test_lasso_zero():
     # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
@@ -437,8 +431,9 @@ def test_enet_multitarget():
 
 
 def test_multioutput_enetcv_error():
-    X = np.random.randn(10, 2)
-    y = np.random.randn(10, 2)
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    y = rng.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
 
