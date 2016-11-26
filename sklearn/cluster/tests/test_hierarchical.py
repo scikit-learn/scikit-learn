@@ -115,6 +115,14 @@ def test_height_linkage_tree():
         assert_true(len(children) + n_leaves == n_nodes)
 
 
+def test_zero_cosine_linkage_tree():
+    # Check that zero vectors in X produce an error when
+    # 'cosine' affinity is used
+    X = np.array([[0, 1],
+                  [0, 0]])
+    assert_raises(ValueError, linkage_tree, X, affinity='cosine')
+
+
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.

@@ -379,7 +379,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
             'Unknown linkage option, linkage should be one '
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
-    if np.sum(np.sum(np.abs(X), axis=1) == 0) > 0 and affinity == 'cosine':
+    if np.sum(1 - np.any(X, axis=1)) > 0 and affinity == 'cosine':
         raise ValueError(
             'Cosine affinity cannot be used when X contains zero vectors')
 
