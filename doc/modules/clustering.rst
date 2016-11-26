@@ -1569,3 +1569,77 @@ Drawbacks
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
     `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
+
+.. _davies–bouldin_index:
+
+Davies–Bouldin Index
+----------------------
+
+If the ground truth labels are not known, the Davies–Bouldin index
+(:func:`sklearn.metrics.davies_bouldin_index`) can be used to evaluate the
+model, where a lower Davies–Bouldin Index relates to a model with better
+separation between clusters.
+
+For :math:`k` clusters, the Davies–Bouldin index :math:`DB` is given as the
+ratio of within cluster-mean distance to the between means distance.
+
+.. math::
+  DB(k) = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} D_{ij}
+
+Where :math:`D_ij` is the ratio between the within distances in clusters
+:math:`i` and :math:`j` and the distance between the means of cluster
+:math:`i` and :math:`j`.
+
+.. math::
+  D_ij = \frac{\bar{d_i}+\bar{d_j}}{d_ij}
+
+:math:`\bar{d_i}` is the average distance between each point cluster
+:math:`i` and the centroid of cluster :math:`i`.
+:math:`\bar{d_i}` is the diameter of cluster :math:`i`.
+
+:math:`\bar{d_j}` is the average distance between each point cluster
+:math:`j` and the centroid of cluster :math:`j`.
+:math:`\bar{d_j}` is the diameter of cluster :math:`j`.
+
+:math:`d_ij` is the Euclidean distance between the centroid of cluster
+:math:`i` and the centroid of cluster :math:`j`.
+
+
+  >>> from sklearn import metrics
+  >>> from sklearn.metrics import pairwise_distances
+  >>> from sklearn import datasets
+  >>> dataset = datasets.load_iris()
+  >>> X = dataset.data
+  >>> y = dataset.target
+
+In normal usage, the Davies-Bouldin index is applied to the results of a
+cluster analysis.
+
+  >>> import numpy as np
+  >>> from sklearn.cluster import KMeans
+  >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans_model.labels_
+  >>> metrics.davies_bouldin_index(X, labels)  # doctest: +ELLIPSIS
+  0.6623...
+
+
+Advantages
+~~~~~~~~~~
+
+- The computation of the Davies-Bouldin index is simpler than the computation
+  of the Silhouette index.
+
+Drawbacks
+~~~~~~~~~
+
+- The Davies-Bouldin index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained
+  through DBSCAN.
+
+.. topic:: References
+
+ *  Davies, David L.; Bouldin, Donald W. (1979).
+    "A Cluster Separation Measure"
+    IEEE Transactions on Pattern Analysis and Machine Intelligence.
+    PAMI-1 (2): 224–227. 
+    `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
