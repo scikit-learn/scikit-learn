@@ -43,6 +43,7 @@ from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
 from .cluster import calinski_harabaz_score
+from .cluster import davies_bouldin_index
 from .cluster import v_measure_score
 
 from .pairwise import euclidean_distances
