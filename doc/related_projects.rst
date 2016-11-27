@@ -44,6 +44,9 @@ enhance the functionality of scikit-learn's estimators.
   into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
   library.
 
+- `sklearn-porter <https://github.com/nok/sklearn-porter>`_
+  Port or transpile trained scikit-learn models to a low-level programming language.
+
 Other estimators and tasks
 --------------------------
 
