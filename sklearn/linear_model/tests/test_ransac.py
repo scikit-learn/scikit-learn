@@ -153,9 +153,8 @@ def test_ransac_resid_thresh_no_inliers():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=0.0, random_state=0)
 
-    assert_raises_regexp(ValueError,
-                    "No inliers.*residual_threshold.*0\.0",
-                    ransac_estimator.fit, X, y)
+    assert_raises(ValueError,
+                  ransac_estimator.fit, X, y)
 
 
 def test_ransac_sparse_coo():
