@@ -291,7 +291,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             # are random for each initialization of splitter but consistent
             # across multiple calls for the same initialization.
             self._random_state = check_random_state(
-                random_state).randint(99999999)
+                random_state).randint(np.iinfo(np.int32).max)
         else:
             self._random_state = random_state
 
