@@ -245,6 +245,8 @@ def load_files(container_path, description=None, categories=None,
 def load_wine(return_X_y=False):
     """Load and return the wine dataset (classification).
 
+            .. versionadded:: 0.18
+
     The wine dataset is a classic and very easy multi-class classification
     dataset.
 
@@ -264,7 +266,6 @@ def load_wine(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-        .. versionadded:: 0.18
 
     Returns
     -------
@@ -277,15 +278,21 @@ def load_wine(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.18
 
     The copy of UCI ML Wine Data Set dataset is
     downloaded from:
     https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
 
+    The file has been modified:
+        -to include class labels class_0, class_1 and class_2;
+        -to have the target classification as the last column;
+        -to rename target variables from 1, 2, and 3 to 0, 1 and 2;
+        -to include to amount of datapoints and class labels.
+
+
     Examples
     --------
-    Let's say you are interested in the samples 10, 25, and 50, and want to
+    Let's say you are interested in the samples 10, 80, and 140, and want to
     know their class name.
 
     >>> from sklearn.datasets import load_wine

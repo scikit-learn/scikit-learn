@@ -6,7 +6,7 @@ Importance of Feature Scaling
 =========================================================
 
 Features scaling though standardization (or Z-score normalization)
-can be an importance preprocessing step for many machine learning
+can be an important preprocessing step for many machine learning
 algorithms. Standardization involves rescaling the features such
 that they’ll have the properties of a standard normal distribution
 with a mean of zero and a standard deviation of one.
@@ -20,7 +20,7 @@ components that maximize the variance. If there exists components
 weight) because of their respective scales (meters vs. kilos) it can
 be seen how not scaling the features would cause PCA to determine that
 the direction of maximal variance more closely corresponds with the
-‘weight’ axis. As a change in height of one meter can be considered much
+'weight' axis. As a change in height of one meter can be considered much
 more important than the change in weight of one kilogram, it is easily
 seen that this determination is incorrect. In the case of PCA, scaling
 features using normalization is preferred over using min-max scaling as
@@ -28,7 +28,7 @@ the primary components are computed using the correlation matrix as opposed
 to the covariance matrix.
 
 In order to illustrate this in an example, PCA will be performed on a dataset
-which has been standardized using StandardScalerand a copy which has remained
+which has been standardized using Standard Scaler and a copy which has remained
 untouched. The results with be visualized and a clear difference noted.
 
 The results will then be used to train a naive Bayes classifier, and a clear
@@ -36,7 +36,7 @@ difference the prediction accuracies will be observed.
 
 """
 from __future__ import print_function
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.decomposition import PCA
 from sklearn.naive_bayes import GaussianNB
@@ -50,9 +50,7 @@ print(__doc__)
 
 # License: BSD 3 clause
 
-
-# Contants
-RAN_STATE = 42
+RANDOM_STATE = 42
 FIG_SIZE = (10, 7)
 
 
@@ -61,7 +59,7 @@ features, target = load_wine(return_X_y=True)
 # Make a train/test split using 30% test size
 X_train, X_test, y_train, y_test = train_test_split(features, target,
                                                     test_size=0.30,
-                                                    random_state=RAN_STATE)
+                                                    random_state=RANDOM_STATE)
 
 # Apply Scaling to X_train and X_test
 std_scale = preprocessing.StandardScaler().fit(X_train)
@@ -122,11 +120,11 @@ ax1.set_title('Training dataset after PCA')
 ax2.set_title('Standardized training dataset after PCA')
 
 for ax in (ax1, ax2):
-
     ax.set_xlabel('1st principal component')
     ax.set_ylabel('2nd principal component')
     ax.legend(loc='upper right')
     ax.grid()
+
 plt.tight_layout()
 
 plt.show()
