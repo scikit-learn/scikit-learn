@@ -16,6 +16,11 @@ Changelog
 New features
 ............
 
+   - Validation that input data contains no NaN or inf can now be suppressed
+     using :func:`set_config`, at your own risk. This will save on runtime,
+     and may be particularly useful for prediction time. :issue:`7548` by
+     `Joel Nothman`_.
+
 Enhancements
 ............
 
