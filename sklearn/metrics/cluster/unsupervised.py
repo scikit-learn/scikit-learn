@@ -260,7 +260,7 @@ def calinski_harabaz_score(X, labels):
 def davies_bouldin_index(X, labels):
     """Compute the Davies Bouldin index.
 
-    The index is defiend as the ratio of within-cluster
+    The index is defined as the ratio of within-cluster
     and between-cluster distances.
 
     Parameters
