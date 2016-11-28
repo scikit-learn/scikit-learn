@@ -723,6 +723,19 @@ def test_multilabel_representation_invariance():
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
 
+    y1_list_list_indicator = []
+    y2_list_list_indicator = []
+
+    y1_list_array_indicator = []
+    y2_list_array_indicator = []
+
+    for i in range(n_samples + 1):
+        y1_list_list_indicator.append(list(y1[i]))
+        y2_list_list_indicator.append(list(y2[i]))
+
+        y1_list_array_indicator.append(y1[i])
+        y2_list_array_indicator.append(y2[i])
+
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
 
@@ -740,22 +753,18 @@ def test_multilabel_representation_invariance():
                             err_msg="%s failed representation invariance  "
                                     "between dense and sparse indicator "
                                     "formats." % name)
-
-
-def test_raise_value_error_multilabel_sequences():
-    # make sure the multilabel-sequence format raises ValueError
-    multilabel_sequences = [
-        [[0, 1]],
-        [[1], [2], [0, 1]],
-        [(), (2), (0, 1)],
-        [[]],
-        [()],
-        np.array([[], [1, 2]], dtype='object')]
-
-    for name in MULTILABELS_METRICS:
-        metric = ALL_METRICS[name]
-        for seq in multilabel_sequences:
-            assert_raises(ValueError, metric, seq, seq)
+        assert_almost_equal(metric(y1_list_list_indicator,
+                                   y2_list_list_indicator),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between dense array and list of list "
+                                    "indicator formats." % name)
+        assert_almost_equal(metric(y1_list_array_indicator,
+                                   y2_list_array_indicator),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between dense and list of array "
+                                    "indicator formats." % name)
 
 
 def test_normalize_option_binary_classification(n_samples=20):

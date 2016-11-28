@@ -138,7 +138,7 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__'):
+    if hasattr(y, '__array__') or isinstance(y, Sequence):
         y = np.asarray(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
