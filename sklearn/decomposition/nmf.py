@@ -51,12 +51,6 @@ def trace_dot(X, Y):
     return np.dot(X.ravel(), Y.ravel())
 
 
-def _sparseness(x):
-    """Hoyer's measure of sparsity for a vector"""
-    sqrt_n = np.sqrt(len(x))
-    return (sqrt_n - np.linalg.norm(x, 1) / norm(x)) / (sqrt_n - 1)
-
-
 def _check_init(A, shape, whom):
     A = check_array(A)
     if np.shape(A) != shape:
@@ -77,20 +71,6 @@ def _safe_compute_error(X, W, H):
         cross_prod = trace_dot((X * H.T), W)
         error = sqrt(norm_X + norm_WH - 2. * cross_prod)
     return error
-
-
-def _check_string_param(sparseness, solver):
-    allowed_sparseness = (None, 'data', 'components')
-    if sparseness not in allowed_sparseness:
-        raise ValueError(
-            'Invalid sparseness parameter: got %r instead of one of %r' %
-            (sparseness, allowed_sparseness))
-
-    allowed_solver = ('cd', )
-    if solver not in allowed_solver:
-        raise ValueError(
-            'Invalid solver parameter: got %r instead of one of %r' %
-            (solver, allowed_solver))
 
 
 def _initialize_nmf(X, n_components, init=None, eps=1e-6,
@@ -342,115 +322,6 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
         warnings.warn("Iteration limit reached in nls subproblem.")
 
     return H, grad, n_iter
-
-
-def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, alpha, l1_ratio,
-                                 sparseness, beta, eta):
-    """Helper function for _fit_projected_gradient"""
-    n_samples, n_features = X.shape
-    n_components_ = H.shape[0]
-
-    if sparseness is None:
-        Wt, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW, nls_max_iter,
-                                           alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'data':
-        Wt, gradW, iterW = _nls_subproblem(
-            safe_vstack([X.T, np.zeros((1, n_samples))]),
-            safe_vstack([H.T, np.sqrt(beta) * np.ones((1,
-                         n_components_))]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'components':
-        Wt, gradW, iterW = _nls_subproblem(
-            safe_vstack([X.T,
-                         np.zeros((n_components_, n_samples))]),
-            safe_vstack([H.T,
-                         np.sqrt(eta) * np.eye(n_components_)]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-
-    return Wt.T, gradW.T, iterW
-
-
-def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
-                                 sparseness, beta, eta):
-    """Helper function for _fit_projected_gradient"""
-    n_samples, n_features = X.shape
-    n_components_ = W.shape[1]
-
-    if sparseness is None:
-        H, gradH, iterH = _nls_subproblem(X, W, H, tolH, nls_max_iter,
-                                          alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'data':
-        H, gradH, iterH = _nls_subproblem(
-            safe_vstack([X, np.zeros((n_components_, n_features))]),
-            safe_vstack([W,
-                         np.sqrt(eta) * np.eye(n_components_)]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'components':
-        H, gradH, iterH = _nls_subproblem(
-            safe_vstack([X, np.zeros((1, n_features))]),
-            safe_vstack([W, np.sqrt(beta) * np.ones((1, n_components_))]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-
-    return H, gradH, iterH
-
-
-def _fit_projected_gradient(X, W, H, tol, max_iter,
-                            nls_max_iter, alpha, l1_ratio,
-                            sparseness, beta, eta):
-    """Compute Non-negative Matrix Factorization (NMF) with Projected Gradient
-
-    References
-    ----------
-    C.-J. Lin. Projected gradient methods for non-negative matrix
-    factorization. Neural Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
-
-    P. Hoyer. Non-negative Matrix Factorization with Sparseness Constraints.
-    Journal of Machine Learning Research 2004.
-    """
-    gradW = (np.dot(W, np.dot(H, H.T)) -
-             safe_sparse_dot(X, H.T, dense_output=True))
-    gradH = (np.dot(np.dot(W.T, W), H) -
-             safe_sparse_dot(W.T, X, dense_output=True))
-
-    init_grad = squared_norm(gradW) + squared_norm(gradH.T)
-    # max(0.001, tol) to force alternating minimizations of W and H
-    tolW = max(0.001, tol) * np.sqrt(init_grad)
-    tolH = tolW
-
-    for n_iter in range(1, max_iter + 1):
-        # stopping condition
-        # as discussed in paper
-        proj_grad_W = squared_norm(gradW * np.logical_or(gradW < 0, W > 0))
-        proj_grad_H = squared_norm(gradH * np.logical_or(gradH < 0, H > 0))
-
-        if (proj_grad_W + proj_grad_H) / init_grad < tol ** 2:
-            break
-
-        # update W
-        W, gradW, iterW = _update_projected_gradient_w(X, W, H, tolW,
-                                                       nls_max_iter,
-                                                       alpha, l1_ratio,
-                                                       sparseness, beta, eta)
-        if iterW == 1:
-            tolW = 0.1 * tolW
-
-        # update H
-        H, gradH, iterH = _update_projected_gradient_h(X, W, H, tolH,
-                                                       nls_max_iter,
-                                                       alpha, l1_ratio,
-                                                       sparseness, beta, eta)
-        if iterH == 1:
-            tolH = 0.1 * tolH
-
-    H[H == 0] = 0   # fix up negative zeros
-
-    if n_iter == max_iter:
-        W, _, _ = _update_projected_gradient_w(X, W, H, tol, nls_max_iter,
-                                               alpha, l1_ratio, sparseness,
-                                               beta, eta)
-
-    return W, H, n_iter
 
 
 def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
@@ -887,7 +758,7 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     NMF(alpha=0.0, init='random', l1_ratio=0.0, max_iter=200,
       n_components=2, random_state=0, shuffle=False,
-      solver='cd', sparseness=None, tol=0.0001, verbose=0)
+      solver='cd', tol=0.0001, verbose=0)
 
     >>> model.components_
     array([[ 2.09783018,  0.30560234],
@@ -996,9 +867,7 @@ class NMF(BaseEstimator, TransformerMixin):
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle,
-            nls_max_iter=self.nls_max_iter, sparseness=self.sparseness,
-            beta=self.beta, eta=self.eta)
+            shuffle=self.shuffle)
 
         return W
 

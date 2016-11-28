@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_raise_message, assert_no_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import ignore_warnings
 from sklearn.base import clone
 
 
@@ -25,7 +24,6 @@ def test_initialize_nn_output():
         assert_false((W < 0).any() or (H < 0).any())
 
 
-@ignore_warnings
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
@@ -69,27 +67,22 @@ def test_initialize_variants():
         assert_almost_equal(evl[ref != 0], ref[ref != 0])
 
 
-@ignore_warnings
 def test_nmf_fit_nn_output():
     # Test that the decomposition does not contain negative values
     A = np.c_[5 * np.ones(5) - np.arange(1, 6),
               5 * np.ones(5) + np.arange(1, 6)]
-    for solver in ('pg', 'cd'):
-        for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
-            model = NMF(n_components=2, solver=solver, init=init,
-                        random_state=0)
-            transf = model.fit_transform(A)
-            assert_false((model.components_ < 0).any() or
-                         (transf < 0).any())
+    for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
+        model = NMF(n_components=2, init=init, random_state=0)
+        transf = model.fit_transform(A)
+        assert_false((model.components_ < 0).any() or
+                     (transf < 0).any())
 
 
-@ignore_warnings
 def test_nmf_fit_close():
     # Test that the fit is not too far away
-    for solver in ('pg', 'cd'):
-        pnmf = NMF(5, solver=solver, init='nndsvd', random_state=0)
-        X = np.abs(random_state.randn(6, 5))
-        assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
+    pnmf = NMF(5, init='nndsvd', random_state=0)
+    X = np.abs(random_state.randn(6, 5))
+    assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
 
 
 def test_nls_nn_output():
@@ -107,15 +100,13 @@ def test_nls_close():
     assert_true((np.abs(Ap - A) < 0.01).all())
 
 
-@ignore_warnings
 def test_nmf_transform():
     # Test that NMF.transform returns close values
     A = np.abs(random_state.randn(6, 5))
-    for solver in ('pg', 'cd'):
-        m = NMF(solver=solver, n_components=4, init='nndsvd', random_state=0)
-        ft = m.fit_transform(A)
-        t = m.transform(A)
-        assert_array_almost_equal(ft, t, decimal=2)
+    m = NMF(n_components=4, init='nndsvd', random_state=0)
+    ft = m.fit_transform(A)
+    t = m.transform(A)
+    assert_array_almost_equal(ft, t, decimal=2)
 
 
 def test_nmf_transform_custom_init():
@@ -132,27 +123,23 @@ def test_nmf_transform_custom_init():
     m.transform(A)
 
 
-@ignore_warnings
 def test_nmf_inverse_transform():
     # Test that NMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
-    for solver in ('pg', 'cd'):
-        m = NMF(solver=solver, n_components=4, init='random', random_state=0)
-        m.fit_transform(A)
-        t = m.transform(A)
-        A_new = m.inverse_transform(t)
-        assert_array_almost_equal(A, A_new, decimal=2)
+    m = NMF(n_components=4, init='random', random_state=0)
+    m.fit_transform(A)
+    t = m.transform(A)
+    A_new = m.inverse_transform(t)
+    assert_array_almost_equal(A, A_new, decimal=2)
 
 
-@ignore_warnings
 def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     A = np.abs(random_state.randn(30, 10))
     NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
 
 
-@ignore_warnings
 def test_sparse_input():
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
@@ -161,21 +148,18 @@ def test_sparse_input():
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-    for solver in ('pg', 'cd'):
-        est1 = NMF(solver=solver, n_components=5, init='random',
-                   random_state=0, tol=1e-2)
-        est2 = clone(est1)
+    est1 = NMF(n_components=5, init='random', random_state=0, tol=1e-2)
+    est2 = clone(est1)
 
-        W1 = est1.fit_transform(A)
-        W2 = est2.fit_transform(A_sparse)
-        H1 = est1.components_
-        H2 = est2.components_
+    W1 = est1.fit_transform(A)
+    W2 = est2.fit_transform(A_sparse)
+    H1 = est1.components_
+    H2 = est2.components_
 
-        assert_array_almost_equal(W1, W2)
-        assert_array_almost_equal(H1, H2)
+    assert_array_almost_equal(W1, W2)
+    assert_array_almost_equal(H1, H2)
 
 
-@ignore_warnings
 def test_sparse_transform():
     # Test that transform works on sparse data.  Issue #2124
 
@@ -183,34 +167,29 @@ def test_sparse_transform():
     A[A > 1.0] = 0
     A = csc_matrix(A)
 
-    for solver in ('pg', 'cd'):
-        model = NMF(solver=solver, random_state=0, tol=1e-4, n_components=2)
-        A_fit_tr = model.fit_transform(A)
-        A_tr = model.transform(A)
-        assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
+    model = NMF(random_state=0, tol=1e-4, n_components=2)
+    A_fit_tr = model.fit_transform(A)
+    A_tr = model.transform(A)
+    assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
 
 
-@ignore_warnings
 def test_non_negative_factorization_consistency():
     # Test that the function is called in the same way, either directly
     # or through the NMF class
     A = np.abs(random_state.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    for solver in ('pg', 'cd'):
-        W_nmf, H, _ = non_negative_factorization(
-            A, solver=solver, random_state=1, tol=1e-2)
-        W_nmf_2, _, _ = non_negative_factorization(
-            A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2)
+    W_nmf, H, _ = non_negative_factorization(A, random_state=1, tol=1e-2)
+    W_nmf_2, _, _ = non_negative_factorization(
+        A, H=H, update_H=False, random_state=1, tol=1e-2)
 
-        model_class = NMF(solver=solver, random_state=1, tol=1e-2)
-        W_cls = model_class.fit_transform(A)
-        W_cls_2 = model_class.transform(A)
-        assert_array_almost_equal(W_nmf, W_cls, decimal=10)
-        assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
+    model_class = NMF(random_state=1, tol=1e-2)
+    W_cls = model_class.fit_transform(A)
+    W_cls_2 = model_class.transform(A)
+    assert_array_almost_equal(W_nmf, W_cls, decimal=10)
+    assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
 
 
-@ignore_warnings
 def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
