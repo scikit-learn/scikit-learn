@@ -49,7 +49,7 @@ Enhancements
 
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
      that matches the ``classes_`` attribute of ``best_estimator_``. :issue:`7661`
-     by `Alyssa Batula`_ and :user:`Dylan Werner-Meier <unautre>`.
+     by :user:`Alyssa Batula <abatula>`_ and :user:`Dylan Werner-Meier <unautre>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
