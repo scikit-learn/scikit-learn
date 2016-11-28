@@ -74,6 +74,7 @@ __all__ = [
     'confusion_matrix',
     'consensus_score',
     'coverage_error',
+    'davies_bouldin_index',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
