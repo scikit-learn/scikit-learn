@@ -6,7 +6,7 @@ functions to split the data based on a preset strategy.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav R V <rvraghav93@gmail.com>
+#         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 
@@ -25,6 +25,7 @@ import numpy as np
 from scipy.misc import comb
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
+from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
@@ -472,6 +473,7 @@ class GroupKFold(_BaseKFold):
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
 
         unique_groups, groups = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
@@ -618,12 +620,16 @@ class StratifiedKFold(_BaseKFold):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
 
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : object
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -633,6 +639,7 @@ class StratifiedKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
+        y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedKFold, self).split(X, y, groups)
 
 
@@ -696,11 +703,10 @@ class TimeSeriesSplit(_BaseKFold):
             and n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            The target variable for supervised learning problems.
+            Always ignored, exists for compatibility.
 
         groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -746,12 +752,12 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
     >>> groups = np.array([1, 1, 2, 2])
-    >>> lol = LeaveOneGroupOut()
-    >>> lol.get_n_splits(X, y, groups)
+    >>> logo = LeaveOneGroupOut()
+    >>> logo.get_n_splits(X, y, groups)
     2
-    >>> print(lol)
+    >>> print(logo)
     LeaveOneGroupOut()
-    >>> for train_index, test_index in lol.split(X, y, groups):
+    >>> for train_index, test_index in logo.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -771,8 +777,12 @@ class LeaveOneGroupOut(BaseCrossValidator):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
         # We make a copy of groups to avoid side-effects during iteration
-        groups = np.array(groups, copy=True)
+        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
         unique_groups = np.unique(groups)
+        if len(unique_groups) <= 1:
+            raise ValueError(
+                "The groups parameter contains fewer than 2 unique groups "
+                "(%s). LeaveOneGroupOut expects at least 2." % unique_groups)
         for i in unique_groups:
             yield groups == i
 
@@ -829,12 +839,12 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
     >>> groups = np.array([1, 2, 3])
-    >>> lpl = LeavePGroupsOut(n_groups=2)
-    >>> lpl.get_n_splits(X, y, groups)
+    >>> lpgo = LeavePGroupsOut(n_groups=2)
+    >>> lpgo.get_n_splits(X, y, groups)
     3
-    >>> print(lpl)
+    >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
-    >>> for train_index, test_index in lpl.split(X, y, groups):
+    >>> for train_index, test_index in lpgo.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -860,8 +870,14 @@ class LeavePGroupsOut(BaseCrossValidator):
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
-        groups = np.array(groups, copy=True)
+        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
         unique_groups = np.unique(groups)
+        if self.n_groups >= len(unique_groups):
+            raise ValueError(
+                "The groups parameter contains fewer than (or equal to) "
+                "n_groups (%d) numbers of unique groups (%s). LeavePGroupsOut "
+                "expects that at least n_groups + 1 (%d) unique groups be "
+                "present" % (self.n_groups, unique_groups, self.n_groups + 1))
         combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
             test_index = np.zeros(_num_samples(X), dtype=np.bool)
@@ -876,9 +892,11 @@ class LeavePGroupsOut(BaseCrossValidator):
         ----------
         X : object
             Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         y : object
             Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -891,6 +909,8 @@ class LeavePGroupsOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
+        X, y, groups = indexable(X, y, groups)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
 
@@ -1087,6 +1107,7 @@ class GroupShuffleSplit(ShuffleSplit):
     def _iter_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super(
                 GroupShuffleSplit, self)._iter_indices(X=classes):
@@ -1227,6 +1248,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
+        y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         classes, y_indices = np.unique(y, return_inverse=True)
@@ -1280,12 +1302,16 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
 
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : object
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -1295,6 +1321,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         test : ndarray
             The testing set indices for that split.
         """
+        y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 
@@ -1467,7 +1494,7 @@ class PredefinedSplit(BaseCrossValidator):
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""
     def __init__(self, cv):
-        self.cv = cv
+        self.cv = list(cv)
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
@@ -1488,7 +1515,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return len(self.cv)  # Both iterables and old-cv objects support len
+        return len(self.cv)
 
     def split(self, X=None, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1603,7 +1630,7 @@ def train_test_split(*arrays, **options):
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
-        the groups array.
+        the class labels.
 
     Returns
     -------

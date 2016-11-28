@@ -1,12 +1,11 @@
 $(document).ready(function() {
     /* Add a [>>>] button on the top-right corner of code samples to hide
      * the >>> and ... prompts and the output and thus make the code
-     * copyable. 
-     * Note: This JS snippet was taken from the official python.org
-     * documentation site.*/
+     * copyable. */
     var div = $('.highlight-python .highlight,' +
                 '.highlight-python3 .highlight,' + 
-                '.highlight-pycon .highlight')
+                '.highlight-pycon .highlight,' +
+		'.highlight-default .highlight')
     var pre = div.find('pre');
 
     // get the styles from the current theme
@@ -20,7 +19,8 @@ $(document).ready(function() {
         'cursor':'pointer', 'position': 'absolute', 'top': '0', 'right': '0',
         'border-color': border_color, 'border-style': border_style,
         'border-width': border_width, 'color': border_color, 'text-size': '75%',
-        'font-family': 'monospace', 'padding-left': '0.2em', 'padding-right': '0.2em'
+        'font-family': 'monospace', 'padding-left': '0.2em', 'padding-right': '0.2em',
+        'border-radius': '0 3px 0 0'
     }
 
     // create and add the button to all the code blocks that contain >>>
@@ -30,6 +30,7 @@ $(document).ready(function() {
             var button = $('<span class="copybutton">&gt;&gt;&gt;</span>');
             button.css(button_styles)
             button.attr('title', hide_text);
+            button.data('hidden', 'false');
             jthis.prepend(button);
         }
         // tracebacks (.gt) contain bare text elements that need to be
@@ -40,20 +41,24 @@ $(document).ready(function() {
     });
 
     // define the behavior of the button when it's clicked
-    $('.copybutton').toggle(
-        function() {
-            var button = $(this);
+    $('.copybutton').click(function(e){
+        e.preventDefault();
+        var button = $(this);
+        if (button.data('hidden') === 'false') {
+            // hide the code output
             button.parent().find('.go, .gp, .gt').hide();
             button.next('pre').find('.gt').nextUntil('.gp, .go').css('visibility', 'hidden');
             button.css('text-decoration', 'line-through');
             button.attr('title', show_text);
-        },
-        function() {
-            var button = $(this);
+            button.data('hidden', 'true');
+        } else {
+            // show the code output
             button.parent().find('.go, .gp, .gt').show();
             button.next('pre').find('.gt').nextUntil('.gp, .go').css('visibility', 'visible');
             button.css('text-decoration', 'none');
             button.attr('title', hide_text);
-        });
+            button.data('hidden', 'false');
+        }
+    });
 });
 

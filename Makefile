@@ -26,9 +26,6 @@ clean: clean-ctags
 
 in: inplace # just a shortcut
 inplace:
-	# to avoid errors in 0.15 upgrade
-	rm -f sklearn/utils/sparsefuncs*.so
-	rm -f sklearn/utils/random*.so
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
@@ -52,7 +49,7 @@ trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	python build_tools/cythonize.py sklearn
+	python setup.py build_src
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim

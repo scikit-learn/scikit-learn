@@ -64,8 +64,9 @@ def l1_cross_distances(X):
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """The legacy Gaussian Process model class.
 
-    Note that this class was deprecated in version 0.18 and will be
-    removed in 0.20. Use the GaussianProcessRegressor instead.
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use the :class:`GaussianProcessRegressor` instead.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -515,7 +516,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
 
                 y, MSE = np.zeros(n_eval), np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                for k in range(max(1, int(n_eval / batch_size))):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to], MSE[batch_from:batch_to] = \
@@ -527,7 +528,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             else:
 
                 y = np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                for k in range(max(1, int(n_eval / batch_size))):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to] = \
@@ -617,14 +618,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Get generalized least squares solution
         Ft = linalg.solve_triangular(C, F, lower=True)
-        try:
-            Q, G = linalg.qr(Ft, econ=True)
-        except:
-            #/usr/lib/python2.6/dist-packages/scipy/linalg/decomp.py:1177:
-            # DeprecationWarning: qr econ argument will be removed after scipy
-            # 0.7. The economy transform will then be available through the
-            # mode='economic' argument.
-            Q, G = linalg.qr(Ft, mode='economic')
+        Q, G = linalg.qr(Ft, mode='economic')
 
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]

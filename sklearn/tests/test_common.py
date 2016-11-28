@@ -28,12 +28,8 @@ from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
-    CROSS_DECOMPOSITION,
     check_parameters_default_constructible,
-    check_class_weight_balanced_linear_classifier,
-    check_transformer_n_iter,
-    check_non_transformer_estimators_n_iter,
-    check_get_params_invariance)
+    check_class_weight_balanced_linear_classifier)
 
 
 def test_all_estimator_no_base_class():
@@ -162,72 +158,3 @@ def test_all_tests_are_importable():
                  '{0} do not have `tests` subpackages. Perhaps they require '
                  '__init__.py or an add_subpackage directive in the parent '
                  'setup.py'.format(missing_tests))
-
-
-def test_non_transformer_estimators_n_iter():
-    # Test that all estimators of type which are non-transformer
-    # and which have an attribute of max_iter, return the attribute
-    # of n_iter atleast 1.
-    for est_type in ['regressor', 'classifier', 'cluster']:
-        regressors = all_estimators(type_filter=est_type)
-        for name, Estimator in regressors:
-            # LassoLars stops early for the default alpha=1.0 for
-            # the iris dataset.
-            if name == 'LassoLars':
-                estimator = Estimator(alpha=0.)
-            else:
-                with ignore_warnings(category=DeprecationWarning):
-                    estimator = Estimator()
-            if hasattr(estimator, "max_iter"):
-                # These models are dependent on external solvers like
-                # libsvm and accessing the iter parameter is non-trivial.
-                if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
-                             'LogisticRegressionCV']):
-                    continue
-
-                # Tested in test_transformer_n_iter below
-                elif (name in CROSS_DECOMPOSITION or
-                      name in ['LinearSVC', 'LogisticRegression']):
-                    continue
-
-                else:
-                    # Multitask models related to ENet cannot handle
-                    # if y is mono-output.
-                    yield (_named_check(
-                        check_non_transformer_estimators_n_iter, name),
-                        name, estimator, 'Multi' in name)
-
-
-def test_transformer_n_iter():
-    transformers = all_estimators(type_filter='transformer')
-    for name, Estimator in transformers:
-        with ignore_warnings(category=DeprecationWarning):
-            estimator = Estimator()
-        # Dependent on external solvers and hence accessing the iter
-        # param is non-trivial.
-        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                           'RandomizedLasso', 'LogisticRegressionCV']
-
-        if hasattr(estimator, "max_iter") and name not in external_solver:
-            yield _named_check(
-                check_transformer_n_iter, name), name, estimator
-
-
-def test_get_params_invariance():
-    # Test for estimators that support get_params, that
-    # get_params(deep=False) is a subset of get_params(deep=True)
-    # Related to issue #4465
-
-    estimators = all_estimators(include_meta_estimators=False,
-                                include_other=True)
-    for name, Estimator in estimators:
-        if hasattr(Estimator, 'get_params'):
-            # If class is deprecated, ignore deprecated warnings
-            if hasattr(Estimator.__init__, "deprecated_original"):
-                with ignore_warnings():
-                    yield _named_check(
-                        check_get_params_invariance, name), name, Estimator
-            else:
-                yield _named_check(
-                    check_get_params_invariance, name), name, Estimator

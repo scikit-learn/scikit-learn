@@ -2,7 +2,6 @@ import os
 import shutil
 import tempfile
 import warnings
-import nose
 import numpy
 from pickle import loads
 from pickle import dumps
@@ -27,6 +26,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import with_setup
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -84,7 +84,7 @@ def test_default_empty_load_files():
     assert_equal(res.DESCR, None)
 
 
-@nose.tools.with_setup(setup_load_files, teardown_load_files)
+@with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
     res = load_files(LOAD_FILES_ROOT)
     assert_equal(len(res.filenames), 1)
@@ -93,7 +93,7 @@ def test_default_load_files():
     assert_equal(res.data, [b("Hello World!\n")])
 
 
-@nose.tools.with_setup(setup_load_files, teardown_load_files)
+@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_w_categories_desc_and_encoding():
     category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
     res = load_files(LOAD_FILES_ROOT, description="test",
@@ -104,7 +104,7 @@ def test_load_files_w_categories_desc_and_encoding():
     assert_equal(res.data, [u("Hello World!\n")])
 
 
-@nose.tools.with_setup(setup_load_files, teardown_load_files)
+@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_wo_load_content():
     res = load_files(LOAD_FILES_ROOT, load_content=False)
     assert_equal(len(res.filenames), 1)
@@ -171,6 +171,7 @@ def test_load_diabetes():
     res = load_diabetes()
     assert_equal(res.data.shape, (442, 10))
     assert_true(res.target.size, 442)
+    assert_equal(len(res.feature_names), 10)
 
     # test return_X_y option
     X_y_tuple = load_diabetes(return_X_y=True)

@@ -265,12 +265,16 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
         This also checks if we are attempting to create a nested parallel
         loop.
         """
+        if mp is None:
+            return 1
+
         if mp.current_process().daemon:
             # Daemonic processes cannot have children
-            warnings.warn(
-                'Multiprocessing-backed parallel loops cannot be nested,'
-                ' setting n_jobs=1',
-                stacklevel=3)
+            if n_jobs != 1:
+                warnings.warn(
+                    'Multiprocessing-backed parallel loops cannot be nested,'
+                    ' setting n_jobs=1',
+                    stacklevel=3)
             return 1
 
         elif threading.current_thread().name != 'MainThread':

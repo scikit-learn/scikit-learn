@@ -66,7 +66,7 @@ teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
 <http://lear.inrialpes.fr/>`_ for computer vision, `Visages
 <https://team.inria.fr/visages/>`_ for medical image analysis, `Privatics
 <https://team.inria.fr/privatics>`_ for security. The project is a fantastic
-tool to address difficult applications of machine learing in an academic
+tool to address difficult applications of machine learning in an academic
 environment as it is performant and versatile, but all easy-to-use and well
 documented, which makes it well suited to grad students.
 
@@ -293,7 +293,7 @@ Greg Lamp, Co-founder Yhat
 
    </span>
 
-`Rangespan <https://www.rangespan.com>_`
+`Rangespan <http://www.rangespan.com>`_
 ----------------------------------------
 
 .. raw:: html
@@ -302,7 +302,7 @@ Greg Lamp, Co-founder Yhat
 
 .. image:: images/rangespan.png
     :width: 120pt
-    :target: https://www.rangespan.com
+    :target: http://www.rangespan.com
 
 .. raw:: html
 

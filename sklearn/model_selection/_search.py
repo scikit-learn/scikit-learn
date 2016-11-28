@@ -30,6 +30,7 @@ from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
 from ..utils.fixes import rankdata
+from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -549,6 +550,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
 
+        cv_iter = list(cv.split(X, y, groups))
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
@@ -560,7 +562,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_times=True, return_parameters=True,
                                   error_score=self.error_score)
           for parameters in parameter_iterable
-          for train, test in cv.split(X, y, groups))
+          for train, test in cv_iter)
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -603,17 +605,20 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         _store('test_score', test_scores, splits=True, rank=True,
                weights=test_sample_counts if self.iid else None)
-        _store('train_score', train_scores, splits=True)
+        if self.return_train_score:
+            _store('train_score', train_scores, splits=True)
         _store('fit_time', fit_time)
         _store('score_time', score_time)
 
         best_index = np.flatnonzero(results["rank_test_score"] == 1)[0]
         best_parameters = candidate_params[best_index]
 
-        # Use one np.MaskedArray and mask all the places where the param is not
+        # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
-        param_results = defaultdict(partial(np.ma.masked_all, (n_candidates,),
+        param_results = defaultdict(partial(MaskedArray,
+                                            np.empty(n_candidates,),
+                                            mask=True,
                                             dtype=object))
         for cand_i, params in enumerate(candidate_params):
             for name, value in params.items():
@@ -1074,7 +1079,7 @@ class RandomizedSearchCV(BaseSearchCV):
         will be represented by a ``cv_results_`` dict of::
 
             {
-            'param_kernel' : masked_array(data = ['rbf', rbf', 'rbf'],
+            'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
             'split0_test_score'  : [0.8, 0.9, 0.7],

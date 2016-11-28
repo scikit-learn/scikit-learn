@@ -15,7 +15,7 @@ Installing the latest release
 
 Scikit-learn requires:
 
-- Python (>= 2.6 or >= 3.3),
+- Python (>= 2.7 or >= 3.3),
 - NumPy (>= 1.6.1),
 - SciPy (>= 0.9).
 
@@ -86,10 +86,10 @@ Anaconda offers scikit-learn as part of its free distribution.
     via ``pip install``.
 
 
-Python(x,y) for Windows
+WinPython for Windows
 -----------------------
 
-The `Python(x,y) <https://python-xy.github.io>`_ project distributes
+The `WinPython <https://winpython.github.io/>`_ project distributes
 scikit-learn as an additional plugin.
 
 

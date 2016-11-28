@@ -73,8 +73,6 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
 
         .. versionadded:: 0.18
 
-        .. versionadded:: 0.18
-
     Returns
     -------
     contingency : {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
@@ -253,13 +251,13 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
 
     Returns
     -------
-    homogeneity: float
+    homogeneity : float
        score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
-    completeness: float
+    completeness : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
-    v_measure: float
+    v_measure : float
         harmonic mean of the first two
 
     See also
@@ -317,7 +315,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     Returns
     -------
-    homogeneity: float
+    homogeneity : float
        score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
 
     References
@@ -465,7 +463,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Returns
     -------
-    v_measure: float
+    v_measure : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
     References
@@ -573,7 +571,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     Returns
     -------
-    mi: float
+    mi : float
        Mutual information, a non-negative value
 
     See also
@@ -741,7 +739,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     Returns
     -------
-    nmi: float
+    nmi : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
     See also

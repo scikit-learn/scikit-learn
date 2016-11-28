@@ -67,6 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
+# Supported since numpy 1.7.0
 if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
@@ -107,7 +108,7 @@ except TypeError:
 try:
     np.array(5).astype(float, copy=False)
 except TypeError:
-    # Compat where astype accepted no copy argument
+    # Compat where astype accepted no copy argument (numpy < 1.7.0)
     def astype(array, dtype, copy=True):
         if not copy and array.dtype == dtype:
             return array
@@ -203,30 +204,6 @@ except ImportError:
         return np.sort(a, axis=axis, order=order)
 
 
-try:
-    from itertools import combinations_with_replacement
-except ImportError:
-    # Backport of itertools.combinations_with_replacement for Python 2.6,
-    # from Python 3.4 documentation (http://tinyurl.com/comb-w-r), copyright
-    # Python Software Foundation (https://docs.python.org/3/license.html)
-    def combinations_with_replacement(iterable, r):
-        # combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
-        pool = tuple(iterable)
-        n = len(pool)
-        if not n and r:
-            return
-        indices = [0] * r
-        yield tuple(pool[i] for i in indices)
-        while True:
-            for i in reversed(range(r)):
-                if indices[i] != n - 1:
-                    break
-            else:
-                return
-            indices[i:] = [indices[i] + 1] * (r - i)
-            yield tuple(pool[i] for i in indices)
-
-
 if np_version < (1, 7):
     # Prior to 1.7.0, np.frombuffer wouldn't work for empty first arg.
     def frombuffer_empty(buf, dtype):
@@ -288,25 +265,6 @@ if sp_version < (0, 15):
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
 else:
     from scipy.sparse.linalg import lsqr as sparse_lsqr
-
-
-if sys.version_info < (2, 7, 0):
-    # partial cannot be pickled in Python 2.6
-    # http://bugs.python.org/issue1398
-    class partial(object):
-        def __init__(self, func, *args, **keywords):
-            functools.update_wrapper(self, func)
-            self.func = func
-            self.args = args
-            self.keywords = keywords
-
-        def __call__(self, *args, **keywords):
-            args = self.args + args
-            kwargs = self.keywords.copy()
-            kwargs.update(keywords)
-            return self.func(*args, **kwargs)
-else:
-    from functools import partial
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
@@ -400,3 +358,51 @@ if sp_version < (0, 13, 0):
         return .5 * (count[dense] + count[dense - 1] + 1)
 else:
     from scipy.stats import rankdata
+
+
+if np_version < (1, 12, 0):
+    class MaskedArray(np.ma.MaskedArray):
+        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
+        # This fix is needed to make our model_selection.GridSearchCV
+        # picklable as the ``cv_results_`` param uses MaskedArray
+        def __getstate__(self):
+            """Return the internal state of the masked array, for pickling
+            purposes.
+
+            """
+            cf = 'CF'[self.flags.fnc]
+            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
+            return data_state + (np.ma.getmaskarray(self).tostring(cf),
+                                 self._fill_value)
+else:
+    from numpy.ma import MaskedArray    # noqa
+
+if 'axis' not in signature(np.linalg.norm).parameters:
+
+    def norm(X, ord=None, axis=None):
+        """
+        Handles the axis parameter for the norm function
+        in old versions of numpy (useless for numpy >= 1.8).
+        """
+
+        if axis is None or X.ndim == 1:
+            result = np.linalg.norm(X, ord=ord)
+            return result
+
+        if axis not in (0, 1):
+            raise NotImplementedError("""
+            The fix that adds axis parameter to the old numpy
+            norm only works for 1D or 2D arrays.
+            """)
+
+        if axis == 0:
+            X = X.T
+
+        result = np.zeros(X.shape[0])
+        for i in range(len(result)):
+            result[i] = np.linalg.norm(X[i], ord=ord)
+
+        return result
+
+else:
+    norm = np.linalg.norm

@@ -9,6 +9,7 @@
 from itertools import chain, combinations
 import numbers
 import warnings
+from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
@@ -19,7 +20,6 @@ from ..utils import check_array
 from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
@@ -204,7 +204,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     copy : boolean, optional, default True
@@ -403,7 +403,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     axis : int (0 by default)
@@ -1325,6 +1325,16 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     return_norm : boolean, default False
         whether to return the computed norms
 
+    Returns
+    -------
+    X : {array-like, sparse matrix}, shape [n_samples, n_features]
+        Normalized input X.
+
+    norms : array, shape [n_samples] if axis=1 else [n_features]
+        An array of norms along given axis for X.
+        When X is sparse, a NotImplementedError will be raised
+        for norm 'l1' or 'l2'.
+
     See also
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
@@ -1346,15 +1356,19 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         X = X.T
 
     if sparse.issparse(X):
+        if return_norm and norm in ('l1', 'l2'):
+            raise NotImplementedError("return_norm=True is not implemented "
+                                      "for sparse matrices with norm 'l1' "
+                                      "or norm 'l2'")
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
             _, norms = min_max_axis(X, 1)
-            norms = norms.repeat(np.diff(X.indptr))
-            mask = norms != 0
-            X.data[mask] /= norms[mask]
+            norms_elementwise = norms.repeat(np.diff(X.indptr))
+            mask = norms_elementwise != 0
+            X.data[mask] /= norms_elementwise[mask]
     else:
         if norm == 'l1':
             norms = np.abs(X).sum(axis=1)
@@ -1737,6 +1751,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
 
+    Note: a one-hot encoding of y labels should use a LabelBinarizer
+    instead.
+
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
     Parameters
@@ -1751,7 +1768,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                   ``X[:, i]``. Each feature value should be
                   in ``range(n_values[i])``
 
-    categorical_features: "all" or array of indices or mask
+    categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
 
         - 'all' (default): All features are treated as categorical.
@@ -1810,6 +1827,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
+    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
+      fashion.
+    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
+      iterables and a multilabel format, e.g. a (samples x classes) binary
+      matrix indicating the presence of a class label.
+    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
+      and n_classes-1.
     """
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):

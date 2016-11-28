@@ -12,7 +12,7 @@ The project is hosted on https://github.com/scikit-learn/scikit-learn
 Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
 adding new algorithms, and the best way to contribute and to help the project
 is to start working on known issues.
-See :ref:`easy_issues` to get started.
+See :ref:`new_contributors` to get started.
 
 .. topic:: **Our community, our values**
 
@@ -148,8 +148,18 @@ visibility.
 
         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-(If any of the above seems like magic to you, then look up the
-`Git documentation <https://git-scm.com/documentation>`_ on the web.)
+If any of the above seems like magic to you, then look up the `Git documentation
+<https://git-scm.com/documentation>`_ and the `Git development workflow
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+web.
+
+In particular, if some conflicts arise between your branch and the master
+branch, you will need to `rebase your branch on master
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_.
+Please avoid merging master branch into yours. If you did it anyway, you can fix
+it following `this example
+<https://github.com/scikit-learn/scikit-learn/pull/7111#issuecomment-249175383>`_.
+
 
 Contributing pull requests
 --------------------------
@@ -175,11 +185,13 @@ rules before submitting a pull request:
 
     * Please prefix the title of your pull request with ``[MRG]`` if the
       contribution is complete and should be subjected to a detailed review.
-      Incomplete contributions should be prefixed ``[WIP]`` to indicate a work
-      in progress (and changed to ``[MRG]`` when it matures). WIPs may be useful
-      to: indicate you are working on something to avoid duplicated work,
-      request broad review of functionality or API, or seek collaborators.
-      WIPs often benefit from the inclusion of a
+      Two core developers will review your code and change the prefix of the pull
+      request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
+      for merging. Incomplete contributions should be prefixed ``[WIP]`` to
+      indicate a work in progress (and changed to ``[MRG]`` when it matures).
+      WIPs may be useful to: indicate you are working on something to avoid
+      duplicated work, request broad review of functionality or API, or seek
+      collaborators. WIPs often benefit from the inclusion of a
       `task list
       <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
       in the PR description.
@@ -292,18 +304,36 @@ following rules before submitting:
    or link to a `gist <https://gist.github.com>`_. If an exception is raised,
    please provide the traceback.
 
-.. _easy_issues:
+.. _new_contributors:
 
-Easy Issues
------------
+Issues for New Contributors
+---------------------------
 
-A great way to start contributing to scikit-learn is to pick an item from the
-list of `Easy issues
-<https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
-in the issue tracker. Resolving these issues allow you to start contributing
-to the project without much prior knowledge. Your assistance in this area will
-be greatly appreciated by the more experienced developers as it helps free up
-their time to concentrate on other issues.
+New contributors should look for the following tags when looking for issues. 
+We strongly recommend that new contributors tackle "easy" issues first: this 
+helps the contributor become familiar with the contribution workflow, and 
+for the core devs to become acquainted with the contributor; besides which, 
+we frequently underestimate how easy an issue is to solve!
+
+.. topic:: Easy Tags
+
+    A great way to start contributing to scikit-learn is to pick an item from the
+    list of `Easy issues
+    <https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
+    in the issue tracker. Resolving these issues allow you to start contributing
+    to the project without much prior knowledge. Your assistance in this area will
+    be greatly appreciated by the more experienced developers as it helps free up
+    their time to concentrate on other issues.
+
+.. topic:: Need Contributor Tags
+
+    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
+    we use the Need Contributor tag to mark Pull Requests which have been abandoned
+    by their original contributor and are available for someone to pick up where the original
+    contributor left off. The list of issues with the Need Contributor tag can be found
+    `here <https://github.com/scikit-learn/scikit-learn/labels/Need%20Contributor>`_ .
+
+    Note that not all issues which need contributors will have this tag.
 
 .. _contribute_documentation:
 
@@ -362,8 +392,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
         See also
         --------
-        SelectKBest: Select features based on the k highest scores.
-        SelectFpr: Select features based on a false positive rate test.
+        SelectKBest : Select features based on the k highest scores.
+        SelectFpr : Select features based on a false positive rate test.
 
     * For unwritten formatting rules, try to follow existing good works:
 
@@ -436,7 +466,7 @@ should have (at least) one of the following tags:
 :New Feature:
     Feature requests and pull requests implementing a new feature.
 
-There are two other tags to help new contributors:
+There are three other tags to help new contributors:
 
 :Easy:
     This issue can be tackled by anyone, no experience needed.
@@ -445,6 +475,13 @@ There are two other tags to help new contributors:
 :Moderate:
     Might need some knowledge of machine learning or the package,
     but is still approachable for someone new to the project.
+
+:Needs Contributor:
+    This tag marks an issue which currently lacks a contributor or a 
+    PR that needs another contributor to take over the work. These 
+    issues can range in difficulty, and may not be approachable
+    for new contributors. Note that not all issues which need
+    contributors will have this tag.
 
 
 Other ways to contribute
@@ -665,7 +702,7 @@ Python 3.x support
 All scikit-learn code should work unchanged in both Python 2.[67]
 and 3.2 or newer. Since Python 3.x is not backwards compatible,
 that may require changes to code and it certainly requires testing
-on both 2.6 or 2.7, and 3.2 or newer.
+on both 2.7 and 3.2 or newer.
 
 For most numerical algorithms, Python 3.x support is easy:
 just remember that ``print`` is a function and

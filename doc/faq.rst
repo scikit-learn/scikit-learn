@@ -75,31 +75,15 @@ input variables and a 1D array ``y`` for the target variables. The array ``X``
 holds the features as columns and samples as rows . The array ``y`` contains
 integer values to encode the class membership of each sample in ``X``.
 
-To load data as numpy arrays you can use different libraries depending on the
-original data format:
+How can I load my own datasets into a format usable by scikit-learn?
+--------------------------------------------------------------------
 
-* `numpy.loadtxt
-  <http://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ to
-  load text files (such as CSV) assuming that all the columns have an
-  homogeneous data type (e.g. all numeric values).
+Generally, scikit-learn works on any numeric data stored as numpy arrays
+or scipy sparse matrices. Other types that are convertible to numeric 
+arrays such as pandas DataFrame are also acceptable.
 
-* `scipy.io <http://docs.scipy.org/doc/scipy/reference/io.html>`_ for common
-  binary formats often used in scientific computing context.
-
-* `scipy.misc.imread <http://docs.scipy.org/doc/scipy/reference/generated/scipy.
-  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
-  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
-  data from various image file formats.
-
-* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ to load
-  heterogeneously typed data from various file formats and database protocols
-  that can slice and dice before conversion to numerical features in a numpy
-  array.
-
-Note: if you manage your own numerical data it is recommended to use an
-optimized file format such as HDF5 to reduce data load times. Various libraries
-such as H5Py, PyTables and pandas provides a Python interface for reading and
-writing data in that format.
+For more information on loading your data files into these usable data 
+structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
 What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
@@ -264,10 +248,13 @@ Python processes for parallel computing. Unfortunately this is a violation of
 the POSIX standard and therefore some software editors like Apple refuse to
 consider the lack of fork-safety in Accelerate / vecLib as a bug.
 
-In Python 3.4+ it is now possible to configure ``multiprocessing`` to use the
-'forkserver' or 'spawn' start methods (instead of the default 'fork') to manage
-the process pools. This makes it possible to not be subject to this issue
-anymore.
+In Python 3.4+ it is now possible to configure ``multiprocessing`` to
+use the 'forkserver' or 'spawn' start methods (instead of the default
+'fork') to manage the process pools. To work around this issue when
+using scikit-learn, you can set the JOBLIB_START_METHOD environment
+variable to 'forkserver'. However the user should be aware that using
+the 'forkserver' method prevents joblib.Parallel to call function
+interactively defined in a shell session.
 
 If you have custom code that uses ``multiprocessing`` directly instead of using
 it via joblib you can enable the 'forkserver' mode globally for your

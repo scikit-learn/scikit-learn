@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-from nose import SkipTest
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -12,6 +11,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import SkipTest
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -171,19 +171,17 @@ def test_lda_explained_variance_ratio():
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
+    assert_equal(clf_lda_eigen.explained_variance_ratio_.shape, (2,),
+                 "Unexpected length for explained_variance_ratio_")
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
+    assert_equal(clf_lda_svd.explained_variance_ratio_.shape, (2,),
+                 "Unexpected length for explained_variance_ratio_")
 
-    tested_length = min(clf_lda_svd.explained_variance_ratio_.shape[0],
-                        clf_lda_eigen.explained_variance_ratio_.shape[0])
-
-    # NOTE: clf_lda_eigen.explained_variance_ratio_ is not of n_components
-    # length. Make it the same length as clf_lda_svd.explained_variance_ratio_
-    # before comparison.
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
-                              clf_lda_eigen.explained_variance_ratio_[:tested_length])
+                              clf_lda_eigen.explained_variance_ratio_)
 
 
 def test_lda_orthogonality():
@@ -331,7 +329,7 @@ def test_deprecated_lda_qda_deprecation():
         return sklearn.lda
 
     lda = assert_warns(DeprecationWarning, import_lda_module)
-    assert lda.LDA is LinearDiscriminantAnalysis
+    assert isinstance(lda.LDA(), LinearDiscriminantAnalysis)
 
     def import_qda_module():
         import sklearn.qda
@@ -341,7 +339,7 @@ def test_deprecated_lda_qda_deprecation():
         return sklearn.qda
 
     qda = assert_warns(DeprecationWarning, import_qda_module)
-    assert qda.QDA is QuadraticDiscriminantAnalysis
+    assert isinstance(qda.QDA(), QuadraticDiscriminantAnalysis)
 
 
 def test_covariance():
