@@ -45,7 +45,7 @@ enhance the functionality of scikit-learn's estimators.
   library.
 
 - `sklearn-porter <https://github.com/nok/sklearn-porter>`_
-  Port or transpile trained scikit-learn models to a low-level programming language.
+  Transpile trained scikit-learn models to C, Java, Javascript and others.
 
 Other estimators and tasks
 --------------------------
