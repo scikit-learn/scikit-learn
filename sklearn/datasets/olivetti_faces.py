@@ -25,6 +25,7 @@ consists of 64x64 images.
 from io import BytesIO
 from os.path import exists
 from os import makedirs
+import logging
 try:
     # Python 2
     import urllib2
@@ -111,7 +112,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         makedirs(data_home)
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
-        print('downloading Olivetti faces from %s to %s'
+        logging.info('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
         fhandle = urlopen(DATA_URL)
         buf = BytesIO(fhandle.read())
