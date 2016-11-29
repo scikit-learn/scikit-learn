@@ -8,10 +8,10 @@ be used to generate missing values completely at random or conforming to the
 given distribution.
 
 The :class`sklearn.datasets.ValueDropper` is a transformer which can be
-initialized with a ``missing_distribution`` specifying the drop probabilites
+initialized with a ``missing_proba`` specifying the drop probabilites
 for each label (and each feature if needed). It provisions preserving the
-missing values of lower scaled ``missing_distribution`` in a higher scaled
-``missing_distribution``. This facilitates benchmarking missing-value
+missing values of lower scaled ``missing_proba`` in a higher scaled
+``missing_proba``. This facilitates benchmarking missing-value
 strategies and evaluating the performance of such strategies with
 respect to the type and extent of missingness in data.
 
@@ -42,49 +42,35 @@ from sklearn.datasets import ValueDropper
 print(__doc__)
 
 
-X = np.array([[0, 1, 2],
-              [3, 4, 5],
-              [6, 7, 8],
-              [9, 0, 1],
-              [2, 3, 4],
-              [8, 9, 8],
-              [8, 9, 8],
-              [1, 0, 5],
-              [5, 4, 3],
-              [2, 1, 1],
-              [3, 4, 5],
-              [2, 3, 4],
-              [8, 9, 8],
-              [7, 8, 9]], dtype=float)
-y = np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 2, 2])
+X = np.random.RandomState(0).random_sample((20, 3))
+y = np.array([1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2])
 
-# Drop 10% of values across all features, where all missing values
-# come from samples of class 1
-
-vd = ValueDropper(missing_distribution={1: 0.1}, random_state=42)
+# 10% of values in samples of class 1 will have missing values across all
+# features
+vd = ValueDropper(missing_proba={1: 0.2}, random_state=0)
 X_dropped = vd.transform(X, y)
 
-print("\nAfter dropping 10% of values when class label(s) are 1")
+print("\nAfter dropping 10% of values in samples of class 1 across all"
+      " features")
 print("y", "X", sep="\t")
 print("------------------------")
 for i in range(y.shape[0]):
     print(y[i], X_dropped[i], sep="\t")
 
-# Drop another 10% of values across all features, where all missing values
-# come from samples of class 1
-
-vd = ValueDropper(missing_distribution={1: 0.2}, random_state=42)
+# Drop another 10% of values in samples of class 1 across all features
+vd = ValueDropper(missing_proba={1: 0.4}, random_state=0)
 X_dropped = vd.transform(X, y)
 
-print("\nAfter dropping another 10% of values when class label(s) are 1")
+print("\nAfter dropping another 10% of values in samples of class 1 across all"
+      " features")
 print("y", "X", sep="\t")
 print("------------------------")
 for i in range(y.shape[0]):
     print(y[i], X_dropped[i], sep="\t")
 
-# Drop 30% of values completely at random
+# Drop 30% of values in all features completely at random
 
-vd = ValueDropper(missing_distribution=0.3, random_state=42)
+vd = ValueDropper(missing_proba=0.3, random_state=0)
 X_dropped = vd.transform(X, y)
 
 print("\nAfter dropping 30% of values randomly")
@@ -93,50 +79,40 @@ print("------------------------")
 for i in range(y.shape[0]):
     print(y[i], X_dropped[i], sep="\t")
 
-# Drop 30% of values but according to the given probability distribution
-# Incrementally adding 10% each time
+# Drop values based on the given probability distribution
 
-# 40% of the dropped values must be from class label 0
-# (evenly across all features)
-# The rest 60% of the dropped values are from class label 1, distributed in the
-# 1:2:0 ratio amongst the features.
-# Don't drop any values from samples of class 2
-abs_missing_rate = 0.1
-missing_distribution = {0: 0.4 * abs_missing_rate,
-                        1: np.array([0.2, 0.4, 0]) * abs_missing_rate}
-
-# Also let's use -1 to denote missing values, this time
-vd = ValueDropper(missing_values=-1, missing_distribution=missing_distribution,
-                  random_state=42)
+# For samples of class 0, drop 10% of values (evenly across all features)
+# For samples of class 1, drop 20% of values in feature 0, 40% in feature 1
+#                         and None in feature 2
+# Don't drop any values for samples of class 2.
+missing_proba = {0: 0.1, 1: [0.2, 0.4, 0]}
+vd = ValueDropper(missing_proba=missing_proba, random_state=0)
 X_dropped = vd.transform(X, y)
 
-print("The given class wise distribution is %s " % missing_distribution)
-print("\nAfter dropping 10% of values according to the distribution")
+print("The given class wise missing_proba dict is %s " % missing_proba)
+print("\nAfter dropping one set of missing values based on the "
+      " missing_proba=%s" % missing_proba)
 print("y", "X", sep="\t")
 print("------------------------")
 for i in range(y.shape[0]):
     print(y[i], X_dropped[i], sep="\t")
 
-# NOTE that the relative values of the distribution must not be changed.
-abs_missing_rate = 0.2
-missing_distribution = {0: 0.4 * abs_missing_rate,
-                        1: np.array([0.2, 0.4, 0]) * abs_missing_rate}
-vd = ValueDropper(missing_values=-1, missing_distribution=missing_distribution,
-                  random_state=42)
+# Drop twice as many missing values as in previous step.
+missing_proba = {0: 0.2, 1: [0.4, 0.6, 0]}
+vd = ValueDropper(missing_proba=missing_proba, random_state=0)
 X_dropped = vd.transform(X, y)
-print("\nAfter dropping another 10% of values according to the distribution")
+print("\nAfter dropping another set of missing values based on the new"
+      " missing_proba=%s" % missing_proba)
 print("y", "X", sep="\t")
 print("------------------------")
 for i in range(y.shape[0]):
     print(y[i], X_dropped[i], sep="\t")
 
-abs_missing_rate = 0.3
-missing_distribution = {0: 0.3 * abs_missing_rate,
-                        1: np.array([0.2, 0.4, 0]) * abs_missing_rate}
-vd = ValueDropper(missing_values=-1, missing_distribution=missing_distribution,
-                  random_state=42)
+missing_proba = {0: 0.3, 1: [0.6, 0.8, 0]}
+vd = ValueDropper(missing_proba=missing_proba, random_state=0)
 X_dropped = vd.transform(X, y)
-print("\nAfter dropping another 10% of values according to the distribution")
+print("\nAfter dropping another set of missing values based on the new"
+      " missing_proba=%s" % missing_proba)
 print("y", "X", sep="\t")
 print("------------------------")
 for i in range(y.shape[0]):

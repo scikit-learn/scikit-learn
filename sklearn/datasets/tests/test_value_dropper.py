@@ -32,74 +32,59 @@ def test_value_dropper_mnar_clf():
 
         # Inplace dropping of values
 
-        # Samples from class 0 will have a drop probability of 0.1
-        vd = ValueDropper(missing_distribution={classes[0]: 0.1},
+        # Samples from class 0 will have a drop-probability of 0.1
+        vd = ValueDropper(missing_proba={classes[0]: 0.1},
+                          missing_values=np.nan, random_state=0)
+        X_dropped = vd.transform(X, y)
+        missing_mask = np.isnan(X_dropped)
+
+        # Check the drop-probabilty for class 0
+        assert_almost_equal(missing_mask[y == classes[0]].sum() /
+                            (np.sum(y == classes[0]) * n_features), 0.1,
+                            decimal=2)
+
+        # All the missing values are from y == 0
+        assert_almost_equal(
+            np.isnan(X_dropped[y == classes[0]]).ravel().sum() /
+            (np.sum(y == classes[0]) * n_features), 0.1, decimal=2)
+
+        # and no missing values from y != 0
+        assert_equal(missing_mask[y != classes[0]].ravel().sum(), 0)
+
+        # Samples from class 1 will have a drop probabilty of 0.5
+        # but spread unevenly across features as given by the
+        # list of probabilities
+        # And samples from class 0 will have a drop-probabilities as specified
+        # by a list of drop-probabilites for each feature
+        missing_proba = {classes[0]: [0.1, 0.2, 0.2, 0, 0],
+                         classes[1]: 0.5}
+        vd = ValueDropper(missing_proba=missing_proba,
                           missing_values=np.nan, random_state=0)
         X_dropped = vd.transform(X, y)
 
-        # Check the total drop fraction
-        assert_almost_equal(np.isnan(X_dropped).ravel().sum() /
-                            float(n_values), 0.1)
-
-        # All the missing values are from y == 0
-        assert_almost_equal(np.isnan(
-            X_dropped[y == classes[0]]).ravel().sum() / float(n_values), 0.1)
-
-        # and no missing values from y != 0
-        assert_almost_equal(np.isnan(
-            X_dropped[y != classes[0]]).ravel().sum() / float(n_values), 0.)
-
-        # Samples from class 0 will have a drop probabilty of 0.3
-        # but spread unevenly across features as given by the
-        # list of probabilities
-        # And samples from class 1 will have a drop probability of 0.01
-        # across all features
-
-        missing_distribution = {classes[0]: [0.01, 0.005, 0.005, 0, 0],
-                                classes[1]: 0.05}
-        vd = ValueDropper(missing_distribution=missing_distribution,
-                          missing_values=np.nan,
-                          random_state=0)
-        X_dropped = vd.transform(X, y)
-
         missing_mask = np.isnan(X_dropped)
-
         # Check that there are no missing values when y != {0 or 1}
         assert_equal(missing_mask[(y == classes[2])].ravel().sum(), 0)
         assert_equal(missing_mask[(y == classes[3])].ravel().sum(), 0)
 
-        # Check that the drop probabilites when class == 1 is 0.1
+        # Check that the drop probabilites for samples of class 1 is 0.5
         # across all features
-        assert_equal(missing_mask[y == classes[1]].ravel().sum() /
-                     float(n_values), 0.05)
+        assert_array_almost_equal(
+            missing_mask[y == classes[1]].sum(axis=0) /
+            np.sum(y == classes[1]), [0.5] * n_features, decimal=2)
 
-        # Check that the drop probabilites when class == 0 is 2.1
-        # across all features sum(missing_distribution[0])
-        assert_equal(missing_mask[y == classes[0]].ravel().sum() /
-                     float(n_values), 0.02)
+        # Check that the drop probabilites when class == 0  are as given by
+        # the missing_proba dict
+        assert_array_almost_equal(missing_mask[y == classes[0]].sum(axis=0) /
+                                  np.sum(y == classes[0]),
+                                  missing_proba[classes[0]],
+                                  decimal=2)
 
-        # Check that the features indexed 3 and 4 have no missing values
-        # for class 0
-        assert_equal(missing_mask[y == classes[0]][3, 4].ravel().sum(), 0.)
-
-        # Check that feature indexed 0 has drop prob 0.2
-        assert_equal(missing_mask[np.where(y == classes[0])[0],
-                                  (0,)].ravel().sum() /
-                     float(n_values), 0.01)
-
-        # Check that feature indexed 1 and 2 both have drop prob 0.05
-        # Check that feature indexed 0 has drop prob 0.2
-        assert_equal(missing_mask[np.where(y == classes[0])[0],
-                                  (1,)].ravel().sum() /
-                     float(n_values), 0.005)
-        assert_equal(missing_mask[np.where(y == classes[0])[0],
-                                  (2,)].ravel().sum() /
-                     float(n_values), 0.005)
-
-        # Ensure scaling the missing_distribution by a factor of 2
-        missing_distribution = {classes[0]: [0.02, 0.01, 0.01, 0, 0],
-                                classes[1]: 0.1}
-        vd = ValueDropper(missing_distribution=missing_distribution,
+        # Ensure scaling up the missing_proba retains previously dropped
+        # locations as long as random_state is set
+        # The up scaling need not be linear
+        missing_proba = {classes[0]: [0.1, 0.5, 0.5, 0.1, 0], classes[1]: 0.8}
+        vd = ValueDropper(missing_proba=missing_proba,
                           missing_values=np.nan, random_state=0)
         X_dropped2 = vd.transform(X, y)
         assert_true(np.all(np.isnan(X_dropped2[np.isnan(X_dropped)])))
@@ -112,7 +97,7 @@ def test_value_dropper_mnar_reg_error():
                          "only for single target which is discrete"
                          " (classification tasks). The given target (y) is of "
                          "type continuous",
-                         ValueDropper(missing_distribution={0: 0.2}).transform,
+                         ValueDropper(missing_proba={0: 0.2}).transform,
                          X, y)
 
 
@@ -123,49 +108,46 @@ def check_value_dropper_mcar(X, y):
     n_values = n_samples * n_features
 
     # Inplace dropping of values; 0 correlation case.
-    # For even indexed features missing probability is 0.03 and
-    # for odd indexed ones 0.01
-    missing_distribution = np.array([0.03, 0.01] * 5)
-    vd = ValueDropper(missing_distribution=missing_distribution,
-                      copy=False, random_state=0)
+    # For even indexed features missing drop-probability is 0.3 and
+    # for odd indexed ones 0.1
+    # (Also check if inplace operation works as expected)
+    missing_proba = np.array([0.3, 0.1] * 5)
+    vd = ValueDropper(missing_proba=missing_proba, copy=False, random_state=0)
     vd.transform(X_copy, y)
     missing_mask = np.isnan(X_copy)
 
-    global_missing_rate = missing_distribution.sum()
+    global_missing_rate = missing_proba.mean()  # 0.2
 
     # Check the global missing rate
     assert_almost_equal(missing_mask.ravel().sum() / float(n_values),
                         global_missing_rate)
 
     # Check the rate for all even indexed features
-    assert_almost_equal(missing_mask[:, missing_distribution == 0.03]
-                        .ravel().sum() / float(n_values),
-                        0.03 * 5)
-
-    # Check the rate for one even indexed feature
-    assert_almost_equal(missing_mask[:, 0]
-                        .ravel().sum() / float(n_values), 0.03)
+    even_feature_missing_mask = missing_mask[:, missing_proba == 0.3]
+    assert_almost_equal(even_feature_missing_mask.ravel().sum() /
+                        even_feature_missing_mask.size, 0.3)
 
     # Check the rate for all odd features
-    assert_almost_equal(missing_mask[:, missing_distribution == 0.03]
-                        .ravel().sum() / float(n_values),
-                        0.03 * 5)
-
-    # Check the rate for one odd indexed feature
-    assert_almost_equal(missing_mask[:, 1]
-                        .ravel().sum() / float(n_values), 0.01)
+    odd_feature_missing_mask = missing_mask[:, missing_proba == 0.1]
+    assert_almost_equal(odd_feature_missing_mask.ravel().sum() /
+                        odd_feature_missing_mask.size, 0.1)
 
     # Let us drop 0.3 more fraction of values. This time not inplace
     # copy=True must be default
-    vd = ValueDropper(missing_distribution=0.6, random_state=0)
+    vd = ValueDropper(missing_proba=0.6, random_state=0)
     X_more_dropped = vd.transform(X_copy2, y)
     new_missing_mask = np.isnan(X_more_dropped)
+
+    # Check global drop probability
+    assert_almost_equal(new_missing_mask.ravel().sum() / n_values, 0.6)
+    # Check the drop-probability for a random feature 3
+    assert_almost_equal(new_missing_mask[:, 3].ravel().sum() / n_samples, 0.6)
 
     # Ensure X is not modified
     assert_array_almost_equal(X_copy2, X)
 
     # Ensure all the missing positions that were in the previous step also
-    # exist when missing_distribution is scaled up
+    # exist when missing_proba is scaled up
     # (Important for reproducibility)
     assert_true(np.all(new_missing_mask[missing_mask]))
 
@@ -197,33 +179,21 @@ def test_value_dropper_errors():
                                n_repeated=0,
                                random_state=0)
 
-    # Raise sensible error when sum of all probabilites in missing_distribution
-    # exceeds or equals 1
-    missing_distributions = (
+    # Raise sensible error when any probability is outside the range [0, 1]
+    missing_probas = (
         # NMAR cases
-        {0: 0.25, 1: 0.25, 2: 0.25, 3: 0.25}, {0: 2., },
-        {0: [0, 0, 0, 0, 0.24, 0, 0, 0, 0, 0.01], 1: 0.25, 2: [0.025, ] * 10,
-         3: 0.25}, {0: [0.1] * 10, }, {0: 0.26, 1: [0.09, ] * 10},
+        {0: 2., 1: 0.25, 2: 0.25, 3: 0.25}, {0: 2, }, {0: -2, }, {0: 2.0, },
+        {0: [0, 0, 0, 0, 0.24, 0, 0, 0, 0, -0.01],},
         # MCAR cases
-        [0, 0, 0, 0.2, 0.3, 0.1, 0, 0, 0, 0.5], 2.5, 1.5,
-        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
-    for missing_distribution in missing_distributions:
-        assert_raise_message(ValueError, "should sum up to less than 1",
+        [0, 0, 0, 0.2, 0.3, -0.1, 0, 0, 0, 0.5], 2.5, 1.5,
+        [0, -1, 0, 0, 0, 0, 0, 0, 0, 0], 2, -2)
+    for missing_proba in missing_probas:
+        assert_raise_message(ValueError,
+                             "should be within the range of [0, 1]",
                              ValueDropper(
-                                 missing_distribution=missing_distribution)
-                             .transform, X, y)
+                                 missing_proba=missing_proba).transform, X, y)
 
-    # Accept only float values 0, 1, 2 all are incorrect values even as float
-    # hence no point in accepting any int values
-    assert_raise_message(ValueError,
-                         "missing_distribution must be a float or  1D vector",
-                         ValueDropper(missing_distribution=2).transform, X, y)
-    assert_raise_message(ValueError,
-                         "should either be a single float or an array",
-                         ValueDropper(missing_distribution={0: 2})
-                         .transform, X, y)
-
-    wrong_missing_distributions_err_pairs = (
+    wrong_missing_probas_err_pairs = (
         # 1D vector with fewer or more than n_feature elements
         ([0.01, ] * 9, "does not conform to the number of features, 10"),
         ([0.01, ] * 11, "does not conform to the number of features, 10"),
@@ -245,18 +215,15 @@ def test_value_dropper_errors():
          "\{1: 0.2.*\} was passed for class label 0"),
 
         ("foobar",
-         "must be a float or  1D vector \(list, tuple or np.ndarray\)"
+         "must be a float or 1D vector \(list, tuple or np.ndarray\)"
          " of shape \(n_features,\) or dict"))
 
-    missing_distribution = {0: 0.025, 1: 0.025, 2: 0.025, 3: 0.025}
-    for missing_distribution, err_msg in wrong_missing_distributions_err_pairs:
+    for missing_proba, err_msg in wrong_missing_probas_err_pairs:
         assert_raises_regexp(ValueError, err_msg,
-                             ValueDropper(
-                                 missing_distribution=missing_distribution)
+                             ValueDropper(missing_proba=missing_proba)
                              .transform, X, y)
 
-    # When missing_distribution is a dict, but y is not given
-    assert_raise_message(ValueError, "",
-                         ValueDropper(
-                             missing_distribution=missing_distribution)
-                         .transform, X)
+    # When missing_proba is a dict, but y is not given
+    missing_proba = {0: 0.025}
+    assert_raise_message(
+        ValueError, "", ValueDropper(missing_proba=missing_proba).transform, X)
