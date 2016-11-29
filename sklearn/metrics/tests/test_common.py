@@ -723,18 +723,11 @@ def test_multilabel_representation_invariance():
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
 
-    y1_list_list_indicator = []
-    y2_list_list_indicator = []
+    y1_list_array_indicator = list(y1)
+    y2_list_array_indicator = list(y2)
 
-    y1_list_array_indicator = []
-    y2_list_array_indicator = []
-
-    for i in range(n_samples + 1):
-        y1_list_list_indicator.append(list(y1[i]))
-        y2_list_list_indicator.append(list(y2[i]))
-
-        y1_list_array_indicator.append(y1[i])
-        y2_list_array_indicator.append(y2[i])
+    y1_list_list_indicator = [list(a) for a in y1_list_array_indicator]
+    y2_list_list_indicator = [list(a) for a in y2_list_array_indicator]
 
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
