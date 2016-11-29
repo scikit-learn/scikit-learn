@@ -600,8 +600,11 @@ The decision function is:
 .. note::
 
     While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
-    regularization parameter, most other estimators use ``alpha``. The relation
-    between both is :math:`C = \frac{n\_samples}{alpha}`.
+    regularization parameter, most other estimators use ``alpha``. The exact
+    equivalence between the amount of regularization of two models depends on
+    the exact objective function optimized by the model. For example, when the
+    estimator used is :class:`sklearn.linear_model.Ridge <ridge>` regression,
+    the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 
