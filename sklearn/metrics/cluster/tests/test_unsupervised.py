@@ -176,3 +176,9 @@ def test_davies_bouldin_index():
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     assert_almost_equal(davies_bouldin_index(X, labels),
                         2*np.sqrt(0.5)/3)
+
+    # General case - cluster have one sample
+    X = ([[0, 0], [2, 2], [3, 3], [5, 5]])
+    labels = [0, 0, 1, 2]
+    assert_almost_equal(davies_bouldin_index(X, labels),
+                        (5./4)/3)
