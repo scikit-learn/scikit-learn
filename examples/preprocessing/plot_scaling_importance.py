@@ -24,12 +24,18 @@ the direction of maximal variance more closely corresponds with the
 more important than the change in weight of one kilogram, it is easily
 seen that this determination is incorrect. In the case of PCA, scaling
 features using normalization is preferred over using min-max scaling as
-the primary components are computed using the correlation matrix as opposed
-to the covariance matrix.
+the primary components are computed using the correlation matrix as
+opposed to the covariance matrix.
 
-In order to illustrate this in an example, PCA will be performed on a dataset
-which has been standardized using Standard Scaler and a copy which has remained
-untouched. The results with be visualized and a clear difference noted.
+In order to illustrate this in an example, PCA will be performed on a
+dataset which has been standardized using Standard Scaler and a copy
+which has remained untouched. The results with be visualized and a clear
+difference noted. The 1st principal component in the unscaled set is shown.
+It can be seen that feature #13 dominates the direction, being a whole
+two orders of magnitude above the other features. This is contrasted when
+observing the prinicpal component for the scaled version of the data. In the
+scaled version, the orders of magnitude is roughly the same across all the
+features.
 
 The results will then be used to train a naive Bayes classifier, and a clear
 difference the prediction accuracies will be observed.
@@ -94,9 +100,10 @@ print('{:.2%}\n'.format(metrics.accuracy_score(y_test, pred_test)))
 print('\nPrediction accuracy for the standardized test dataset with PCA')
 print('{:.2%}\n'.format(metrics.accuracy_score(y_test, pred_test_std)))
 
+print('\nPC 1 without scaling:\n', pca.components_[0])
+print('\nPC 1 with scaling:\n', pca_std.components_[0])
 
 # visualize standardized vs. untouched dataset with PCA performed
-
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=FIG_SIZE)
 
 
