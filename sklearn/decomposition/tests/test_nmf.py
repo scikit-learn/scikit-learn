@@ -27,12 +27,10 @@ def test_initialize_nn_output():
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
-    msg = "Invalid solver parameter: got 'spam' instead of one of"
+    msg = "Invalid solver parameter 'spam'"
     assert_raise_message(ValueError, msg, NMF(solver=name).fit, A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(init=name).fit, A)
-    msg = "Invalid sparseness parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, NMF(sparseness=name).fit, A)
 
     msg = "Negative values in data passed to"
     assert_raise_message(ValueError, msg, NMF().fit, -A)
