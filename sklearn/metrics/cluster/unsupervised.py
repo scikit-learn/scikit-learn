@@ -295,7 +295,7 @@ def davies_bouldin_index(X, labels):
     for k in range(n_labels):
         cluster_k = X[labels == k]
         mean_k = np.mean(cluster_k, axis=0)
-        d_k = np.average(pairwise_distances(cluster_k, mean_k))
+        d_k = np.average(pairwise_distances(cluster_k, [mean_k]))
         clusters_data[k] = (mean_k, d_k)
 
     score = 0
