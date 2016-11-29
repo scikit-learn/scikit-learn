@@ -15,7 +15,6 @@ def test_value_dropper_mnar_clf():
     # Test drop probabilites when missing distribution is
     # given for classification problems
     n_samples, n_features = 1000, 5
-    n_values = n_samples * n_features
     X, y = make_classification(n_samples=n_samples,
                                n_classes=4,
                                n_features=n_features,
@@ -184,7 +183,7 @@ def test_value_dropper_errors():
     missing_probas = (
         # NMAR cases
         {0: 2., 1: 0.25, 2: 0.25, 3: 0.25}, {0: 2, }, {0: -2, }, {0: 2.0, },
-        {0: [0, 0, 0, 0, 0.24, 0, 0, 0, 0, -0.01],},
+        {0: [0, 0, 0, 0, 0.24, 0, 0, 0, 0, -0.01], },
         # MCAR cases
         [0, 0, 0, 0.2, 0.3, -0.1, 0, 0, 0, 0.5], 2.5, 1.5,
         [0, -1, 0, 0, 0, 0, 0, 0, 0, 0], 2, -2)
