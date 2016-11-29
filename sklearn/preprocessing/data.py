@@ -392,9 +392,20 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    X = check_array(X, copy=False,  warn_on_dtype=True,
+    # To allow retro-compatibility, we handle here the case of 1D-input
+    # From 0.17, 1D-input are deprecated in scaler objects
+    # Although, we want to allow the users to keep calling this function
+    # with 1D-input.
+
+    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
+    # done inside the scaler object fit_transform.
+    # If copy is required, it will be done inside the scaler object.
+    X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
                     dtype=FLOAT_DTYPES)
     original_ndim = X.ndim
+
+    if original_ndim == 1:
+        X = X.reshape(X.shape[0], 1)
 
     s = MinMaxScaler(feature_range=feature_range, copy=copy)
     if axis == 0:
@@ -817,13 +828,20 @@ def maxabs_scale(X, axis=0, copy=True):
     # done inside the scaler object fit_transform.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
-                    dtype=FLOAT_DTYPES)
+                    ensure_2d=False, dtype=FLOAT_DTYPES)
+    original_ndim = X.ndim
+
+    if original_ndim == 1:
+        X = X.reshape(X.shape[0], 1)
 
     s = MaxAbsScaler(copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
         X = s.fit_transform(X.T).T
+
+    if original_ndim == 1:
+        X = X.ravel()
 
     return X
 
