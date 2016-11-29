@@ -36,8 +36,10 @@ New features
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
    - Introduced the :class:`datasets.ValueDropper` transformer to artificially
-     introduce missing values conforming to a given distribution (NMAR) or
-     completely at random (MCAR). :issue:`7084` by `Raghav RV`_.
+     introduce missing values based on per-class or per-feature
+     drop-probabilities (for introducing NMAR missingness) or global
+     drop-probability (for introducing MCAR missingness).
+     :issue:`7084` by `Raghav RV`_.
 
 Enhancements
 ............
