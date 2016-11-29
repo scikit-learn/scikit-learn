@@ -383,6 +383,17 @@ documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
 
+You may also be asked to show your changes when it's built. When you create
+a pull request or make changes in an existing one modifying the docs, CircleCI
+automatically builds them. Thus, you can easily view your changes in the built
+artifacts using the following formula:
+
+``http://scikit-learn.org/circle?{BUILD_NUMBER}``
+
+Note: When you visit the details page of the CircleCI tests, you can find your
+BUILD_NUMBER mentioned as 'build #' which is different from your pull request
+number, which is presented as 'pull/#'.
+
 Finally, follow the formatting rules below to make it consistently good:
 
     * Add "See also" in docstrings for related classes/functions.
