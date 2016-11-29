@@ -90,7 +90,7 @@ Bug fixes
 
    - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
      sparse array X and initial centroids, where X's means were unnecessarily
-     being subtracted from the centroids. :issue:`7872` by Josh Karnofsky
+     being subtracted from the centroids. :issue:`7872` by `Josh Karnofsky <https://github.com/jkarno>`_.
 
 .. _changes_0_18_1:
 
