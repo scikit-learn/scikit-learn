@@ -85,17 +85,6 @@ def test_libsvm_iris():
     assert_array_equal(pred, pred2)
 
 
-@ignore_warnings
-def test_single_sample_1d():
-    # Test whether SVCs work on a single sample given as a 1-d array
-
-    clf = svm.SVC().fit(X, Y)
-    clf.predict(X[0])
-
-    clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    clf.predict(X[0])
-
-
 def test_precomputed():
     # SVC with a precomputed kernel.
     # We test it with a toy dataset and with iris.
