@@ -1290,8 +1290,9 @@ def test_sparse_input():
 
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    for tree_type, dataset in product(REG_TREES, ["boston", "reg_small"]):
-        yield (check_sparse_input, tree_type, dataset, 2)
+    for tree_type, dataset in product(SPARSE_TREES, ["boston", "reg_small"]):
+        if tree_type in REG_TREES:
+            yield (check_sparse_input, tree_type, dataset, 2)
 
 
 def check_sparse_parameters(tree, dataset):

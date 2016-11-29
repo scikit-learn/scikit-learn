@@ -962,11 +962,9 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
     clf.fit(X, _y)
-    # smoke test for subsample and balanced subsample
+    # smoke test for balanced subsample
     clf = ForestClassifier(class_weight='balanced_subsample', random_state=0)
     clf.fit(X, _y)
-    clf = ForestClassifier(class_weight='subsample', random_state=0)
-    ignore_warnings(clf.fit)(X, _y)
 
 
 def test_class_weight_balanced_and_bootstrap_multi_output():
@@ -985,7 +983,7 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
     # Warning warm_start with preset
-    clf = ForestClassifier(class_weight='auto', warm_start=True,
+    clf = ForestClassifier(class_weight='balanced', warm_start=True,
                            random_state=0)
     assert_warns(UserWarning, clf.fit, X, y)
     assert_warns(UserWarning, clf.fit, X, _y)
