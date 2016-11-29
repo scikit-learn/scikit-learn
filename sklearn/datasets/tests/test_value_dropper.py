@@ -40,13 +40,13 @@ def test_value_dropper_mnar_clf():
 
         # Check the drop-probabilty for class 0
         assert_almost_equal(missing_mask[y == classes[0]].sum() /
-                            (np.sum(y == classes[0]) * n_features), 0.1,
+                            float(np.sum(y == classes[0]) * n_features), 0.1,
                             decimal=2)
 
         # All the missing values are from y == 0
         assert_almost_equal(
             np.isnan(X_dropped[y == classes[0]]).ravel().sum() /
-            (np.sum(y == classes[0]) * n_features), 0.1, decimal=2)
+            float(np.sum(y == classes[0]) * n_features), 0.1, decimal=2)
 
         # and no missing values from y != 0
         assert_equal(missing_mask[y != classes[0]].ravel().sum(), 0)
@@ -71,12 +71,12 @@ def test_value_dropper_mnar_clf():
         # across all features
         assert_array_almost_equal(
             missing_mask[y == classes[1]].sum(axis=0) /
-            np.sum(y == classes[1]), [0.5] * n_features, decimal=2)
+            float(np.sum(y == classes[1])), [0.5] * n_features, decimal=2)
 
         # Check that the drop probabilites when class == 0  are as given by
         # the missing_proba dict
         assert_array_almost_equal(missing_mask[y == classes[0]].sum(axis=0) /
-                                  np.sum(y == classes[0]),
+                                  float(np.sum(y == classes[0])),
                                   missing_proba[classes[0]],
                                   decimal=2)
 
@@ -125,12 +125,12 @@ def check_value_dropper_mcar(X, y):
     # Check the rate for all even indexed features
     even_feature_missing_mask = missing_mask[:, missing_proba == 0.3]
     assert_almost_equal(even_feature_missing_mask.ravel().sum() /
-                        even_feature_missing_mask.size, 0.3)
+                        float(even_feature_missing_mask.size), 0.3)
 
     # Check the rate for all odd features
     odd_feature_missing_mask = missing_mask[:, missing_proba == 0.1]
     assert_almost_equal(odd_feature_missing_mask.ravel().sum() /
-                        odd_feature_missing_mask.size, 0.1)
+                        float(odd_feature_missing_mask.size), 0.1)
 
     # Let us drop 0.3 more fraction of values. This time not inplace
     # copy=True must be default
@@ -139,9 +139,10 @@ def check_value_dropper_mcar(X, y):
     new_missing_mask = np.isnan(X_more_dropped)
 
     # Check global drop probability
-    assert_almost_equal(new_missing_mask.ravel().sum() / n_values, 0.6)
+    assert_almost_equal(new_missing_mask.ravel().sum() / float(n_values), 0.6)
     # Check the drop-probability for a random feature 3
-    assert_almost_equal(new_missing_mask[:, 3].ravel().sum() / n_samples, 0.6)
+    assert_almost_equal(new_missing_mask[:, 3].ravel().sum() /
+                        float(n_samples), 0.6)
 
     # Ensure X is not modified
     assert_array_almost_equal(X_copy2, X)
