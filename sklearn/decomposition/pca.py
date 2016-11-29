@@ -120,6 +120,10 @@ class PCA(_BasePCA):
     Notice that this class does not support sparse input. See
     :class:`TruncatedSVD` for an alternative with sparse data.
 
+    PCA uses the maximum likelihood estimate of the eigenvalues, which does not
+    include the Bessel correction, though in practice this should rarely make a
+    difference in a machine learning context.
+
     Read more in the :ref:`User Guide <PCA>`.
 
     Parameters
