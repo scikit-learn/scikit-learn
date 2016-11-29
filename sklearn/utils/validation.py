@@ -218,7 +218,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     spmatrix : scipy sparse matrix
         Input to validate and convert.
 
-    accept_sparse : string, list of string, boolean or None (default=None)
+    accept_sparse : string, list of strings or boolean (default=None)
         String[s] representing allowed sparse matrix formats ('csc',
         'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). If the input is sparse but
         not in the allowed format, it will be converted to the first listed
@@ -253,6 +253,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
                         'data is required. Use X.toarray() to '
                         'convert to a dense numpy array.')
     elif (isinstance(accept_sparse, (list, tuple)) and
+          len(accept_sparse) and
           isinstance(accept_sparse[0], str)):
         # ensure correct sparse format
         if spmatrix.format not in accept_sparse:
@@ -295,7 +296,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     array : object
         Input object to check / convert.
 
-    accept_sparse : string, list of string, boolean or None (default=None)
+    accept_sparse : string, list of strings or boolean (default=None)
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
         it will be converted to the first listed format. True allows the input

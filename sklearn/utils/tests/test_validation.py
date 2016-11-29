@@ -341,6 +341,10 @@ def test_check_array_accept_sparse_type_exception():
                          check_array, X_csr, accept_sparse=invalid_type)
     assert_raise_message(ValueError, msg,
                          check_array, X_csr, accept_sparse=[invalid_type])
+    assert_raise_message(ValueError, msg,
+                         check_array, X_csr, accept_sparse=[])
+    assert_raise_message(ValueError, msg,
+                         check_array, X_csr, accept_sparse=())
 
     # don't raise errors
     check_array(X_csr, accept_sparse=True)
