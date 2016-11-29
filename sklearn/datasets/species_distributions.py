@@ -222,6 +222,9 @@ def fetch_species_distributions(data_home=None,
     archive_path = _pkl_filepath(data_home, DATA_ARCHIVE_NAME)
 
     if not exists(archive_path):
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
+
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
         X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
