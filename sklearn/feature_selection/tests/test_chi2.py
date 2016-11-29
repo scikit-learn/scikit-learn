@@ -77,7 +77,7 @@ def test_chi2_unused_feature():
         warnings.simplefilter('always')
         chi, p = chi2([[1, 0], [0, 0]], [1, 0])
         for w in warned:
-            if 'divide by zero' in w.message:
+            if 'divide by zero' in repr(w):
                 raise AssertionError('Found unexpected warning %s' % w)
     assert_array_equal(chi, [1, np.nan])
     assert_array_equal(p[1], np.nan)

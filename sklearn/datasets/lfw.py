@@ -246,7 +246,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     (gallery).
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Parameters
     ----------
@@ -380,7 +380,13 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
             "be removed in 0.19."
             "Use fetch_lfw_people(download_if_missing=False) instead.")
 def load_lfw_people(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_people(download_if_missing=False)
+    """
+    Alias for fetch_lfw_people(download_if_missing=False)
+
+    .. deprecated:: 0.17
+        This function will be removed in 0.19.
+        Use :func:`sklearn.datasets.fetch_lfw_people` with parameter
+        ``download_if_missing=False`` instead.
 
     Check fetch_lfw_people.__doc__ for the documentation and parameter list.
     """
@@ -412,7 +418,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
 
@@ -509,7 +515,13 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
             "be removed in 0.19."
             "Use fetch_lfw_pairs(download_if_missing=False) instead.")
 def load_lfw_pairs(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_pairs(download_if_missing=False)
+    """
+    Alias for fetch_lfw_pairs(download_if_missing=False)
+
+    .. deprecated:: 0.17
+        This function will be removed in 0.19.
+        Use :func:`sklearn.datasets.fetch_lfw_pairs` with parameter
+        ``download_if_missing=False`` instead.
 
     Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
     """

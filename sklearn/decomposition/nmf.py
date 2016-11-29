@@ -1181,7 +1181,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
 
         W : array-like, shape (n_samples, n_components)
@@ -1190,17 +1190,9 @@ class NMF(BaseEstimator, TransformerMixin):
         H : array-like, shape (n_components, n_features)
             If init='custom', it is used as initial guess for the solution.
 
-        Attributes
-        ----------
-        components_ : array-like, shape (n_components, n_features)
-            Factorization matrix, sometimes called 'dictionary'.
-
-        n_iter_ : int
-            Actual number of iterations for the transform.
-
         Returns
         -------
-        W: array, shape (n_samples, n_components)
+        W : array, shape (n_samples, n_components)
             Transformed data.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'))
@@ -1227,16 +1219,8 @@ class NMF(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
-
-        Attributes
-        ----------
-        components_ : array-like, shape (n_components, n_features)
-            Factorization matrix, sometimes called 'dictionary'.
-
-        n_iter_ : int
-            Actual number of iterations for the transform.
 
         Returns
         -------
@@ -1250,17 +1234,12 @@ class NMF(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be transformed by the model
-
-        Attributes
-        ----------
-        n_iter_ : int
-            Actual number of iterations for the transform.
 
         Returns
         -------
-        W: array, shape (n_samples, n_components)
+        W : array, shape (n_samples, n_components)
             Transformed data
         """
         check_is_fitted(self, 'n_components_')
@@ -1273,7 +1252,6 @@ class NMF(BaseEstimator, TransformerMixin):
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
-        self.n_iter_ = n_iter_
         return W
 
     def inverse_transform(self, W):
@@ -1281,12 +1259,12 @@ class NMF(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        W: {array-like, sparse matrix}, shape (n_samples, n_components)
+        W : {array-like, sparse matrix}, shape (n_samples, n_components)
             Transformed data matrix
 
         Returns
         -------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix of original shape
 
         .. versionadded:: 0.18

@@ -143,9 +143,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     .. versionadded:: 0.17
        *LinearDiscriminantAnalysis*.
 
-    .. versionchanged:: 0.17
-       Deprecated :class:`lda.LDA` have been moved to :class:`LinearDiscriminantAnalysis`.
-
     Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
@@ -561,9 +558,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     .. versionadded:: 0.17
        *QuadraticDiscriminantAnalysis*
-
-    .. versionchanged:: 0.17
-       Deprecated :class:`qda.QDA` have been moved to :class:`QuadraticDiscriminantAnalysis`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
