@@ -1635,6 +1635,7 @@ Drawbacks
 - The Davies-Bouldin index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
+- The usage of centroid distance limit the distance metric only to Euclidean space.
 
 .. topic:: References
 
