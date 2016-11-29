@@ -1586,22 +1586,22 @@ ratio of within cluster-mean distance to the between means distance.
 .. math::
   DB(k) = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} D_{ij}
 
-Where :math:`D_ij` is the ratio between the within distances in clusters
+Where :math:`D_{ij}` is the ratio between the within distances in clusters
 :math:`i` and :math:`j` and the distance between the means of cluster
 :math:`i` and :math:`j`.
 
 .. math::
-  D_ij = \frac{\bar{d_i}+\bar{d_j}}{d_ij}
+  D_{ij} = \frac{\bar{d_i}+\bar{d_j}}{d_ij}
 
-:math:`\bar{d_i}` is the average distance between each point cluster
+:math:`\bar{d_i}` is the average distance between each point in cluster
 :math:`i` and the centroid of cluster :math:`i`.
 :math:`\bar{d_i}` is the diameter of cluster :math:`i`.
 
-:math:`\bar{d_j}` is the average distance between each point cluster
+:math:`\bar{d_j}` is the average distance between each point in cluster
 :math:`j` and the centroid of cluster :math:`j`.
 :math:`\bar{d_j}` is the diameter of cluster :math:`j`.
 
-:math:`d_ij` is the Euclidean distance between the centroid of cluster
+:math:`d_{ij}` is the Euclidean distance between the centroid of cluster
 :math:`i` and the centroid of cluster :math:`j`.
 
 
