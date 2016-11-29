@@ -116,7 +116,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    X = check_array(X, accept_sparse='csc', copy=copy,
+    X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
                     dtype=FLOAT_DTYPES)
     if sparse.issparse(X):
