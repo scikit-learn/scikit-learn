@@ -266,6 +266,13 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
+Comparison with the regularization parameter of SVM
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The equivalence between ``alpha`` and the regularization parameter of SVM,
+``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``, 
+depending on the estimator and the exact objective function optimized by the
+model.
 
 .. _multi_task_lasso:
 
