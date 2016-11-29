@@ -662,7 +662,7 @@ class NuSVC(BaseSVC):
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     NuSVC(cache_size=200, class_weight=None, coef0=0.0,
-          decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+          decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
           max_iter=-1, nu=0.5, probability=False, random_state=None,
           shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -681,7 +681,7 @@ class NuSVC(BaseSVC):
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None, verbose=False,
-                 max_iter=-1, decision_function_shape=None, random_state=None):
+                 max_iter=-1, decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
             impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
