@@ -99,8 +99,8 @@ logistic sigmoid activation function of the input it receives:
 
 .. math::
 
-   P(v_i=1|\mathbf{h}) = \sigma(\sum_j w_{ij}h_j + b_i) \\
-   P(h_i=1|\mathbf{v}) = \sigma(\sum_i w_{ij}v_i + c_j)
+   P(v_i=1|\mathbf{h}) = \sigma\left(\sum_j w_{ij}h_j + b_i\right) \\
+   P(h_i=1|\mathbf{v}) = \sigma\left(\sum_i w_{ij}v_i + c_j\right)
 
 where :math:`\sigma` is the logistic sigmoid function:
 

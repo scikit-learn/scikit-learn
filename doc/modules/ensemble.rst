@@ -110,8 +110,8 @@ construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
 As other classifiers, forest classifiers have to be fitted with two
-arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
-training samples, and an array Y of size ``[n_samples]`` holding the
+arrays: a sparse or dense array X of shape ``(n_samples, n_features)`` holding the
+training samples, and an array Y of shape ``(n_samples,)`` holding the
 target values (class labels) for the training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
@@ -121,8 +121,8 @@ target values (class labels) for the training samples::
     >>> clf = clf.fit(X, Y)
 
 Like :ref:`decision trees <tree>`, forests of trees also extend
-to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
-``[n_samples, n_outputs]``).
+to :ref:`multi-output problems <tree_multioutput>` if Y is an array of shape
+``(n_samples, n_outputs)``.
 
 Random Forests
 --------------

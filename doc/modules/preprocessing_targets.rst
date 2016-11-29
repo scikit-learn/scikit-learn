@@ -36,9 +36,9 @@ Label encoding
 --------------
 
 :class:`LabelEncoder` is a utility class to help normalize labels such that
-they contain only values between 0 and n_classes-1. This is sometimes useful
-for writing efficient Cython routines. :class:`LabelEncoder` can be used as
-follows::
+they contain only values between ``0`` and ``n_classes-1``. This is sometimes
+useful for writing efficient Cython routines. :class:`LabelEncoder` can be used
+as follows::
 
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()

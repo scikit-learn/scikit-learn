@@ -122,12 +122,12 @@ to drop most of the singular vectors it is much more efficient to limit the
 computation to an approximated estimate of the singular vectors we will keep
 to actually perform the transform.
 
-For instance, the following shows 16 sample portraits (centered around
-0.0) from the Olivetti dataset. On the right hand side are the first 16
-singular vectors reshaped as portraits. Since we only require the top
-16 singular vectors of a dataset with size :math:`n_{samples} = 400`
-and :math:`n_{features} = 64 \times 64 = 4096`, the computation time is
-less than 1s:
+For instance, the following shows 16 sample portraits (centered around 0.0)
+from the Olivetti dataset. On the right hand side are the first 16 singular
+vectors reshaped as portraits. Since we only require the top 16 singular
+vectors of a dataset with size :math:`n_\textrm{samples} = 400` and
+:math:`n_\textrm{features} = 64 \times 64 = 4096`, the computation time is less
+than 1s:
 
 .. |orig_img| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_001.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
@@ -143,15 +143,16 @@ Note: with the optional parameter ``svd_solver='randomized'``, we also
 need to give :class:`PCA` the size of the lower-dimensional space
 ``n_components`` as a mandatory input parameter.
 
-If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
-:math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
-of the randomized :class:`PCA` is :math:`O(n_{max}^2 \cdot n_{components})`
-instead of :math:`O(n_{max}^2 \cdot n_{min})` for the exact method
+If we note :math:`n_\textrm{max} = \max(n_\textrm{samples},
+n_\textrm{features})` and :math:`n_\textrm{min} = \min(n_\textrm{samples},
+n_\textrm{features})`, the time complexity of the randomized :class:`PCA` is
+:math:`O(n_\textrm{max}^2 \cdot n_\textrm{components})` instead of
+:math:`O(n_\textrm{max}^2 \cdot n_\textrm{min})` for the exact method
 implemented in :class:`PCA`.
 
-The memory footprint of randomized :class:`PCA` is also proportional to
-:math:`2 \cdot n_{max} \cdot n_{components}` instead of :math:`n_{max}
-\cdot n_{min}` for the exact method.
+The memory footprint of the randomized :class:`PCA` is also proportional to
+:math:`2 \cdot n_\textrm{max} \cdot n_\textrm{components}` instead of
+:math:`n_\textrm{max} \cdot n_\textrm{min}` for the exact method.
 
 Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 ``svd_solver='randomized'`` is not the exact inverse transform of
@@ -222,14 +223,14 @@ The following example illustrates 16 components extracted using sparse PCA from
 the Olivetti faces dataset.  It can be seen how the regularization term induces
 many zeros. Furthermore, the natural structure of the data causes the non-zero
 coefficients to be vertically adjacent. The model does not enforce this
-mathematically: each component is a vector :math:`h \in \mathbf{R}^{4096}`, and
+mathematically: each component is a vector :math:`h \in \mathbb R^{4096}`, and
 there is no notion of vertical adjacency except during the human-friendly
 visualization as 64x64 pixel images. The fact that the components shown below
 appear local is the effect of the inherent structure of the data, which makes
-such local patterns minimize reconstruction error. There exist sparsity-inducing
-norms that take into account adjacency and different kinds of structure; see
-[Jen09]_ for a review of such methods.
-For more details on how to use Sparse PCA, see the Examples section, below.
+such local patterns minimize reconstruction error. There exist
+sparsity-inducing norms that take into account adjacency and different kinds of
+structure; see [Jen09]_ for a review of such methods. For more details on how
+to use Sparse PCA, see the Examples section, below.
 
 
 .. |spca_img| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_005.png
@@ -245,9 +246,9 @@ problem solved is a PCA problem (dictionary learning) with an
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||V||_1 \\
-                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
-                0 \leq k < n_{components}
+                \|X-UV\|_2^2+\alpha\|V\|_1 \\
+                \text{subject to\,} & \|U_k\|_2 = 1 \text{ for all }
+                0 \leq k < n_\textrm{components}
 
 
 The sparsity-inducing :math:`\ell_1` norm also prevents learning
@@ -431,9 +432,9 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
-                ||X-UV||_2^2+\alpha||U||_1 \\
-                \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
-                0 \leq k < n_{atoms}
+                \|X-UV\|_2^2+\alpha\|U\|_1 \\
+                \text{subject to\,} & \|V_k\|_2 = 1 \text{ for all }
+                0 \leq k < n_\textrm{atoms}
 
 
 .. |pca_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
@@ -555,9 +556,9 @@ structure of the error covariance :math:`\Psi`:
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
   the probabilistic model of :class:`PCA`.
 
-* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
-  :class:`FactorAnalysis`, a classical statistical model. The matrix W is
-  sometimes called the "factor loading matrix".
+* :math:`\Psi = \operatorname{diag}(\psi_1, \psi_2, \dots, \psi_n)`: This model
+  is called :class:`FactorAnalysis`, a classical statistical model. The matrix
+  W is sometimes called the "factor loading matrix".
 
 Both models essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probabilistic they can be integrated in more complex
@@ -657,7 +658,8 @@ into two matrices :math:`W` and :math:`H` of non-negative elements,
 by optimizing for the squared Frobenius norm:
 
 .. math::
-    \arg\min_{W,H} \frac{1}{2} ||X - WH||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {WH}_{ij})^2
+    \arg\min_{W,H} \frac{1}{2} \|X - WH\|_\textrm{Fro}^2 = \frac{1}{2}
+    \sum_{i,j} (X_{ij} - {WH}_{ij})^2
 
 This norm is an obvious extension of the Euclidean norm to matrices. (Other
 optimization objectives have been suggested in the NMF literature, in
@@ -701,25 +703,26 @@ matrices by setting :attr:`init="random"`. An integer seed or a
 ``RandomState`` can also be passed to :attr:`random_state` to control
 reproducibility.
 
-In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
-to regularize the model. The L2 prior uses the Frobenius norm, while the L1
-prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
-combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
-and the intensity of the regularization with the :attr:`alpha`
-(:math:`\alpha`) parameter. Then the priors terms are:
+In :class:`NMF`, :math:`\ell_1` and :math:`\ell_2` priors can be added to the
+loss function in order to regularize the model. The :math:`\ell_2` prior uses
+the Frobenius norm, while the :math:`\ell_1` prior uses an elementwise
+:math:`\ell_1` norm. As in :class:`ElasticNet`, we control the combination of
+:math:`\ell_1` and :math:`\ell_2` with the :attr:`l1_ratio` (:math:`\rho`)
+parameter, and the intensity of the regularization with the :attr:`alpha`
+(:math:`\alpha`) parameter. Then the priors terms are
 
 .. math::
-    \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    \alpha \rho \|W||_1 + \alpha \rho \|H\|_1
+    + \frac{\alpha(1-\rho)}{2} \|W\|_\textrm{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} \|H\|_\textrm{Fro} ^ 2
 
-and the regularized objective function is:
+and the regularized objective function is
 
 .. math::
-    \frac{1}{2}||X - WH||_{Fro}^2
+    \frac{1}{2}\|X - WH\|_\textrm{Fro}^2
     + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} \|W\|_\textrm{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} \|H\|_\textrm{Fro} ^ 2 .
 
 :class:`NMF` regularizes both W and H. The public function
 :func:`non_negative_factorization` allows a finer control through the
@@ -772,20 +775,23 @@ The graphical model of LDA is a three-level Bayesian model:
 When modeling text corpora, the model assumes the following generative process for
 a corpus with :math:`D` documents and :math:`K` topics:
 
-  1. For each topic :math:`k`, draw :math:`\beta_k \sim Dirichlet(\eta),\: k =1...K`
+  1. For each topic :math:`k=1, \ldots, K`, draw :math:`\beta_k \sim \operatorname{Dirichlet}(\eta)`;
 
-  2. For each document :math:`d`, draw :math:`\theta_d \sim Dirichlet(\alpha), \: d=1...D`
+  2. For each document :math:`d=1,\ldots,D`, draw :math:`\theta_d \sim \operatorname{Dirichlet}(\alpha)`;
 
   3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw a topic index :math:`z_{di} \sim Multinomial(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim Multinomial(beta_{z_{di}}.)`
+    a. Draw a topic index :math:`z_{di} \sim
+    \operatorname{Multinomial}(\theta_d)`;
+
+    b. Draw the observed word :math:`w_{ij} \sim
+    \operatorname{Multinomial}(\beta_{z_{di}})`.
 
 For parameter estimation, the posterior distribution is:
 
 .. math::
   p(z, \theta, \beta |w, \alpha, \eta) =
-    \frac{p(z, \theta, \beta|\alpha, \eta)}{p(w|\alpha, \eta)}
+    \frac{p(z, \theta, \beta|\alpha, \eta)}{p(w|\alpha, \eta)} .
 
 Since the posterior is intractable, variational Bayesian method
 uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
@@ -793,8 +799,9 @@ to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi
 :math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
 
 .. math::
-  log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
-    E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
+  \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda)
+  \overset{\triangle}{=} E_{q}[\log\:p(w,z,\theta,\beta|\alpha,\eta)] -
+  E_{q}[\log\:q(z, \theta, \beta)] .
 
 Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior

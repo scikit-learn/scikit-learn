@@ -20,7 +20,7 @@ are 2D arrays.
 
 
 Cross decomposition algorithms find the fundamental relations between two
-matrices (X and Y). They are latent variable approaches to modeling the
+matrices X and Y. They are latent variable approaches to modeling the
 covariance structures in these two spaces. They will try to find the
 multidimensional direction in the X space that explains the maximum
 multidimensional variance direction in the Y space. PLS-regression is

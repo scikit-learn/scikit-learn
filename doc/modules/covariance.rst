@@ -221,10 +221,9 @@ The mathematical formulation is the following:
 
 .. math::
 
-    \hat{K} = \mathrm{argmin}_K \big(
-                \mathrm{tr} S K - \mathrm{log} \mathrm{det} K
-                + \alpha \|K\|_1
-                \big)
+    \hat{K} = \underset{K}{\operatorname{arg\,min\,}} \left(
+                \operatorname{tr} \left( S K \right) - \log \det K
+                + \alpha \|K\|_1 \right)
 
 Where :math:`K` is the precision matrix to be estimated, and :math:`S` is the
 sample covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of

@@ -39,18 +39,17 @@ the kernel:
 
 Cosine similarity
 -----------------
-:func:`cosine_similarity` computes the L2-normalized dot product of vectors.
-That is, if :math:`x` and :math:`y` are row vectors,
-their cosine similarity :math:`k` is defined as:
+:func:`cosine_similarity` computes the :math:`\ell_2`-normalized dot product of
+vectors. That is, if :math:`x` and :math:`y` are row vectors, their cosine
+similarity :math:`k` is defined as:
 
 .. math::
 
     k(x, y) = \frac{x y^\top}{\|x\| \|y\|}
 
-This is called cosine similarity, because Euclidean (L2) normalization
-projects the vectors onto the unit sphere,
-and their dot product is then the cosine of the angle between the points
-denoted by the vectors.
+This is called cosine similarity, because Euclidean (:math:`\ell_2`)
+normalization projects the vectors onto the unit sphere, and their dot product
+is then the cosine of the angle between the points denoted by the vectors.
 
 This kernel is a popular choice for computing the similarity of documents
 represented as tf-idf vectors.
@@ -188,9 +187,10 @@ The chi squared kernel is given by
 
         k(x, y) = \exp \left (-\gamma \sum_i \frac{(x[i] - y[i]) ^ 2}{x[i] + y[i]} \right )
 
-The data is assumed to be non-negative, and is often normalized to have an L1-norm of one.
-The normalization is rationalized with the connection to the chi squared distance,
-which is a distance between discrete probability distributions.
+The data is assumed to be non-negative, and is often normalized to have an
+:math:`\ell_1` norm of one. The normalization is rationalized with the
+connection to the chi squared distance, which is a distance between discrete
+probability distributions.
 
 The chi squared kernel is most commonly used on histograms (bags) of visual words.
 

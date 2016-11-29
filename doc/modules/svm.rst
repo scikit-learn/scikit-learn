@@ -221,18 +221,16 @@ logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
 In the multiclass case, this is extended as per Wu et al. (2004).
 
-Needless to say, the cross-validation involved in Platt scaling
-is an expensive operation for large datasets.
-In addition, the probability estimates may be inconsistent with the scores,
-in the sense that the "argmax" of the scores
-may not be the argmax of the probabilities.
-(E.g., in binary classification,
-a sample may be labeled by ``predict`` as belonging to a class
-that has probability <½ according to ``predict_proba``.)
-Platt's method is also known to have theoretical issues.
-If confidence scores are required, but these do not have to be probabilities,
-then it is advisable to set ``probability=False``
-and use ``decision_function`` instead of ``predict_proba``.
+Needless to say, the cross-validation involved in Platt scaling is an expensive
+operation for large datasets. In addition, the probability estimates may be
+inconsistent with the scores, in the sense that the argmax of the scores may
+not be the argmax of the probabilities. For instance, in binary classification,
+a sample may be labeled by ``predict`` as belonging to a class that has
+probability less than :math`\frac 1 2` according to ``predict_proba``. Platt's
+method is also known to have theoretical issues. If confidence scores are
+required, but these do not have to be probabilities, then it is advisable to
+set ``probability=False`` and use ``decision_function`` instead of
+``predict_proba``.
 
 .. topic:: References:
 
@@ -249,10 +247,11 @@ In problems where it is desired to give more importance to certain
 classes or certain individual samples keywords ``class_weight`` and
 ``sample_weight`` can be used.
 
-:class:`SVC` (but not :class:`NuSVC`) implement a keyword
-``class_weight`` in the ``fit`` method. It's a dictionary of the form
-``{class_label : value}``, where value is a floating point number > 0
-that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
+:class:`SVC` (but not :class:`NuSVC`) has a keyword argument ``class_weight``.
+This should be a dictionry of the form ``{class_label : weight}``, where
+``weight`` is a positive float. This will set the ``C`` parameter of class
+``class_label`` to ``weight*C``. If ``class_weight`` is not given, all classes
+are supposed to have weight one.
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
@@ -261,9 +260,9 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
 
 :class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
-:class:`OneClassSVM` implement also weights for individual samples in method
-``fit`` through keyword ``sample_weight``. Similar to ``class_weight``, these
-set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
+:class:`OneClassSVM` have a keyword argument ``sample_weight`` for their
+``fit`` method. Similar to ``class_weight``, these set the parameter ``C`` for
+the i-th example to ``C * sample_weight[i]``.
 
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
@@ -356,16 +355,16 @@ See, section :ref:`outlier_detection` for more details on this usage.
 Complexity
 ==========
 
-Support Vector Machines are powerful tools, but their compute and
-storage requirements increase rapidly with the number of training
-vectors. The core of an SVM is a quadratic programming problem (QP),
-separating support vectors from the rest of the training data. The QP
-solver used by this `libsvm`_-based implementation scales between
-:math:`O(n_{features} \times n_{samples}^2)` and
-:math:`O(n_{features} \times n_{samples}^3)` depending on how efficiently
-the `libsvm`_ cache is used in practice (dataset dependent). If the data
-is very sparse :math:`n_{features}` should be replaced by the average number
-of non-zero features in a sample vector.
+Support Vector Machines are powerful tools, but their compute and storage
+requirements increase rapidly with the number of training vectors. The core of
+an SVM is a quadratic programming problem (QP), separating support vectors from
+the rest of the training data. The QP solver used by this `libsvm`_-based
+implementation scales between :math:`O(n_\textrm{features} \times
+n_\textrm{samples}^2)` and :math:`O(n_\textrm{features} \times
+n_\textrm{samples}^3)` depending on how efficiently the `libsvm`_ cache is used
+in practice (dataset dependent). If the data is very sparse
+:math:`n_\textrm{features}` should be replaced by the average number of
+non-zero features in a sample vector.
 
 Also note that for the linear case, the algorithm used in
 :class:`LinearSVC` by the `liblinear`_ implementation is much more
@@ -423,12 +422,12 @@ Tips on Practical Use
     thus not uncommon, to have slightly different results for the same
     input data. If that happens, try with a smaller tol parameter.
 
-  * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
-    dual=False)`` yields a sparse solution, i.e. only a subset of feature
-    weights is different from zero and contribute to the decision function.
-    Increasing ``C`` yields a more complex model (more feature are selected).
-    The ``C`` value that yields a "null" model (all weights equal to zero) can
-    be calculated using :func:`l1_min_c`.
+  * Using :math:`\ell_1` penalization as provided by ``LinearSVC(loss='l2',
+    penalty='l1', dual=False)`` yields a sparse solution, i.e. only a subset of
+    feature weights is different from zero and contribute to the decision
+    function. Increasing ``C`` yields a more complex model (more feature are
+    selected). The ``C`` value that yields a "null" model (all weights equal to
+    zero) can be calculated using :func:`l1_min_c`.
 
 
 .. _svm_kernels:
@@ -595,13 +594,15 @@ is the kernel. Here training vectors are implicitly mapped into a higher
 
 The decision function is:
 
-.. math:: \operatorname{sgn}(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
+.. math::
+ 
+  \operatorname{sgn}\left(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho\right)
 
 .. note::
 
     While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
     regularization parameter, most other estimators use ``alpha``. The relation
-    between both is :math:`C = \frac{n\_samples}{alpha}`.
+    between both is :math:`C = \frac{n_\textrm{samples}}{\alpha}`.
 
 .. TODO multiclass case ?/
 

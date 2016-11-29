@@ -147,7 +147,7 @@ Feature selection using SelectFromModel
 
 :class:`SelectFromModel` is a meta-transformer that can be used along with any
 estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
-The features are considered unimportant and removed, if the corresponding
+The features are considered unimportant and removed if the corresponding
 ``coef_`` or ``feature_importances_`` values are below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.
@@ -164,12 +164,12 @@ For examples on how it is to be used refer to the sections below.
 
 .. _l1_feature_selection:
 
-L1-based feature selection
---------------------------
+:math:`\ell_1`-based feature selection
+--------------------------------------
 
 .. currentmodule:: sklearn
 
-:ref:`Linear models <linear_model>` penalized with the L1 norm have
+:ref:`Linear models <linear_model>` penalized with the :math:`\ell_1` norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
 they can be used along with :class:`feature_selection.SelectFromModel`
@@ -197,23 +197,21 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison
-      of different algorithms for document classification including L1-based
-      feature selection.
+    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison of different algorithms for document classification including :math:`\ell_1`-based feature selection.
 
 .. _compressive_sensing:
 
-.. topic:: **L1-recovery and compressive sensing**
+.. topic:: **l1-recovery and compressive sensing**
 
-   For a good choice of alpha, the :ref:`lasso` can fully recover the
-   exact set of non-zero variables using only few observations, provided
-   certain specific conditions are met. In particular, the number of
-   samples should be "sufficiently large", or L1 models will perform at
-   random, where "sufficiently large" depends on the number of non-zero
-   coefficients, the logarithm of the number of features, the amount of
-   noise, the smallest absolute value of non-zero coefficients, and the
-   structure of the design matrix X. In addition, the design matrix must
-   display certain specific properties, such as not being too correlated.
+   For a good choice of alpha, the :ref:`lasso` can fully recover the exact set
+   of non-zero variables using only few observations, provided certain specific
+   conditions are met. In particular, the number of samples should be
+   "sufficiently large", or :math:`\ell_1` models will perform at random, where
+   "sufficiently large" depends on the number of non-zero coefficients, the
+   logarithm of the number of features, the amount of noise, the smallest
+   absolute value of non-zero coefficients, and the structure of the design
+   matrix X. In addition, the design matrix must display certain specific
+   properties, such as not being too correlated.
 
    There is no general rule to select an alpha parameter for recovery of
    non-zero coefficients. It can by set by cross-validation
@@ -235,21 +233,22 @@ Randomized sparse models
 .. currentmodule:: sklearn.linear_model
 
 In terms of feature selection, there are some well-known limitations of
-L1-penalized models for regression and classification. For example, it is
-known that the Lasso will tend to select an individual variable out of a group
-of highly correlated features. Furthermore, even when the correlation between
-features is not too high, the conditions under which L1-penalized methods
-consistently select "good" features can be restrictive in general.
+:math:`\ell_1`-penalized models for regression and classification. For example,
+it is known that the Lasso will tend to select an individual variable out of a
+group of highly correlated features. Furthermore, even when the correlation
+between features is not too high, the conditions under which
+:math:`\ell_1`-penalized methods consistently select "good" features can be
+restrictive in general.
 
 To mitigate this problem, it is possible to use randomization techniques such
 as those presented in [B2009]_ and [M2010]_. The latter technique, known as
 stability selection, is implemented in the module :mod:`sklearn.linear_model`.
 In the stability selection method, a subsample of the data is fit to a
-L1-penalized model where the penalty of a random subset of coefficients has
-been scaled. Specifically, given a subsample of the data
+:math:`\ell_1`-penalized model where the penalty of a random subset of
+coefficients has been scaled. Specifically, given a subsample of the data
 :math:`(x_i, y_i), i \in I`, where :math:`I \subset \{1, 2, \ldots, n\}` is a
-random subset of the data of size :math:`n_I`, the following modified Lasso
-fit is obtained:
+random subset of the data of size :math:`n_I`, the following modified Lasso fit
+is obtained:
 
 .. math::   \hat{w_I} = \mathrm{arg}\min_{w} \frac{1}{2n_I} \sum_{i \in I} (y_i - x_i^T w)^2 + \alpha \sum_{j=1}^p \frac{ \vert w_j \vert}{s_j},
 

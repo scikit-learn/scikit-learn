@@ -134,7 +134,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids
 that minimise the *inertia*, or within-cluster sum of squared criterion:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}\left(||x_j - \mu_i||^2\right)
 
 Inertia, or the within-cluster sum of squares criterion,
 can be recognized as a measure of how internally coherent clusters are.
@@ -338,7 +338,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+    r(i, k) \leftarrow s(i, k) - \max_{k' \ne k} \{ a(i, k') + s(i, k') \}
 
 Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
 The availability of sample :math:`k`
@@ -346,7 +346,8 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+    a(i, k) \leftarrow \min \{ 0, r(k, k) + \sum_{i' \notin \{i,k\}}{r(i', k)}
+    \}
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
@@ -807,7 +808,7 @@ the need to hold the entire input data in memory. This information includes:
 
 - Number of samples in a subcluster.
 - Linear Sum - A n-dimensional vector holding the sum of all samples
-- Squared Sum - Sum of the squared L2 norm of all samples.
+- Squared Sum - Sum of the squared :math:`\ell_2` norm of all samples.
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
 
@@ -992,10 +993,10 @@ define :math:`a` and :math:`b` as:
 
 The raw (unadjusted) Rand index is then given by:
 
-.. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
+.. math:: \text{RI} = \frac{a + b}{C_2^{n_\textrm{samples}}}
 
-Where :math:`C_2^{n_{samples}}` is the total number of possible pairs
-in the dataset (without ordering).
+Where :math:`C_2^{n_\textrm{samples}}` is the total number of possible pairs in
+the dataset (without ordering).
 
 However the RI score does not guarantee that random label assignments
 will get a value close to zero (esp. if the number of clusters is in
@@ -1149,10 +1150,12 @@ following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
 :math:`b_j = |V_j|` (the number of elements in :math:`V_j`).
 
 
-.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^|U| \sum_{j=1}^|V| \sum_{n_{ij}=(a_i+b_j-N)^+
-   }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
-   \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
-   (N-a_i-b_j+n_{ij})!}
+.. math::
+  E[\text{MI}(U,V)]=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|}
+  \sum_{n_{ij}=(a_i+b_j-N)^+ }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left(
+  \frac{ N.n_{ij}}{a_i b_j}\right)
+  \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
+  (N-a_i-b_j+n_{ij})!}
 
 Using the expected value, the adjusted mutual information can then be
 calculated using a similar form to that of the adjusted Rand index:
@@ -1446,7 +1449,7 @@ of two scores:
 
 The Silhouette Coefficient *s* for a single sample is then given as:
 
-.. math:: s = \frac{b - a}{max(a, b)}
+.. math:: s = \frac{b - a}{\max(a, b)}
 
 The Silhouette Coefficient for a set of samples is given as the mean of the
 Silhouette Coefficient for each sample.

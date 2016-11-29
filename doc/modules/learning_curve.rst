@@ -12,14 +12,15 @@ estimator is its average error for different training sets. The **variance**
 of an estimator indicates how sensitive it is to varying training sets. Noise
 is a property of the data.
 
-In the following plot, we see a function :math:`f(x) = \cos (\frac{3}{2} \pi x)`
-and some noisy samples from that function. We use three different estimators
-to fit the function: linear regression with polynomial features of degree 1,
-4 and 15. We see that the first estimator can at best provide only a poor fit
-to the samples and the true function because it is too simple (high bias),
-the second estimator approximates it almost perfectly and the last estimator
-approximates the training data perfectly but does not fit the true function
-very well, i.e. it is very sensitive to varying training data (high variance).
+In the following plot, we see a function :math:`f(x) = \cos \left(\frac{3}{2}
+\pi x\right)` and some noisy samples from that function. We use three different
+estimators to fit the function: linear regression with polynomial features of
+degree 1, 4 and 15. We see that the first estimator can at best provide only a
+poor fit to the samples and the true function because it is too simple (high
+bias), the second estimator approximates it almost perfectly and the last
+estimator approximates the training data perfectly but does not fit the true
+function very well, i.e. it is very sensitive to varying training data (high
+variance).
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_underfitting_overfitting_001.png
    :target: ../auto_examples/model_selection/plot_underfitting_overfitting.html

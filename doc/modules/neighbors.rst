@@ -419,13 +419,14 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` 
-and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
-``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
-same order as the number of training points, and that ``leaf_size`` is 
-close to its default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` and
+the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
+``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the
+``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of
+``'kd_tree'``. It selects ``'brute'`` if :math:`k \ge N/2`. This choice is
+based on the assumption that the number of query points is at least the same
+order as the number of training points, and that ``leaf_size`` is close to its
+default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------
@@ -665,7 +666,7 @@ There are two phases of tree traversals used in order to answer a query to find
 the :math:`m` nearest neighbors of a point :math:`q`. First, a top-down
 traversal is performed using a binary search to identify the leaf having the
 longest prefix match (maximum depth) with :math:`q`'s label after subjecting
-:math:`q` to the same hash functions. :math:`M >> m` points (total candidates)
+:math:`q` to the same hash functions. :math:`M \gg m` points (total candidates)
 are extracted from the forest, moving up from the previously found maximum 
 depth towards the root synchronously across all trees in the bottom-up
 traversal. `M` is set to  :math:`cl` where :math:`c`, the number of candidates
@@ -674,7 +675,7 @@ these :math:`M` points against point :math:`q` is calculated and the top
 :math:`m` points are returned as the nearest neighbors of :math:`q`. Since
 most of the time in these queries is spent calculating the distances to
 candidates, the speedup compared to brute force search is approximately
-:math:`N/M`, where :math:`N` is the number of points in database.
+:math:`N/M`, where :math:`N` is the number of points in the database.
 
 .. topic:: References:
 

@@ -229,7 +229,7 @@ Multi-output problems
 =====================
 
 A multi-output problem is a supervised learning problem with several outputs
-to predict, that is when Y is a 2d array of size ``[n_samples, n_outputs]``.
+to predict, that is when Y is a 2d array of shape ``(n_samples, n_outputs)``.
 
 When there is no correlation between the outputs, a very simple way to solve
 this kind of problem is to build n independent models, i.e. one for each
@@ -250,7 +250,7 @@ multi-output problems. This requires the following changes:
 This module offers support for multi-output problems by implementing this
 strategy in both :class:`DecisionTreeClassifier` and
 :class:`DecisionTreeRegressor`. If a decision tree is fit on an output array Y
-of size ``[n_samples, n_outputs]`` then the resulting estimator will:
+of shape ``(n_samples, n_outputs)`` then the resulting estimator will:
 
   * Output n_output values upon ``predict``;
 
@@ -295,26 +295,29 @@ Complexity
 ==========
 
 In general, the run time cost to construct a balanced binary tree is
-:math:`O(n_{samples}n_{features}\log(n_{samples}))` and query time
-:math:`O(\log(n_{samples}))`.  Although the tree construction algorithm attempts
-to generate balanced trees, they will not always be balanced.  Assuming that the
-subtrees remain approximately balanced, the cost at each node consists of
-searching through :math:`O(n_{features})` to find the feature that offers the
-largest reduction in entropy.  This has a cost of
-:math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
-total cost over the entire trees (by summing the cost at each node) of
-:math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
+:math:`O(n_\textrm{samples}n_\textrm{features}\log(n_\textrm{samples}))` and
+query time :math:`O(\log(n_\textrm{samples}))`.  Although the tree construction
+algorithm attempts to generate balanced trees, they will not always be
+balanced.  Assuming that the subtrees remain approximately balanced, the cost
+at each node consists of searching through :math:`O(n_\textrm{features})` to
+find the feature that offers the largest reduction in entropy.  This has a cost
+of :math:`O(n_\textrm{features}n_\textrm{samples}\log(n_\textrm{samples}))` at
+each node, leading to a total cost over the entire trees (by summing the cost
+at each node) of
+:math:`O(n_\textrm{features}n_\textrm{samples}^{2}\log(n_\textrm{samples}))`.
 
 Scikit-learn offers a more efficient implementation for the construction of
 decision trees.  A naive implementation (as above) would recompute the class
 label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. Presorting the feature over all
-relevant samples, and retaining a running label count, will reduce the complexity
-at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
-for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as
-it tends to slow down training when training deep trees.
+new split point along a given feature. Presorting the feature over all relevant
+samples, and retaining a running label count, will reduce the complexity at
+each node to :math:`O(n_\textrm{features}\log(n_\textrm{samples}))`, which
+results in a total cost of
+:math:`O(n_\textrm{features}n_\textrm{samples}\log(n_\textrm{samples}))`. This
+is an option for all tree based algorithms. By default it is turned on for
+gradient boosting, where in general it makes training faster, but turned off
+for all other algorithms as it tends to slow down training when training deep
+trees.
 
 
 Tips on practical use
@@ -415,20 +418,20 @@ scikit-learn uses an optimised version of the CART algorithm.
 Mathematical formulation
 ========================
 
-Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
-:math:`y \in R^l`, a decision tree recursively partitions the space such
-that the samples with the same labels are grouped together.
+Given training vectors :math:`x_i \in \mathbb R^n`, i=1,..., l and a label
+vector :math:`y \in \mathbb R^l`, a decision tree recursively partitions the
+space such that the samples with the same labels are grouped together.
 
 Let the data at node :math:`m` be represented by :math:`Q`. For
 each candidate split :math:`\theta = (j, t_m)` consisting of a
 feature :math:`j` and threshold :math:`t_m`, partition the data into
-:math:`Q_{left}(\theta)` and :math:`Q_{right}(\theta)` subsets
+:math:`Q_\textrm{left}(\theta)` and :math:`Q_\textrm{right}(\theta)` subsets
 
 .. math::
 
-    Q_{left}(\theta) = {(x, y) | x_j <= t_m}
+    Q_\textrm{left}(\theta) = {(x, y) | x_j <= t_m}
 
-    Q_{right}(\theta) = Q \setminus Q_{left}(\theta)
+    Q_\textrm{right}(\theta) = Q \setminus Q_\textrm{left}(\theta)
 
 The impurity at :math:`m` is computed using an impurity function
 :math:`H()`, the choice of which depends on the task being solved
@@ -436,18 +439,18 @@ The impurity at :math:`m` is computed using an impurity function
 
 .. math::
 
-   G(Q, \theta) = \frac{n_{left}}{N_m} H(Q_{left}(\theta))
-   + \frac{n_{right}}{N_m} H(Q_{right}(\theta))
+   G(Q, \theta) = \frac{n_\textrm{left}}{N_m} H(Q_\textrm{left}(\theta))
+   + \frac{n_\textrm{right}}{N_m} H(Q_\textrm{right}(\theta))
 
 Select the parameters that minimises the impurity
 
 .. math::
 
-    \theta^* = \operatorname{argmin}_\theta  G(Q, \theta)
+    \theta^* = \arg\min_\theta G(Q, \theta)
 
-Recurse for subsets :math:`Q_{left}(\theta^*)` and
-:math:`Q_{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`N_m < \min_{samples}` or :math:`N_m = 1`.
+Recurse for subsets :math:`Q_\textrm{left}(\theta^*)` and
+:math:`Q_\textrm{right}(\theta^*)` until either the maximum allowable depth is
+reached, :math:`N_m < \min_\textrm{samples}`, or :math:`N_m = 1`.
 
 Classification criteria
 -----------------------
@@ -458,9 +461,9 @@ observations, let
 
 .. math::
 
-    p_{mk} = 1/ N_m \sum_{x_i \in R_m} I(y_i = k)
+    p_{mk} = \frac{1}{N_m} \sum_{x_i \in R_m} I(y_i = k)
 
-be the proportion of class k observations in node :math:`m`
+be the proportion of class k observations in node :math:`m`.
 
 Common measures of impurity are Gini
 

@@ -31,7 +31,7 @@ of squares between the observed responses in the dataset, and the
 responses predicted by the linear approximation. Mathematically it
 solves a problem of the form:
 
-.. math:: \underset{w}{min\,} {|| X w - y||_2}^2
+.. math:: \min_w {\| X w - y\|_2}^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../auto_examples/linear_model/plot_ols.html
@@ -83,7 +83,7 @@ of squares,
 
 .. math::
 
-   \underset{w}{min\,} {{|| X w - y||_2}^2 + \alpha {||w||_2}^2}
+   \min_w {{\| X w - y\|_2}^2 + \alpha {\|w\|_2}^2}
 
 
 Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
@@ -170,12 +170,12 @@ weights (see
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::
+  \min_w { \frac{1}{2n_\textrm{samples}} \|X w - y\|_2 ^ 2 + \alpha \|w\|_1}
 
-The lasso estimate thus solves the minimization of the
-least-squares penalty with :math:`\alpha ||w||_1` added, where
-:math:`\alpha` is a constant and :math:`||w||_1` is the :math:`\ell_1`-norm of
-the parameter vector.
+The lasso estimate thus solves the minimization of the least-squares penalty
+with :math:`\alpha \|w\|_1` added, where :math:`\alpha` is a constant and
+:math:`\|w\|_1` is the :math:`\ell_1`-norm of the parameter vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
@@ -300,18 +300,21 @@ columns.
 
 
 Mathematically, it consists of a linear model trained with a mixed
-:math:`\ell_1` :math:`\ell_2` prior as regularizer.
-The objective function to minimize is:
+:math:`\ell_1\ell_2` prior as regularizer. The objective function to
+minimize is:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro} ^ 2 + \alpha ||W||_{21}}
+.. math::
 
-where :math:`Fro` indicates the Frobenius norm:
+  \min_W { \frac{1}{2n_\textrm{samples}} \|X W - Y\|_\textrm{Fro} ^ 2 + \alpha
+  \|W\|_{21}}
 
-.. math:: ||A||_{Fro} = \sqrt{\sum_{ij} a_{ij}^2}
+where :math:`\textrm{Fro}` indicates the Frobenius norm:
 
-and :math:`\ell_1` :math:`\ell_2` reads:
+.. math:: \|A\|_\textrm{Fro} = \sqrt{\sum_{ij} a_{ij}^2}
 
-.. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}
+and :math:`\ell_1\ell_2` reads:
+
+.. math:: \|A\|_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}
 
 
 The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
@@ -322,11 +325,12 @@ the algorithm to fit the coefficients.
 
 Elastic Net
 ===========
-:class:`ElasticNet` is a linear regression model trained with L1 and L2 prior
-as regularizer. This combination allows for learning a sparse model where
-few of the weights are non-zero like :class:`Lasso`, while still maintaining
-the regularization properties of :class:`Ridge`. We control the convex
-combination of L1 and L2 using the ``l1_ratio`` parameter.
+:class:`ElasticNet` is a linear regression model trained with :math:`\ell_1`
+and :math:`\ell_2` prior as regularizer. This combination allows for learning a
+sparse model where few of the weights are non-zero like :class:`Lasso`, while
+still maintaining the regularization properties of :class:`Ridge`. We control
+the convex combination of :math:`\ell_1` and :math:`\ell_2` using the
+``l1_ratio`` parameter.
 
 Elastic-net is useful when there are multiple features which are
 correlated with one another. Lasso is likely to pick one of these
@@ -339,8 +343,8 @@ The objective function to minimize is in this case
 
 .. math::
 
-    \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
-    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
+    \min_w { \frac{1}{2n_\textrm{samples}} \|X w - y\|_2 ^ 2 + \alpha \rho
+    \|w\|_1 + \frac{\alpha(1-\rho)}{2} \|w\|_2 ^ 2}
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_coordinate_descent_path_001.png
@@ -364,9 +368,9 @@ Multi-task Elastic Net
 ======================
 
 The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
-coefficients for multiple regression problems jointly: ``Y`` is a 2D array,
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
-features are the same for all the regression problems, also called tasks.
+coefficients for multiple regression problems jointly: ``Y`` is a 2D array of
+shape ``(n_samples, n_tasks)``. The constraint is that the selected features
+are the same for all the regression problems, also called tasks.
 
 Mathematically, it consists of a linear model trained with a mixed
 :math:`\ell_1` :math:`\ell_2` prior and :math:`\ell_2` prior as regularizer.
@@ -374,8 +378,8 @@ The objective function to minimize is:
 
 .. math::
 
-    \underset{W}{min\,} { \frac{1}{2n_{samples}} ||X W - Y||_{Fro}^2 + \alpha \rho ||W||_{2 1} +
-    \frac{\alpha(1-\rho)}{2} ||W||_{Fro}^2}
+    \min_W { \frac{1}{2n_\textrm{samples}} \|X W - Y\|_\textrm{Fro}^2 + \alpha
+    \rho \|W\|_{2 1} + \frac{\alpha(1-\rho)}{2} \|W\|_\textrm{Fro}^2}
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
 the algorithm to fit the coefficients.
@@ -395,8 +399,8 @@ Johnstone and Robert Tibshirani.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where p >> n (i.e., when the
-    number of dimensions is significantly greater than the number of
+  - It is numerically efficient in contexts where :math:`p >> n` (i.e., when
+    the number of dimensions is significantly greater than the number of
     points)
 
   - It is computationally just as fast as forward selection and has
@@ -465,10 +469,10 @@ of including variables at each step, the estimated parameters are
 increased in a direction equiangular to each one's correlations with
 the residual.
 
-Instead of giving a vector result, the LARS solution consists of a
-curve denoting the solution for each value of the L1 norm of the
+Instead of giving a vector result, the LARS solution consists of a curve
+denoting the solution for each value of the :math:`\ell_1` norm of the
 parameter vector. The full coefficients path is stored in the array
-``coef_path_``, which has size (n_features, max_features+1). The first
+``coef_path_``, which has shape ``(n_features, max_features+1)``. The first
 column is always zero.
 
 .. topic:: References:
@@ -490,13 +494,13 @@ Being a forward feature selection method like :ref:`least_angle_regression`,
 orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
-.. math:: \text{arg\,min\,} ||y - X\gamma||_2^2 \text{ subject to } \
-    ||\gamma||_0 \leq n_{nonzero\_coefs}
+.. math:: \text{arg\,min\,} \|y - X\gamma\|_2^2 \text{ subject to } \
+    \|\gamma\|_0 \leq n_\textrm{nonzero\_coefs}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
-.. math:: \text{arg\,min\,} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \
+.. math:: \text{arg\,min\,} \|\gamma\|_0 \text{ subject to } \|y-X\gamma\|_2^2 \
     \leq \text{tol}
 
 
@@ -531,12 +535,11 @@ not set in a hard sense but tuned to the data at hand.
 
 This can be done by introducing `uninformative priors
 <https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
-over the hyper parameters of the model.
-The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
-to finding a maximum a-postiori solution under a Gaussian prior over the
-parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
-`\lambda` manually, it is possible to treat it as a random variable to be
-estimated from the data.
+over the hyper parameters of the model. The :math:`\ell_{2}` regularization
+used in `Ridge Regression`_ is equivalent to finding a maximum a-postiori
+solution under a Gaussian prior over the parameters :math:`w` with precision
+:math:`\lambda^{-1}`.  Instead of setting `\lambda` manually, it is possible to
+treat it as a random variable to be estimated from the data.
 
 To obtain a fully probabilistic model, the output :math:`y` is assumed
 to be Gaussian distributed around :math:`X w`:
@@ -590,7 +593,7 @@ remaining hyperparameters are the parameters of the gamma priors over
 *non-informative*.  The parameters are estimated by maximizing the *marginal
 log likelihood*.
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
@@ -653,7 +656,8 @@ centered on zero and with a precision :math:`\lambda_{i}`:
 
 .. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
-with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+with :math:`\operatorname{diag} \; (A) = \lambda =
+\{\lambda_{1},...,\lambda_{p}\}`.
 
 In contrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
 has its own standard deviation :math:`\lambda_i`. The prior over all
@@ -696,41 +700,47 @@ or the log-linear classifier. In this model, the probabilities describing the po
 
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
-Rest, or multinomial logistic regression with optional L2 or L1
-regularization.
+Rest, or multinomial logistic regression with optional :math:`\ell_2` or
+:math:`\ell_1` regularization.
 
-As an optimization problem, binary class L2 penalized logistic regression
-minimizes the following cost function:
+As an optimization problem, binary class :math:`\ell_2` penalized logistic
+regression minimizes the following cost function:
 
-.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math::
 
-Similarly, L1 regularized logistic regression solves the following
+  \min_{w,c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) +
+  1) .
+
+Similarly, :math:`\ell_1` regularized logistic regression solves the following
 optimization problem
 
-.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math::
+
+  \min_{w,c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs" and "sag":
 
-The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
-on the excellent C++ `LIBLINEAR library
+The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies on
+the excellent C++ `LIBLINEAR library
 <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
-scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
-a true multinomial (multiclass) model; instead, the optimization problem is
+scikit-learn. However, the CD algorithm implemented in liblinear cannot learn a
+true multinomial (multiclass) model; instead, the optimization problem is
 decomposed in a "one-vs-rest" fashion so separate binary classifiers are
 trained for all classes. This happens under the hood, so
 :class:`LogisticRegression` instances using this solver behave as multiclass
-classifiers. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
-calculate the lower bound for C in order to get a non "null" (all feature
-weights to zero) model.
+classifiers. For :math:`\ell_1` penalization :func:`sklearn.svm.l1_min_c`
+allows to calculate the lower bound for C in order to get a non "null" (all
+feature weights to zero) model.
 
-The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
-are found to converge faster for some high dimensional data. Setting
-`multi_class` to "multinomial" with these solvers learns a true multinomial
-logistic regression model [5]_, which means that its probability estimates
-should be better calibrated than the default "one-vs-rest" setting. The
-"lbfgs", "sag" and "newton-cg"" solvers cannot optimize L1-penalized models,
-therefore the "multinomial" setting does not learn sparse models.
+The "lbfgs", "sag" and "newton-cg" solvers only support :math:`\ell_2`
+penalization and are found to converge faster for some high dimensional data.
+Setting `multi_class` to "multinomial" with these solvers learns a true
+multinomial logistic regression model [5]_, which means that its probability
+estimates should be better calibrated than the default "one-vs-rest" setting.
+The "lbfgs", "sag" and "newton-cg"" solvers cannot optimize
+:math:`\ell_1`-penalized models, therefore the "multinomial" setting does not
+learn sparse models.
 
 The solver "sag" uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
@@ -738,15 +748,15 @@ number of features are large.
 
 In a nutshell, one may choose the solver with the following rules:
 
-=================================  =============================
-Case                               Solver
-=================================  =============================
-Small dataset or L1 penalty        "liblinear"
-Multinomial loss or large dataset  "lbfgs", "sag" or "newton-cg"
-Very Large dataset                 "sag"
-=================================  =============================
-
-For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
+=================================         =============================
+Case                                      Solver
+=================================         =============================
+Small dataset or :math:`\ell_1` penalty   "liblinear"
+Multinomial loss or large dataset         "lbfgs", "sag" or "newton-cg"
+Very Large dataset                        "sag"
+=================================         =============================
+For a large dataset, you may also consider using :class:`SGDClassifier` with
+'log' loss.
 
 .. topic:: Examples:
 
@@ -773,8 +783,8 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
 
 .. note:: **Feature selection with sparse logistic regression**
 
-   A logistic regression with L1 penalty yields sparse models, and can
-   thus be used to perform feature selection, as detailed in
+   A logistic regression with :math:`\ell_1` penalty yields sparse models, and
+   can thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
 :class:`LogisticRegressionCV` implements Logistic Regression with builtin
@@ -1051,7 +1061,7 @@ dimensions [#f2]_.
 In terms of time and space complexity, Theil-Sen scales according to
 
 .. math::
-    \binom{n_{samples}}{n_{subsamples}}
+    \binom{n_\textrm{samples}}{n_\textrm{subsamples}}
 
 which makes it infeasible to be applied exhaustively to problems with a
 large number of samples and features. Therefore, the magnitude of a
@@ -1089,7 +1099,7 @@ The loss function that :class:`HuberRegressor` minimizes is given by
 
 .. math::
 
-  \underset{w, \sigma}{min\,} {\sum_{i=1}^n\left(\sigma + H_m\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
+  \min_{w,\sigma} {\sum_{i=1}^n\left(\sigma + H_m\left(\frac{X_{i}w - y_{i}}{\sigma}\right)\sigma\right) + \alpha {||w||_2}^2}
 
 where
 

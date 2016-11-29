@@ -452,30 +452,32 @@ Basic kernels
 The :class:`ConstantKernel` kernel can be used as part of a :class:`Product`
 kernel where it scales the magnitude of the other factor (kernel) or as part
 of a :class:`Sum` kernel, where it modifies the mean of the Gaussian process.
-It depends on a parameter :math:`constant\_value`. It is defined as:
+It depends on a parameter ``constant_value``. It is defined as:
 
 .. math::
-   k(x_i, x_j) = constant\_value \;\forall\; x_1, x_2
+   k(x_i, x_j) = \textrm{constant\_value}
 
 The main use-case of the :class:`WhiteKernel` kernel is as part of a
 sum-kernel where it explains the noise-component of the signal. Tuning its
-parameter :math:`noise\_level` corresponds to estimating the noise-level.
-It is defined as:e
+parameter ``noise_level`` corresponds to estimating the noise-level.
+It is defined as:
 
 .. math::
-    k(x_i, x_j) = noise\_level \text{ if } x_i == x_j \text{ else } 0
-
+  k(x_i, x_j) = \begin{cases}
+    \textrm{noise\_level}, & \textrm{if } x_i=x_j, \\
+    0, & \textrm{otherwise}
+  \end{cases}
 
 Kernel operators
 ----------------
 Kernel operators take one or two base kernels and combine them into a new
-kernel. The :class:`Sum` kernel takes two kernels :math:`k1` and :math:`k2`
-and combines them via :math:`k_{sum}(X, Y) = k1(X, Y) + k2(X, Y)`.
-The  :class:`Product` kernel takes two kernels :math:`k1` and :math:`k2`
-and combines them via :math:`k_{product}(X, Y) = k1(X, Y) * k2(X, Y)`.
-The :class:`Exponentiation` kernel takes one base kernel and a scalar parameter
-:math:`exponent` and combines them via
-:math:`k_{exp}(X, Y) = k(X, Y)^\text{exponent}`.
+kernel. The :class:`Sum` kernel takes two kernels ``k1`` and ``k2`` and
+combines them via :math:`k_\textrm{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)`. The
+:class:`Product` kernel takes two kernels ``k1`` and ``k2`` and combines them
+via :math:`k_\textrm{product}(X, Y) = k_1(X, Y) k_2(X, Y)`. The
+:class:`Exponentiation` kernel takes one base kernel and a scalar parameter
+``exponent`` and combines them via :math:`k_\textrm{exp}(X, Y) = k(X,
+Y)^\textrm{exponent}`.
 
 Radial-basis function (RBF) kernel
 ----------------------------------
@@ -870,12 +872,12 @@ models, see the book by Rasmussen & Williams in references.
 Regression Models
 -----------------
 
-Common linear regression models involve zero- (constant), first- and
-second-order polynomials. But one may specify its own in the form of a Python
-function that takes the features X as input and that returns a vector
-containing the values of the functional set. The only constraint is that the
-number of functions must not exceed the number of available observations so
-that the underlying regression problem is not *underdetermined*.
+Common linear regression models involve polynomials of order zero (constant),
+one, or two. But one may specify its own in the form of a Python function that
+takes the features X as input and that returns a vector containing the values
+of the functional set. The only constraint is that the number of functions must
+not exceed the number of available observations so that the underlying
+regression problem is not *underdetermined*.
 
 
 Implementation details
