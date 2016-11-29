@@ -49,13 +49,13 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
         two classes.
-        ``"ovr"`` trains n_classes one-vs-rest classifiers, while ``"crammer_singer"``
-        optimizes a joint objective over all classes.
+        ``"ovr"`` trains n_classes one-vs-rest classifiers, while
+        ``"crammer_singer"`` optimizes a joint objective over all classes.
         While `crammer_singer` is interesting from a theoretical perspective
         as it is consistent, it is seldom used in practice as it rarely leads
         to better accuracy and is more expensive to compute.
-        If ``"crammer_singer"`` is chosen, the options loss, penalty and dual will
-        be ignored.
+        If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
+        will be ignored.
 
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
@@ -678,10 +678,10 @@ class NuSVC(BaseSVC):
         liblinear.
     """
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto',
-                 coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, class_weight=None, verbose=False,
-                 max_iter=-1, decision_function_shape='ovr', random_state=None):
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+                 shrinking=True, probability=False, tol=1e-3, cache_size=200,
+                 class_weight=None, verbose=False, max_iter=-1,
+                 decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
             impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
