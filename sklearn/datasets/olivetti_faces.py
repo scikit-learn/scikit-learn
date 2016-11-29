@@ -111,6 +111,9 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         makedirs(data_home)
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
+
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
         fhandle = urlopen(DATA_URL)
@@ -121,6 +124,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         del mfile
     else:
         faces = joblib.load(filepath)
+
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
     faces = np.float32(faces)
