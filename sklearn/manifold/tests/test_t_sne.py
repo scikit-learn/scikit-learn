@@ -188,8 +188,8 @@ def test_gradient():
 
     n_samples = 50
     n_features = 2
-    n_components = 2
-    for alpha in [1.0, 2.5]:
+    for n_components in [2, 4]:
+        alpha = n_components - 1
         distances = random_state.randn(n_samples,
                                        n_features).astype(np.float32)
         distances = distances.dot(distances.T)
