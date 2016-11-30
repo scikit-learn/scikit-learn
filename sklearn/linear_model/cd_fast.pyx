@@ -535,7 +535,7 @@ def sparse_enet_coordinate_descent(floating [:] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,                                 
+def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
