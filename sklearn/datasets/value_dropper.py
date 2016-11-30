@@ -35,44 +35,19 @@ class ValueDropper(TransformerMixin):
     Parameters
     ----------
 
-    missing_values : {"NaN" (or np.nan) | int}, default "NaN"
+    missing_values : {"NaN" (or np.nan) | int | float}, default "NaN"
         The value to insert to indicate missingness.
 
     missing_proba : dict of floats or dict of vector of floats
-        If ``missing_proba`` is a float within range [0, 1), it represents the
-        probability with which the values will be dropped.
-
-        The values are dropped (approximately) uniformly across all labels and
-        features. This type of missingness is referred to as MCAR.
-
         To vary the proportion of values dropped across each feature,
         individual drop-probabilities for each feature can be specified as a 1D
-        vector of shape ``(n_features,)``.
+        array-like of shape (n_features, ) (e.g. [0.1, 0.15, 0.1]).
 
-        If missingness is not MCAR, ``missing_proba`` can be used to specify
-        the drop-probabilities on a per-label (and if needed further on
-        per-feature basis.).
+        If missingness is not MCAR, a dict of floats can be used to specify
+        the drop-probabilities on a per-label basis (e.g. {1: 0.2, 2: 0.3, 3: 0.5}).
 
-        If ``missing_proba`` is a dict of floats::
-            {1: 0.2, 2: 0.3, 3: 0.5}
-
-        This represents, the drop-probabilities for samples of each
-        class-label. The missing values are evenly spread across all the
-        features.
-
-        If ``missing_proba`` is a dict of vectors (and scalars)::
-
-            {0: 0.1,
-             3: [0.1, 0.15]}
-
-        Note that the shape of the vector must be ``(n_features,)``
-
-        Samples from class 0 are dropped with probability of 0.1 for each
-        feature and those from class 3 are dropped with a probability of 0.1
-        in feature 0, 0.15 in feature 1 while there are no values dropped from
-        samples of class 1 and 2.
-
-        Note that the samples are randomly chosen "*for each feature*".
+        This dict can also contains some 1D array-like of shape (n_features, )
+        to vary drop-probabilities across features  (e.g. {1: 0.1, 3: [0.1, 0.15, 0.1]}).
 
     copy : bool, default False
         Whether to copy the data or work inplace.
@@ -83,11 +58,11 @@ class ValueDropper(TransformerMixin):
         If ``random_state`` is set to an integer, the ``missing_proba``
         can be upscaled safely with the assumption that all the values
         dropped with a smaller scale will exist in the larger scaled version::
-            missing_proba_25pc = {0: 0.1, 3: [0.3, 0.1, 0.1]}
-            missing_proba_50pc = {0: 0.1, 1:0.2, 3: [0.6, 0.1, 0.8]}
+            missing_proba_1 = {0: 0.1, 3: [0.3, 0.1, 0.1]}
+            missing_proba_2 = {0: 0.1, 1:0.2, 3: [0.6, 0.1, 0.8]}
 
-        The missing values dropped with ``missing_proba_25pc`` will also
-        exist in ``missing_proba_50pc``.
+        The missing values dropped with ``missing_proba_1`` will also
+        be dropped with ``missing_proba_2``.
 
 
     Examples
@@ -189,7 +164,7 @@ class ValueDropper(TransformerMixin):
         Parameters
         ----------
 
-        X : ndarray like of shape (n_features, n_samples)
+        X : array-like of shape (n_features, n_samples)
             Data, in which the values must be dropped and set to
             ``missing_values``.
 
@@ -317,14 +292,6 @@ class ValueDropper(TransformerMixin):
                                                     this_n_samples))
                 if this_required_n_missing == 0:
                     continue
-
-                if this_required_n_missing > this_n_samples:
-                    raise ValueError("There are no more available values at "
-                                     "%sfeature - %s, to drop."
-                                     # For NMAR, specify the label too
-                                     % ("class label - %s, " % class_i
-                                        if missing_type == 'nmar' else "",
-                                        feature))
 
                 # Drop them
                 X[shuffled_indices[:this_required_n_missing],

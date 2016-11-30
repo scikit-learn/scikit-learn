@@ -84,9 +84,10 @@ def test_value_dropper_mnar_clf():
         # The up scaling need not be linear
         missing_proba = {classes[0]: [0.1, 0.5, 0.5, 0.1, 0], classes[1]: 0.8}
         vd = ValueDropper(missing_proba=missing_proba,
-                          missing_values=np.nan, random_state=0)
+                          missing_values=-100.2, random_state=0)
         X_dropped2 = vd.transform(X, y)
-        assert_true(np.all(np.isnan(X_dropped2[np.isnan(X_dropped)])))
+        new_missing_mask = X_dropped2 == -100.2
+        assert_true(np.all(new_missing_mask[missing_mask]))
 
 
 def test_value_dropper_mnar_reg_error():
@@ -133,9 +134,10 @@ def check_value_dropper_mcar(X, y):
 
     # Let us drop 0.3 more fraction of values. This time not inplace
     # copy=True must be default
-    vd = ValueDropper(missing_proba=0.6, random_state=0)
+    # Check with inf as missing values
+    vd = ValueDropper(missing_proba=0.6, missing_values=np.inf, random_state=0)
     X_more_dropped = vd.transform(X_copy2, y)
-    new_missing_mask = np.isnan(X_more_dropped)
+    new_missing_mask = np.isinf(X_more_dropped)
 
     # Check global drop probability
     assert_almost_equal(new_missing_mask.ravel().sum() / float(n_values), 0.6)
