@@ -17,7 +17,7 @@ Algorithm 21.1
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Denis A. Engemann <d.engemann@fz-juelich.de>
 
-# Licence: BSD3
+# License: BSD3
 
 import warnings
 from math import sqrt, log
@@ -309,12 +309,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: array, shape (n_samples,)
+        ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self, 'components_')
@@ -333,12 +333,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: float
+        ll : float
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))

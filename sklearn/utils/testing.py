@@ -8,6 +8,7 @@
 #          Arnaud Joly
 #          Denis Engemann
 #          Giorgio Patrini
+#          Thierry Guillemot
 # License: BSD 3 clause
 import os
 import inspect
@@ -35,6 +36,7 @@ import tempfile
 import shutil
 import os.path as op
 import atexit
+import unittest
 
 # WindowsError only exist on Windows
 try:
@@ -46,14 +48,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 
-# Conveniently import all assertions in one place.
-from nose.tools import assert_equal
-from nose.tools import assert_not_equal
-from nose.tools import assert_true
-from nose.tools import assert_false
-from nose.tools import assert_raises
 from nose.tools import raises
-from nose import SkipTest
 from nose import with_setup
 
 from numpy.testing import assert_almost_equal
@@ -73,75 +68,34 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal"]
+           "assert_approx_equal", "SkipTest"]
+
+
+_dummy = unittest.TestCase('__init__')
+assert_equal = _dummy.assertEqual
+assert_not_equal = _dummy.assertNotEqual
+assert_true = _dummy.assertTrue
+assert_false = _dummy.assertFalse
+assert_raises = _dummy.assertRaises
+SkipTest = unittest.case.SkipTest
+assert_dict_equal = _dummy.assertDictEqual
+assert_in = _dummy.assertIn
+assert_not_in = _dummy.assertNotIn
+assert_less = _dummy.assertLess
+assert_greater = _dummy.assertGreater
+assert_less_equal = _dummy.assertLessEqual
+assert_greater_equal = _dummy.assertGreaterEqual
 
 
 try:
-    from nose.tools import assert_in, assert_not_in
-except ImportError:
-    # Nose < 1.0.0
-
-    def assert_in(x, container):
-        assert_true(x in container, msg="%r in %r" % (x, container))
-
-    def assert_not_in(x, container):
-        assert_false(x in container, msg="%r in %r" % (x, container))
-
-try:
-    from nose.tools import assert_raises_regex
-except ImportError:
-    # for Python 2
-    def assert_raises_regex(expected_exception, expected_regexp,
-                            callable_obj=None, *args, **kwargs):
-        """Helper function to check for message patterns in exceptions"""
-
-        not_raised = False
-        try:
-            callable_obj(*args, **kwargs)
-            not_raised = True
-        except expected_exception as e:
-            error_message = str(e)
-            if not re.compile(expected_regexp).search(error_message):
-                raise AssertionError("Error message should match pattern "
-                                     "%r. %r does not." %
-                                     (expected_regexp, error_message))
-        if not_raised:
-            raise AssertionError("%s not raised by %s" %
-                                 (expected_exception.__name__,
-                                  callable_obj.__name__))
-
+    assert_raises_regex = _dummy.assertRaisesRegex
+except AttributeError:
+    # Python 2.7
+    assert_raises_regex = _dummy.assertRaisesRegexp
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-def _assert_less(a, b, msg=None):
-    message = "%r is not lower than %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a < b, message
-
-
-def _assert_greater(a, b, msg=None):
-    message = "%r is not greater than %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a > b, message
-
-
-def assert_less_equal(a, b, msg=None):
-    message = "%r is not lower than or equal to %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a <= b, message
-
-
-def assert_greater_equal(a, b, msg=None):
-    message = "%r is not greater than or equal to %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a >= b, message
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -165,7 +119,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -262,9 +215,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-
-    # warnings module context manager.
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -277,17 +227,23 @@ def assert_no_warnings(func, *args, **kw):
                  if e.category is not np.VisibleDeprecationWarning]
 
         if len(w) > 0:
-            raise AssertionError("Got warnings when calling %s: %s"
-                                 % (func.__name__, w))
+            raise AssertionError("Got warnings when calling %s: [%s]"
+                                 % (func.__name__,
+                                    ', '.join(str(warning) for warning in w)))
     return result
 
 
-def ignore_warnings(obj=None):
-    """ Context manager and decorator to ignore warnings
+def ignore_warnings(obj=None, category=Warning):
+    """Context manager and decorator to ignore warnings.
 
     Note. Using this (in both variants) will clear all warnings
     from all python modules loaded. In case you need to test
     cross-module-warning-logging this is not your tool of choice.
+
+    Parameters
+    ----------
+    category : warning class, defaults to Warning.
+        The category to filter. If Warning, all categories will be muted.
 
     Examples
     --------
@@ -300,47 +256,44 @@ def ignore_warnings(obj=None):
 
     >>> ignore_warnings(nasty_warn)()
     42
-
     """
     if callable(obj):
-        return _ignore_warnings(obj)
+        return _IgnoreWarnings(category=category)(obj)
     else:
-        return _IgnoreWarnings()
-
-
-def _ignore_warnings(fn):
-    """Decorator to catch and hide warnings without visual nesting"""
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        # very important to avoid uncontrolled state propagation
-        clean_warning_registry()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            return fn(*args, **kwargs)
-            w[:] = []
-
-    return wrapper
+        return _IgnoreWarnings(category=category)
 
 
 class _IgnoreWarnings(object):
+    """Improved and simplified Python warnings context manager and decorator.
 
-    """Improved and simplified Python warnings context manager
-
+    This class allows to ignore the warnings raise by a function.
     Copied from Python 2.7.5 and modified as required.
+
+    Parameters
+    ----------
+    category : tuple of warning class, defaut to Warning
+        The category to filter. By default, all the categories will be muted.
+
     """
 
-    def __init__(self):
-        """
-        Parameters
-        ==========
-        category : warning class
-            The category to filter. Defaults to Warning. If None,
-            all categories will be muted.
-        """
+    def __init__(self, category):
         self._record = True
         self._module = sys.modules['warnings']
         self._entered = False
         self.log = []
+        self.category = category
+
+    def __call__(self, fn):
+        """Decorator to catch and hide warnings without visual nesting."""
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            # very important to avoid uncontrolled state propagation
+            clean_warning_registry()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", self.category)
+                return fn(*args, **kwargs)
+
+        return wrapper
 
     def __repr__(self):
         args = []
@@ -353,22 +306,13 @@ class _IgnoreWarnings(object):
 
     def __enter__(self):
         clean_warning_registry()  # be safe and not propagate state + chaos
-        warnings.simplefilter('always')
+        warnings.simplefilter("ignore", self.category)
         if self._entered:
             raise RuntimeError("Cannot enter %r twice" % self)
         self._entered = True
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
-        if self._record:
-            self.log = []
-
-            def showwarning(*args, **kwargs):
-                self.log.append(warnings.WarningMessage(*args, **kwargs))
-            self._module.showwarning = showwarning
-            return self.log
-        else:
-            return None
 
     def __exit__(self, *exc_info):
         if not self._entered:
@@ -379,15 +323,8 @@ class _IgnoreWarnings(object):
         clean_warning_registry()  # be safe and not propagate state + chaos
 
 
-try:
-    from nose.tools import assert_less
-except ImportError:
-    assert_less = _assert_less
-
-try:
-    from nose.tools import assert_greater
-except ImportError:
-    assert_greater = _assert_greater
+assert_less = _dummy.assertLess
+assert_greater = _dummy.assertGreater
 
 
 def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
@@ -407,19 +344,19 @@ else:
 
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
-    """Helper function to test error messages in exceptions
+    """Helper function to test error messages in exceptions.
 
     Parameters
     ----------
     exceptions : exception or tuple of exception
         Name of the estimator
 
-    func : callable
+    function : callable
         Calable object to raise error
 
-    *args : the positional arguments to `func`.
+    *args : the positional arguments to `function`.
 
-    **kw : the keyword arguments to `func`
+    **kw : the keyword arguments to `function`
     """
     try:
         function(*args, **kwargs)
@@ -616,8 +553,8 @@ def all_estimators(include_meta_estimators=False,
     all_classes = set(all_classes)
 
     estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator)
-                      and c[0] != 'BaseEstimator')]
+                  if (issubclass(c[1], BaseEstimator) and
+                      c[0] != 'BaseEstimator')]
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
@@ -647,7 +584,8 @@ def all_estimators(include_meta_estimators=False,
         estimators = filtered_estimators
         if type_filter:
             raise ValueError("Parameter type_filter must be 'classifier', "
-                             "'regressor', 'transformer', 'cluster' or None, got"
+                             "'regressor', 'transformer', 'cluster' or "
+                             "None, got"
                              " %s." % repr(type_filter))
 
     # drop duplicates, sort for reproducibility
@@ -662,7 +600,6 @@ def set_random_state(estimator, random_state=0):
     Classes for whom random_state is deprecated are ignored. Currently DBSCAN
     is one such class.
     """
-
     if isinstance(estimator, DBSCAN):
         return
 
@@ -671,8 +608,7 @@ def set_random_state(estimator, random_state=0):
 
 
 def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed. """
-
+    """Test decorator that skips test if matplotlib not installed."""
     @wraps(func)
     def run_test(*args, **kwargs):
         try:
@@ -723,7 +659,7 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
 
 
 def if_safe_multiprocessing_with_blas(func):
-    """Decorator for tests involving both BLAS calls and multiprocessing
+    """Decorator for tests involving both BLAS calls and multiprocessing.
 
     Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
     some implementation of BLAS (or other libraries that manage an internal
@@ -740,7 +676,6 @@ def if_safe_multiprocessing_with_blas(func):
     for multiprocessing to avoid this issue. However it can cause pickling
     errors on interactively defined functions. It therefore not enabled by
     default.
-
     """
     @wraps(func)
     def run_test(*args, **kwargs):
@@ -752,7 +687,7 @@ def if_safe_multiprocessing_with_blas(func):
 
 
 def clean_warning_registry():
-    """Safe way to reset warnings """
+    """Safe way to reset warnings."""
     warnings.resetwarnings()
     reg = "__warningregistry__"
     for mod_name, mod in list(sys.modules.items()):
@@ -775,7 +710,9 @@ def check_skip_travis():
 
 def _delete_folder(folder_path, warn=False):
     """Utility function to cleanup a temporary folder if still existing.
-    Copy from joblib.pool (for independence)"""
+
+    Copy from joblib.pool (for independence).
+    """
     try:
         if os.path.exists(folder_path):
             # This can fail under windows,
@@ -805,3 +742,24 @@ class TempMemmap(object):
 
 with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)
+
+
+class _named_check(object):
+    """Wraps a check to show a useful description
+
+    Parameters
+    ----------
+    check : function
+        Must have ``__name__`` and ``__call__``
+    arg_text : str
+        A summary of arguments to the check
+    """
+    # Setting the description on the function itself can give incorrect results
+    # in failing tests
+    def __init__(self, check, arg_text):
+        self.check = check
+        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
+            inspect.stack()[1], check, arg_text))
+
+    def __call__(self, *args, **kwargs):
+        return self.check(*args, **kwargs)

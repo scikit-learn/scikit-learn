@@ -345,9 +345,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         split and if the number of subclusters in the parent is greater than
         the branching factor, then it has to be split recursively.
 
-    n_clusters : int, instance of sklearn.cluster model, default None
+    n_clusters : int, instance of sklearn.cluster model, default 3
         Number of clusters after the final clustering step, which treats the
-        subclusters from the leaves as new samples. By default, this final
+        subclusters from the leaves as new samples. If None, this final
         clustering step is not performed and the subclusters are returned
         as they are. If a model is provided, the model is fit treating
         the subclusters as new samples and the initial data is mapped to the
@@ -401,7 +401,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm
-      https://code.google.com/p/jbirch/
+      https://code.google.com/archive/p/jbirch
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
@@ -481,7 +481,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        leaves: array-like
+        leaves : array-like
             List of the leaf nodes.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
@@ -538,7 +538,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        labels: ndarray, shape(n_samples)
+        labels : ndarray, shape(n_samples)
             Labelled data.
         """
         X = check_array(X, accept_sparse='csr')

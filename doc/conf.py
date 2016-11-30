@@ -24,24 +24,28 @@ from sklearn.externals.six import u
 sys.path.insert(0, os.path.abspath('sphinxext'))
 
 from github_link import make_linkcode_resolve
+import sphinx_gallery
 
 # -- General configuration ---------------------------------------------------
 
-# Try to override the matplotlib configuration as early as possible
-try:
-    import gen_rst
-except:
-    pass
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['gen_rst',
-              'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
-              'sphinx.ext.linkcode',
-              ]
+extensions = [
+    'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'numpy_ext.numpydoc',
+    'sphinx.ext.linkcode', 'sphinx.ext.doctest',
+    'sphinx_gallery.gen_gallery',
+    'sphinx_issues',
+]
 
-autosummary_generate = True
+# pngmath / imgmath compatibility layer for different sphinx versions
+import sphinx
+from distutils.version import LooseVersion
+if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
+    extensions.append('sphinx.ext.pngmath')
+else:
+    extensions.append('sphinx.ext.imgmath')
+
 
 autodoc_default_flags = ['members', 'inherited-members']
 
@@ -230,20 +234,53 @@ latex_domain_indices = False
 trim_doctests_flags = True
 
 
-def generate_example_rst(app, what, name, obj, options, lines):
-    # generate empty examples files, so that we don't get
-    # inclusion errors if there are no examples for a class / module
-    examples_path = os.path.join(app.srcdir, "modules", "generated",
-                                 "%s.examples" % name)
-    if not os.path.exists(examples_path):
-        # touch file
-        open(examples_path, 'w').close()
+sphinx_gallery_conf = {
+    'doc_module': 'sklearn',
+    'reference_url': {
+        'sklearn': None,
+        'matplotlib': 'http://matplotlib.org',
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
+        'nibabel': 'http://nipy.org/nibabel'}
+}
+
+
+# The following dictionary contains the information used to create the
+# thumbnails for the front page of the scikit-learn home page.
+# key: first image in set
+# values: (number of plot in set, height of thumbnail)
+carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
+                   'sphx_glr_plot_outlier_detection_003.png': 372,
+                   'sphx_glr_plot_gpr_co2_001.png': 350,
+                   'sphx_glr_plot_adaboost_twoclass_001.png': 372,
+                   'sphx_glr_plot_compare_methods_001.png': 349}
+
+
+def make_carousel_thumbs(app, exception):
+    """produces the final resized carousel images"""
+    if exception is not None:
+        return
+    print('Preparing carousel images')
+
+    image_dir = os.path.join(app.builder.outdir, '_images')
+    for glr_plot, max_width in carousel_thumbs.items():
+        image = os.path.join(image_dir, glr_plot)
+        if os.path.exists(image):
+            c_thumb = os.path.join(image_dir, glr_plot[:-4] + '_carousel.png')
+            sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
+
+
+# Config for sphinx_issues
+
+issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
+issues_github_path = 'scikit-learn/scikit-learn'
+issues_user_uri = 'https://github.com/{user}'
 
 
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
-    app.connect('autodoc-process-docstring', generate_example_rst)
+    app.connect('build-finished', make_carousel_thumbs)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github

@@ -116,6 +116,8 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     Targets               str, 'normal.' or name of the anomaly type
     ================      ==========================================
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     subset : None, 'SA', 'SF', 'http', 'smtp'
@@ -156,6 +158,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     .. [2] A Geometric Framework for Unsupervised Anomaly Detection: Detecting
            Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
            Michael Prerau, Leonid Portnoy, Sal Stolfo
+
     """
     kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
                                      download_if_missing=download_if_missing)
@@ -342,6 +345,9 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
+    elif not available:
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
 
     try:
         X, y

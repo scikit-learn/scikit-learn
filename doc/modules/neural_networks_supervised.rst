@@ -21,7 +21,7 @@ Multi-layer Perceptron
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
 a function :math:`f(\cdot): R^m \rightarrow R^o` by training on a dataset,
-where :math:`m` is the number of dimensions for input and :math:`o` is the the
+where :math:`m` is the number of dimensions for input and :math:`o` is the
 number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
 and a target :math:`y`, it can learn a non-linear function approximator for either
 classification or regression. It is different from logistic regression, in that
@@ -86,14 +86,16 @@ training samples::
     >>> from sklearn.neural_network import MLPClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MLPClassifier(algorithm='l-bfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
-           batch_size='auto', beta_1=0.9, beta_2=0.999, early_stopping=False,
+    >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
+    ...                     hidden_layer_sizes=(5, 2), random_state=1)
+    ...
+    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
+    MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
+           beta_1=0.9, beta_2=0.999, early_stopping=False,
            epsilon=1e-08, hidden_layer_sizes=(5, 2), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           tol=0.0001, validation_fraction=0.1, verbose=False,
+           solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
            warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
@@ -107,14 +109,6 @@ contains the weight matrices that constitute the model parameters::
     >>> [coef.shape for coef in clf.coefs_]
     [(2, 5), (5, 2), (2, 1)]
 
-To get the raw values before applying the output activation function, run the
-following command,
-
-use :meth:`MLPClassifier.decision_function`::
-
-    >>> clf.decision_function([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([ 47.6...,  47.6...])
-
 Currently, :class:`MLPClassifier` supports only the
 Cross-Entropy loss function, which allows probability estimates by running the
 ``predict_proba`` method.
@@ -125,34 +119,35 @@ classification, it minimizes the Cross-Entropy loss function, giving a vector
 of probability estimates :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([[ 0.,  1.],
-           [ 0.,  1.]])
+    array([[  1.967...e-04,   9.998...-01],
+           [  1.967...e-04,   9.998...-01]])
 
 :class:`MLPClassifier` supports multi-class classification by
 applying `Softmax <https://en.wikipedia.org/wiki/Softmax_activation_function>`_
 as the output function.
 
-Further, the algorithm supports :ref:`multi-label classification <multiclass>`
-in which a sample can belong to more than one class. For each class, the output
-of :meth:`MLPClassifier.decision_function` passes through the
-logistic function. Values larger or equal to `0.5` are rounded to `1`,
-otherwise to `0`. For a predicted output of a sample, the indices where the
-value is `1` represents the assigned classes of that sample::
+Further, the model supports :ref:`multi-label classification <multiclass>`
+in which a sample can belong to more than one class. For each class, the raw
+output passes through the logistic function. Values larger or equal to `0.5`
+are rounded to `1`, otherwise to `0`. For a predicted output of a sample, the
+indices where the value is `1` represents the assigned classes of that sample::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1, 1]]
-    >>> clf = MLPClassifier(algorithm='l-bfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
-    >>> clf.fit(X, y)
-    MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
-           batch_size='auto', beta_1=0.9, beta_2=0.999, early_stopping=False,
+    >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
+    ...                     hidden_layer_sizes=(15,), random_state=1)
+    ...
+    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
+    MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
+           beta_1=0.9, beta_2=0.999, early_stopping=False,
            epsilon=1e-08, hidden_layer_sizes=(15,), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           tol=0.0001, validation_fraction=0.1, verbose=False,
+           solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
            warm_start=False)
-    >>> clf.predict([1., 2.])
+    >>> clf.predict([[1., 2.]])
     array([[1, 1]])
-    >>> clf.predict([0., 0.])
+    >>> clf.predict([[0., 0.]])
     array([[0, 1]])
 
 See the examples below and the doc string of
@@ -160,8 +155,8 @@ See the examples below and the doc string of
 
 .. topic:: Examples:
 
- * :ref:`example_neural_networks_plot_mlp_training_curves.py`
- * :ref:`example_neural_networks_plot_mnist_filters.py`
+ * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_training_curves.py`
+ * :ref:`sphx_glr_auto_examples_neural_networks_plot_mnist_filters.py`
 
 Regression
 ==========
@@ -183,7 +178,7 @@ for regularization (L2 regularization) term which helps in avoiding overfitting
 by penalizing weights with large magnitudes. Following plot displays varying
 decision function with value of alpha.
 
-.. figure:: ../auto_examples/neural_networks/plot_mlp_alpha_001.png
+.. figure:: ../auto_examples/neural_networks/images/sphx_glr_plot_mlp_alpha_001.png
    :target: ../auto_examples/neural_networks/plot_mlp_alpha.html
    :align: center
    :scale: 75
@@ -192,7 +187,7 @@ See the examples below for further information.
 
 .. topic:: Examples:
 
- * :ref:`example_neural_networks_plot_mlp_alpha.py`
+ * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
 
 Algorithms
 ==========
@@ -216,19 +211,19 @@ for the network.
 More details can be found in the documentation of
 `SGD <http://scikit-learn.org/stable/modules/sgd.html>`_
 
-Adam is similar to SGD in a sense that it is a stochastic optimization
-algorithm, but it can automatically adjust the amount to update parameters
-based on adaptive estimates of lower-order moments.
+Adam is similar to SGD in a sense that it is a stochastic optimizer, but it can
+automatically adjust the amount to update parameters based on adaptive estimates
+of lower-order moments.
 
 With SGD or Adam, training supports online and mini-batch learning.
 
-L-BFGS is a fast learning algorithm that approximates the Hessian matrix which
-represents the second-order partial derivative of a function. Further it
-approximates the inverse of the Hessian matrix to perform parameter updates.
-The implementation uses the Scipy version of
-`L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`__..
+L-BFGS is a solver that approximates the Hessian matrix which represents the
+second-order partial derivative of a function. Further it approximates the
+inverse of the Hessian matrix to perform parameter updates. The implementation
+uses the Scipy version of `L-BFGS
+<http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_.
 
-If the selected algorithm is 'L-BFGS', training does not support online nor
+If the selected solver is 'L-BFGS', training does not support online nor
 mini-batch learning.
 
 

@@ -32,7 +32,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric"]
+           "check_symmetric", "indices_to_mask"]
 
 
 def safe_mask(X, mask):
@@ -43,7 +43,7 @@ def safe_mask(X, mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask: array
+    mask : array
         Mask to be used on X.
 
     Returns
@@ -133,6 +133,8 @@ def resample(*arrays, **options):
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
+        If replace is False it should not be larger than the length of
+        arrays.
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -194,10 +196,10 @@ def resample(*arrays, **options):
 
     if max_n_samples is None:
         max_n_samples = n_samples
-
-    if max_n_samples > n_samples:
-        raise ValueError("Cannot sample %d out of arrays with dim %d" % (
-            max_n_samples, n_samples))
+    elif (max_n_samples > n_samples) and (not replace):
+        raise ValueError("Cannot sample %d out of arrays with dim %d"
+                         "when replace is False" % (max_n_samples,
+                                                    n_samples))
 
     check_consistent_length(*arrays)
 
@@ -417,3 +419,27 @@ def tosequence(x):
         return x
     else:
         return list(x)
+
+
+def indices_to_mask(indices, mask_length):
+    """Convert list of indices to boolean mask.
+
+    Parameters
+    ----------
+    indices : list-like
+        List of integers treated as indices.
+    mask_length : int
+        Length of boolean mask to be generated.
+
+    Returns
+    -------
+    mask : 1d boolean nd-array
+        Boolean array that is True where indices are present, else False.
+    """
+    if mask_length <= np.max(indices):
+        raise ValueError("mask_length must be greater than max(indices)")
+
+    mask = np.zeros(mask_length, dtype=np.bool)
+    mask[indices] = True
+
+    return mask

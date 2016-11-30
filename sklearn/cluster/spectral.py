@@ -39,7 +39,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
         of the rotation matrix
 
@@ -305,7 +305,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
 
-    gamma : float
+    gamma : float, default=1.0
         Scaling factor of RBF, polynomial, exponential chi^2 and
         sigmoid affinity kernel. Ignored for
         ``affinity='nearest_neighbors'``.

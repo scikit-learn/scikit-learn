@@ -143,8 +143,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     .. versionadded:: 0.17
        *LinearDiscriminantAnalysis*.
 
-    .. versionchanged:: 0.17
-       Deprecated :class:`lda.LDA` have been moved to *LinearDiscriminantAnalysis*.
+    Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------
@@ -291,8 +290,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.means_ = _class_means(X, y)
         self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
         self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
-        self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T))
-                           + np.log(self.priors_))
+        self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T)) +
+                           np.log(self.priors_))
 
     def _solve_eigen(self, X, y, shrinkage):
         """Eigenvalue solver.
@@ -334,15 +333,16 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Sb = St - Sw  # between scatter
 
         evals, evecs = linalg.eigh(Sb, Sw)
-        self.explained_variance_ratio_ = np.sort(evals / np.sum(evals))[::-1]
+        self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
+                                                 )[::-1][:self._max_components]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
         # evecs /= np.linalg.norm(evecs, axis=0)  # doesn't work with numpy 1.6
         evecs /= np.apply_along_axis(np.linalg.norm, 0, evecs)
 
         self.scalings_ = evecs
         self.coef_ = np.dot(self.means_, evecs).dot(evecs.T)
-        self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T))
-                           + np.log(self.priors_))
+        self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T)) +
+                           np.log(self.priors_))
 
     def _solve_svd(self, X, y):
         """SVD solver.
@@ -397,12 +397,13 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = S[:self.n_components] / S.sum()
+        self.explained_variance_ratio_ = (S**2 / np.sum(
+            S**2))[:self._max_components]
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
-        self.intercept_ = (-0.5 * np.sum(coef ** 2, axis=1)
-                           + np.log(self.priors_))
+        self.intercept_ = (-0.5 * np.sum(coef ** 2, axis=1) +
+                           np.log(self.priors_))
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
@@ -454,6 +455,13 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                           UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()
 
+        # Get the maximum number of components
+        if self.n_components is None:
+            self._max_components = len(self.classes_) - 1
+        else:
+            self._max_components = min(len(self.classes_) - 1,
+                                       self.n_components)
+
         if self.solver == 'svd':
             if self.shrinkage is not None:
                 raise NotImplementedError('shrinkage not supported')
@@ -494,9 +502,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             X_new = np.dot(X - self.xbar_, self.scalings_)
         elif self.solver == 'eigen':
             X_new = np.dot(X, self.scalings_)
-        n_components = X.shape[1] if self.n_components is None \
-            else self.n_components
-        return X_new[:, :n_components]
+
+        return X_new[:, :self._max_components]
 
     def predict_proba(self, X):
         """Estimate probability.
@@ -552,8 +559,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     .. versionadded:: 0.17
        *QuadraticDiscriminantAnalysis*
 
-    .. versionchanged:: 0.17
-       Deprecated :class:`qda.QDA` have been moved to *QuadraticDiscriminantAnalysis*.
+    Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------

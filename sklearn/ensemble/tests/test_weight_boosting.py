@@ -3,7 +3,7 @@
 import numpy as np
 from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal, assert_true
+from sklearn.utils.testing import assert_equal, assert_true, assert_greater
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.base import BaseEstimator
@@ -113,6 +113,12 @@ def test_iris():
         assert score > 0.9, "Failed with algorithm %s and score = %f" % \
             (alg, score)
 
+        # Check we used multiple estimators
+        assert_greater(len(clf.estimators_), 1)
+        # Check for distinct random states (see issue #7408)
+        assert_equal(len(set(est.random_state for est in clf.estimators_)),
+                     len(clf.estimators_))
+
     # Somewhat hacky regression test: prior to
     # ae7adc880d624615a34bafdb1d75ef67051b8200,
     # predict_proba returned SAMME.R values for SAMME.
@@ -123,10 +129,16 @@ def test_iris():
 
 def test_boston():
     # Check consistency on dataset boston house prices.
-    clf = AdaBoostRegressor(random_state=0)
-    clf.fit(boston.data, boston.target)
-    score = clf.score(boston.data, boston.target)
+    reg = AdaBoostRegressor(random_state=0)
+    reg.fit(boston.data, boston.target)
+    score = reg.score(boston.data, boston.target)
     assert score > 0.85
+
+    # Check we used multiple estimators
+    assert_true(len(reg.estimators_) > 1)
+    # Check for distinct random states (see issue #7408)
+    assert_equal(len(set(est.random_state for est in reg.estimators_)),
+                 len(reg.estimators_))
 
 
 def test_staged_predict():

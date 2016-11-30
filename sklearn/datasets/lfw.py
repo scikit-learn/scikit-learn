@@ -23,7 +23,7 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from os import listdir, makedirs, remove
+from os import listdir, makedirs, remove, rename
 from os.path import join, exists, isdir
 
 from sklearn.utils import deprecated
@@ -98,9 +98,11 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
+                archive_path_temp = archive_path + ".tmp"
                 logger.warning("Downloading LFW data (~200MB): %s",
                                archive_url)
-                urllib.urlretrieve(archive_url, archive_path)
+                urllib.urlretrieve(archive_url, archive_path_temp)
+                rename(archive_path_temp, archive_path)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -244,7 +246,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     (gallery).
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Parameters
     ----------
@@ -265,7 +267,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
     slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
@@ -378,7 +380,13 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
             "be removed in 0.19."
             "Use fetch_lfw_people(download_if_missing=False) instead.")
 def load_lfw_people(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_people(download_if_missing=False)
+    """
+    Alias for fetch_lfw_people(download_if_missing=False)
+
+    .. deprecated:: 0.17
+        This function will be removed in 0.19.
+        Use :func:`sklearn.datasets.fetch_lfw_people` with parameter
+        ``download_if_missing=False`` instead.
 
     Check fetch_lfw_people.__doc__ for the documentation and parameter list.
     """
@@ -410,7 +418,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
 
@@ -436,7 +444,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
     slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
@@ -507,7 +515,13 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
             "be removed in 0.19."
             "Use fetch_lfw_pairs(download_if_missing=False) instead.")
 def load_lfw_pairs(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_pairs(download_if_missing=False)
+    """
+    Alias for fetch_lfw_pairs(download_if_missing=False)
+
+    .. deprecated:: 0.17
+        This function will be removed in 0.19.
+        Use :func:`sklearn.datasets.fetch_lfw_pairs` with parameter
+        ``download_if_missing=False`` instead.
 
     Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
     """

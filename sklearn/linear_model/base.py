@@ -67,8 +67,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
     return dataset, intercept_decay
 
 
-@deprecated("sparse_center_data will be removed in "
-            "0.20. Use utilities in preprocessing.data instead")
+@deprecated("sparse_center_data was deprecated in version 0.18 and will be "
+            "removed in 0.20. Use utilities in preprocessing.data instead")
 def sparse_center_data(X, y, fit_intercept, normalize=False):
     """
     Compute information needed to center data to have mean zero along
@@ -105,7 +105,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     return X, y, X_offset, y_offset, X_std
 
 
-@deprecated("center_data will be removed in "
+@deprecated("center_data was deprecated in version 0.18 and will be removed in "
             "0.20. Use utilities in preprocessing.data instead")
 def center_data(X, y, fit_intercept, normalize=False, copy=True,
                 sample_weight=None):
@@ -376,7 +376,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
         check_is_fitted(self, "coef_", msg=msg)
@@ -406,7 +406,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, "coef_", msg=msg)
@@ -458,6 +458,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         than its number of linearly independent columns), this is an empty
         array. If the target vector passed during the fit is 1-dimensional,
         this is a (1,) shape array.
+
+        .. versionadded:: 0.18
 
     intercept_ : array
         Independent term in the linear model.

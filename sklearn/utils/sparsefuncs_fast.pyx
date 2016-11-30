@@ -4,7 +4,10 @@
 #          Lars Buitinck
 #          Giorgio Patrini
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
+
+#!python
+#cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
@@ -18,73 +21,84 @@ np.import_array()
 
 ctypedef np.float64_t DOUBLE
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
+    if X.dtype != np.float32:
+        X = X.astype(np.float64)
+    return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
+
+
+def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
+                   shape,
+                   np.ndarray[int, ndim=1, mode="c"] X_indices,
+                   np.ndarray[int, ndim=1, mode="c"] X_indptr):
     cdef:
-        unsigned int n_samples = X.shape[0]
-        unsigned int n_features = X.shape[1]
+        unsigned int n_samples = shape[0]
+        unsigned int n_features = shape[1]
         np.ndarray[DOUBLE, ndim=1, mode="c"] norms
-        np.ndarray[DOUBLE, ndim=1, mode="c"] data
-        np.ndarray[int, ndim=1, mode="c"] indices = X.indices
-        np.ndarray[int, ndim=1, mode="c"] indptr = X.indptr
 
         np.npy_intp i, j
         double sum_
 
     norms = np.zeros(n_samples, dtype=np.float64)
-    data = np.asarray(X.data, dtype=np.float64)     # might copy!
 
     for i in range(n_samples):
         sum_ = 0.0
-        for j in range(indptr[i], indptr[i + 1]):
-            sum_ += data[j] * data[j]
+        for j in range(X_indptr[i], X_indptr[i + 1]):
+            sum_ += X_data[j] * X_data[j]
         norms[i] = sum_
 
     return norms
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csr_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSR matrix
 
     Parameters
     ----------
-    X: CSR sparse matrix, shape (n_samples, n_features)
+    X : CSR sparse matrix, shape (n_samples, n_features)
         Input data.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
+    if X.dtype != np.float32:
+        X = X.astype(np.float64)
+    return _csr_mean_variance_axis0(X.data, X.shape, X.indices)
 
-    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] X_data
-    X_data = np.asarray(X.data, dtype=np.float64)     # might copy!
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+
+def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
+                             shape,
+                             np.ndarray[int, ndim=1] X_indices):
+    # Implement the function here since variables using fused types
+    # cannot be declared directly and can only be passed as function arguments
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
 
     cdef unsigned int i
     cdef unsigned int non_zero = X_indices.shape[0]
     cdef unsigned int col_ind
-    cdef double diff
+    cdef floating diff
 
     # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features,
-                                                     dtype=np.float64)
-
+    cdef np.ndarray[floating, ndim=1] means
     # variances[j] contains the variance of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
+    cdef np.ndarray[floating, ndim=1] variances
+
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    means = np.zeros(n_features, dtype=dtype)
+    variances = np.zeros_like(means, dtype=dtype)
 
     # counts[j] contains the number of samples where feature j is non-zero
     cdef np.ndarray[int, ndim=1] counts = np.zeros(n_features,
@@ -109,48 +123,56 @@ def csr_mean_variance_axis0(X):
     return means, variances
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csc_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSC matrix
 
     Parameters
     ----------
-    X: CSC sparse matrix, shape (n_samples, n_features)
+    X : CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
+    if X.dtype != np.float32:
+        X = X.astype(np.float64)
+    return _csc_mean_variance_axis0(X.data, X.shape, X.indices, X.indptr)
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data
-    X_data = np.asarray(X.data, dtype=np.float64)     # might copy!
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
+def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
+                             shape,
+                             np.ndarray[int, ndim=1] X_indices,
+                             np.ndarray[int, ndim=1] X_indptr):
+    # Implement the function here since variables using fused types
+    # cannot be declared directly and can only be passed as function arguments
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
 
     cdef unsigned int i
     cdef unsigned int j
     cdef unsigned int counts
     cdef unsigned int startptr
     cdef unsigned int endptr
-    cdef double diff
+    cdef floating diff
 
     # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features,
-                                                     dtype=np.float64)
-
+    cdef np.ndarray[floating, ndim=1] means
     # variances[j] contains the variance of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
+    cdef np.ndarray[floating, ndim=1] variances
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    means = np.zeros(n_features, dtype=dtype)
+    variances = np.zeros_like(means, dtype=dtype)
 
     for i in xrange(n_features):
 
@@ -172,9 +194,6 @@ def csc_mean_variance_axis0(X):
     return means, variances
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix.
 
@@ -184,25 +203,25 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
       Input data.
 
-    last_mean: float array with shape (n_features,)
+    last_mean : float array with shape (n_features,)
       Array of feature-wise means to update with the new data X.
 
-    last_var: float array with shape (n_features,)
+    last_var : float array with shape (n_features,)
       Array of feature-wise var to update with the new data X.
 
-    last_n: int
+    last_n : int
       Number of samples seen so far, before X.
 
     Returns
     -------
 
-    updated_mean: float array with shape (n_features,)
+    updated_mean : float array with shape (n_features,)
       Feature-wise means
 
-    updated_variance: float array with shape (n_features,)
+    updated_variance : float array with shape (n_features,)
       Feature-wise variances
 
     updated_n : int
@@ -219,29 +238,58 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
     `utils.extmath._batch_mean_variance_update`.
 
     """
-    cdef unsigned long n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
+    if X.dtype != np.float32:
+        X = X.astype(np.float64)
+    return _incr_mean_variance_axis0(X.data, X.shape, X.indices, X.indptr,
+                                     X.format, last_mean, last_var, last_n)
+
+
+def _incr_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
+                              shape,
+                              np.ndarray[int, ndim=1] X_indices,
+                              np.ndarray[int, ndim=1] X_indptr,
+                              X_format,
+                              last_mean,
+                              last_var,
+                              unsigned long last_n):
+    # Implement the function here since variables using fused types
+    # cannot be declared directly and can only be passed as function arguments
+    cdef unsigned long n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
     cdef unsigned int i
 
     # last = stats until now
     # new = the current increment
     # updated = the aggregated stats
     # when arrays, they are indexed by i per-feature
-    cdef np.ndarray[DOUBLE, ndim=1] new_mean = np.zeros(n_features,
-                                                      dtype=np.float64)
-    cdef np.ndarray[DOUBLE, ndim=1] new_var = np.zeros_like(new_mean)
+    cdef np.ndarray[floating, ndim=1] new_mean
+    cdef np.ndarray[floating, ndim=1] new_var
+    cdef np.ndarray[floating, ndim=1] updated_mean
+    cdef np.ndarray[floating, ndim=1] updated_var
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    new_mean = np.zeros(n_features, dtype=dtype)
+    new_var = np.zeros_like(new_mean, dtype=dtype)
+    updated_mean = np.zeros_like(new_mean, dtype=dtype)
+    updated_var = np.zeros_like(new_mean, dtype=dtype)
+
     cdef unsigned long new_n
-    cdef np.ndarray[DOUBLE, ndim=1] updated_mean = np.zeros_like(new_mean)
-    cdef np.ndarray[DOUBLE, ndim=1] updated_var = np.zeros_like(new_mean)
     cdef unsigned long updated_n
-    cdef DOUBLE last_over_new_n
+    cdef floating last_over_new_n
 
     # Obtain new stats first
     new_n = n_samples
-    if isinstance(X, sp.csr_matrix):
-        new_mean, new_var = csr_mean_variance_axis0(X)
-    elif isinstance(X, sp.csc_matrix):
-        new_mean, new_var = csc_mean_variance_axis0(X)
+
+    if X_format == 'csr':
+        # X is a CSR matrix
+        new_mean, new_var = _csr_mean_variance_axis0(X_data, shape, X_indices)
+    else:
+        # X is a CSC matrix
+        new_mean, new_var = _csc_mean_variance_axis0(X_data, shape, X_indices,
+                                                     X_indptr)
 
     # First pass
     if last_n == 0:
@@ -271,17 +319,15 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
     return updated_mean, updated_var, updated_n
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def inplace_csr_row_normalize_l1(X):
+    """Inplace row normalize using the l1 norm"""
     _inplace_csr_row_normalize_l1(X.data, X.shape, X.indices, X.indptr)
 
 
-def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data, shape,
+def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
+                                  shape,
                                   np.ndarray[int, ndim=1] X_indices,
                                   np.ndarray[int, ndim=1] X_indptr):
-    """Inplace row normalize using the l1 norm"""
     cdef unsigned int n_samples = shape[0]
     cdef unsigned int n_features = shape[1]
 
@@ -308,10 +354,8 @@ def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data, shape,
             X_data[j] /= sum_
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def inplace_csr_row_normalize_l2(X):
+    """Inplace row normalize using the l2 norm"""
     _inplace_csr_row_normalize_l2(X.data, X.shape, X.indices, X.indptr)
 
 
@@ -319,7 +363,6 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
                                   shape,
                                   np.ndarray[int, ndim=1] X_indices,
                                   np.ndarray[int, ndim=1] X_indptr):
-    """Inplace row normalize using the l2 norm"""
     cdef unsigned int n_samples = shape[0]
     cdef unsigned int n_features = shape[1]
 
@@ -344,25 +387,6 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
             X_data[j] /= sum_
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
-                      np.ndarray[int, ndim=1] indices,
-                      np.ndarray[int, ndim=1] indptr,
-                      int i, np.ndarray[np.float64_t, ndim=1, mode="c"] out):
-    """Add row i of CSR matrix (data, indices, indptr) to array out.
-
-    Equivalent to out += X[i].toarray(). Returns None.
-    """
-    cdef int ind, j
-
-    for ind in range(indptr[i], indptr[i + 1]):
-        j = indices[ind]
-        out[j] += data[ind]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def assign_rows_csr(X,
                     np.ndarray[np.npy_intp, ndim=1] X_rows,
                     np.ndarray[np.npy_intp, ndim=1] out_rows,
@@ -393,8 +417,6 @@ def assign_rows_csr(X,
 
     out[out_rows] = 0.
     for i in range(X_rows.shape[0]):
-        # XXX we could reuse add_row_csr here, but the array slice
-        # is not optimized away.
         rX = X_rows[i]
         for ind in range(indptr[rX], indptr[rX + 1]):
             j = indices[ind]

@@ -1,4 +1,3 @@
-
 """
 Logistic Regression
 """
@@ -28,7 +27,6 @@ from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
 from ..utils.extmath import row_norms
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
 from ..utils.fixes import expit
 from ..utils.multiclass import check_classification_targets
@@ -54,6 +52,18 @@ def _intercept_dot(w, X, y):
 
     y : ndarray, shape (n_samples,)
         Array of labels.
+
+    Returns
+    -------
+    w : ndarray, shape (n_features,)
+        Coefficient vector without the intercept weight (w[-1]) if the
+        intercept should be fit. Unchanged otherwise.
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data. Unchanged.
+
+    yz : float
+        y * np.dot(X, w).
     """
     c = 0.
     if w.size == X.shape[1] + 1:
@@ -61,7 +71,8 @@ def _intercept_dot(w, X, y):
         w = w[:-1]
 
     z = safe_sparse_dot(X, w) + c
-    return w, c, y * z
+    yz = y * z
+    return w, c, yz
 
 
 def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
@@ -93,13 +104,13 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     grad : ndarray, shape (n_features,) or (n_features + 1,)
         Logistic gradient.
     """
-    _, n_features = X.shape
+    n_samples, n_features = X.shape
     grad = np.empty_like(w)
 
     w, c, yz = _intercept_dot(w, X, y)
 
     if sample_weight is None:
-        sample_weight = np.ones(y.shape[0])
+        sample_weight = np.ones(n_samples)
 
     # Logistic loss is the negative of the log of the logistic function.
     out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
@@ -445,6 +456,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     This is an implementation that uses the result of the previous model
     to speed up computations along the set of solutions, making it faster
     than sequentially calling LogisticRegression for the different parameters.
+    Note that there will be no speedup with liblinear solver, since it does
+    not handle warm-starting.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -605,23 +618,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # are assigned to the original labels. If it is "balanced", then
     # the class_weights are assigned after masking the labels with a OvR.
     le = LabelEncoder()
-
     if isinstance(class_weight, dict) or multi_class == 'multinomial':
-        if solver == "liblinear":
-            if classes.size == 2:
-                # Reconstruct the weights with keys 1 and -1
-                temp = {1: class_weight[pos_class],
-                        -1: class_weight[classes[0]]}
-                class_weight = temp.copy()
-            else:
-                raise ValueError("In LogisticRegressionCV the liblinear "
-                                 "solver cannot handle multiclass with "
-                                 "class_weight of type dict. Use the lbfgs, "
-                                 "newton-cg or sag solvers or set "
-                                 "class_weight='balanced'")
-        else:
-            class_weight_ = compute_class_weight(class_weight, classes, y)
-            sample_weight *= class_weight_[le.fit_transform(y)]
+        class_weight_ = compute_class_weight(class_weight, classes, y)
+        sample_weight *= class_weight_[le.fit_transform(y)]
 
     # For doing a ovr, we need to mask the labels first. for the
     # multinomial case this is not necessary.
@@ -727,7 +726,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                                      maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
-                X, target, C, fit_intercept, intercept_scaling, class_weight,
+                X, target, C, fit_intercept, intercept_scaling, None,
                 penalty, dual, verbose, max_iter, tol, random_state,
                 sample_weight=sample_weight)
             if fit_intercept:
@@ -924,9 +923,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         y_test = np.ones(y_test.shape, dtype=np.float64)
         y_test[~mask] = -1.
 
-    # To deal with object dtypes, we need to convert into an array of floats.
-    y_test = check_array(y_test, dtype=np.float64, ensure_2d=False)
-
     scores = list()
 
     if isinstance(scoring, six.string_types):
@@ -953,8 +949,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
-    scheme if the 'multi_class' option is set to 'ovr' and uses the cross-
-    entropy loss, if the 'multi_class' option is set to 'multinomial'.
+    scheme if the 'multi_class' option is set to 'ovr', and uses the cross-
+    entropy loss if the 'multi_class' option is set to 'multinomial'.
     (Currently the 'multinomial' option is supported only by the 'lbfgs',
     'sag' and 'newton-cg' solvers.)
 
@@ -1074,12 +1070,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    coef_ : array, shape (n_classes, n_features)
+
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-    intercept_ : array, shape (n_classes,)
+        `coef_` is of shape (1, n_features) when the given problem
+        is binary.
+
+    intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
+
         If `fit_intercept` is set to False, the intercept is set to zero.
+        `intercept_` is of shape(1,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
@@ -1108,6 +1110,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     LIBLINEAR -- A Library for Large Linear Classification
         http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+    SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
+        Minimizing Finite Sums with the Stochastic Average Gradient
+        https://hal.inria.fr/hal-00860051/document
 
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
@@ -1141,7 +1147,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
         y : array-like, shape (n_samples,)
@@ -1450,13 +1456,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         `coef_` is of shape (1, n_features) when the given problem
         is binary.
-        `coef_` is readonly property derived from `raw_coef_` that
-        follows the internal memory layout of liblinear.
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
-        It is available only when parameter intercept is set to True
-        and is of shape(1,) when the problem is binary.
+
+        If `fit_intercept` is set to False, the intercept is set to zero.
+        `intercept_` is of shape(1,) when the problem is binary.
 
     Cs_ : array
         Array of C i.e. inverse of regularization parameter values used
@@ -1524,7 +1529,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
         y : array-like, shape (n_samples,)
@@ -1551,64 +1556,64 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
+        check_classification_targets(y)
+
+        class_weight = self.class_weight
+        if class_weight and not(isinstance(class_weight, dict) or
+                                class_weight in ['balanced', 'auto']):
+            # 'auto' is deprecated and will be removed in 0.19
+            raise ValueError("class_weight provided should be a "
+                             "dict or 'balanced'")
+
+        # Encode for string labels
+        label_encoder = LabelEncoder().fit(y)
+        y = label_encoder.transform(y)
+        if isinstance(class_weight, dict):
+            class_weight = dict((label_encoder.transform([cls])[0], v)
+                                for cls, v in class_weight.items())
+
+        # The original class labels
+        classes = self.classes_ = label_encoder.classes_
+        encoded_labels = label_encoder.transform(label_encoder.classes_)
 
         if self.solver == 'sag':
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
 
-        check_classification_targets(y)
-
-        if y.ndim == 2 and y.shape[1] == 1:
-            warnings.warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples, ), for example using ravel().",
-                DataConversionWarning)
-            y = np.ravel(y)
-
-        check_consistent_length(X, y)
-
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
         folds = list(cv.split(X, y))
 
-        self._enc = LabelEncoder()
-        self._enc.fit(y)
-
-        labels = self.classes_ = np.unique(y)
-        n_classes = len(labels)
+        # Use the label encoded classes
+        n_classes = len(encoded_labels)
 
         if n_classes < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
-                             " class: %r" % self.classes_[0])
+                             " class: %r" % classes[0])
+
         if n_classes == 2:
             # OvR in case of binary problems is as good as fitting
             # the higher label
             n_classes = 1
-            labels = labels[1:]
+            encoded_labels = encoded_labels[1:]
+            classes = classes[1:]
 
         # We need this hack to iterate only once over labels, in the case of
         # multi_class = multinomial, without changing the value of the labels.
-        iter_labels = labels
         if self.multi_class == 'multinomial':
-            iter_labels = [None]
-
-        if self.class_weight and not(isinstance(self.class_weight, dict) or
-                                     self.class_weight in
-                                     ['balanced', 'auto']):
-            # 'auto' is deprecated and will be removed in 0.19
-            raise ValueError("class_weight provided should be a "
-                             "dict or 'balanced'")
+            iter_encoded_labels = iter_classes = [None]
+        else:
+            iter_encoded_labels = encoded_labels
+            iter_classes = classes
 
         # compute the class weights for the entire dataset y
-        if self.class_weight in ("auto", "balanced"):
-            classes = np.unique(y)
-            class_weight = compute_class_weight(self.class_weight, classes, y)
-            class_weight = dict(zip(classes, class_weight))
-        else:
-            class_weight = self.class_weight
+        if class_weight in ("auto", "balanced"):
+            class_weight = compute_class_weight(class_weight,
+                                                np.arange(len(self.classes_)),
+                                                y)
+            class_weight = dict(enumerate(class_weight))
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -1628,7 +1633,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight
                       )
-            for label in iter_labels
+            for label in iter_encoded_labels
             for train, test in folds)
 
         if self.multi_class == 'multinomial':
@@ -1649,19 +1654,19 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = np.tile(multi_scores, (n_classes, 1, 1))
             self.Cs_ = Cs[0]
             self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
-                                      len(self.Cs_)))
+                                                len(self.Cs_)))
 
         else:
             coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
             self.Cs_ = Cs[0]
             coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
-                                     len(self.Cs_), -1))
+                                                   len(self.Cs_), -1))
             self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
-                                      len(self.Cs_)))
+                                                len(self.Cs_)))
 
-        self.coefs_paths_ = dict(zip(labels, coefs_paths))
+        self.coefs_paths_ = dict(zip(classes, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
-        self.scores_ = dict(zip(labels, scores))
+        self.scores_ = dict(zip(classes, scores))
 
         self.C_ = list()
         self.coef_ = np.empty((n_classes, X.shape[1]))
@@ -1672,10 +1677,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
-        for index, label in enumerate(iter_labels):
+        for index, (cls, encoded_label) in enumerate(
+                zip(iter_classes, iter_encoded_labels)):
+
             if self.multi_class == 'ovr':
-                scores = self.scores_[label]
-                coefs_paths = self.coefs_paths_[label]
+                # The scores_ / coefs_paths_ dict have unencoded class
+                # labels as their keys
+                scores = self.scores_[cls]
+                coefs_paths = self.coefs_paths_[cls]
 
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
@@ -1688,8 +1697,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
 
+                # Note that y is label encoded and hence pos_class must be
+                # the encoded label / None (for 'multinomial')
                 w, _, _ = logistic_regression_path(
-                    X, y, pos_class=label, Cs=[C_], solver=self.solver,
+                    X, y, pos_class=encoded_label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
                     penalty=self.penalty, copy=False,

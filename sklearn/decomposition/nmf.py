@@ -19,7 +19,6 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from ..externals import six
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
@@ -28,6 +27,9 @@ from ..utils.validation import check_is_fitted, check_non_negative
 from ..utils import deprecated
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
+
+
+INTEGER_TYPES = (numbers.Integral, np.integer)
 
 
 def safe_vstack(Xs):
@@ -387,9 +389,7 @@ def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
     elif sparseness == 'components':
         H, gradH, iterH = _nls_subproblem(
             safe_vstack([X, np.zeros((1, n_features))]),
-            safe_vstack([W,
-                         np.sqrt(beta)
-                         * np.ones((1, n_components_))]),
+            safe_vstack([W, np.sqrt(beta) * np.ones((1, n_components_))]),
             H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
 
     return H, gradH, iterH
@@ -409,10 +409,10 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
     P. Hoyer. Non-negative Matrix Factorization with Sparseness Constraints.
     Journal of Machine Learning Research 2004.
     """
-    gradW = (np.dot(W, np.dot(H, H.T))
-             - safe_sparse_dot(X, H.T, dense_output=True))
-    gradH = (np.dot(np.dot(W.T, W), H)
-             - safe_sparse_dot(W.T, X, dense_output=True))
+    gradW = (np.dot(W, np.dot(H, H.T)) -
+             safe_sparse_dot(X, H.T, dense_output=True))
+    gradH = (np.dot(np.dot(W.T, W), H) -
+             safe_sparse_dot(W.T, X, dense_output=True))
 
     init_grad = squared_norm(gradW) + squared_norm(gradH.T)
     # max(0.001, tol) to force alternating minimizations of W and H
@@ -749,18 +749,18 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if n_components is None:
         n_components = n_features
 
-    if not isinstance(n_components, six.integer_types) or n_components <= 0:
-        raise ValueError("Number of components must be positive;"
+    if not isinstance(n_components, INTEGER_TYPES) or n_components <= 0:
+        raise ValueError("Number of components must be a positive integer;"
                          " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, numbers.Number) or max_iter < 0:
-        raise ValueError("Maximum number of iteration must be positive;"
+    if not isinstance(max_iter, INTEGER_TYPES) or max_iter < 0:
+        raise ValueError("Maximum number of iterations must be a positive integer;"
                          " got (max_iter=%r)" % max_iter)
     if not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
 
     # check W and H, or initialize them
-    if init == 'custom':
+    if init == 'custom' and update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
         _check_init(W, (n_samples, n_components), "NMF (input W)")
     elif not update_H:
@@ -891,7 +891,8 @@ class NMF(BaseEstimator, TransformerMixin):
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
         .. versionadded:: 0.17
-           Regularization parameter *l1_ratio* used in the Coordinate Descent solver.
+           Regularization parameter *l1_ratio* used in the Coordinate Descent
+           solver.
 
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
@@ -1006,7 +1007,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
 
         W : array-like, shape (n_samples, n_components)
@@ -1015,17 +1016,9 @@ class NMF(BaseEstimator, TransformerMixin):
         H : array-like, shape (n_components, n_features)
             If init='custom', it is used as initial guess for the solution.
 
-        Attributes
-        ----------
-        components_ : array-like, shape (n_components, n_features)
-            Factorization matrix, sometimes called 'dictionary'.
-
-        n_iter_ : int
-            Actual number of iterations for the transform.
-
         Returns
         -------
-        W: array, shape (n_samples, n_components)
+        W : array, shape (n_samples, n_components)
             Transformed data.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'))
@@ -1057,16 +1050,8 @@ class NMF(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
-
-        Attributes
-        ----------
-        components_ : array-like, shape (n_components, n_features)
-            Factorization matrix, sometimes called 'dictionary'.
-
-        n_iter_ : int
-            Actual number of iterations for the transform.
 
         Returns
         -------
@@ -1080,17 +1065,12 @@ class NMF(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be transformed by the model
-
-        Attributes
-        ----------
-        n_iter_ : int
-            Actual number of iterations for the transform.
 
         Returns
         -------
-        W: array, shape (n_samples, n_components)
+        W : array, shape (n_samples, n_components)
             Transformed data
         """
         check_is_fitted(self, 'n_components_')
@@ -1105,19 +1085,19 @@ class NMF(BaseEstimator, TransformerMixin):
             nls_max_iter=self.nls_max_iter, sparseness=self.sparseness,
             beta=self.beta, eta=self.eta)
 
-        self.n_iter_ = n_iter_
         return W
 
     def inverse_transform(self, W):
-        """
+        """Transform data back to its original space.
+
         Parameters
         ----------
-        W: {array-like, sparse matrix}, shape (n_samples, n_components)
-            Transformed Data matrix
+        W : {array-like, sparse matrix}, shape (n_samples, n_components)
+            Transformed data matrix
 
         Returns
         -------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix of original shape
 
         .. versionadded:: 0.18
@@ -1214,7 +1194,8 @@ class ProjectedGradientNMF(NMF):
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
         .. versionadded:: 0.17
-           Regularization parameter *l1_ratio* used in the Coordinate Descent solver.
+           Regularization parameter *l1_ratio* used in the Coordinate Descent
+           solver.
 
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.

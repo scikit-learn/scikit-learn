@@ -133,10 +133,13 @@ learn::
              [  0.,   0.,   6.,  13.,  10.,   0.,   0.,   0.]])
 
     The :ref:`simple example on this dataset
-    <example_classification_plot_digits_classification.py>` illustrates how starting
+    <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
+    
+.. topic:: Loading from external datasets
 
+    To load from an external dataset, please refer to :ref:`loading external datasets <external_datasets>`.
 
 Learning and predicting
 ------------------------
@@ -190,7 +193,7 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: ../../auto_examples/datasets/images/plot_digits_last_image_001.png
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
     :target: ../../auto_examples/datasets/plot_digits_last_image.html
     :align: center
     :scale: 50
@@ -200,7 +203,7 @@ resolution. Do you agree with the classifier?
 
 A complete example of this classification problem is available as an
 example that you can run and study:
-:ref:`example_classification_plot_digits_classification.py`.
+:ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`.
 
 
 Model persistence
@@ -243,10 +246,9 @@ with::
 
 .. note::
 
-   joblib.dump returns a list of filenames. Each individual numpy array
-   contained in the ``clf`` object is serialized as a separate file on the
-   filesystem. All files are required in the same folder when reloading the
-   model with joblib.load.
+    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
+    instead of filenames. More information on data persistence with Joblib is
+    available `here <https://pythonhosted.org/joblib/persistence.html>`_.
 
 Note that pickle has some security and maintainability issues. Please refer to
 section :ref:`model_persistence` for more detailed information about model
@@ -308,9 +310,8 @@ maintained::
     ['setosa', 'setosa', 'setosa']
 
 Here, the first ``predict()`` returns an integer array, since ``iris.target``
-(an integer array) was used in ``fit``. The second ``predict`` returns a string
+(an integer array) was used in ``fit``. The second ``predict()`` returns a string
 array, since ``iris.target_names`` was for fitting.
-
 
 Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -347,3 +348,57 @@ more than once will overwrite what was learned by any previous ``fit()``::
 Here, the default kernel ``rbf`` is first changed to ``linear`` after the
 estimator has been constructed via ``SVC()``, and changed back to ``rbf`` to
 refit the estimator and to make a second prediction.
+
+Multiclass vs. multilabel fitting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using :class:`multiclass classifiers <sklearn.multiclass>`,
+the learning and prediction task that is performed is dependent on the format of
+the target data fit upon::
+
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.multiclass import OneVsRestClassifier
+    >>> from sklearn.preprocessing import LabelBinarizer
+
+    >>> X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
+    >>> y = [0, 0, 1, 1, 2]
+
+    >>> classif = OneVsRestClassifier(estimator=SVC(random_state=0))
+    >>> classif.fit(X, y).predict(X)
+    array([0, 0, 1, 1, 2])
+
+In the above case, the classifier is fit on a 1d array of multiclass labels and
+the ``predict()`` method therefore provides corresponding multiclass predictions.
+It is also possible to fit upon a 2d array of binary label indicators::
+
+    >>> y = LabelBinarizer().fit_transform(y)
+    >>> classif.fit(X, y).predict(X)
+    array([[1, 0, 0],
+           [1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0],
+           [0, 0, 0]])
+
+Here, the classifier is ``fit()``  on a 2d binary label representation of ``y``,
+using the :class:`LabelBinarizer <sklearn.preprocessing.LabelBinarizer>`.
+In this case ``predict()`` returns a 2d array representing the corresponding
+multilabel predictions.
+
+Note that the fourth and fifth instances returned all zeroes, indicating that
+they matched none of the three labels ``fit`` upon. With multilabel outputs, it
+is similarly possible for an instance to be assigned multiple labels::
+
+  >> from sklearn.preprocessing import MultiLabelBinarizer
+  >> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
+  >> y = MultiLabelBinarizer().fit_transform(y)
+  >> classif.fit(X, y).predict(X)
+  array([[1, 1, 0, 0, 0],
+         [1, 0, 1, 0, 0],
+         [0, 1, 0, 1, 0],
+         [1, 0, 1, 1, 0],
+         [0, 0, 1, 0, 1]])
+
+In this case, the classifier is fit upon instances each assigned multiple labels.
+The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is
+used to binarize the 2d array of multilabels to ``fit`` upon. As a result,
+``predict()`` returns a 2d array with multiple predicted labels for each instance.

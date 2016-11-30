@@ -1,9 +1,13 @@
 """
 ====================================================================
-Linear and Quadratic Discriminant Analysis with confidence ellipsoid
+Linear and Quadratic Discriminant Analysis with covariance ellipsoid
 ====================================================================
 
-Plot the confidence ellipsoids of each class and decision boundary
+This example plots the covariance ellipsoids of each class and
+decision boundary learned by LDA and QDA. The ellipsoids display
+the double standard deviation for each class. With LDA, the
+standard deviation is the same for all the classes, while each
+class has its own standard deviation with QDA.
 """
 print(__doc__)
 
@@ -68,13 +72,19 @@ def plot_data(lda, X, y, y_pred, fig_index):
     X0_tp, X0_fp = X0[tp0], X0[~tp0]
     X1_tp, X1_fp = X1[tp1], X1[~tp1]
 
+    alpha = 0.5
+
     # class 0: dots
-    plt.plot(X0_tp[:, 0], X0_tp[:, 1], 'o', color='red')
-    plt.plot(X0_fp[:, 0], X0_fp[:, 1], '.', color='#990000')  # dark red
+    plt.plot(X0_tp[:, 0], X0_tp[:, 1], 'o', alpha=alpha,
+             color='red')
+    plt.plot(X0_fp[:, 0], X0_fp[:, 1], '*', alpha=alpha,
+             color='#990000')  # dark red
 
     # class 1: dots
-    plt.plot(X1_tp[:, 0], X1_tp[:, 1], 'o', color='blue')
-    plt.plot(X1_fp[:, 0], X1_fp[:, 1], '.', color='#000099')  # dark blue
+    plt.plot(X1_tp[:, 0], X1_tp[:, 1], 'o', alpha=alpha,
+             color='blue')
+    plt.plot(X1_fp[:, 0], X1_fp[:, 1], '*', alpha=alpha,
+             color='#000099')  # dark blue
 
     # class 0 and 1 : areas
     nx, ny = 200, 100
@@ -104,7 +114,8 @@ def plot_ellipse(splot, mean, cov, color):
     angle = 180 * angle / np.pi  # convert to degrees
     # filled Gaussian at 2 standard deviation
     ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
-                              180 + angle, color=color)
+                              180 + angle, facecolor=color, edgecolor='yellow',
+                              linewidth=2, zorder=2)
     ell.set_clip_box(splot.bbox)
     ell.set_alpha(0.5)
     splot.add_artist(ell)

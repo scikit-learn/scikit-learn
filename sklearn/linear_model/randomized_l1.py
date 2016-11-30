@@ -46,8 +46,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
             delayed(estimator_func)(
-                X, y, weights=scaling * random_state.random_integers(
-                    0, 1, size=(n_features,)),
+                X, y, weights=scaling * random_state.randint(
+                    0, 2, size=(n_features,)),
                 mask=(random_state.rand(n_samples) < sample_fraction),
                 verbose=max(0, verbose - 1),
                 **params)
@@ -216,7 +216,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     n_resampling : int, optional
         Number of randomized models.
 
-    selection_threshold: float, optional
+    selection_threshold : float, optional
         The score above which features should be selected.
 
     fit_intercept : boolean, optional
@@ -546,7 +546,7 @@ def _lasso_stability_path(X, y, mask, weights, eps):
                                      alpha_min=alpha_min)
     # Scale alpha by alpha_max
     alphas /= alphas[0]
-    # Sort alphas in assending order
+    # Sort alphas in ascending order
     alphas = alphas[::-1]
     coefs = coefs[:, ::-1]
     # Get rid of the alphas that are too small
@@ -564,7 +564,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          sample_fraction=0.75,
                          eps=4 * np.finfo(np.float).eps, n_jobs=1,
                          verbose=False):
-    """Stabiliy path based on randomized Lasso estimates
+    """Stability path based on randomized Lasso estimates
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 
@@ -627,8 +627,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     paths = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_lasso_stability_path)(
             X, y, mask=rng.rand(n_samples) < sample_fraction,
-            weights=1. - scaling * rng.random_integers(0, 1,
-                                                       size=(n_features,)),
+            weights=1. - scaling * rng.randint(0, 2, size=(n_features,)),
             eps=eps)
         for k in range(n_resampling))
 

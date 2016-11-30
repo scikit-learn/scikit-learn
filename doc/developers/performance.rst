@@ -127,7 +127,7 @@ for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_classification_plot_digits_classification.py` example::
+dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -143,7 +143,7 @@ overhead and save it somewhere for later reference::
   In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
   1 loops, best of 3: 1.7 s per loop
 
-To have have a look at the overall performance profile using the ``%prun``
+To have a look at the overall performance profile using the ``%prun``
 magic command::
 
   In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)

@@ -8,6 +8,8 @@ from collections import defaultdict
 import gc
 from time import time
 
+import six
+
 import numpy as np
 from scipy.linalg import norm
 
@@ -17,7 +19,7 @@ from sklearn.externals.six.moves import xrange
 
 
 def alt_nnmf(V, r, max_iter=1000, tol=1e-3, init='random'):
-    '''
+    """
     A, S = nnmf(X, r, tol=1e-3, R=None)
 
     Implement Lee & Seung's algorithm
@@ -48,7 +50,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, init='random'):
     "Algorithms for Non-negative Matrix Factorization"
     by Daniel D Lee, Sebastian H Seung
     (available at http://citeseer.ist.psu.edu/lee01algorithms.html)
-    '''
+    """
     # Nomenclature in the function follows Lee & Seung
     eps = 1e-5
     n, m = V.shape
@@ -147,7 +149,7 @@ if __name__ == '__main__':
         fig = plt.figure('scikit-learn Non-Negative Matrix Factorization'
                          'benchmark results')
         ax = fig.gca(projection='3d')
-        for c, (label, timings) in zip('rbgcm', sorted(results.iteritems())):
+        for c, (label, timings) in zip('rbgcm', sorted(six.iteritems(results))):
             X, Y = np.meshgrid(samples_range, features_range)
             Z = np.asarray(timings).reshape(samples_range.shape[0],
                                             features_range.shape[0])

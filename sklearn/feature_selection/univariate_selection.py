@@ -162,7 +162,8 @@ def _chisquare(f_obs, f_exp):
     chisq = f_obs
     chisq -= f_exp
     chisq **= 2
-    chisq /= f_exp
+    with np.errstate(invalid="ignore"):
+        chisq /= f_exp
     chisq = chisq.sum(axis=0)
     return chisq, special.chdtrc(k - 1, chisq)
 
@@ -318,7 +319,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -355,6 +356,8 @@ class SelectPercentile(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -426,6 +429,8 @@ class SelectKBest(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     k : int or "all", optional, default=10
         Number of top features to select.
@@ -498,6 +503,8 @@ class SelectFpr(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest p-value for features to be kept.
@@ -547,6 +554,8 @@ class SelectFdr(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
@@ -587,8 +596,8 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features
-                      * np.arange(n_features)]
+        selected = sv[sv <= float(self.alpha) / n_features *
+                      np.arange(1, n_features + 1)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()
@@ -604,6 +613,8 @@ class SelectFwe(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.

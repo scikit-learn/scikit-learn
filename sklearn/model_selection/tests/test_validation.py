@@ -3,6 +3,9 @@ from __future__ import division
 
 import sys
 import warnings
+import tempfile
+import os
+from time import sleep
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
@@ -26,10 +29,10 @@ from sklearn.model_selection import permutation_test_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneLabelOut
-from sklearn.model_selection import LeavePLabelOut
-from sklearn.model_selection import LabelKFold
-from sklearn.model_selection import LabelShuffleSplit
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
@@ -41,7 +44,7 @@ from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
 
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -53,10 +56,17 @@ from sklearn.pipeline import Pipeline
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.base import BaseEstimator
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
-from test_split import MockClassifier
+from sklearn.model_selection.tests.common import OneTimeSplitter
+
+
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
 
 
 class MockImprovingEstimator(BaseEstimator):
@@ -121,13 +131,78 @@ class MockEstimatorWithParameter(BaseEstimator):
         return X is self.X_subset
 
 
+class MockClassifier(object):
+    """Dummy classifier to test the cross-validation"""
+
+    def __init__(self, a=0, allow_nd=False):
+        self.a = a
+        self.allow_nd = allow_nd
+
+    def fit(self, X, Y=None, sample_weight=None, class_prior=None,
+            sparse_sample_weight=None, sparse_param=None, dummy_int=None,
+            dummy_str=None, dummy_obj=None, callback=None):
+        """The dummy arguments are to test that this fit function can
+        accept non-array arguments through cross-validation, such as:
+            - int
+            - str (this is actually array-like)
+            - object
+            - function
+        """
+        self.dummy_int = dummy_int
+        self.dummy_str = dummy_str
+        self.dummy_obj = dummy_obj
+        if callback is not None:
+            callback(self)
+
+        if self.allow_nd:
+            X = X.reshape(len(X), -1)
+        if X.ndim >= 3 and not self.allow_nd:
+            raise ValueError('X cannot be d')
+        if sample_weight is not None:
+            assert_true(sample_weight.shape[0] == X.shape[0],
+                        'MockClassifier extra fit_param sample_weight.shape[0]'
+                        ' is {0}, should be {1}'.format(sample_weight.shape[0],
+                                                        X.shape[0]))
+        if class_prior is not None:
+            assert_true(class_prior.shape[0] == len(np.unique(y)),
+                        'MockClassifier extra fit_param class_prior.shape[0]'
+                        ' is {0}, should be {1}'.format(class_prior.shape[0],
+                                                        len(np.unique(y))))
+        if sparse_sample_weight is not None:
+            fmt = ('MockClassifier extra fit_param sparse_sample_weight'
+                   '.shape[0] is {0}, should be {1}')
+            assert_true(sparse_sample_weight.shape[0] == X.shape[0],
+                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
+        if sparse_param is not None:
+            fmt = ('MockClassifier extra fit_param sparse_param.shape '
+                   'is ({0}, {1}), should be ({2}, {3})')
+            assert_true(sparse_param.shape == P_sparse.shape,
+                        fmt.format(sparse_param.shape[0],
+                                   sparse_param.shape[1],
+                                   P_sparse.shape[0], P_sparse.shape[1]))
+        return self
+
+    def predict(self, T):
+        if self.allow_nd:
+            T = T.reshape(len(T), -1)
+        return T[:, 0]
+
+    def score(self, X=None, Y=None):
+        return 1. / (1 + np.abs(self.a))
+
+    def get_params(self, deep=False):
+        return {'a': self.a, 'allow_nd': self.allow_nd}
+
+
 # XXX: use 2D array, since 1D X is being detected as a single sample in
 # check_consistent_length
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
 y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
-# The number of samples per class needs to be > n_folds, for StratifiedKFold(3)
+# The number of samples per class needs to be > n_splits,
+# for StratifiedKFold(n_splits=3)
 y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
+P_sparse = coo_matrix(np.eye(5))
 
 
 def test_cross_val_score():
@@ -170,22 +245,22 @@ def test_cross_val_score():
     assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
 
 
-def test_cross_val_score_predict_labels():
-    # Check if ValueError (when labels is None) propagates to cross_val_score
+def test_cross_val_score_predict_groups():
+    # Check if ValueError (when groups is None) propagates to cross_val_score
     # and cross_val_predict
-    # And also check if labels is correctly passed to the cv object
+    # And also check if groups is correctly passed to the cv object
     X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
 
     clf = SVC(kernel="linear")
 
-    label_cvs = [LeaveOneLabelOut(), LeavePLabelOut(2), LabelKFold(),
-                 LabelShuffleSplit()]
-    for cv in label_cvs:
+    group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2), GroupKFold(),
+                 GroupShuffleSplit()]
+    for cv in group_cvs:
         assert_raise_message(ValueError,
-                             "The labels parameter should not be None",
+                             "The groups parameter should not be None",
                              cross_val_score, estimator=clf, X=X, y=y, cv=cv)
         assert_raise_message(ValueError,
-                             "The labels parameter should not be None",
+                             "The groups parameter should not be None",
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
@@ -337,9 +412,10 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
-    mse_scores = cross_val_score(reg, X, y, cv=5, scoring="mean_squared_error")
-    expected_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
-    assert_array_almost_equal(mse_scores, expected_mse, 2)
+    neg_mse_scores = cross_val_score(reg, X, y, cv=5,
+                                     scoring="neg_mean_squared_error")
+    expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
+    assert_array_almost_equal(neg_mse_scores, expected_neg_mse, 2)
 
     # Explained variance
     scoring = make_scorer(explained_variance_score)
@@ -360,26 +436,26 @@ def test_permutation_score():
     assert_greater(score, 0.9)
     assert_almost_equal(pvalue, 0.0, 1)
 
-    score_label, _, pvalue_label = permutation_test_score(
+    score_group, _, pvalue_group = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
-        labels=np.ones(y.size), random_state=0)
-    assert_true(score_label == score)
-    assert_true(pvalue_label == pvalue)
+        groups=np.ones(y.size), random_state=0)
+    assert_true(score_group == score)
+    assert_true(pvalue_group == pvalue)
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
     cv_sparse = StratifiedKFold(2)
-    score_label, _, pvalue_label = permutation_test_score(
+    score_group, _, pvalue_group = permutation_test_score(
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
-        scoring="accuracy", labels=np.ones(y.size), random_state=0)
+        scoring="accuracy", groups=np.ones(y.size), random_state=0)
 
-    assert_true(score_label == score)
-    assert_true(pvalue_label == pvalue)
+    assert_true(score_group == score)
+    assert_true(pvalue_group == pvalue)
 
     # test with custom scoring object
     def custom_score(y_true, y_pred):
-        return (((y_true == y_pred).sum() - (y_true != y_pred).sum())
-                / y_true.shape[0])
+        return (((y_true == y_pred).sum() - (y_true != y_pred).sum()) /
+                y_true.shape[0])
 
     scorer = make_scorer(custom_score)
     score, _, pvalue = permutation_test_score(
@@ -471,7 +547,7 @@ def test_cross_val_predict():
     assert_equal(len(preds), len(y))
 
     class BadCV():
-        def split(self, X, y=None, labels=None):
+        def split(self, X, y=None, groups=None):
             for i in range(4):
                 yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
@@ -544,22 +620,39 @@ def test_cross_val_score_sparse_fit_params():
 
 
 def test_learning_curve():
-    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
-                               n_redundant=0, n_classes=2,
+    n_samples = 30
+    n_splits = 3
+    X, y = make_classification(n_samples=n_samples, n_features=1,
+                               n_informative=1, n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockImprovingEstimator(20)
-    with warnings.catch_warnings(record=True) as w:
-        train_sizes, train_scores, test_scores = learning_curve(
-            estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
-    if len(w) > 0:
-        raise RuntimeError("Unexpected warning: %r" % w[0].message)
-    assert_equal(train_scores.shape, (10, 3))
-    assert_equal(test_scores.shape, (10, 3))
-    assert_array_equal(train_sizes, np.linspace(2, 20, 10))
-    assert_array_almost_equal(train_scores.mean(axis=1),
-                              np.linspace(1.9, 1.0, 10))
-    assert_array_almost_equal(test_scores.mean(axis=1),
-                              np.linspace(0.1, 1.0, 10))
+    estimator = MockImprovingEstimator(n_samples * ((n_splits - 1) / n_splits))
+    for shuffle_train in [False, True]:
+        with warnings.catch_warnings(record=True) as w:
+            train_sizes, train_scores, test_scores = learning_curve(
+                estimator, X, y, cv=KFold(n_splits=n_splits),
+                train_sizes=np.linspace(0.1, 1.0, 10),
+                shuffle=shuffle_train)
+        if len(w) > 0:
+            raise RuntimeError("Unexpected warning: %r" % w[0].message)
+        assert_equal(train_scores.shape, (10, 3))
+        assert_equal(test_scores.shape, (10, 3))
+        assert_array_equal(train_sizes, np.linspace(2, 20, 10))
+        assert_array_almost_equal(train_scores.mean(axis=1),
+                                  np.linspace(1.9, 1.0, 10))
+        assert_array_almost_equal(test_scores.mean(axis=1),
+                                  np.linspace(0.1, 1.0, 10))
+
+        # Test a custom cv splitter that can iterate only once
+        with warnings.catch_warnings(record=True) as w:
+            train_sizes2, train_scores2, test_scores2 = learning_curve(
+                estimator, X, y,
+                cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
+                train_sizes=np.linspace(0.1, 1.0, 10),
+                shuffle=shuffle_train)
+        if len(w) > 0:
+            raise RuntimeError("Unexpected warning: %r" % w[0].message)
+        assert_array_almost_equal(train_scores2, train_scores)
+        assert_array_almost_equal(test_scores2, test_scores)
 
 
 def test_learning_curve_unsupervised():
@@ -610,14 +703,15 @@ def test_learning_curve_incremental_learning():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=3, exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10))
-    assert_array_equal(train_sizes, np.linspace(2, 20, 10))
-    assert_array_almost_equal(train_scores.mean(axis=1),
-                              np.linspace(1.9, 1.0, 10))
-    assert_array_almost_equal(test_scores.mean(axis=1),
-                              np.linspace(0.1, 1.0, 10))
+    for shuffle_train in [False, True]:
+        train_sizes, train_scores, test_scores = learning_curve(
+            estimator, X, y, cv=3, exploit_incremental_learning=True,
+            train_sizes=np.linspace(0.1, 1.0, 10), shuffle=shuffle_train)
+        assert_array_equal(train_sizes, np.linspace(2, 20, 10))
+        assert_array_almost_equal(train_scores.mean(axis=1),
+                                  np.linspace(1.9, 1.0, 10))
+        assert_array_almost_equal(test_scores.mean(axis=1),
+                                  np.linspace(0.1, 1.0, 10))
 
 
 def test_learning_curve_incremental_learning_unsupervised():
@@ -691,7 +785,7 @@ def test_learning_curve_with_boolean_indices():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    cv = KFold(n_folds=3)
+    cv = KFold(n_splits=3)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
@@ -699,6 +793,39 @@ def test_learning_curve_with_boolean_indices():
                               np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores.mean(axis=1),
                               np.linspace(0.1, 1.0, 10))
+
+
+def test_learning_curve_with_shuffle():
+    # Following test case was designed this way to verify the code
+    # changes made in pull request: #7506.
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [11, 12], [13, 14], [15, 16],
+                 [17, 18], [19, 20], [7, 8], [9, 10], [11, 12], [13, 14],
+                 [15, 16], [17, 18]])
+    y = np.array([1, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 2, 3, 4])
+    groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
+    # Splits on these groups fail without shuffle as the first iteration
+    # of the learning curve doesn't contain label 4 in the training set.
+    estimator = PassiveAggressiveClassifier(shuffle=False)
+
+    cv = GroupKFold(n_splits=2)
+    train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
+        groups=groups, shuffle=True, random_state=2)
+    assert_array_almost_equal(train_scores_batch.mean(axis=1),
+                              np.array([0.75, 0.3, 0.36111111]))
+    assert_array_almost_equal(test_scores_batch.mean(axis=1),
+                              np.array([0.36111111, 0.25, 0.25]))
+    assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
+                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups)
+
+    train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
+        groups=groups, shuffle=True, random_state=2,
+        exploit_incremental_learning=True)
+    assert_array_almost_equal(train_scores_inc.mean(axis=1),
+                              train_scores_batch.mean(axis=1))
+    assert_array_almost_equal(test_scores_inc.mean(axis=1),
+                              test_scores_batch.mean(axis=1))
 
 
 def test_validation_curve():
@@ -718,13 +845,52 @@ def test_validation_curve():
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
 
 
+def test_validation_curve_cv_splits_consistency():
+    n_samples = 100
+    n_splits = 5
+    X, y = make_classification(n_samples=100, random_state=0)
+
+    scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
+                               cv=OneTimeSplitter(n_splits=n_splits,
+                                                  n_samples=n_samples))
+    # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
+    # `split` is called for each parameter, the following should produce
+    # identical results for param setting 1 and param setting 2 as both have
+    # the same C value.
+    assert_array_almost_equal(*np.vsplit(np.hstack(scores1)[(0, 2, 1, 3), :],
+                                         2))
+
+    scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
+                               cv=KFold(n_splits=n_splits, shuffle=True))
+
+    # For scores2, compare the 1st and 2nd parameter's scores
+    # (Since the C value for 1st two param setting is 0.1, they must be
+    # consistent unless the train test folds differ between the param settings)
+    assert_array_almost_equal(*np.vsplit(np.hstack(scores2)[(0, 2, 1, 3), :],
+                                         2))
+
+    scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
+                               cv=KFold(n_splits=n_splits))
+
+    # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
+    assert_array_almost_equal(np.array(scores3), np.array(scores1))
+
+
 def test_check_is_permutation():
+    rng = np.random.RandomState(0)
     p = np.arange(100)
+    rng.shuffle(p)
     assert_true(_check_is_permutation(p, 100))
     assert_false(_check_is_permutation(np.delete(p, 23), 100))
 
     p[0] = 23
     assert_false(_check_is_permutation(p, 100))
+
+    # Check if the additional duplicate indices are caught
+    assert_false(_check_is_permutation(np.hstack((p, 0)), 100))
 
 
 def test_cross_val_predict_sparse_prediction():
@@ -740,3 +906,58 @@ def test_cross_val_predict_sparse_prediction():
     preds_sparse = cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()
     assert_array_almost_equal(preds_sparse, preds)
+
+
+def test_cross_val_predict_with_method():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    classes = len(set(y))
+
+    kfold = KFold(len(iris.target))
+
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    for method in methods:
+        est = LogisticRegression()
+
+        predictions = cross_val_predict(est, X, y, method=method)
+        assert_equal(len(predictions), len(y))
+
+        expected_predictions = np.zeros([len(y), classes])
+        func = getattr(est, method)
+
+        # Naive loop (should be same as cross_val_predict):
+        for train, test in kfold.split(X, y):
+            est.fit(X[train], y[train])
+            expected_predictions[test] = func(X[test])
+
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+
+def test_score_memmap():
+    # Ensure a scalar score of memmap type is accepted
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    clf = MockClassifier()
+    tf = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+    tf.write(b'Hello world!!!!!')
+    tf.close()
+    scores = np.memmap(tf.name, dtype=np.float64)
+    score = np.memmap(tf.name, shape=(), mode='r', dtype=np.float64)
+    try:
+        cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
+        # non-scalar should still fail
+        assert_raises(ValueError, cross_val_score, clf, X, y,
+                      scoring=lambda est, X, y: scores)
+    finally:
+        # Best effort to release the mmap file handles before deleting the
+        # backing file under Windows
+        scores, score = None, None
+        for _ in range(3):
+            try:
+                os.unlink(tf.name)
+                break
+            except WindowsError:
+                sleep(1.)

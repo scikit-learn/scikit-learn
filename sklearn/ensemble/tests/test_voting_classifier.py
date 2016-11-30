@@ -1,7 +1,7 @@
-"""Testing for the boost module (sklearn.ensemble.boost)."""
+"""Testing for the VotingClassifier"""
 
 import numpy as np
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
@@ -15,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 
 # Load the iris dataset and randomly permute it
@@ -207,3 +208,53 @@ def test_gridsearch():
 
     grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     grid.fit(iris.data, iris.target)
+
+
+def test_parallel_predict():
+    """Check parallel backend of VotingClassifier on toy dataset."""
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = GaussianNB()
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    eclf1 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft',
+        n_jobs=1).fit(X, y)
+    eclf2 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft',
+        n_jobs=2).fit(X, y)
+
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
+
+def test_sample_weight():
+    """Tests sample_weight parameter of VotingClassifier"""
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = SVC(probability=True, random_state=123)
+    eclf1 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('svc', clf3)],
+        voting='soft').fit(X, y, sample_weight=np.ones((len(y),)))
+    eclf2 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('svc', clf3)],
+        voting='soft').fit(X, y)
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
+    sample_weight = np.random.RandomState(123).uniform(size=(len(y),))
+    eclf3 = VotingClassifier(estimators=[('lr', clf1)], voting='soft')
+    eclf3.fit(X, y, sample_weight)
+    clf1.fit(X, y, sample_weight)
+    assert_array_equal(eclf3.predict(X), clf1.predict(X))
+    assert_array_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
+
+    clf4 = KNeighborsClassifier()
+    eclf3 = VotingClassifier(estimators=[
+        ('lr', clf1), ('svc', clf3), ('knn', clf4)],
+        voting='soft')
+    msg = ('Underlying estimator \'knn\' does not support sample weights.')
+    assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)

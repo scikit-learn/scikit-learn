@@ -99,6 +99,9 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(y, targets_path, compress=9)
+    elif not available:
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
 
     try:
         X, y

@@ -27,6 +27,7 @@ from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
                                column_or_1d)
 from .utils.multiclass import type_of_target
+from .utils.random import choice
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
@@ -36,7 +37,7 @@ from .gaussian_process.kernels import Kernel as GPKernel
 from .exceptions import FitFailedWarning
 
 
-warnings.warn("This module has been deprecated in favor of the "
+warnings.warn("This module was deprecated in version 0.18 in favor of the "
               "model_selection module into which all the refactored classes "
               "and functions are moved. Also note that the interface of the "
               "new CV iterators are different from that of this module. "
@@ -108,6 +109,10 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
 class LeaveOneOut(_PartitionIterator):
     """Leave-One-Out cross validation iterator.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeaveOneOut` instead.
+
     Provides train/test indices to split data in train test sets. Each
     sample is used once as a test set (singleton) while the remaining
     samples form the training set.
@@ -169,6 +174,10 @@ class LeaveOneOut(_PartitionIterator):
 
 class LeavePOut(_PartitionIterator):
     """Leave-P-Out cross validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeavePOut` instead.
 
     Provides train/test indices to split data in train test sets. This results
     in testing on all distinct samples of size p, while the remaining n - p
@@ -265,6 +274,10 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
 class KFold(_BaseKFold):
     """K-Folds cross validation iterator.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.KFold` instead.
+
     Provides train/test indices to split data in train test sets. Split
     dataset into k consecutive folds (without shuffling by default).
 
@@ -356,6 +369,10 @@ class KFold(_BaseKFold):
 class LabelKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping labels.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.GroupKFold` instead.
+
     The same label will not appear in two different folds (the number of
     distinct labels has to be at least equal to the number of folds).
 
@@ -414,9 +431,9 @@ class LabelKFold(_BaseKFold):
 
         if n_folds > n_labels:
             raise ValueError(
-                    ("Cannot have number of folds n_folds={0} greater"
-                     " than the number of labels: {1}.").format(n_folds,
-                                                                n_labels))
+                ("Cannot have number of folds n_folds={0} greater"
+                 " than the number of labels: {1}.").format(n_folds,
+                                                            n_labels))
 
         # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
@@ -457,6 +474,10 @@ class LabelKFold(_BaseKFold):
 
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.StratifiedKFold` instead.
 
     Provides train/test indices to split data in train test sets.
 
@@ -580,6 +601,10 @@ class StratifiedKFold(_BaseKFold):
 class LeaveOneLabelOut(_PartitionIterator):
     """Leave-One-Label_Out cross-validation iterator
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeaveOneGroupOut` instead.
+
     Provides train/test indices to split data according to a third-party
     provided label. This label information can be used to encode arbitrary
     domain specific stratifications of the samples as integers.
@@ -649,6 +674,10 @@ class LeaveOneLabelOut(_PartitionIterator):
 
 class LeavePLabelOut(_PartitionIterator):
     """Leave-P-Label_Out cross-validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeavePGroupsOut` instead.
 
     Provides train/test indices to split data according to a third-party
     provided label. This label information can be used to encode arbitrary
@@ -760,6 +789,10 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
 class ShuffleSplit(BaseShuffleSplit):
     """Random permutation cross-validation iterator.
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.ShuffleSplit` instead.
 
     Yields indices to split data into training and test sets.
 
@@ -906,8 +939,65 @@ def _validate_shuffle_split(n, test_size, train_size):
     return int(n_train), int(n_test)
 
 
+def _approximate_mode(class_counts, n_draws, rng):
+    """Computes approximate mode of multivariate hypergeometric.
+
+    This is an approximation to the mode of the multivariate
+    hypergeometric given by class_counts and n_draws.
+    It shouldn't be off by more than one.
+
+    It is the mostly likely outcome of drawing n_draws many
+    samples from the population given by class_counts.
+
+    Parameters
+    ----------
+    class_counts : ndarray of int
+        Population per class.
+    n_draws : int
+        Number of draws (samples to draw) from the overall population.
+    rng : random state
+        Used to break ties.
+
+    Returns
+    -------
+    sampled_classes : ndarray of int
+        Number of samples drawn from each class.
+        np.sum(sampled_classes) == n_draws
+    """
+    # this computes a bad approximation to the mode of the
+    # multivariate hypergeometric given by class_counts and n_draws
+    continuous = n_draws * class_counts / class_counts.sum()
+    # floored means we don't overshoot n_samples, but probably undershoot
+    floored = np.floor(continuous)
+    # we add samples according to how much "left over" probability
+    # they had, until we arrive at n_samples
+    need_to_add = int(n_draws - floored.sum())
+    if need_to_add > 0:
+        remainder = continuous - floored
+        values = np.sort(np.unique(remainder))[::-1]
+        # add according to remainder, but break ties
+        # randomly to avoid biases
+        for value in values:
+            inds, = np.where(remainder == value)
+            # if we need_to_add less than what's in inds
+            # we draw randomly from them.
+            # if we need to add more, we add them all and
+            # go to the next value
+            add_now = min(len(inds), need_to_add)
+            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            floored[inds] += 1
+            need_to_add -= add_now
+            if need_to_add == 0:
+                    break
+    return floored.astype(np.int)
+
+
 class StratifiedShuffleSplit(BaseShuffleSplit):
     """Stratified ShuffleSplit cross validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.StratifiedShuffleSplit` instead.
 
     Provides train/test indices to split data in train test sets.
 
@@ -991,39 +1081,24 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
         cls_count = bincount(self.y_indices)
-        p_i = cls_count / float(self.n)
-        n_i = np.round(self.n_train * p_i).astype(int)
-        t_i = np.minimum(cls_count - n_i,
-                         np.round(self.n_test * p_i).astype(int))
 
         for n in range(self.n_iter):
+            # if there are ties in the class-counts, we want
+            # to make sure to break them anew in each iteration
+            n_i = _approximate_mode(cls_count, self.n_train, rng)
+            class_counts_remaining = cls_count - n_i
+            t_i = _approximate_mode(class_counts_remaining, self.n_test, rng)
+
             train = []
             test = []
 
-            for i, cls in enumerate(self.classes):
+            for i, _ in enumerate(self.classes):
                 permutation = rng.permutation(cls_count[i])
-                cls_i = np.where((self.y == cls))[0][permutation]
+                perm_indices_class_i = np.where(
+                    (i == self.y_indices))[0][permutation]
 
-                train.extend(cls_i[:n_i[i]])
-                test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
-
-            # Because of rounding issues (as n_train and n_test are not
-            # dividers of the number of elements per class), we may end
-            # up here with less samples in train and test than asked for.
-            if len(train) + len(test) < self.n_train + self.n_test:
-                # We complete by affecting randomly the missing indexes
-                missing_idx = np.where(bincount(train + test,
-                                                minlength=len(self.y)) == 0,
-                                       )[0]
-                missing_idx = rng.permutation(missing_idx)
-                n_missing_train = self.n_train - len(train)
-                n_missing_test = self.n_test - len(test)
-
-                if n_missing_train > 0:
-                    train.extend(missing_idx[:n_missing_train])
-                if n_missing_test > 0:
-                    test.extend(missing_idx[-n_missing_test:])
-
+                train.extend(perm_indices_class_i[:n_i[i]])
+                test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
             train = rng.permutation(train)
             test = rng.permutation(test)
 
@@ -1045,6 +1120,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 class PredefinedSplit(_PartitionIterator):
     """Predefined split cross validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.PredefinedSplit` instead.
 
     Splits the data into training/test set folds according to a predefined
     scheme. Each sample can be assigned to at most one test set fold, as
@@ -1100,6 +1179,10 @@ class PredefinedSplit(_PartitionIterator):
 
 class LabelShuffleSplit(ShuffleSplit):
     """Shuffle-Labels-Out cross-validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.GroupShuffleSplit` instead.
 
     Provides randomized train/test indices to split data according to a
     third-party provided label. This label information can be used to encode
@@ -1202,6 +1285,10 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.cross_val_predict` instead.
+
     Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
@@ -1226,7 +1313,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1263,6 +1350,16 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     -------
     preds : ndarray
         This is the result of calling 'predict'
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.cross_validation import cross_val_predict
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> y_pred = cross_val_predict(lasso, X, y)
     """
     X, y = indexable(X, y)
 
@@ -1372,6 +1469,10 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.cross_val_score` instead.
+
     Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
@@ -1401,7 +1502,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1438,6 +1539,17 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     -------
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.cross_validation import cross_val_score
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> print(cross_val_score(lasso, X, y))  # doctest:  +ELLIPSIS
+    [ 0.33150734  0.08022311  0.03531764]
 
     See Also
     ---------
@@ -1527,7 +1639,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     """
     if verbose > 1:
         if parameters is None:
-            msg = "no parameters to be set"
+            msg = ''
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
                           for k, v in parameters.items()))
@@ -1627,6 +1739,13 @@ def _score(estimator, X_test, y_test, scorer):
         score = scorer(estimator, X_test)
     else:
         score = scorer(estimator, X_test, y_test)
+    if hasattr(score, 'item'):
+        try:
+            # e.g. unwrap memmapped scalars
+            score = score.item()
+        except ValueError:
+            # non-scalar?
+            pass
     if not isinstance(score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s) instead."
                          % (str(score), type(score)))
@@ -1657,6 +1776,10 @@ def _shuffle(y, labels, random_state):
 def check_cv(cv, X=None, y=None, classifier=False):
     """Input checker utility for building a CV in a user friendly way.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.check_cv` instead.
+
     Parameters
     ----------
     cv : int, cross-validation generator or an iterable, optional
@@ -1669,7 +1792,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if classifier is True and ``y`` is binary or
-        multiclass, :class:`StratifiedKFold` used. In all other cases,
+        multiclass, :class:`StratifiedKFold` is used. In all other cases,
         :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1687,7 +1810,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
     Returns
     -------
-    checked_cv: a cross-validation generator instance.
+    checked_cv : a cross-validation generator instance.
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
@@ -1713,6 +1836,10 @@ def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
                            random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.permutation_test_score` instead.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -1743,7 +1870,7 @@ def permutation_test_score(estimator, X, y, cv=None,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1815,6 +1942,10 @@ permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.train_test_split` instead.
+
     Quick utility that wraps input validation and
     ``next(iter(ShuffleSplit(n_samples)))`` and application to input
     data into a single call for splitting (and optionally subsampling)
@@ -1825,13 +1956,8 @@ def train_test_split(*arrays, **options):
     Parameters
     ----------
     *arrays : sequence of indexables with same length / shape[0]
-
-        allowed inputs are lists, numpy arrays, scipy-sparse
+        Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
-
-        .. versionadded:: 0.16
-            preserves input type instead of always casting to numpy array.
-
 
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
@@ -1862,7 +1988,9 @@ def train_test_split(*arrays, **options):
         List containing train-test split of inputs.
 
         .. versionadded:: 0.16
-            Output type is the same as the input type.
+            If the input is sparse, the output will be a
+            ``scipy.sparse.csr_matrix``. Else, output type is the same as the
+            input type.
 
     Examples
     --------

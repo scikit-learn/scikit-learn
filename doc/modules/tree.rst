@@ -16,7 +16,7 @@ For instance, in the example below, decision trees learn from data to
 approximate a sine curve with a set of if-then-else decision rules. The deeper
 the tree, the more complex the decision rules and the fitter the model.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -129,7 +129,6 @@ Once trained, we can export the tree in `Graphviz
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
-    >>> from sklearn.externals.six import StringIO
     >>> with open("iris.dot", 'w') as f:
     ...     f = tree.export_graphviz(clf, out_file=f)
 
@@ -141,14 +140,12 @@ supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
     >>> import os
     >>> os.unlink('iris.dot')
 
-Alternatively, if we have Python module ``pydot`` installed, we can generate
+Alternatively, if we have Python module ``pydotplus`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
-    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
-    >>> import pydot # doctest: +SKIP
-    >>> dot_data = StringIO() # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
+    >>> import pydotplus # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
@@ -157,13 +154,12 @@ using explicit variable and class names if desired. IPython notebooks can also
 render these plots inline using the `Image()` function::
 
     >>> from IPython.display import Image  # doctest: +SKIP
-    >>> dot_data = StringIO()  # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data,  # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
                              feature_names=iris.feature_names,  # doctest: +SKIP
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data)  # doctest: +SKIP
     >>> Image(graph.create_png())  # doctest: +SKIP
 
 .. only:: html
@@ -187,14 +183,14 @@ fraction of training samples of the same class in a leaf::
     >>> clf.predict_proba(iris.data[:1, :])
     array([[ 1.,  0.,  0.]])
 
-.. figure:: ../auto_examples/tree/images/plot_iris_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
    :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_iris.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
 
 
 .. _tree_regression:
@@ -202,7 +198,7 @@ fraction of training samples of the same class in a leaf::
 Regression
 ==========
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -224,7 +220,7 @@ instead of integer values::
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
 
 
 .. _tree_multioutput:
@@ -263,28 +259,28 @@ of size ``[n_samples, n_outputs]`` then the resulting estimator will:
 
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
    :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
    :scale: 75
    :align: center
 
 The use of multi-output trees for classification is demonstrated in
-:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression_multioutput.py`
- * :ref:`example_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+ * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
 
 .. topic:: References:
 
@@ -411,7 +407,7 @@ and threshold that yield the largest information gain at each node.
 scikit-learn uses an optimised version of the CART algorithm.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
-.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
 
 
 .. _tree_mathematical_formulation:

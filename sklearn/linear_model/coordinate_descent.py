@@ -49,10 +49,10 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         Xy = np.dot(X.T, y) that can be precomputed.
 
     l1_ratio : float
-        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``.
-        For ``l1_ratio = 0`` the penalty is an L2 penalty. ``For
-        l1_ratio = 1`` it is an L1 penalty.  For ``0 < l1_ratio <
-        1``, the penalty is a combination of L1 and L2.
+        The elastic net mixing parameter, with ``0 < l1_ratio <= 1``.
+        For ``l1_ratio = 0`` the penalty is an L2 penalty. (currently not
+        supported) ``For l1_ratio = 1`` it is an L1 penalty. For
+        ``0 < l1_ratio <1``, the penalty is a combination of L1 and L2.
 
     eps : float, optional
         Length of the path. ``eps=1e-3`` means that
@@ -65,18 +65,23 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         Whether to fit an intercept or not
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
     """
+    if l1_ratio == 0:
+        raise ValueError("Automatic alpha grid generation is not supported for"
+                         " l1_ratio=0. Please supply a grid by providing "
+                         "your estimator with the appropriate `alphas=` "
+                         "argument.")
     n_samples = len(y)
 
     sparse_center = False
@@ -367,7 +372,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/plot_lasso_coordinate_descent_path.py for an example.
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py for an example.
 
     See also
     --------
@@ -376,16 +381,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    # We expect X and y to be already float64 Fortran ordered when bypassing
+    # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
-        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+        X = check_array(X, 'csc', dtype=[np.float64, np.float32],
+                        order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=X.dtype.type, order='F', copy=False,
                         ensure_2d=False)
         if Xy is not None:
             # Xy should be a 1d contiguous array or a 2D C ordered array
-            Xy = check_array(Xy, dtype=np.float64, order='C', copy=False,
+            Xy = check_array(Xy, dtype=X.dtype.type, order='C', copy=False,
                              ensure_2d=False)
+
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -399,8 +406,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # As sparse matrices are not actually centered we need this
             # to be passed to the CD solver.
             X_sparse_scaling = params['X_offset'] / params['X_scale']
+            X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
-            X_sparse_scaling = np.zeros(n_features)
+            X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
 
     # X should be normalized and fit already if function is called
     # from ElasticNet.fit
@@ -430,15 +438,15 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     random = (selection == 'random')
 
     if not multi_output:
-        coefs = np.empty((n_features, n_alphas), dtype=np.float64)
+        coefs = np.empty((n_features, n_alphas), dtype=X.dtype)
     else:
         coefs = np.empty((n_outputs, n_features, n_alphas),
-                         dtype=np.float64)
+                         dtype=X.dtype)
 
     if coef_init is None:
-        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
+        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1], dtype=X.dtype))
     else:
-        coef_ = np.asfortranarray(coef_init)
+        coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
@@ -470,7 +478,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
-                             "'auto' or array-like")
+                             "'auto' or array-like. Got %r" % precompute)
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
@@ -478,7 +486,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
-                          ' to increase the number of iterations',
+                          ' to increase the number of iterations.' +
+                          ' Fitting data with very small alpha' +
+                          ' may cause precision problems.',
                           ConvergenceWarning)
 
         if verbose:
@@ -525,14 +535,13 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    alpha : float
-        Constant that multiplies the penalty terms. Defaults to 1.0
+    alpha : float, optional
+        Constant that multiplies the penalty terms. Defaults to 1.0.
         See the notes for the exact mathematical meaning of this
-        parameter.
-        ``alpha = 0`` is equivalent to an ordinary least square, solved
+        parameter.``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` with the Lasso object is not advised
-        and you should prefer the LinearRegression object.
+        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
+        Given this, you should use the :class:`LinearRegression` object.
 
     l1_ratio : float
         The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``. For
@@ -545,20 +554,19 @@ class ElasticNet(LinearModel, RegressorMixin):
         data is assumed to be already centered.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     precompute : True | False | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument. For sparse input
-        this option is always ``True`` to preserve sparsity.
+        calculations. The Gram matrix can also be passed as argument.
+        For sparse input this option is always ``True`` to preserve sparsity.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -650,6 +658,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
             Target
 
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
         Notes
         -----
 
@@ -666,22 +678,20 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        if (isinstance(self.precompute, six.string_types) and
-           self.precompute == 'auto'):
-            warnings.warn("Setting precompute to 'auto', was found to be "
-                          "slower even when n_samples > n_features. Hence "
-                          "it will be removed in 0.18.",
-                          DeprecationWarning, stacklevel=2)
-        # We expect X and y to be already float64 Fortran ordered arrays
+        if isinstance(self.precompute, six.string_types):
+            raise ValueError('precompute should be one of True, False or'
+                             ' array-like. Got %r' % self.precompute)
+
+        # We expect X and y to be float64 or float32 Fortran ordered arrays
         # when bypassing checks
         if check_input:
-            y = np.asarray(y, dtype=np.float64)
-            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                             order='F',
+            X, y = check_X_y(X, y, accept_sparse='csc',
+                             order='F', dtype=[np.float64, np.float32],
                              copy=self.copy_X and self.fit_intercept,
                              multi_output=True, y_numeric=True)
-            y = check_array(y, dtype=np.float64, order='F', copy=False,
+            y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
+
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=False)
@@ -697,14 +707,14 @@ class ElasticNet(LinearModel, RegressorMixin):
             raise ValueError("selection should be either random or cyclic.")
 
         if not self.warm_start or self.coef_ is None:
-            coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
+            coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
                              order='F')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:
                 coef_ = coef_[np.newaxis, :]
 
-        dual_gaps_ = np.zeros(n_targets, dtype=np.float64)
+        dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
         for k in xrange(n_targets):
@@ -734,12 +744,15 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.coef_, self.dual_gap_ = map(np.squeeze, [coef_, dual_gaps_])
         self._set_intercept(X_offset, y_offset, X_scale)
 
+        # workaround since _set_intercept will cast self.coef_ into float64
+        self.coef_ = np.asarray(self.coef_, dtype=X.dtype)
+
         # return self for chaining fit and predict calls
         return self
 
     @property
     def sparse_coef_(self):
-        """ sparse representation of the fitted coef """
+        """ sparse representation of the fitted ``coef_`` """
         return sparse.csr_matrix(self.coef_)
 
     @deprecated(" and will be removed in 0.19")
@@ -771,9 +784,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         """
         check_is_fitted(self, 'n_iter_')
         if sparse.isspmatrix(X):
-            return np.ravel(safe_sparse_dot(self.coef_, X.T,
-                                            dense_output=True) +
-                            self.intercept_)
+            return safe_sparse_dot(X, self.coef_.T,
+                                   dense_output=True) + self.intercept_
         else:
             return super(ElasticNet, self)._decision_function(X)
 
@@ -799,8 +811,8 @@ class Lasso(ElasticNet):
         Constant that multiplies the L1 term. Defaults to 1.0.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` is with the Lasso object is not advised
-        and you should prefer the LinearRegression object.
+        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
+        Given this, you should use the :class:`LinearRegression` object.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -808,14 +820,14 @@ class Lasso(ElasticNet):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1006,7 +1018,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     intercepts = y_offset[:, np.newaxis] - np.dot(X_offset, coefs)
     if sparse.issparse(X_test):
         n_order, n_features, n_alphas = coefs.shape
-        # Work around for sparse matices since coefs is a 3-D numpy array.
+        # Work around for sparse matrices since coefs is a 3-D numpy array.
         coefs_feature_major = np.rollaxis(coefs, 1)
         feature_2d = np.reshape(coefs_feature_major, (n_features, -1))
         X_test_coefs = safe_sparse_dot(X_test, feature_2d)
@@ -1294,14 +1306,14 @@ class LassoCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1333,7 +1345,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py
+    See examples/linear_model/plot_lasso_model_selection.py
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -1448,14 +1460,14 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1488,7 +1500,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py
+    See examples/linear_model/plot_lasso_model_selection.py
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -1562,7 +1574,7 @@ class MultiTaskElasticNet(Lasso):
 
     i.e. the sum of norm of each row.
 
-    Read more in the :ref:`User Guide <multi_task_lasso>`.
+    Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
     Parameters
     ----------
@@ -1581,14 +1593,14 @@ class MultiTaskElasticNet(Lasso):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1735,7 +1747,8 @@ class MultiTaskElasticNet(Lasso):
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of iterations')
+                          ' to increase the number of iterations',
+                          ConvergenceWarning)
 
         # return self for chaining fit and predict calls
         return self
@@ -1752,7 +1765,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
-    i.e. the sum of norm of earch row.
+    i.e. the sum of norm of each row.
 
     Read more in the :ref:`User Guide <multi_task_lasso>`.
 
@@ -1767,14 +1780,14 @@ class MultiTaskLasso(MultiTaskElasticNet):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1904,14 +1917,14 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2069,14 +2082,14 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.

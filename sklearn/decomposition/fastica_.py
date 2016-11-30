@@ -191,7 +191,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     max_iter : int, optional
         Maximum number of iterations to perform.
 
-    tol: float, optional
+    tol : float, optional
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
@@ -293,7 +293,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         n_components = min(n, p)
     if (n_components > min(n, p)):
         n_components = min(n, p)
-        print("n_components is too large: it will be set to %s" % n_components)
+        warnings.warn('n_components is too large: it will be set to %s' % n_components)
 
     if whiten:
         # Centering the columns (ie the variables)

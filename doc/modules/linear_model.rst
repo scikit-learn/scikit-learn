@@ -33,7 +33,7 @@ solves a problem of the form:
 
 .. math:: \underset{w}{min\,} {|| X w - y||_2}^2
 
-.. figure:: ../auto_examples/linear_model/images/plot_ols_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../auto_examples/linear_model/plot_ols.html
    :align: center
    :scale: 50%
@@ -43,10 +43,10 @@ and will store the coefficients :math:`w` of the linear model in its
 ``coef_`` member::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.LinearRegression()
-    >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    >>> reg = linear_model.LinearRegression()
+    >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
-    >>> clf.coef_
+    >>> reg.coef_
     array([ 0.5,  0.5])
 
 However, coefficient estimates for Ordinary Least Squares rely on the
@@ -60,7 +60,7 @@ example, when data are collected without an experimental design.
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_ols.py`
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
 
 Ordinary Least Squares Complexity
@@ -90,7 +90,7 @@ Here, :math:`\alpha \geq 0` is a complexity parameter that controls the amount
 of shrinkage: the larger the value of :math:`\alpha`, the greater the amount
 of shrinkage and thus the coefficients become more robust to collinearity.
 
-.. figure:: ../auto_examples/linear_model/images/plot_ridge_path_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ridge_path_001.png
    :target: ../auto_examples/linear_model/plot_ridge_path.html
    :align: center
    :scale: 50%
@@ -101,20 +101,20 @@ arrays X, y and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.Ridge (alpha = .5)
-    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> reg = linear_model.Ridge (alpha = .5)
+    >>> reg.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
-    >>> clf.coef_
+    >>> reg.coef_
     array([ 0.34545455,  0.34545455])
-    >>> clf.intercept_ #doctest: +ELLIPSIS
+    >>> reg.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_ridge_path.py`
-   * :ref:`example_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -138,11 +138,11 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
-    >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
+    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
     RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
         normalize=False)
-    >>> clf.alpha_                                      # doctest: +SKIP
+    >>> reg.alpha_                                      # doctest: +SKIP
     0.1
 
 .. topic:: References
@@ -165,7 +165,7 @@ upon which the given solution is dependent. For this reason, the Lasso
 and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero
 weights (see
-:ref:`example_applications_plot_tomography_l1_reconstruction.py`).
+:ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
@@ -182,12 +182,12 @@ the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.Lasso(alpha = 0.1)
-    >>> clf.fit([[0, 0], [1, 1]], [0, 1])
+    >>> reg = linear_model.Lasso(alpha = 0.1)
+    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
-    >>> clf.predict([[1, 1]])
+    >>> reg.predict([[1, 1]])
     array([ 0.8])
 
 Also useful for lower-level tasks is the function :func:`lasso_path` that
@@ -195,8 +195,8 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
-  * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -231,11 +231,11 @@ the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
 
-.. |lasso_cv_1| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_002.png
+.. |lasso_cv_1| image:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_002.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
     :scale: 48%
 
-.. |lasso_cv_2| image:: ../auto_examples/linear_model/images/plot_lasso_model_selection_003.png
+.. |lasso_cv_2| image:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_003.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
     :scale: 48%
 
@@ -256,7 +256,7 @@ is correct, i.e. that the data are actually generated by this model.
 They also tend to break when the problem is badly conditioned
 (more features than samples).
 
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_model_selection_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_001.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
     :align: center
     :scale: 50%
@@ -264,8 +264,15 @@ They also tend to break when the problem is badly conditioned
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_lasso_model_selection.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
+Comparison with the regularization parameter of SVM
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The equivalence between ``alpha`` and the regularization parameter of SVM,
+``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``, 
+depending on the estimator and the exact objective function optimized by the
+model.
 
 .. _multi_task_lasso:
 
@@ -282,11 +289,11 @@ with a simple Lasso or a MultiTaskLasso. The Lasso estimates yields
 scattered non-zeros while the non-zeros of the MultiTaskLasso are full
 columns.
 
-.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_001.png
+.. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/sphx_glr_plot_multi_task_lasso_support_001.png
     :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
     :scale: 48%
 
-.. |multi_task_lasso_2| image:: ../auto_examples/linear_model/images/plot_multi_task_lasso_support_002.png
+.. |multi_task_lasso_2| image:: ../auto_examples/linear_model/images/sphx_glr_plot_multi_task_lasso_support_002.png
     :target: ../auto_examples/linear_model/plot_multi_task_lasso_support.html
     :scale: 48%
 
@@ -296,7 +303,7 @@ columns.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_multi_task_lasso_support.py`
 
 
 Mathematically, it consists of a linear model trained with a mixed
@@ -343,7 +350,7 @@ The objective function to minimize is in this case
     \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
 
 
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_coordinate_descent_path_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_coordinate_descent_path_001.png
    :target: ../auto_examples/linear_model/plot_lasso_coordinate_descent_path.html
    :align: center
    :scale: 50%
@@ -353,8 +360,8 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
-  * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
 
@@ -433,7 +440,7 @@ algorithm, and unlike the implementation based on coordinate_descent,
 this yields the exact solution, which is piecewise linear as a
 function of the norm of its coefficients.
 
-.. figure:: ../auto_examples/linear_model/images/plot_lasso_lars_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_001.png
    :target: ../auto_examples/linear_model/plot_lasso_lars.html
    :align: center
    :scale: 50%
@@ -441,17 +448,17 @@ function of the norm of its coefficients.
 ::
 
    >>> from sklearn import linear_model
-   >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   >>> reg = linear_model.LassoLars(alpha=.1)
+   >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
    LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
         fit_path=True, max_iter=500, normalize=True, positive=False,
         precompute='auto', verbose=False)
-   >>> clf.coef_    # doctest: +ELLIPSIS
+   >>> reg.coef_    # doctest: +ELLIPSIS
    array([ 0.717157...,  0.        ])
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_lasso_lars.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars.py`
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
@@ -509,7 +516,7 @@ previously chosen dictionary elements.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_omp.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_omp.py`
 
 .. topic:: References:
 
@@ -593,7 +600,7 @@ log likelihood*.
 By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
 
 
-.. figure:: ../auto_examples/linear_model/images/plot_bayesian_ridge_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
    :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
    :align: center
    :scale: 50%
@@ -604,21 +611,21 @@ Bayesian Ridge Regression is used for regression::
     >>> from sklearn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
-    >>> clf = linear_model.BayesianRidge()
-    >>> clf.fit(X, Y)
+    >>> reg = linear_model.BayesianRidge()
+    >>> reg.fit(X, Y)
     BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
            fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
            normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> clf.predict ([[1, 0.]])
+    >>> reg.predict ([[1, 0.]])
     array([ 0.50000013])
 
 
 The weights :math:`w` of the model can be access::
 
-    >>> clf.coef_
+    >>> reg.coef_
     array([ 0.49999993,  0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
@@ -627,7 +634,7 @@ is more robust to ill-posed problem.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_bayesian_ridge.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
 
 .. topic:: References
 
@@ -660,7 +667,7 @@ has its own standard deviation :math:`\lambda_i`. The prior over all
 :math:`\lambda_i` is chosen to be the same gamma distribution given by
 hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_ard_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ard_001.png
    :target: ../auto_examples/linear_model/plot_ard.html
    :align: center
    :scale: 50%
@@ -670,7 +677,7 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_ard.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
 
 .. topic:: References:
 
@@ -742,16 +749,19 @@ In a nutshell, one may choose the solver with the following rules:
 Case                               Solver
 =================================  =============================
 Small dataset or L1 penalty        "liblinear"
-Multinomial loss or large dataset  "lbfgs", "sag" or newton-cg"
+Multinomial loss or large dataset  "lbfgs", "sag" or "newton-cg"
 Very Large dataset                 "sag"
 =================================  =============================
+
 For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_logistic_l1_l2_sparsity.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_l1_l2_sparsity.py`
 
-  * :ref:`example_linear_model_plot_logistic_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
 
 .. _liblinear_differences:
 
@@ -786,7 +796,7 @@ entropy loss.
 
     .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
 
-    .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
+    .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
 Stochastic Gradient Descent - SGD
 =================================
@@ -855,7 +865,7 @@ Robustness regression: outliers and modeling errors
 Robust regression is interested in fitting a regression model in the
 presence of corrupt data: either outliers, or error in the model.
 
-.. figure:: ../auto_examples/linear_model/images/plot_theilsen_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_theilsen_001.png
    :target: ../auto_examples/linear_model/plot_theilsen.html
    :scale: 50%
    :align: center
@@ -866,15 +876,15 @@ Different scenario and useful concepts
 There are different things to keep in mind when dealing with data
 corrupted by outliers:
 
-.. |y_outliers| image:: ../auto_examples/linear_model/images/plot_robust_fit_003.png
+.. |y_outliers| image:: ../auto_examples/linear_model/images/sphx_glr_plot_robust_fit_003.png
    :target: ../auto_examples/linear_model/plot_robust_fit.html
    :scale: 60%
 
-.. |X_outliers| image:: ../auto_examples/linear_model/images/plot_robust_fit_002.png
+.. |X_outliers| image:: ../auto_examples/linear_model/images/sphx_glr_plot_robust_fit_002.png
    :target: ../auto_examples/linear_model/plot_robust_fit.html
    :scale: 60%
 
-.. |large_y_outliers| image:: ../auto_examples/linear_model/images/plot_robust_fit_005.png
+.. |large_y_outliers| image:: ../auto_examples/linear_model/images/sphx_glr_plot_robust_fit_005.png
    :target: ../auto_examples/linear_model/plot_robust_fit.html
    :scale: 60%
 
@@ -952,7 +962,7 @@ which may be subject to noise, and outliers, which are e.g. caused by erroneous
 measurements or invalid hypotheses about the data. The resulting model is then
 estimated only from the determined inliers.
 
-.. figure:: ../auto_examples/linear_model/images/plot_ransac_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ransac_001.png
    :target: ../auto_examples/linear_model/plot_ransac.html
    :align: center
    :scale: 50%
@@ -988,8 +998,8 @@ performance.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_ransac.py`
-  * :ref:`example_linear_model_plot_robust_fit.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
 .. topic:: References:
 
@@ -1015,8 +1025,8 @@ better than an ordinary least squares in high dimension.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_theilsen.py`
-  * :ref:`example_linear_model_plot_robust_fit.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
 .. topic:: References:
 
@@ -1035,7 +1045,7 @@ setting, Theil-Sen has a breakdown point of about 29.3% in case of a
 simple linear regression which means that it can tolerate arbitrary
 corrupted data of up to 29.3%.
 
-.. figure:: ../auto_examples/linear_model/images/plot_theilsen_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_theilsen_001.png
    :target: ../auto_examples/linear_model/plot_theilsen.html
    :align: center
    :scale: 50%
@@ -1057,7 +1067,7 @@ considering only a random subset of all possible combinations.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_theilsen.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
 
 .. topic:: References:
 
@@ -1077,7 +1087,7 @@ lesser than a certain threshold. It differs from :class:`TheilSenRegressor`
 and :class:`RANSACRegressor` because it does not ignore the effect of the outliers
 but gives a lesser weight to them.
 
-.. figure:: ../auto_examples/linear_model/images/plot_huber_vs_ridge_001.png
+.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_huber_vs_ridge_001.png
    :target: ../auto_examples/linear_model/plot_huber_vs_ridge.html
    :align: center
    :scale: 50%
@@ -1115,7 +1125,7 @@ in the following ways.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_huber_vs_ridge.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_huber_vs_ridge.py`
 
 .. topic:: References:
 
@@ -1168,7 +1178,7 @@ flexibility to fit a much broader range of data.
 Here is an example of applying this idea to one-dimensional data, using
 polynomial features of varying degrees:
 
-.. figure:: ../auto_examples/linear_model/images/plot_polynomial_interpolation_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_polynomial_interpolation_001.png
    :target: ../auto_examples/linear_model/plot_polynomial_interpolation.html
    :align: center
    :scale: 50%
@@ -1230,12 +1240,19 @@ This way, we can solve the XOR problem with a linear classifier::
     >>> import numpy as np
     >>> X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     >>> y = X[:, 0] ^ X[:, 1]
-    >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X)
+    >>> y
+    array([0, 1, 1, 0])
+    >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X).astype(int)
     >>> X
-    array([[ 1.,  0.,  0.,  0.],
-           [ 1.,  0.,  1.,  0.],
-           [ 1.,  1.,  0.,  0.],
-           [ 1.,  1.,  1.,  1.]])
+    array([[1, 0, 0, 0],
+           [1, 0, 1, 0],
+           [1, 1, 0, 0],
+           [1, 1, 1, 1]])
     >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
+
+And the classifier "predictions" are perfect::
+
+    >>> clf.predict(X)
+    array([0, 1, 1, 0])
     >>> clf.score(X, y)
     1.0
