@@ -141,13 +141,13 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
     ----------
     y_true : array, shape = [n_samples]
         True multiclass labels.
-        Currently only handles labels with values 0 to n_classes - 1.
+        Assumes labels have been recoded to 0 to n_classes.
 
     y_score : array, shape = [n_samples, n_classes]
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    average : string, ['macro' (default), 'weighted']
+    average : 'macro' or 'weighted', default='macro'
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -167,7 +167,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
     Returns
     -------
     score : float
-        Average the sum of the pairwise binary metric scores
+        Average the sum of pairwise binary metric scores
     """
     n_labels = len(np.unique(y_true))
     auc_scores_sum = 0
