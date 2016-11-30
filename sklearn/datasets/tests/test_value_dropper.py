@@ -69,7 +69,7 @@ def test_value_dropper_mnar_clf():
             missing_mask[y == classes[1]].sum(axis=0) /
             float(np.sum(y == classes[1])), [0.5] * n_features, decimal=2)
 
-        # Check that the drop probabilites when class == 0  are as given by
+        # Check that the drop probabilites when class == 0 are as given by
         # the missing_proba dict
         assert_array_almost_equal(missing_mask[y == classes[0]].sum(axis=0) /
                                   float(np.sum(y == classes[0])),
