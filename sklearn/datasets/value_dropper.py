@@ -44,10 +44,12 @@ class ValueDropper(TransformerMixin):
         array-like of shape (n_features, ) (e.g. [0.1, 0.15, 0.1]).
 
         If missingness is not MCAR, a dict of floats can be used to specify
-        the drop-probabilities on a per-label basis (e.g. {1: 0.2, 2: 0.3, 3: 0.5}).
+        the drop-probabilities on a per-label basis
+        (e.g. {1: 0.2, 2: 0.3, 3: 0.5}).
 
         This dict can also contains some 1D array-like of shape (n_features, )
-        to vary drop-probabilities across features  (e.g. {1: 0.1, 3: [0.1, 0.15, 0.1]}).
+        to vary drop-probabilities across features
+        (e.g. {1: 0.1, 3: [0.1, 0.15, 0.1]}).
 
     copy : bool, default False
         Whether to copy the data or work inplace.
@@ -193,7 +195,6 @@ class ValueDropper(TransformerMixin):
 
         # Validate y, and find type of missingness
         if isinstance(self.missing_proba, dict):
-            missing_type = 'nmar'
             # For NMAR
             # Validate and convert the missing_proba dict into a
             # 2D probability distribution along the features and labels
@@ -243,7 +244,6 @@ class ValueDropper(TransformerMixin):
                 drop_probs[encoded_class_key, :] = val
 
         else:
-            missing_type = 'mcar'
             # For MCAR
             # Validate and convert the missing_proba dict into a
             # 1D probability distribution along the features
