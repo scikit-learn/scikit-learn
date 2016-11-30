@@ -395,8 +395,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                 "RANSAC could not find valid consensus set, because"
                 " either the `residual_threshold` rejected all the samples or"
                 " `is_data_valid` and `is_model_valid` returned False for all"
-                " `max_trials` randomly ""chosen sub-samples. Consider "
-                "relaxing the ""constraints.")
+                " `max_trials` randomly chosen sub-samples. Consider"
+                " relaxing the constraints.")
 
         # estimate final model using all inliers
         base_estimator.fit(X_inlier_best, y_inlier_best)

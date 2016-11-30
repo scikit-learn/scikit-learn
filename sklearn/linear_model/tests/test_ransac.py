@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raise_message
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 
@@ -153,8 +154,14 @@ def test_ransac_resid_thresh_no_inliers():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=0.0, random_state=0)
 
-    assert_raises(ValueError,
-                  ransac_estimator.fit, X, y)
+    msg = (
+        "RANSAC could not find valid consensus set, because"
+        " either the `residual_threshold` rejected all the samples or"
+        " `is_data_valid` and `is_model_valid` returned False for all"
+        " `max_trials` randomly chosen sub-samples. Consider"
+        " relaxing the constraints.")
+
+    assert_raise_message(ValueError,msg,ransac_estimator.fit, X, y)
 
 
 def test_ransac_sparse_coo():
