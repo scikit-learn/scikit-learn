@@ -137,11 +137,12 @@ cdef extern from "cblas.h":
 @cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                             floating alpha, floating beta,
-                            np.ndarray[floating, ndim=1] l1_weights,
                             np.ndarray[floating, ndim=2, mode='fortran'] X,
                             np.ndarray[floating, ndim=1, mode='c'] y,
                             int max_iter, floating tol,
-                            object rng, bint random=0, bint positive=0):
+                            object rng, 
+                            np.ndarray[floating, ndim=1] l1_weights,
+                            bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -534,12 +535,12 @@ def sparse_enet_coordinate_descent(floating [:] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
-                                 np.ndarray[floating, ndim=1] l1_weights,
+def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,                                 
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
                                  int max_iter, floating tol, object rng,
+                                 np.ndarray[floating, ndim=1] l1_weights,
                                  bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
