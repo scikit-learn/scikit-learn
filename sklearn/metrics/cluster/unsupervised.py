@@ -292,26 +292,20 @@ def davies_bouldin_index(X, labels):
 
     check_number_of_labels(n_labels, n_samples)
     clusters_data = {}
+    intra_dists = np.zeros(n_labels)
+    centroids = np.zeros((n_labels, len(X[0])), np.float32)
     for k in range(n_labels):
         cluster_k = X[labels == k]
         mean_k = np.mean(cluster_k, axis=0)
-        d_k = np.average(pairwise_distances(cluster_k, [mean_k]))
-        clusters_data[k] = (mean_k, d_k)
+        centroids[k] = mean_k
+        intra_dists[k] = np.average(pairwise_distances(cluster_k, [mean_k]))
+    centroid_distances = pairwise_distances(centroids)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        if np.all((intra_dists[:, None] + intra_dists)==0.0) or \
+           np.all(centroid_distances == 0.0):
+           return 0.0
+        scores = (intra_dists[:, None] + intra_dists)/centroid_distances
+        # remove inf values
+        scores[scores == np.inf] = np.nan
+        return np.mean(np.nanmax(scores, axis=1))
 
-    score = 0
-    for i in range(n_labels):
-        max_score = 0
-        mean_i, d_i = clusters_data[i]
-        for j in range(n_labels):
-            if i == j:
-                continue
-            mean_j, d_j = clusters_data[j]
-            mean_distance = np.linalg.norm(mean_i - mean_j)
-
-            if mean_distance == 0:
-                curr_score = 0
-            else:
-                curr_score = (d_i + d_j)/mean_distance
-            max_score = max(curr_score, max_score)
-        score += max_score
-    return score/n_labels
