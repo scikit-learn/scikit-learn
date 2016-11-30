@@ -392,40 +392,42 @@ def test_auc_errors():
 
 
 def test_multi_auc_toydata():
-    y_true = np.array([0, 1, 2])
-    y_scores = np.array(
-        [[0.714, 0.072, 0.214], [0.837, 0.143, 0.020], [0.714, 0.072, 0.214]])
-    assert_almost_equal(
-        roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.666666666663)
-
+    # Tests the unweighted, one-vs-one multiclass ROC AUC algorithm
+    # on a small example, representative of an expected use case.
     y_true = np.array([0, 1, 0, 2])
     y_scores = np.array(
         [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.75)
 
-    y_true = np.array([0, 1, 0, 2])
-    y_scores = np.array(
-        [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+    # Tests the weighted, one-vs-one multiclass ROC AUC algorithm
+    # on the same input
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovo", average="weighted"),
         0.23958333333)
 
+    # Tests the unweighted, one-vs-rest multiclass ROC AUC algorithm
+    # on a small example, representative of an expected use case.
     y_true = np.array([0, 1, 2, 2])
     y_scores = np.array(
         [[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8], [0.3, 0.3, 0.4]])
+    # Compute the expected result by individually computing the 'one-vs-rest'
+    # ROC AUC scores for classes 0, 1, and 2.
     out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
     out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:, 1])
     out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:, 2])
+    result_unweighted = (out_0 + out_1 + out_2)/3.0
+
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multiclass="ovr"),
+        result_unweighted)
+
+    # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
+    # on the same input
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovr", average="weighted"),
         result_weighted)
-
-    result_unweighted = (out_0 + out_1 + out_2)/3.0
-    assert_almost_equal(
-        roc_auc_score(y_true, y_scores, multiclass="ovr"),
-        result_unweighted)
 
 
 def test_auc_score_multi_error():

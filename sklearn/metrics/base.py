@@ -176,18 +176,20 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
             if pos == neg:
                 continue
             ix = np.in1d(y_true.ravel(), [pos, neg])
-            y_true_filtered = y_true[np.where(ix.reshape(y_true.shape))]
-            y_score_filtered = y_score[np.where(ix)]
+            y_true_filtered = y_true[ix.reshape(y_true.shape)]
+            y_score_filtered = y_score[ix]
 
-            y_true_10 = y_true_filtered == pos
-            y_true_01 = y_true_filtered == neg
-            score_10 = binary_metric(
-                    y_true_10, y_score_filtered[:, pos])
-            score_01 = binary_metric(
-                    y_true_01, y_score_filtered[:, neg])
-            binary_avg_auc = (score_10 + score_01)/2.0
+            # compute score with `pos` as the positive class
+            class_a = y_true_filtered == pos
+            # compute score with `neg` as the positive class
+            class_b = y_true_filtered == neg
+            score_class_a = binary_metric(
+                    class_a, y_score_filtered[:, pos])
+            score_class_b = binary_metric(
+                    class_b, y_score_filtered[:, neg])
+            binary_avg_auc = (score_class_a + score_class_b) / 2.0
             if average == "weighted":
-                probability_pos = np.sum(y_true == pos)/float(y_true.size)
+                probability_pos = np.sum(y_true == pos) / float(y_true.size)
                 auc_scores_sum += binary_avg_auc * probability_pos
             else:
                 auc_scores_sum += binary_avg_auc
