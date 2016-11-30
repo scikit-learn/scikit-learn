@@ -471,11 +471,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                                          order='C')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, rng, l1_weights_, random, positive)
+                tol, rng, random, positive, l1_weights_)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, l1_weights_,
-                random, positive)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng,
+                random, positive, l1_weights_)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like. Got %r" % precompute)
