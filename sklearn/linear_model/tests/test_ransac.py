@@ -8,7 +8,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
@@ -161,7 +160,7 @@ def test_ransac_resid_thresh_no_inliers():
         " `max_trials` randomly chosen sub-samples. Consider"
         " relaxing the constraints.")
 
-    assert_raise_message(ValueError,msg,ransac_estimator.fit, X, y)
+    assert_raise_message(ValueError, msg, ransac_estimator.fit, X, y)
 
 
 def test_ransac_sparse_coo():
