@@ -88,7 +88,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     from .. import __name__ as pkg_name
     import sys
     if pkg_name + '.gaussian_process.kernels' in sys.modules:
-        from ..gaussian_process.kernels import GPKernel
+        from ..gaussian_process.kernels import Kernel as GPKernel
     else:
         GPKernel = None
 
