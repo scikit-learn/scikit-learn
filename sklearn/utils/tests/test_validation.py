@@ -336,15 +336,17 @@ def test_check_array_accept_sparse_type_exception():
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=None)
 
-    msg = "The parameter \'accept_sparse\' was not a correct type."
-    assert_raise_message(ValueError, msg,
-                         check_array, X_csr, accept_sparse=invalid_type)
-    assert_raise_message(ValueError, msg,
-                         check_array, X_csr, accept_sparse=[invalid_type])
-    assert_raise_message(ValueError, msg,
+    msg = "The parameter 'accept_sparse={}' was not a correct type."
+    assert_raise_message(ValueError, msg.format([]),
                          check_array, X_csr, accept_sparse=[])
-    assert_raise_message(ValueError, msg,
+    assert_raise_message(ValueError, msg.format(()),
                          check_array, X_csr, accept_sparse=())
+    assert_raise_message(ValueError, msg.format(invalid_type),
+                         check_array, X_csr, accept_sparse=invalid_type)
+
+    msg = "Can't convert 'SVR' object to str implicitly"
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=[invalid_type])
 
     # don't raise errors
     check_array(X_csr, accept_sparse=True)
