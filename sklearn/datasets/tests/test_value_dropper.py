@@ -42,23 +42,20 @@ def test_value_dropper_mnar_clf():
                             float(np.sum(y == classes[0]) * n_features), 0.1,
                             decimal=2)
 
-        # All the missing values are from y == 0
+        # Check drop-probability for samples of class 0
         assert_almost_equal(
-            np.isnan(X_dropped[y == classes[0]]).ravel().sum() /
+            missing_mask[y == classes[0]].ravel().sum() /
             float(np.sum(y == classes[0]) * n_features), 0.1, decimal=2)
 
         # and no missing values from y != 0
         assert_equal(missing_mask[y != classes[0]].ravel().sum(), 0)
 
-        # Samples from class 1 will have a drop probabilty of 0.5
-        # but spread unevenly across features as given by the
-        # list of probabilities
-        # And samples from class 0 will have a drop-probabilities as specified
+        # Samples from class 0 will have 50% of values missing in each feature
+        # And samples from class 1 will have a drop-probabilities as specified
         # by a list of drop-probabilites for each feature
-        missing_proba = {classes[0]: [0.1, 0.2, 0.2, 0, 0],
-                         classes[1]: 0.5}
-        vd = ValueDropper(missing_proba=missing_proba,
-                          missing_values=np.nan, random_state=0)
+        missing_proba = {classes[0]: [0.1, 0.2, 0.2, 0, 0], classes[1]: 0.5}
+        vd = ValueDropper(missing_proba=missing_proba, missing_values=np.nan,
+                          random_state=0)
         X_dropped = vd.transform(X, y)
 
         missing_mask = np.isnan(X_dropped)
@@ -228,4 +225,5 @@ def test_value_dropper_errors():
     # When missing_proba is a dict, but y is not given
     missing_proba = {0: 0.025}
     assert_raise_message(
-        ValueError, "", ValueDropper(missing_proba=missing_proba).transform, X)
+        ValueError, "The missing_proba is a dict but y is None.",
+        ValueDropper(missing_proba=missing_proba).transform, X)
