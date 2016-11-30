@@ -200,7 +200,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
-    cdef double w_alpha = alpha
+    cdef floating w_alpha = alpha
     cdef unsigned int use_l1_weight = l1_weights.size > 1
 
     cdef floating *X_data = <floating*> X.data
@@ -535,7 +535,7 @@ def sparse_enet_coordinate_descent(floating [:] w,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
-								 np.ndarray[floating, ndim=1] l1_weights,
+                                 np.ndarray[floating, ndim=1] l1_weights,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
@@ -592,7 +592,7 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
-    cdef double w_alpha = alpha
+    cdef floating w_alpha = alpha
     cdef unsigned int use_l1_weight = l1_weights.size > 1
 
     cdef floating y_norm2 = np.dot(y, y)
