@@ -336,7 +336,7 @@ def test_check_array_accept_sparse_type_exception():
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=None)
 
-    msg = "The parameter 'accept_sparse={}' was not a correct type."
+    msg = "Invalid parameter 'accept_sparse={}'"
     assert_raise_message(ValueError, msg.format([]),
                          check_array, X_csr, accept_sparse=[])
     assert_raise_message(ValueError, msg.format(()),

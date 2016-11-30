@@ -261,8 +261,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
             changed_format = True
     elif accept_sparse is not True:
         # any other type
-        raise ValueError(("The parameter 'accept_sparse={}' "
-                         "was not a correct type.").format(accept_sparse))
+        raise ValueError(("Invalid parameter "
+                          "'accept_sparse={}'").format(accept_sparse))
 
     if dtype != spmatrix.dtype:
         # convert dtype
