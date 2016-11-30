@@ -120,7 +120,8 @@ def test_zero_cosine_linkage_tree():
     # 'cosine' affinity is used
     X = np.array([[0, 1],
                   [0, 0]])
-    assert_raises(ValueError, linkage_tree, X, affinity='cosine')
+    msg = 'Cosine affinity cannot be used when X contains zero vectors'
+    assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
 
 
 def test_agglomerative_clustering():
