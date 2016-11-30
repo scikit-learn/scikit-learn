@@ -24,8 +24,8 @@ import warnings
 import numpy as np
 
 from . import (r2_score, median_absolute_error, mean_absolute_error,
-               mean_squared_error, accuracy_score, f1_score,
-               roc_auc_score, average_precision_score,
+               mean_squared_error, mean_squared_log_error, accuracy_score,
+               f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss)
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
@@ -349,6 +349,8 @@ deprecation_msg = ('Scoring method mean_squared_error was renamed to '
 mean_squared_error_scorer = make_scorer(mean_squared_error,
                                         greater_is_better=False)
 mean_squared_error_scorer._deprecation_msg = deprecation_msg
+neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
+                                                greater_is_better=False)
 neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                              greater_is_better=False)
 deprecation_msg = ('Scoring method mean_absolute_error was renamed to '
@@ -396,6 +398,7 @@ SCORERS = dict(r2=r2_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
+               neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
                median_absolute_error=median_absolute_error_scorer,
                mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
