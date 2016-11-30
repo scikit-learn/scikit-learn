@@ -186,8 +186,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
             # coef_ = sigma_^-1 * XT * y
             if n_samples > n_features:
                 coef_ = np.dot(Vh.T,
-                               Vh / (eigen_vals_ + lambda_ / alpha_)[:,
-                                    np.newaxis])
+                               Vh / (eigen_vals_ +
+                                     lambda_ / alpha_)[:, np.newaxis])
                 coef_ = np.dot(coef_, XT_y)
                 if self.compute_score:
                     logdet_sigma_ = - np.sum(
