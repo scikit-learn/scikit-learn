@@ -17,11 +17,13 @@ the size of the dataset and the stability of the model. See Cawley and Talbot
 [1]_ for an analysis of these issues.
 
 To avoid this problem, nested CV effectively uses a series of
-train/validation/test set splits. In the inner loop, the score is approximately
-maximized by fitting a model to each training set, and then directly maximized
-in selecting (hyper)parameters over the validation set. In the outer loop,
-generalization error is estimated by averaging test set scores over several
-dataset splits.
+train/validation/test set splits. In the inner loop (here executed by
+:class:`GridSearchCV <sklearn.model_selection.GridSearchCV>`), the score is
+approximately maximized by fitting a model to each training set, and then
+directly maximized in selecting (hyper)parameters over the validation set. In
+the outer loop (here in :func:`cross_val_score
+<sklearn.model_selection.cross_val_score>`), generalization error is estimated
+by averaging test set scores over several dataset splits.
 
 The example below uses a support vector classifier with a non-linear kernel to
 build a model with optimized hyperparameters by grid search. We compare the
