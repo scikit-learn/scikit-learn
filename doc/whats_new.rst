@@ -97,6 +97,10 @@ Bug fixes
      in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
 
 
+   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
+     sparse array X and initial centroids, where X's means were unnecessarily
+     being subtracted from the centroids. :issue:`7872` by `Josh Karnofsky <https://github.com/jkarno>`_.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
