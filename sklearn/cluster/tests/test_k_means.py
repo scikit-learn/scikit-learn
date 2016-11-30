@@ -812,7 +812,7 @@ def test_float_precision():
                                       decimal=4)
 
 
-def test_KMeans_init_centers():
+def test_k_means_init_centers():
     # This test is used to check KMeans won't mutate the user provided input
     # array silently even if input data and init centers have the same type
     X_small = np.array([[1.1, 1.1], [-7.5, -7.5], [-1.1, -1.1], [7.5, 7.5]])
@@ -826,7 +826,7 @@ def test_KMeans_init_centers():
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
 
 
-def test_sparse_KMeans_init_centers():
+def test_sparse_k_means_init_centers():
     from sklearn.datasets import load_iris
 
     iris = load_iris()
@@ -865,6 +865,6 @@ def test_sparse_validate_centers():
     # Test that a ValueError is raised for validate_center_shape
     classifier = KMeans(n_clusters=3, init=centers, n_init=1)
 
-    msg = "The shape of the initial centers ((4, 4)) " \
+    msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
           "does not match the number of clusters 3"
-    assert_raise_message(ValueError, msg, classifier.fit, X)
+    assert_raises_regex(ValueError, msg, classifier.fit, X)
