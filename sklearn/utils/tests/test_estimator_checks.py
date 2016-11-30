@@ -84,7 +84,7 @@ def test_check_estimator():
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
     # check that fit does input validation
-    msg = "TypeError not raised by fit"
+    msg = "TypeError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"

@@ -54,9 +54,8 @@ Enhancements
      nearest cluster center. :issue:`7721` by :user:`Jon Crall <Erotemic>`.
 
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
-     that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
-     <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
-     Batula`_ and :user:`Dylan Werner-Meier <unautre>`.
+     that matches the ``classes_`` attribute of ``best_estimator_``. :issue:`7661`
+     by :user:`Alyssa Batula <abatula>`_ and :user:`Dylan Werner-Meier <unautre>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -91,39 +90,22 @@ Enhancements
      do not set attributes on the estimator.
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
+   - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
+     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with norm 'max'
+     the norms returned will be the same as for dense matrices (:issue:`7771`).
+     By `Ang Lu <https://github.com/luang008>`_.
+
 Bug fixes
 .........
-
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
-     exactly implement Benjamini-Hochberg procedure. It formerly may have
-     selected fewer features than it should.
-     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
-
-   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
-     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
-
-   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
-     regressors now assumes uniform sample weights by default if the
-     ``sample_weight`` argument is not passed to the ``fit`` function.
-     Previously, the parameter was silently ignored. :issue:`7301`
-     by :user:`Nelson Liu <nelson-liu>`.
-
-   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
-     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
-
-   - Tree splitting criterion classes' cloning/pickling is now memory safe
-     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
-
-   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
-     attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
-     Krivich <kiote>`.
-
-   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
-     string labels. :issue:`5874` by `Raghav RV`_.
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
      in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
+
+
+   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
+     sparse array X and initial centroids, where X's means were unnecessarily
+     being subtracted from the centroids. :issue:`7872` by `Josh Karnofsky <https://github.com/jkarno>`_.
 
 .. _changes_0_18_1:
 
@@ -183,6 +165,33 @@ Bug fixes
      has less number of classes than the total data. :issue:`7799` by
      `Srivatsan Ramesh`_
 
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
+   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
+     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. :issue:`7301`
+     by :user:`Nelson Liu <nelson-liu>`.
+
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
+
+   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
+     attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
+     Krivich <kiote>`.
+
+   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
+     string labels. :issue:`5874` by `Raghav RV`_.
+
    - Fixed a bug where :func:`sklearn.model_selection.train_test_split` raised
      an error when ``stratify`` is a list of string labels. :issue:`7593` by
      `Raghav RV`_.
@@ -203,13 +212,28 @@ Bug fixes
 API changes summary
 -------------------
 
+Trees and forests
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. :issue:`7301` by `Nelson
+     Liu`_.
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe.
+     :issue:`7680` by `Ibraim Ganiev`_.
+
+
 Linear, kernelized and related models
 
-   - Length of `explained_variance_ratio` of
+   - Length of ``explained_variance_ratio`` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis`
      changed for both Eigen and SVD solvers. The attribute has now a length
      of min(n_components, n_classes - 1). :issue:`7632`
      by :user:`JPFrancoia <JPFrancoia>`
+
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     ``n_features > n_samples``. :issue:`6178` by `Bertrand Thirion`_
 
 .. _changes_0_18:
 

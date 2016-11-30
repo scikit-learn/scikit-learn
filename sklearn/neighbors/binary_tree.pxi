@@ -297,9 +297,9 @@ Query for k-nearest neighbors
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
     >>> dist, ind = tree.query([X[0]], k=3)                # doctest: +SKIP
-    >>> print ind  # indices of 3 closest neighbors
+    >>> print(ind)  # indices of 3 closest neighbors
     [0 3 1]
-    >>> print dist  # distances to 3 closest neighbors
+    >>> print(dist)  # distances to 3 closest neighbors
     [ 0.          0.19662693  0.29473397]
 
 Pickle and Unpickle a tree.  Note that the state of the tree is saved in the
@@ -313,9 +313,9 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
     >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
     >>> dist, ind = tree_copy.query(X[0], k=3)     # doctest: +SKIP
-    >>> print ind  # indices of 3 closest neighbors
+    >>> print(ind)  # indices of 3 closest neighbors
     [0 3 1]
-    >>> print dist  # distances to 3 closest neighbors
+    >>> print(dist)  # distances to 3 closest neighbors
     [ 0.          0.19662693  0.29473397]
 
 Query for neighbors within a given radius
@@ -324,10 +324,10 @@ Query for neighbors within a given radius
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
-    >>> print tree.query_radius(X[0], r=0.3, count_only=True)
+    >>> print(tree.query_radius(X[0], r=0.3, count_only=True))
     3
     >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
-    >>> print ind  # indices of neighbors within distance 0.3
+    >>> print(ind)  # indices of neighbors within distance 0.3
     [3 0 1]
 
 
@@ -623,7 +623,7 @@ cdef class NeighborsHeap:
         dist_arr[0] = val
         ind_arr[0] = i_val
 
-        #descend the heap, swapping values until the max heap criterion is met
+        # descend the heap, swapping values until the max heap criterion is met
         i = 0
         while True:
             ic1 = 2 * i + 1
@@ -1282,9 +1282,9 @@ cdef class BinaryTree:
             >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
             >>> tree = BinaryTree(X, leaf_size=2)    # doctest: +SKIP
             >>> dist, ind = tree.query(X[0], k=3)    # doctest: +SKIP
-            >>> print ind  # indices of 3 closest neighbors
+            >>> print(ind)  # indices of 3 closest neighbors
             [0 3 1]
-            >>> print dist  # distances to 3 closest neighbors
+            >>> print(dist)  # distances to 3 closest neighbors
             [ 0.          0.19662693  0.29473397]
         """
         # XXX: we should allow X to be a pre-built tree.
@@ -1415,10 +1415,10 @@ cdef class BinaryTree:
         >>> np.random.seed(0)
         >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
         >>> tree = BinaryTree(X, leaf_size=2)     # doctest: +SKIP
-        >>> print tree.query_radius(X[0], r=0.3, count_only=True)
+        >>> print(tree.query_radius(X[0], r=0.3, count_only=True))
         3
         >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
-        >>> print ind  # indices of neighbors within distance 0.3
+        >>> print(ind)  # indices of neighbors within distance 0.3
         [3 0 1]
         """
         if count_only and return_distance:

@@ -36,7 +36,6 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -655,7 +654,7 @@ def test_stable_cumsum():
         raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
-    assert_warns(ConvergenceWarning, stable_cumsum, r, rtol=0, atol=0)
+    assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)
 
     # test axis parameter
     A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))

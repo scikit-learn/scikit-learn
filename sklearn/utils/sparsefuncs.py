@@ -67,19 +67,19 @@ def mean_variance_axis(X, axis):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
@@ -110,31 +110,31 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    last_mean: float array with shape (n_features,)
+    last_mean : float array with shape (n_features,)
         Array of feature-wise means to update with the new data X.
 
-    last_var: float array with shape (n_features,)
+    last_var : float array with shape (n_features,)
         Array of feature-wise var to update with the new data X.
 
-    last_n: int
+    last_n : int
         Number of samples seen so far, excluded X.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Updated feature-wise means.
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Updated feature-wise variances.
 
-    n: int
+    n : int
         Updated number of seen samples.
 
     """
@@ -166,10 +166,10 @@ def inplace_column_scale(X, scale):
 
     Parameters
     ----------
-    X: CSC or CSR matrix with shape (n_samples, n_features)
+    X : CSC or CSR matrix with shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    scale: float array with shape (n_features,)
+    scale : float array with shape (n_features,)
         Array of precomputed feature-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
@@ -208,13 +208,13 @@ def inplace_swap_row_csc(X, m, n):
 
     Parameters
     ----------
-    X: scipy.sparse.csc_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     for t in [m, n]:
@@ -237,13 +237,13 @@ def inplace_swap_row_csr(X, m, n):
 
     Parameters
     ----------
-    X: scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     for t in [m, n]:
@@ -295,10 +295,10 @@ def inplace_swap_row(X, m, n):
     X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     if isinstance(X, sp.csc_matrix):
@@ -318,7 +318,7 @@ def inplace_swap_column(X, m, n):
     X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
         Matrix whose two columns are to be swapped.
 
-    m: int
+    m : int
         Index of the column of X to be swapped.
 
     n : int
@@ -344,16 +344,16 @@ def min_max_axis(X, axis):
     X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
     Returns
     -------
 
-    mins: float array with shape (n_features,)
+    mins : float array with shape (n_features,)
         Feature-wise minima
 
-    maxs: float array with shape (n_features,)
+    maxs : float array with shape (n_features,)
         Feature-wise maxima
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
