@@ -291,7 +291,6 @@ def davies_bouldin_index(X, labels):
     n_labels = len(le.classes_)
 
     check_number_of_labels(n_labels, n_samples)
-    clusters_data = {}
     intra_dists = np.zeros(n_labels)
     centroids = np.zeros((n_labels, len(X[0])), np.float32)
     for k in range(n_labels):
@@ -301,11 +300,10 @@ def davies_bouldin_index(X, labels):
         intra_dists[k] = np.average(pairwise_distances(cluster_k, [mean_k]))
     centroid_distances = pairwise_distances(centroids)
     with np.errstate(divide='ignore', invalid='ignore'):
-        if np.all((intra_dists[:, None] + intra_dists)==0.0) or \
+        if np.all((intra_dists[:, None] + intra_dists) == 0.0) or \
            np.all(centroid_distances == 0.0):
-           return 0.0
+            return 0.0
         scores = (intra_dists[:, None] + intra_dists)/centroid_distances
         # remove inf values
         scores[scores == np.inf] = np.nan
         return np.mean(np.nanmax(scores, axis=1))
-
