@@ -1610,7 +1610,6 @@ Where :math:`D_{ij}` is the ratio between the within distances in clusters
   >>> from sklearn import datasets
   >>> dataset = datasets.load_iris()
   >>> X = dataset.data
-  >>> y = dataset.target
 
 In normal usage, the Davies-Bouldin index is applied to the results of a
 cluster analysis.
