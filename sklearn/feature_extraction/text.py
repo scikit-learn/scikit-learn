@@ -647,17 +647,18 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     --------
     >>> from sklearn.feature_extraction import text
     >>> vect = text.CountVectorizer()
-    >>> vect.fit(['learning machine learning in python'])
+    >>> X = ['learning machine learning in python']
+    >>> vect.fit(X)
     CountVectorizer(analyzer=u'word', binary=False, decode_error=u'strict',
         dtype=<type 'numpy.int64'>, encoding=u'utf-8', input=u'content',
         lowercase=True, max_df=1.0, max_features=None, min_df=1,
         ngram_range=(1, 1), preprocessor=None, stop_words=None,
         strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
         tokenizer=None, vocabulary=None)
-    >>> vect.fit_transform(['learning machine learning in python'])
+    >>> vect.fit_transform(X)
     <1x4 sparse matrix of type '<type 'numpy.int64'>'
 	with 4 stored elements in Compressed Sparse Row format>
-    >>> print(vect.fit_transform(['learning machine learning in python']))
+    >>> print(vect.fit_transform(X))
     (0, 1)	2
     (0, 2)	1
     (0, 0)	1
@@ -1263,7 +1264,8 @@ class TfidfVectorizer(CountVectorizer):
     --------
     >>> from sklearn.feature_extraction import text
     >>> vect = text.TfidfVectorizer()
-    >>> vect.fit(['learning machine learning in python'])
+    >>> X = ['learning machine learning in python']
+    >>> vect.fit(X)
     TfidfVectorizer(analyzer=u'word', binary=False, decode_error=u'strict',
         dtype=<type 'numpy.int64'>, encoding=u'utf-8', input=u'content',
         lowercase=True, max_df=1.0, max_features=None, min_df=1,
@@ -1271,10 +1273,10 @@ class TfidfVectorizer(CountVectorizer):
         stop_words=None, strip_accents=None, sublinear_tf=False,
         token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None, use_idf=True,
         vocabulary=None)
-    >>> vect.fit_transform(['learning machine learning in python'])
+    >>> vect.fit_transform(X)
     <1x4 sparse matrix of type '<type 'numpy.float64'>'
 	with 4 stored elements in Compressed Sparse Row format>
-    >>> print(vect.fit_transform(['learning machine learning in python']))
+    >>> print(vect.fit_transform(X))
     (0, 3)	0.377964473009
     (0, 0)	0.377964473009
     (0, 2)	0.377964473009
