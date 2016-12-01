@@ -36,6 +36,7 @@ from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
            'KFold',
+           'RepeatedKFold',
            'GroupKFold',
            'LeaveOneGroupOut',
            'LeaveOneOut',
@@ -419,6 +420,71 @@ class KFold(_BaseKFold):
             current = stop
 
 
+class RepeatedKFold(_BaseKFold):
+    """ Repeated KFold cross-validation
+
+    To repeat KFold n times with different split at each repetition
+    (by default).
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_reps : int, default=2
+        Number of times KFold needs to be repeated.
+
+    n_splits : int, default=3
+        Number of folds. Must be atleast 2.
+
+    shuffle : boolean, default=True
+        Whether to shuffle the data before splitting.
+
+    random_state: None, int or RandomState
+        When shuffle=True, psedo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import RepeatedKFold
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> rkf = RepeatedKFold(n_splits=2)
+    >>> rkf.get_n_splits()
+    2
+    >>> for train_index, test_index in rkf.split(X):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ('TRAIN:', array([0, 1]), 'TEST:', array([2, 3]))
+    ('TRAIN:', array([2, 3]), 'TEST:', array([0, 1]))
+    ('TRAIN:', array([0, 3]), 'TEST:', array([1, 2]))
+    ('TRAIN:', array([1, 2]), 'TEST:', array([0, 3]))
+    """
+
+    def __init__(self, n_reps=2, n_splits=3, shuffle=True,
+                 random_state=None):
+        if random_state is None:
+            random_state = check_random_state(random_state)
+        self.n_reps = n_reps
+        super(RepeatedKFold, self).__init__(n_splits, shuffle, random_state)
+
+    def _iter_test_indices(self, X, y=None, groups=None):
+        n_samples = _num_samples(X)
+
+        for _ in range(self.n_reps):
+            indices = np.arange(n_samples)
+            if self.shuffle:
+                check_random_state(self.random_state).shuffle(indices)
+
+            n_splits = self.n_splits
+            fold_sizes = (n_samples // n_splits) * \
+                np.ones(n_splits, dtype=np.int)
+            fold_sizes[:n_samples % n_splits] += 1
+            current = 0
+            for fold_size in fold_sizes:
+                start, stop = current, current + fold_size
+                yield indices[start:stop]
+                current = stop
+
+
 class GroupKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
@@ -465,6 +531,7 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
+
     def __init__(self, n_splits=3):
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
@@ -687,6 +754,7 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
+
     def __init__(self, n_splits=3):
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
@@ -1492,6 +1560,7 @@ class PredefinedSplit(BaseCrossValidator):
 
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""
+
     def __init__(self, cv):
         self.cv = list(cv)
 
@@ -1702,6 +1771,7 @@ def train_test_split(*arrays, **options):
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests
+
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params
