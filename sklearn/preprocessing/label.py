@@ -285,7 +285,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array of shape (n_samples,) or (n_samples, n_classes)
+        y : array of shape [n_samples,] or [n_samples, n_classes]
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification.
 
@@ -308,13 +308,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """Fit label binarizer and transform multi-class labels to binary
         labels.
 
-        The output of transform is sometimes referred to by some authors as
+        The output of transform is sometimes referred to    as
         the 1-of-K coding scheme.
 
         Parameters
         ----------
-        y : array or sparse matrix of shape (n_samples,) or \
-(n_samples, n_classes)
+        y : array or sparse matrix of shape [n_samples,] or \
+            [n_samples, n_classes]
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification. Sparse matrix can be
             CSR, CSC, COO, DOK, or LIL.
@@ -334,8 +334,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array or sparse matrix of shape (n_samples,) or \
-(n_samples, n_classes)
+        y : array or sparse matrix of shape [n_samples,] or \
+            [n_samples, n_classes]
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification. Sparse matrix can be
             CSR, CSC, COO, DOK, or LIL.
