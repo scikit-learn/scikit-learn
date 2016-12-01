@@ -218,11 +218,11 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     spmatrix : scipy sparse matrix
         Input to validate and convert.
 
-    accept_sparse : string, list of strings or boolean (default=None)
+    accept_sparse : string, boolean or list/tuple of strings (default=False)
         String[s] representing allowed sparse matrix formats ('csc',
         'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). If the input is sparse but
         not in the allowed format, it will be converted to the first listed
-        format. True allows the input to be any format. False or None means
+        format. True allows the input to be any format. False means
         that a sparse matrix input will raise an error.
 
     dtype : string, type or None (default=none)
@@ -245,10 +245,16 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     changed_format = False
 
-    if isinstance(accept_sparse, str):
+    if isinstance(accept_sparse, six.string_types):
         accept_sparse = [accept_sparse]
 
     if accept_sparse in [None, False]:
+        if accept_sparse is None:
+            warnings.warn(
+                    "Passing None to parameter 'accept_sparse' is "
+                    "deprecated in 0.19. Use False instead.",
+                    DeprecationWarning)
+
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
                         'convert to a dense numpy array.')
@@ -261,8 +267,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
             changed_format = True
     elif accept_sparse is not True:
         # any other type
-        raise ValueError(("Invalid parameter "
-                          "'accept_sparse={}'").format(accept_sparse))
+        raise ValueError(("Parameter 'accept_sparse' should be a string, "
+                          "boolean or list of strings. You provided "
+                          "'accept_sparse={}'.").format(accept_sparse))
 
     if dtype != spmatrix.dtype:
         # convert dtype
@@ -280,7 +287,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
-def check_array(array, accept_sparse=None, dtype="numeric", order=None,
+def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
                 warn_on_dtype=False, estimator=None):
@@ -295,11 +302,11 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     array : object
         Input object to check / convert.
 
-    accept_sparse : string, list of strings or boolean (default=None)
+    accept_sparse : string, boolean or list/tuple of strings (default=False)
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
         it will be converted to the first listed format. True allows the input
-        to be any format. False or None means that a sparse matrix input will
+        to be any format. False means that a sparse matrix input will
         raise an error.
 
     dtype : string, type, list of types or None (default="numeric")
@@ -439,7 +446,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     return array
 
 
-def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
+def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
               copy=False, force_all_finite=True, ensure_2d=True,
               allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
@@ -460,11 +467,12 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
     y : nd-array, list or sparse matrix
         Labels.
 
-    accept_sparse : string, list of string or None (default=None)
+    accept_sparse : string, boolean or list of string (default=False)
         String[s] representing allowed sparse matrix formats, such as 'csc',
-        'csr', etc.  None means that sparse matrix input will raise an error.
-        If the input is sparse but not in the allowed format, it will be
-        converted to the first listed format.
+        'csr', etc. If the input is sparse but not in the allowed format,
+        it will be converted to the first listed format. True allows the input
+        to be any format. False means that a sparse matrix input will
+        raise an error.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.

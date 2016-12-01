@@ -336,7 +336,8 @@ def test_check_array_accept_sparse_type_exception():
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=None)
 
-    msg = "Invalid parameter 'accept_sparse={}'"
+    msg = "Parameter 'accept_sparse' should be a string, " \
+          "boolean or list of strings. You provided 'accept_sparse={}'."
     assert_raise_message(ValueError, msg.format([]),
                          check_array, X_csr, accept_sparse=[])
     assert_raise_message(ValueError, msg.format(()),
@@ -348,11 +349,22 @@ def test_check_array_accept_sparse_type_exception():
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=[invalid_type])
 
-    # don't raise errors
+    # Test deprecation of 'None'
+    msg = "Passing None to parameter 'accept_sparse' is " \
+          "deprecated in 0.19. Use False instead."
+
+    assert_raise_message((DeprecationWarning, TypeError), msg,
+                         check_array, X_csr, accept_sparse=None)
+
+
+def test_check_array_accept_sparse_no_exception():
+    X = [[1, 2], [3, 4]]
+    X_csr = sp.csr_matrix(X)
+
     check_array(X_csr, accept_sparse=True)
     check_array(X_csr, accept_sparse='csr')
     check_array(X_csr, accept_sparse=['csr'])
-    check_array(X_csr, accept_sparse=('csr'))
+    check_array(X_csr, accept_sparse=('csr',))
 
 
 def test_check_array_min_samples_and_features_messages():
