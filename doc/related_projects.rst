@@ -102,7 +102,8 @@ and tasks.
 
 - `sparkit-learn <https://github.com/lensacom/sparkit-learn>`_ Scikit-learn functionality and API on PySpark.
 
-- `keras <https://github.com/fchollet/keras>`_ Deep Learning library for theano and tensorflow.
+- `keras <https://github.com/fchollet/keras>`_ Deep Learning library capable of
+  running on top of either TensorFlow or Theano.
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
