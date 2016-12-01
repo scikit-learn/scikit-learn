@@ -44,7 +44,7 @@ def test_lle_simple_grid():
 
     # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(5), repeat=2)))
-    X = X + 1e-10 * rng.uniform(size=X.shape)
+    X += 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
                                           n_components=n_components,

@@ -163,7 +163,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 
     alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float64))
 
-    X = (1 - weights) * X
+    X *= (1 - weights)
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', ConvergenceWarning)
         alphas_, _, coef_ = lars_path(X, y,

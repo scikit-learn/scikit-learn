@@ -105,7 +105,7 @@ def _cg(fhess_p, fgrad, maxiter, tol):
         dri1 = np.dot(ri, ri)
         betai = dri1 / dri0
         psupi = -ri + betai * psupi
-        i = i + 1
+        i += 1
         dri0 = dri1          # update np.dot(ri,ri) for next time.
 
     return xsupi
@@ -195,7 +195,7 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
                 warnings.warn('Line Search failed')
                 break
 
-        xk = xk + alphak * xsupi        # upcast if necessary
+        xk += alphak * xsupi  # upcast if necessary
         k += 1
 
     if warn and k >= maxiter:

@@ -50,9 +50,9 @@ def test_neighbors_accuracy_with_n_candidates():
 
             intersection = np.intersect1d(ranks, neighbors).shape[0]
             ratio = intersection / float(n_points)
-            accuracies[i] = accuracies[i] + ratio
+            accuracies[i] += ratio
 
-        accuracies[i] = accuracies[i] / float(n_iter)
+        accuracies[i] /= float(n_iter)
     # Sorted accuracies should be equal to original accuracies
     assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
@@ -84,9 +84,9 @@ def test_neighbors_accuracy_with_n_estimators():
 
             intersection = np.intersect1d(ranks, neighbors).shape[0]
             ratio = intersection / float(n_points)
-            accuracies[i] = accuracies[i] + ratio
+            accuracies[i] += ratio
 
-        accuracies[i] = accuracies[i] / float(n_iter)
+        accuracies[i] /= float(n_iter)
     # Sorted accuracies should be equal to original accuracies
     assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")

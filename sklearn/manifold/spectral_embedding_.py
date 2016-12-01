@@ -223,7 +223,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     n_nodes = adjacency.shape[0]
     # Whether to drop the first eigenvector
     if drop_first:
-        n_components = n_components + 1
+        n_components += 1
 
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"

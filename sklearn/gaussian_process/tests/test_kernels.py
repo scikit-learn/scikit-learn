@@ -169,7 +169,7 @@ def test_kernel_anisotropic():
     assert_almost_equal(K, K2)
 
     # Check getting and setting via theta
-    kernel.theta = kernel.theta + np.log(2)
+    kernel.theta += np.log(2)
     assert_array_equal(kernel.theta, np.log([6.0, 1.0, 4.0]))
     assert_array_equal(kernel.k2.length_scale, [1.0, 4.0])
 

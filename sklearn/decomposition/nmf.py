@@ -434,7 +434,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
                                                        alpha, l1_ratio,
                                                        sparseness, beta, eta)
         if iterW == 1:
-            tolW = 0.1 * tolW
+            tolW *= 0.1
 
         # update H
         H, gradH, iterH = _update_projected_gradient_h(X, W, H, tolH,
@@ -442,7 +442,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
                                                        alpha, l1_ratio,
                                                        sparseness, beta, eta)
         if iterH == 1:
-            tolH = 0.1 * tolH
+            tolH *= 0.1
 
     H[H == 0] = 0   # fix up negative zeros
 

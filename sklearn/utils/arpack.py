@@ -1091,7 +1091,7 @@ def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
                np.imag(sigma) == 0):
                 A = np.copy(A)
             else:
-                A = A + 0j
+                A += 0j
             A.flat[::A.shape[1] + 1] -= sigma
             return LuInv(A).matvec
         elif isspmatrix(A):
