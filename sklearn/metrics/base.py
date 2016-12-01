@@ -158,10 +158,11 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
 
     binary_metric : callable, the binary metric function to use.
         Accepts the following as input
-            y_true' : array, shape = [n_samples']
-                Some sub-array of y_true
-            y_score' : array, shape = [n_samples']
-                Target scores corresponding to the probability estimates
+            y_true_target : array, shape = [n_samples_target]
+                Some sub-array of y_true for a pair of classes designated
+                positive and negative in the one-vs-one scheme.
+            y_score_target : array, shape = [n_samples_target]
+                Scores corresponding to the probability estimates
                 of a sample belonging to the designated positive class label
 
     Returns

@@ -981,13 +981,37 @@ F1 score, ROC doesn't require optimizing a threshold for each label.
 
 The :func:`roc_auc_score` function can also be used in multi-class
 classification. Two averaging strategies are currently supported: the
-Hand & Till (2001) one-vs-one algorithm computes the average of the pairwise
-ROC AUC scores, and the Provost & Domingos (2001) one-vs-rest algorithm
+[HT2001]_ one-vs-one algorithm computes the average of the pairwise
+ROC AUC scores, and the [PD2000]_ one-vs-rest algorithm
 computes the average of the ROC AUC scores for each class against
 all other classes. In both cases, the predicted class labels are provided in
-an array with values from 0 to `n_classes`, and the scores correspond to the
+an array with values from 0 to ``n_classes``, and the scores correspond to the
 probability estimates that a sample belongs to a particular class.
 
+**One-vs-one Algorithm**
+[HT2001]_: AUC of each class against each other, computing
+the AUC of all possible pairwise combinations :math:`c(c-1)` for a
+:math:`c`-dimensional classifier.
+
+Using the uniform class distribution:
+
+.. math:: \frac{1}{c(c-1)}\sum_{j=1}^c\sum_{k \neq j}^c \textnormal{AUC}(j, k)
+        
+Using the a priori class distribution:
+
+.. math:: \frac{1}{c(c-1)}\sum_{j=1}^c\sum_{k \neq j}^c p(j)\textnormal{AUC}(j, k)
+
+**One-vs-rest Algorithm**
+[PD2000]_: AUC of each class against the rest. This treats
+a :math:`c`-dimensional classifier as :math:`c` two-dimensional classifiers.
+
+Using the uniform class distribution:
+
+.. math:: \frac{\sum_{j=1}^c \textnormal{AUC}(j, \textnormal{rest}_j)}{c}
+
+Using the a priori class distribution
+
+.. math:: \frac{\sum_{j=1}^c p(j)\textnormal{AUC}(j, \textnormal{rest}_j)}{c}
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
@@ -1007,6 +1031,18 @@ probability estimates that a sample belongs to a particular class.
   * See :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     for an example of using ROC to
     model species distribution.
+
+.. topic:: References:
+
+    .. [HT2001] Hand, D.J. and Till, R.J., 2001. `A simple generalisation
+       of the area under the ROC curve for multiple class classification problems.
+       <http://link.springer.com/article/10.1023/A:1010920819831>`_
+       Machine learning, 45(2), pp.171-186.
+    .. [PD2000] Provost, F. and Domingos, P., 2000.
+       `Well-trained PETs: Improving probability estimation trees.
+       <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.33.309&rep=rep1&type=pdf>`_
+       CeDER Working Paper #IS-00-04, Stern School of Business, New
+       York University, NY 10012.
 
 .. _zero_one_loss:
 
