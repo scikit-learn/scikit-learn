@@ -641,7 +641,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
           - occurred in too few documents (`min_df`)
           - were cut off by feature selection (`max_features`).
 
-        This is only available if no vocabulary was given.
+        This is only available if no vocabulary was given 123123.
 
     Examples
     --------
@@ -657,7 +657,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         tokenizer=None, vocabulary=None)
     >>> vect.fit_transform(X)
     <1x4 sparse matrix of type '<type 'numpy.int64'>'
-	with 4 stored elements in Compressed Sparse Row format>
+    with 4 stored elements in Compressed Sparse Row format>
     >>> print(vect.fit_transform(X))
     (0, 1)	2
     (0, 2)	1
@@ -1275,7 +1275,7 @@ class TfidfVectorizer(CountVectorizer):
         vocabulary=None)
     >>> vect.fit_transform(X)
     <1x4 sparse matrix of type '<type 'numpy.float64'>'
-	with 4 stored elements in Compressed Sparse Row format>
+    with 4 stored elements in Compressed Sparse Row format>
     >>> print(vect.fit_transform(X))
     (0, 3)	0.377964473009
     (0, 0)	0.377964473009
