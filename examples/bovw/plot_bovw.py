@@ -17,7 +17,6 @@ References
        pattern analysis and machine intelligence 31.11 (2009): 2032-2047.
 
 """
-print(__doc__)
 
 # Author: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD
@@ -34,6 +33,9 @@ from sklearn.metrics import confusion_matrix
 from sklearn.externals.joblib import Parallel, delayed
 
 from tudarmstadt import fetch_tu_darmstadt
+
+
+print(__doc__)
 
 
 def proc_image(path_image, rng, patch_size=(9, 9), max_patches=10000):
