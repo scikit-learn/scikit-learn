@@ -91,6 +91,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
     lambda_ : float
        estimated precision of the weights.
 
+    sigma_ : array, shape = (n_features, n_features)
+        estimated variance-covariance matrix of the weights
+
     scores_ : float
         if computed, value of the objective function (to be maximized)
 
@@ -109,6 +112,16 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Notes
     -----
     See examples/linear_model/plot_bayesian_ridge.py for an example.
+
+    References
+    ----------
+    D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
+    Vol. 4, No. 3, 1992.
+
+    R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
+    http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
+    Their beta is our self.alpha_
+    Their alpha is our self.lambda_
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -142,8 +155,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self : returns an instance of self.
         """
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
+        self.X_offset_ = X_offset_
+        self.X_scale_ = X_scale_
         n_samples, n_features = X.shape
 
         # Initialization of the values of the parameters
@@ -171,7 +186,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
             # coef_ = sigma_^-1 * XT * y
             if n_samples > n_features:
                 coef_ = np.dot(Vh.T,
-                               Vh / (eigen_vals_ + lambda_ / alpha_)[:, None])
+                               Vh / (eigen_vals_ +
+                                     lambda_ / alpha_)[:, np.newaxis])
                 coef_ = np.dot(coef_, XT_y)
                 if self.compute_score:
                     logdet_sigma_ = - np.sum(
@@ -216,9 +232,44 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.alpha_ = alpha_
         self.lambda_ = lambda_
         self.coef_ = coef_
+        sigma_ = np.dot(Vh.T,
+                        Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis])
+        self.sigma_ = (1. / alpha_) * sigma_
 
-        self._set_intercept(X_offset, y_offset, X_scale)
+        self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
+
+    def predict(self, X, return_std=False):
+        """Predict using the linear model.
+
+        In addition to the mean of the predictive distribution, also its
+        standard deviation can be returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
+
+        return_std : boolean, optional
+            Whether to return the standard deviation of posterior prediction.
+
+        Returns
+        -------
+        y_mean : array, shape = (n_samples,)
+            Mean of predictive distribution of query points.
+
+        y_std : array, shape = (n_samples,)
+            Standard deviation of predictive distribution of query points.
+        """
+        y_mean = self._decision_function(X)
+        if return_std is False:
+            return y_mean
+        else:
+            if self.normalize:
+                X = (X - self.X_offset_) / self.X_scale_
+            sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
+            y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
+            return y_mean, y_std
 
 
 ###############################################################################
@@ -323,6 +374,19 @@ class ARDRegression(LinearModel, RegressorMixin):
     Notes
     --------
     See examples/linear_model/plot_ard.py for an example.
+
+    References
+    ----------
+    D. J. C. MacKay, Bayesian nonlinear modeling for the prediction
+    competition, ASHRAE Transactions, 1994.
+
+    R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
+    http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
+    Their beta is our self.alpha_
+    Their alpha is our self.lambda_
+    ARD is a little different than the slide: only dimensions/features for
+    which self.lambda_ < self.threshold_lambda are kept and the rest are
+    discarded.
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -365,7 +429,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         # Launch the convergence loop
@@ -417,7 +481,7 @@ class ARDRegression(LinearModel, RegressorMixin):
                 s = (lambda_1 * np.log(lambda_) - lambda_2 * lambda_).sum()
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
                 s += 0.5 * (fast_logdet(sigma_) + n_samples * log(alpha_) +
-                                                np.sum(np.log(lambda_)))
+                            np.sum(np.log(lambda_)))
                 s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_ ** 2).sum())
                 self.scores_.append(s)
 
@@ -432,5 +496,38 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
         self.lambda_ = lambda_
-        self._set_intercept(X_offset, y_offset, X_scale)
+        self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
+
+    def predict(self, X, return_std=False):
+        """Predict using the linear model.
+
+        In addition to the mean of the predictive distribution, also its
+        standard deviation can be returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
+
+        return_std : boolean, optional
+            Whether to return the standard deviation of posterior prediction.
+
+        Returns
+        -------
+        y_mean : array, shape = (n_samples,)
+            Mean of predictive distribution of query points.
+
+        y_std : array, shape = (n_samples,)
+            Standard deviation of predictive distribution of query points.
+        """
+        y_mean = self._decision_function(X)
+        if return_std is False:
+            return y_mean
+        else:
+            if self.normalize:
+                X = (X - self.X_offset_) / self.X_scale_
+            X = X[:, self.lambda_ < self.threshold_lambda]
+            sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
+            y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
+            return y_mean, y_std
