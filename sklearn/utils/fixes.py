@@ -437,7 +437,7 @@ if np_version < (1, 7, 0):
         allclose
         Notes
         -----
-        .. versionadded:: 1.7.0
+        Ported over from numpy version 1.11.0
         For finite values, isclose uses the following equation to test whether
         two floating point values are equivalent.
          absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
@@ -446,15 +446,15 @@ if np_version < (1, 7, 0):
         some rare cases.
         Examples
         --------
-        >>> np.isclose([1e10,1e-7], [1.00001e10,1e-8])
+        >>> isclose([1e10,1e-7], [1.00001e10,1e-8])
         array([True, False])
-        >>> np.isclose([1e10,1e-8], [1.00001e10,1e-9])
+        >>> isclose([1e10,1e-8], [1.00001e10,1e-9])
         array([True, True])
-        >>> np.isclose([1e10,1e-8], [1.0001e10,1e-9])
+        >>> isclose([1e10,1e-8], [1.0001e10,1e-9])
         array([False, True])
-        >>> np.isclose([1.0, np.nan], [1.0, np.nan])
+        >>> isclose([1.0, np.nan], [1.0, np.nan])
         array([True, False])
-        >>> np.isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
+        >>> isclose([1.0, np.nan], [1.0, np.nan], equal_nan=True)
         array([True, True])
         """
         def within_tol(x, y, atol, rtol):
