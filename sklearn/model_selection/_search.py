@@ -532,16 +532,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.transform(Xt)
 
-    @property
-    def _param_iterable(self):
-        """To generate parameter iterables for multiple iterations"""
-        if hasattr(self, 'param_grid'):
-            return ParameterGrid(self.param_grid)
-        else:
-            return ParameterSampler(
-                self.param_distributions, self.n_iter,
-                random_state=self.random_state)
-
     def fit(self, X, y=None, groups=None):
         """Run fit with all sets of parameters.
 
@@ -947,6 +937,11 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
+    @property
+    def _param_iterable(self):
+        """To generate parameter iterables for multiple iterations"""
+            return ParameterGrid(self.param_grid)
+
 
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
@@ -1169,3 +1164,10 @@ class RandomizedSearchCV(BaseSearchCV):
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
              return_train_score=return_train_score)
+
+    @property
+    def _param_iterable(self):
+        """To generate parameter iterables for multiple iterations"""
+            return ParameterSampler(
+                self.param_distributions, self.n_iter,
+                random_state=self.random_state)
