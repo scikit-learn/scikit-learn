@@ -881,7 +881,8 @@ class Memory(Logger):
         """
         if warn:
             self.warn('Flushing completely the cache')
-        rm_subdirs(self.cachedir)
+        if self.cachedir is not None:
+            rm_subdirs(self.cachedir)
 
     def eval(self, func, *args, **kwargs):
         """ Eval function func with arguments `*args` and `**kwargs`,

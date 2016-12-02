@@ -46,7 +46,8 @@ gmm.fit(X)
 dpgmm = mixture.DPGMM(n_components=5, covariance_type='full')
 dpgmm.fit(X)
 
-color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
+color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold',
+                              'darkorange'])
 
 for i, (clf, title) in enumerate([(gmm, 'GMM'),
                                   (dpgmm, 'Dirichlet Process GMM')]):

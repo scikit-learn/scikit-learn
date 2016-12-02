@@ -244,6 +244,8 @@ class VectorizerMixin(object):
     def _validate_vocabulary(self):
         vocabulary = self.vocabulary
         if vocabulary is not None:
+            if isinstance(vocabulary, set):
+                vocabulary = sorted(vocabulary)
             if not isinstance(vocabulary, Mapping):
                 vocab = {}
                 for i, t in enumerate(vocabulary):
@@ -548,7 +550,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
-        Only applies if ``analyzer == 'word'``.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
@@ -1177,6 +1178,9 @@ class TfidfVectorizer(CountVectorizer):
 
     Attributes
     ----------
+    vocabulary_ : dict
+        A mapping of terms to feature indices.
+
     idf_ : array, shape = [n_features], or None
         The learned idf vector (global term weights)
         when ``use_idf`` is set to True, None otherwise.

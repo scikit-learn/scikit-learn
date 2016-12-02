@@ -235,7 +235,7 @@ def test_enet_path():
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have seleted an elastic-net
+    # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
@@ -247,7 +247,7 @@ def test_enet_path():
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have seleted an elastic-net
+    # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
@@ -603,16 +603,6 @@ def test_random_descent():
     assert_raises(ValueError, clf_random.fit, X, y)
 
 
-def test_deprection_precompute_enet():
-    # Test that setting precompute="auto" gives a Deprecation Warning.
-
-    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
-    clf = ElasticNet(precompute="auto")
-    assert_warns(DeprecationWarning, clf.fit, X, y)
-    clf = Lasso(precompute="auto")
-    assert_warns(DeprecationWarning, clf.fit, X, y)
-
-
 def test_enet_path_positive():
     # Test that the coefs returned by positive=True in enet_path are positive
 
@@ -641,19 +631,14 @@ def test_check_input_false():
     clf.fit(X, y, check_input=False)
     X = check_array(X, order='F', dtype='float32')
     clf.fit(X, y, check_input=True)
-    # Check that an error is raised if data is provided in the wrong format,
+    # Check that an error is raised if data is provided in the wrong dtype,
     # because of check bypassing
     assert_raises(ValueError, clf.fit, X, y, check_input=False)
 
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
-    clf.fit(X, y, check_input=False)
-    coef_false = clf.coef_
-    clf.fit(X, y, check_input=True)
-    coef_true = clf.coef_
-    assert_raises(AssertionError, assert_array_almost_equal,
-                  coef_true, coef_false)
+    assert_raises(ValueError, clf.fit, X, y, check_input=False)
 
 
 def test_overrided_gram_matrix():
@@ -666,3 +651,16 @@ def test_overrided_gram_matrix():
                          " to fit intercept, "
                          "or X was normalized : recomputing Gram matrix.",
                          clf.fit, X, y)
+
+
+def test_lasso_non_float_y():
+    X = [[0, 0], [1, 1], [-1, -1]]
+    y = [0, 1, 2]
+    y_float = [0.0, 1.0, 2.0]
+
+    for model in [ElasticNet, Lasso]:
+        clf = model(fit_intercept=False)
+        clf.fit(X, y)
+        clf_float = model(fit_intercept=False)
+        clf_float.fit(X, y_float)
+        assert_array_equal(clf.coef_, clf_float.coef_)

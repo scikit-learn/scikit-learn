@@ -2,7 +2,7 @@
 
   <div class="container-index">
 
-Documentation of scikit-learn 0.17.dev0
+Documentation of scikit-learn 0.18.dev0
 =======================================
 
 .. raw:: html
@@ -28,8 +28,9 @@ Documentation of scikit-learn 0.17.dev0
                 <!-- doc versions -->
                     <h2>Other Versions</h2>
                     <ul>
-                        <li>scikit-learn 0.17 (development)</li>
-                        <li><a href="http://scikit-learn.org/stable/documentation.html">scikit-learn 0.16 (stable)</a></li>
+                        <li>scikit-learn 0.18 (development)</li>
+                        <li><a href="http://scikit-learn.org/stable/documentation.html">scikit-learn 0.17 (stable)</a></li>
+                        <li><a href="http://scikit-learn.org/0.16/documentation.html">scikit-learn 0.16</a></li>
                         <li><a href="http://scikit-learn.org/0.15/documentation.html">scikit-learn 0.15</a></li>
                     </ul>
 

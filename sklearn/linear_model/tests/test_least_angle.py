@@ -3,7 +3,7 @@ from nose.tools import assert_equal
 import numpy as np
 from scipy import linalg
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings, assert_warns
 from sklearn.utils.testing import TempMemmap
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model.least_angle import _lars_path_residues
 
@@ -333,7 +333,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
-    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
+    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-4, normalize=False)
     cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = objective_function(cd_coef_)
 
@@ -360,6 +360,7 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert_equal(len(lars.alphas_), 7)
 
 
+@ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
     X = diabetes.data
@@ -369,7 +370,7 @@ def test_multitarget():
     for estimator in (linear_model.LassoLars(), linear_model.Lars()):
         estimator.fit(X, Y)
         Y_pred = estimator.predict(X)
-        Y_dec = estimator.decision_function(X)
+        Y_dec = assert_warns(DeprecationWarning, estimator.decision_function, X)
         assert_array_almost_equal(Y_pred, Y_dec)
         alphas, active, coef, path = (estimator.alphas_, estimator.active_,
                                       estimator.coef_, estimator.coef_path_)
@@ -386,7 +387,7 @@ def test_multitarget():
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
-    # This property is not actually garantied in general and is just a
+    # This property is not actually guaranteed in general and is just a
     # property of the given dataset, with the given steps chosen.
     old_alpha = 0
     lars_cv = linear_model.LassoLarsCV()

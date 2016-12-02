@@ -3,19 +3,23 @@ from nose.tools import assert_equal
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
+from scipy.linalg import eigh
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal
 
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
 from sklearn.manifold.spectral_embedding_ import _graph_is_connected
+from sklearn.manifold.spectral_embedding_ import _graph_connected_component
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.utils.graph import graph_laplacian
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
 
 
 # non centered, sparse centers to check the
@@ -56,6 +60,15 @@ def test_spectral_embedding_two_components(seed=36):
     # second component
     affinity[n_sample::,
              n_sample::] = np.abs(random_state.randn(n_sample, n_sample)) + 2
+
+    # Test of internal _graph_connected_component before connection
+    component = _graph_connected_component(affinity, 0)
+    assert_true(component[:n_sample].all())
+    assert_true(not component[n_sample:].any())
+    component = _graph_connected_component(affinity, -1)
+    assert_true(not component[:n_sample].any())
+    assert_true(component[n_sample:].all())
+
     # connection
     affinity[0, n_sample + 1] = 1
     affinity[n_sample + 1, 0] = 1
@@ -191,4 +204,24 @@ def test_spectral_embedding_deterministic():
     sims = rbf_kernel(data)
     embedding_1 = spectral_embedding(sims)
     embedding_2 = spectral_embedding(sims)
+    assert_array_almost_equal(embedding_1, embedding_2)
+
+
+def test_spectral_embedding_unnormalized():
+    # Test that spectral_embedding is also processing unnormalized laplacian correctly
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    n_components = 8
+    embedding_1 = spectral_embedding(sims,
+                                     norm_laplacian=False,
+                                     n_components=n_components,
+                                     drop_first=False)
+
+    # Verify using manual computation with dense eigh
+    laplacian, dd = graph_laplacian(sims, normed=False, return_diag=True)
+    _, diffusion_map = eigh(laplacian)
+    embedding_2 = diffusion_map.T[:n_components] * dd
+    embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
+
     assert_array_almost_equal(embedding_1, embedding_2)

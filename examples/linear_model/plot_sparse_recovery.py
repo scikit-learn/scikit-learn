@@ -56,7 +56,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.utils.extmath import pinvh
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 
 
 def mutual_incoherence(X_relevant, X_irelevant):

@@ -7,14 +7,18 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import warnings
 from sklearn.base import BaseEstimator
-from sklearn.learning_curve import learning_curve, validation_curve
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import make_classification
-from sklearn.cross_validation import KFold
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn.learning_curve import learning_curve, validation_curve
+    from sklearn.cross_validation import KFold
+
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 

@@ -49,7 +49,7 @@ from scipy import linalg
 
 from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
     log_likelihood, empirical_covariance
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 
 ###############################################################################

@@ -137,7 +137,9 @@ cdef class DistanceMetric:
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
     ==============  ====================  ========  ===============================
 
-    **Metrics intended for two-dimensional vector spaces:**
+    **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
+    distance metric requires data in the form of [latitude, longitude] and both
+    inputs and outputs are in units of radians.
 
     ============  ==================  ========================================
     identifier    class name          distance function

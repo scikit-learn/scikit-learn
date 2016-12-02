@@ -94,11 +94,11 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.path_method = path_method
         self.neighbors_algorithm = neighbors_algorithm
-        self.nbrs_ = NearestNeighbors(n_neighbors=n_neighbors,
-                                      algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
         X = check_array(X)
+        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                      algorithm=self.neighbors_algorithm)
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,

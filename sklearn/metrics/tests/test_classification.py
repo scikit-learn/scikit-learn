@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -46,11 +47,13 @@ from sklearn.metrics import brier_score_loss
 
 
 from sklearn.metrics.classification import _check_targets
-from sklearn.metrics.base import UndefinedMetricWarning
+from sklearn.exceptions import UndefinedMetricWarning
 
+from scipy.spatial.distance import hamming as sp_hamming
 
 ###############################################################################
 # Utilities for testing
+
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -161,8 +164,7 @@ def test_precision_recall_f_binary_single_class():
 
 @ignore_warnings
 def test_precision_recall_f_extra_labels():
-    """Test handling of explicit additional (not in input) labels to PRF
-    """
+    # Test handling of explicit additional (not in input) labels to PRF
     y_true = [1, 3, 3, 2]
     y_pred = [1, 1, 3, 2]
     y_true_bin = label_binarize(y_true, classes=np.arange(5))
@@ -202,7 +204,7 @@ def test_precision_recall_f_extra_labels():
 
 @ignore_warnings
 def test_precision_recall_f_ignored_labels():
-    """Test a subset of labels may be requested for PRF"""
+    # Test a subset of labels may be requested for PRF
     y_true = [1, 1, 2, 3]
     y_pred = [1, 3, 3, 3]
     y_true_bin = label_binarize(y_true, classes=np.arange(5))
@@ -242,7 +244,7 @@ def test_average_precision_score_duplicate_values():
     # Duplicate values with precision-recall require a different
     # processing than when computing the AUC of a ROC, because the
     # precision-recall curve is a decreasing curve
-    # The following situtation corresponds to a perfect
+    # The following situation corresponds to a perfect
     # test statistic, the average_precision_score should be 1
     y_true = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
     y_score = [0, .1, .1, .4, .5, .6, .6, .9, .9, 1, 1]
@@ -323,9 +325,62 @@ def test_cohen_kappa():
     assert_almost_equal(cohen_kappa_score(y1, y2), .8013, decimal=4)
 
 
+@ignore_warnings
 def test_matthews_corrcoef_nan():
     assert_equal(matthews_corrcoef([0], [1]), 0.0)
     assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
+
+
+def test_matthews_corrcoef_against_numpy_corrcoef():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=20)
+    y_pred = rng.randint(0, 2, size=20)
+
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred),
+                        np.corrcoef(y_true, y_pred)[0, 1], 10)
+
+
+def test_matthews_corrcoef():
+    rng = np.random.RandomState(0)
+    y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
+
+    # corrcoef of same vectors must be 1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
+
+    # corrcoef, when the two vectors are opposites of each other, should be -1
+    y_true_inv = ["b" if i == "a" else "a" for i in y_true]
+
+    assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
+    y_true_inv2 = label_binarize(y_true, ["a", "b"]) * -1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
+
+    # For the zero vector case, the corrcoef cannot be calculated and should
+    # result in a RuntimeWarning
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
+
+    # And also for any other vector with 0 variance
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, y_true,
+                               rng.randint(-100, 100) * np.ones(20, dtype=int))
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
+
+    # These two vectors have 0 correlation and hence mcc should be 0
+    y_1 = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
+    y_2 = [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1]
+    assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.)
+
+    # Check that sample weight is able to selectively exclude
+    mask = [1] * 10 + [0] * 10
+    # Now the first half of the vector elements are alone given a weight of 1
+    # and hence the mcc will not be a perfect 0 as in the previous case
+    assert_raises(AssertionError, assert_almost_equal,
+                  matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.)
 
 
 def test_precision_recall_f1_score_multiclass():
@@ -643,14 +698,20 @@ def test_multilabel_hamming_loss():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
     y2 = np.array([[0, 0, 1], [1, 0, 1]])
+    w = np.array([1, 3])
 
     assert_equal(hamming_loss(y1, y2), 1 / 6)
     assert_equal(hamming_loss(y1, y1), 0)
     assert_equal(hamming_loss(y2, y2), 0)
-    assert_equal(hamming_loss(y2, np.logical_not(y2)), 1)
-    assert_equal(hamming_loss(y1, np.logical_not(y1)), 1)
+    assert_equal(hamming_loss(y2, 1 - y2), 1)
+    assert_equal(hamming_loss(y1, 1 - y1), 1)
     assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
     assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
+    assert_equal(hamming_loss(y1, y2, sample_weight=w), 1. / 12)
+    assert_equal(hamming_loss(y1, 1-y2, sample_weight=w), 11. / 12)
+    assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
+    # sp_hamming only works with 1-D arrays
+    assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -807,6 +868,7 @@ def test_precision_recall_f1_score_multilabel_2():
                         0.1666, 2)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_with_an_empty_prediction():
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
@@ -1142,11 +1204,11 @@ def test_hinge_loss_binary():
 
 def test_hinge_loss_multiclass():
     pred_decision = np.array([
-        [0.36, -0.17, -0.58, -0.99],
+        [+0.36, -0.17, -0.58, -0.99],
         [-0.54, -0.37, -0.48, -0.58],
         [-1.45, -0.58, -0.38, -0.17],
         [-0.54, -0.38, -0.48, -0.58],
-        [-2.36, -0.79, -0.27,  0.24],
+        [-2.36, -0.79, -0.27, +0.24],
         [-1.45, -0.58, -0.38, -0.17]
     ])
     y_true = np.array([0, 1, 2, 1, 3, 2])
@@ -1167,10 +1229,10 @@ def test_hinge_loss_multiclass():
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
     y_true = np.array([0, 1, 2, 2])
     pred_decision = np.array([
-        [1.27, 0.034, -0.68, -1.40],
+        [+1.27, 0.034, -0.68, -1.40],
         [-1.45, -0.58, -0.38, -0.17],
-        [-2.36, -0.79, -0.27,  0.24],
-        [-2.36, -0.79, -0.27,  0.24]
+        [-2.36, -0.79, -0.27, +0.24],
+        [-2.36, -0.79, -0.27, +0.24]
     ])
     error_message = ("Please include all labels in y_true "
                      "or pass labels as third argument")
@@ -1181,7 +1243,7 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
 
 def test_hinge_loss_multiclass_with_missing_labels():
     pred_decision = np.array([
-        [0.36, -0.17, -0.58, -0.99],
+        [+0.36, -0.17, -0.58, -0.99],
         [-0.55, -0.38, -0.48, -0.58],
         [-1.45, -0.58, -0.38, -0.17],
         [-0.55, -0.38, -0.48, -0.58],
@@ -1209,12 +1271,12 @@ def test_hinge_loss_multiclass_invariance_lists():
     y_true = ['blue', 'green', 'red',
               'green', 'white', 'red']
     pred_decision = [
-        [0.36, -0.17, -0.58, -0.99],
+        [+0.36, -0.17, -0.58, -0.99],
         [-0.55, -0.38, -0.48, -0.58],
-        [-1.45, -0.58, -0.38,  -0.17],
+        [-1.45, -0.58, -0.38, -0.17],
         [-0.55, -0.38, -0.48, -0.58],
-        [-2.36, -0.79, -0.27,  0.24],
-        [-1.45, -0.58, -0.38,  -0.17]]
+        [-2.36, -0.79, -0.27, +0.24],
+        [-1.45, -0.58, -0.38, -0.17]]
     dummy_losses = np.array([
         1 - pred_decision[0][0] + pred_decision[0][1],
         1 - pred_decision[1][1] + pred_decision[1][2],
@@ -1265,6 +1327,23 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+
+def test_log_loss_pandas_input():
+    # case when input is a pandas series and dataframe gh-5715
+    y_tr = np.array(["ham", "spam", "spam", "ham"])
+    y_pr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TrueInputType, PredInputType in types:
+        # y_pred dataframe, y_true series
+        y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
+        loss = log_loss(y_true, y_pred)
+        assert_almost_equal(loss, 1.0383217, decimal=6)
 
 
 def test_brier_score_loss():

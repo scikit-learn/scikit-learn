@@ -1,4 +1,5 @@
 Diabetes dataset
+================
 
 Notes
 -----
@@ -28,7 +29,7 @@ Data Set Characteristics:
     :S5:
     :S6:
 
-*Note: Each of these 10 feature variables have been mean centered and scaled by the standard deviation times `n_samples` (i.e. the sum of squares of each column totals 1).
+Note: Each of these 10 feature variables have been mean centered and scaled by the standard deviation times `n_samples` (i.e. the sum of squares of each column totals 1).
 
 Source URL:
 http://www4.stat.ncsu.edu/~boos/var.select/diabetes.html

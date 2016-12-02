@@ -24,23 +24,25 @@ from ..externals import six
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
+    .. versionadded:: 0.17
+
     Read more in the :ref:`User Guide <voting_classifier>`.
 
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the `fit` method on the `VotingClassifier` will fit clones
+        Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
         `self.estimators_`.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
-        the sums of the predicted probalities, which is recommended for
+        the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
-        Sequence of weights (`float` or `int`) to weight the occurances of
+        Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
@@ -149,7 +151,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                                       np.argmax(np.bincount(x,
                                                 weights=self.weights)),
                                       axis=1,
-                                      arr=predictions)
+                                      arr=predictions.astype('int'))
 
         maj = self.le_.inverse_transform(maj)
 
@@ -197,7 +199,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         If `voting='soft'`:
           array-like = [n_classifiers, n_samples, n_classes]
-            Class probabilties calculated by each classifier.
+            Class probabilities calculated by each classifier.
         If `voting='hard'`:
           array-like = [n_classifiers, n_samples]
             Class labels predicted by each classifier.

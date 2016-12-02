@@ -1,3 +1,4 @@
+
 """
 The :mod:`sklearn.cross_validation` module includes utilities for cross-
 validation and performance evaluation.
@@ -24,15 +25,26 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
-                               check_array, column_or_1d)
+                               column_or_1d)
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 from .utils.fixes import bincount
+from .gaussian_process.kernels import Kernel as GPKernel
+from .exceptions import FitFailedWarning
+
+
+warnings.warn("This module has been deprecated in favor of the "
+              "model_selection module into which all the refactored classes "
+              "and functions are moved. Also note that the interface of the "
+              "new CV iterators are different from that of this module. "
+              "This module will be removed in 0.20.", DeprecationWarning)
+
 
 __all__ = ['KFold',
+           'LabelKFold',
            'LeaveOneLabelOut',
            'LeaveOneOut',
            'LeavePLabelOut',
@@ -273,15 +285,15 @@ class KFold(_BaseKFold):
         Whether to shuffle the data before splitting into batches.
 
     random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for 
+        When shuffle=True, pseudo-random number generator state used for
         shuffling. If None, use default numpy RNG for shuffling.
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> kf = cross_validation.KFold(4, n_folds=2)
+    >>> kf = KFold(4, n_folds=2)
     >>> len(kf)
     2
     >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
@@ -301,9 +313,11 @@ class KFold(_BaseKFold):
 
     See also
     --------
-    StratifiedKFold: take label information into account to avoid building
+    StratifiedKFold take label information into account to avoid building
     folds with imbalanced class distributions (for binary or multiclass
     classification tasks).
+
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, n, n_folds=3, shuffle=False,
@@ -339,6 +353,108 @@ class KFold(_BaseKFold):
         return self.n_folds
 
 
+class LabelKFold(_BaseKFold):
+    """K-fold iterator variant with non-overlapping labels.
+
+    The same label will not appear in two different folds (the number of
+    distinct labels has to be at least equal to the number of folds).
+
+    The folds are approximately balanced in the sense that the number of
+    distinct labels is approximately the same in each fold.
+
+    .. versionadded:: 0.17
+
+    Parameters
+    ----------
+    labels : array-like with shape (n_samples, )
+        Contains a label for each sample.
+        The folds are built so that the same label does not appear in two
+        different folds.
+
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import LabelKFold
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> labels = np.array([0, 0, 2, 2])
+    >>> label_kfold = LabelKFold(labels, n_folds=2)
+    >>> len(label_kfold)
+    2
+    >>> print(label_kfold)
+    sklearn.cross_validation.LabelKFold(n_labels=4, n_folds=2)
+    >>> for train_index, test_index in label_kfold:
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
+    ...
+    TRAIN: [0 1] TEST: [2 3]
+    [[1 2]
+     [3 4]] [[5 6]
+     [7 8]] [1 2] [3 4]
+    TRAIN: [2 3] TEST: [0 1]
+    [[5 6]
+     [7 8]] [[1 2]
+     [3 4]] [3 4] [1 2]
+
+    See also
+    --------
+    LeaveOneLabelOut for splitting the data according to explicit,
+    domain-specific stratification of the dataset.
+    """
+    def __init__(self, labels, n_folds=3):
+        super(LabelKFold, self).__init__(len(labels), n_folds,
+                                         shuffle=False, random_state=None)
+
+        unique_labels, labels = np.unique(labels, return_inverse=True)
+        n_labels = len(unique_labels)
+
+        if n_folds > n_labels:
+            raise ValueError(
+                    ("Cannot have number of folds n_folds={0} greater"
+                     " than the number of labels: {1}.").format(n_folds,
+                                                                n_labels))
+
+        # Weight labels by their number of occurrences
+        n_samples_per_label = np.bincount(labels)
+
+        # Distribute the most frequent labels first
+        indices = np.argsort(n_samples_per_label)[::-1]
+        n_samples_per_label = n_samples_per_label[indices]
+
+        # Total weight of each fold
+        n_samples_per_fold = np.zeros(n_folds)
+
+        # Mapping from label index to fold index
+        label_to_fold = np.zeros(len(unique_labels))
+
+        # Distribute samples by adding the largest weight to the lightest fold
+        for label_index, weight in enumerate(n_samples_per_label):
+            lightest_fold = np.argmin(n_samples_per_fold)
+            n_samples_per_fold[lightest_fold] += weight
+            label_to_fold[indices[label_index]] = lightest_fold
+
+        self.idxs = label_to_fold[labels]
+
+    def _iter_test_indices(self):
+        for f in range(self.n_folds):
+            yield np.where(self.idxs == f)[0]
+
+    def __repr__(self):
+        return '{0}.{1}(n_labels={2}, n_folds={3})'.format(
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
+            self.n_folds,
+        )
+
+    def __len__(self):
+        return self.n_folds
+
+
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross validation iterator
 
@@ -363,15 +479,15 @@ class StratifiedKFold(_BaseKFold):
         into batches.
 
     random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for 
+        When shuffle=True, pseudo-random number generator state used for
         shuffling. If None, use default numpy RNG for shuffling.
 
     Examples
     --------
-    >>> from sklearn import cross_validation
+    >>> from sklearn.cross_validation import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
+    >>> skf = StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
     >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
@@ -389,6 +505,9 @@ class StratifiedKFold(_BaseKFold):
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
 
+    See also
+    --------
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, y, n_folds=3, shuffle=False,
@@ -497,6 +616,9 @@ class LeaveOneLabelOut(_PartitionIterator):
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
 
+    See also
+    --------
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels):
@@ -572,6 +694,10 @@ class LeavePLabelOut(_PartitionIterator):
     TRAIN: [0] TEST: [1 2]
     [[1 2]] [[3 4]
      [5 6]] [1] [2 1]
+
+    See also
+    --------
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
     def __init__(self, labels, p):
@@ -964,7 +1090,7 @@ class PredefinedSplit(_PartitionIterator):
 
 
 class LabelShuffleSplit(ShuffleSplit):
-    '''Shuffle-Labels-Out cross-validation iterator
+    """Shuffle-Labels-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
     third-party provided label. This label information can be used to encode
@@ -985,13 +1111,15 @@ class LabelShuffleSplit(ShuffleSplit):
     Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
     not to samples, as in ShuffleSplit.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     labels :  array, [n_samples]
         Labels of samples
 
     n_iter : int (default 5)
-        Number of re-shuffling & splitting iterations.
+        Number of re-shuffling and splitting iterations.
 
     test_size : float (default 0.2), int, or None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1007,7 +1135,8 @@ class LabelShuffleSplit(ShuffleSplit):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
-    '''
+
+    """
     def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
                  random_state=None):
 
@@ -1078,15 +1207,21 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    cv : integer or cross-validation generator, optional, default=3
-        A cross-validation generator to use. If int, determines the number 
-        of folds in StratifiedKFold if estimator is a classifier and the 
-        target y is binary or multiclass, or the number of folds in KFold 
-        otherwise.
-        Specific cross-validation objects can be passed, see 
-        sklearn.cross_validation module for the list of possible objects.
-        This generator must include all elements in the test set exactly once.
-        Otherwise, a ValueError is raised.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1247,13 +1382,21 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : integer or cross-validation generator, optional, default=3
-        A cross-validation generator to use. If int, determines the number 
-        of folds in StratifiedKFold if estimator is a classifier and the 
-        target y is binary or multiclass, or the number of folds in KFold 
-        otherwise.
-        Specific cross-validation objects can be passed, see 
-        sklearn.cross_validation module for the list of possible objects.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1300,10 +1443,6 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                                               fit_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
-
-
-class FitFailedWarning(RuntimeWarning):
-    pass
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
@@ -1436,7 +1575,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
-    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel) \
+       and not isinstance(estimator.kernel, GPKernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")
@@ -1504,11 +1644,21 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
     Parameters
     ----------
-    cv : int, a cv generator instance, or None
-        The input specifying which cv generator to use. It can be an
-        integer, in which case it is the number of folds in a KFold,
-        None, in which case 3 fold is used, or another object, that
-        will then be used as a cv generator.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if classifier is True and ``y`` is binary or
+        multiclass, :class:`StratifiedKFold` used. In all other cases,
+        :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     X : array-like
         The data the cross-val object will be applied on.
@@ -1568,13 +1718,21 @@ def permutation_test_score(estimator, X, y, cv=None,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : integer or cross-validation generator, optional, default=3
-        A cross-validation generator to use. If int, determines the number 
-        of folds in StratifiedKFold if estimator is a classifier and the 
-        target y is binary or multiclass, or the number of folds in KFold 
-        otherwise.
-        Specific cross-validation objects can be passed, see 
-        sklearn.cross_validation module for the list of possible objects.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_permutations : integer, optional
         Number of times to permute ``y``.
@@ -1651,9 +1809,14 @@ def train_test_split(*arrays, **options):
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
-        Python lists or tuples occurring in arrays are converted to 1D numpy
-        arrays.
+    *arrays : sequence of indexables with same length / shape[0]
+
+        allowed inputs are lists, numpy arrays, scipy-sparse
+        matrices or pandas dataframes.
+
+        .. versionadded:: 0.16
+            preserves input type instead of always casting to numpy array.
+
 
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
@@ -1675,10 +1838,16 @@ def train_test_split(*arrays, **options):
         If not None, data is split in a stratified fashion, using this as
         the labels array.
 
+        .. versionadded:: 0.17
+           *stratify* splitting
+
     Returns
     -------
-    splitting : list of arrays, length=2 * len(arrays)
-        List containing train-test split of input array.
+    splitting : list, length = 2 * len(arrays),
+        List containing train-test split of inputs.
+
+        .. versionadded:: 0.16
+            Output type is the same as the input type.
 
     Examples
     --------
@@ -1717,29 +1886,10 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
-    dtype = options.pop('dtype', None)
-    if dtype is not None:
-        warnings.warn("dtype option is ignored and will be removed in 0.18.",
-                      DeprecationWarning)
-
-    allow_nd = options.pop('allow_nd', None)
-    allow_lists = options.pop('allow_lists', None)
     stratify = options.pop('stratify', None)
-
-    if allow_lists is not None:
-        warnings.warn("The allow_lists option is deprecated and will be "
-                      "assumed True in 0.18 and removed.", DeprecationWarning)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
-    if allow_nd is not None:
-        warnings.warn("The allow_nd option is deprecated and will be "
-                      "assumed True in 0.18 and removed.", DeprecationWarning)
-    if allow_lists is False or allow_nd is False:
-        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
-                              force_all_finite=False, ensure_2d=False)
-                  if x is not None else x
-                  for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25

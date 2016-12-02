@@ -161,6 +161,7 @@ further information.
  - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
  - :ref:`example_linear_model_plot_sgd_iris.py`
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`example_linear_model_plot_sgd_comparison.py`
  - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
@@ -168,6 +169,10 @@ by setting ```average=True```. ASGD works by averaging the coefficients
 of the plain SGD over each iteration over a sample. When using ASGD
 the learning rate can be larger and even constant leading on some
 datasets to a speed up in training time.
+
+For classification with a logistic loss, another variant of SGD with an
+averaging strategy is available with Stochastic Average Gradient (SAG)
+algorithm, available as a solver in :class:`LogisticRegression`.
 
 Regression
 ==========
@@ -192,7 +197,11 @@ specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
 :class:`SGDRegressor` supports averaged SGD as :class:`SGDClassifier`.
-Averaging can be enabled by setting ```average=True```
+Averaging can be enabled by setting ```average=True```.
+
+For regression with a squared loss and a l2 penalty, another variant of
+SGD with an averaging strategy is available with Stochastic Average
+Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
 
 
 Stochastic Gradient Descent for sparse data
@@ -260,7 +269,7 @@ Tips on Practical Use
 
 .. topic:: References:
 
- * `"Efficient BackProp" <yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
+ * `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
    Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
    of the Trade 1998.
 

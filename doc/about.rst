@@ -69,6 +69,7 @@ provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
 full-time. It also hosts coding sprints and other events.
 
 .. image:: images/inria-logo.jpg
+   :width: 200pt
    :align: center
 
 `Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
@@ -76,6 +77,15 @@ funded one year for a developer to work on the project full-time
 (2014-2015).
 
 .. image:: images/cds-logo.png
+   :width: 200pt
+   :align: center
+
+`NYU Moore-Sloan Data Science Environment <http://cds.nyu.edu/mooresloan/>`_
+funds Andreas Mueller (2014-2015) to work on this project. The Moore-Sloan Data Science
+Environment also funds several students to work on the project part-time.
+
+.. image:: images/nyu_short_color.png
+   :width: 200pt
    :align: center
 
 The following students were sponsored by `Google <http://code.google.com/opensource/>`_
@@ -162,30 +172,30 @@ The 2013' Paris international sprint
 
 
 .. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
-   :width: 150px
+   :width: 120pt
    :target: http://www.telecom-paristech.fr/
 
 
 .. |tinyclues| image:: http://www.tinyclues.com/static/img/logo.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.tinyclues.com/
 
 
 .. |afpy| image:: http://www.afpy.org/logo.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.afpy.org
 
 
 .. |SGR| image:: http://www.svi.cnrs-bellevue.fr/wikimedia/images/Logo_svi_inp.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.svi.cnrs-bellevue.fr
 
 .. |FNRS| image:: http://www.fnrs.be/uploaddocs/images/COMMUNIQUER/FRS-FNRS_rose_transp.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.frs-fnrs.be/
 
 .. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
-   :width: 150px
+   :width: 120pt
    :target: http://sites.uclouvain.be/dysco/
 
    IAP VII/19 - DYSCO

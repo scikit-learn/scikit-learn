@@ -10,6 +10,7 @@ estimator, as a chain of transforms and estimators.
 # Licence: BSD
 
 from collections import defaultdict
+from warnings import warn
 
 import numpy as np
 from scipy import sparse
@@ -304,6 +305,8 @@ class Pipeline(BaseEstimator):
             last step of the pipeline.
         """
         if X.ndim == 1:
+            warn("From version 0.19, a 1d X will not be reshaped in"
+                 " pipeline.inverse_transform any more.", FutureWarning)
             X = X[None, :]
         Xt = X
         for name, step in self.steps[::-1]:
@@ -366,8 +369,8 @@ def make_pipeline(*steps):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
-    does not permit, naming the estimators. Instead, they will be given names
-    automatically based on their types.
+    does not permit, naming the estimators. Instead, their names will be set
+    to the lowercase of their types automatically.
 
     Examples
     --------
@@ -391,7 +394,7 @@ def _fit_one_transformer(transformer, X, y):
 
 def _transform_one(transformer, name, X, transformer_weights):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         return transformer.transform(X) * transformer_weights[name]
     return transformer.transform(X)
 
@@ -399,7 +402,7 @@ def _transform_one(transformer, name, X, transformer_weights):
 def _fit_transform_one(transformer, name, X, y, transformer_weights,
                        **fit_params):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         if hasattr(transformer, 'fit_transform'):
             X_transformed = transformer.fit_transform(X, y, **fit_params)
             return X_transformed * transformer_weights[name], transformer

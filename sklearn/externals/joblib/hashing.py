@@ -13,13 +13,16 @@ import hashlib
 import sys
 import types
 import struct
+from ._compat import _bytes_or_unicode
 
 import io
 
-if sys.version_info[0] < 3:
-    Pickler = pickle.Pickler
-else:
+PY3 = sys.version[0] == '3'
+
+if PY3:
     Pickler = pickle._Pickler
+else:
+    Pickler = pickle.Pickler
 
 
 class _ConsistentSet(object):
@@ -44,7 +47,11 @@ class Hasher(Pickler):
 
     def __init__(self, hash_name='md5'):
         self.stream = io.BytesIO()
-        Pickler.__init__(self, self.stream, protocol=2)
+        # By default we want a pickle protocol that only changes with
+        # the major python version and not the minor one
+        protocol = (pickle.DEFAULT_PROTOCOL if PY3
+                    else pickle.HIGHEST_PROTOCOL)
+        Pickler.__init__(self, self.stream, protocol=protocol)
         # Initialise the hash obj
         self._hash = hashlib.new(hash_name)
 
@@ -76,6 +83,15 @@ class Hasher(Pickler):
                 cls = obj.__self__.__class__
                 obj = _MyHash(func_name, inst, cls)
         Pickler.save(self, obj)
+
+    def memoize(self, obj):
+        # We want hashing to be sensitive to value instead of reference.
+        # For example we want ['aa', 'aa'] and ['aa', 'aaZ'[:2]]
+        # to hash to the same value and that's why we disable memoization
+        # for strings
+        if isinstance(obj, _bytes_or_unicode):
+            return
+        Pickler.memoize(self, obj)
 
     # The dispatch table of the pickler is not accessible in Python
     # 3, as these lines are only bugware for IPython, we skip them.
@@ -166,7 +182,7 @@ class NumpyHasher(Hasher):
             # the array is Fortran rather than C contiguous
             except (ValueError, BufferError):
                 # Cater for non-single-segment arrays: this creates a
-                # copy, and thus aleviates this issue.
+                # copy, and thus alleviates this issue.
                 # XXX: There might be a more efficient way of doing this
                 obj_bytes_view = obj.flatten().view(self.np.uint8)
                 self._hash.update(self._getbuffer(obj_bytes_view))
@@ -186,6 +202,20 @@ class NumpyHasher(Hasher):
 
             # The object will be pickled by the pickler hashed at the end.
             obj = (klass, ('HASHED', obj.dtype, obj.shape, obj.strides))
+        elif isinstance(obj, self.np.dtype):
+            # Atomic dtype objects are interned by their default constructor:
+            # np.dtype('f8') is np.dtype('f8')
+            # This interning is not maintained by a
+            # pickle.loads + pickle.dumps cycle, because __reduce__
+            # uses copy=True in the dtype constructor. This
+            # non-deterministic behavior causes the internal memoizer
+            # of the hasher to generate different hash values
+            # depending on the history of the dtype object.
+            # To prevent the hash from being sensitive to this, we use
+            # .descr which is a full (and never interned) description of
+            # the array dtype according to the numpy doc.
+            klass = obj.__class__
+            obj = (klass, ('HASHED', obj.descr))
         Hasher.save(self, obj)
 
 

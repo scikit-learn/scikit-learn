@@ -22,10 +22,11 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
-from ..cross_validation import check_cv
-from ..utils import ConvergenceWarning
+from ..model_selection import check_cv
+from ..exceptions import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
+from ..externals.six import string_types
 
 import scipy
 solve_triangular_args = {}
@@ -62,8 +63,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         When using this option together with method 'lasso' the model
         coefficients will not converge to the ordinary-least-squares solution
         for small values of alpha (neither will they when using method 'lar'
-        ..). Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
-        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        ..). Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent lasso_path function.
 
@@ -179,7 +180,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # speeds up the calculation of the (partial) Gram matrix
             # and allows to easily swap columns
             X = X.copy('F')
-    elif Gram == 'auto':
+    elif isinstance(Gram, string_types) and Gram == 'auto':
         Gram = None
         if X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
@@ -587,7 +588,7 @@ class Lars(LinearModel, RegressorMixin):
         self.method = 'lar'
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
-        self.positive = positive 
+        self.positive = positive
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -728,8 +729,8 @@ class LassoLars(Lars):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients will not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
-        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
 
@@ -822,7 +823,7 @@ class LassoLars(Lars):
         self.verbose = verbose
         self.normalize = normalize
         self.method = 'lasso'
-        self.positive = positive 
+        self.positive = positive
         self.precompute = precompute
         self.copy_X = copy_X
         self.eps = eps
@@ -979,9 +980,19 @@ class LarsCV(Lars):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : cross-validation generator, optional
-        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
-        a 5-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
@@ -1065,9 +1076,11 @@ class LarsCV(Lars):
         """
         self.fit_path = True
         X, y = check_X_y(X, y, y_numeric=True)
+        X = as_float_array(X, copy=self.copy_X)
+        y = as_float_array(y, copy=self.copy_X)
 
         # init cross-validation generator
-        cv = check_cv(self.cv, X, y, classifier=False)
+        cv = check_cv(self.cv, classifier=False)
 
         Gram = 'auto' if self.precompute else None
 
@@ -1077,7 +1090,7 @@ class LarsCV(Lars):
                 method=self.method, verbose=max(0, self.verbose - 1),
                 normalize=self.normalize, fit_intercept=self.fit_intercept,
                 max_iter=self.max_iter, eps=self.eps, positive=self.positive)
-            for train, test in cv)
+            for train, test in cv.split(X, y))
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
         all_alphas = np.unique(all_alphas)
@@ -1146,8 +1159,8 @@ class LassoLarsCV(LarsCV):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
-        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
         As a consequence using LassoLarsCV only makes sense for problems where
@@ -1167,9 +1180,19 @@ class LassoLarsCV(LarsCV):
     max_iter : integer, optional
         Maximum number of iterations to perform.
 
-    cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If None is passed, default to
-        a 5-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
@@ -1264,8 +1287,8 @@ class LassoLarsIC(LassoLars):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (alphas_[alphas_ >
-        0.].min() when fit_path=True) reached by the stepwise Lars-Lasso
+        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
         As a consequence using LassoLarsIC only makes sense for problems where

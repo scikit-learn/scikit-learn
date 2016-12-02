@@ -72,9 +72,17 @@ following:
      parallelism** that is amenable to **multi-processing** by using the
      ``joblib.Parallel`` class.
 
-When using Cython, include the generated C source code alongside with
-the Cython source code. The goal is to make it possible to install the
-scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
+When using Cython, use either
+
+   $ python setup.py build_ext -i
+   $ python setup.py install
+
+to generate C files. You are responsible for adding .c/.cpp extensions along
+with build parameters in each submodule ``setup.py``.
+
+C/C++ generated files are embedded in distributed stable packages. The goal is
+to make it possible to install scikit-learn stable version
+on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
 Fast matrix multiplications
 ===========================
@@ -105,7 +113,7 @@ silently dispatched to ``numpy.dot``. If you want to be sure when the original
 activate the related warning::
 
   >>> import warnings
-  >>> from sklearn.utils.validation import NonBLASDotWarning
+  >>> from sklearn.exceptions import NonBLASDotWarning
   >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
 .. _profiling-python-code:
@@ -201,7 +209,7 @@ trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
-Python code: it takes around 100% of the cumulated time of the module. In
+Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 

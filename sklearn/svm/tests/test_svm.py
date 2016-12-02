@@ -12,19 +12,21 @@ from numpy.testing import assert_almost_equal
 from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
-from sklearn.base import ChangedBehaviorWarning
 from sklearn import svm, linear_model, datasets, metrics, base
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils import ConvergenceWarning
-from sklearn.utils.validation import NotFittedError
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import ChangedBehaviorWarning
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import NotFittedError
+
+from sklearn.multiclass import OneVsRestClassifier
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -77,7 +79,7 @@ def test_libsvm_iris():
     assert_greater(np.mean(pred == iris.target), .95)
 
     # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
-    # we should get deteriministic results (assuming that there is no other
+    # we should get deterministic results (assuming that there is no other
     # thread calling this wrapper calling `srand` concurrently).
     pred2 = svm.libsvm.cross_validation(iris.data,
                                         iris.target.astype(np.float64), 5,
@@ -86,6 +88,7 @@ def test_libsvm_iris():
     assert_array_equal(pred, pred2)
 
 
+@ignore_warnings
 def test_single_sample_1d():
     # Test whether SVCs work on a single sample given as a 1-d array
 
@@ -346,16 +349,16 @@ def test_decision_function_shape():
     assert_equal(dec.shape, (len(X_train), 10))
 
     # check deprecation warning
-    clf.decision_function_shape = None
+    clf = svm.SVC(kernel='linear', C=0.1).fit(X_train, y_train)
     msg = "change the shape of the decision function"
     dec = assert_warns_message(ChangedBehaviorWarning, msg,
                                clf.decision_function, X_train)
     assert_equal(dec.shape, (len(X_train), 10))
 
 
-def test_svr_decision_function():
+def test_svr_predict():
     # Test SVR's decision_function
-    # Sanity check, test that decision_function implemented in python
+    # Sanity check, test that predict implemented in python
     # returns the same as the one in libsvm
 
     X = iris.data
@@ -365,14 +368,14 @@ def test_svr_decision_function():
     reg = svm.SVR(kernel='linear', C=0.1).fit(X, y)
 
     dec = np.dot(X, reg.coef_.T) + reg.intercept_
-    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+    assert_array_almost_equal(dec.ravel(), reg.predict(X).ravel())
 
     # rbf kernel
     reg = svm.SVR(kernel='rbf', gamma=1).fit(X, y)
 
     rbfs = rbf_kernel(X, reg.support_vectors_, gamma=reg.gamma)
     dec = np.dot(rbfs, reg.dual_coef_.T) + reg.intercept_
-    assert_array_almost_equal(dec.ravel(), reg.decision_function(X).ravel())
+    assert_array_almost_equal(dec.ravel(), reg.predict(X).ravel())
 
 
 def test_weight():
@@ -399,11 +402,11 @@ def test_sample_weights():
     # TODO: check on NuSVR, OneClass, etc.
     clf = svm.SVC()
     clf.fit(X, Y)
-    assert_array_equal(clf.predict(X[2]), [1.])
+    assert_array_equal(clf.predict([X[2]]), [1.])
 
     sample_weight = [.1] * 3 + [10] * 3
     clf.fit(X, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.predict(X[2]), [2.])
+    assert_array_equal(clf.predict([X[2]]), [2.])
 
     # test that rescaling all samples is the same as changing C
     clf = svm.SVC()
@@ -532,56 +535,42 @@ def test_linearsvx_loss_penalty_deprecations():
            " for the %s will be removed in %s")
 
     # LinearSVC
-    # loss l1/L1 --> hinge
+    # loss l1 --> hinge
     assert_warns_message(DeprecationWarning,
                          msg % ("l1", "hinge", "loss='l1'", "1.0"),
                          svm.LinearSVC(loss="l1").fit, X, y)
 
-    # loss l2/L2 --> squared_hinge
+    # loss l2 --> squared_hinge
     assert_warns_message(DeprecationWarning,
-                         msg % ("L2", "squared_hinge", "loss='L2'", "1.0"),
-                         svm.LinearSVC(loss="L2").fit, X, y)
+                         msg % ("l2", "squared_hinge", "loss='l2'", "1.0"),
+                         svm.LinearSVC(loss="l2").fit, X, y)
 
     # LinearSVR
-    # loss l1/L1 --> epsilon_insensitive
+    # loss l1 --> epsilon_insensitive
     assert_warns_message(DeprecationWarning,
-                         msg % ("L1", "epsilon_insensitive", "loss='L1'",
+                         msg % ("l1", "epsilon_insensitive", "loss='l1'",
                                 "1.0"),
-                         svm.LinearSVR(loss="L1").fit, X, y)
+                         svm.LinearSVR(loss="l1").fit, X, y)
 
-    # loss l2/L2 --> squared_epsilon_insensitive
+    # loss l2 --> squared_epsilon_insensitive
     assert_warns_message(DeprecationWarning,
                          msg % ("l2", "squared_epsilon_insensitive",
                                 "loss='l2'", "1.0"),
                          svm.LinearSVR(loss="l2").fit, X, y)
 
 
-# FIXME remove in 0.18
-def test_linear_svx_uppercase_loss_penalty():
-    # Check if Upper case notation is supported by _fit_liblinear
+def test_linear_svx_uppercase_loss_penality_raises_error():
+    # Check if Upper case notation raises error at _fit_liblinear
     # which is called by fit
+
     X, y = [[0.0], [1.0]], [0, 1]
 
-    msg = ("loss='%s' has been deprecated in favor of "
-           "loss='%s' as of 0.16. Backward compatibility"
-           " for the uppercase notation will be removed in %s")
+    assert_raise_message(ValueError, "loss='SQuared_hinge' is not supported",
+                         svm.LinearSVC(loss="SQuared_hinge").fit, X, y)
 
-    # loss SQUARED_hinge --> squared_hinge
-    assert_warns_message(DeprecationWarning,
-                         msg % ("SQUARED_hinge", "squared_hinge", "0.18"),
-                         svm.LinearSVC(loss="SQUARED_hinge").fit, X, y)
-
-    # penalty L2 --> l2
-    assert_warns_message(DeprecationWarning,
-                         msg.replace("loss", "penalty")
-                         % ("L2", "l2", "0.18"),
+    assert_raise_message(ValueError, ("The combination of penalty='L2'"
+                         " and loss='squared_hinge' is not supported"),
                          svm.LinearSVC(penalty="L2").fit, X, y)
-
-    # loss EPSILON_INSENSITIVE --> epsilon_insensitive
-    assert_warns_message(DeprecationWarning,
-                         msg % ("EPSILON_INSENSITIVE", "epsilon_insensitive",
-                                "0.18"),
-                         svm.LinearSVR(loss="EPSILON_INSENSITIVE").fit, X, y)
 
 
 def test_linearsvc():
@@ -865,3 +854,12 @@ def test_hasattr_predict_proba():
     assert_true(hasattr(G, 'predict_proba'))
     msg = "predict_proba is not available when fitted with probability=False"
     assert_raise_message(NotFittedError, msg, G.predict_proba, iris.data)
+
+
+def test_decision_function_shape_two_class():
+    for n_classes in [2, 3]:
+        X, y = make_blobs(centers=n_classes, random_state=0)
+        for estimator in [svm.SVC, svm.NuSVC]:
+            clf = OneVsRestClassifier(estimator(
+                decision_function_shape="ovr")).fit(X, y)
+            assert_equal(len(clf.predict(X)), len(y))

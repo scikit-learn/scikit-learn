@@ -467,9 +467,9 @@ similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
-assumed. See Linear Discriminant Analysis (:class:`sklearn.lda.LDA`) and
-Quadratic Discriminant Analysis (:class:`sklearn.qda.QDA`) for more complex
-methods that do not make this assumption. Usage of the default
+assumed. See Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
+and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
+for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
     >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
@@ -498,11 +498,11 @@ In the example below, using a small shrink threshold increases the accuracy of
 the model from 0.81 to 0.82.
 
 .. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_001.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
 .. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_002.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|
@@ -685,6 +685,6 @@ candidates, the speedup compared to brute force search is approximately
      '06. 47th Annual IEEE Symposium
 
    * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
-     <http://www2005.org/docs/p651.pdf>`_,
+     <http://wwwconference.org/proceedings/www2005/docs/p651.pdf>`_,
      Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
      international conference on World Wide Web  Pages 651-660

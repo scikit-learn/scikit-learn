@@ -21,6 +21,7 @@ from sklearn.utils.testing import ignore_warnings
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
+from sklearn.decomposition import ProjectedGradientNMF
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -30,7 +31,9 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
-    check_get_params_invariance)
+    check_get_params_invariance,
+    check_fit2d_predict1d,
+    check_fit1d_1sample)
 
 
 def test_all_estimator_no_base_class():
@@ -42,7 +45,7 @@ def test_all_estimator_no_base_class():
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, clonable
+    # Test that estimators are default-constructible, cloneable
     # and have working repr.
     estimators = all_estimators(include_meta_estimators=True)
 
@@ -64,8 +67,12 @@ def test_non_meta_estimators():
         if name.startswith("_"):
             continue
         for check in _yield_all_checks(name, Estimator):
-            yield check, name, Estimator
-
+            if issubclass(Estimator, ProjectedGradientNMF):
+                # The ProjectedGradientNMF class is deprecated
+                with ignore_warnings():
+                    yield check, name, Estimator
+            else:
+                yield check, name, Estimator
 
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
@@ -106,12 +113,6 @@ def test_class_weight_balanced_linear_classifiers():
                and issubclass(clazz, LinearClassifierMixin)]
 
     for name, Classifier in linear_classifiers:
-        if name == "LogisticRegressionCV":
-            # Contrary to RidgeClassifierCV, LogisticRegressionCV use actual
-            # CV folds and fit a model for each CV iteration before averaging
-            # the coef. Therefore it is expected to not behave exactly as the
-            # other linear model.
-            continue
         yield check_class_weight_balanced_linear_classifier, name, Classifier
 
 
@@ -178,14 +179,24 @@ def test_non_transformer_estimators_n_iter():
 def test_transformer_n_iter():
     transformers = all_estimators(type_filter='transformer')
     for name, Estimator in transformers:
-        estimator = Estimator()
+        if issubclass(Estimator, ProjectedGradientNMF):
+            # The ProjectedGradientNMF class is deprecated
+            with ignore_warnings():
+                estimator = Estimator()
+        else:
+            estimator = Estimator()
         # Dependent on external solvers and hence accessing the iter
         # param is non-trivial.
         external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
                            'RandomizedLasso', 'LogisticRegressionCV']
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
-            yield check_transformer_n_iter, name, estimator
+            if isinstance(estimator, ProjectedGradientNMF):
+                # The ProjectedGradientNMF class is deprecated
+                with ignore_warnings():
+                    yield check_transformer_n_iter, name, estimator
+            else:
+                yield check_transformer_n_iter, name, estimator
 
 
 def test_get_params_invariance():
@@ -196,4 +207,9 @@ def test_get_params_invariance():
     estimators = all_estimators(include_meta_estimators=False, include_other=True)
     for name, Estimator in estimators:
         if hasattr(Estimator, 'get_params'):
-            yield check_get_params_invariance, name, Estimator
+            # The ProjectedGradientNMF class is deprecated
+            if issubclass(Estimator, ProjectedGradientNMF):
+                with ignore_warnings():
+                    yield check_get_params_invariance, name, Estimator
+            else:
+                yield check_get_params_invariance, name, Estimator

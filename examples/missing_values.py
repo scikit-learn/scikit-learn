@@ -28,7 +28,7 @@ from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 

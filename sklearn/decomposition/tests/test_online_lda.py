@@ -13,14 +13,14 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import if_not_mac_os
+from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
-from sklearn.utils.validation import NotFittedError
+from sklearn.exceptions import NotFittedError
 from sklearn.externals.six.moves import xrange
 
 
 def _build_sparse_mtx():
-    # Create 3 topics and each topic has 3 disticnt words.
+    # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_topics = 3
     block = n_topics * np.ones((3, 3))
@@ -123,7 +123,8 @@ def test_lda_fit_transform():
     for method in ('online', 'batch'):
         rng = np.random.RandomState(0)
         X = rng.randint(10, size=(50, 20))
-        lda = LatentDirichletAllocation(n_topics=5, learning_method=method, random_state=rng)
+        lda = LatentDirichletAllocation(n_topics=5, learning_method=method,
+                                        random_state=rng)
         X_fit = lda.fit_transform(X)
         X_trans = lda.transform(X)
         assert_array_almost_equal(X_fit, X_trans, 4)
@@ -139,7 +140,8 @@ def test_lda_partial_fit_dim_mismatch():
     lda = LatentDirichletAllocation(n_topics=n_topics, learning_offset=5.,
                                     total_samples=20, random_state=rng)
     lda.partial_fit(X_1)
-    assert_raises_regexp(ValueError, r"^The provided data has", lda.partial_fit, X_2)
+    assert_raises_regexp(ValueError, r"^The provided data has",
+                         lda.partial_fit, X_2)
 
 
 def test_invalid_params():
@@ -148,7 +150,8 @@ def test_invalid_params():
 
     invalid_models = (
         ('n_topics', LatentDirichletAllocation(n_topics=0)),
-        ('learning_method', LatentDirichletAllocation(learning_method='unknown')),
+        ('learning_method',
+         LatentDirichletAllocation(learning_method='unknown')),
         ('total_samples', LatentDirichletAllocation(total_samples=0)),
         ('learning_offset', LatentDirichletAllocation(learning_offset=-1)),
     )
@@ -184,17 +187,19 @@ def test_lda_transform_mismatch():
     n_topics = rng.randint(3, 6)
     lda = LatentDirichletAllocation(n_topics=n_topics, random_state=rng)
     lda.partial_fit(X)
-    assert_raises_regexp(ValueError, r"^The provided data has", lda.partial_fit, X_2)
+    assert_raises_regexp(ValueError, r"^The provided data has",
+                         lda.partial_fit, X_2)
 
 
-@if_not_mac_os()
+@if_safe_multiprocessing_with_blas
 def test_lda_multi_jobs():
+    n_topics, X = _build_sparse_mtx()
     # Test LDA batch training with multi CPU
     for method in ('online', 'batch'):
         rng = np.random.RandomState(0)
-        n_topics, X = _build_sparse_mtx()
-        lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=3,
-                                        learning_method=method, random_state=rng)
+        lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=2,
+                                        learning_method=method,
+                                        random_state=rng)
         lda.fit(X)
 
         correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -203,14 +208,15 @@ def test_lda_multi_jobs():
             assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
 
 
-@if_not_mac_os()
+@if_safe_multiprocessing_with_blas
 def test_lda_partial_fit_multi_jobs():
     # Test LDA online training with multi CPU
     rng = np.random.RandomState(0)
     n_topics, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=-1, learning_offset=5.,
-                                    total_samples=30, random_state=rng)
-    for i in xrange(3):
+    lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=2,
+                                    learning_offset=5., total_samples=30,
+                                    random_state=rng)
+    for i in range(2):
         lda.partial_fit(X)
 
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -230,10 +236,12 @@ def test_lda_preplexity_mismatch():
     lda.fit(X)
     # invalid samples
     invalid_n_samples = rng.randint(4, size=(n_samples + 1, n_topics))
-    assert_raises_regexp(ValueError, r'Number of samples', lda.perplexity, X, invalid_n_samples)
+    assert_raises_regexp(ValueError, r'Number of samples', lda.perplexity, X,
+                         invalid_n_samples)
     # invalid topic number
     invalid_n_topics = rng.randint(4, size=(n_samples, n_topics + 1))
-    assert_raises_regexp(ValueError, r'Number of topics', lda.perplexity, X, invalid_n_topics)
+    assert_raises_regexp(ValueError, r'Number of topics', lda.perplexity, X,
+                         invalid_n_topics)
 
 
 def test_lda_perplexity():
@@ -241,9 +249,11 @@ def test_lda_perplexity():
     # perplexity should be lower after each iteration
     n_topics, X = _build_sparse_mtx()
     for method in ('online', 'batch'):
-        lda_1 = LatentDirichletAllocation(n_topics=n_topics, max_iter=1, learning_method=method,
+        lda_1 = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
+                                          learning_method=method,
                                           total_samples=100, random_state=0)
-        lda_2 = LatentDirichletAllocation(n_topics=n_topics, max_iter=10, learning_method=method,
+        lda_2 = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
+                                          learning_method=method,
                                           total_samples=100, random_state=0)
         distr_1 = lda_1.fit_transform(X)
         perp_1 = lda_1.perplexity(X, distr_1, sub_sampling=False)
@@ -262,9 +272,11 @@ def test_lda_score():
     # score should be higher after each iteration
     n_topics, X = _build_sparse_mtx()
     for method in ('online', 'batch'):
-        lda_1 = LatentDirichletAllocation(n_topics=n_topics, max_iter=1, learning_method=method,
+        lda_1 = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
+                                          learning_method=method,
                                           total_samples=100, random_state=0)
-        lda_2 = LatentDirichletAllocation(n_topics=n_topics, max_iter=10, learning_method=method,
+        lda_2 = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
+                                          learning_method=method,
                                           total_samples=100, random_state=0)
         lda_1.fit_transform(X)
         score_1 = lda_1.score(X)
@@ -278,7 +290,8 @@ def test_perplexity_input_format():
     # Test LDA perplexity for sparse and dense input
     # score should be the same for both dense and sparse input
     n_topics, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1, learning_method='batch',
+    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
+                                    learning_method='batch',
                                     total_samples=100, random_state=0)
     distr = lda.fit_transform(X)
     perp_1 = lda.perplexity(X)
@@ -313,8 +326,9 @@ def test_lda_empty_docs():
 def test_dirichlet_expectation():
     """Test Cython version of Dirichlet expectation calculation."""
     x = np.logspace(-100, 10, 10000)
-    assert_allclose(_dirichlet_expectation_1d(x),
-                    np.exp(psi(x) - psi(np.sum(x))),
+    expectation = np.empty_like(x)
+    _dirichlet_expectation_1d(x, 0, expectation)
+    assert_allclose(expectation, np.exp(psi(x) - psi(np.sum(x))),
                     atol=1e-19)
 
     x = x.reshape(100, 100)

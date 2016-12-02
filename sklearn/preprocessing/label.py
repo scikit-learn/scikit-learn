@@ -212,22 +212,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Represents the type of the target data as evaluated by
         utils.multiclass.type_of_target. Possible type are 'continuous',
         'continuous-multioutput', 'binary', 'multiclass',
-        'mutliclass-multioutput', 'multilabel-indicator', and 'unknown'.
-
-    multilabel_ : boolean
-        True if the transformer was fitted on a multilabel rather than a
-        multiclass set of labels. The ``multilabel_`` attribute is deprecated
-        and will be removed in 0.18
+        'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
     sparse_input_ : boolean,
         True if the input data to transform is given as a sparse matrix, False
         otherwise.
-
-    indicator_matrix_ : str
-        'sparse' when the input data to tansform is a multilable-indicator and
-        is sparse, None otherwise. The ``indicator_matrix_`` attribute is
-        deprecated as of version 0.16 and will be removed in 0.18
-
 
     Examples
     --------
@@ -753,6 +742,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
+        check_is_fitted(self, 'classes_')
+
         class_to_index = dict(zip(self.classes_, range(len(self.classes_))))
         yt = self._transform(y, class_to_index)
 
@@ -799,6 +790,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """
+        check_is_fitted(self, 'classes_')
+
         if yt.shape[1] != len(self.classes_):
             raise ValueError('Expected indicator for {0} classes, but got {1}'
                              .format(len(self.classes_), yt.shape[1]))

@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -62,6 +63,9 @@ class TransfT(T):
     def transform(self, X, y=None):
         return X
 
+    def inverse_transform(self, X):
+        return X
+
 
 class FitParamT(object):
     """Mock classifier
@@ -69,7 +73,6 @@ class FitParamT(object):
 
     def __init__(self):
         self.successful = False
-        pass
 
     def fit(self, X, y, should_succeed=False):
         self.successful = should_succeed
@@ -89,8 +92,7 @@ def test_pipeline_init():
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf,
-                     **pipe.get_params(deep=False)
-                     ))
+                      **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -123,13 +125,13 @@ def test_pipeline_init():
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
     params2 = pipe2.get_params(deep=True)
-    
+
     for x in pipe.get_params(deep=False):
         params.pop(x)
-    
+
     for x in pipe2.get_params(deep=False):
         params2.pop(x)
-    
+
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')
@@ -211,7 +213,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = RandomizedPCA(n_components=2, whiten=True)
-    clf = SVC(probability=True, random_state=0)
+    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -460,3 +462,11 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
+
+
+def test_X1d_inverse_transform():
+    transformer = TransfT()
+    pipeline = make_pipeline(transformer)
+    X = np.ones(10)
+    msg = "1d X will not be reshaped in pipeline.inverse_transform"
+    assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)

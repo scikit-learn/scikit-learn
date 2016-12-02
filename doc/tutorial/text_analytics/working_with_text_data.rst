@@ -420,7 +420,7 @@ parameters on a grid of possible values. We try out all classifiers
 on either words or bigrams, with or without idf, and with a penalty
 parameter of either 0.01 or 0.001 for the linear SVM::
 
-  >>> from sklearn.grid_search import GridSearchCV
+  >>> from sklearn.model_selection import GridSearchCV
   >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
   ...               'tfidf__use_idf': (True, False),
   ...               'clf__alpha': (1e-2, 1e-3),

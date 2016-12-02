@@ -21,6 +21,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     Note: If a lambda is used as the function, then the resulting
     transformer will not be pickleable.
 
+    .. versionadded:: 0.17
+
     Parameters
     ----------
     func : callable, optional default=None
@@ -44,13 +46,18 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Indicate that transform should forward the y argument to the
         inner callable.
 
+    kw_args : dict, optional
+        Dictionary of additional keyword arguments to pass to func.
+
     """
     def __init__(self, func=None, validate=True,
-                 accept_sparse=False, pass_y=False):
+                 accept_sparse=False, pass_y=False,
+                 kw_args=None):
         self.func = func
         self.validate = validate
         self.accept_sparse = accept_sparse
         self.pass_y = pass_y
+        self.kw_args = kw_args
 
     def fit(self, X, y=None):
         if self.validate:
@@ -63,4 +70,5 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         func = self.func if self.func is not None else _identity
 
 
-        return func(X, *((y,) if self.pass_y else ()))
+        return func(X, *((y,) if self.pass_y else ()),
+                    **(self.kw_args if self.kw_args else {}))

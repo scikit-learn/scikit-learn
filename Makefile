@@ -1,4 +1,4 @@
-# simple makefile to simplify repetetive build env management tasks under posix
+# simple makefile to simplify repetitive build env management tasks under posix
 
 # caution: testing won't work on windows, see README
 
@@ -6,6 +6,14 @@ PYTHON ?= python
 CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
+
+# skip doctests on 32bit python
+BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
+
+ifeq ($(BITS),32)
+  NOSETESTS:=$(NOSETESTS) -c setup32.cfg
+endif
+
 
 all: clean inplace test
 
@@ -28,9 +36,11 @@ test-code: in
 test-sphinxext:
 	$(NOSETESTS) -s -v doc/sphinxext/
 test-doc:
+ifeq ($(BITS),64)
 	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
 	doc/tutorial/text_analytics
+endif
 
 test-coverage:
 	rm -rf coverage .coverage
@@ -42,7 +52,7 @@ trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	find sklearn -name "*.pyx" -exec $(CYTHON) {} \;
+	python sklearn/_build_utils/cythonize.py sklearn
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim

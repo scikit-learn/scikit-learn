@@ -110,7 +110,8 @@ def test_randomized_logistic_sparse():
     y = y[y != 2]
 
     # center here because sparse matrices are usually not centered
-    X, y, _, _, _ = center_data(X, y, True, True)
+    # labels should not be centered
+    X, _, _, _, _ = center_data(X, y, True, True)
 
     X_sp = sparse.csr_matrix(X)
 

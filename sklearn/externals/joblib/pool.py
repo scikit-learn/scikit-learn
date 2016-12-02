@@ -92,7 +92,7 @@ def has_shareable_memory(a):
 
 def _strided_from_memmap(filename, dtype, mode, offset, order, shape, strides,
                          total_buffer_len):
-    """Reconstruct an array view on a memmory mapped file"""
+    """Reconstruct an array view on a memory mapped file"""
     if mode == 'w+':
         # Do not zero the original data when unpickling
         mode = 'r+'
@@ -317,7 +317,7 @@ class CustomizablePicklingQueue(object):
     This class is an alternative to the multiprocessing implementation
     of SimpleQueue in order to make it possible to pass custom
     pickling reducers, for instance to avoid memory copy when passing
-    memmory mapped datastructures.
+    memory mapped datastructures.
 
     `reducers` is expected expected to be a dictionary with key/values
     being `(type, callable)` pairs where `callable` is a function that

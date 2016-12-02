@@ -108,8 +108,8 @@ class ShrunkCovariance(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
-        EmpiricalCovariance.__init__(self, store_precision=store_precision,
-                                     assume_centered=assume_centered)
+        super(ShrunkCovariance, self).__init__(store_precision=store_precision,
+                                               assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
@@ -194,7 +194,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
                       "You may want to reshape your data array")
     n_samples, n_features = X.shape
 
-    # optionaly center data
+    # optionally center data
     if not assume_centered:
         X = X - X.mean(0)
 
@@ -362,8 +362,8 @@ class LedoitWolf(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  block_size=1000):
-        EmpiricalCovariance.__init__(self, store_precision=store_precision,
-                                     assume_centered=assume_centered)
+        super(LedoitWolf, self).__init__(store_precision=store_precision,
+                                         assume_centered=assume_centered)
         self.block_size = block_size
 
     def fit(self, X, y=None):

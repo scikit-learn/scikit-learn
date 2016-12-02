@@ -152,7 +152,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
-            y_pred = np.empty((X.shape[0], _y.shape[1]), dtype=np.float)
+            y_pred = np.empty((X.shape[0], _y.shape[1]), dtype=np.float64)
             denom = np.sum(weights, axis=1)
 
             for j in range(_y.shape[1]):

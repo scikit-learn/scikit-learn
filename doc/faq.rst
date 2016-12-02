@@ -225,9 +225,13 @@ consider the lack of fork-safety in Accelerate / vecLib as a bug.
 
 In Python 3.4+ it is now possible to configure ``multiprocessing`` to use the
 'forkserver' or 'spawn' start methods (instead of the default 'fork') to manage
-the process pools. This should make it possible to not be subject to this issue
-anymore. To set the 'forkserver' mode globally for your program, insert the
-following instructions in your main script::
+the process pools. This makes it possible to not be subject to this issue
+anymore. The version of joblib shipped with scikit-learn automatically uses
+that setting by default (under Python 3.4 and later).
+
+If you have custom code that uses ``multiprocessing`` directly instead of using
+it via joblib you can enable the the 'forkserver' mode globally for your
+program: Insert the following instructions in your main script::
 
     import multiprocessing
 
@@ -240,3 +244,11 @@ following instructions in your main script::
 
 You can find more default on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
+
+
+Why is there no support for deep learning / Will there be support for deep learning in scikit-learn?
+----------------------------------------------------------------------------------------------------
+Deep learning requires a rich vocabulary to define an architecture and the
+use of GPUs for efficient computing. However, neither of these fit within
+the design constraints of scikit-learn. As a result, deep learning is
+currently out of scope for what scikit-learn seeks to achieve.

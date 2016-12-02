@@ -4,7 +4,7 @@
 Cross-validation: evaluating estimator performance
 ===================================================
 
-.. currentmodule:: sklearn.cross_validation
+.. currentmodule:: sklearn.model_selection
 
 Learning the parameters of a prediction function and testing it on the
 same data is a methodological mistake: a model that would just repeat
@@ -24,7 +24,7 @@ can be quickly computed with the :func:`train_test_split` helper function.
 Let's load the iris data set to fit a linear support vector machine on it::
 
   >>> import numpy as np
-  >>> from sklearn import cross_validation
+  >>> from sklearn.model_selection import train_test_split
   >>> from sklearn import datasets
   >>> from sklearn import svm
 
@@ -35,7 +35,7 @@ Let's load the iris data set to fit a linear support vector machine on it::
 We can now quickly sample a training set while holding out 40% of the
 data for testing (evaluating) our classifier::
 
-  >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
+  >>> X_train, X_test, y_train, y_test = train_test_split(
   ...     iris.data, iris.target, test_size=0.4, random_state=0)
 
   >>> X_train.shape, y_train.shape
@@ -101,10 +101,9 @@ kernel support vector machine on the iris dataset by splitting the data, fitting
 a model and computing the score 5 consecutive times (with different splits each
 time)::
 
+  >>> from sklearn.model_selection import cross_val_score
   >>> clf = svm.SVC(kernel='linear', C=1)
-  >>> scores = cross_validation.cross_val_score(
-  ...    clf, iris.data, iris.target, cv=5)
-  ...
+  >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
   >>> scores                                              # doctest: +ELLIPSIS
   array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
@@ -119,8 +118,8 @@ method of the estimator. It is possible to change this by using the
 scoring parameter::
 
   >>> from sklearn import metrics
-  >>> scores = cross_validation.cross_val_score(clf, iris.data, iris.target,
-  ...     cv=5, scoring='f1_weighted')
+  >>> scores = cross_val_score(
+  ...     clf, iris.data, iris.target, cv=5, scoring='f1_macro')
   >>> scores                                              # doctest: +ELLIPSIS
   array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
@@ -136,11 +135,10 @@ being used if the estimator derives from :class:`ClassifierMixin
 It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
+  >>> from sklearn.model_selection import ShuffleSplit
   >>> n_samples = iris.data.shape[0]
-  >>> cv = cross_validation.ShuffleSplit(n_samples, n_iter=3,
-  ...     test_size=0.3, random_state=0)
-
-  >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
+  >>> cv = ShuffleSplit(n_iter=3, test_size=0.3, random_state=0)
+  >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
   array([ 0.97...,  0.97...,  1.        ])
 
@@ -153,7 +151,7 @@ validation iterator instead, for instance::
     be learnt from a training set and applied to held-out data for prediction::
 
       >>> from sklearn import preprocessing
-      >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
+      >>> X_train, X_test, y_train, y_test = train_test_split(
       ...     iris.data, iris.target, test_size=0.4, random_state=0)
       >>> scaler = preprocessing.StandardScaler().fit(X_train)
       >>> X_train_transformed = scaler.transform(X_train)
@@ -167,7 +165,7 @@ validation iterator instead, for instance::
 
       >>> from sklearn.pipeline import make_pipeline
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
-      >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
+      >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
       ...                                                 # doctest: +ELLIPSIS
       array([ 0.97...,  0.93...,  0.95...])
 
@@ -184,8 +182,8 @@ can be used (otherwise, an exception is raised).
 
 These prediction can then be used to evaluate the classifier::
 
-  >>> predicted = cross_validation.cross_val_predict(clf, iris.data,
-  ...                                                iris.target, cv=10)
+  >>> from sklearn.model_selection import cross_val_predict
+  >>> predicted = cross_val_predict(clf, iris.data, iris.target, cv=10)
   >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
   0.966...
 
@@ -223,10 +221,11 @@ learned using :math:`k - 1` folds, and the fold left out is used for test.
 Example of 2-fold cross-validation on a dataset with 4 samples::
 
   >>> import numpy as np
-  >>> from sklearn.cross_validation import KFold
+  >>> from sklearn.model_selection import KFold
 
-  >>> kf = KFold(4, n_folds=2)
-  >>> for train, test in kf:
+  >>> X = ["a", "b", "c", "d"]
+  >>> kf = KFold(n_folds=2)
+  >>> for train, test in kf.split(X):
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [0 1] [2 3]
@@ -250,15 +249,45 @@ target class as the complete set.
 Example of stratified 3-fold cross-validation on a dataset with 10 samples from
 two slightly unbalanced classes::
 
-  >>> from sklearn.cross_validation import StratifiedKFold
+  >>> from sklearn.model_selection import StratifiedKFold
 
-  >>> labels = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
-  >>> skf = StratifiedKFold(labels, 3)
-  >>> for train, test in skf:
+  >>> X = np.ones(10)
+  >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+  >>> skf = StratifiedKFold(n_folds=3)
+  >>> for train, test in skf.split(X, y):
   ...     print("%s %s" % (train, test))
   [2 3 6 7 8 9] [0 1 4 5]
   [0 1 3 4 5 8 9] [2 6 7]
   [0 1 2 4 5 6 7] [3 8 9]
+
+
+Label k-fold
+------------
+
+:class:`LabelKFold` is a variation of *k-fold* which ensures that the same
+label is not in both testing and training sets. This is necessary for example
+if you obtained data from different subjects and you want to avoid over-fitting
+(i.e., learning person specific features) by testing and training on different
+subjects.
+
+Imagine you have three subjects, each with an associated number from 1 to 3::
+
+  >>> from sklearn.model_selection import LabelKFold
+
+  >>> X = [0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 8.8, 9, 10]
+  >>> y = ["a", "b", "b", "b", "c", "c", "c", "d", "d", "d"]
+  >>> labels = [1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
+
+  >>> lkf = LabelKFold(n_folds=3)
+  >>> for train, test in lkf.split(X, y, labels):
+  ...     print("%s %s" % (train, test))
+  [0 1 2 3 4 5] [6 7 8 9]
+  [0 1 2 6 7 8 9] [3 4 5]
+  [3 4 5 6 7 8 9] [0 1 2]
+
+Each subject is in a different testing fold, and the same subject is never in
+both testing and training. Notice that the folds do not have exactly the same
+size due to the imbalance in the data.
 
 
 Leave-One-Out - LOO
@@ -271,10 +300,11 @@ training sets and :math:`n` different tests set. This cross-validation
 procedure does not waste much data as only one sample is removed from the
 training set::
 
-  >>> from sklearn.cross_validation import LeaveOneOut
+  >>> from sklearn.model_selection import LeaveOneOut
 
-  >>> loo = LeaveOneOut(4)
-  >>> for train, test in loo:
+  >>> X = [1, 2, 3, 4]
+  >>> loo = LeaveOneOut()
+  >>> for train, test in loo.split(X):
   ...     print("%s %s" % (train, test))
   [1 2 3] [0]
   [0 2 3] [1]
@@ -329,10 +359,11 @@ overlap for :math:`p > 1`.
 
 Example of Leave-2-Out on a dataset with 4 samples::
 
-  >>> from sklearn.cross_validation import LeavePOut
+  >>> from sklearn.model_selection import LeavePOut
 
-  >>> lpo = LeavePOut(4, p=2)
-  >>> for train, test in lpo:
+  >>> X = np.ones(4)
+  >>> lpo = LeavePOut(p=2)
+  >>> for train, test in lpo.split(X):
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [1 3] [0 2]
@@ -357,11 +388,13 @@ For example, in the cases of multiple experiments, *LOLO* can be used to
 create a cross-validation based on the different experiments: we create
 a training set using the samples of all the experiments except one::
 
-  >>> from sklearn.cross_validation import LeaveOneLabelOut
+  >>> from sklearn.model_selection import LeaveOneLabelOut
 
+  >>> X = [1, 5, 10, 50]
+  >>> y = [0, 1, 1, 2]
   >>> labels = [1, 1, 2, 2]
-  >>> lolo = LeaveOneLabelOut(labels)
-  >>> for train, test in lolo:
+  >>> lolo = LeaveOneLabelOut()
+  >>> for train, test in lolo.split(X, y, labels):
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [0 1] [2 3]
@@ -372,8 +405,8 @@ for cross-validation against time-based splits.
 
 .. warning::
 
-  Contrary to :class:`StratifiedKFold`, **the ``labels`` of
-  :class:`LeaveOneLabelOut` should not encode the target class to predict**:
+  Contrary to :class:`StratifiedKFold`, the ``labels`` of
+  :class:`LeaveOneLabelOut` should not encode the target class to predict:
   the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
   the train / test split to ensure that the train and test folds have
   approximately the same percentage of samples of each class while
@@ -389,11 +422,13 @@ samples related to :math:`P` labels for each training/test set.
 
 Example of Leave-2-Label Out::
 
-  >>> from sklearn.cross_validation import LeavePLabelOut
+  >>> from sklearn.model_selection import LeavePLabelOut
 
+  >>> X = np.arange(6)
+  >>> y = [1, 1, 1, 2, 2, 2]
   >>> labels = [1, 1, 2, 2, 3, 3]
-  >>> lplo = LeavePLabelOut(labels, p=2)
-  >>> for train, test in lplo:
+  >>> lplo = LeavePLabelOut(n_labels=2)
+  >>> for train, test in lplo.split(X, y, labels):
   ...     print("%s %s" % (train, test))
   [4 5] [0 1 2 3]
   [2 3] [0 1 4 5]
@@ -416,9 +451,11 @@ generator.
 
 Here is a usage example::
 
-  >>> ss = cross_validation.ShuffleSplit(5, n_iter=3, test_size=0.25,
+  >>> from sklearn.model_selection import ShuffleSplit
+  >>> X = np.arange(5)
+  >>> ss = ShuffleSplit(n_iter=3, test_size=0.25,
   ...     random_state=0)
-  >>> for train_index, test_index in ss:
+  >>> for train_index, test_index in ss.split(X):
   ...     print("%s %s" % (train_index, test_index))
   ...
   [1 3 4] [2 0]
@@ -435,19 +472,20 @@ Label-Shuffle-Split
 
 :class:`LabelShuffleSplit`
 
-The :class:`LabelShuffleSplit` iterator behaves as a combination of 
-:class:`ShuffleSplit` and :class:`LeavePLabelsOut`, and generates a 
+The :class:`LabelShuffleSplit` iterator behaves as a combination of
+:class:`ShuffleSplit` and :class:`LeavePLabelsOut`, and generates a
 sequence of randomized partitions in which a subset of labels are held
 out for each split.
 
 Here is a usage example::
 
-  >>> from sklearn.cross_validation import LabelShuffleSplit
-  
+  >>> from sklearn.model_selection import LabelShuffleSplit
+
+  >>> X = [0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001]
+  >>> y = ["a", "b", "b", "b", "c", "c", "c", "a"]
   >>> labels = [1, 1, 2, 2, 3, 3, 4, 4]
-  >>> slo = LabelShuffleSplit(labels, n_iter=4, test_size=0.5,
-  ...                        random_state=0)
-  >>> for train, test in slo:
+  >>> lss = LabelShuffleSplit(n_iter=4, test_size=0.5, random_state=0)
+  >>> for train, test in lss.split(X, y, labels):
   ...     print("%s %s" % (train, test))
   ...
   [0 1 2 3] [4 5 6 7]
@@ -514,4 +552,4 @@ Cross validation and model selection
 
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
-model. This is the topic if the next section: :ref:`grid_search`.
+model. This is the topic of the next section: :ref:`grid_search`.

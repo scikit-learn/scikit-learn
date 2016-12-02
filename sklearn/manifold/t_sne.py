@@ -1,17 +1,19 @@
 # Author: Alexander Fabisch  -- <afabisch@informatik.uni-bremen.de>
+# Author: Christopher Moody <chrisemoody@gmail.com>
+# Author: Nick Travers <nickt@squareup.com>
 # License: BSD 3 clause (C) 2014
 
-# This is the standard t-SNE implementation. There are faster modifications of
-# the algorithm:
-# * Barnes-Hut-SNE: reduces the complexity of the gradient computation from
-#   N^2 to N log N (http://arxiv.org/abs/1301.3342)
+# This is the exact and Barnes-Hut t-SNE implementation. There are other
+# modifications of the algorithm:
 # * Fast Optimization for t-SNE:
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
 import numpy as np
 from scipy import linalg
+import scipy.sparse as sp
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
+from ..neighbors import BallTree
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
@@ -19,6 +21,8 @@ from ..utils.extmath import _ravel
 from ..decomposition import RandomizedPCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
+from . import _barnes_hut_tsne
+from ..utils.fixes import astype
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -47,16 +51,60 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
     """
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
+    distances = astype(distances, np.float32, copy=False)
     conditional_P = _utils._binary_search_perplexity(
-        distances, desired_perplexity, verbose)
+        distances, None, desired_perplexity, verbose)
     P = conditional_P + conditional_P.T
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
     return P
 
 
-def _kl_divergence(params, P, alpha, n_samples, n_components):
-    """t-SNE objective function: KL divergence of p_ijs and q_ijs.
+def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
+    """Compute joint probabilities p_ij from distances using just nearest
+    neighbors.
+
+    This method is approximately equal to _joint_probabilities. The latter
+    is O(N), but limiting the joint probability to nearest neighbors improves
+    this substantially to O(uN).
+
+    Parameters
+    ----------
+    distances : array, shape (n_samples * (n_samples-1) / 2,)
+        Distances of samples are stored as condensed matrices, i.e.
+        we omit the diagonal and duplicate entries and store everything
+        in a one-dimensional array.
+
+    desired_perplexity : float
+        Desired perplexity of the joint probability distributions.
+
+    verbose : int
+        Verbosity level.
+
+    Returns
+    -------
+    P : array, shape (n_samples * (n_samples-1) / 2,)
+        Condensed joint probability matrix.
+    """
+    # Compute conditional probabilities such that they approximately match
+    # the desired perplexity
+    distances = astype(distances, np.float32, copy=False)
+    neighbors = astype(neighbors, np.int64, copy=False)
+    conditional_P = _utils._binary_search_perplexity(
+        distances, neighbors, desired_perplexity, verbose)
+    m = "All probabilities should be finite"
+    assert np.all(np.isfinite(conditional_P)), m
+    P = conditional_P + conditional_P.T
+    sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
+    P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
+    assert np.all(np.abs(P) <= 1.0)
+    return P
+
+
+def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
+                   skip_num_points=0):
+    """t-SNE objective function: gradient of the KL divergence
+    of p_ijs and q_ijs and the absolute error.
 
     Parameters
     ----------
@@ -66,7 +114,75 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    alpha : float
+    degrees_of_freedom : float
+        Degrees of freedom of the Student's-t distribution.
+
+    n_samples : int
+        Number of samples.
+
+    n_components : int
+        Dimension of the embedded space.
+
+    skip_num_points : int (optional, default:0)
+        This does not compute the gradient for points with indices below
+        `skip_num_points`. This is useful when computing transforms of new
+        data where you'd like to keep the old data fixed.
+
+    Returns
+    -------
+    kl_divergence : float
+        Kullback-Leibler divergence of p_ij and q_ij.
+
+    grad : array, shape (n_params,)
+        Unraveled gradient of the Kullback-Leibler divergence with respect to
+        the embedding.
+    """
+    X_embedded = params.reshape(n_samples, n_components)
+
+    # Q is a heavy-tailed distribution: Student's t-distribution
+    n = pdist(X_embedded, "sqeuclidean")
+    n += 1.
+    n /= degrees_of_freedom
+    n **= (degrees_of_freedom + 1.0) / -2.0
+    Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
+
+    # Optimization trick below: np.dot(x, y) is faster than
+    # np.sum(x * y) because it calls BLAS
+
+    # Objective: C (Kullback-Leibler divergence of P and Q)
+    kl_divergence = 2.0 * np.dot(P, np.log(P / Q))
+
+    # Gradient: dC/dY
+    grad = np.ndarray((n_samples, n_components))
+    PQd = squareform((P - Q) * n)
+    for i in range(skip_num_points, n_samples):
+        np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded, out=grad[i])
+    grad = grad.ravel()
+    c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
+    grad *= c
+
+    return kl_divergence, grad
+
+
+def _kl_divergence_error(params, P, neighbors, degrees_of_freedom, n_samples,
+                         n_components):
+    """t-SNE objective function: the absolute error of the
+    KL divergence of p_ijs and q_ijs.
+
+    Parameters
+    ----------
+    params : array, shape (n_params,)
+        Unraveled embedding.
+
+    P : array, shape (n_samples * (n_samples-1) / 2,)
+        Condensed joint probability matrix.
+
+    neighbors : array (n_samples, K)
+        The neighbors is not actually required to calculate the
+        divergence, but is here to match the signature of the
+        gradient function
+
+    degrees_of_freedom : float
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -89,39 +205,109 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
     # Q is a heavy-tailed distribution: Student's t-distribution
     n = pdist(X_embedded, "sqeuclidean")
     n += 1.
-    n /= alpha
-    n **= (alpha + 1.0) / -2.0
+    n /= degrees_of_freedom
+    n **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
 
     # Optimization trick below: np.dot(x, y) is faster than
     # np.sum(x * y) because it calls BLAS
 
     # Objective: C (Kullback-Leibler divergence of P and Q)
+    if len(P.shape) == 2:
+        P = squareform(P)
     kl_divergence = 2.0 * np.dot(P, np.log(P / Q))
 
-    # Gradient: dC/dY
-    grad = np.ndarray((n_samples, n_components))
-    PQd = squareform((P - Q) * n)
-    for i in range(n_samples):
-        np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded, out=grad[i])
+    return kl_divergence
+
+
+def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
+                      n_components, angle=0.5, skip_num_points=0,
+                      verbose=False):
+    """t-SNE objective function: KL divergence of p_ijs and q_ijs.
+
+    Uses Barnes-Hut tree methods to calculate the gradient that
+    runs in O(NlogN) instead of O(N^2)
+
+    Parameters
+    ----------
+    params : array, shape (n_params,)
+        Unraveled embedding.
+
+    P : array, shape (n_samples * (n_samples-1) / 2,)
+        Condensed joint probability matrix.
+
+    neighbors: int64 array, shape (n_samples, K)
+        Array with element [i, j] giving the index for the jth
+        closest neighbor to point i.
+
+    degrees_of_freedom : float
+        Degrees of freedom of the Student's-t distribution.
+
+    n_samples : int
+        Number of samples.
+
+    n_components : int
+        Dimension of the embedded space.
+
+    angle : float (default: 0.5)
+        This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
+        'angle' is the angular size (referred to as theta in [3]) of a distant
+        node as measured from a point. If this size is below 'angle' then it is
+        used as a summary node of all points contained within it.
+        This method is not very sensitive to changes in this parameter
+        in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
+        computation time and angle greater 0.8 has quickly increasing error.
+
+    skip_num_points : int (optional, default:0)
+        This does not compute the gradient for points with indices below
+        `skip_num_points`. This is useful when computing transforms of new
+        data where you'd like to keep the old data fixed.
+
+    verbose : int
+        Verbosity level.
+
+    Returns
+    -------
+    kl_divergence : float
+        Kullback-Leibler divergence of p_ij and q_ij.
+
+    grad : array, shape (n_params,)
+        Unraveled gradient of the Kullback-Leibler divergence with respect to
+        the embedding.
+    """
+    params = astype(params, np.float32, copy=False)
+    X_embedded = params.reshape(n_samples, n_components)
+    neighbors = astype(neighbors, np.int64, copy=False)
+    if len(P.shape) == 1:
+        sP = squareform(P).astype(np.float32)
+    else:
+        sP = P.astype(np.float32)
+
+    grad = np.zeros(X_embedded.shape, dtype=np.float32)
+    error = _barnes_hut_tsne.gradient(sP, X_embedded, neighbors,
+                                      grad, angle, n_components, verbose,
+                                      dof=degrees_of_freedom)
+    c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
-    c = 2.0 * (alpha + 1.0) / alpha
     grad *= c
 
-    return kl_divergence, grad
+    return error, grad
 
 
-def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
+def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
+                      n_iter_check=1, n_iter_without_progress=50,
                       momentum=0.5, learning_rate=1000.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
-                      args=None):
+                      args=None, kwargs=None):
     """Batch gradient descent with momentum and individual gains.
 
     Parameters
     ----------
     objective : function or callable
         Should return a tuple of cost and gradient for a given parameter
-        vector.
+        vector. When expensive to compute, the cost can optionally
+        be None and can be computed every n_iter_check steps using
+        the objective_error function.
 
     p0 : array-like, shape (n_params,)
         Initial parameter vector.
@@ -132,6 +318,14 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
 
     n_iter : int
         Maximum number of gradient descent iterations.
+
+    n_iter_check : int
+        Number of iterations before evaluating the global error. If the error
+        is sufficiently low, we abort the optimization.
+
+    objective_error : function or callable
+        Should return a tuple of cost and gradient for a given parameter
+        vector.
 
     n_iter_without_progress : int, optional (default: 30)
         Maximum number of iterations without progress before we abort the
@@ -162,6 +356,9 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
     args : sequence
         Arguments to pass to objective function.
 
+    kwargs : dict
+        Keyword arguments to pass to objective function.
+
     Returns
     -------
     p : array, shape (n_params,)
@@ -175,6 +372,8 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
     """
     if args is None:
         args = []
+    if kwargs is None:
+        kwargs = {}
 
     p = p0.copy().ravel()
     update = np.zeros_like(p)
@@ -184,30 +383,8 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
     best_iter = 0
 
     for i in range(it, n_iter):
-        new_error, grad = objective(p, *args)
-        error_diff = np.abs(new_error - error)
-        error = new_error
+        new_error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
-
-        if error < best_error:
-            best_error = error
-            best_iter = i
-        elif i - best_iter > n_iter_without_progress:
-            if verbose >= 2:
-                print("[t-SNE] Iteration %d: did not make any progress "
-                      "during the last %d episodes. Finished."
-                      % (i + 1, n_iter_without_progress))
-            break
-        if min_grad_norm >= grad_norm:
-            if verbose >= 2:
-                print("[t-SNE] Iteration %d: gradient norm %f. Finished."
-                      % (i + 1, grad_norm))
-            break
-        if min_error_diff >= error_diff:
-            if verbose >= 2:
-                print("[t-SNE] Iteration %d: error difference %f. Finished."
-                      % (i + 1, error_diff))
-            break
 
         inc = update * grad >= 0.0
         dec = np.invert(inc)
@@ -218,9 +395,38 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if verbose >= 2 and (i + 1) % 10 == 0:
-            print("[t-SNE] Iteration %d: error = %.7f, gradient norm = %.7f"
-                  % (i + 1, error, grad_norm))
+        if (i + 1) % n_iter_check == 0:
+            if new_error is None:
+                new_error = objective_error(p, *args)
+            error_diff = np.abs(new_error - error)
+            error = new_error
+
+            if verbose >= 2:
+                m = "[t-SNE] Iteration %d: error = %.7f, gradient norm = %.7f"
+                print(m % (i + 1, error, grad_norm))
+
+            if error < best_error:
+                best_error = error
+                best_iter = i
+            elif i - best_iter > n_iter_without_progress:
+                if verbose >= 2:
+                    print("[t-SNE] Iteration %d: did not make any progress "
+                          "during the last %d episodes. Finished."
+                          % (i + 1, n_iter_without_progress))
+                break
+            if grad_norm <= min_grad_norm:
+                if verbose >= 2:
+                    print("[t-SNE] Iteration %d: gradient norm %f. Finished."
+                          % (i + 1, grad_norm))
+                break
+            if error_diff <= min_error_diff:
+                if verbose >= 2:
+                    m = "[t-SNE] Iteration %d: error difference %f. Finished."
+                    print(m % (i + 1, error_diff))
+                break
+
+        if new_error is not None:
+            error = new_error
 
     return p, error, i
 
@@ -314,7 +520,7 @@ class TSNE(BaseEstimator):
     perplexity : float, optional (default: 30)
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
-        usually require a larger perplexity. Consider selcting a value
+        usually require a larger perplexity. Consider selecting a value
         between 5 and 50. The choice is not extremely critical since t-SNE
         is quite insensitive to this parameter.
 
@@ -341,6 +547,9 @@ class TSNE(BaseEstimator):
     n_iter_without_progress : int, optional (default: 30)
         Maximum number of iterations without progress before we abort the
         optimization.
+
+        .. versionadded:: 0.17
+           parameter *n_iter_without_progress* to control stopping criteria.
 
     min_grad_norm : float, optional (default: 1E-7)
         If the gradient norm is below this threshold, the optimization will
@@ -371,13 +580,35 @@ class TSNE(BaseEstimator):
         numpy.random singleton. Note that different initializations
         might result in different local minima of the cost function.
 
+    method : string (default: 'barnes_hut')
+        By default the gradient calculation algorithm uses Barnes-Hut
+        approximation running in O(NlogN) time. method='exact'
+        will run on the slower, but exact, algorithm in O(N^2) time. The
+        exact algorithm should be used when nearest-neighbor errors need
+        to be better than 3%. However, the exact method cannot scale to
+        millions of examples.
+
+        .. versionadded:: 0.17
+           Approximate optimization *method* via the Barnes-Hut.
+
+    angle : float (default: 0.5)
+        Only used if method='barnes_hut'
+        This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
+        'angle' is the angular size (referred to as theta in [3]) of a distant
+        node as measured from a point. If this size is below 'angle' then it is
+        used as a summary node of all points contained within it.
+        This method is not very sensitive to changes in this parameter
+        in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
+        computation time and angle greater 0.8 has quickly increasing error.
+
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
-    training_data_ : array-like, shape (n_samples, n_features)
-        Stores the training data.
+    kl_divergence_ : float
+        Kullback-Leibler divergence after optimization.
 
     Examples
     --------
@@ -386,11 +617,12 @@ class TSNE(BaseEstimator):
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = TSNE(n_components=2, random_state=0)
+    >>> np.set_printoptions(suppress=True)
     >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[  887.28...,   238.61...],
-           [ -714.79...,  3243.34...],
-           [  957.30..., -2505.78...],
-           [-1130.28...,  -974.78...])
+    array([[ 0.00017599,  0.00003993],
+           [ 0.00009891,  0.00021913],
+           [ 0.00018554, -0.00009357],
+           [ 0.00009528, -0.00001407]])
 
     References
     ----------
@@ -400,14 +632,20 @@ class TSNE(BaseEstimator):
 
     [2] van der Maaten, L.J.P. t-Distributed Stochastic Neighbor Embedding
         http://homepage.tudelft.nl/19j49/t-SNE.html
+
+    [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
+        Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
+        http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
+
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None):
-        if init not in ["pca", "random"]:
-            raise ValueError("'init' must be either 'pca' or 'random'")
+                 random_state=None, method='barnes_hut', angle=0.5):
+        if init not in ["pca", "random"] or isinstance(init, np.ndarray):
+            msg = "'init' must be 'pca', 'random' or a NumPy array"
+            raise ValueError(msg)
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -419,17 +657,46 @@ class TSNE(BaseEstimator):
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
+        self.method = method
+        self.angle = angle
+        self.embedding_ = None
 
-    def fit(self, X, y=None):
+    def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
+
+        Note that sparse arrays can only be handled by method='exact'.
+        It is recommended that you convert your sparse array to dense
+        (e.g. `X.toarray()`) if it fits in memory, or otherwise using a
+        dimensionality reduction technique (e.g. TruncatedSVD).
 
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row.
+            matrix. Otherwise it contains a sample per row. Note that this
+            when method='barnes_hut', X cannot be a sparse array and if need be
+            will be converted to a 32 bit float array. Method='exact' allows
+            sparse arrays and 64bit floating point inputs.
+
+        skip_num_points : int (optional, default:0)
+            This does not compute the gradient for points with indices below
+            `skip_num_points`. This is useful when computing transforms of new
+            data where you'd like to keep the old data fixed.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
+        if self.method not in ['barnes_hut', 'exact']:
+            raise ValueError("'method' must be 'barnes_hut' or 'exact'")
+        if self.angle < 0.0 or self.angle > 1.0:
+            raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.method == 'barnes_hut' and sp.issparse(X):
+            raise TypeError('A sparse matrix was passed, but dense '
+                            'data is required for method="barnes_hut". Use '
+                            'X.toarray() to convert to a dense numpy array if '
+                            'the array is small enough for it to fit in '
+                            'memory. Otherwise consider dimensionality '
+                            'reduction techniques (e.g. TruncatedSVD)')
+            X = check_array(X, dtype=np.float32)
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
@@ -451,34 +718,70 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing pairwise distances...")
 
             if self.metric == "euclidean":
-                distances = pairwise_distances(X, metric=self.metric, squared=True)
+                distances = pairwise_distances(X, metric=self.metric,
+                                               squared=True)
             else:
                 distances = pairwise_distances(X, metric=self.metric)
 
-        # Degrees of freedom of the Student's t-distribution. The suggestion
-        # alpha = n_components - 1 comes from "Learning a Parametric Embedding
-        # by Preserving Local Structure" Laurens van der Maaten, 2009.
-        alpha = max(self.n_components - 1.0, 1)
-        n_samples = X.shape[0]
-        self.training_data_ = X
+        if not np.all(distances >= 0):
+            raise ValueError("All distances should be positive, either "
+                             "the metric or precomputed distances given "
+                             "as X are not correct")
 
-        P = _joint_probabilities(distances, self.perplexity, self.verbose)
+        # Degrees of freedom of the Student's t-distribution. The suggestion
+        # degrees_of_freedom = n_components - 1 comes from
+        # "Learning a Parametric Embedding by Preserving Local Structure"
+        # Laurens van der Maaten, 2009.
+        degrees_of_freedom = max(self.n_components - 1.0, 1)
+        n_samples = X.shape[0]
+        # the number of nearest neighbors to find
+        k = min(n_samples - 1, int(3. * self.perplexity + 1))
+
+        neighbors_nn = None
+        if self.method == 'barnes_hut':
+            if self.verbose:
+                print("[t-SNE] Computing %i nearest neighbors..." % k)
+            if self.metric == 'precomputed':
+                # Use the precomputed distances to find
+                # the k nearest neighbors and their distances
+                neighbors_nn = np.argsort(distances, axis=1)[:, :k]
+            else:
+                # Find the nearest neighbors for every point
+                bt = BallTree(X)
+                # LvdM uses 3 * perplexity as the number of neighbors
+                # And we add one to not count the data point itself
+                # In the event that we have very small # of points
+                # set the neighbors to n - 1
+                distances_nn, neighbors_nn = bt.query(X, k=k + 1)
+                neighbors_nn = neighbors_nn[:, 1:]
+            P = _joint_probabilities_nn(distances, neighbors_nn,
+                                        self.perplexity, self.verbose)
+        else:
+            P = _joint_probabilities(distances, self.perplexity, self.verbose)
+        assert np.all(np.isfinite(P)), "All probabilities should be finite"
+        assert np.all(P >= 0), "All probabilities should be zero or positive"
+        assert np.all(P <= 1), ("All probabilities should be less "
+                                "or then equal to one")
+
         if self.init == 'pca':
             pca = RandomizedPCA(n_components=self.n_components,
                                 random_state=random_state)
             X_embedded = pca.fit_transform(X)
+        elif isinstance(self.init, np.ndarray):
+            X_embedded = self.init
         elif self.init == 'random':
             X_embedded = None
         else:
             raise ValueError("Unsupported initialization scheme: %s"
                              % self.init)
 
-        self.embedding_ = self._tsne(P, alpha, n_samples, random_state,
-                                     X_embedded=X_embedded)
+        return self._tsne(P, degrees_of_freedom, n_samples, random_state,
+                          X_embedded=X_embedded,
+                          neighbors=neighbors_nn,
+                          skip_num_points=skip_num_points)
 
-        return self
-
-    def _tsne(self, P, alpha, n_samples, random_state, X_embedded=None):
+    def _tsne(self, P, degrees_of_freedom, n_samples, random_state,
+              X_embedded=None, neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
         # and the Student's t-distributions Q. The optimization algorithm that
@@ -495,40 +798,69 @@ class TSNE(BaseEstimator):
                                                    self.n_components)
         params = X_embedded.ravel()
 
+        opt_args = {}
+        opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
+                    "learning_rate": self.learning_rate,
+                    "verbose": self.verbose, "n_iter_check": 25,
+                    "kwargs": dict(skip_num_points=skip_num_points)}
+        if self.method == 'barnes_hut':
+            m = "Must provide an array of neighbors to use Barnes-Hut"
+            assert neighbors is not None, m
+            obj_func = _kl_divergence_bh
+            objective_error = _kl_divergence_error
+            sP = squareform(P).astype(np.float32)
+            neighbors = neighbors.astype(np.int64)
+            args = [sP, neighbors, degrees_of_freedom, n_samples,
+                    self.n_components]
+            opt_args['args'] = args
+            opt_args['min_grad_norm'] = 1e-3
+            opt_args['n_iter_without_progress'] = 30
+            # Don't always calculate the cost since that calculation
+            # can be nearly as expensive as the gradient
+            opt_args['objective_error'] = objective_error
+            opt_args['kwargs']['angle'] = self.angle
+            opt_args['kwargs']['verbose'] = self.verbose
+        else:
+            obj_func = _kl_divergence
+            opt_args['args'] = [P, degrees_of_freedom, n_samples,
+                                self.n_components]
+            opt_args['min_error_diff'] = 0.0
+            opt_args['min_grad_norm'] = 0.0
+
         # Early exaggeration
         P *= self.early_exaggeration
-        params, error, it = _gradient_descent(
-            _kl_divergence, params, it=0, n_iter=50, momentum=0.5,
-            min_grad_norm=0.0, min_error_diff=0.0,
-            learning_rate=self.learning_rate, verbose=self.verbose,
-            args=[P, alpha, n_samples, self.n_components])
-        params, error, it = _gradient_descent(
-            _kl_divergence, params, it=it + 1, n_iter=100, momentum=0.8,
-            min_grad_norm=0.0, min_error_diff=0.0,
-            learning_rate=self.learning_rate, verbose=self.verbose,
-            args=[P, alpha, n_samples, self.n_components])
+
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
+        opt_args['n_iter'] = 100
+        opt_args['momentum'] = 0.8
+        opt_args['it'] = it + 1
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
         if self.verbose:
-            print("[t-SNE] Error after %d iterations with early "
-                  "exaggeration: %f" % (it + 1, error))
+            print("[t-SNE] KL divergence after %d iterations with early "
+                  "exaggeration: %f" % (it + 1, kl_divergence))
+        # Save the final number of iterations
+        self.n_iter_final = it
 
         # Final optimization
         P /= self.early_exaggeration
-        params, error, it = _gradient_descent(
-            _kl_divergence, params, it=it + 1, n_iter=self.n_iter,
-            min_grad_norm=self.min_grad_norm,
-            n_iter_without_progress=self.n_iter_without_progress,
-            momentum=0.8, learning_rate=self.learning_rate,
-            verbose=self.verbose, args=[P, alpha, n_samples,
-                                        self.n_components])
+        opt_args['n_iter'] = self.n_iter
+        opt_args['it'] = it + 1
+        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
+            print("[t-SNE] Error after %d iterations: %f"
+                  % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)
+        self.kl_divergence_ = kl_divergence
 
         return X_embedded
 
     def fit_transform(self, X, y=None):
-        """Transform X to the embedded space.
+        """Fit X into an embedded space and return that transformed
+        output.
 
         Parameters
         ----------
@@ -541,5 +873,20 @@ class TSNE(BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        self.fit(X)
+        embedding = self._fit(X)
+        self.embedding_ = embedding
         return self.embedding_
+
+    def fit(self, X, y=None):
+        """Fit X into an embedded space.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
+            If the metric is 'precomputed' X must be a square distance
+            matrix. Otherwise it contains a sample per row. If the method
+            is 'exact', X may be a sparse matrix of type 'csr', 'csc'
+            or 'coo'.
+        """
+        self.fit_transform(X)
+        return self

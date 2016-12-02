@@ -480,12 +480,37 @@ t-distributed Stochastic Neighbor Embedding (t-SNE)
 t-SNE (:class:`TSNE`) converts affinities of data points to probabilities.
 The affinities in the original space are represented by Gaussian joint
 probabilities and the affinities in the embedded space are represented by
-Student's t-distributions. The Kullback-Leibler (KL) divergence of the joint
+Student's t-distributions. This allows t-SNE to be particularly sensitive
+to local structure and has a few other advantages over existing techniques:
+
+* Revealing the structure at many scales on a single map
+* Revealing data that lie in multiple, different, manifolds or clusters
+* Reducing the tendency to crowd points together at the center
+
+While Isomap, LLE and variants are best suited to unfold a single continuous
+low dimensional manifold, t-SNE will focus on the local structure of the data
+and will tend to extract clustered local groups of samples as highlighted on
+the S-curve example. This ability to group samples based on the local structure
+might be beneficial to visually disentangle a dataset that comprises several
+manifolds at once as is the case in the digits dataset.
+
+The Kullback-Leibler (KL) divergence of the joint
 probabilities in the original space and the embedded space will be minimized
 by gradient descent. Note that the KL divergence is not convex, i.e.
 multiple restarts with different initializations will end up in local minima
 of the KL divergence. Hence, it is sometimes useful to try different seeds
-and select the embedding with the lowest KL divergence.
+and select the embedding with the lowest KL divergence. 
+
+The disadvantages to using t-SNE are roughly:
+
+* t-SNE is computationally expensive, and can take several hours on million-sample
+  datasets where PCA will finish in seconds or minutes
+* The Barnes-Hut t-SNE method is limited to two or three dimensional embeddings.
+* The algorithm is stochastic and multiple restarts with different seeds can
+  yield different embeddings. However, it is perfectly legitimate to pick the the
+  embedding with the least error.
+* Global structure is not explicitly preserved. This is problem is mitigated by
+  initializing points with PCA (using `init='pca'`).
 
 
 .. figure:: ../auto_examples/manifold/images/plot_lle_digits_013.png
@@ -493,17 +518,27 @@ and select the embedding with the lowest KL divergence.
    :align: center
    :scale: 50
 
-
+Optimizing t-SNE
+----------------
 The main purpose of t-SNE is visualization of high-dimensional data. Hence,
 it works best when the data will be embedded on two or three dimensions.
 
 Optimizing the KL divergence can be a little bit tricky sometimes. There are
-three parameters that control the optimization of t-SNE:
+five parameters that control the optimization of t-SNE and therefore possibly
+the quality of the resulting embedding:
 
+* perplexity
 * early exaggeration factor
 * learning rate
 * maximum number of iterations
+* angle (not used in the exact method)
 
+The perplexity is defined as :math:`k=2^(S)` where :math:`S` is the Shannon
+entropy of the conditional probability distribution. The perplexity of a
+:math:`k`-sided die is :math:`k`, so that :math:`k` is effectively the number of
+nearest neighbors t-SNE considers when generating the conditional probabilities.
+Larger perplexities lead to more nearest neighbors and less sensitive to small
+structure. Larger datasets tend to require larger perplexities.
 The maximum number of iterations is usually high enough and does not need
 any tuning. The optimization consists of two phases: the early exaggeration
 phase and the final optimization. During early exaggeration the joint
@@ -514,19 +549,37 @@ divergence could increase during this phase. Usually it does not have to be
 tuned. A critical parameter is the learning rate. If it is too low gradient
 descent will get stuck in a bad local minimum. If it is too high the KL
 divergence will increase during optimization. More tips can be found in
-Laurens van der Maaten's FAQ (see references).
+Laurens van der Maaten's FAQ (see references). The last parameter, angle,
+is a tradeoff between performance and accuracy. Larger angles imply that we
+can approximate larger regions by a single point,leading to better speed
+but less accurate results. 
 
-Standard t-SNE that has been implemented here is usually much slower than
+Barnes-Hut t-SNE
+----------------
+
+The Barnes-Hut t-SNE that has been implemented here is usually much slower than
 other manifold learning algorithms. The optimization is quite difficult
-and the computation of the gradient is on :math:`O[d N^2]`, where :math:`d`
-is the number of output dimensions and :math:`N` is the number of samples.
+and the computation of the gradient is :math:`O[d N log(N)]`, where :math:`d`
+is the number of output dimensions and :math:`N` is the number of samples. The 
+Barnes-Hut method improves on the exact method where t-SNE complexity is 
+:math:`O[d N^2]`, but has several other notable differences:
 
-While Isomap, LLE and variants are best suited to unfold a single continuous
-low dimensional manifold, t-SNE will focus on the local structure of the data
-and will tend to extract clustered local groups of samples as highlighted on
-the S-curve example. This ability to group samples based on the local structure
-might be beneficial to visually disentangle a dataset that comprises several
-manifolds at once as is the case in the digits dataset.
+* The Barnes-Hut implementation only works when the target dimensionality is 3
+  or less. The 2D case is typical when building visualizations.
+* Barnes-Hut only works with dense input data. Sparse data matrices can only be
+  embedded with the exact method or can be approximated by a dense low rank
+  projection for instance using :class:`sklearn.decomposition.TruncatedSVD`
+* Barnes-Hut is an approximation of the exact method. The approximation is
+  parameterized with the angle parameter, therefore the angle parameter is
+  unused when method="exact"
+* Barnes-Hut is significantly more scalable. Barnes-Hut can be used to embed
+  hundred of thousands of data points while the exact method can handle
+  thousands of samples before becoming computationally intractable
+
+For visualization purpose (which is the main use case of t-SNE), using the
+Barnes-Hut method is strongly recommended. The exact t-SNE method is useful
+for checking the theoretically properties of the embedding possibly in higher
+dimensional space but limit to small datasets due to computational constraints.
 
 Also note that the digits labels roughly match the natural grouping found by
 t-SNE while the linear 2D projection of the PCA model yields a representation
@@ -547,8 +600,12 @@ the internal structure of the data.
     (2008)
 
   * `"t-Distributed Stochastic Neighbor Embedding"
-    <http://homepage.tudelft.nl/19j49/t-SNE.html>`_
+    <http://lvdmaaten.github.io/tsne/>`_
     van der Maaten, L.J.P.
+
+  * `"Accelerating t-SNE using Tree-Based Algorithms."
+    <http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
+    L.J.P. van der Maaten.  Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
 
 Tips on practical use
 =====================

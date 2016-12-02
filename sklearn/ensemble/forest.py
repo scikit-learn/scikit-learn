@@ -45,9 +45,10 @@ import warnings
 from warnings import warn
 
 from abc import ABCMeta, abstractmethod
-
 import numpy as np
 from scipy.sparse import issparse
+from scipy.sparse import hstack as sparse_hstack
+
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
@@ -59,9 +60,10 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
-from ..utils.validation import DataConversionWarning, NotFittedError
+from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount
+from ..utils.multiclass import check_classification_targets
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -79,7 +81,7 @@ def _generate_sample_indices(random_state, n_samples):
     return sample_indices
 
 def _generate_unsampled_indices(random_state, n_samples):
-    """Private function used to forest._set_oob_score fuction."""
+    """Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(random_state, n_samples)
     sample_counts = bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
@@ -181,6 +183,39 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return np.array(results).T
 
+    def decision_path(self, X):
+        """Return the decision path in the forest
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        indicator : sparse csr array, shape = [n_samples, n_nodes]
+            Return a node indicator matrix where non zero elements
+            indicates that the samples goes through the nodes.
+
+        n_nodes_ptr : array of size (n_estimators + 1, )
+            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
+            gives the indicator value for the i-th estimator.
+        """
+        X = self._validate_X_predict(X)
+        indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                              backend="threading")(
+            delayed(_parallel_helper)(tree, 'decision_path', X,
+                                      check_input=False)
+            for tree in self.estimators_)
+
+        n_nodes = [0]
+        n_nodes.extend([i.shape[1] for i in indicators])
+        n_nodes_ptr = np.array(n_nodes).cumsum()
+
+        return sparse_hstack(indicators).tocsr(), n_nodes_ptr
+
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
 
@@ -208,7 +243,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             Returns self.
         """
         # Validate or convert input data
-        X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+        X = check_array(X, accept_sparse="csc", dtype=DTYPE)
+        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -417,6 +453,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.oob_score_ = oob_score / self.n_outputs_
 
     def _validate_y_class_weight(self, y):
+        check_classification_targets(y)
+
         y = np.copy(y)
         expanded_class_weight = None
 
@@ -434,16 +472,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y = y_store_unique_indices
 
         if self.class_weight is not None:
-            valid_presets = ('auto', 'balanced', 'balanced_subsample', 'subsample', 'auto')
+            valid_presets = ('auto', 'balanced', 'subsample', 'balanced_subsample')
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'
                                      % self.class_weight)
                 if self.class_weight == "subsample":
-                    warn("class_weight='subsample' is deprecated and will be removed in 0.18."
-                         " It was replaced by class_weight='balanced_subsample' "
-                         "using the balanced strategy.", DeprecationWarning)
+                    warn("class_weight='subsample' is deprecated in 0.17 and"
+                         "will be removed in 0.19. It was replaced by "
+                         "class_weight='balanced_subsample' using the balanced"
+                         "strategy.", DeprecationWarning)
                 if self.warm_start:
                     warn('class_weight presets "balanced" or "balanced_subsample" are '
                          'not recommended for warm_start if the fitted data '
@@ -738,43 +777,45 @@ class RandomForestClassifier(ForestClassifier):
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
-        Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
         Ignored if ``max_leaf_nodes`` is not None.
-        Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
-        Note: this parameter is tree-specific.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leaves.  A split is
-        discarded if after the split, one of the leaves would contain less then
-        ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
         leaf node.
-        Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
-        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
     oob_score : bool
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization accuracy.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -795,7 +836,6 @@ class RandomForestClassifier(ForestClassifier):
         new forest.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional
-
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -805,8 +845,9 @@ class RandomForestClassifier(ForestClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-        The "balanced_subsample" mode is the same as "balanced" except that weights are
-        computed based on the bootstrap sample for every tree grown.
+        The "balanced_subsample" mode is the same as "balanced" except that
+        weights are computed based on the bootstrap sample for every tree
+        grown.
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -913,7 +954,6 @@ class RandomForestRegressor(ForestRegressor):
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
-        Note: this parameter is tree-specific.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -930,43 +970,45 @@ class RandomForestRegressor(ForestRegressor):
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
-        Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
         Ignored if ``max_leaf_nodes`` is not None.
-        Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
-        Note: this parameter is tree-specific.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leaves.  A split is
-        discarded if after the split, one of the leaves would contain less then
-        ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
         leaf node.
-        Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
-        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
+    oob_score : bool, optional (default=False)
         whether to use out-of-bag samples to estimate
-        the generalization error.
+        the R^2 on unseen data.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1071,7 +1113,6 @@ class ExtraTreesClassifier(ForestClassifier):
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
-        Note: this parameter is tree-specific.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1088,43 +1129,45 @@ class ExtraTreesClassifier(ForestClassifier):
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
-        Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
         Ignored if ``max_leaf_nodes`` is not None.
-        Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
-        Note: this parameter is tree-specific.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leaves.  A split is
-        discarded if after the split, one of the leaves would contain less then
-        ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
         leaf node.
-        Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
-        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
+    oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
-        the generalization error.
+        the generalization accuracy.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1145,7 +1188,6 @@ class ExtraTreesClassifier(ForestClassifier):
         new forest.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional
-
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1227,7 +1269,8 @@ class ExtraTreesClassifier(ForestClassifier):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "random_state"),
+                              "max_features", "max_leaf_nodes",
+                              "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1263,7 +1306,6 @@ class ExtraTreesRegressor(ForestRegressor):
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
-        Note: this parameter is tree-specific.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
@@ -1280,44 +1322,44 @@ class ExtraTreesRegressor(ForestRegressor):
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
-        Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
         Ignored if ``max_leaf_nodes`` is not None.
-        Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
-        Note: this parameter is tree-specific.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leaves.  A split is
-        discarded if after the split, one of the leaves would contain less then
-        ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
         leaf node.
-        Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
-        Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
-        Note: this parameter is tree-specific.
 
-    oob_score : bool
-        Whether to use out-of-bag samples to estimate
-        the generalization error.
+    oob_score : bool, optional (default=False)
+        Whether to use out-of-bag samples to estimate the R^2 on unseen data.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1432,13 +1474,21 @@ class RandomTreesEmbedding(BaseForest):
         min_samples_split samples.
         Ignored if ``max_leaf_nodes`` is not None.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples in newly created leaves.  A split is
-        discarded if after the split, one of the leaves would contain less then
-        ``min_samples_leaf`` samples.
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` is the minimum
+          number of samples for each split.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` is the minimum
+          number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a

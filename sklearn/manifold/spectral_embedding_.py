@@ -44,14 +44,20 @@ def _graph_connected_component(graph, node_id):
     """
     connected_components_matrix = np.zeros(
         shape=(graph.shape[0]), dtype=np.bool)
-    connected_components_matrix[node_id] = True
+    nodes_to_explore = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
+    nodes_to_explore[node_id] = True
     n_node = graph.shape[0]
+    nodes_to_add = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
     for i in range(n_node):
-        last_num_component = connected_components_matrix.sum()
-        _, node_to_add = np.where(graph[connected_components_matrix] != 0)
-        connected_components_matrix[node_to_add] = True
-        if last_num_component >= connected_components_matrix.sum():
+        nodes_to_add.fill(False)
+        for i in np.where(nodes_to_explore)[0]:
+            nodes_to_add = np.logical_or(nodes_to_add, graph[i] != 0)
+        connected_components_matrix = np.logical_or(
+            connected_components_matrix, nodes_to_explore)
+        if not nodes_to_add.any():
             break
+        # Swap arrays
+        nodes_to_explore, nodes_to_add = nodes_to_add, nodes_to_explore
     return connected_components_matrix
 
 
@@ -78,7 +84,7 @@ def _graph_is_connected(graph):
         return _graph_connected_component(graph, 0).sum() == graph.shape[0]
 
 
-def _set_diag(laplacian, value):
+def _set_diag(laplacian, value, norm_laplacian):
     """Set the diagonal of the laplacian matrix and convert it to a
     sparse format well suited for eigenvalue decomposition
 
@@ -88,6 +94,8 @@ def _set_diag(laplacian, value):
         The graph laplacian
     value : float
         The value of the diagonal
+    norm_laplacian : bool
+        Whether the value of the diagonal should be changed or not
 
     Returns
     -------
@@ -99,11 +107,13 @@ def _set_diag(laplacian, value):
     n_nodes = laplacian.shape[0]
     # We need all entries in the diagonal to values
     if not sparse.isspmatrix(laplacian):
-        laplacian.flat[::n_nodes + 1] = value
+        if norm_laplacian:
+            laplacian.flat[::n_nodes + 1] = value
     else:
         laplacian = laplacian.tocoo()
-        diag_idx = (laplacian.row == laplacian.col)
-        laplacian.data[diag_idx] = value
+        if norm_laplacian:
+            diag_idx = (laplacian.row == laplacian.col)
+            laplacian.data[diag_idx] = value
         # If the matrix has a small number of diagonals (as in the
         # case of structured matrices coming from images), the
         # dia format might be best suited for matvec products:
@@ -229,7 +239,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # /lobpcg/lobpcg.py#L237
         # or matlab:
         # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
-        laplacian = _set_diag(laplacian, 1)
+        laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
         # (see http://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
@@ -249,9 +259,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
+            v0 = random_state.uniform(-1, 1, laplacian.shape[0])
             lambdas, diffusion_map = eigsh(laplacian, k=n_components,
                                            sigma=1.0, which='LM',
-                                           tol=eigen_tol)
+                                           tol=eigen_tol, v0=v0)
             embedding = diffusion_map.T[n_components::-1] * dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
@@ -268,7 +279,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # lobpcg needs double precision floats
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)
-        laplacian = _set_diag(laplacian, 1)
+        laplacian = _set_diag(laplacian, 1, norm_laplacian)
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
@@ -292,7 +303,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
-            laplacian = _set_diag(laplacian, 1)
+            laplacian = _set_diag(laplacian, 1, norm_laplacian)
             # We increase the number of eigenvectors requested, as lobpcg
             # doesn't behave well in low dimension
             X = random_state.rand(laplacian.shape[0], n_components + 1)
@@ -451,6 +462,9 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+
+        X = check_array(X, ensure_min_samples=2, estimator=self)
+
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, six.string_types):
             if self.affinity not in set(("nearest_neighbors", "rbf",

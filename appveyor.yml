@@ -5,7 +5,7 @@
 environment:
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
-    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # /E:ON and /V:ON options are not enabled in the batch script interpreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\continuous_integration\\appveyor\\run_with_env.cmd"
     WHEELHOUSE_UPLOADER_USERNAME: sklearn-appveyor
@@ -25,13 +25,14 @@ environment:
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.1"
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.0"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.1"
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.0"
       PYTHON_ARCH: "64"
+
 
 
 install:
@@ -49,7 +50,7 @@ install:
   - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp"
   - ps: "ls dist"
 
-  # Install the genreated wheel package to test it
+  # Install the generated wheel package to test it
   - "pip install --pre --no-index --find-links dist/ scikit-learn"
 
 # Not a .NET project, we build scikit-learn in the install step instead
@@ -61,7 +62,7 @@ test_script:
   - "mkdir empty_folder"
   - "cd empty_folder"
 
-  - "python -c \"import nose; nose.main()\" -s -v sklearn"
+  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
 
   # Move back to the project folder
   - "cd .."
@@ -81,3 +82,10 @@ notifications:
     url: https://webhooks.gitter.im/e/0dc8e57cd38105aeb1b4
     on_build_success: false
     on_build_failure: True
+
+cache:
+  # Use the appveyor cache to avoid re-downloading large archives such
+  # the MKL numpy and scipy wheels mirrored on a rackspace cloud
+  # container, speed up the appveyor jobs and reduce bandwidth
+  # usage on our rackspace account.
+  - '%APPDATA%\pip\Cache'

@@ -163,7 +163,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     hash_functions_ : list of GaussianRandomProjectionHash objects
         Hash function g(p,x) for a tree is an array of 32 randomly generated
-        float arrays with the same dimenstion as the data set. This array is
+        float arrays with the same dimension as the data set. This array is
         stored in GaussianRandomProjectionHash object and can be obtained
         from ``components_`` attribute.
 
@@ -189,11 +189,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
-      >>> lshf = LSHForest()
+      >>> lshf = LSHForest(random_state=42)
       >>> lshf.fit(X_train)  # doctest: +NORMALIZE_WHITESPACE
       LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10,
                 n_neighbors=5, radius=1.0, radius_cutoff_ratio=0.9,
-                random_state=None)
+                random_state=42)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances                                        # doctest: +ELLIPSIS
       array([[ 0.069...,  0.149...],
@@ -435,7 +435,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         neighbors, distances = [], []
         bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            neighs, dists = self._get_candidates(X[i], max_depth[i],
+
+            neighs, dists = self._get_candidates(X[[i]], max_depth[i],
                                                  bin_queries[i],
                                                  n_neighbors)
             neighbors.append(neighs)
@@ -494,7 +495,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         neighbors, distances = [], []
         bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            neighs, dists = self._get_radius_neighbors(X[i], max_depth[i],
+
+            neighs, dists = self._get_radius_neighbors(X[[i]], max_depth[i],
                                                        bin_queries[i], radius)
             neighbors.append(neighs)
             distances.append(dists)

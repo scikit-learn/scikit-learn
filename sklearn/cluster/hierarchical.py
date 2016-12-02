@@ -25,8 +25,7 @@ from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
 
-if sys.version_info[0] > 2:
-    xrange = range
+from ..externals.six.moves import xrange
 
 ###############################################################################
 # For non fully-connected graphs
@@ -86,8 +85,7 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
-              return_distance=False):
+def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -110,12 +108,6 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
-
-    n_components : int (optional)
-        Number of connected components. If None the number of connected
-        components is estimated from the connectivity matrix.
-        NOTE: This parameter is now directly determined directly
-        from the connectivity matrix and will be removed in 0.18
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -199,11 +191,6 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         else:
             return children_, 1, n_samples, None
 
-    if n_components is not None:
-        warnings.warn(
-            "n_components is now directly calculated from the connectivity "
-            "matrix and will be removed in 0.18",
-            DeprecationWarning)
     connectivity, n_components = _fix_connectivity(X, connectivity)
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
@@ -234,7 +221,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     moments_1[:n_samples] = 1
     moments_2 = np.zeros((n_nodes, n_features), order='C')
     moments_2[:n_samples] = X
-    inertia = np.empty(len(coord_row), dtype=np.float, order='C')
+    inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
     inertia = list(six.moves.zip(inertia, coord_row, coord_col))
@@ -279,7 +266,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         coord_row = np.empty(coord_col.shape, dtype=np.intp, order='C')
         coord_row.fill(k)
         n_additions = len(coord_row)
-        ini = np.empty(n_additions, dtype=np.float, order='C')
+        ini = np.empty(n_additions, dtype=np.float64, order='C')
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                         coord_row, coord_col, ini)
@@ -326,12 +313,6 @@ def linkage_tree(X, connectivity=None, n_components=None,
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
 
-    n_components : int (optional)
-        Number of connected components. If None the number of connected
-        components is estimated from the connectivity matrix.
-        NOTE: This parameter is now directly determined directly
-        from the connectivity matrix and will be removed in 0.18
-
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
@@ -341,7 +322,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         This option is valid only when specifying a connectivity matrix.
 
     linkage : {"average", "complete"}, optional, default: "complete"
-        Which linkage critera to use. The linkage criterion determines which
+        Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
             - average uses the average of the distances of each observation of
               the two sets
@@ -435,11 +416,6 @@ def linkage_tree(X, connectivity=None, n_components=None,
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    if n_components is not None:
-        warnings.warn(
-            "n_components is now directly calculated from the connectivity "
-            "matrix and will be removed in 0.18",
-            DeprecationWarning)
     connectivity, n_components = _fix_connectivity(X, connectivity)
 
     connectivity = connectivity.tocoo()
@@ -636,12 +612,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    n_components : int (optional)
-        Number of connected components. If None the number of connected
-        components is estimated from the connectivity matrix.
-        NOTE: This parameter is now directly determined from the connectivity
-        matrix and will be removed in 0.18
-
     compute_full_tree : bool or 'auto' (optional)
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
@@ -689,12 +659,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, n_components=None,
-                 compute_full_tree='auto', linkage='ward',
-                 pooling_func=np.mean):
+                 connectivity=None, compute_full_tree='auto',
+                 linkage='ward', pooling_func=np.mean):
         self.n_clusters = n_clusters
         self.memory = memory
-        self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
@@ -713,7 +681,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        X = check_array(X)
+        X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
@@ -760,7 +728,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             kwargs['affinity'] = self.affinity
         self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(tree_builder)(X, connectivity,
-                                       n_components=self.n_components,
                                        n_clusters=n_clusters,
                                        **kwargs)
         # Cut the tree
@@ -806,12 +773,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
-
-    n_components : int (optional)
-        Number of connected components. If None the number of connected
-        components is estimated from the connectivity matrix.
-        NOTE: This parameter is now directly determined from the connectivity
-        matrix and will be removed in 0.18
 
     compute_full_tree : bool or 'auto', optional, default "auto"
         Stop early the construction of the tree at n_clusters. This is
@@ -869,11 +830,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        if not (len(X.shape) == 2 and X.shape[0] > 0):
-            raise ValueError('At least one sample is required to fit the '
-                             'model. A data matrix of shape %s was given.'
-                             % (X.shape, ))
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        ensure_min_features=2, estimator=self)
         return AgglomerativeClustering.fit(self, X.T, **params)
 
     @property

@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -21,7 +22,10 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn import cross_validation as cval
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn import cross_validation as cval
+
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
@@ -110,7 +114,9 @@ X_sparse = coo_matrix(X)
 W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
                       shape=(10, 1))
 P_sparse = coo_matrix(np.eye(5))
-y = np.arange(10) // 2
+
+# avoid StratifiedKFold's Warning about least populated class in y
+y = np.arange(10) % 3
 
 ##############################################################################
 # Tests
@@ -288,12 +294,10 @@ def test_shuffle_kfold():
 
     all_folds = None
     for train, test in kf:
-        sorted_array = np.arange(100)
-        assert_true(np.any(sorted_array != ind[train]))
-        sorted_array = np.arange(101, 200)
-        assert_true(np.any(sorted_array != ind[train]))
-        sorted_array = np.arange(201, 300)
-        assert_true(np.any(sorted_array != ind[train]))
+        assert_true(np.any(np.arange(100) != ind[test]))
+        assert_true(np.any(np.arange(100, 200) != ind[test]))
+        assert_true(np.any(np.arange(200, 300) != ind[test]))
+
         if all_folds is None:
             all_folds = ind[test].copy()
         else:
@@ -356,6 +360,71 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     mean_score = cval.cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(0.88, mean_score)
     assert_greater(mean_score, 0.85)
+
+
+def test_label_kfold():
+    rng = np.random.RandomState(0)
+
+    # Parameters of the test
+    n_labels = 15
+    n_samples = 1000
+    n_folds = 5
+
+    # Construct the test data
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    labels = rng.randint(0, n_labels, n_samples)
+    folds = cval.LabelKFold(labels, n_folds=n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    labels = np.asarray(labels, dtype=object)
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Construct the test data
+    labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+              'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
+              'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
+              'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
+              'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
+              'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
+              'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
+    labels = np.asarray(labels, dtype=object)
+
+    n_labels = len(np.unique(labels))
+    n_samples = len(labels)
+    n_folds = 5
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    folds = cval.LabelKFold(labels, n_folds=n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Should fail if there are more folds than labels
+    labels = np.array([1, 1, 1, 2, 2])
+    assert_raises(ValueError, cval.LabelKFold, labels, n_folds=3)
 
 
 def test_shuffle_split():
@@ -494,7 +563,7 @@ def test_label_shuffle_split():
 
     for y in ys:
         n_iter = 6
-        test_size = 1./3
+        test_size = 1. / 3
         slo = cval.LabelShuffleSplit(y, n_iter, test_size=test_size,
                                      random_state=0)
 
@@ -720,7 +789,7 @@ def test_train_test_split():
 
     # conversion of lists to arrays (deprecated?)
     with warnings.catch_warnings(record=True):
-        split = cval.train_test_split(X, X_s, y.tolist(), allow_lists=False)
+        split = cval.train_test_split(X, X_s, y.tolist())
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -769,16 +838,12 @@ def train_test_split_pandas():
         assert_true(isinstance(X_train, InputFeatureType))
         assert_true(isinstance(X_test, InputFeatureType))
 
-
 def train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
     X_train, X_test = cval.train_test_split(X_df)
     assert_true(isinstance(X_train, MockDataFrame))
     assert_true(isinstance(X_test, MockDataFrame))
-    X_train_arr, X_test_arr = cval.train_test_split(X_df, allow_lists=False)
-    assert_true(isinstance(X_train_arr, np.ndarray))
-    assert_true(isinstance(X_test_arr, np.ndarray))
 
 
 def test_cross_val_score_with_score_func_classification():

@@ -27,8 +27,8 @@ from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
-from sklearn.cross_validation import train_test_split, cross_val_score
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 
 
@@ -80,6 +80,12 @@ class DummyScorer(object):
     """Dummy scorer that always returns 1."""
     def __call__(self, est, X, y):
         return 1
+
+
+def test_all_scorers_repr():
+    # Test that all scorers have a working repr
+    for name, scorer in SCORERS.items():
+        repr(scorer)
 
 
 def test_check_scoring():

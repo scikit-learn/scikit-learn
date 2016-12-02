@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |AppVeyor|_ |Coveralls|_
+|Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
@@ -8,8 +8,12 @@
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
 
-.. |Coveralls| image:: https://coveralls.io/repos/scikit-learn/scikit-learn/badge.svg?branch=master
+.. |Coveralls| image:: https://coveralls.io/repos/scikit-learn/scikit-learn/badge.svg?branch=master&service=github
 .. _Coveralls: https://coveralls.io/r/scikit-learn/scikit-learn
+
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
+.. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
+
 
 scikit-learn
 ============
@@ -45,7 +49,8 @@ scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.4.
 `six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3.
 
 The required dependencies to build the software are NumPy >= 1.6.1,
-SciPy >= 0.9 and a working C/C++ compiler.
+SciPy >= 0.9 and a working C/C++ compiler. For the development version,
+you will also require Cython >=0.23.
 
 For running the examples Matplotlib >= 1.1.1 is required and for running the
 tests you need nose >= 1.1.2.
@@ -74,6 +79,8 @@ To install for all users on Unix/Linux::
   python setup.py build
   sudo python setup.py install
 
+For more detailed installation instructions,
+see the web page http://scikit-learn.org/stable/install.html
 
 Development
 ===========

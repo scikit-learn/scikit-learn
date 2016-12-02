@@ -161,7 +161,7 @@ def test_score_samples():
     # Test numerical stability (#2785): would previously generate infinities
     # and crash with an exception.
     with np.errstate(under='ignore'):
-        rbm1.score_samples(np.arange(1000) * 100)
+        rbm1.score_samples([np.arange(1000) * 100])
 
 
 def test_rbm_verbose():

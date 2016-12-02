@@ -47,7 +47,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
 
-# TODO Curve are currently not coverd by invariance test
+# TODO Curve are currently not covered by invariance test
 # from sklearn.metrics import precision_recall_curve
 # from sklearn.metrics import roc_curve
 
@@ -93,7 +93,7 @@ REGRESSION_METRICS = {
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score,
+    "r2_score": partial(r2_score, multioutput='variance_weighted'),
 }
 
 CLASSIFICATION_METRICS = {
@@ -187,32 +187,47 @@ ALL_METRICS.update(REGRESSION_METRICS)
 # When you add a new metric or functionality, check if a general test
 # is already written.
 
-# Metric undefined with "binary" or "multiclass" input
-METRIC_UNDEFINED_MULTICLASS = [
-    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
-    "samples_precision_score", "samples_recall_score",
+# Those metrics don't support binary inputs
+METRIC_UNDEFINED_BINARY = [
+    "samples_f0.5_score",
+    "samples_f1_score",
+    "samples_f2_score",
+    "samples_precision_score",
+    "samples_recall_score",
+    "coverage_error",
 
-    # Those metrics don't support multiclass outputs
-    "average_precision_score", "weighted_average_precision_score",
-    "micro_average_precision_score", "macro_average_precision_score",
+    "roc_auc_score",
+    "micro_roc_auc",
+    "weighted_roc_auc",
+    "macro_roc_auc",
+    "samples_roc_auc",
+
+    "average_precision_score",
+    "weighted_average_precision_score",
+    "micro_average_precision_score",
+    "macro_average_precision_score",
     "samples_average_precision_score",
 
-    "label_ranking_average_precision_score",
-
-    "roc_auc_score", "micro_roc_auc", "weighted_roc_auc",
-    "macro_roc_auc",  "samples_roc_auc",
-
-    "coverage_error",
-    "brier_score_loss",
     "label_ranking_loss",
+    "label_ranking_average_precision_score",
 ]
+
+# Those metrics don't support multiclass inputs
+METRIC_UNDEFINED_MULTICLASS = [
+    "brier_score_loss",
+    "matthews_corrcoef_score",
+]
+
+# Metric undefined with "binary" or "multiclass" input
+METRIC_UNDEFINED_BINARY_MULTICLASS = set(METRIC_UNDEFINED_BINARY).union(
+    set(METRIC_UNDEFINED_MULTICLASS))
 
 # Metrics with an "average" argument
 METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
 ]
 
-# Treshold-based metrics with an "average" argument
+# Threshold-based metrics with an "average" argument
 THRESHOLDED_METRICS_WITH_AVERAGING = [
     "roc_auc_score", "average_precision_score",
 ]
@@ -346,8 +361,6 @@ NOT_SYMMETRIC_METRICS = [
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "cohen_kappa_score",
     "confusion_matrix",
-    "hamming_loss",
-    "matthews_corrcoef_score",
     "median_absolute_error",
 ]
 
@@ -360,10 +373,9 @@ def test_symmetry():
     y_pred = random_state.randint(0, 2, size=(20, ))
 
     # We shouldn't forget any metrics
-    assert_equal(set(SYMMETRIC_METRICS).union(NOT_SYMMETRIC_METRICS,
-                                              THRESHOLDED_METRICS,
-                                              METRIC_UNDEFINED_MULTICLASS),
-                 set(ALL_METRICS))
+    assert_equal(set(SYMMETRIC_METRICS).union(
+        NOT_SYMMETRIC_METRICS, THRESHOLDED_METRICS,
+        METRIC_UNDEFINED_BINARY_MULTICLASS), set(ALL_METRICS))
 
     assert_equal(
         set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
@@ -391,7 +403,7 @@ def test_sample_order_invariance():
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
     for name, metric in ALL_METRICS.items():
-        if name in METRIC_UNDEFINED_MULTICLASS:
+        if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
 
         assert_almost_equal(metric(y_true, y_pred),
@@ -458,7 +470,7 @@ def test_format_invariance_with_1d_vectors():
     y2_row = np.reshape(y2_1d, (1, -1))
 
     for name, metric in ALL_METRICS.items():
-        if name in METRIC_UNDEFINED_MULTICLASS:
+        if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
 
         measure = metric(y1, y2)
@@ -533,7 +545,7 @@ def test_invariance_string_vs_numbers_labels():
     labels_str = ["eggs", "spam"]
 
     for name, metric in CLASSIFICATION_METRICS.items():
-        if name in METRIC_UNDEFINED_MULTICLASS:
+        if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
 
         measure_with_number = metric(y1, y2)
@@ -614,7 +626,8 @@ def check_single_sample_multioutput(name):
 
 def test_single_sample():
     for name in ALL_METRICS:
-        if name in METRIC_UNDEFINED_MULTICLASS or name in THRESHOLDED_METRICS:
+        if (name in METRIC_UNDEFINED_BINARY_MULTICLASS or
+                name in THRESHOLDED_METRICS):
             # Those metrics are not always defined with one sample
             # or in multiclass classification
             continue
@@ -916,9 +929,9 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                                  sample_weight=sample_weight.tolist())
     assert_almost_equal(
         weighted_score, weighted_score_list,
-        err_msg="Weighted scores for array and list sample_weight input are "
-                "not equal (%f != %f) for %s" % (
-                    weighted_score, weighted_score_list, name))
+        err_msg=("Weighted scores for array and list "
+                 "sample_weight input are not equal (%f != %f) for %s") % (
+                     weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
     repeat_weighted_score = metric(
@@ -964,14 +977,14 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
 
-    # binary output
+    # binary
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
-                name in METRIC_UNDEFINED_MULTICLASS):
+                name in METRIC_UNDEFINED_BINARY):
             continue
         metric = ALL_METRICS[name]
         if name in THRESHOLDED_METRICS:
@@ -986,7 +999,7 @@ def test_sample_weight_invariance(n_samples=50):
     y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
-                name in METRIC_UNDEFINED_MULTICLASS):
+                name in METRIC_UNDEFINED_BINARY_MULTICLASS):
             continue
         metric = ALL_METRICS[name]
         if name in THRESHOLDED_METRICS:

@@ -30,7 +30,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> import pickle
   >>> s = pickle.dumps(clf)
   >>> clf2 = pickle.loads(s)
-  >>> clf2.predict(X[0])
+  >>> clf2.predict(X[0:1])
   array([0])
   >>> y[0]
   0

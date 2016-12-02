@@ -145,10 +145,10 @@ intrinsic limitation of sigmoid calibration, whose parametric form assumes a
 sigmoid rather than a transposed-sigmoid curve. The non-parametric isotonic
 calibration model, however, makes no such strong assumptions and can deal with
 either shape, provided that there is sufficient calibration data. In general,
-sigmoid calibration is preferable if the calibration curve is sigmoid and when
-there is few calibration data while isotonic calibration is preferable for non-
-sigmoid calibration curves and in situations where many additional data can be
-used for calibration.
+sigmoid calibration is preferable in cases where the calibration curve is sigmoid
+and where there is limited calibration data, while isotonic calibration is
+preferable for non-sigmoid calibration curves and in situations where large
+amounts of data are available for calibration.
 
 .. currentmodule:: sklearn.calibration
 

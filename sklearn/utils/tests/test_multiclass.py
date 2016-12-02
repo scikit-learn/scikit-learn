@@ -26,6 +26,7 @@ from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.multiclass import check_classification_targets
 
 
 class NotAnArray(object):
@@ -41,7 +42,7 @@ class NotAnArray(object):
 
 EXAMPLES = {
     'multilabel-indicator': [
-        # valid when the data is formated as sparse or dense, identified
+        # valid when the data is formatted as sparse or dense, identified
         # by CSR format when the testing takes place
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
         csr_matrix(np.array([[0, 1], [1, 0]])),
@@ -120,7 +121,7 @@ EXAMPLES = {
     'unknown': [
         [[]],
         [()],
-        # sequence of sequences that were'nt supported even before deprecation
+        # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
         [set([1, 2, 3]), set([1, 2])],
@@ -260,7 +261,18 @@ def test_is_multilabel():
                           msg='is_multilabel(%r) should be %s'
                           % (example, dense_exp))
 
+def test_check_classification_targets():
+    for y_type in EXAMPLES.keys():
+        if y_type in ["unknown", "continuous", 'continuous-multioutput']:
+            for example in EXAMPLES[y_type]:
+                msg = 'Unknown label type: '
+                assert_raises_regex(ValueError, msg, 
+                    check_classification_targets, example)
+        else:
+            for example in EXAMPLES[y_type]:
+                check_classification_targets(example)
 
+# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:

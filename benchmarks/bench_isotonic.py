@@ -7,7 +7,7 @@ examine the time taken to run isotonic regression over the dataset.
 The timings are then output to stdout, or visualized on a log-log scale
 with matplotlib.
 
-This alows the scaling of the algorithm with the problem size to be
+This allows the scaling of the algorithm with the problem size to be
 visualized and understood.
 """
 from __future__ import print_function

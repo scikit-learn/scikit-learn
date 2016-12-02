@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -46,6 +47,15 @@ def test_pca():
                                   np.eye(X.shape[1]), 12)
 
 
+def test_no_empty_slice_warning():
+    # test if we avoid numpy warnings for computing over empty arrays
+    n_components = 10
+    n_features = n_components + 2  # anything > n_comps triggered it in 0.16
+    X = np.random.uniform(-1, 1, size=(n_components, n_features))
+    pca = PCA(n_components=n_components)
+    assert_no_warnings(pca.fit, X)
+
+
 def test_whitening():
     # Check that PCA output has unit-variance
     rng = np.random.RandomState(0)
@@ -59,7 +69,7 @@ def test_whitening():
                np.dot(np.diag(np.linspace(10.0, 1.0, rank)),
                       rng.randn(rank, n_features)))
     # the component-wise variance of the first 50 features is 3 times the
-    # mean component-wise variance of the remaingin 30 features
+    # mean component-wise variance of the remaining 30 features
     X[:, :50] *= 3
 
     assert_equal(X.shape, (n_samples, n_features))
@@ -72,13 +82,16 @@ def test_whitening():
         # whiten the data while projecting to the lower dim subspace
         X_ = X.copy()  # make sure we keep an original across iterations.
         pca = this_PCA(n_components=n_components, whiten=True, copy=copy)
+        if hasattr(pca, 'random_state'):
+            pca.random_state = rng
         # test fit_transform
         X_whitened = pca.fit_transform(X_.copy())
         assert_equal(X_whitened.shape, (n_samples, n_components))
         X_whitened2 = pca.transform(X_)
         assert_array_almost_equal(X_whitened, X_whitened2)
 
-        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
+        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components),
+                            decimal=4)
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
         X_ = X.copy()
@@ -101,11 +114,9 @@ def test_explained_variance():
     X = rng.randn(n_samples, n_features)
 
     pca = PCA(n_components=2).fit(X)
-    rpca = RandomizedPCA(n_components=2, random_state=42).fit(X)
-    assert_array_almost_equal(pca.explained_variance_,
-                              rpca.explained_variance_, 1)
+    rpca = RandomizedPCA(n_components=2, random_state=rng).fit(X)
     assert_array_almost_equal(pca.explained_variance_ratio_,
-                              rpca.explained_variance_ratio_, 3)
+                              rpca.explained_variance_ratio_, 1)
 
     # compare to empirical variances
     X_pca = pca.transform(X)
@@ -113,8 +124,18 @@ def test_explained_variance():
                               np.var(X_pca, axis=0))
 
     X_rpca = rpca.transform(X)
-    assert_array_almost_equal(rpca.explained_variance_,
-                              np.var(X_rpca, axis=0))
+    assert_array_almost_equal(rpca.explained_variance_, np.var(X_rpca, axis=0),
+                              decimal=1)
+
+    # Same with correlated data
+    X = datasets.make_classification(n_samples, n_features,
+                                     n_informative=n_features-2,
+                                     random_state=rng)[0]
+
+    pca = PCA(n_components=2).fit(X)
+    rpca = RandomizedPCA(n_components=2, random_state=rng).fit(X)
+    assert_array_almost_equal(pca.explained_variance_ratio_,
+                              rpca.explained_variance_ratio_, 5)
 
 
 def test_pca_check_projection():

@@ -54,7 +54,6 @@ def test_sample_gaussian():
     from sklearn.mixture import sample_gaussian
     x = sample_gaussian([0, 0], [[4, 3], [1, .1]],
                         covariance_type='full', random_state=42)
-    print(x)
     assert_true(np.isfinite(x).all())
 
 

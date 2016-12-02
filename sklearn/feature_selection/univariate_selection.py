@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
-from ..utils.extmath import norm, safe_sparse_dot
+from ..utils.extmath import norm, safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
 
@@ -126,7 +126,7 @@ def f_classif(X, y):
     Parameters
     ----------
     X : {array-like, sparse matrix} shape = [n_samples, n_features]
-        The set of regressors that will tested sequentially.
+        The set of regressors that will be tested sequentially.
 
     y : array of shape(n_samples)
         The data matrix.
@@ -203,7 +203,7 @@ def chi2(X, y):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     """
 
@@ -219,8 +219,8 @@ def chi2(X, y):
 
     observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
 
-    feature_count = check_array(X.sum(axis=0))
-    class_prob = check_array(Y.mean(axis=0))
+    feature_count = X.sum(axis=0).reshape(1, -1)
+    class_prob = Y.mean(axis=0).reshape(1, -1)
     expected = np.dot(class_prob.T, feature_count)
 
     return _chisquare(observed, expected)
@@ -244,7 +244,7 @@ def f_regression(X, y, center=True):
     Parameters
     ----------
     X : {array-like, sparse matrix}  shape = (n_samples, n_features)
-        The set of regressors that will tested sequentially.
+        The set of regressors that will be tested sequentially.
 
     y : array of shape(n_samples).
         The data matrix
@@ -262,12 +262,12 @@ def f_regression(X, y, center=True):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float)
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
     if center:
         y = y - np.mean(y)
         X = X.copy('F')  # faster in fortran
@@ -275,8 +275,7 @@ def f_regression(X, y, center=True):
 
     # compute the correlation
     corr = safe_sparse_dot(y, X)
-    # XXX could use corr /= row_norms(X.T) here, but the test doesn't pass
-    corr /= np.asarray(np.sqrt(safe_sqr(X).sum(axis=0))).ravel()
+    corr /= row_norms(X.T)
     corr /= norm(y)
 
     # convert to p-value
@@ -369,7 +368,7 @@ class SelectPercentile(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectKBest: Select features based on the k highest scores.
@@ -439,7 +438,7 @@ class SelectKBest(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -503,7 +502,7 @@ class SelectFpr(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -555,7 +554,7 @@ class SelectFdr(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -605,7 +604,7 @@ class SelectFwe(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -658,7 +657,7 @@ class GenericUnivariateSelect(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.

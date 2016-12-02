@@ -81,8 +81,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
     alpha_ : float
        estimated precision of the noise.
 
-    lambda_ : array, shape = (n_features)
-       estimated precisions of the weights.
+    lambda_ : float
+       estimated precision of the weights.
 
     scores_ : float
         if computed, value of the objective function (to be maximized)

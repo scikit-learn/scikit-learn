@@ -49,6 +49,17 @@ MIN_IDEAL_BATCH_DURATION = .2
 # on a single worker while other workers have no work to process any more.
 MAX_IDEAL_BATCH_DURATION = 2
 
+# Under Linux or OS X the default start method of multiprocessing
+# can cause third party libraries to crash. Under Python 3.4+ it is possible
+# to set an environment variable to switch the default start method from
+# 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
+# of causing semantic changes and some additional pool instantiation overhead.
+if hasattr(mp, 'get_context'):
+    method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
+    DEFAULT_MP_CONTEXT = mp.get_context(method=method)
+else:
+    DEFAULT_MP_CONTEXT = None
+
 
 class BatchedCalls(object):
     """Wrap a sequence of (func, args, kwargs) tuples as a single callable"""
@@ -251,7 +262,7 @@ class Parallel(Logger):
         pre_dispatch: {'all', integer, or expression, as in '3*n_jobs'}
             The number of batches (of tasks) to be pre-dispatched.
             Default is '2*n_jobs'. When batch_size="auto" this is reasonable
-            default and the multiprocessing workers shoud never starve.
+            default and the multiprocessing workers should never starve.
         batch_size: int or 'auto', default: 'auto'
             The number of atomic tasks to dispatch at once to each
             worker. When individual evaluations are very fast, multiprocessing
@@ -406,10 +417,10 @@ class Parallel(Logger):
          [Parallel(n_jobs=2)]: Done   6 out of   6 | elapsed:    0.0s finished
     '''
     def __init__(self, n_jobs=1, backend='multiprocessing', verbose=0,
-                 pre_dispatch='2 * n_jobs', batch_size='auto', temp_folder=None,
-                 max_nbytes='1M', mmap_mode='r'):
+                 pre_dispatch='2 * n_jobs', batch_size='auto',
+                 temp_folder=None, max_nbytes='1M', mmap_mode='r'):
         self.verbose = verbose
-        self._mp_context = None
+        self._mp_context = DEFAULT_MP_CONTEXT
         if backend is None:
             # `backend=None` was supported in 0.8.2 with this effect
             backend = "multiprocessing"
@@ -602,14 +613,13 @@ class Parallel(Logger):
         elif self.batch_size == 'auto':
             old_batch_size = self._effective_batch_size
             batch_duration = self._smoothed_batch_duration
-            if (batch_duration > 0 and
-                    batch_duration < MIN_IDEAL_BATCH_DURATION):
+            if (0 < batch_duration < MIN_IDEAL_BATCH_DURATION):
                 # The current batch size is too small: the duration of the
                 # processing of a batch of task is not large enough to hide
                 # the scheduling overhead.
                 ideal_batch_size = int(
                     old_batch_size * MIN_IDEAL_BATCH_DURATION / batch_duration)
-                # Multiply by two to limit oscilations between min and max.
+                # Multiply by two to limit oscillations between min and max.
                 batch_size = max(2 * ideal_batch_size, 1)
                 self._effective_batch_size = batch_size
                 if self.verbose >= 10:

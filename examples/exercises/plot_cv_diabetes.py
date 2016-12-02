@@ -14,13 +14,17 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import cross_validation, datasets, linear_model
+from sklearn import datasets
+from sklearn.linear_model import LassoCV
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data[:150]
 y = diabetes.target[:150]
 
-lasso = linear_model.Lasso()
+lasso = Lasso()
 alphas = np.logspace(-4, -.5, 30)
 
 scores = list()
@@ -28,7 +32,7 @@ scores_std = list()
 
 for alpha in alphas:
     lasso.alpha = alpha
-    this_scores = cross_validation.cross_val_score(lasso, X, y, n_jobs=1)
+    this_scores = cross_val_score(lasso, X, y, n_jobs=1)
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 
@@ -51,15 +55,15 @@ plt.axhline(np.max(scores), linestyle='--', color='.5')
 # performs cross-validation on the training data it receives).
 # We use external cross-validation to see how much the automatically obtained
 # alphas differ across different cross-validation folds.
-lasso_cv = linear_model.LassoCV(alphas=alphas)
-k_fold = cross_validation.KFold(len(X), 3)
+lasso_cv = LassoCV(alphas=alphas)
+k_fold = KFold(3)
 
 print("Answer to the bonus question:",
       "how much can you trust the selection of alpha?")
 print()
 print("Alpha parameters maximising the generalization score on different")
 print("subsets of the data:")
-for k, (train, test) in enumerate(k_fold):
+for k, (train, test) in enumerate(k_fold.split(X, y)):
     lasso_cv.fit(X[train], y[train])
     print("[fold {0}] alpha: {1:.5f}, score: {2:.5f}".
           format(k, lasso_cv.alpha_, lasso_cv.score(X[test], y[test])))

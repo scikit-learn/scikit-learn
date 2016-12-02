@@ -9,8 +9,6 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
 from scipy import sparse
 
@@ -24,8 +22,7 @@ from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
-           random_state=None):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -75,10 +72,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
-    random_state: numpy.RandomState, optional
-        Deprecated and ignored as of version 0.16, will be removed in version
-        0.18. DBSCAN does not use random initialization.
-
     Returns
     -------
     core_samples : array [n_core_samples]
@@ -109,11 +102,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     """
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
-    if random_state is not None:
-        warnings.warn("The parameter random_state is deprecated in 0.16 "
-                      "and will be removed in version 0.18. "
-                      "DBSCAN is deterministic except for rare border cases.",
-                      category=DeprecationWarning)
 
     X = check_array(X, accept_sparse='csr')
     if sample_weight is not None:
@@ -186,6 +174,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
+
+        .. versionadded:: 0.17
+           metric *precomputed* to accept precomputed sparse matrix.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
@@ -195,9 +187,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
-    random_state: numpy.RandomState, optional
-        Deprecated and ignored as of version 0.16, will be removed in version
-        0.18. DBSCAN does not use random initialization.
 
     Attributes
     ----------
@@ -233,14 +222,13 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-                 algorithm='auto', leaf_size=30, p=None, random_state=None):
+                 algorithm='auto', leaf_size=30, p=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.p = p
-        self.random_state = random_state
 
     def fit(self, X, y=None, sample_weight=None):
         """Perform DBSCAN clustering from features or distance matrix.

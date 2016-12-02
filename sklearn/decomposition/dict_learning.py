@@ -26,7 +26,7 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                    regularization=None, copy_cov=True,
-                   init=None, max_iter=1000):
+                   init=None, max_iter=1000, check_input=True, verbose=0):
     """Generic sparse coding
 
     Each column of the result is the solution to a Lasso problem.
@@ -73,6 +73,12 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Whether to copy the precomputed covariance matrix; if False, it may be
         overwritten.
 
+    check_input: boolean, optional
+        If False, the input arrays X and dictionary will not be checked.
+
+    verbose: int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
+
     Returns
     -------
     code: array of shape (n_components, n_features)
@@ -97,8 +103,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         alpha = float(regularization) / n_features  # account for scaling
         try:
             err_mgt = np.seterr(all='ignore')
+
+            # Not passing in verbose=max(0, verbose-1) because Lars.fit already
+            # corrects the verbosity level.
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
-                                   verbose=False, normalize=False,
+                                   verbose=verbose, normalize=False,
                                    precompute=gram, fit_path=False)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
@@ -107,16 +116,23 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'lasso_cd':
         alpha = float(regularization) / n_features  # account for scaling
+
+        # TODO: Make verbosity argument for Lasso?
+        # sklearn.linear_model.coordinate_descent.enet_path has a verbosity
+        # argument that we could pass in from Lasso.
         clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False,
                     precompute=gram, max_iter=max_iter, warm_start=True)
         clf.coef_ = init
-        clf.fit(dictionary.T, X.T, check_input=False)
+        clf.fit(dictionary.T, X.T, check_input=check_input)
         new_code = clf.coef_
 
     elif algorithm == 'lars':
         try:
             err_mgt = np.seterr(all='ignore')
-            lars = Lars(fit_intercept=False, verbose=False, normalize=False,
+
+            # Not passing in verbose=max(0, verbose-1) because Lars.fit already
+            # corrects the verbosity level.
+            lars = Lars(fit_intercept=False, verbose=verbose, normalize=False,
                         precompute=gram, n_nonzero_coefs=int(regularization),
                         fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
@@ -129,9 +145,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                     np.maximum(np.abs(cov) - regularization, 0)).T)
 
     elif algorithm == 'omp':
-        new_code = orthogonal_mp_gram(gram, cov, regularization, None,
-                                      row_norms(X, squared=True),
-                                      copy_Xy=copy_cov).T
+        # TODO: Should verbose argument be passed to this?
+        new_code = orthogonal_mp_gram(
+            Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
+            tol=None, norms_squared=row_norms(X, squared=True),
+            copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
@@ -142,7 +160,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=1):
+                  max_iter=1000, n_jobs=1, check_input=True, verbose=0):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -186,7 +204,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     alpha: float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
-        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
@@ -206,6 +224,12 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     n_jobs: int, optional
         Number of parallel jobs to run.
 
+    check_input: boolean, optional
+        If False, the input arrays X and dictionary will not be checked.
+
+    verbose : int, optional
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
+
     Returns
     -------
     code: array of shape (n_samples, n_components)
@@ -218,14 +242,19 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    dictionary = check_array(dictionary)
-    X = check_array(X)
+    if check_input:
+        if algorithm == 'lasso_cd':
+            dictionary = check_array(dictionary, order='C', dtype='float64')
+            X = check_array(X, order='C', dtype='float64')
+        else:
+            dictionary = check_array(dictionary)
+            X = check_array(X)
+
     n_samples, n_features = X.shape
     n_components = dictionary.shape[0]
 
     if gram is None and algorithm != 'threshold':
-        # Transposing product to ensure Fortran ordering
-        gram = np.dot(dictionary, dictionary.T).T
+        gram = np.dot(dictionary, dictionary.T)
 
     if cov is None and algorithm != 'lasso_cd':
         copy_cov = False
@@ -246,7 +275,9 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                               algorithm=algorithm,
                               regularization=regularization, copy_cov=copy_cov,
                               init=init,
-                              max_iter=max_iter)
+                              max_iter=max_iter,
+                              check_input=False,
+                              verbose=verbose)
         # This ensure that dimensionality of code is always 2,
         # consistant with the case n_jobs > 1
         if code.ndim == 1:
@@ -257,14 +288,15 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
 
-    code_views = Parallel(n_jobs=n_jobs)(
+    code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_sparse_encode)(
             X[this_slice], dictionary, gram,
             cov[:, this_slice] if cov is not None else None,
             algorithm,
             regularization=regularization, copy_cov=copy_cov,
             init=init[this_slice] if init is not None else None,
-            max_iter=max_iter)
+            max_iter=max_iter,
+            check_input=False)
         for this_slice in slices)
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
@@ -478,9 +510,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
             sys.stdout.write(".")
             sys.stdout.flush()
         elif verbose:
-            print ("Iteration % 3i "
-                   "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
-                   % (ii, dt, dt / 60, current_cost))
+            print("Iteration % 3i "
+                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                  % (ii, dt, dt / 60, current_cost))
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
@@ -726,7 +758,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         elif verbose == 1:
             print('|', end=' ')
         code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
-                             n_jobs=n_jobs)
+                             n_jobs=n_jobs, check_input=False)
         if verbose > 1:
             dt = (time.time() - t0)
             print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
@@ -916,6 +948,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+        .. versionadded:: 0.17
+           *cd* coordinate descent method to improve speed.
+
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}
         Algorithm used to transform the data
@@ -927,6 +962,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
         the projection ``dictionary * X'``
+
+        .. versionadded:: 0.17
+           *lasso_cd* coordinate descent method to improve speed.
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the

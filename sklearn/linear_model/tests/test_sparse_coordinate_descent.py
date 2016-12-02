@@ -15,7 +15,7 @@ from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
 
 
 def test_sparse_coef():
-    # Check that the sparse_coef propery works
+    # Check that the sparse_coef property works
     clf = ElasticNet()
     clf.coef_ = [1, 2, 3]
 

@@ -8,31 +8,24 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raise_message
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-
-from sklearn.multiclass import fit_ovr
-from sklearn.multiclass import fit_ovo
-from sklearn.multiclass import fit_ecoc
-from sklearn.multiclass import predict_ovr
-from sklearn.multiclass import predict_ovo
-from sklearn.multiclass import predict_ecoc
-from sklearn.multiclass import predict_proba_ovr
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
-from sklearn.preprocessing import LabelBinarizer
-
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
-                                  Perceptron, LogisticRegression)
+                                  Perceptron, LogisticRegression,
+                                  SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
@@ -50,10 +43,6 @@ def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovr.predict, [])
 
-    with ignore_warnings():
-        assert_raises(ValueError, predict_ovr, [LinearSVC(), MultinomialNB()],
-                      LabelBinarizer(), [])
-
     # Fail on multioutput data
     assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
                   np.array([[1, 0], [0, 1]]),
@@ -61,6 +50,13 @@ def test_ovr_exceptions():
     assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
                   np.array([[1, 0], [0, 1]]),
                   np.array([[1.5, 2.4], [3.1, 0.8]]))
+
+
+def test_check_classification_targets():
+    # Test that check_classification_target return correct type. #5782
+    y = np.array([0.0, 1.1, 2.0, 3.0])
+    msg = type_of_target(y)
+    assert_raise_message(ValueError, msg, check_classification_targets, y)
 
 
 def test_ovr_fit_predict():
@@ -76,6 +72,33 @@ def test_ovr_fit_predict():
     # A classifier which implements predict_proba.
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_greater(np.mean(iris.target == pred), 0.65)
+
+
+def test_ovr_partial_fit():
+    # Test if partial_fit is working as intented
+    X, y = shuffle(iris.data, iris.target, random_state=0)
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(X[:100], y[:100], np.unique(y))
+    ovr.partial_fit(X[100:], y[100:])
+    pred = ovr.predict(X)
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(X, y).predict(X)
+
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(y)))
+    assert_greater(np.mean(y == pred), 0.65)
+
+    # Test when mini batches doesn't have all classes
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
+    ovr.partial_fit(iris.data[60:], iris.target[60:])
+    pred = ovr.predict(iris.data)
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(iris.data, iris.target).predict(iris.data)
+    
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(iris.target)))
     assert_greater(np.mean(iris.target == pred), 0.65)
 
 
@@ -432,6 +455,33 @@ def test_ovo_fit_predict():
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
 
+def test_ovo_partial_fit_predict():
+    X, y = shuffle(iris.data, iris.target)
+    ovo1 = OneVsOneClassifier(MultinomialNB())
+    ovo1.partial_fit(X[:100], y[:100], np.unique(y))
+    ovo1.partial_fit(X[100:], y[100:])
+    pred1 = ovo1.predict(X)
+
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    ovo2.fit(X, y)
+    pred2 = ovo2.predict(X)
+    assert_equal(len(ovo1.estimators_), n_classes * (n_classes - 1) / 2)
+    assert_greater(np.mean(y == pred1), 0.65)
+    assert_almost_equal(pred1, pred2)
+
+    # Test when mini-batches don't have all target classes
+    ovo1 = OneVsOneClassifier(MultinomialNB())
+    ovo1.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
+    ovo1.partial_fit(iris.data[60:], iris.target[60:])
+    pred1 = ovo1.predict(iris.data)
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    pred2 = ovo2.fit(iris.data, iris.target).predict(iris.data)
+
+    assert_almost_equal(pred1, pred2)
+    assert_equal(len(ovo1.estimators_), len(np.unique(iris.target)))
+    assert_greater(np.mean(iris.target == pred1), 0.65)
+
+
 def test_ovo_decision_function():
     n_samples = iris.data.shape[0]
 
@@ -555,44 +605,3 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
-
-
-@ignore_warnings
-def test_deprecated():
-    base_estimator = DecisionTreeClassifier(random_state=0)
-    X, Y = iris.data, iris.target
-    X_train, Y_train = X[:80], Y[:80]
-    X_test = X[80:]
-
-    all_metas = [
-        (OneVsRestClassifier, fit_ovr, predict_ovr, predict_proba_ovr),
-        (OneVsOneClassifier, fit_ovo, predict_ovo, None),
-        (OutputCodeClassifier, fit_ecoc, predict_ecoc, None),
-    ]
-
-    for MetaEst, fit_func, predict_func, proba_func in all_metas:
-        try:
-            meta_est = MetaEst(base_estimator,
-                               random_state=0).fit(X_train, Y_train)
-
-            fitted_return = fit_func(base_estimator, X_train, Y_train,
-                                     random_state=0)
-        except TypeError:
-            meta_est = MetaEst(base_estimator).fit(X_train, Y_train)
-            fitted_return = fit_func(base_estimator, X_train, Y_train)
-
-        if len(fitted_return) == 2:
-            estimators_, classes_or_lb = fitted_return
-            assert_almost_equal(predict_func(estimators_, classes_or_lb,
-                                             X_test),
-                                meta_est.predict(X_test))
-            if proba_func is not None:
-                assert_almost_equal(proba_func(estimators_, X_test,
-                                               is_multilabel=False),
-                                    meta_est.predict_proba(X_test))
-
-        else:
-            estimators_, classes_or_lb, codebook = fitted_return
-            assert_almost_equal(predict_func(estimators_, classes_or_lb,
-                                             codebook, X_test),
-                                meta_est.predict(X_test))
