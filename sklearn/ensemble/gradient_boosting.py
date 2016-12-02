@@ -58,6 +58,7 @@ from ..utils import check_consistent_length
 from ..utils import deprecated
 from ..utils.extmath import logsumexp
 from ..utils.fixes import expit
+from ..utils.fixes import isclose
 from ..utils.fixes import bincount
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
@@ -511,7 +512,7 @@ class BinomialDeviance(ClassificationLossFunction):
         numerator = np.sum(sample_weight * residual)
         denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
 
-        if denominator == 0.0:
+        if isclose(denominator, 0., rtol=0., atol=np.float64(1e-150)):
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -577,7 +578,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         denominator = np.sum(sample_weight * (y - residual) *
                              (1.0 - y + residual))
 
-        if denominator == 0.0:
+        if isclose(denominator, 0., rtol=0., atol=np.float64(1e-150)):
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -634,7 +635,7 @@ class ExponentialLoss(ClassificationLossFunction):
         numerator = np.sum(y_ * sample_weight * np.exp(-y_ * pred))
         denominator = np.sum(sample_weight * np.exp(-y_ * pred))
 
-        if denominator == 0.0:
+        if isclose(denominator, 0., rtol=0., atol=np.float64(1e-150)):
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
