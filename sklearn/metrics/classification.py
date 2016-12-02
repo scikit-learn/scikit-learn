@@ -1390,8 +1390,17 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     last_line_heading = 'avg / total'
 
+    # fixes bug 7751
+    # check if length of target names is same as that of labels
+    # if not, give the user a warning
     if target_names is None:
         target_names = ['%s' % l for l in labels]
+    else:
+        if(len(target_names) != len(labels)):
+            raise ValueError('labels has '+str(len(labels)) + 
+                            ' elements while target_names has ' + 
+                            str(len(target_names)) + ' elements.')
+
     name_width = max(len(cn) for cn in target_names)
     width = max(name_width, len(last_line_heading), digits)
 
