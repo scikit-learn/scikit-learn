@@ -147,8 +147,8 @@ def test_cross_validator_with_default_params():
     groups = np.array([1, 2, 3, 4])
     loo = LeaveOneOut()
     lpo = LeavePOut(p)
-    kf = KFold(n_splits)
-    skf = StratifiedKFold(n_splits)
+    kf = KFold(n_splits, random_state=0)
+    skf = StratifiedKFold(n_splits, random_state=0)
     lolo = LeaveOneGroupOut()
     lopo = LeavePGroupsOut(p)
     ss = ShuffleSplit(random_state=0)
@@ -156,8 +156,8 @@ def test_cross_validator_with_default_params():
 
     loo_repr = "LeaveOneOut()"
     lpo_repr = "LeavePOut(p=2)"
-    kf_repr = "KFold(n_splits=2, random_state=None, shuffle=False)"
-    skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
+    kf_repr = "KFold(n_splits=2, random_state=0, shuffle=False)"
+    skf_repr = "StratifiedKFold(n_splits=2, random_state=0, shuffle=False)"
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=0.1, "
@@ -425,8 +425,11 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
 
     kf = KFold(3, shuffle=True, random_state=0)
     skf = StratifiedKFold(3, shuffle=True, random_state=0)
+    kf2 = KFold(3, shuffle=True, random_state=np.random.RandomState(0))
+    skf2 = StratifiedKFold(3, shuffle=True,
+                           random_state=np.random.RandomState(0))
 
-    for cv in (kf, skf):
+    for cv in (kf, skf, kf2, skf2):
         np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
         np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
 
