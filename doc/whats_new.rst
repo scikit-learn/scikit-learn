@@ -104,6 +104,10 @@ Bug fixes
      sparse array X and initial centroids, where X's means were unnecessarily
      being subtracted from the centroids. :issue:`7872` by `Josh Karnofsky <https://github.com/jkarno>`_.
 
+   - Fix estimators to accept a ``sample_weight`` parameter of type
+     ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
+     `Kathleen Chen`_.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
@@ -4824,3 +4828,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
 
 .. _Ron Weiss: http://www.ee.columbia.edu/~ronw
+.. _Kathleen Chen: https://github.com/kchen17
