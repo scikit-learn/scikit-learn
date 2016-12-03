@@ -3,6 +3,7 @@ from ._split import KFold
 from ._split import RepeatedKFold
 from ._split import GroupKFold
 from ._split import StratifiedKFold
+from ._split import RepeatedStratifiedKFold
 from ._split import TimeSeriesSplit
 from ._split import LeaveOneGroupOut
 from ._split import LeaveOneOut
@@ -32,6 +33,7 @@ __all__ = ('BaseCrossValidator',
            'TimeSeriesSplit',
            'KFold',
            'RepeatedKFold',
+           'RepeatedStratifiedKFold',
            'GroupKFold',
            'GroupShuffleSplit',
            'LeaveOneGroupOut',

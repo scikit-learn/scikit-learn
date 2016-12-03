@@ -36,7 +36,6 @@ from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
            'KFold',
-           'RepeatedKFold',
            'GroupKFold',
            'LeaveOneGroupOut',
            'LeaveOneOut',
@@ -47,6 +46,8 @@ __all__ = ['BaseCrossValidator',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
+           'RepeatedKFold',
+           'RepeatedStratifiedKFold',
            'train_test_split',
            'check_cv']
 
@@ -420,71 +421,6 @@ class KFold(_BaseKFold):
             current = stop
 
 
-class RepeatedKFold(_BaseKFold):
-    """ Repeated KFold cross-validation
-
-    To repeat KFold n times with different split at each repetition
-    (by default).
-
-    Read more in the :ref:`User Guide <cross_validation>`.
-
-    Parameters
-    ----------
-    n_reps : int, default=2
-        Number of times KFold needs to be repeated.
-
-    n_splits : int, default=3
-        Number of folds. Must be atleast 2.
-
-    shuffle : boolean, default=True
-        Whether to shuffle the data before splitting.
-
-    random_state: None, int or RandomState
-        When shuffle=True, psedo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
-
-    Examples
-    --------
-    >>> from sklearn.model_selection import RepeatedKFold
-    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-    >>> y = np.array([1, 2, 3, 4])
-    >>> rkf = RepeatedKFold(n_splits=2)
-    >>> rkf.get_n_splits()
-    2
-    >>> for train_index, test_index in rkf.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ('TRAIN:', array([0, 1]), 'TEST:', array([2, 3]))
-    ('TRAIN:', array([2, 3]), 'TEST:', array([0, 1]))
-    ('TRAIN:', array([0, 3]), 'TEST:', array([1, 2]))
-    ('TRAIN:', array([1, 2]), 'TEST:', array([0, 3]))
-    """
-
-    def __init__(self, n_reps=2, n_splits=3, shuffle=True,
-                 random_state=None):
-        if random_state is None:
-            random_state = check_random_state(random_state)
-        self.n_reps = n_reps
-        super(RepeatedKFold, self).__init__(n_splits, shuffle, random_state)
-
-    def _iter_test_indices(self, X, y=None, groups=None):
-        n_samples = _num_samples(X)
-
-        for _ in range(self.n_reps):
-            indices = np.arange(n_samples)
-            if self.shuffle:
-                check_random_state(self.random_state).shuffle(indices)
-
-            n_splits = self.n_splits
-            fold_sizes = (n_samples // n_splits) * \
-                np.ones(n_splits, dtype=np.int)
-            fold_sizes[:n_samples % n_splits] += 1
-            current = 0
-            for fold_size in fold_sizes:
-                start, stop = current, current + fold_size
-                yield indices[start:stop]
-                current = stop
-
-
 class GroupKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
@@ -531,7 +467,6 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-
     def __init__(self, n_splits=3):
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
@@ -754,7 +689,6 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-
     def __init__(self, n_splits=3):
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
@@ -930,7 +864,6 @@ class LeavePGroupsOut(BaseCrossValidator):
     --------
     GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
-
     def __init__(self, n_groups):
         self.n_groups = n_groups
 
@@ -979,6 +912,144 @@ class LeavePGroupsOut(BaseCrossValidator):
         groups = check_array(groups, ensure_2d=False, dtype=None)
         X, y, groups = indexable(X, y, groups)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
+
+
+class BaseRepeatedCrossValidator(with_metaclass(ABCMeta)):
+    """Base class for repeated cross validators
+
+    Implementations must define `_get_cv`.
+    """
+
+    def __init__(self, n_iter=2, n_splits=3):
+        self.n_iter = n_iter
+        self.n_splits = n_splits
+        self._random_states = []
+        for _ in range(n_splits):
+            random_state = check_random_state(
+                None).randint(np.iinfo(np.int32).max)
+            self._random_states.extend([random_state])
+
+    def split(self, X, y=None, groups=None):
+        """Generates indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, of length n_samples
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        for idx in range(self.n_iter):
+            random_state = check_random_state(self._random_states[idx])
+            cv = self._get_cv(random_state)
+            for train_index, test_index in cv.split(X, y, groups):
+                yield train_index, test_index
+
+    def _get_cv(self, random_state):
+        """Returns an instance of cross-validator
+
+        This method needs to implemented by class that inherits
+        BaseRepeatedCrossValidator.
+
+        Parameters
+        ----------
+        random_state : Instance of RandomState
+            Random state that should be used to create instance of cv.
+
+        Returns
+        -------
+        cv : Instance of BaseCrossValidator.
+        """
+        raise NotImplementedError
+
+    def get_n_iter(self):
+        """Returns number of repetitions to be performed"""
+        return self.n_iter
+
+
+class RepeatedKFold(with_metaclass(ABCMeta, BaseRepeatedCrossValidator)):
+    """Repeated K-Fold cross validator.
+
+    Repeats K-Fold n times.
+
+    Parameters
+    ----------
+    n_iter : int, default=3
+        Number of times KFold needs to be repeated.
+
+    n_splits : int, default=5
+        Number of folds. Must be atleast 2.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import RepeatedKFold
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> rkf = RepeatedKFold(n_splits=2)
+    >>> rkf.get_n_iter()
+    2
+    >>> for train_index, test_index in rkf.split(X):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [0 1] TEST: [2 3]
+    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [0 1] TEST: [2 3]
+    """
+    def __init__(self, n_iter=2, n_splits=5):
+        super(RepeatedKFold, self).__init__(n_iter, n_splits)
+
+    def _get_cv(self, random_state):
+        return KFold(self.n_splits, shuffle=True, random_state=random_state)
+
+
+class RepeatedStratifiedKFold(with_metaclass(
+        ABCMeta, BaseRepeatedCrossValidator)):
+    """Repeated Stratified K-Fold cross validator
+
+    Repeats Stratified K-Fold n times.
+
+    Parameters
+    ----------
+    n_iter : int, default=3
+        Number of times KFold needs to be repeated.
+
+    n_splits : int, default=5
+        Number of folds. Must be atleast 2.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import RepeatedStratifiedKFold
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> rskf = RepeatedStratifiedKFold(n_splits=2)
+    >>> rskf.get_n_iter()
+    2
+    >>> for train_index, test_index in rskf.split(X, y):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    TRAIN: [0 2] TEST: [1 3]
+    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 3] TEST: [1 2]
+    """
+    def __init__(self, n_iter=2, n_splits=5):
+        super(RepeatedStratifiedKFold, self).__init__(n_iter, n_splits)
+
+    def _get_cv(self, random_state):
+        return StratifiedKFold(self.n_splits, shuffle=True,
+                               random_state=random_state)
 
 
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
@@ -1560,7 +1631,6 @@ class PredefinedSplit(BaseCrossValidator):
 
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""
-
     def __init__(self, cv):
         self.cv = list(cv)
 
@@ -1771,7 +1841,6 @@ def train_test_split(*arrays, **options):
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests
-
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params
