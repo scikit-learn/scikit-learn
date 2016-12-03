@@ -45,6 +45,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
 
 from sklearn.utils import shuffle
@@ -258,7 +259,7 @@ def check_estimator(Estimator):
         except SkipTest as message:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
-            warnings.warn(message, ImportWarning)
+            warnings.warn(message, SkipTestWarning)
 
 
 def _boston_subset(n_samples=200):
@@ -387,7 +388,7 @@ def check_estimator_sparse_data(name, Estimator):
             raise
 
 
-@ignore_warnings(category=(DeprecationWarning))
+@ignore_warnings(category=DeprecationWarning)
 def check_sample_weights_pandas_series(name, Estimator):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
