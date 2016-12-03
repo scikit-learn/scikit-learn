@@ -45,10 +45,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
+from sklearn.utils.validation import has_fit_parameter
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -80,6 +82,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_dtype_object
+    yield check_sample_weights_pandas_series
     yield check_estimators_fit_returns_self
 
     # Check that all estimator yield informative messages when
@@ -198,7 +201,6 @@ def _yield_transformer_checks(name, Transformer):
         yield check_transformer_n_iter
 
 
-
 def _yield_clustering_checks(name, Clusterer):
     yield check_clusterer_compute_labels_predict
     if name not in ('WardAgglomeration', "FeatureAgglomeration"):
@@ -252,7 +254,12 @@ def check_estimator(Estimator):
     name = Estimator.__name__
     check_parameters_default_constructible(name, Estimator)
     for check in _yield_all_checks(name, Estimator):
-        check(name, Estimator)
+        try:
+            check(name, Estimator)
+        except SkipTest as message:
+            # the only SkipTest thrown currently results from not
+            # being able to import pandas.
+            warnings.warn(message, SkipTestWarning)
 
 
 def _boston_subset(n_samples=200):
@@ -379,6 +386,28 @@ def check_estimator_sparse_data(name, Estimator):
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
             raise
+
+
+@ignore_warnings(category=DeprecationWarning)
+def check_sample_weights_pandas_series(name, Estimator):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type pandas.Series in the 'fit' function.
+    estimator = Estimator()
+    if has_fit_parameter(estimator, "sample_weight"):
+        try:
+            import pandas as pd
+            X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+            y = pd.Series([1, 1, 1, 2, 2, 2])
+            weights = pd.Series([1] * 6)
+            try:
+                estimator.fit(X, y, sample_weight=weights)
+            except ValueError:
+                raise ValueError("Estimator {0} raises error if "
+                                 "'sample_weight' parameter is of "
+                                 "type pandas.Series".format(name))
+        except ImportError:
+            raise SkipTest("pandas is not installed: not testing for "
+                           "input of type pandas.Series to class weight.")
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
