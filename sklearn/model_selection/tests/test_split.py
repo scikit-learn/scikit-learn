@@ -42,6 +42,8 @@ from sklearn.model_selection import PredefinedSplit
 from sklearn.model_selection import check_cv
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RepeatedKFold
+from sklearn.model_selection import RepeatedStratifiedKFold
 
 from sklearn.linear_model import Ridge
 
@@ -677,6 +679,81 @@ def test_predefinedsplit_with_kfold_split():
         ps_test.append(test_ind)
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
+
+
+def test_repeated_kfold_valueerrors():
+    random_states1 = [0]
+    random_states2 = [np.random.RandomState()]
+
+    # random state
+    assert_raises(ValueError, RepeatedKFold, n_iter=3,
+                  random_states=random_states1)
+    assert_raises(ValueError, RepeatedKFold, n_iter=3,
+                  random_states=random_states2)
+
+    # number of repetitions
+    assert_raises(ValueError, RepeatedKFold, n_iter=1.5)
+    assert_raises(ValueError, RepeatedKFold, n_iter=1)
+
+
+def test_repeated_kfold_deterministic_split():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    random_states = [1944695409,  258173307]
+
+    splits = RepeatedKFold(2, 2, random_states).split(X)
+    train, test = next(splits)
+    assert_array_equal(train, [1, 3])
+    assert_array_equal(test, [0, 2, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 2, 4])
+    assert_array_equal(test, [1, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 4])
+    assert_array_equal(test, [0, 1, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 3])
+    assert_array_equal(test, [2, 4])
+
+
+def test_repeated_stratified_kfold_valueerrors():
+    random_states1 = [0]
+    random_states2 = [np.random.RandomState()]
+
+    # random state
+    assert_raises(ValueError, RepeatedStratifiedKFold,
+                  n_iter=3, random_states=random_states1)
+    assert_raises(ValueError, RepeatedStratifiedKFold,
+                  n_iter=3, random_states=random_states2)
+
+    # number of repetitions
+    assert_raises(ValueError, RepeatedStratifiedKFold, n_iter=1.5)
+    assert_raises(ValueError, RepeatedStratifiedKFold, n_iter=1)
+
+
+def test_repeated_stratified_kfold_determistic_split():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    y = [0, 0, 1, 1, 1]
+    random_states = [1944695409,  258173307]
+
+    splits = RepeatedStratifiedKFold(2, 2, random_states).split(X, y)
+    train, test = next(splits)
+    assert_array_equal(train, [1, 3])
+    assert_array_equal(test, [0, 2, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 2, 4])
+    assert_array_equal(test, [1, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 4])
+    assert_array_equal(test, [1, 2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [1, 2, 3])
+    assert_array_equal(test, [0, 4])
 
 
 def test_group_shuffle_split():
