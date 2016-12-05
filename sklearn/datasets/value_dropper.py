@@ -278,20 +278,25 @@ class ValueDropper(TransformerMixin):
                              "missing_proba does not conform to that. %r"
                              % self.missing_proba)
 
+        # Generate random_states for each feature / label in advance
+        # This is important to maintain consistency in generated missing values
+        # for successively increasing missing percent.
+        random_states = rng.randint(0, np.iinfo(np.int32).max,
+                                    drop_probs.shape)
+
         for i, class_i in enumerate(classes):
             samples_mask = (y == class_i)
             this_n_samples = samples_mask.sum()
             this_block_indices = np.arange(n_samples)[samples_mask]
 
             for feature in range(n_features):
-                # Shuffle even if this_required_n_missing is 0, to maintain
-                # consistency in generated missing values for successively
-                # increasing % of missing values.%
-                shuffled_indices = rng.permutation(this_block_indices)
                 this_required_n_missing = int(round(drop_probs[i, feature] *
                                                     this_n_samples))
                 if this_required_n_missing == 0:
                     continue
+
+                this_rng = check_random_state(random_state[i, feature])
+                shuffled_indices = this_rng.permutation(this_block_indices)
 
                 # Drop them
                 X[shuffled_indices[:this_required_n_missing],
