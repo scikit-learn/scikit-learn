@@ -153,25 +153,25 @@ cdef extern from "cblas.h":
 
 
 # Function to compute the duality gap
-cdef double enet_duality_gap( # Data
-                             unsigned int n_samples,
-                             unsigned int n_features,
-                             unsigned int n_tasks,
-                             floating * X_data,
-                             floating * y_data,
-                             floating * R_data,
-                             floating * w_data,
-                             # Variables intended to be modified
-                             floating * XtA_data,
-                             floating * dual_scaling,
-                             # Parameters
-                             floating alpha,
-                             floating beta,
-                             bint positive,
-                             # active set for improved performance
-                             np.int32_t* disabled_data = NULL,
-                             unsigned int n_disabled = 0
-                             ) nogil:
+cdef inline floating enet_duality_gap( # Data
+                                      unsigned int n_samples,
+                                      unsigned int n_features,
+                                      unsigned int n_tasks,
+                                      floating * X_data,
+                                      floating * y_data,
+                                      floating * R_data,
+                                      floating * w_data,
+                                      # Variables intended to be modified
+                                      floating * XtA_data,
+                                      floating * dual_scaling,
+                                      # Parameters
+                                      floating alpha,
+                                      floating beta,
+                                      bint positive,
+                                      # active set for improved performance
+                                      np.int32_t* disabled_data = NULL,
+                                      unsigned int n_disabled = 0
+                                      ) nogil:
 
     cdef floating R_norm2
     cdef floating w_norm2
@@ -524,7 +524,7 @@ cdef inline floating sparse_enet_duality_gap(unsigned int n_samples,
             if R_norm2 == 0:
                 dual_scaling[0] = 1. / alpha
             else:
-                dual_scaling[0] = yTA / (R_norm2 * alpha) 
+                dual_scaling[0] = yTA / (R_norm2 * alpha)
         elif positive:
             dual_scaling[0] = fmin(yTA / (alpha * R_norm2),
                                    1. / dual_norm_XtA)
@@ -681,11 +681,11 @@ def sparse_enet_coordinate_descent(floating[:] w,
 
         # Activate variable
         for ii in range(n_features):
-          if norm2_cols_X[ii] != 0.:
-            active_set[n_active] = ii
-            n_active += 1
-          else:
-            disabled[ii] = 1
+            if norm2_cols_X[ii] != 0.:
+                active_set[n_active] = ii
+                n_active += 1
+            else:
+                disabled[ii] = 1
 
         for n_iter in range(max_iter):
             # Coordinate descent
@@ -879,7 +879,7 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 if w_ii != 0.0:
                     # H -= w_ii * Q[ii]
                     axpy(n_features, -w_ii, Q_ptr + ii * n_features, 1,
-                          H_ptr, 1)
+                         H_ptr, 1)
 
                 tmp = q[ii] - H[ii]
 
@@ -892,7 +892,7 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 if w[ii] != 0.0:
                     # H +=  w[ii] * Q[ii] # Update H = X.T X w
                     axpy(n_features, w[ii], Q_ptr + ii * n_features, 1,
-                          H_ptr, 1)
+                         H_ptr, 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -1000,7 +1000,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     # initial value of the residuals
     cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype)
 
-    cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[:] norm2_cols_X = np.zeros(n_features, dtype=dtype)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
     cdef floating[:] w_ii = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
@@ -1033,8 +1033,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     with nogil:
         # norm2_cols_X = (np.asarray(X) ** 2).sum(axis=0)
         for ii in range(n_features):
-            for jj in range(n_samples):
-                norm2_cols_X[ii] += X[jj, ii] ** 2
+            norm2_cols_X[ii] += nrm2(n_samples, X_ptr + ii * n_samples, 1) ** 2
 
         # R = Y - np.dot(X, W.T)
         for ii in range(n_samples):
@@ -1076,11 +1075,10 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = nrm2(n_tasks, &tmp[0], 1)
 
-                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
+                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg)
                 copy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
-                scal(n_tasks,
-                     fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
-                     W_ptr + ii * n_tasks, 1)
+                scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg),
+                          W_ptr + ii * n_tasks, 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
                 if nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
