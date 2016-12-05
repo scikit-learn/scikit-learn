@@ -1,7 +1,7 @@
 """
-=============================================
-Generating NMAR / MCAR missing_values in data
-=============================================
+================================================================
+Data Pertubation: Generating NMAR / MCAR missing_values in data
+================================================================
 
 This example illustrates how the :class:`sklearn.datasets.ValueDropper` can
 be used to generate missing values completely at random or based on the
@@ -13,8 +13,8 @@ for each class label (and each feature if needed). This facilitates
 benchmarking missing-value strategies and evaluating the performance of such
 strategies with respect to the type, extent and distribution of missingness in
 the data. Importantly, when ``random_state`` is set to an integer, it
-provisions preserving the drop-locations as the ``missing_proba`` is upscaled
-to study the effect of the increase in missingness. This allows benchmarking
+provisions preserving the drop-locations as the ``missing_proba`` is increased
+to study the effect of the more missing values. This allows benchmarking
 with incremental missing rates without causing variation in the results due to
 an inconsistency in the drop-locations between different scales of
 ``missing_proba``.
