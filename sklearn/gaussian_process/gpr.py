@@ -44,12 +44,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    alpha : float or array-like, optional (default: 1e-10)
+    alpha : float, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
         Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting. If an array is
-        passed, it must have the same number of entries as the data used for
-        fitting and is used as datapoint-dependent noise level. Note that this
+        and reduce potential numerical issue during fitting. Note that this
         is equivalent to adding a WhiteKernel with c=alpha. Allowing to specify
         the noise level directly as a parameter is mainly for convenience and
         for consistency with Ridge.
@@ -140,7 +138,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y,sample_alpha=None):
         """Fit Gaussian process regression model
 
         Parameters
@@ -150,7 +148,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         y : array-like, shape = (n_samples, [n_output_dims])
             Target values
-
+            
+        sample_alpha : float or array like, shape = (n_samples,), optional
+            Sample dependent noise estimates.
+            Added, in addition to alpha, to the diagonal of the kernel matrix during fitting.
+            Larger values correspond to increased noise level in the observations.
+            
         Returns
         -------
         self : returns an instance of self.
@@ -173,14 +176,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.y_train_mean = np.zeros(1)
 
-        if np.iterable(self.alpha) \
-           and self.alpha.shape[0] != y.shape[0]:
-            if self.alpha.shape[0] == 1:
-                self.alpha = self.alpha[0]
-            else:
-                raise ValueError("alpha must be a scalar or an array"
-                                 " with same number of entries as y.(%d != %d)"
-                                 % (self.alpha.shape[0], y.shape[0]))
+        if np.iterable(self.alpha):
+            raise ValueError("alpha must be a scalar. Use sample_alpha in fit() for sample-dependent noise")
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
@@ -223,11 +220,25 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.log_marginal_likelihood_value_ = \
                 self.log_marginal_likelihood(self.kernel_.theta)
-
+                
+        #Add sample-dependent noise-estimates      
+        if sample_alpha is None:
+            add_alpha=0.0
+        else:
+            if np.iterable(sample_alpha) \
+               and sample_alpha.shape[0] != y.shape[0]:
+                if sample_alpha.shape[0] == 1:
+                    sample_alpha = sample_alpha[0]
+                else:
+                    raise ValueError("sample_alpha must be a scalar or an array"
+                                     " with same number of entries as y.(%d != %d)"
+                                     % (sample_alpha.shape[0], y.shape[0]))
+            add_alpha=sample_alpha
+            
         # Precompute quantities required for predictions which are independent
         # of actual query points
         K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.alpha
+        K[np.diag_indices_from(K)] += self.alpha+add_alpha
         self.L_ = cholesky(K, lower=True)  # Line 2
         self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
 
