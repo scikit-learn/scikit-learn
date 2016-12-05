@@ -465,9 +465,9 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_splits=3):
-        super(GroupKFold, self).__init__(n_splits, shuffle=False,
-                                         random_state=None)
+    def __init__(self, n_splits=3, random_state=None, shuffle=False):
+        super(GroupKFold, self).__init__(n_splits, shuffle=suffle,
+                                         random_state=random_state)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
