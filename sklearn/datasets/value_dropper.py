@@ -96,59 +96,59 @@ class ValueDropper(TransformerMixin):
            [  6.,   7.,   8.],
            [  9.,   0.,   1.],
            [  2.,   3.,   4.],
-           [  8.,   9.,   8.],
+           [  8.,  nan,   8.],
            [  1.,   0.,   5.],
-           [  7.,   8.,   9.],
-           [ nan,   4.,   3.],
+           [ nan,   8.,   9.],
+           [  5.,   4.,   3.],
            [  2.,   1.,   1.],
-           [  1.,  nan,   3.]])
-    >>> # Upscale the missing_proba to add more missing values in feature 0
+           [  1.,   2.,   3.]])
+    >>> # Increase the missing_proba to add more missing values in feature 0
     >>> # Also add a few missing values in all features for class 0 samples.
     >>> missing_proba = {1: [0.4, 0.2, 0], 0: 0.6}
     >>> vd = ValueDropper(missing_proba=missing_proba, random_state=0)
     >>> vd.transform(X, y)
-    array([[ nan,  nan,   2.],
-           [ nan,  nan,  nan],
+    array([[ nan,  nan,  nan],
+           [ nan,   4.,  nan],
            [ nan,  nan,   8.],
-           [  9.,   0.,  nan],
-           [  2.,   3.,  nan],
-           [  8.,   9.,   8.],
-           [  1.,   0.,   5.],
-           [  7.,   8.,   9.],
-           [ nan,   4.,   3.],
+           [  9.,   0.,   1.],
+           [  2.,  nan,  nan],
+           [  8.,  nan,   8.],
+           [ nan,   0.,   5.],
+           [ nan,   8.,   9.],
+           [  5.,   4.,   3.],
            [  2.,   1.,   1.],
-           [ nan,  nan,   3.]])
+           [  1.,   2.,   3.]])
     >>> # MCAR missingness -
     >>> # 30% of values in each feature Missing Completely At Random
     >>> vd = ValueDropper(missing_proba=0.3, random_state=0)
     >>> vd.transform(X, y)
-    array([[  0.,   1.,   2.],
+    array([[  0.,   1.,  nan],
            [  3.,   4.,   5.],
-           [ nan,   7.,  nan],
-           [  9.,  nan,   1.],
-           [ nan,   3.,   4.],
-           [  8.,   9.,   8.],
-           [  1.,   0.,  nan],
-           [  7.,   8.,  nan],
-           [  5.,   4.,   3.],
-           [ nan,  nan,   1.],
-           [  1.,  nan,   3.]])
-    >>> # Upscale the missing_proba to add more missing values in feature 0 and
-    >>> # 1 alone. Retain the same drop-probability for feature 2
+           [  6.,  nan,   8.],
+           [  9.,   0.,   1.],
+           [  2.,  nan,   4.],
+           [ nan,   9.,   8.],
+           [ nan,  nan,   5.],
+           [ nan,   8.,  nan],
+           [  5.,   4.,  nan],
+           [  2.,   1.,   1.],
+           [  1.,   2.,   3.]])
+    >>> # Increase the missing_proba to add more missing values in feature 0
+    >>> # and 1 alone. Retain the same drop-probability for feature 2
     >>> # Explicitly set copy=False for inplace dropping of values
     >>> vd = ValueDropper(missing_proba=[0.6, 0.8, 0.3],
     ...                   copy=False, random_state=0)
     >>> _ = vd.transform(X, y)
     >>> X
-    array([[  0.,  nan,   2.],
+    array([[  0.,   1.,  nan],
+           [ nan,  nan,   5.],
+           [  6.,  nan,   8.],
+           [  9.,   0.,   1.],
+           [ nan,  nan,   4.],
+           [ nan,  nan,   8.],
            [ nan,  nan,   5.],
            [ nan,  nan,  nan],
-           [  9.,  nan,   1.],
-           [ nan,  nan,   4.],
-           [  8.,  nan,   8.],
-           [ nan,   0.,  nan],
-           [ nan,   8.,  nan],
-           [  5.,  nan,   3.],
+           [  5.,  nan,  nan],
            [ nan,  nan,   1.],
            [ nan,  nan,   3.]])
     """
@@ -250,7 +250,7 @@ class ValueDropper(TransformerMixin):
                                         if missing_type == 'nmar'
                                         else "The", n_features))
             elif not isinstance(proba, (np.floating, float,
-                                      numbers.Integral, np.integer)):
+                                        numbers.Integral, np.integer)):
                 raise ValueError("%s value must be a float or "
                                  "1D vector (list, tuple or np.ndarray) of "
                                  "shape (n_features,)%s %r was passed."
