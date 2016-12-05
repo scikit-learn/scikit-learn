@@ -416,8 +416,8 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
-Using yep and google-perftools
---------------------------------
+Using yep and gperftools
+------------------------------
 
 Easy profiling without special compilation options use yep:
 
@@ -426,16 +426,15 @@ Easy profiling without special compilation options use yep:
 
 .. note::
 
-  google-perftools provides a nice 'line by line' report mode that
+  gperftools provides a nice 'line by line' report mode that
   can be triggered with the ``--lines`` option. However this
   does not seem to work correctly at the time of writing. This
   issue can be tracked on the `project issue tracker
   <https://github.com/gperftools/gperftools>`_.
 
 
-
 Using gprof
--------------
+-----------
 
 In order to profile compiled Python extensions one could use ``gprof``
 after having recompiled the project with ``gcc -pg`` and using the
@@ -446,11 +445,11 @@ with ``-pg`` which is rather complicated to get working.
 Fortunately there exist two alternative profilers that don't require you to
 recompile everything.
 
-
 Using valgrind / callgrind / kcachegrind
 ----------------------------------------
 
-TODO
+kcachegrind
+~~~~~~~~~~~
 
 
 Multi-core parallelism using ``joblib.Parallel``
