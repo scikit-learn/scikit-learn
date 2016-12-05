@@ -177,7 +177,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             self.y_train_mean = np.zeros(1)
 
         if np.iterable(self.alpha):
-            print "Deprecation warning: Alpha must be scalar. Used sample_alpha in fit() for sample dependent noise estimates."
+            print("Deprecation warning: Alpha must be scalar. Used sample_alpha in fit() for sample dependent noise estimates.")
             if self.alpha.shape[0] != y.shape[0]:
                 if self.alpha.shape[0] == 1:
                     self.alpha = self.alpha[0]
