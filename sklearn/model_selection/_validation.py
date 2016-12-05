@@ -15,7 +15,6 @@ from __future__ import division
 import warnings
 import numbers
 import time
-import operator
 
 import numpy as np
 import scipy.sparse as sp
@@ -404,9 +403,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
         for train, test in cv_iter)
 
     # Concatenate the predictions
-    predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
+    predictions = [pred_block_i for pred_block_i, _, _ in prediction_blocks]
     test_indices = np.concatenate([indices_i
-                                   for _, indices_i in prediction_blocks])
+                                   for _, indices_i, _ in prediction_blocks])
+    classes = [classes_i for _, _, classes_i in prediction_blocks]
 
     if not _check_is_permutation(test_indices, _num_samples(X)):
         raise ValueError('cross_val_predict only works for partitions')
@@ -477,15 +477,11 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
+
+    classes = []
     if method is 'predict_proba' and hasattr(estimator, 'classes_'):
         classes = getattr(estimator, 'classes_')
-        class_map = dict()
-        for i in range(len(classes)):
-            class_map[i] = classes[i]
-        sorted_indices = [i for i, j in sorted(class_map.items(),
-                                               key=operator.itemgetter(1))]
-        predictions = predictions[:, sorted_indices]
-    return predictions, test
+    return predictions, test, classes
 
 
 def _check_is_permutation(indices, n_samples):
