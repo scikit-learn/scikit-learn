@@ -58,8 +58,6 @@ if [[ "$TRAVIS" == "true" ]]; then
             COMMIT_RANGE=$TRAVIS_COMMIT_RANGE
         fi
     else
-        # We need to unshallow here too ...
-        git fetch --unshallow || echo "Unshallowing the git checkout failed"
         # We want to fetch the code as it is in the PR branch and not
         # the result of the merge into master. This way line numbers
         # reported by Travis will match with the local code.
