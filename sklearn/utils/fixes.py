@@ -360,7 +360,7 @@ else:
     from scipy.stats import rankdata
 
 
-if np_version[:2] < (1, 12):
+if np_version < (1, 12):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
         # This fix is needed to make our model_selection.GridSearchCV
