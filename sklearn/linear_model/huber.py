@@ -41,10 +41,10 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
     Returns
     -------
-    loss: float
+    loss : float
         Huber loss.
 
-    gradient: ndarray, shape (len(w))
+    gradient : ndarray, shape (len(w))
         Returns the derivative of the Huber loss with respect to each
         coefficient, intercept and the scale as a vector.
     """
@@ -183,7 +183,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Number of iterations that fmin_l_bfgs_b has run for.
         Not available if SciPy version is 0.9 and below.
 
-    outliers_: array, shape (n_samples,)
+    outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
         as outliers.
 

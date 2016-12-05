@@ -9,6 +9,7 @@
 from itertools import chain, combinations
 import numbers
 import warnings
+from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
@@ -19,7 +20,6 @@ from ..utils import check_array
 from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
@@ -552,7 +552,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
 
         # Reset internal state before fitting
@@ -576,7 +576,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         ensure_2d=False, warn_on_dtype=True,
@@ -776,7 +776,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)

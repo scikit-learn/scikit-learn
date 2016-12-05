@@ -7,6 +7,8 @@ from time import time
 import numpy as np
 from collections import defaultdict
 
+import six
+
 from scipy.linalg import svd
 from sklearn.utils.extmath import randomized_svd
 from sklearn.datasets.samples_generator import make_low_rank_matrix
@@ -64,7 +66,7 @@ if __name__ == '__main__':
     label = 'scikit-learn singular value decomposition benchmark results'
     fig = plt.figure(label)
     ax = fig.gca(projection='3d')
-    for c, (label, timings) in zip('rbg', sorted(results.iteritems())):
+    for c, (label, timings) in zip('rbg', sorted(six.iteritems(results))):
         X, Y = np.meshgrid(samples_range, features_range)
         Z = np.asarray(timings).reshape(samples_range.shape[0],
                                         features_range.shape[0])

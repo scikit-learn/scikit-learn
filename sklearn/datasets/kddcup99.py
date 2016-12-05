@@ -345,6 +345,9 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
+    elif not available:
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
 
     try:
         X, y
