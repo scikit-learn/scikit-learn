@@ -284,14 +284,14 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         self.n_splits = n_splits
         self.shuffle = shuffle
-        if not isinstance(random_state, (np.integer, numbers.Integral)):
+        if isinstance(random_state, (np.integer, numbers.Integral)):
+            self.random_state = random_state
+        else:
             # This is done to ensure that the multiple calls to split
             # are random for each initialization of splitter but consistent
             # across multiple calls for the same initialization.
             self.random_state = check_random_state(
                 random_state).randint(np.iinfo(np.int32).max)
-        else:
-            self.random_state = random_state
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -926,14 +926,14 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
-        if not isinstance(random_state, (np.integer, numbers.Integral)):
+        if isinstance(random_state, (np.integer, numbers.Integral)):
+            self.random_state = random_state
+        else:
             # This is done to ensure that the multiple calls to split
             # are random for each initialization of splitter but consistent
             # across multiple calls for the same initialization.
             self.random_state = check_random_state(
                 random_state).randint(np.iinfo(np.int32).max)
-        else:
-            self.random_state = random_state
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
