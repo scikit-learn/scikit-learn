@@ -429,11 +429,13 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
     skf2 = StratifiedKFold(3, shuffle=True,
                            random_state=np.random.RandomState(0))
 
+    # 1) Test to ensure consistent behavior when random_state is set explicitly
     for cv in (kf, skf, kf2, skf2):
+        # Check that calling split twice yields the same results
         np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
         np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
 
-    # Tests to ensure consistent behaviour even when random_state is not set.
+    # 2) Tests to ensure consistent behavior even when random_state is not set
     kf = KFold(3, shuffle=True)
     skf = StratifiedKFold(3, shuffle=True)
     kf1 = KFold(3, shuffle=True)
