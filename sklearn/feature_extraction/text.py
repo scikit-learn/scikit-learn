@@ -19,6 +19,7 @@ import numbers
 from operator import itemgetter
 import re
 import unicodedata
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -684,6 +685,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_features = max_features
         if max_features is not None and max_features < 0:
             raise ValueError("negative value for max_features")
+        if max_features is None:
+            warnings.warn("None was replaced by 1.0 in version 0.19.",
+                          DeprecationWarning)
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
