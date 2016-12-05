@@ -43,7 +43,7 @@ print(__doc__)
 X = np.random.RandomState(0).random_sample((20, 3))
 y = np.array([1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2])
 
-# Each feature of samples of class 1 will have 20% of thier values missing.
+# For samples from class 1, each feature will be missing 20% of its values
 vd = ValueDropper(missing_proba={1: 0.2}, random_state=0)
 X_dropped = vd.transform(X, y)
 
@@ -53,7 +53,7 @@ print("------------------------")
 for i in range(y.shape[0]):
     print(y[i], X_dropped[i], sep="\t")
 
-# Each feature of samples of class 1 will have another 20% of thier values
+# Each feature of samples of class 1 will have a further 20% of its values
 # missing. (Old locations will be preserved as random_state is set)
 vd = ValueDropper(missing_proba={1: 0.4}, random_state=0)
 X_dropped = vd.transform(X, y)
