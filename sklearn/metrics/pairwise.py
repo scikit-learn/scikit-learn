@@ -1130,6 +1130,100 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'russellrao', 'seuclidean', 'sokalmichener',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
 
+DEFAULT_BLOCK_SIZE = 64
+
+
+def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
+                                 block_size=DEFAULT_BLOCK_SIZE, **kwds):
+    """ Compute the distance matrix from a vector array X and optional Y.
+
+    This method takes either a vector array or a distance matrix, and returns
+    a distance matrix. If the input is a vector array, the distances are
+    computed. If the input is a distances matrix, it is returned instead.
+
+    This is equivalent to calling:
+
+        pairwise_distances(X, y, metric)
+
+    but uses much less memory.
+
+    Parameters
+    ----------
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
+             [n_samples_a, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
+
+    Y : array [n_samples_b, n_features], optional
+        An optional second feature array. Only allowed if metric != "precomputed".
+
+    metric : string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+        If metric is "precomputed", X is assumed to be a distance matrix.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+    n_jobs : int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debugging. For n_jobs below -1,
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
+    block_size : int, default=64
+        The maximum number of mebibytes (MiB) of memory per job (see``n_jobs``)
+        to use at a time for calculating pairwise distances.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+        If using a scipy.spatial.distance metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
+
+    Returns
+    -------
+    D : array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+        A distance matrix D such that D_{i, j} is the distance between the
+        ith and jth vectors of the given matrix X, if Y is None.
+        If Y is not None, then D_{i, j} is the distance between the ith array
+        from X and the jth array from Y.
+
+    """
+    if (metric not in _VALID_METRICS and
+            not callable(metric) and metric != "precomputed"):
+        raise ValueError("Unknown metric %s. "
+                         "Valid metrics are %s, or 'precomputed', or a "
+                         "callable" % (metric, _VALID_METRICS))
+
+    if metric == "precomputed":
+        X, _ = check_pairwise_arrays(X, Y, precomputed=True)
+        return X
+    elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+    elif callable(metric):
+        func = partial(_pairwise_callable, metric=metric, **kwds)
+    else:
+        if issparse(X) or issparse(Y):
+            raise TypeError("scipy distance metrics do not"
+                            " support sparse matrices.")
+
+        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
+        if n_jobs == 1 and X is Y:
+            return distance.squareform(distance.pdist(X, metric=metric,
+                                                      **kwds))
+        func = partial(distance.cdist, metric=metric, **kwds)
+
+    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
