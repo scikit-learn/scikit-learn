@@ -177,8 +177,29 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             self.y_train_mean = np.zeros(1)
 
         if np.iterable(self.alpha):
-            raise ValueError("alpha must be a scalar. Use sample_alpha in fit() for sample-dependent noise")
-
+            print "Deprecation warning: Alpha must be scalar. Used sample_alpha in fit() for sample dependent noise estimates."
+            if self.alpha.shape[0] != y.shape[0]:
+                if self.alpha.shape[0] == 1:
+                    self.alpha = self.alpha[0]
+                else:
+                    raise ValueError("alpha must be a scalar or an array"
+                                     " with same number of entries as y.(%d != %d)"
+    % (self.alpha.shape[0], y.shape[0]))
+            
+        #Add sample-dependent noise-estimates      
+        if sample_alpha is None:
+            add_alpha=0.0
+        else:
+            if np.iterable(sample_alpha) \
+               and sample_alpha.shape[0] != y.shape[0]:
+                if sample_alpha.shape[0] == 1:
+                    sample_alpha = sample_alpha[0]
+                else:
+                    raise ValueError("sample_alpha must be a scalar or an array"
+                                     " with same number of entries as y.(%d != %d)"
+                                     % (sample_alpha.shape[0], y.shape[0]))
+            add_alpha=sample_alpha
+            
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
 
@@ -221,19 +242,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             self.log_marginal_likelihood_value_ = \
                 self.log_marginal_likelihood(self.kernel_.theta)
                 
-        #Add sample-dependent noise-estimates      
-        if sample_alpha is None:
-            add_alpha=0.0
-        else:
-            if np.iterable(sample_alpha) \
-               and sample_alpha.shape[0] != y.shape[0]:
-                if sample_alpha.shape[0] == 1:
-                    sample_alpha = sample_alpha[0]
-                else:
-                    raise ValueError("sample_alpha must be a scalar or an array"
-                                     " with same number of entries as y.(%d != %d)"
-                                     % (sample_alpha.shape[0], y.shape[0]))
-            add_alpha=sample_alpha
+        
             
         # Precompute quantities required for predictions which are independent
         # of actual query points
