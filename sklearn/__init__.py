@@ -72,7 +72,7 @@ def config_context(**kwargs):
     >>> with sklearn.config_context(assume_finite=True):
     ...     assert_all_finite([float('nan')])
     >>> with sklearn.config_context(assume_finite=True):
-    ...     with sklearn.set_config(assume_finite=False):
+    ...     with sklearn.config_context(assume_finite=False):
     ...         assert_all_finite([float('nan')])
     ... # doctest: +ELLIPSIS
     Traceback (most recent call last):
