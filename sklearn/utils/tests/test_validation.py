@@ -472,10 +472,10 @@ def test_check_consistent_length():
     # XXX: We should have a test with a string, but what is correct behaviour?
 
 
-def check_suppress_validation():
+def test_suppress_validation():
     X = np.array([0, np.inf])
     assert_raises(ValueError, assert_all_finite, X)
-    sklearn.ASSUME_FINITE = True
+    sklearn.set_config(assume_finite=True)
     assert_all_finite(X)
-    sklearn.ASSUME_FINITE = False
+    sklearn.set_config(assume_finite=False)
     assert_raises(ValueError, assert_all_finite, X)
