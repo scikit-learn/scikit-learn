@@ -138,7 +138,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
-    def fit(self, X, y,sample_alpha=None):
+    def fit(self, X, y, sample_alpha=None):
         """Fit Gaussian process regression model
 
         Parameters
@@ -148,12 +148,13 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         y : array-like, shape = (n_samples, [n_output_dims])
             Target values
-            
+
         sample_alpha : float or array like, shape = (n_samples,), optional
-            Sample dependent noise estimates.
-            Added, in addition to alpha, to the diagonal of the kernel matrix during fitting.
-            Larger values correspond to increased noise level in the observations.
-            
+            Sample dependent noise estimates.Added, in addition to alpha,
+            to the diagonal of the kernel matrix during fitting.
+            Larger values correspond to increased noise level in the
+            observations.
+
         Returns
         -------
         self : returns an instance of self.
@@ -177,29 +178,33 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             self.y_train_mean = np.zeros(1)
 
         if np.iterable(self.alpha):
-            print("Deprecation warning: Alpha must be scalar. Used sample_alpha in fit() for sample dependent noise estimates.")
+            print("Deprecation warning: Alpha must be scalar."
+                  "Use sample_alpha in fit() for sample dependent"
+                  "noise estimates.")
             if self.alpha.shape[0] != y.shape[0]:
                 if self.alpha.shape[0] == 1:
                     self.alpha = self.alpha[0]
                 else:
-                    raise ValueError("alpha must be a scalar or an array"
-                                     " with same number of entries as y.(%d != %d)"
-    % (self.alpha.shape[0], y.shape[0]))
-            
-        #Add sample-dependent noise-estimates      
+                    raise ValueError("alpha must be a scalar"
+                                     "or an array with same number"
+                                     " of entries as y.(%d != %d)"
+                                     % (self.alpha.shape[0], y.shape[0]))
+
+        # Add sample-dependent noise-estimates
         if sample_alpha is None:
-            add_alpha=0.0
+            add_alpha = 0.0
         else:
             if np.iterable(sample_alpha) \
                and sample_alpha.shape[0] != y.shape[0]:
                 if sample_alpha.shape[0] == 1:
                     sample_alpha = sample_alpha[0]
                 else:
-                    raise ValueError("sample_alpha must be a scalar or an array"
-                                     " with same number of entries as y.(%d != %d)"
+                    raise ValueError("sample_alpha must be a scalar"
+                                     " or an array with same number of"
+                                     " entries as y.(%d != %d)"
                                      % (sample_alpha.shape[0], y.shape[0]))
-            add_alpha=sample_alpha
-            
+            add_alpha = sample_alpha
+ 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
 
@@ -241,9 +246,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.log_marginal_likelihood_value_ = \
                 self.log_marginal_likelihood(self.kernel_.theta)
-                
-        
-            
+
         # Precompute quantities required for predictions which are independent
         # of actual query points
         K = self.kernel_(self.X_train_)
