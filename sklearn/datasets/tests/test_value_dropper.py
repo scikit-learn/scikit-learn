@@ -199,23 +199,26 @@ def test_value_dropper_errors():
 
         # Dict with labels having fewer or more than n_feature elements
         ({1: [0.01, ] * 9, },
-         "for label, 1, does not conform to the number of features, 10"),
+         "For label, 1, the shape of the per feature drop-probabilities "
+         "vector does not conform to the number of features, 10"),
 
-        ({0: [0.01, ] * 10, 1: [0.01, ] * 11},
-         "for label, 1, does not conform to the number of features, 10"),
+        ({0: [0.01, ] * 11, 1: [0.01, ] * 10},
+         "For label, 0, the shape of the per feature drop-probabilities "
+         "vector does not conform to the number of features, 10"),
 
         # Dict having labels not present in y labels
         ({0: 0.025, 1: [0.0025, ] * 10, 2: 0.025, 3: 0.025, 4: 0.025},
          "y contains new labels: \[4\]"),
 
         # Incorrect dict or incorrect value
-        ({0: {1: 0.2}, },
-         "either be a single float or an array of shape \(n_features,\). "
-         "\{1: 0.2.*\} was passed for class label 0"),
+        ({0: 'foo', },
+         "For label, 0, probability value must be a float or 1D vector \(list,"
+         " tuple or np.ndarray\) of shape \(n_features,\) \'foo\' was passed"),
 
         ("foobar",
          "must be a float or 1D vector \(list, tuple or np.ndarray\)"
-         " of shape \(n_features,\) or dict"))
+         " of shape \(n_features,\) or dict of floats/1D vectors. "
+         "'foobar' was passed."))
 
     for missing_proba, err_msg in wrong_missing_probas_err_pairs:
         assert_raises_regexp(ValueError, err_msg,

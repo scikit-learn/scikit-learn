@@ -198,6 +198,7 @@ class ValueDropper(TransformerMixin):
             # For NMAR
             # Validate and convert the missing_proba dict into a
             # 2D probability distribution along the features and labels
+            missing_type = 'nmar'
 
             if y is None:
                 raise ValueError("The missing_proba is a dict "
@@ -220,57 +221,46 @@ class ValueDropper(TransformerMixin):
 
             drop_probs = np.zeros((n_classes, n_features), dtype=np.float64)
 
-            for class_key, val in self.missing_proba.items():
-                # This will also validate incorrect values for class_key
-                encoded_class_key = le.transform([class_key, ])[0]
-
-                if isinstance(val, (np.ndarray, list, tuple)):
-                    val = np.asarray(val)
-                    if val.shape[0] != n_features:
-                        raise ValueError("The shape of the per feature "
-                                         "drop-probabilities vector "
-                                         "for label, %s, does not conform "
-                                         "to the number of features, %d"
-                                         % (class_key, n_features))
-                elif not isinstance(val, (np.floating, float,
-                                          numbers.Integral, np.integer)):
-                    raise ValueError("If missing_proba is a dict with "
-                                     "target labels as keys, the values of "
-                                     "the dict should either be a single "
-                                     "float or an array of shape "
-                                     "(n_features,). %r was passed for class "
-                                     "label %s" % (val, class_key))
-
-                drop_probs[encoded_class_key, :] = val
-
+            class_keys, probas = zip(*self.missing_proba.items())
+            encoded_class_keys = le.transform(class_keys)
         else:
             # For MCAR
             # Validate and convert the missing_proba dict into a
             # 1D probability distribution along the features
+            missing_type = 'mcar'
 
             drop_probs = np.zeros((1, n_features), dtype=np.float64)
 
-            if isinstance(self.missing_proba, (list, tuple, np.ndarray)):
-                # Convert to ndarray and check shape
-                missing_proba = np.asarray(self.missing_proba)
-                if missing_proba.shape[0] != n_features:
-                    raise ValueError("The shape of the per feature "
-                                     "drop-probabilities vector does not "
-                                     "conform to the number of features, %d"
-                                     % n_features)
-            elif not isinstance(self.missing_proba,
-                                (np.floating, float, numbers.Integral,
-                                 np.integer)):
-                raise ValueError("missing_proba must be a float or "
-                                 "1D vector (list, tuple or np.ndarray) of "
-                                 "shape (n_features,) or dict of 1D vector / "
-                                 "floats. %r was passed"
-                                 % self.missing_proba)
-
-            drop_probs[:] = self.missing_proba
-            # Hack to simplify code
-            classes = [0, ]
+            # Hack to simplify and unify missing generation code for nmar/mcar
+            classes = class_keys = encoded_class_keys = (0, )
+            probas = (self.missing_proba, )
             y = np.zeros(n_samples)
+
+        # For both nmar/mcar
+        for encoded_class_key, class_key, proba in zip(encoded_class_keys,
+                                                       class_keys, probas):
+            if isinstance(proba, (np.ndarray, list, tuple)):
+                proba = np.asarray(proba)
+                if proba.shape[0] != n_features:
+                    raise ValueError("%s shape of the per feature "
+                                     "drop-probabilities vector "
+                                     "does not conform to the number of "
+                                     "features, %d"
+                                     % ("For label, %s, the" % class_key
+                                        if missing_type == 'nmar'
+                                        else "The", n_features))
+            elif not isinstance(proba, (np.floating, float,
+                                      numbers.Integral, np.integer)):
+                raise ValueError("%s value must be a float or "
+                                 "1D vector (list, tuple or np.ndarray) of "
+                                 "shape (n_features,)%s %r was passed."
+                                 % ("For label, %s, probability" % class_key
+                                    if missing_type == 'nmar'
+                                    else 'Probability',
+                                    " or dict of floats/1D vectors."
+                                    if missing_type == 'mcar' else "", proba))
+
+            drop_probs[encoded_class_key, :] = proba
 
         if np.any(drop_probs < 0) or np.any(drop_probs > 1):
             raise ValueError("All the individual drop-probabilities should be "
@@ -295,7 +285,7 @@ class ValueDropper(TransformerMixin):
                 if this_required_n_missing == 0:
                     continue
 
-                this_rng = check_random_state(random_state[i, feature])
+                this_rng = check_random_state(random_states[i, feature])
                 shuffled_indices = this_rng.permutation(this_block_indices)
 
                 # Drop them
