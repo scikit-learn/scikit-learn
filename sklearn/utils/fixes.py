@@ -404,9 +404,6 @@ else:
 
 
 if np_version < (1, 12):
-    # tuple(1,12,'0b1') ,cannot compare with (1, 12, 0)
-    # it occured error> unorderable types: str() < int().
-    # delete the tuple third index, become (1,12)
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
         # This fix is needed to make our model_selection.GridSearchCV
