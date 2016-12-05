@@ -1898,9 +1898,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
             normalize=False, random_state=None, selection='cyclic', tol=0.0001,
             warm_start=False)
-    >>> print(clf.coef_)
-    [[ 0.89393398  0.        ]
-     [ 0.89393398  0.        ]]
+    >>> print(clf.coef_)  # doctest: +ELLIPSIS
+    [[  8.939...e-01   4...e-16]
+     [  8.939...e-01   4...e-16]]
     >>> print(clf.intercept_)
     [ 0.10606602  0.10606602]
 
