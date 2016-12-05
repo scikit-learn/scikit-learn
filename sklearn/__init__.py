@@ -32,9 +32,25 @@ def get_config():
     return {'assume_finite': _ASSUME_FINITE}
 
 
-@_contextmanager
 def set_config(assume_finite=None):
-    """Context manager for global scikit-learn settings
+    """Set global scikit-learn configuration
+
+    Parameters
+    ----------
+    assume_finite : bool, optional
+        If True, validation for finiteness will be skipped,
+        saving time, but leading to potential crashes. If
+        False, validation for finiteness will be performed,
+        avoiding error.
+    """
+    global _ASSUME_FINITE
+    if assume_finite is not None:
+        _ASSUME_FINITE = assume_finite
+
+
+@_contextmanager
+def config_context(**kwargs):
+    """Context manager for global scikit-learn configuration
 
     Parameters
     ----------
@@ -53,9 +69,9 @@ def set_config(assume_finite=None):
     --------
     >>> import sklearn
     >>> from sklearn.utils.validation import assert_all_finite
-    >>> with sklearn.set_config(assume_finite=True):
+    >>> with sklearn.config_context(assume_finite=True):
     ...     assert_all_finite([float('nan')])
-    >>> with sklearn.set_config(assume_finite=True):
+    >>> with sklearn.config_context(assume_finite=True):
     ...     with sklearn.set_config(assume_finite=False):
     ...         assert_all_finite([float('nan')])
     ... # doctest: +ELLIPSIS
@@ -63,13 +79,11 @@ def set_config(assume_finite=None):
     ...
     ValueError: Input contains NaN, ...
     """
-    global _ASSUME_FINITE
-    prev_assume_finite = _ASSUME_FINITE
-    if assume_finite is not None:
-        _ASSUME_FINITE = assume_finite
+    config = get_config().copy()
+    set_config(**kwargs)
 
     yield
-    _ASSUME_FINITE = prev_assume_finite
+    set_config(**{k: config[k] for k in kwargs})
 
 
 # Make sure that DeprecationWarning within this package always gets printed

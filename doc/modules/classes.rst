@@ -40,6 +40,7 @@ Functions
    :template: function.rst
 
    base.clone
+   config_context
    set_config
    get_config
 

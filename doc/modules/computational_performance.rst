@@ -79,7 +79,7 @@ you an estimate of the order of magnitude of the prediction latency.
     scikit-learn, or configure it in Python with::
 
       >>> import sklearn
-      >>> with sklearn.set_config(assume_finite=True):
+      >>> with sklearn.config_context(assume_finite=True):
       ...    pass  # do learning/prediction here with reduced validation
 
     Note that this will affect all uses of
