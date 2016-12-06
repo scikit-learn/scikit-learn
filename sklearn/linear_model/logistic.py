@@ -1003,8 +1003,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         through the fit method) if sample_weight is specified.
 
         .. versionadded:: 0.17
-           *class_weight='balanced'* instead of deprecated
-           *class_weight='auto'*.
+           *class_weight='balanced'*
 
     max_iter : int, default: 100
         Useful only for the newton-cg, sag and lbfgs solvers.

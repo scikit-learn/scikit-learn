@@ -218,19 +218,19 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Per feature minimum seen in the data
 
         .. versionadded:: 0.17
-           *data_min_* instead of deprecated *data_min*.
+           *data_min_*
 
     data_max_ : ndarray, shape (n_features,)
         Per feature maximum seen in the data
 
         .. versionadded:: 0.17
-           *data_max_* instead of deprecated *data_max*.
+           *data_max_*
 
     data_range_ : ndarray, shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
 
         .. versionadded:: 0.17
-           *data_range_* instead of deprecated *data_range*.
+           *data_range_*
 
     See also
     --------
@@ -392,13 +392,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    # To allow retro-compatibility, we handle here the case of 1D-input
-    # From 0.17, 1D-input are deprecated in scaler objects
-    # Although, we want to allow the users to keep calling this function
-    # with 1D-input.
-
-    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
-    # done inside the scaler object fit_transform.
+    # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
                     dtype=FLOAT_DTYPES)
@@ -470,7 +464,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         Per feature relative scaling of the data.
 
         .. versionadded:: 0.17
-           *scale_* is recommended instead of deprecated *std_*.
+           *scale_*
 
     mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
@@ -819,13 +813,8 @@ def maxabs_scale(X, axis=0, copy=True):
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    # To allow retro-compatibility, we handle here the case of 1D-input
-    # From 0.17, 1D-input are deprecated in scaler objects
-    # Although, we want to allow the users to keep calling this function
-    # with 1D-input.
+    # Unlike the scaler object, this function allows 1d input.
 
-    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
-    # done inside the scaler object fit_transform.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                     ensure_2d=False, dtype=FLOAT_DTYPES)
