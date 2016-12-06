@@ -142,7 +142,7 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
 
 
 def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
-                     sample_weight=None, return_mean=False):
+                     sample_weight=None, return_mean=False, center_y=True):
     """
     Centers data to have mean zero along axis 0. If fit_intercept=False or if
     the X is a sparse matrix, no centering is done, but normalization can still
@@ -196,8 +196,11 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                                          return_norm=True)
             else:
                 X_scale = np.ones(X.shape[1])
-        y_offset = np.average(y, axis=0, weights=sample_weight)
-        y = y - y_offset
+
+        y_offset = 0
+        if center_y:
+            y_offset = np.average(y, axis=0, weights=sample_weight)
+            y = y - y_offset
     else:
         X_offset = np.zeros(X.shape[1])
         X_scale = np.ones(X.shape[1])
@@ -222,7 +225,22 @@ def _rescale_data(X, y, sample_weight):
     return X, y
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearNormalizerMixin(object):
+    _preprocess_data = staticmethod(_preprocess_data)
+
+    def _set_intercept(self, X_offset, y_offset, X_scale, intercept_=None):
+        """Set the intercept_
+        """
+        if self.fit_intercept:
+            self.coef_ = self.coef_ / X_scale
+            if intercept_ is None:
+                self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
+        else:
+            self.intercept_ = 0 if intercept_ is None else intercept_
+
+
+class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator),
+                  LinearNormalizerMixin):
     """Base class for Linear Models"""
 
     @abstractmethod
@@ -266,17 +284,6 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
             Returns predicted values.
         """
         return self._decision_function(X)
-
-    _preprocess_data = staticmethod(_preprocess_data)
-
-    def _set_intercept(self, X_offset, y_offset, X_scale):
-        """Set the intercept_
-        """
-        if self.fit_intercept:
-            self.coef_ = self.coef_ / X_scale
-            self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
-        else:
-            self.intercept_ = 0.
 
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
