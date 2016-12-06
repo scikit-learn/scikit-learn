@@ -176,6 +176,47 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
 
+def test_ovr_fit_predict_multilabel_list():
+    # Test for multilabel-indicator representation invariance
+    list_list = lambda lis: [list(arr) for arr in list(lis)]
+    for list_type in [list, list_list]:
+        base_clf = MultinomialNB(alpha=1)
+
+        X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                       n_features=20,
+                                                       n_classes=5,
+                                                       n_labels=3,
+                                                       length=50,
+                                                       allow_unlabeled=True,
+                                                       random_state=0)
+
+        X_train, Y_train = X[:80], Y[:80]
+        X_test = X[80:]
+
+        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+        Y_pred = clf.predict(X_test)
+
+        clf_list = OneVsRestClassifier(base_clf).fit(X_train,
+                                                     list_type(Y_train))
+        Y_pred_list = clf_list.predict(X_test)
+
+        assert_array_equal(Y_pred_list, Y_pred)
+
+        # Test predict_proba
+        Y_proba = clf_list.predict_proba(X_test)
+
+        # predict assigns a label if the probability that the
+        # sample has the label is greater than 0.5.
+        pred = Y_proba > .5
+        assert_array_equal(pred, Y_pred_list)
+
+        # Test decision_function
+        clf_list = OneVsRestClassifier(svm.SVC()).fit(X_train,
+                                                      list_list(Y_train))
+        dec_pred = (clf_list.decision_function(X_test) > 0).astype(int)
+        assert_array_equal(dec_pred, clf_list.predict(X_test))
+
+
 def test_ovr_always_present():
     # Test that ovr works with classes that are always present or absent.
     # Note: tests is the case where _ConstantPredictor is utilised
