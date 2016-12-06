@@ -181,7 +181,7 @@ def test_ovr_fit_predict_multilabel_list():
     # Test for multilabel-indicator representation invariance
 
     def list_list(lis):
-        [list(arr) for arr in list(lis)]
+        return [list(arr) for arr in list(lis)]
 
     for list_type in [list, list_list]:
         base_clf = MultinomialNB(alpha=1)
