@@ -266,13 +266,14 @@ def test_fit():
     clf2 = RandomForestClassifier(random_state=123)
     eclf1 = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2)],
-                weights=[1,2],
+                weights=[1, 2],
                 voting='soft')
     eclf2 = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2)],
-                weights=np.array((1,2)),
+                weights=np.array((1, 2)),
                 voting='soft')
-    eclf1.fit(X,y)
-    eclf2.fit(X,y)
+    eclf1.fit(X, y)
+    eclf2.fit(X, y)
+
 
 
