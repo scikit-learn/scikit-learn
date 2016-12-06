@@ -543,13 +543,17 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 self.n_iter_ += 1
         return self
 
-    def transform(self, X):
+    def transform(self, X, normalize=True):
         """Transform data X according to the fitted model.
 
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
+            
+        normalize : boolean, optional, (default=True)
+            Whether to normalize the document topic distribution returned by
+            this method
 
         Returns
         -------
@@ -572,8 +576,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False,
                                           random_init=False)
-        # normalize doc_topic_distr
-        doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
+        if normalize: # normalize doc_topic_distr
+            doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
+            
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
@@ -699,7 +704,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                                       "LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
-            doc_topic_distr = self.transform(X)
+            doc_topic_distr = self.transform(X, normalize=False)
         else:
             n_samples, n_topics = doc_topic_distr.shape
             if n_samples != X.shape[0]:
