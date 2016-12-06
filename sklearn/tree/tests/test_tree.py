@@ -1640,3 +1640,60 @@ def test_criterion_copy():
             assert_equal(typename, typename_)
             assert_equal(n_outputs, n_outputs_)
             assert_equal(n_samples, n_samples_)
+
+
+def test_multilabel_invariance():
+
+    def list_list(lis):
+        return [list(arr) for arr in list(lis)]
+
+    for name, y_ml_list in product(CLF_TREES, (list(y_multilabel),
+                                               list_list(y_multilabel))):
+        TreeClassifier = ALL_TREES[name]
+        X = X_multilabel
+
+        # Check max_features
+        clf_arr = TreeClassifier(random_state=0, max_features=1,
+                                 max_depth=2).fit(X, y_multilabel)
+        clf_list = TreeClassifier(random_state=0, max_features=1,
+                                  max_depth=2).fit(X, y_ml_list)
+        assert_tree_equal(clf_arr.tree_, clf_list.tree_,
+                          "{0} with multilabel-indicator list of lists and "
+                          "list of arrays format gave different "
+                          "trees".format(name))
+        assert_array_almost_equal(clf_list.predict(X), clf_arr.predict(X))
+
+        # Check min_samples_split
+        clf_arr = TreeClassifier(random_state=0, max_features=1,
+                                 min_samples_split=10).fit(X, y_multilabel)
+        clf_list = TreeClassifier(random_state=0, max_features=1,
+                                  min_samples_split=10).fit(X, y_ml_list)
+        assert_tree_equal(clf_arr.tree_, clf_list.tree_,
+                          "{0} with multilabel-indicator list of lists and "
+                          "list of arrays format gave different "
+                          "trees".format(name))
+        assert_array_almost_equal(clf_list.predict(X), clf_arr.predict(X))
+
+        # Check min_samples_leaf
+        clf_arr = TreeClassifier(random_state=0,
+                                 min_samples_leaf=X.shape[0] // 2).\
+            fit(X, y_multilabel)
+        clf_list = TreeClassifier(random_state=0,
+                                  min_samples_leaf=X.shape[0] // 2)\
+            .fit(X, y_ml_list)
+        assert_tree_equal(clf_arr.tree_, clf_list.tree_,
+                          "{0} with multilabel-indicator list of lists and "
+                          "list of arrays format gave different "
+                          "trees".format(name))
+        assert_array_almost_equal(clf_list.predict(X), clf_arr.predict(X))
+
+        # Check best-first search
+        clf_arr = TreeClassifier(random_state=0,
+                                 max_leaf_nodes=3).fit(X, y_multilabel)
+        clf_list = TreeClassifier(random_state=0, max_leaf_nodes=3).\
+            fit(X, y_ml_list)
+        assert_tree_equal(clf_arr.tree_, clf_list.tree_,
+                          "{0} with multilabel-indicator list of lists and "
+                          "list of arrays format gave different "
+                          "trees".format(name))
+        assert_array_almost_equal(clf_list.predict(X), clf_arr.predict(X))
