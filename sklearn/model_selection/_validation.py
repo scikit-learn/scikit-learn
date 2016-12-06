@@ -462,6 +462,10 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
 
     test : array-like
         This is the value of the test parameter
+
+    classes : array-like
+        Result of calling 'estimator.classes_' for estimators having the
+        `classes_` attribute
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
