@@ -14,12 +14,13 @@ from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
 from .utils import indexable
+from .exceptions import SklearnDeprecationWarning
 
 
-warnings.warn("This module was deprecated in version 0.18 in favor of the "
-              "model_selection module into which all the functions are moved."
-              " This module will be removed in 0.20",
-              DeprecationWarning)
+warnings.warn("sklearn.learning_curve module was deprecated in version 0.18 "
+              "in favor of the model_selection module into which all the "
+              "functions are moved. sklearn.learning_curve will be removed "
+              "in 0.20", SklearnDeprecationWarning, stacklevel=2)
 
 
 __all__ = ['learning_curve', 'validation_curve']

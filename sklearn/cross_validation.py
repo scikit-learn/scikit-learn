@@ -31,14 +31,16 @@ from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 from .gaussian_process.kernels import Kernel as GPKernel
-from .exceptions import FitFailedWarning
+from .exceptions import FitFailedWarning, SklearnDeprecationWarning
 
 
-warnings.warn("This module was deprecated in version 0.18 in favor of the "
-              "model_selection module into which all the refactored classes "
-              "and functions are moved. Also note that the interface of the "
-              "new CV iterators are different from that of this module. "
-              "This module will be removed in 0.20.", DeprecationWarning)
+warnings.warn("sklearn.cross_validation module was deprecated in version 0.18 "
+              "in favor of the model_selection module into which all the "
+              "refactored classes and functions are moved. Also note that the "
+              "interface of the new CV iterators are different from that of "
+              "sklearn.cross_validation module. sklearn.cross_validation "
+              "will be removed in 0.20.", SklearnDeprecationWarning,
+              stacklevel=2)
 
 
 __all__ = ['KFold',

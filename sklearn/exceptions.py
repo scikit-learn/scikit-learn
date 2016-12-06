@@ -12,7 +12,8 @@ __all__ = ['NotFittedError',
            'FitFailedWarning',
            'NonBLASDotWarning',
            'SkipTestWarning',
-           'UndefinedMetricWarning']
+           'UndefinedMetricWarning',
+           'SklearnDeprecationWarning']
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -153,4 +154,13 @@ class UndefinedMetricWarning(UserWarning):
 
     .. versionchanged:: 0.18
        Moved from sklearn.base.
+    """
+
+
+class SklearnDeprecationWarning(DeprecationWarning):
+    """Warning used when scikit-learn module is deprecated.
+
+    Unlike DeprecationWarning this warning is shown by default,
+    even if the warning points to a line in a module outside sklearn.
+    It happens e.g. when deprecating a module and using stacklevel=2.
     """
