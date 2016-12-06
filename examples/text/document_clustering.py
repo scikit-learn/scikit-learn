@@ -104,8 +104,7 @@ op.print_help()
 
 
 def is_interactive():
-    import __main__ as main
-    return not hasattr(main, '__file__')
+    return not hasattr(sys.modules['__main__'], '__file__')
 
 argv = [] if is_interactive() else sys.argv[1:]
 (opts, args) = op.parse_args(argv)
