@@ -25,12 +25,10 @@ import numpy as np
 from scipy.misc import imread
 
 from sklearn.feature_extraction.image import extract_patches_2d
-from sklearn.decomposition import PCA
 from sklearn.model_selection import StratifiedKFold
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
-from sklearn.externals.joblib import Parallel, delayed
 
 from tudarmstadt import fetch_tu_darmstadt
 
@@ -39,7 +37,7 @@ print(__doc__)
 
 
 def image_extraction(path_image, rng, patch_size=(9, 9),
-                                max_patches=100000):
+                     max_patches=100000):
     """ Function to extract a couple of patches from an image and apply PCA """
 
     # Read the current image
