@@ -392,19 +392,48 @@ def test_auc_errors():
 
 
 def test_multi_auc_toydata():
-    # Tests the unweighted, one-vs-one multiclass ROC AUC algorithm
+    # Tests the one-vs-one multiclass ROC AUC algorithm
     # on a small example, representative of an expected use case.
     y_true = np.array([0, 1, 0, 2])
+    n_labels = len(np.unique(y_true))
     y_scores = np.array(
         [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
-    assert_almost_equal(
-        roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.75)
 
-    # Tests the weighted, one-vs-one multiclass ROC AUC algorithm
-    # on the same input
+    # Used to compute the expected output.
+    # Consider labels 0 and 1:
+    # positive label is 0, negative label is 1
+    score_01 = roc_auc_score([1, 0, 1], [0.1, 0.3, 0.35])
+    # positive label is 1, negative label is 0
+    score_10 = roc_auc_score([0, 1, 0], [0.8, 0.4, 0.5])
+    average_score_01 = (score_01 + score_10) / 2.
+
+    # Consider labels 0 and 2:
+    score_02 = roc_auc_score([1, 1, 0], [0.1, 0.35, 0])
+    score_20 = roc_auc_score([0, 0, 1], [0.1, 0.15, 0.8])
+    average_score_02 = (score_02 + score_20) / 2.
+
+    # Consider labels 1 and 2:
+    score_12 = roc_auc_score([1, 0], [0.4, 0.2])
+    score_21 = roc_auc_score([0, 1], [0.3, 0.8])
+    average_score_12 = (score_12 + score_21) / 2.
+
+    ovo_coefficient = 2. / (n_labels * (n_labels - 1))
+    # Unweighted, one-vs-one multiclass ROC AUC algorithm
+    sum_avg_scores = average_score_01 + average_score_02 + average_score_12
+    ovo_unweighted_score = ovo_coefficient * sum_avg_scores
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multiclass="ovo"),
+        ovo_unweighted_score)
+
+    # Weighted, one-vs-one multiclass ROC AUC algorithm
+    # Each term is weighted by the posterior for the positive label.
+    weighted_sum_avg_scores = (0.5 * average_score_01 +
+                               0.5 * average_score_02 +
+                               0.25 * average_score_12)
+    ovo_weighted_score = ovo_coefficient * weighted_sum_avg_scores
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovo", average="weighted"),
-        0.23958333333)
+        ovo_weighted_score)
 
     # Tests the unweighted, one-vs-rest multiclass ROC AUC algorithm
     # on a small example, representative of an expected use case.
@@ -416,7 +445,7 @@ def test_multi_auc_toydata():
     out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
     out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:, 1])
     out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:, 2])
-    result_unweighted = (out_0 + out_1 + out_2)/3.0
+    result_unweighted = (out_0 + out_1 + out_2)/3.
 
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovr"),
