@@ -20,6 +20,12 @@ from .gen_rst import generate_dir_rst, SPHX_GLR_SIG
 from .docs_resolv import embed_code_links
 from .downloads import generate_zipfiles
 
+try:
+    FileNotFoundError
+except NameError:
+    # Python2
+    FileNotFoundError = IOError
+
 DEFAULT_GALLERY_CONF = {
     'filename_pattern': re.escape(os.sep) + 'plot',
     'examples_dirs': os.path.join('..', 'examples'),
@@ -117,6 +123,10 @@ def generate_gallery_rst(app):
         this_fhindex, this_computation_times = \
             generate_dir_rst(examples_dir, gallery_dir, gallery_conf,
                              seen_backrefs)
+        if this_fhindex == "":
+            raise FileNotFoundError("Main example directory {0} does not "
+                                    "have a README.txt file. Please write "
+                                    "one to introduce your gallery.".format(examples_dir))
 
         computation_times += this_computation_times
 
