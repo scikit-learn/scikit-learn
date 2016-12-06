@@ -557,7 +557,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
         # Regenerate parameter iterable for each fit
-        candidate_params = list(self.get_param_iterable())
+        candidate_params = list(self.get_param_iterator())
         n_candidates = len(candidate_params)
         if self.verbose > 0:
             print("Fitting {0} folds for each of {1} candidates, totalling"
@@ -937,7 +937,7 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def get_param_iterable(self):
+    def get_param_iterator(self):
         """Return ParameterGrid instance for the given param_grid"""
         return ParameterGrid(self.param_grid)
 
@@ -1164,7 +1164,7 @@ class RandomizedSearchCV(BaseSearchCV):
              pre_dispatch=pre_dispatch, error_score=error_score,
              return_train_score=return_train_score)
 
-    def get_param_iterable(self):
+    def get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""
         return ParameterSampler(
             self.param_distributions, self.n_iter,
