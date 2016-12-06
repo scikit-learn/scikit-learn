@@ -379,11 +379,11 @@ class KFold(_BaseKFold):
     >>> from sklearn.model_selection import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> kf = KFold(n_splits=2, random_state=0)
+    >>> kf = KFold(n_splits=2)
     >>> kf.get_n_splits(X)
     2
     >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
-    KFold(n_splits=2, random_state=0, shuffle=False)
+    KFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in kf.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -544,11 +544,11 @@ class StratifiedKFold(_BaseKFold):
     >>> from sklearn.model_selection import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> skf = StratifiedKFold(n_splits=2, random_state=0)
+    >>> skf = StratifiedKFold(n_splits=2)
     >>> skf.get_n_splits(X, y)
     2
     >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
-    StratifiedKFold(n_splits=2, random_state=0, shuffle=False)
+    StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in skf.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
