@@ -423,37 +423,38 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
     X2 = np.ones(16)  # Not divisible by 3
     y2 = [0] * 8 + [1] * 8
 
+    # random_state set to int with shuffle=True
     kf = KFold(3, shuffle=True, random_state=0)
     skf = StratifiedKFold(3, shuffle=True, random_state=0)
+    # random_state set to RandomState object with shuffle=True
     kf2 = KFold(3, shuffle=True, random_state=np.random.RandomState(0))
     skf2 = StratifiedKFold(3, shuffle=True,
                            random_state=np.random.RandomState(0))
+    # random_state not set with shuffle=True
+    kf3 = KFold(3, shuffle=True)
+    skf3 = StratifiedKFold(3, shuffle=True)
 
-    # 1) Test to ensure consistent behavior when random_state is set explicitly
-    for cv in (kf, skf, kf2, skf2):
-        # Check that calling split twice yields the same results
-        np.testing.assert_equal(list(cv.split(X, y)), list(cv.split(X, y)))
-        np.testing.assert_equal(list(cv.split(X2, y2)), list(cv.split(X2, y2)))
+    # 1) Test to ensure consistent behavior for multiple split calls
+    #    irrespective of random_state
+    for cv in (kf, skf, kf2, skf2, kf3, skf3):
+        for data in ((X, y), (X2, y2)):
+            # Check that calling split twice yields the same results
+            np.testing.assert_equal(list(cv.split(*data)),
+                                    list(cv.split(*data)))
 
-    # 2) Tests to ensure consistent behavior even when random_state is not set
-    kf = KFold(3, shuffle=True)
-    skf = StratifiedKFold(3, shuffle=True)
+    # 2) Tests to ensure different initilization produce different splits,
+    #    when random_state is not set
     kf1 = KFold(3, shuffle=True)
-    kf2 = KFold(3, shuffle=True)
     skf1 = StratifiedKFold(3, shuffle=True)
+    kf2 = KFold(3, shuffle=True)
     skf2 = StratifiedKFold(3, shuffle=True)
-    for cvs in ((kf, kf1, kf2), (skf, skf1, skf2)):
-        for data in zip((X, X2), (y, y2)):
-            # For the same initialization, splits should be same across
-            # multiple split calls, even when random_state is not set.
-            np.testing.assert_equal(list(cvs[0].split(*data)),
-                                    list(cvs[0].split(*data)))
-
+    for cv1, cv2 in ((kf1, kf2), (skf1, skf2)):
+        for data in ((X, y), (X2, y2)):
             # For different initialisations, splits should not be same when
             # random_state is not set.
             try:
-                np.testing.assert_equal(list(cvs[1].split(*data)),
-                                        list(cvs[2].split(*data)))
+                np.testing.assert_equal(list(cv1.split(*data)),
+                                        list(cv2.split(*data)))
             except AssertionError:
                 pass
             else:
