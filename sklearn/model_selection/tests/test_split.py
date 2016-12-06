@@ -147,20 +147,20 @@ def test_cross_validator_with_default_params():
     groups = np.array([1, 2, 3, 4])
     loo = LeaveOneOut()
     lpo = LeavePOut(p)
-    kf = KFold(n_splits, random_state=0)
-    skf = StratifiedKFold(n_splits, random_state=0)
+    kf = KFold(n_splits)
+    skf = StratifiedKFold(n_splits)
     lolo = LeaveOneGroupOut()
     lopo = LeavePGroupsOut(p)
-    ss = ShuffleSplit(random_state=0)
+    ss = ShuffleSplit(random_state=42)
     ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
 
     loo_repr = "LeaveOneOut()"
     lpo_repr = "LeavePOut(p=2)"
-    kf_repr = "KFold(n_splits=2, random_state=0, shuffle=False)"
-    skf_repr = "StratifiedKFold(n_splits=2, random_state=0, shuffle=False)"
+    kf_repr = "KFold(n_splits=2, random_state=None, shuffle=False)"
+    skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
-    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=0.1, "
+    ss_repr = ("ShuffleSplit(n_splits=10, random_state=42, test_size=0.1, "
                "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
