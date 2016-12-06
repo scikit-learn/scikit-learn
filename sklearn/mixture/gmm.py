@@ -152,7 +152,7 @@ class _GMMBase(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    random_state: RandomState or an int seed (None by default)
+    random_state : RandomState or an int seed (None by default)
         A random number generator instance
 
     min_covar : float, optional
@@ -316,7 +316,7 @@ class _GMMBase(BaseEstimator):
 
         Parameters
         ----------
-        X: array_like, shape (n_samples, n_features)
+        X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -647,7 +647,7 @@ class _GMMBase(BaseEstimator):
 
         Returns
         -------
-        bic: float (the lower the better)
+        bic : float (the lower the better)
         """
         return (-2 * self.score(X).sum() +
                 self._n_parameters() * np.log(X.shape[0]))
@@ -662,7 +662,7 @@ class _GMMBase(BaseEstimator):
 
         Returns
         -------
-        aic: float (the lower the better)
+        aic : float (the lower the better)
         """
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
 
@@ -670,6 +670,15 @@ class _GMMBase(BaseEstimator):
 @deprecated("The class GMM is deprecated in 0.18 and will be "
             " removed in 0.20. Use class GaussianMixture instead.")
 class GMM(_GMMBase):
+    """
+    Legacy Gaussian Mixture Model
+
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use :class:`sklearn.mixture.GaussianMixture` instead.
+
+    """
+
     def __init__(self, n_components=1, covariance_type='diag',
                  random_state=None, tol=1e-3, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc',

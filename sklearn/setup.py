@@ -2,6 +2,8 @@ import os
 from os.path import join
 import warnings
 
+from sklearn._build_utils import maybe_cythonize_extensions
+
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -55,12 +57,11 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('svm')
 
     # add cython extension module for isotonic regression
-    config.add_extension(
-        '_isotonic',
-        sources=['_isotonic.c'],
-        include_dirs=[numpy.get_include()],
-        libraries=libraries,
-    )
+    config.add_extension('_isotonic',
+                         sources=['_isotonic.pyx'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         )
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)
@@ -77,6 +78,8 @@ def configuration(parent_package='', top_path=None):
 
     # add the test directory
     config.add_subpackage('tests')
+
+    maybe_cythonize_extensions(top_path, config)
 
     return config
 

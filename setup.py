@@ -84,9 +84,6 @@ class CleanCommand(Clean):
         cwd = os.path.abspath(os.path.dirname(__file__))
         remove_c_files = not os.path.exists(os.path.join(cwd, 'PKG-INFO'))
         if remove_c_files:
-            cython_hash_file = os.path.join(cwd, 'cythonize.dat')
-            if os.path.exists(cython_hash_file):
-                os.unlink(cython_hash_file)
             print('Will remove generated .c files')
         if os.path.exists('build'):
             shutil.rmtree('build')
@@ -181,18 +178,6 @@ def get_numpy_status():
     return numpy_status
 
 
-def generate_cython():
-    cwd = os.path.abspath(os.path.dirname(__file__))
-    print("Cythonizing sources")
-    p = subprocess.call([sys.executable, os.path.join(cwd,
-                                                      'build_tools',
-                                                      'cythonize.py'),
-                         'sklearn'],
-                        cwd=cwd)
-    if p != 0:
-        raise RuntimeError("Running cythonize failed!")
-
-
 def setup_package():
     metadata = dict(name=DISTNAME,
                     maintainer=MAINTAINER,
@@ -215,7 +200,6 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 2',
-                                 'Programming Language :: Python :: 2.6',
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.4',
@@ -230,7 +214,7 @@ def setup_package():
                                                     'egg_info',
                                                     '--version',
                                                     'clean'))):
-        # For these actions, NumPy is not required, nor Cythonization
+        # For these actions, NumPy is not required
         #
         # They are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
@@ -277,26 +261,6 @@ def setup_package():
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration
-
-        if len(sys.argv) >= 2 and sys.argv[1] not in 'config':
-            # Cythonize if needed
-
-            print('Generating cython files')
-            cwd = os.path.abspath(os.path.dirname(__file__))
-            if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
-                # Generate Cython sources, unless building from source release
-                generate_cython()
-
-            # Clean left-over .so file
-            for dirpath, dirnames, filenames in os.walk(
-                    os.path.join(cwd, 'sklearn')):
-                for filename in filenames:
-                    extension = os.path.splitext(filename)[1]
-                    if extension in (".so", ".pyd", ".dll"):
-                        pyx_file = str.replace(filename, extension, '.pyx')
-                        print(pyx_file)
-                        if not os.path.exists(os.path.join(dirpath, pyx_file)):
-                            os.unlink(os.path.join(dirpath, filename))
 
     setup(**metadata)
 

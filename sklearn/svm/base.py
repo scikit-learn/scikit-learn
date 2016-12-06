@@ -551,7 +551,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
                           "the shape of the decision function returned by "
                           "SVC.", ChangedBehaviorWarning)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
-            return _ovr_decision_function(dec < 0, dec, len(self.classes_))
+            return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
         return dec
 
     def predict(self, X):
@@ -851,7 +851,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    sample_weight: array-like, optional
+    sample_weight : array-like, optional
         Weights assigned to each sample.
 
     Returns

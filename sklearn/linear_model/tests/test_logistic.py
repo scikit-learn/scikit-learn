@@ -27,6 +27,7 @@ from sklearn.linear_model.logistic import (
 from sklearn.model_selection import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
+from sklearn.preprocessing import LabelEncoder
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -277,7 +278,7 @@ def test_consistency_path():
 
 def test_liblinear_dual_random_state():
     # random_state is relevant for liblinear solver only if dual=True
-    X, y = make_classification(n_samples=20)
+    X, y = make_classification(n_samples=20, random_state=0)
     lr1 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
     lr1.fit(X, y)
     lr2 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
@@ -294,7 +295,7 @@ def test_liblinear_dual_random_state():
 
 
 def test_logistic_loss_and_grad():
-    X_ref, y = make_classification(n_samples=20)
+    X_ref, y = make_classification(n_samples=20, random_state=0)
     n_features = X_ref.shape[1]
 
     X_sp = X_ref.copy()
@@ -396,6 +397,45 @@ def test_logistic_cv():
     assert_array_equal(lr_cv.Cs_.shape, (1, ))
     scores = np.asarray(list(lr_cv.scores_.values()))
     assert_array_equal(scores.shape, (1, 3, 1))
+
+
+def test_multinomial_logistic_regression_string_inputs():
+    # Test with string labels for LogisticRegression(CV)
+    n_samples, n_features, n_classes = 50, 5, 3
+    X_ref, y = make_classification(n_samples=n_samples, n_features=n_features,
+                                   n_classes=n_classes, n_informative=3,
+                                   random_state=0)
+    y_str = LabelEncoder().fit(['bar', 'baz', 'foo']).inverse_transform(y)
+    # For numerical labels, let y values be taken from set (-1, 0, 1)
+    y = np.array(y) - 1
+    # Test for string labels
+    lr = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+    lr_cv = LogisticRegressionCV(solver='lbfgs', multi_class='multinomial')
+    lr_str = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+    lr_cv_str = LogisticRegressionCV(solver='lbfgs', multi_class='multinomial')
+
+    lr.fit(X_ref, y)
+    lr_cv.fit(X_ref, y)
+    lr_str.fit(X_ref, y_str)
+    lr_cv_str.fit(X_ref, y_str)
+
+    assert_array_almost_equal(lr.coef_, lr_str.coef_)
+    assert_equal(sorted(lr_str.classes_), ['bar', 'baz', 'foo'])
+    assert_array_almost_equal(lr_cv.coef_, lr_cv_str.coef_)
+    assert_equal(sorted(lr_str.classes_), ['bar', 'baz', 'foo'])
+    assert_equal(sorted(lr_cv_str.classes_), ['bar', 'baz', 'foo'])
+
+    # The predictions should be in original labels
+    assert_equal(sorted(np.unique(lr_str.predict(X_ref))),
+                 ['bar', 'baz', 'foo'])
+    assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))),
+                 ['bar', 'baz', 'foo'])
+
+    # Make sure class weights can be given with string labels
+    lr_cv_str = LogisticRegression(
+        solver='lbfgs', class_weight={'bar': 1, 'baz': 2, 'foo': 0},
+        multi_class='multinomial').fit(X_ref, y_str)
+    assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
 
 
 def test_logistic_cv_sparse():
@@ -706,7 +746,7 @@ def test_multinomial_logistic_regression_with_classweight_auto():
 def test_logistic_regression_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
-    X, y = make_classification(n_samples=20, n_features=20)
+    X, y = make_classification(n_samples=20, n_features=20, random_state=0)
     clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
     assert_equal(clf_lib.n_iter_, 2)
@@ -795,7 +835,7 @@ def test_liblinear_decision_function_zero():
     # are zero. This is a test to verify that we do not do the same.
     # See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
     # and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
-    X, y = make_classification(n_samples=5, n_features=5)
+    X, y = make_classification(n_samples=5, n_features=5, random_state=0)
     clf = LogisticRegression(fit_intercept=False)
     clf.fit(X, y)
 
@@ -807,7 +847,7 @@ def test_liblinear_decision_function_zero():
 def test_liblinear_logregcv_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
-    X, y = make_classification(n_samples=10, n_features=5)
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     clf = LogisticRegressionCV(solver='liblinear')
     clf.fit(sparse.csr_matrix(X), y)
 

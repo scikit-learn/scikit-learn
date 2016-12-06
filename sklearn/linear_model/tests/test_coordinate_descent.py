@@ -9,6 +9,7 @@ from scipy import interpolate, sparse
 from copy import deepcopy
 
 from sklearn.datasets import load_boston
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -29,12 +30,6 @@ from sklearn.linear_model.coordinate_descent import Lasso, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 from sklearn.utils import check_array
-
-
-def check_warnings():
-    if version_info < (2, 6):
-        raise SkipTest("Testing for warnings is not supported in versions \
-        older than Python 2.6")
 
 
 def test_lasso_zero():
@@ -392,6 +387,9 @@ def test_multi_task_lasso_and_enet():
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
+    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
+    assert_warns_message(ConvergenceWarning, 'did not converge', clf.fit, X, Y)
+
 
 def test_lasso_readonly_data():
     X = np.array([[-1], [0], [1]])
@@ -433,8 +431,9 @@ def test_enet_multitarget():
 
 
 def test_multioutput_enetcv_error():
-    X = np.random.randn(10, 2)
-    y = np.random.randn(10, 2)
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    y = rng.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
 
