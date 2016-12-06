@@ -75,7 +75,7 @@ for i in range(n_nodes):
     if is_leaves[i]:
         print("%snode=%s leaf node." % (node_depth[i] * "\t", i))
     else:
-        print("%snode=%s test node: go to node %s if X[:, %s] <= %ss else to "
+        print("%snode=%s test node: go to node %s if X[:, %s] <= %s else to "
               "node %s."
               % (node_depth[i] * "\t",
                  i,
