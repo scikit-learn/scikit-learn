@@ -424,18 +424,17 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         score : float
         """
-        if self.multimetric_:
-            raise AttributeError("score method is not available for "
-                                 "multimetric evaluation.")
+        self._check_is_fitted('score')
+
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        return self.scorer_(self.best_estimator_, X, y)
+        return self.scorer_[refit](self.best_estimator_, X, y)
 
     def _check_is_fitted(self, method_name):
         if not self.refit:
-            raise NotFittedError(('This GridSearchCV instance was initialized '
+            raise NotFittedError(('This SearchCV instance was initialized '
                                   'with refit=False. %s is '
                                   'available only after refitting on the best '
                                   'parameters. ') % method_name)
@@ -589,6 +588,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.scorer_, self.multimetric_ = check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
+
+        if self.multimetric_:
+            if (not isinstance(self.refit, six.string_types) or
+                    # This will work for both dict / list (tuple) scorer values
+                    self.refit not in self.scorer_):
+                raise ValueError("The parameter refit must be set to a string "
+                                 "metric name to make the best_* attributes "
+                                 "available for that metric. If the attributes"
+                                 " are not to be made available, it should be"
+                                 " set to False explicitly.")
 
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
@@ -854,6 +863,12 @@ class GridSearchCV(BaseSearchCV):
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this GridSearchCV instance after fitting.
+
+        For multimetric evaluation, this needs to be a string denoting the
+        metric that should be used for setting the ``best_estimator_``,
+        ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
+        If those attributes are not to be made available, ``refit`` must be set
+        to ``False``, explicitly otherwise an error will be raised.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -1139,6 +1154,12 @@ class RandomizedSearchCV(BaseSearchCV):
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this RandomizedSearchCV instance after fitting.
+
+        For multimetric evaluation, this needs to be a string denoting the
+        metric that should be used for setting the ``best_estimator_``,
+        ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
+        If those attributes are not to be made available, ``refit`` must be set
+        to ``False``, explicitly otherwise an error will be raised.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
