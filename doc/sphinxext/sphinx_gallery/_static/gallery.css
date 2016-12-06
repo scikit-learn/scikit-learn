@@ -209,7 +209,6 @@ a.sphx-glr-code-links[tooltip]:hover:before{
     display: inline-block;
     text-align: center;
     text-indent: 0;
-    margin-left: -5em;
+    margin-left: 0; /* Has to be zero to avoid overlapping with sidebar */
     margin-top: 1.2em;
 }
-
