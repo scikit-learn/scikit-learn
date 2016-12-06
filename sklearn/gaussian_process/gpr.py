@@ -204,7 +204,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                                      " entries as y.(%d != %d)"
                                      % (sample_alpha.shape[0], y.shape[0]))
             add_alpha = sample_alpha
- 
+
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
 
