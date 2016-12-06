@@ -1,60 +1,44 @@
-"""
-Implements an in-place MinHeap for tuples of (reachability, distance).
-Each min tuple is called once and not updated; hence, only heapify and
-bubble_down methods are implemented.
-"""
 
-# Author: Shane Grigsby <refuge@rocktalus.coheap>
-# Licence: BSD 3-Clause
-
-
-cimport cython
 cimport numpy as np
 import numpy as np
+cimport cython
 
-ctypedef np.int64_t data_type_t
+ctypedef np.float64_t DTYPE_t
+ctypedef np.int_t DTYPE
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef listify(double[:] rdists, 
-              double[:] dists, 
-              data_type_t[:] indices):
-    
-    cdef int i
-    cdef int n
-    cdef list result
-    result = []
-    n = len(dists)
-    for i from 0 <= i < n:
-        result.append(tuple((rdists[i],
-                             dists[i],
-                             indices[i])))
-    return result
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cpdef min_heap(list heap):
+cpdef min_heap(double[:] rdists, double[:] dists, long[:] indices):
     cdef int len_heap
-    cdef int idx
-    len_heap = len(heap)
-    heapify(heap, len_heap)
-    idx = heap[0][2]
+    cdef long idx
+    len_heap = len(rdists)
+    heapify(rdists, dists, indices, len_heap)
+    idx = indices[0]
     return idx
 
 @cython.boundscheck(False)
-cpdef heapify(list heap, int len_heap):
+cpdef heapify(double[:] rdists, double[:] dists, 
+            long[:] indices, int len_heap):
     cdef int node
     cdef int i
     node = (len_heap - 2) // 2
     for i in np.r_[node:-1:-1]:
-        bubble_down(heap, i, len_heap)
+        bubble_down(rdists, dists, indices, i, len_heap)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef bubble_down(list heap, int index, int len_heap):
+cpdef bubble_down(double[:] rdists, double[:] dists, 
+                long[:] indices, int index, int len_heap):
     cdef bint go
     cdef int left
     cdef int right
+    cdef double Crdist
+    cdef double Cdist
+    cdef double Lrdist
+    cdef double Ldist
+    cdef double Rrdist
+    cdef double Rdist
+    cdef tuple C
+    cdef tuple L
+    cdef tuple R
     go = True
     left = index*2 + 1
     if left == len_heap - 1:
@@ -62,12 +46,25 @@ cpdef bubble_down(list heap, int index, int len_heap):
     else:
         right = index*2 + 2
     while go:
-        if heap[index] > (heap[left] or heap[right]):
-            if heap[left] <= heap[right]:
-                heap[index], heap[left] = heap[left], heap[index]
+        Crdist = rdists[index]
+        Cdist = dists[index]
+        C = tuple((Crdist,Cdist))
+        Lrdist = rdists[left]
+        Ldist = dists[left]
+        L = tuple((Lrdist,Ldist))
+        Rrdist = rdists[right]
+        Rdist = dists[right]
+        R = tuple((Rrdist,Rdist))
+        if C > (L or R):
+            if L <= R:
+                rdists[index], rdists[left] = rdists[left], rdists[index]
+                dists[index], dists[left] = dists[left], dists[index]
+                indices[index], indices[left] = indices[left], indices[index]
                 index = left
             else:
-                heap[index], heap[right] = heap[right], heap[index]
+                rdists[index], rdists[right] = rdists[right], rdists[index]
+                dists[index], dists[right] = dists[right], dists[index]
+                indices[index], indices[right] = indices[right], indices[index]
                 index = right
             go = index < (len_heap // 2) - 1
             left = index*2 + 1

@@ -15,7 +15,7 @@ from ..utils import check_array
 from ..neighbors import BallTree
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import pairwise_distances
-from ._optics_inner import min_heap, listify
+from ._optics_inner import min_heap 
 
 
 class SetOfObjects(BallTree):
@@ -79,7 +79,7 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
                                         count_only=False,
                                         sort_results=False)[0]
 
-    # Checks to see if there more than one member in the neighborhood ##
+    # Checks to see if there more than one member in the neighborhood
     if sp.iterable(indices):
         # Masking processed values; n_pr is 'not processed'
         n_pr = indices[(setofobjects._processed[indices] < 1).ravel()]
@@ -93,11 +93,10 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
             setofobjects.reachability_[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
-        # if so, return control to main loop ##
+        # if so, return control to main loop
         if n_pr.size > 0:
-            # Define return order based on reachability distance ###
-            return(min_heap(listify(setofobjects.reachability_[n_pr],
-                                     dists, n_pr)))
+            # Define return order based on reachability distance
+            return(min_heap(setofobjects.reachability_[n_pr], dists, n_pr))
         else:
             return point_index
 
