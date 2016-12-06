@@ -1596,7 +1596,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             iter_classes = classes
 
         # compute the class weights for the entire dataset y
-        if class_weight in ("auto", "balanced"):
+        if class_weight == "balanced":
             class_weight = compute_class_weight(class_weight,
                                                 np.arange(len(self.classes_)),
                                                 y)

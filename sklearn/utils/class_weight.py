@@ -97,8 +97,8 @@ def compute_sample_weight(class_weight, y, indices=None):
         Array of indices to be used in a subsample. Can be of length less than
         n_samples in the case of a subsample, or equal to n_samples in the
         case of a bootstrap subsample with repeated indices. If None, the
-        sample weight will be calculated over the full sample. Only "auto" is
-        supported for class_weight if this is provided.
+        sample weight will be calculated over the full sample. Only "balanced"
+        is supported for class_weight if this is provided.
 
     Returns
     -------
@@ -112,7 +112,7 @@ def compute_sample_weight(class_weight, y, indices=None):
     n_outputs = y.shape[1]
 
     if isinstance(class_weight, six.string_types):
-        if class_weight not in ['balanced', 'auto']:
+        if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
@@ -135,7 +135,7 @@ def compute_sample_weight(class_weight, y, indices=None):
         classes_full = np.unique(y_full)
         classes_missing = None
 
-        if class_weight in ['balanced', 'auto'] or n_outputs == 1:
+        if class_weight == 'balanced' or n_outputs == 1:
             class_weight_k = class_weight
         else:
             class_weight_k = class_weight[k]
