@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+from scipy.special import rel_entr
 
 from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.testing import assert_not_equal
@@ -9,6 +10,8 @@ from sklearn.utils.testing import assert_less_equal
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
+from sklearn.kernel_approximation import IntersectionSampler
+from sklearn.kernel_approximation import JensenShannonSampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
@@ -21,21 +24,21 @@ X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
-def test_additive_chi2_sampler():
-    # test that AdditiveChi2Sampler approximates kernel on random data
+def _test_additive_homogenous_sampler(exact_kernel, sampler, sample_interval):
+    # common tester for additive homogenous samplers
 
     # compute exact kernel
     # abbreviations for easier formula
     X_ = X[:, np.newaxis, :]
     Y_ = Y[np.newaxis, :, :]
 
-    large_kernel = 2 * X_ * Y_ / (X_ + Y_)
+    large_kernel = exact_kernel(X_, Y_)
 
     # reduce to n_samples_x x n_samples_y by summing over features
     kernel = (large_kernel.sum(axis=2))
 
     # approximate kernel mapping
-    transform = AdditiveChi2Sampler(sample_steps=3)
+    transform = sampler(sample_steps=3)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
 
@@ -55,7 +58,7 @@ def test_additive_chi2_sampler():
     assert_raises(ValueError, transform.transform, Y_neg)
 
     # test error on invalid sample_steps
-    transform = AdditiveChi2Sampler(sample_steps=4)
+    transform = sampler(sample_steps=4)
     assert_raises(ValueError, transform.fit, X)
 
     # test that the sample interval is set correctly
@@ -63,7 +66,7 @@ def test_additive_chi2_sampler():
     for sample_steps in sample_steps_available:
 
         # test that the sample_interval is initialized correctly
-        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
+        transform = sampler(sample_steps=sample_steps)
         assert_equal(transform.sample_interval, None)
 
         # test that the sample_interval is changed in the fit method
@@ -71,12 +74,33 @@ def test_additive_chi2_sampler():
         assert_not_equal(transform.sample_interval_, None)
 
     # test that the sample_interval is set correctly
-    sample_interval = 0.3
-    transform = AdditiveChi2Sampler(sample_steps=4,
-                                    sample_interval=sample_interval)
+    transform = sampler(sample_steps=4,
+                        sample_interval=sample_interval)
     assert_equal(transform.sample_interval, sample_interval)
     transform.fit(X)
     assert_equal(transform.sample_interval_, sample_interval)
+
+
+def test_additive_chi2_sampler():
+    # test that AdditiveChi2Sampler approximates kernel on random data
+    _test_additive_homogenous_sampler(lambda X_, Y_: 2 * X_ * Y_ / (X_ + Y_),
+                                      AdditiveChi2Sampler, 0.3)
+
+
+def test_intersection_sampler():
+    # test that IntersectionSampler approximates kernel on random data
+    _test_additive_homogenous_sampler(lambda X_, Y_: np.fmin(X_, Y_),
+                                      IntersectionSampler, 0.3)
+
+
+def _exact_jensen_shannon_kernel(X_, Y_):
+    return -0.5 * (rel_entr(X_, X_ + Y_) + rel_entr(Y_, X_ + Y_)) / np.log(2.)
+
+
+def test_jensen_shannon_sampler():
+    # test that JensenShannonSampler approximates kernel on random data
+    _test_additive_homogenous_sampler(_exact_jensen_shannon_kernel,
+                                      JensenShannonSampler, 0.3)
 
 
 def test_skewed_chi2_sampler():
@@ -134,6 +158,8 @@ def test_input_validation():
     # No assertions; the old versions would simply crash
     X = [[1, 2], [3, 4], [5, 6]]
     AdditiveChi2Sampler().fit(X).transform(X)
+    IntersectionSampler().fit(X).transform(X)
+    JensenShannonSampler().fit(X).transform(X)
     SkewedChi2Sampler().fit(X).transform(X)
     RBFSampler().fit(X).transform(X)
 
