@@ -17,11 +17,22 @@ def test_config_context():
         with config_context(assume_finite=None):
             assert_equal(get_config(), {'assume_finite': True})
 
+        assert_equal(get_config(), {'assume_finite': True})
+
         with config_context(assume_finite=False):
             assert_equal(get_config(), {'assume_finite': False})
 
             with config_context(assume_finite=None):
                 assert_equal(get_config(), {'assume_finite': False})
+
+                # global setting will be retained outside of context that did
+                # not modify this setting
+                set_config(assume_finite=True)
+                assert_equal(get_config(), {'assume_finite': True})
+
+            assert_equal(get_config(), {'assume_finite': True})
+
+        assert_equal(get_config(), {'assume_finite': True})
 
     assert_equal(get_config(), {'assume_finite': False})
 

@@ -62,8 +62,9 @@ def config_context(**kwargs):
 
     Notes
     -----
-    Settings will be returned to previous values when the context manager
-    is exited. This is not thread-safe.
+    Only settings that are set by this context manager will be returned to
+    previous values when the context manager is exited. This is not
+    thread-safe.
 
     Examples
     --------
@@ -83,7 +84,8 @@ def config_context(**kwargs):
     set_config(**kwargs)
 
     yield
-    set_config(**{k: config[k] for k in kwargs})
+    set_config(**{k: config[k] for k, v in kwargs.items()
+                  if v is not None})
 
 
 # Make sure that DeprecationWarning within this package always gets printed
