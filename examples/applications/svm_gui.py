@@ -319,7 +319,6 @@ def get_parser():
 
 def main(argv):
     op = get_parser()
-
     opts, args = op.parse_args(argv[1:])
     root = Tk.Tk()
     model = Model()
