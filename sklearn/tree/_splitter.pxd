@@ -19,6 +19,7 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -30,6 +31,9 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
+    SIZE_t n_categories    # Num. of categories of the feature; -1 if not categorical.
+    UINT64_t split_map     # bitmap guiding how to split; 1 means right node.
+
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -83,7 +87,8 @@ cdef class Splitter:
     # Methods
     cdef void init(self, object X, np.ndarray y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=*) except *
+                   np.ndarray X_idx_sorted=*,
+                   np.ndarray categorical_features=*) except *
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil

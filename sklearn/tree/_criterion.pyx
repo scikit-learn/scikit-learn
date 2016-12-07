@@ -969,6 +969,7 @@ cdef class MSE(RegressionCriterion):
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
 
+
 cdef class MAE(RegressionCriterion):
     """Mean absolute error impurity criterion
 

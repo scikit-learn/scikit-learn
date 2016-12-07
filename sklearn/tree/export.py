@@ -71,7 +71,8 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False):
+                    rounded=False, special_characters=False,
+                    split_map=True):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -212,6 +213,16 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                 node_string += 'node '
             node_string += characters[0] + str(node_id) + characters[4]
 
+        # Write categorical split map
+        if split_map:
+            if labels:
+                if tree.n_categories[node_id] > 0:
+                    # Categorical feature
+                    _n_categories = tree.n_categories[node_id]
+                    _split_map = str(bin(tree.split_maps[node_id]))[2:]
+                    node_string += "0" * (_n_categories - len(_split_map)) + \
+                                   _split_map + characters[4]
+
         # Write decision criteria
         if tree.children_left[node_id] != _tree.TREE_LEAF:
             # Always write node decision criteria, except for leaves
@@ -221,10 +232,15 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                 feature = "X%s%s%s" % (characters[1],
                                        tree.feature[node_id],
                                        characters[2])
-            node_string += '%s %s %s%s' % (feature,
-                                           characters[3],
-                                           round(tree.threshold[node_id], 4),
-                                           characters[4])
+
+            if tree.n_categories[node_id] > 0:
+                # Categorical feature
+                node_string += '%s%s' % (feature, characters[4])
+            else:
+                node_string += '%s %s %s%s' % (feature,
+                                               characters[3],
+                                               round(tree.threshold[node_id], 4),
+                                               characters[4])
 
         # Write impurity
         if impurity:

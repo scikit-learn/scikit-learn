@@ -28,6 +28,7 @@ np.import_array()
 
 from scipy.sparse import csc_matrix
 
+from ._utils cimport goes_right
 from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
@@ -43,13 +44,21 @@ cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 # in SparseSplitter
 cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
-cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
+cdef SIZE_t MAX_CATEGORICAL_LABEL = 64
+
+cdef DOUBLE_t Y_MEAN_UNDEFINED = -1
+cdef SIZE_t CARDINALITY_UNDEFINED = -2
+
+cdef inline void _init_split(SplitRecord*self, SIZE_t start_pos) nogil:
     self.impurity_left = INFINITY
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
     self.threshold = 0.
     self.improvement = -INFINITY
+    self.n_categories = CARDINALITY_UNDEFINED
+    self.split_map = 0
+
 
 cdef class Splitter:
     """Abstract splitter class.
@@ -120,7 +129,8 @@ cdef class Splitter:
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   np.ndarray X_idx_sorted=None,
+                   np.ndarray categorical_features=None) except *:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
@@ -137,8 +147,14 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
-        """
 
+        X_idx_sorted : np.ndarray
+            Only the ``BaseDenseSplitter`` subclass handles this parameter.
+
+        categorical_features : np.ndarray
+            Only the ``BaseDenseSplitter`` subclass handles this parameter.
+
+        """
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
         cdef SIZE_t n_samples = X.shape[0]
 
@@ -178,8 +194,6 @@ cdef class Splitter:
 
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
-
-        self.sample_weight = sample_weight
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil:
@@ -240,6 +254,13 @@ cdef class BaseDenseSplitter(Splitter):
     cdef SIZE_t n_total_samples
     cdef SIZE_t* sample_mask
 
+    cdef np.ndarray categorical_features
+    cdef SIZE_t* categorical_flags
+
+    cdef DOUBLE_t* feature_y_sum
+    cdef DOUBLE_t* feature_y_count
+    cdef DOUBLE_t* feature_y_mean
+
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
                   object random_state, bint presort):
@@ -252,16 +273,29 @@ cdef class BaseDenseSplitter(Splitter):
         self.sample_mask = NULL
         self.presort = presort
 
+        self.categorical_flags = NULL
+
+        self.feature_y_sum = NULL
+        self.feature_y_count = NULL
+        self.feature_y_mean = NULL
+
     def __dealloc__(self):
         """Destructor."""
         if self.presort == 1:
             free(self.sample_mask)
 
+        free(self.categorical_flags)
+
+        free(self.feature_y_sum)
+        free(self.feature_y_count)
+        free(self.feature_y_mean)
+
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   np.ndarray X_idx_sorted=None,
+                   np.ndarray categorical_features=None) except *:
         """Initialize the splitter."""
 
         # Call parent init
@@ -282,7 +316,26 @@ cdef class BaseDenseSplitter(Splitter):
 
             self.n_total_samples = X.shape[0]
             safe_realloc(&self.sample_mask, self.n_total_samples)
-            memset(self.sample_mask, 0, self.n_total_samples*sizeof(SIZE_t))
+            memset(self.sample_mask, 0, self.n_total_samples * sizeof(SIZE_t))
+
+        safe_realloc(&self.categorical_flags, self.n_features)
+        memset(self.categorical_flags, 0, self.n_features * sizeof(SIZE_t))
+
+        cdef SIZE_t i
+        for i in range(self.n_features):
+            self.categorical_flags[i] = 0
+
+        if categorical_features is not None:
+            for i in range(categorical_features.size):
+                self.categorical_flags[<SIZE_t> categorical_features[i]] = 1
+
+        safe_realloc(&self.feature_y_sum, MAX_CATEGORICAL_LABEL)
+        safe_realloc(&self.feature_y_count, MAX_CATEGORICAL_LABEL)
+        safe_realloc(&self.feature_y_mean, MAX_CATEGORICAL_LABEL)
+
+        memset(self.feature_y_sum, 0, MAX_CATEGORICAL_LABEL * sizeof(DOUBLE_t))
+        memset(self.feature_y_count, 0, MAX_CATEGORICAL_LABEL * sizeof(DOUBLE_t))
+        memset(self.feature_y_mean, 0, MAX_CATEGORICAL_LABEL * sizeof(DOUBLE_t))
 
 
 cdef class BestSplitter(BaseDenseSplitter):
@@ -404,7 +457,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                     p = start
                     feature_idx_offset = self.X_idx_sorted_stride * current.feature
 
-                    for i in range(self.n_total_samples): 
+                    for i in range(self.n_total_samples):
                         j = X_idx_sorted[i + feature_idx_offset]
                         if sample_mask[j] == 1:
                             samples[p] = j
@@ -484,6 +537,308 @@ cdef class BestSplitter(BaseDenseSplitter):
                     tmp = samples[partition_end]
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
+
+            self.criterion.reset()
+            self.criterion.update(best.pos)
+            best.improvement = self.criterion.impurity_improvement(impurity)
+            self.criterion.children_impurity(&best.impurity_left,
+                                             &best.impurity_right)
+
+        # Reset sample mask
+        if self.presort == 1:
+            for p in range(start, end):
+                sample_mask[samples[p]] = 0
+
+        # Respect invariant for constant features: the original order of
+        # element in features[:n_known_constants] must be preserved for sibling
+        # and child nodes
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
+
+        # Copy newly found constant features
+        memcpy(constant_features + n_known_constants,
+               features + n_known_constants,
+               sizeof(SIZE_t) * n_found_constants)
+
+        # Return values
+        split[0] = best
+        n_constant_features[0] = n_total_constants
+
+
+cdef class SmartSplitter(BaseDenseSplitter):
+    """Splitter that can handle categorical features in a smart way."""
+    def __reduce__(self):
+        return (SmartSplitter, (self.criterion,
+                               self.max_features,
+                               self.min_samples_leaf,
+                               self.min_weight_leaf,
+                               self.random_state,
+                               self.presort), self.__getstate__())
+
+    cdef void node_split(self, double impurity, SplitRecord* split,
+                         SIZE_t* n_constant_features) nogil:
+        """Find the best split on node samples[start:end]."""
+        # Find the best split
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t* constant_features = self.constant_features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* Xf = self.feature_values
+        cdef SIZE_t X_sample_stride = self.X_sample_stride
+        cdef SIZE_t X_feature_stride = self.X_feature_stride
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_leaf = self.min_weight_leaf
+        cdef UINT32_t* random_state = &self.rand_r_state
+
+        cdef INT32_t* X_idx_sorted = self.X_idx_sorted_ptr
+        cdef SIZE_t* sample_mask = self.sample_mask
+
+        cdef SplitRecord best, current
+        cdef double current_proxy_improvement = -INFINITY
+        cdef double best_proxy_improvement = -INFINITY
+
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j
+        cdef SIZE_t tmp
+        cdef SIZE_t p
+        cdef SIZE_t feature_idx_offset
+        cdef SIZE_t feature_offset
+        cdef SIZE_t i
+        cdef SIZE_t j
+
+        cdef SIZE_t n_visited_features = 0
+        # Number of features discovered to be constant during the split search
+        cdef SIZE_t n_found_constants = 0
+        # Number of features known to be constant and drawn without replacement
+        cdef SIZE_t n_drawn_constants = 0
+        cdef SIZE_t n_known_constants = n_constant_features[0]
+        # n_total_constants = n_known_constants + n_found_constants
+        cdef SIZE_t n_total_constants = n_known_constants
+        cdef DTYPE_t current_feature_value
+        cdef SIZE_t partition_end
+
+        # For categorical features
+        cdef UINT64_t split_map = 0
+        cdef SIZE_t* categorical_flags = self.categorical_flags
+        cdef DTYPE_t sample_value
+        cdef SIZE_t sample_label
+        cdef SIZE_t sample_max_label = 0
+        cdef DOUBLE_t* feature_y_sum = self.feature_y_sum
+        cdef DOUBLE_t* feature_y_count = self.feature_y_count
+        cdef DOUBLE_t* feature_y_mean = self.feature_y_mean
+
+        _init_split(&best, end)
+
+        if self.presort == 1:
+            for p in range(start, end):
+                sample_mask[samples[p]] = 1
+
+        # Sample up to max_features without replacement using a
+        # Fisher-Yates-based algorithm (using the local variables `f_i` and
+        # `f_j` to compute a permutation of the `features` array).
+        #
+        # Skip the CPU intensive evaluation of the impurity criterion for
+        # features that were already detected as constant (hence not suitable
+        # for good splitting) by ancestor nodes and save the information on
+        # newly discovered constant features to spare computation on descendant
+        # nodes.
+        while (f_i > n_total_constants and  # Stop early if remaining features
+                                            # are constant
+                (n_visited_features < max_features or
+                 # At least one drawn features must be non constant
+                 n_visited_features <= n_found_constants + n_drawn_constants)):
+
+            n_visited_features += 1
+
+            # Loop invariant: elements of features in
+            # - [:n_drawn_constant[ holds drawn and known constant features;
+            # - [n_drawn_constant:n_known_constant[ holds known constant
+            #   features that haven't been drawn yet;
+            # - [n_known_constant:n_total_constant[ holds newly found constant
+            #   features;
+            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori.
+            # - [f_i:n_features[ holds features that have been drawn
+            #   and aren't constant.
+
+            # Draw a feature at random
+            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                           random_state)
+
+            sample_max_label = 0
+
+            if f_j < n_known_constants:
+                # f_j in the interval [n_drawn_constants, n_known_constants[
+                tmp = features[f_j]
+                features[f_j] = features[n_drawn_constants]
+                features[n_drawn_constants] = tmp
+
+                n_drawn_constants += 1
+
+            else:
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                f_j += n_found_constants
+                # f_j in the interval [n_total_constants, f_i[
+                current.feature = features[f_j]
+                current.n_categories = CARDINALITY_UNDEFINED
+                feature_offset = self.X_feature_stride * current.feature
+                is_categorical = categorical_flags[current.feature]
+
+                ################################################################################
+                if is_categorical:
+                    # Here we have a categorical feature; treat it very differently.
+                    for i in range(start, end):
+                        Xf[i] = X[self.X_sample_stride * samples[i] + feature_offset]
+                        if <SIZE_t> Xf[i] > sample_max_label:
+                            sample_max_label = <SIZE_t> Xf[i]
+
+                    current.n_categories = sample_max_label + 1
+
+                    # Compute the mean of y for each categorical label.
+                    # TODO: Figure out a way to handle corner cases when we cannot
+                    # observe all the categorical values in the sub-nodes.
+                    for i in range(sample_max_label + 1):
+                        # Initialize, `i` is the categorical label.
+                        feature_y_sum[i] = 0.0
+                        feature_y_count[i] = 0.0
+                        feature_y_mean[i] = Y_MEAN_UNDEFINED
+
+                    for p in range(start, end):
+                        feature_y_sum[<SIZE_t> Xf[p]] += self.y[samples[p] * self.y_stride]
+                        feature_y_count[<SIZE_t> Xf[p]] += 1
+
+                    for i in range(sample_max_label + 1):
+                        if feature_y_count[i] > 0:
+                            feature_y_mean[i] = feature_y_sum[i] / feature_y_count[i]
+
+                    # First sort Xf and samples by the categorical labels
+                    sort(Xf + start, samples + start, end - start)
+
+                    # Update Xf with the transformed value
+                    for p in range(start, end):
+                        Xf[p] = feature_y_mean[<SIZE_t> Xf[p]]
+
+                    # Then sort Xf and samples by the mean y associated with each label.
+                    sort(Xf + start, samples + start, end - start)
+
+                    # TODO: Add a new array variable to avoid assigning the values again.
+                    for i in range(start, end):
+                        Xf[i] = X[self.X_sample_stride * samples[i] + feature_offset]
+
+                ############################################################################
+                else:
+                    # Here we have a continuous feature.
+                    # Sort samples along that feature; either by utilizing
+                    # presorting, or by copying the values into an array and
+                    # sorting the array in a manner which utilizes the cache more
+                    # effectively.
+                    if self.presort == 1:
+                        p = start
+                        feature_idx_offset = self.X_idx_sorted_stride * current.feature
+
+                        for i in range(self.n_total_samples):
+                            j = X_idx_sorted[i + feature_idx_offset]
+                            if sample_mask[j] == 1:
+                                samples[p] = j
+                                Xf[p] = X[self.X_sample_stride * j + feature_offset]
+                                p += 1
+                    else:
+                        for i in range(start, end):
+                            Xf[i] = X[self.X_sample_stride * samples[i] + feature_offset]
+
+                        sort(Xf + start, samples + start, end - start)
+
+                ############################################################################
+
+                if ((not is_categorical and Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD) or
+                    (is_categorical and Xf[end - 1] == Xf[start])):
+                    # This is a constant feature.
+                    features[f_j] = features[n_total_constants]
+                    features[n_total_constants] = current.feature
+
+                    n_found_constants += 1
+                    n_total_constants += 1
+
+                else:
+                    # This is not a constant feature.
+                    f_i -= 1
+                    features[f_i], features[f_j] = features[f_j], features[f_i]
+
+                    # Evaluate all splits
+                    self.criterion.reset()
+                    p = start
+
+                    while p < end:
+                        while (p + 1 < end and (
+                            (not is_categorical and Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD ) or
+                            (is_categorical and Xf[p + 1] == Xf[p])
+                        )):
+                            p += 1
+
+                        # (p + 1 >= end) or (X[samples[p + 1], current.feature] !=
+                        #                    X[samples[p], current.feature])
+                        p += 1
+                        # (p >= end) or (X[samples[p], current.feature] !=
+                        #                X[samples[p - 1], current.feature])
+
+                        if p < end:
+                            current.pos = p
+
+                            # Reject if min_samples_leaf is not guaranteed
+                            if (((current.pos - start) < min_samples_leaf) or
+                                ((end - current.pos) < min_samples_leaf)):
+                                continue
+
+                            self.criterion.update(current.pos)
+
+                            # Reject if min_weight_leaf is not satisfied
+                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                (self.criterion.weighted_n_right < min_weight_leaf)):
+                                continue
+
+                            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+
+                            if current_proxy_improvement > best_proxy_improvement:
+                                best_proxy_improvement = current_proxy_improvement
+                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+
+                                if current.threshold == Xf[p]:
+                                    current.threshold = Xf[p - 1]
+
+                                if is_categorical:
+                                    split_map = <UINT64_t> 0
+                                    for i in range(current.pos, end):
+                                        # 1 in the bitmap refers to the right node.
+                                        split_map |= (<UINT64_t> 1) << (<UINT64_t> Xf[i])
+                                else:
+                                    split_map = <UINT64_t> 0
+
+                                best = current  # copy
+                                best.split_map = split_map
+
+        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
+        if best.pos < end:
+            feature_offset = X_feature_stride * best.feature
+            partition_end = end
+            p = start
+
+            while p < partition_end:
+                sample_value = X[X_sample_stride * samples[p] + feature_offset]
+
+                if goes_right(sample_value, best.threshold, best.n_categories,
+                              best.split_map):
+                    partition_end -= 1
+
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
+                else:
+                    p += 1
 
             self.criterion.reset()
             self.criterion.update(best.pos)
@@ -869,7 +1224,8 @@ cdef class BaseSparseSplitter(Splitter):
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   np.ndarray X_idx_sorted=None,
+                   np.ndarray categorical_features=None) except *:
         """Initialize the splitter."""
 
         # Call parent init

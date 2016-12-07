@@ -31,6 +31,7 @@ from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 
+from ._utils cimport goes_right
 from ._utils cimport Stack
 from ._utils cimport StackRecord
 from ._utils cimport PriorityHeap
@@ -65,12 +66,13 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
-# Repeat struct definition for numpy
+# Repeat struct definition of `Node` for numpy.
 NODE_DTYPE = np.dtype({
-    'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_node_samples', 'weighted_n_node_samples'],
+    'names': ['left_child', 'right_child', 'feature', 'threshold',
+              'impurity', 'n_node_samples', 'weighted_n_node_samples',
+              'n_categories', 'split_map'],
     'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
-                np.float64],
+                np.float64, np.intp, np.uint64],
     'offsets': [
         <Py_ssize_t> &(<Node*> NULL).left_child,
         <Py_ssize_t> &(<Node*> NULL).right_child,
@@ -78,9 +80,12 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).threshold,
         <Py_ssize_t> &(<Node*> NULL).impurity,
         <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples,
+        <Py_ssize_t> &(<Node*> NULL).n_categories,
+        <Py_ssize_t> &(<Node*> NULL).split_map,
     ]
 })
+
 
 # =============================================================================
 # TreeBuilder
@@ -91,7 +96,8 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray X_idx_sorted=None,
+                np.ndarray categorical_features=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
@@ -141,7 +147,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray X_idx_sorted=None,
+                np.ndarray categorical_features=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -170,7 +177,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr, X_idx_sorted, categorical_features)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -234,7 +241,9 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
-                                         weighted_n_node_samples)
+                                         weighted_n_node_samples,
+                                         split.n_categories,
+                                         split.split_map)
 
                 if node_id == <SIZE_t>(-1):
                     rc = -1
@@ -302,7 +311,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray X_idx_sorted=None,
+                np.ndarray categorical_features=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -320,7 +330,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr, X_idx_sorted, categorical_features)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
@@ -362,6 +372,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     node.right_child = _TREE_LEAF
                     node.feature = _TREE_UNDEFINED
                     node.threshold = _TREE_UNDEFINED
+                    node.n_categories = _TREE_UNDEFINED
+                    node.split_map = 0
 
                 else:
                     # Node is expandable
@@ -451,7 +463,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  else _TREE_UNDEFINED,
                                  is_left, is_leaf,
                                  split.feature, split.threshold, impurity, n_node_samples,
-                                 weighted_n_node_samples)
+                                 weighted_n_node_samples,
+                                 split.n_categories,
+                                 split.split_map)
         if node_id == <SIZE_t>(-1):
             return -1
 
@@ -577,9 +591,18 @@ cdef class Tree:
         def __get__(self):
             return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
 
+    property n_categories:
+        def __get__(self):
+            return self._get_node_ndarray()['n_categories'][:self.node_count]
+
+    property split_maps:
+        def __get__(self):
+            return self._get_node_ndarray()['split_map'][:self.node_count]
+
     property value:
         def __get__(self):
             return self._get_value_ndarray()[:self.node_count]
+
 
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                   int n_outputs):
@@ -625,6 +648,7 @@ cdef class Tree:
         d["node_count"] = self.node_count
         d["nodes"] = self._get_node_ndarray()
         d["values"] = self._get_value_ndarray()
+
         return d
 
     def __setstate__(self, d):
@@ -641,6 +665,7 @@ cdef class Tree:
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
+
         if (node_ndarray.ndim != 1 or
                 node_ndarray.dtype != NODE_DTYPE or
                 not node_ndarray.flags.c_contiguous or
@@ -702,7 +727,8 @@ cdef class Tree:
 
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples, double weighted_n_node_samples) nogil:
+                          SIZE_t n_node_samples, double weighted_n_node_samples,
+                          SIZE_t n_categories, UINT64_t split_map) nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -719,6 +745,8 @@ cdef class Tree:
         node.impurity = impurity
         node.n_node_samples = n_node_samples
         node.weighted_n_node_samples = weighted_n_node_samples
+        node.n_categories = n_categories
+        node.split_map = split_map
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -731,6 +759,8 @@ cdef class Tree:
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
             node.threshold = _TREE_UNDEFINED
+            node.n_categories = _TREE_UNDEFINED
+            node.split_map = 0
 
         else:
             # left_child and right_child will be set later
@@ -781,6 +811,8 @@ cdef class Tree:
         # Initialize auxiliary data-structure
         cdef Node* node = NULL
         cdef SIZE_t i = 0
+        cdef SIZE_t j
+        cdef DOUBLE_t sample_value
 
         with nogil:
             for i in range(n_samples):
@@ -788,11 +820,13 @@ cdef class Tree:
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    if X_ptr[X_sample_stride * i +
-                             X_fx_stride * node.feature] <= node.threshold:
-                        node = &self.nodes[node.left_child]
-                    else:
+                    sample_value = X_ptr[X_sample_stride * i + X_fx_stride * node.feature]
+
+                    if goes_right(sample_value, node.threshold, node.n_categories,
+                                  node.split_map):
                         node = &self.nodes[node.right_child]
+                    else:
+                        node = &self.nodes[node.left_child]
 
                 out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
 

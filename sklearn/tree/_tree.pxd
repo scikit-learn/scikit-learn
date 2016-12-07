@@ -18,13 +18,13 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
-
     SIZE_t left_child                    # id of the left child of the node
     SIZE_t right_child                   # id of the right child of the node
     SIZE_t feature                       # Feature used for splitting the node
@@ -32,6 +32,8 @@ cdef struct Node:
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
+    SIZE_t n_categories                  # Num. of categories of the feature; -1 if not categorical.
+    UINT64_t split_map                   # bitmap guiding how to split; 1 means right node.
 
 
 cdef class Tree:
@@ -58,7 +60,9 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_samples) nogil
+                          double weighted_n_samples,
+                          SIZE_t n_categories,
+                          UINT64_t split_map) nogil
     cdef void _resize(self, SIZE_t capacity) except *
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
@@ -100,5 +104,6 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*,
-                np.ndarray X_idx_sorted=*)
+                np.ndarray X_idx_sorted=*,
+                np.ndarray categorical_features=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)

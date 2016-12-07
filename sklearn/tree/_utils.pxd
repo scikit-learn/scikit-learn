@@ -17,6 +17,7 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
@@ -48,14 +49,18 @@ cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
 
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
-                            UINT32_t* random_state) nogil
+                     UINT32_t* random_state) nogil
 
 
 cdef double rand_uniform(double low, double high,
-                                UINT32_t* random_state) nogil
+                         UINT32_t* random_state) nogil
 
 
 cdef double log(double x) nogil
+
+
+cdef bint goes_right(DTYPE_t sample_value, double threshold,
+                     SIZE_t n_categories, UINT64_t split_map) nogil
 
 # =============================================================================
 # Stack data structure

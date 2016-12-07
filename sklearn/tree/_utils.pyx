@@ -85,6 +85,16 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 
+cdef inline bint goes_right(DTYPE_t sample_value, double threshold,
+                            SIZE_t n_categories, UINT64_t split_map) nogil:
+    """True if the sample value should go to right node."""
+    if n_categories > 0:
+        # Categorical feature; 1 in the bitmap refers to right node.
+        return (split_map >> (<SIZE_t> sample_value)) & 1
+    else:
+        # Continuous feature.
+        return sample_value > threshold
+
 # =============================================================================
 # Stack data structure
 # =============================================================================
