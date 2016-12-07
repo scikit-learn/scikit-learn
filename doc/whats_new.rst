@@ -109,8 +109,8 @@ Bug fixes
      `Kathleen Chen`_.
 
    - Fix a bug where :class:`sklearn.ensemble.VotingClassifier` raises an error
-     when numpy array are passed in for weights. :issue:`7983` by `Vincent
-     Pham`_.
+     when numpy array are passed in for weights. :issue:`7983` by
+     `Vincent Pham`_.
 
 .. _changes_0_18_1:
 
