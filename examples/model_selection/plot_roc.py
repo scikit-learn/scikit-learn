@@ -53,9 +53,8 @@ iris = datasets.load_iris()
 X = iris.data
 y = iris.target
 
-# Binarize the output
-y = label_binarize(y, classes=[0, 1, 2])
-n_classes = y.shape[1]
+classes = np.unique(y)
+n_classes = len(classes)
 
 # Add noisy features to make the problem harder
 random_state = np.random.RandomState(0)
@@ -72,16 +71,16 @@ classifier = OneVsRestClassifier(svm.SVC(kernel='linear', probability=True,
 y_score = classifier.fit(X_train, y_train).decision_function(X_test)
 
 # Compute ROC curve and ROC area for each class
+
+# Binarize y_test to compute the ROC curve
+y_test_binarized = label_binarize(y_test, classes=classes)
+
 fpr = dict()
 tpr = dict()
 roc_auc = dict()
 for i in range(n_classes):
-    fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_score[:, i])
+    fpr[i], tpr[i], _ = roc_curve(y_test_binarized[:, i], y_score[:, i])
     roc_auc[i] = auc(fpr[i], tpr[i])
-
-# Compute micro-average ROC curve and ROC area
-fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
-roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 
 ##############################################################################
@@ -101,7 +100,11 @@ plt.show()
 
 
 ##############################################################################
-# Plot ROC curves for the multiclass problem
+# Plot ROC curves for the multiclass problem using One vs. Rest classification.
+
+# Compute micro-average ROC curve and ROC area
+fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
+roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 # Compute macro-average ROC curve and ROC area
 
@@ -143,6 +146,56 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('Some extension of Receiver operating characteristic to multi-class')
+plt.title('An extension of Receiver operating characteristic to multi-class '
+          'using One-vs-Rest')
 plt.legend(loc="lower right")
 plt.show()
+
+# TODO: roc_auc_score weighted and unweighted
+
+
+##############################################################################
+# Plot ROC curves for the multiclass problem using One vs. One classification.
+
+for pos in range(n_classes):
+    for neg in range(pos + 1, n_classes):
+        # Filter `y_test` and `y_score` to only consider the current
+        # class pair: `pos` and `neg`.
+        class_pair_indices = np.in1d(y_test, [pos, neg])
+        y_true_filtered = y_test[class_pair_indices]
+        y_score_filtered = y_score[class_pair_indices]
+
+        # Compute ROC curve and ROC area with `pos` as the positive class
+        class_a = y_true_filtered == pos
+        fpr[(pos, neg)], tpr[(pos, neg)], _ = roc_curve(
+                class_a, y_score_filtered[:, pos])
+        roc_auc[(pos, neg)] = auc(fpr[(pos, neg)], tpr[(pos, neg)])
+
+        # Compute ROC curve and ROC area with `neg` as the positive class
+        class_b = y_true_filtered == neg
+        fpr[(neg, pos)], tpr[(neg, pos)], _ = roc_curve(
+                class_b, y_score_filtered[:, neg])
+        roc_auc[(neg, pos)] = auc(fpr[(neg, pos)], tpr[(neg, pos)])
+
+plt.figure()
+for pos in range(n_classes):
+    for neg in range(pos + 1, n_classes):
+        plt.plot(fpr[(pos, neg)], tpr[(pos, neg)], lw=lw,
+                 label='ROC curve of class {0} against class {1} '
+                       '(area = {2:0.2f})'.format(
+                        pos, neg, roc_auc[(pos, neg)]))
+        plt.plot(fpr[(neg, pos)], tpr[(neg, pos)], lw=lw,
+                 label='ROC curve of class {0} against class {1} '
+                       '(area = {2:0.2f})'.format(
+                        neg, pos, roc_auc[(neg, pos)]))
+plt.plot([0, 1], [0, 1], 'k--', lw=lw)
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('An extension of Receiver operating characteristic to multi-class '
+          'using One-vs-One')
+plt.legend(bbox_to_anchor=(1.8, 0.55))
+plt.show()
+
+# TODO: roc_auc_scores
