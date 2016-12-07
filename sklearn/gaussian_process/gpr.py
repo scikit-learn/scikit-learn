@@ -148,6 +148,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.random_state = random_state
         self.n_jobs = n_jobs
 
+    def _optima_iterations(self, optima, bounds, theta_initial, obj_func):
+        optima.append(
+            self._constrained_optimization(obj_func, theta_initial,
+                                           bounds))
+
     def fit(self, X, y):
         """Fit Gaussian process regression model
 
@@ -217,17 +222,17 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite.")
                 bounds = self.kernel_.bounds
-
-                def optima_iterations():
+                theta_initials = []
+                for i in range(self.n_restarts_optimizer):
                     theta_initial = \
                         self.rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(
-                        self._constrained_optimization(obj_func, theta_initial,
-                                                       bounds))
-                Parallel(n_jobs=self.n_jobs)(delayed(optima_iterations,
-                                                     check_pickle=False)()
-                                             for iteration in range
-                                             (self.n_restarts_optimizer))
+                    theta_initials.append(theta_initial)
+                Parallel(n_jobs=self.n_jobs)(delayed(self._optima_iterations,
+                                                     check_pickle=False)
+                                             (optima, bounds,
+                                              theta_initial, obj_func)
+                                             for theta_initial in
+                                             theta_initials)
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
