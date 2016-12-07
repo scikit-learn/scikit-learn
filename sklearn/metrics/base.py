@@ -171,11 +171,10 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
         Average the sum of pairwise binary metric scores
     """
     n_labels = len(np.unique(y_true))
+    label_counts = np.bincount(y_true)
     auc_scores_sum = 0
     for pos in range(n_labels):
-        for neg in range(n_labels):
-            if pos == neg:
-                continue
+        for neg in range(pos + 1, n_labels):
             ix = np.in1d(y_true.ravel(), [pos, neg])
             y_true_filtered = y_true[ix.reshape(y_true.shape)]
             y_score_filtered = y_score[ix]
@@ -188,10 +187,10 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
                     class_a, y_score_filtered[:, pos])
             score_class_b = binary_metric(
                     class_b, y_score_filtered[:, neg])
-            binary_avg_auc = (score_class_a + score_class_b) / 2.0
+            binary_avg_score = (score_class_a + score_class_b) / 2.0
             if average == "weighted":
-                probability_pos = np.sum(y_true == pos) / float(y_true.size)
-                auc_scores_sum += binary_avg_auc * probability_pos
+                probability_pos = label_counts[pos] / float(y_true.size)
+                auc_scores_sum += binary_avg_score * probability_pos
             else:
-                auc_scores_sum += binary_avg_auc
-    return auc_scores_sum / (n_labels * (n_labels - 1.0))
+                auc_scores_sum += binary_avg_score
+    return 2. * auc_scores_sum / (n_labels * (n_labels - 1))

@@ -23,7 +23,7 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import MultiLabelBinarizer
+from ..preprocessing import LabelBinarizer
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
@@ -299,7 +299,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                 _binary_roc_auc_score, y_true, y_score, average)
         else:
             y_true = y_true.reshape((-1, 1))
-            y_true_multilabel = MultiLabelBinarizer().fit_transform(y_true)
+            y_true_multilabel = LabelBinarizer().fit_transform(y_true)
             return _average_binary_score(_binary_roc_auc_score,
                                          y_true_multilabel, y_score, average)
 
