@@ -15,7 +15,7 @@ from ..utils import check_array
 from ..neighbors import BallTree
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import pairwise_distances
-from ._optics_inner import min_heap 
+from ._optics_inner import quick_scan 
 
 
 class SetOfObjects(BallTree):
@@ -82,21 +82,29 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
     # Checks to see if there more than one member in the neighborhood
     if sp.iterable(indices):
         # Masking processed values; n_pr is 'not processed'
-        n_pr = indices[(setofobjects._processed[indices] < 1).ravel()]
+        n_pr = np.compress((np.take(setofobjects._processed, 
+                                    indices, axis=0) < 1).ravel(),
+                           indices, axis=0)
+        # n_pr = indices[(setofobjects._processed[indices] < 1).ravel()]
         if len(n_pr) > 0:
             dists = pairwise_distances(X,
-                                       setofobjects.get_arrays()[0][[n_pr]],
+                                       np.take(setofobjects.get_arrays()[0],
+                                               n_pr,
+                                               axis=0),
                                        setofobjects.metric, n_jobs=1).ravel()
 
             rdists = sp.maximum(dists, setofobjects.core_dists_[point_index])
-            new_reach = sp.minimum(setofobjects.reachability_[n_pr], rdists)
+            new_reach = sp.minimum(np.take(setofobjects.reachability_, 
+                                           n_pr, axis=0),
+                                   rdists)
             setofobjects.reachability_[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop
         if n_pr.size > 0:
             # Define return order based on reachability distance
-            return(min_heap(setofobjects.reachability_[n_pr], dists, n_pr))
+            return(n_pr[quick_scan(np.take(setofobjects.reachability_,
+                                           n_pr, axis=0), dists)])
         else:
             return point_index
 
