@@ -341,8 +341,10 @@ cdef class WeightedPQueue:
     cdef void reset(self) nogil:
         """Reset the WeightedPQueue to its state at construction"""
         self.array_ptr = 0
-        self.array_ = <WeightedPQueueRecord*> calloc(self.capacity,
-                                                     sizeof(WeightedPQueueRecord))
+        with gil:
+            safe_realloc(&self.array_, self.capacity)
+        # self.array_ = <WeightedPQueueRecord*> calloc(self.capacity,
+        #                                             sizeof(WeightedPQueueRecord))
 
     cdef bint is_empty(self) nogil:
         return self.array_ptr <= 0
@@ -361,14 +363,16 @@ cdef class WeightedPQueue:
         # Resize if capacity not sufficient
         if array_ptr >= self.capacity:
             self.capacity *= 2
-            array = <WeightedPQueueRecord*> realloc(self.array_,
-                                                    self.capacity *
-                                                    sizeof(WeightedPQueueRecord))
+            with gil:
+                safe_realloc(&self.array_, self.capacity)
+            # array = <WeightedPQueueRecord*> realloc(self.array_,
+            #                                         self.capacity *
+            #                                         sizeof(WeightedPQueueRecord))
 
-            if array == NULL:
-                # no free; __dealloc__ handles that
-                return -1
-            self.array_ = array
+            # if array == NULL:
+            #     # no free; __dealloc__ handles that
+            #     return -1
+            # self.array_ = array
 
         # Put element as last element of array
         array = self.array_
