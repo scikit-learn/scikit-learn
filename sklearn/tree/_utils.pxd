@@ -41,7 +41,7 @@ ctypedef fused realloc_ptr:
     (Node*)
     (Node**)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
 
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)

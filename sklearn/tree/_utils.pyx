@@ -25,17 +25,19 @@ np.import_array()
 # Helper functions
 # =============================================================================
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *:
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
     cdef size_t nbytes = nelems * sizeof(p[0][0])
     if nbytes / sizeof(p[0][0]) != nelems:
         # Overflow in the multiplication
-        raise MemoryError("could not allocate (%d * %d) bytes"
-                          % (nelems, sizeof(p[0][0])))
+        with gil:
+            raise MemoryError("could not allocate (%d * %d) bytes"
+                              % (nelems, sizeof(p[0][0])))
     cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
-        raise MemoryError("could not allocate %d bytes" % nbytes)
+        with gil:
+            raise MemoryError("could not allocate %d bytes" % nbytes)
 
     p[0] = tmp
     return tmp  # for convenience
@@ -341,10 +343,7 @@ cdef class WeightedPQueue:
     cdef void reset(self) nogil:
         """Reset the WeightedPQueue to its state at construction"""
         self.array_ptr = 0
-        with gil:
-            safe_realloc(&self.array_, self.capacity)
-        # self.array_ = <WeightedPQueueRecord*> calloc(self.capacity,
-        #                                             sizeof(WeightedPQueueRecord))
+        safe_realloc(&self.array_, self.capacity)
 
     cdef bint is_empty(self) nogil:
         return self.array_ptr <= 0
@@ -365,14 +364,6 @@ cdef class WeightedPQueue:
             self.capacity *= 2
             with gil:
                 safe_realloc(&self.array_, self.capacity)
-            # array = <WeightedPQueueRecord*> realloc(self.array_,
-            #                                         self.capacity *
-            #                                         sizeof(WeightedPQueueRecord))
-
-            # if array == NULL:
-            #     # no free; __dealloc__ handles that
-            #     return -1
-            # self.array_ = array
 
         # Put element as last element of array
         array = self.array_
