@@ -15,7 +15,7 @@ from ..utils import check_array
 from ..neighbors import BallTree
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import pairwise_distances
-from ._optics_inner import quick_scan 
+from ._optics_inner import quick_scan
 
 
 class SetOfObjects(BallTree):
@@ -82,7 +82,7 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
     # Checks to see if there more than one member in the neighborhood
     if sp.iterable(indices):
         # Masking processed values; n_pr is 'not processed'
-        n_pr = np.compress((np.take(setofobjects._processed, 
+        n_pr = np.compress((np.take(setofobjects._processed,
                                     indices, axis=0) < 1).ravel(),
                            indices, axis=0)
         # n_pr = indices[(setofobjects._processed[indices] < 1).ravel()]
@@ -94,7 +94,7 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
                                        setofobjects.metric, n_jobs=1).ravel()
 
             rdists = sp.maximum(dists, setofobjects.core_dists_[point_index])
-            new_reach = sp.minimum(np.take(setofobjects.reachability_, 
+            new_reach = sp.minimum(np.take(setofobjects.reachability_,
                                            n_pr, axis=0),
                                    rdists)
             setofobjects.reachability_[n_pr] = new_reach
@@ -124,7 +124,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
     The maximum distance between two samples for them to be considered
     as in the same neighborhood. This is also the largest object size
     expected within the dataset. Lower eps values can be used after
-    OPTICS is run the first time, with fast returns of labels.
+    OPTICS is run the first time, with fast returns of labels. Default
+    value of "np.inf" will identify clusters across all scales; reducing
+    eps will result in shorter run times.
     min_samples : int, optional
     The number of samples in a neighborhood for a point to be considered
     as a core point.
@@ -157,7 +159,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, eps=0.5, min_samples=5, metric='euclidean', **kwargs):
+    def __init__(self, eps=np.inf, min_samples=5, metric='euclidean', **kwargs):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
