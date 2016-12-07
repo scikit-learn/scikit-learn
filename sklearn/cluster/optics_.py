@@ -159,7 +159,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, eps=np.inf, min_samples=5, metric='euclidean', **kwargs):
+    def __init__(self, eps=np.inf, min_samples=5,
+                 metric='euclidean', **kwargs):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
