@@ -542,25 +542,21 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     last_bound = bound
                 self.n_iter_ += 1
         return self
-
-    def transform(self, X, normalize=True):
-        """Transform data X according to the fitted model.
-
+        
+    def _unnormalized_transform(self, X):
+        """Transform data X according to fitted model without normalization.
+        
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
-            
-        normalize : boolean, optional, (default=True)
-            Whether to normalize the document topic distribution returned by
-            this method
 
         Returns
         -------
         doc_topic_distr : shape=(n_samples, n_topics)
-            Document topic distribution for X.
+            Unnormalized document topic distribution for X.
         """
-
+        
         if not hasattr(self, 'components_'):
             raise NotFittedError("no 'components_' attribute in model."
                                  " Please fit model first.")
@@ -576,8 +572,25 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False,
                                           random_init=False)
-        if normalize: # normalize doc_topic_distr
-            doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
+                                          
+        return doc_topic_distr
+
+    def transform(self, X):
+        """Transform data X according to the fitted model with normalization.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
+
+        Returns
+        -------
+        doc_topic_distr : shape=(n_samples, n_topics)
+            Normalized document topic distribution for X.
+        """
+
+        doc_topic_distr = self._unnormalized_transform(X)
+        doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
             
         return doc_topic_distr
 
@@ -704,7 +717,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                                       "LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
-            doc_topic_distr = self.transform(X, normalize=False)
+            doc_topic_distr = self._unnormalized_transform(X)
         else:
             n_samples, n_topics = doc_topic_distr.shape
             if n_samples != X.shape[0]:
