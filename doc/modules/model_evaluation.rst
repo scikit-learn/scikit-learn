@@ -999,7 +999,7 @@ Using the uniform class distribution:
         
 Using the a priori class distribution:
 
-.. math:: \frac{1}{c(c-1)}\sum_{j=1}^c\sum_{k \neq j}^c p(j)\textnormal{AUC}(j, k)
+.. math:: \frac{1}{c-1}\sum_{j=1}^c\sum_{k \neq j}^c p(j)\textnormal{AUC}(j, k)
 
 **One-vs-rest Algorithm**
 [PD2000]_: AUC of each class against the rest. This treats
