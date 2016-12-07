@@ -295,7 +295,7 @@ def test_perplexity_input_format():
     lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
                                     learning_method='batch',
                                     total_samples=100, random_state=0)
-    lda.fit(X)                                    
+    lda.fit(X)
     distr = lda._unnormalized_transform(X)
     perp_1 = lda.perplexity(X)
     perp_2 = lda.perplexity(X, distr)
@@ -309,7 +309,7 @@ def test_lda_score_perplexity():
     n_topics, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
                                     random_state=0)
-    lda.fit(X)                                    
+    lda.fit(X)
     distr = lda._unnormalized_transform(X)
     perplexity_1 = lda.perplexity(X, distr, sub_sampling=False)
 

@@ -542,10 +542,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     last_bound = bound
                 self.n_iter_ += 1
         return self
-        
+
     def _unnormalized_transform(self, X):
         """Transform data X according to fitted model without normalization.
-        
+
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
@@ -556,7 +556,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr : shape=(n_samples, n_topics)
             Unnormalized document topic distribution for X.
         """
-        
+
         if not hasattr(self, 'components_'):
             raise NotFittedError("no 'components_' attribute in model."
                                  " Please fit model first.")
@@ -572,7 +572,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False,
                                           random_init=False)
-                                          
+
         return doc_topic_distr
 
     def transform(self, X):
@@ -591,7 +591,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr = self._unnormalized_transform(X)
         doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
-            
+
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
