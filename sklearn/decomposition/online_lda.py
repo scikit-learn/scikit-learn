@@ -686,7 +686,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.score")
 
-        doc_topic_distr = self.transform(X)
+        doc_topic_distr = self._unnormalized_transform(X)
         score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
         return score
 
