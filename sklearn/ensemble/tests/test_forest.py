@@ -833,6 +833,21 @@ def test_sparse_input():
         yield check_sparse_input, name, X, sparse_matrix(X), y
 
 
+def check_no_sparse_y_support(name):
+    X, y = datasets.make_multilabel_classification(random_state=0,
+                                                   n_samples=50)
+    y_sparse = csr_matrix(y)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    if name not in FOREST_TRANSFORMERS:
+        assert_raises(ValueError, ForestEstimator(random_state=0).fit, X, y_sparse)
+
+
+def test_no_sparse_y_support():
+    # Currently we don't support sparse y
+    for name in FOREST_ESTIMATORS:
+        yield (check_no_sparse_y_support, name)
+
+
 def check_memory_layout(name, dtype):
     # Check that it works no matter the memory layout
 
