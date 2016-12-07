@@ -407,7 +407,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             K = kernel(self.X_train_)
 
         K[np.diag_indices_from(K)] += self.alpha
-        K[np.diag_indices_from(K)] += self.sample_alpha 
+        K[np.diag_indices_from(K)] += self.sample_alpha
 
         try:
             L = cholesky(K, lower=True)  # Line 2
