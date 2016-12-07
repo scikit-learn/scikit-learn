@@ -82,14 +82,6 @@ def if_delegate_has_method(delegate):
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
-    from ..gaussian_process.kernels import Kernel as GPKernel
-
-    if (hasattr(estimator, 'kernel') and callable(estimator.kernel) and
-            not isinstance(estimator.kernel, GPKernel)):
-        # cannot compute the kernel values with custom function
-        raise ValueError("Cannot use a custom kernel function. "
-                         "Precompute the kernel matrix instead.")
-
     if not hasattr(X, "shape"):
         if getattr(estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
