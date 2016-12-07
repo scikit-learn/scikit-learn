@@ -154,11 +154,12 @@ def test_ransac_resid_thresh_no_inliers():
                                        residual_threshold=0.0, random_state=0)
 
     msg = (
-        "RANSAC could not find valid consensus set, because"
-        " either the `residual_threshold` rejected all the samples or"
-        " `is_data_valid` and `is_model_valid` returned False for all"
-        " `max_trials` randomly chosen sub-samples. Consider"
-        " relaxing the constraints.")
+        "RANSAC could not find a valid consensus set. All `max_trials`"
+        " iterations were skipped because each randomly chosen"
+        " sub-sample either: didn't produce a valid set of inliers"
+        " due to a small `residual_threshold` or was invalidated by"
+        " `is_data_valid` or `is_model_valid` if either of these"
+        " functions have been defined by the user.")
 
     assert_raise_message(ValueError, msg, ransac_estimator.fit, X, y)
 

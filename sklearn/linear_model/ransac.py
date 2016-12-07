@@ -392,11 +392,12 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         # if none of the iterations met the required criteria
         if inlier_mask_best is None:
             raise ValueError(
-                "RANSAC could not find valid consensus set, because"
-                " either the `residual_threshold` rejected all the samples or"
-                " `is_data_valid` and `is_model_valid` returned False for all"
-                " `max_trials` randomly chosen sub-samples. Consider"
-                " relaxing the constraints.")
+                "RANSAC could not find a valid consensus set. All `max_trials`"
+                " iterations were skipped because each randomly chosen"
+                " sub-sample either: didn't produce a valid set of inliers"
+                " due to a small `residual_threshold` or was invalidated by"
+                " `is_data_valid` or `is_model_valid` if either of these"
+                " functions have been defined by the user.")
 
         # estimate final model using all inliers
         base_estimator.fit(X_inlier_best, y_inlier_best)
