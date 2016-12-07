@@ -1131,6 +1131,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
 
 DEFAULT_BLOCK_SIZE = 64
+BYTES_PER_FLOAT = 64
 
 
 def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
@@ -1143,7 +1144,7 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
 
     This is equivalent to calling:
 
-        pairwise_distances(X, y, metric)
+        pairwise_distances(X, y, metric, n_jobs)
 
     but uses much less memory.
 
@@ -1188,41 +1189,28 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
 
     Returns
     -------
-    D : array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
-        A distance matrix D such that D_{i, j} is the distance between the
-        ith and jth vectors of the given matrix X, if Y is None.
-        If Y is not None, then D_{i, j} is the distance between the ith array
-        from X and the jth array from Y.
+    D : generator of blocks based on the ``block_size`` parameter. The blocks,
+        when concatenated, produce a distance matrix D such that D_{i, j} is the
+        distance between the ith and jth vectors of the given matrix X, if Y is
+        None. If Y is not None, then D_{i, j} is the distance between the ith
+        array from X and the jth array from Y.
 
     """
-    if (metric not in _VALID_METRICS and
-            not callable(metric) and metric != "precomputed"):
-        raise ValueError("Unknown metric %s. "
-                         "Valid metrics are %s, or 'precomputed', or a "
-                         "callable" % (metric, _VALID_METRICS))
-
-    if metric == "precomputed":
-        X, _ = check_pairwise_arrays(X, Y, precomputed=True)
-        return X
-    elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
-        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
-    elif callable(metric):
-        func = partial(_pairwise_callable, metric=metric, **kwds)
-    else:
-        if issparse(X) or issparse(Y):
-            raise TypeError("scipy distance metrics do not"
-                            " support sparse matrices.")
-
-        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
-
-        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
-
-        if n_jobs == 1 and X is Y:
-            return distance.squareform(distance.pdist(X, metric=metric,
-                                                      **kwds))
-        func = partial(distance.cdist, metric=metric, **kwds)
-
-    return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+    n_samples = X.shape[0]
+    block_n_rows = block_size * (2 ** 20) // (BYTES_PER_FLOAT * n_samples)
+    if block_n_rows > n_samples:
+        block_n_rows = min(block_n_rows, n_samples)
+    if block_n_rows < 1:
+        min_block_mib = np.ceil(n_samples * BYTES_PER_FLOAT * 2 ** -20)
+        raise ValueError('block_size should be at least n_samples * %d bytes '
+                         '= %.0f MiB, got %r' % (BYTES_PER_FLOAT,
+                                                 min_block_mib, block_size))
+    block_range = np.arange(block_n_rows)
+    kwds['metric'] = metric
+    for start in range(0, n_samples, block_n_rows):
+        # get distances from block to every other sample
+        stop = min(start + block_n_rows, X.shape[0])
+        yield (pairwise_distances, X[start:stop], X, metric, n_jobs, kwds)
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
