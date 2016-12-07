@@ -314,3 +314,18 @@ def test_duplicate_input():
 
         assert_almost_equal(y_pred_equal, y_pred_similar)
         assert_almost_equal(y_std_equal, y_std_similar)
+
+
+def test_n_jobs_parallel():
+    # Test to check the functioning of n_jobs parameter.
+    for kernel in kernels:
+        gpr1 = GaussianProcessRegressor(kernel=kernel, n_jobs=1).fit(X, y)
+        gpr2 = GaussianProcessRegressor(kernel=kernel, n_jobs=-1).fit(X, y)
+        y1, y1_cov = gpr1.predict(X, return_cov=True)
+        y2, y2_cov = gpr2.predict(X, return_cov=True)
+
+        assert_almost_equal(y1, y2)
+        assert_almost_equal(y1_cov, y2_cov)
+        assert_almost_equal(gpr1.alpha_, gpr2.alpha_)
+        assert_equal(gpr1.log_marginal_likelihood_value_,
+                     gpr2.log_marginal_likelihood_value_)
