@@ -20,6 +20,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import is_classifier, clone
+from ..preprocessing import LabelBinarizer
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
@@ -403,10 +404,9 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
         for train, test in cv_iter)
 
     # Concatenate the predictions
-    predictions = [pred_block_i for pred_block_i, _, _ in prediction_blocks]
+    predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
     test_indices = np.concatenate([indices_i
-                                   for _, indices_i, _ in prediction_blocks])
-    classes = [classes_i for _, _, classes_i in prediction_blocks]
+                                   for _, indices_i in prediction_blocks])
 
     if not _check_is_permutation(test_indices, _num_samples(X)):
         raise ValueError('cross_val_predict only works for partitions')
@@ -462,15 +462,14 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
 
     test : array-like
         This is the value of the test parameter
-
-    classes : array-like
-        Result of calling 'estimator.classes_' for estimators having the
-        `classes_` attribute
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
+
+    lb = LabelBinarizer()
+    lb.fit(y)
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -482,10 +481,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     func = getattr(estimator, method)
     predictions = func(X_test)
 
-    classes = []
-    if method is 'predict_proba' and hasattr(estimator, 'classes_'):
-        classes = getattr(estimator, 'classes_')
-    return predictions, test, classes
+    if method is 'predict_proba':
+        predictions = lb.transform(predictions)
+    return predictions, test
 
 
 def _check_is_permutation(indices, n_samples):
