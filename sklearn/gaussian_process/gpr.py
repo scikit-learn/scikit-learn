@@ -192,7 +192,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
         # Add sample-dependent noise-estimates
         if sample_alpha is None:
-            add_alpha = 0.0
+            self.sample_alpha = 0.0
         else:
             if np.iterable(sample_alpha) \
                and sample_alpha.shape[0] != y.shape[0]:
@@ -203,7 +203,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                                      " or an array with same number of"
                                      " entries as y.(%d != %d)"
                                      % (sample_alpha.shape[0], y.shape[0]))
-            add_alpha = sample_alpha
+            self.sample_alpha = sample_alpha
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
@@ -250,7 +250,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         # Precompute quantities required for predictions which are independent
         # of actual query points
         K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.alpha+add_alpha
+        K[np.diag_indices_from(K)] += self.alpha+self.sample_alpha
         self.L_ = cholesky(K, lower=True)  # Line 2
         self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
 
@@ -407,6 +407,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             K = kernel(self.X_train_)
 
         K[np.diag_indices_from(K)] += self.alpha
+        K[np.diag_indices_from(K)] += self.sample_alpha 
+
         try:
             L = cholesky(K, lower=True)  # Line 2
         except np.linalg.LinAlgError:
