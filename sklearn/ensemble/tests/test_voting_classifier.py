@@ -274,6 +274,4 @@ def test_fit():
                 voting='soft')
     eclf1.fit(X, y)
     eclf2.fit(X, y)
-
-
-
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
