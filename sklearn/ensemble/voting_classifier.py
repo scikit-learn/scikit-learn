@@ -102,7 +102,6 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1):
         self.estimators = estimators
-        self.named_estimators = dict(estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
@@ -149,8 +148,14 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         if sample_weight is not None:
             for name, step in self.estimators:
                 if not has_fit_parameter(step, 'sample_weight'):
-                    raise ValueError('Underlying estimator \'%s\' does not support'
-                                     ' sample weights.' % name)
+                    raise ValueError('Underlying estimator \'%s\' does not '
+                                     'support sample weights.' % name)
+
+        isnone = np.array([1 if clf is None else 0
+                           for _, clf in self.estimators])
+        if isnone.sum() == len(self.estimators):
+            raise ValueError('All estimators is None. At least one is required'
+                             ' to be a classifier!')
 
         self.le_ = LabelEncoder()
         self.le_.fit(y)
@@ -161,10 +166,22 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                    sample_weight)
-                    for _, clf in self.estimators)
+                                                 sample_weight)
+                for _, clf in self.estimators if clf is not None)
 
         return self
+
+    @property
+    def named_estimators(self):
+        return dict(self.estimators)
+
+    @property
+    def _narej_weights(self):
+        """Get the weights of not `None` estimators"""
+        if self.weights is None:
+            return None
+        return [w for est, w in zip(self.estimators,
+                                    self.weights) if est[1] is not None]
 
     def predict(self, X):
         """ Predict class labels for X.
@@ -189,7 +206,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             predictions = self._predict(X)
             maj = np.apply_along_axis(lambda x:
                                       np.argmax(np.bincount(x,
-                                                weights=self.weights)),
+                                                weights=self._narej_weights)),
                                       axis=1,
                                       arr=predictions.astype('int'))
 
@@ -207,7 +224,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             raise AttributeError("predict_proba is not available when"
                                  " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
-        avg = np.average(self._collect_probas(X), axis=0, weights=self.weights)
+        avg = np.average(self._collect_probas(X), axis=0,
+                         weights=self._narej_weights)
         return avg
 
     @property
@@ -259,9 +277,31 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             out = super(VotingClassifier, self).get_params(deep=False)
             out.update(self.named_estimators.copy())
             for name, step in six.iteritems(self.named_estimators):
-                for key, value in six.iteritems(step.get_params(deep=True)):
-                    out['%s__%s' % (name, key)] = value
+                if step is not None:
+                    for key, value in six.iteritems(
+                            step.get_params(deep=True)):
+                        out['%s__%s' % (name, key)] = value
             return out
+
+    def set_params(self, **params):
+        estimators = dict((key, value) for key, value in six.iteritems(params)
+                          if key in self.named_estimators.keys())
+        for name, clf in six.iteritems(estimators):
+            if clf is not None:
+                if not hasattr(clf, 'fit') or not hasattr(clf, 'predict'):
+                    raise TypeError("All estimators should implement fit and "
+                                    "predict. '%s' (type %s) doesn't" %
+                                    (clf, type(clf)))
+        non_estimators = dict((key, value)
+                              for key, value in six.iteritems(params)
+                              if key not in self.named_estimators.keys())
+        if estimators:
+            self.estimators = [(name, estimators[name])
+                               if name in estimators.keys() else (name, clf)
+                               for name, clf in self.estimators]
+
+        super(VotingClassifier, self).set_params(**non_estimators)
+        return self
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
