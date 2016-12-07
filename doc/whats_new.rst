@@ -89,6 +89,11 @@ Enhancements
      the norms returned will be the same as for dense matrices (:issue:`7771`).
      By `Ang Lu <https://github.com/luang008>`_.
 
+   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
+     to change output shape of `transform` method to 2 dimensional.
+     (`#7794 <https://github.com/scikit-learn/scikit-learn/pull/7794>`_)
+     by `Ibraim Ganiev`_.
+
 Bug fixes
 .........
 
