@@ -417,10 +417,10 @@ def test_multi_auc_toydata():
     score_21 = roc_auc_score([0, 1], [0.3, 0.8])
     average_score_12 = (score_12 + score_21) / 2.
 
-    ovo_coefficient = 2. / (n_labels * (n_labels - 1))
     # Unweighted, one-vs-one multiclass ROC AUC algorithm
     sum_avg_scores = average_score_01 + average_score_02 + average_score_12
-    ovo_unweighted_score = ovo_coefficient * sum_avg_scores
+    ovo_unweighted_coefficient = 2. / (n_labels * (n_labels - 1))
+    ovo_unweighted_score = ovo_unweighted_coefficient * sum_avg_scores
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovo"),
         ovo_unweighted_score)
@@ -430,7 +430,8 @@ def test_multi_auc_toydata():
     weighted_sum_avg_scores = (0.5 * average_score_01 +
                                0.5 * average_score_02 +
                                0.25 * average_score_12)
-    ovo_weighted_score = ovo_coefficient * weighted_sum_avg_scores
+    ovo_weighted_coefficient = 2. / (n_labels - 1)
+    ovo_weighted_score = ovo_weighted_coefficient * weighted_sum_avg_scores
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovo", average="weighted"),
         ovo_weighted_score)
