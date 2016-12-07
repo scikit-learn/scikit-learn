@@ -76,7 +76,9 @@ you an estimate of the order of magnitude of the prediction latency.
     data. If you ensure that your data is acceptable, you may suppress
     checking for finiteness by setting the environment variable
     ``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
-    scikit-learn, or configure it in Python with::
+    scikit-learn, or configure it in Python with :func:`sklearn.set_config`.
+    For more control than these global settings, a :func:`config_context`
+    allows you to set this configuration within a specified context::
 
       >>> import sklearn
       >>> with sklearn.config_context(assume_finite=True):
