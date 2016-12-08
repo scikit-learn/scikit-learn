@@ -258,3 +258,20 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
+
+
+def test_estimator_weights_format():
+    # Test estimator weights inputs as list and array
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    eclf1 = VotingClassifier(estimators=[
+                ('lr', clf1), ('rf', clf2)],
+                weights=[1, 2],
+                voting='soft')
+    eclf2 = VotingClassifier(estimators=[
+                ('lr', clf1), ('rf', clf2)],
+                weights=np.array((1, 2)),
+                voting='soft')
+    eclf1.fit(X, y)
+    eclf2.fit(X, y)
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
