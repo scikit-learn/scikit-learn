@@ -56,7 +56,8 @@ def _cov(X, shrinkage=None):
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
             s = ledoit_wolf(X)[0]
-            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]  # rescale
+            # rescale
+            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
         elif shrinkage == 'empirical':
             s = empirical_covariance(X)
         else:
@@ -411,11 +412,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """Fit LinearDiscriminantAnalysis model according to the given
            training data and parameters.
 
-           .. versionchanged:: 0.17
-              Deprecated *store_covariance* have been moved to main constructor.
+           .. versionchanged:: 0.19
+              *store_covariance* has been moved to main constructor.
 
-           .. versionchanged:: 0.17
-              Deprecated *tol* have been moved to main constructor.
+           .. versionchanged:: 0.19
+              *tol* has been moved to main constructor.
 
         Parameters
         ----------
@@ -619,11 +620,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
-            .. versionchanged:: 0.17
-               Deprecated *store_covariance* have been moved to main constructor.
+            .. versionchanged:: 0.19
+               *store_covariance* has been moved to main constructor.
 
-            .. versionchanged:: 0.17
-               Deprecated *tol* have been moved to main constructor.
+            .. versionchanged:: 0.19
+               *tol* has been moved to main constructor.
 
         Parameters
         ----------
