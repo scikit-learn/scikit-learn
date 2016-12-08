@@ -37,7 +37,6 @@ from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin, BaseEstimator)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
@@ -67,7 +66,7 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
 
-def _yield_non_meta_checks(name, Estimator):
+def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_dtype_object
@@ -92,7 +91,7 @@ def _yield_non_meta_checks(name, Estimator):
         # FIXME!
         # in particular GaussianProcess!
         yield check_estimators_overwrite_params
-    if hasattr(Estimator, 'sparsify'):
+    if hasattr(estimator, 'sparsify'):
         yield check_sparsify_coefficients
 
     yield check_estimator_sparse_data
@@ -102,7 +101,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_pickle
 
 
-def _yield_classifier_checks(name, Classifier):
+def _yield_classifier_checks(name, classifier):
     # test classifiers can handle non-array data
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
@@ -122,16 +121,16 @@ def _yield_classifier_checks(name, Classifier):
         yield check_supervised_y_2d
     # test if NotFittedError is raised
     yield check_estimators_unfitted
-    if 'class_weight' in Classifier().get_params().keys():
+    if 'class_weight' in classifier().get_params().keys():
         yield check_class_weight_classifiers
 
     yield check_non_transformer_estimators_n_iter
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_supervised_y_no_nan(name, Estimator):
+def check_supervised_y_no_nan(name, estimator):
     # Checks that the Estimator targets are not NaN.
-
+    estimator = clone(estimator)
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
     y = np.ones(10) * np.inf
@@ -140,7 +139,7 @@ def check_supervised_y_no_nan(name, Estimator):
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
     try:
-        Estimator().fit(X, y)
+        estimator.fit(X, y)
     except ValueError as e:
         if str(e) != errmsg:
             raise ValueError("Estimator {0} raised warning as expected, but "
@@ -200,20 +199,20 @@ def _yield_clustering_checks(name, Clusterer):
     yield check_non_transformer_estimators_n_iter
 
 
-def _yield_all_checks(name, Estimator):
-    for check in _yield_non_meta_checks(name, Estimator):
+def _yield_all_checks(name, estimator):
+    for check in _yield_non_meta_checks(name, estimator):
         yield check
-    if issubclass(Estimator, ClassifierMixin):
-        for check in _yield_classifier_checks(name, Estimator):
+    if isinstance(estimator, ClassifierMixin):
+        for check in _yield_classifier_checks(name, estimator):
             yield check
-    if issubclass(Estimator, RegressorMixin):
-        for check in _yield_regressor_checks(name, Estimator):
+    if isinstance(estimator, RegressorMixin):
+        for check in _yield_regressor_checks(name, estimator):
             yield check
-    if issubclass(Estimator, TransformerMixin):
-        for check in _yield_transformer_checks(name, Estimator):
+    if isinstance(estimator, TransformerMixin):
+        for check in _yield_transformer_checks(name, estimator):
             yield check
-    if issubclass(Estimator, ClusterMixin):
-        for check in _yield_clustering_checks(name, Estimator):
+    if isinstance(estimator, ClusterMixin):
+        for check in _yield_clustering_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
     yield check_fit2d_1sample
@@ -241,10 +240,11 @@ def check_estimator(Estimator):
 
     """
     name = Estimator.__name__
-    check_parameters_default_constructible(name, Estimator)
-    for check in _yield_all_checks(name, Estimator):
+    estimator = Estimator()
+    check_parameters_default_constructible(name, estimator)
+    for check in _yield_all_checks(name, estimator):
         try:
-            check(name, Estimator)
+            check(name, estimator)
         except SkipTest as message:
             # the only SkipTest thrown currently results from not
             # being able to import pandas.
@@ -334,7 +334,7 @@ def _is_32bit():
     return struct.calcsize('P') * 8 == 32
 
 
-def check_estimator_sparse_data(name, Estimator):
+def check_estimator_sparse_data(name, estimator):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -345,9 +345,9 @@ def check_estimator_sparse_data(name, Estimator):
         # catch deprecation warnings
         with ignore_warnings(category=DeprecationWarning):
             if name in ['Scaler', 'StandardScaler']:
-                estimator = Estimator(with_mean=False)
+                estimator = clone(estimator).set_params(with_mean=False)
             else:
-                estimator = Estimator()
+                estimator = clone(estimator)
         set_testing_parameters(estimator)
         # fit and predict
         try:
@@ -374,10 +374,10 @@ def check_estimator_sparse_data(name, Estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_sample_weights_pandas_series(name, Estimator):
+def check_sample_weights_pandas_series(name, estimator):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
-    estimator = Estimator()
+    estimator = clone(estimator)
     if has_fit_parameter(estimator, "sample_weight"):
         try:
             import pandas as pd
@@ -396,13 +396,13 @@ def check_sample_weights_pandas_series(name, Estimator):
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
-def check_dtype_object(name, Estimator):
+def check_dtype_object(name, estimator):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10).astype(object)
     y = (X[:, 0] * 4).astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
 
     estimator.fit(X, y)
@@ -424,7 +424,7 @@ def check_dtype_object(name, Estimator):
 
 
 @ignore_warnings
-def check_dict_unchanged(name, Estimator):
+def check_dict_unchanged(name, estimator):
     # this estimator raises
     # ValueError: Found array with 0 feature(s) (shape=(23, 0))
     # while a minimum of 1 is required.
@@ -439,7 +439,7 @@ def check_dict_unchanged(name, Estimator):
 
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -467,13 +467,13 @@ def check_dict_unchanged(name, Estimator):
                               'Estimator changes __dict__ during %s' % method)
 
 
-def check_fit2d_predict1d(name, Estimator):
+def check_fit2d_predict1d(name, estimator):
     # check by fitting a 2d array and prediting with a 1d array
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
@@ -492,13 +492,13 @@ def check_fit2d_predict1d(name, Estimator):
 
 
 @ignore_warnings
-def check_fit2d_1sample(name, Estimator):
+def check_fit2d_1sample(name, estimator):
     # check by fitting a 2d array and prediting with a 1d array
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
@@ -514,13 +514,13 @@ def check_fit2d_1sample(name, Estimator):
 
 
 @ignore_warnings
-def check_fit2d_1feature(name, Estimator):
+def check_fit2d_1feature(name, estimator):
     # check by fitting a 2d array and prediting with a 1d array
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
@@ -536,13 +536,13 @@ def check_fit2d_1feature(name, Estimator):
 
 
 @ignore_warnings
-def check_fit1d_1feature(name, Estimator):
+def check_fit1d_1feature(name, estimator):
     # check fitting 1d array with 1 feature
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
@@ -559,13 +559,13 @@ def check_fit1d_1feature(name, Estimator):
 
 
 @ignore_warnings
-def check_fit1d_1sample(name, Estimator):
+def check_fit1d_1sample(name, estimator):
     # check fitting 1d array with 1 feature
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = np.array([1])
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
@@ -604,16 +604,15 @@ def check_transformer_data_not_an_array(name, Transformer):
     _check_transformer(name, Transformer, this_X, this_y)
 
 
-def check_transformers_unfitted(name, Transformer):
+def check_transformers_unfitted(name, transformer):
     X, y = _boston_subset()
 
-    with ignore_warnings(category=DeprecationWarning):
-        transformer = Transformer()
+    transformer = clone(transformer)
 
     assert_raises((AttributeError, ValueError), transformer.transform, X)
 
 
-def _check_transformer(name, Transformer, X, y):
+def _check_transformer(name, transformer, X, y):
     if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
@@ -623,8 +622,7 @@ def _check_transformer(name, Transformer, X, y):
         msg = name + ' is non deterministic on 32bit Python'
         raise SkipTest(msg)
     n_samples, n_features = np.asarray(X).shape
-    # catch deprecation warnings
-    transformer = Transformer()
+    transformer = clone(transformer)
     set_random_state(transformer)
     set_testing_parameters(transformer)
 
@@ -660,20 +658,20 @@ def _check_transformer(name, Transformer, X, y):
                 assert_array_almost_equal(
                     x_pred, x_pred2, 2,
                     "fit_transform and transform outcomes not consistent in %s"
-                    % Transformer)
+                    % transformer)
                 assert_array_almost_equal(
                     x_pred, x_pred3, 2,
                     "consecutive fit_transform outcomes not consistent in %s"
-                    % Transformer)
+                    % transformer)
         else:
             assert_array_almost_equal(
                 X_pred, X_pred2, 2,
                 "fit_transform and transform outcomes not consistent in %s"
-                % Transformer)
+                % transformer)
             assert_array_almost_equal(
                 X_pred, X_pred3, 2,
                 "consecutive fit_transform outcomes not consistent in %s"
-                % Transformer)
+                % transformer)
             assert_equal(len(X_pred2), n_samples)
             assert_equal(len(X_pred3), n_samples)
 
@@ -684,7 +682,7 @@ def _check_transformer(name, Transformer, X, y):
 
 
 @ignore_warnings
-def check_pipeline_consistency(name, Estimator):
+def check_pipeline_consistency(name, estimator):
     if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
@@ -699,7 +697,7 @@ def check_pipeline_consistency(name, Estimator):
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
     set_random_state(estimator)
     pipeline = make_pipeline(estimator)
@@ -718,14 +716,14 @@ def check_pipeline_consistency(name, Estimator):
 
 
 @ignore_warnings
-def check_fit_score_takes_y(name, Estimator):
+def check_fit_score_takes_y(name, estimator):
     # check that all estimators accept an optional y
     # in fit and score so they can be used in pipelines
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
     set_random_state(estimator)
 
@@ -738,11 +736,11 @@ def check_fit_score_takes_y(name, Estimator):
             assert_true(args[1] in ["y", "Y"],
                         "Expected y or Y as second argument for method "
                         "%s of %s. Got arguments: %r."
-                        % (func_name, Estimator.__name__, args))
+                        % (func_name, estimator.__name__, args))
 
 
 @ignore_warnings
-def check_estimators_dtypes(name, Estimator):
+def check_estimators_dtypes(name, estimator):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
     X_train_64 = X_train_32.astype(np.float64)
@@ -754,7 +752,7 @@ def check_estimators_dtypes(name, Estimator):
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
-        estimator = Estimator()
+        estimator = clone(estimator)
         set_testing_parameters(estimator)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
@@ -765,8 +763,8 @@ def check_estimators_dtypes(name, Estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_estimators_empty_data_messages(name, Estimator):
-    e = Estimator()
+def check_estimators_empty_data_messages(name, estimator):
+    e = clone(estimator)
     set_testing_parameters(e)
     set_random_state(e, 1)
 
@@ -784,7 +782,7 @@ def check_estimators_empty_data_messages(name, Estimator):
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
 
-def check_estimators_nan_inf(name, Estimator):
+def check_estimators_nan_inf(name, estimator):
     # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
     X_train_finite = rnd.uniform(size=(10, 3))
@@ -803,7 +801,7 @@ def check_estimators_nan_inf(name, Estimator):
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
         with ignore_warnings(category=DeprecationWarning):
-            estimator = Estimator()
+            estimator = clone(estimator)
             set_testing_parameters(estimator)
             set_random_state(estimator, 1)
             # try to fit
@@ -811,15 +809,15 @@ def check_estimators_nan_inf(name, Estimator):
                 estimator.fit(X_train, y)
             except ValueError as e:
                 if 'inf' not in repr(e) and 'NaN' not in repr(e):
-                    print(error_string_fit, Estimator, e)
+                    print(error_string_fit, estimator, e)
                     traceback.print_exc(file=sys.stdout)
                     raise e
             except Exception as exc:
-                print(error_string_fit, Estimator, exc)
+                print(error_string_fit, estimator, exc)
                 traceback.print_exc(file=sys.stdout)
                 raise exc
             else:
-                raise AssertionError(error_string_fit, Estimator)
+                raise AssertionError(error_string_fit, estimator)
             # actually fit
             estimator.fit(X_train_finite, y)
 
@@ -829,14 +827,14 @@ def check_estimators_nan_inf(name, Estimator):
                     estimator.predict(X_train)
                 except ValueError as e:
                     if 'inf' not in repr(e) and 'NaN' not in repr(e):
-                        print(error_string_predict, Estimator, e)
+                        print(error_string_predict, estimator, e)
                         traceback.print_exc(file=sys.stdout)
                         raise e
                 except Exception as exc:
-                    print(error_string_predict, Estimator, exc)
+                    print(error_string_predict, estimator, exc)
                     traceback.print_exc(file=sys.stdout)
                 else:
-                    raise AssertionError(error_string_predict, Estimator)
+                    raise AssertionError(error_string_predict, estimator)
 
             # transform
             if hasattr(estimator, "transform"):
@@ -844,18 +842,18 @@ def check_estimators_nan_inf(name, Estimator):
                     estimator.transform(X_train)
                 except ValueError as e:
                     if 'inf' not in repr(e) and 'NaN' not in repr(e):
-                        print(error_string_transform, Estimator, e)
+                        print(error_string_transform, estimator, e)
                         traceback.print_exc(file=sys.stdout)
                         raise e
                 except Exception as exc:
-                    print(error_string_transform, Estimator, exc)
+                    print(error_string_transform, estimator, exc)
                     traceback.print_exc(file=sys.stdout)
                 else:
-                    raise AssertionError(error_string_transform, Estimator)
+                    raise AssertionError(error_string_transform, estimator)
 
 
 @ignore_warnings
-def check_estimators_pickle(name, Estimator):
+def check_estimators_pickle(name, estimator):
     """Test that we can pickle all estimators"""
     check_methods = ["predict", "transform", "decision_function",
                      "predict_proba"]
@@ -869,7 +867,7 @@ def check_estimators_pickle(name, Estimator):
     # some estimators only take multioutputs
     y = multioutput_estimator_convert_y_2d(name, y)
 
-    estimator = Estimator()
+    estimator = clone(estimator)
 
     set_random_state(estimator)
     set_testing_parameters(estimator)
@@ -882,7 +880,7 @@ def check_estimators_pickle(name, Estimator):
 
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
-    if Estimator.__module__.startswith('sklearn.'):
+    if estimator.__module__.startswith('sklearn.'):
         assert_true(b"version" in pickled_estimator)
     unpickled_estimator = pickle.loads(pickled_estimator)
 
@@ -966,7 +964,7 @@ def check_clusterer_compute_labels_predict(name, Clusterer):
         assert_array_equal(X_pred1, X_pred2)
 
 
-def check_classifiers_one_label(name, Classifier):
+def check_classifiers_one_label(name, classifier):
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "
                             "present.")
@@ -976,32 +974,32 @@ def check_classifiers_one_label(name, Classifier):
     y = np.ones(10)
     # catch deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
-        classifier = Classifier()
+        classifier = clone(classifier)
         set_testing_parameters(classifier)
         # try to fit
         try:
             classifier.fit(X_train, y)
         except ValueError as e:
             if 'class' not in repr(e):
-                print(error_string_fit, Classifier, e)
+                print(error_string_fit, classifier, e)
                 traceback.print_exc(file=sys.stdout)
                 raise e
             else:
                 return
         except Exception as exc:
-            print(error_string_fit, Classifier, exc)
+            print(error_string_fit, classifier, exc)
             traceback.print_exc(file=sys.stdout)
             raise exc
         # predict
         try:
             assert_array_equal(classifier.predict(X_test), y)
         except Exception as exc:
-            print(error_string_predict, Classifier, exc)
+            print(error_string_predict, classifier, exc)
             raise exc
 
 
 @ignore_warnings  # Warnings are raised by decision function
-def check_classifiers_train(name, Classifier):
+def check_classifiers_train(name, classifier):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
@@ -1012,7 +1010,7 @@ def check_classifiers_train(name, Classifier):
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
-        classifier = Classifier()
+        classifier = clone(classifier())
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
         set_testing_parameters(classifier)
@@ -1075,14 +1073,14 @@ def check_classifiers_train(name, Classifier):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_estimators_fit_returns_self(name, Estimator):
+def check_estimators_fit_returns_self(name, estimator):
     """Check if self is returned when calling fit"""
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     y = multioutput_estimator_convert_y_2d(name, y)
     # some want non-negative input
     X -= X.min()
 
-    estimator = Estimator()
+    estimator = clone(estimator)
 
     set_testing_parameters(estimator)
     set_random_state(estimator)
@@ -1091,7 +1089,7 @@ def check_estimators_fit_returns_self(name, Estimator):
 
 
 @ignore_warnings
-def check_estimators_unfitted(name, Estimator):
+def check_estimators_unfitted(name, estimator):
     """Check that predict raises an exception in an unfitted estimator.
 
     Unfitted estimators should raise either AttributeError or ValueError.
@@ -1102,7 +1100,7 @@ def check_estimators_unfitted(name, Estimator):
     # Common test for Regressors as well as Classifiers
     X, y = _boston_subset()
 
-    est = Estimator()
+    est = clone(estimator)
 
     msg = "fit"
     if hasattr(est, 'predict'):
@@ -1123,14 +1121,14 @@ def check_estimators_unfitted(name, Estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_supervised_y_2d(name, Estimator):
+def check_supervised_y_2d(name, estimator):
     if "MultiTask" in name:
         # These only work on 2d, so this test makes no sense
         return
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
-    estimator = Estimator()
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
     set_random_state(estimator)
     # fit
@@ -1155,7 +1153,7 @@ def check_supervised_y_2d(name, Estimator):
     assert_array_almost_equal(y_pred.ravel(), y_pred_2d.ravel())
 
 
-def check_classifiers_classes(name, Classifier):
+def check_classifiers_classes(name, classifier):
     X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
@@ -1172,8 +1170,7 @@ def check_classifiers_classes(name, Classifier):
             y_ = y_names
 
         classes = np.unique(y_)
-        with ignore_warnings(category=DeprecationWarning):
-            classifier = Classifier()
+        classifier = clone(classifier)
         if name == 'BernoulliNB':
             classifier.set_params(binarize=X.mean())
         set_testing_parameters(classifier)
@@ -1191,7 +1188,7 @@ def check_classifiers_classes(name, Classifier):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_regressors_int(name, Regressor):
+def check_regressors_int(name, regressor):
     X, _ = _boston_subset()
     X = X[:50]
     rnd = np.random.RandomState(0)
@@ -1199,8 +1196,8 @@ def check_regressors_int(name, Regressor):
     y = multioutput_estimator_convert_y_2d(name, y)
     rnd = np.random.RandomState(0)
     # separate estimators to control random seeds
-    regressor_1 = Regressor()
-    regressor_2 = Regressor()
+    regressor_1 = clone(regressor)
+    regressor_2 = clone(regressor)
     set_testing_parameters(regressor_1)
     set_testing_parameters(regressor_2)
     set_random_state(regressor_1)
@@ -1221,14 +1218,13 @@ def check_regressors_int(name, Regressor):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_regressors_train(name, Regressor):
+def check_regressors_train(name, regressor):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
     y = multioutput_estimator_convert_y_2d(name, y)
     rnd = np.random.RandomState(0)
-    # catch deprecation warnings
-    regressor = Regressor()
+    regressor = clone(regressor)
     set_testing_parameters(regressor)
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -1258,12 +1254,12 @@ def check_regressors_train(name, Regressor):
 
 
 @ignore_warnings
-def check_regressors_no_decision_function(name, Regressor):
+def check_regressors_no_decision_function(name, regressor):
     # checks whether regressors have decision_function or predict_proba
     rng = np.random.RandomState(0)
     X = rng.normal(size=(10, 4))
     y = multioutput_estimator_convert_y_2d(name, X[:, 0])
-    regressor = Regressor()
+    regressor = clone(regressor)
 
     set_testing_parameters(regressor)
     if hasattr(regressor, "n_components"):
@@ -1282,7 +1278,7 @@ def check_regressors_no_decision_function(name, Regressor):
         assert_warns_message(DeprecationWarning, msg, func, X)
 
 
-def check_class_weight_classifiers(name, Classifier):
+def check_class_weight_classifiers(name, classifier):
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
         raise SkipTest
@@ -1303,8 +1299,7 @@ def check_class_weight_classifiers(name, Classifier):
         else:
             class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
 
-        with ignore_warnings(category=DeprecationWarning):
-            classifier = Classifier(class_weight=class_weight)
+        classifier = clone(classifier).set_params(class_weight=class_weight)
         if hasattr(classifier, "n_iter"):
             classifier.set_params(n_iter=100)
         if hasattr(classifier, "min_weight_fraction_leaf"):
@@ -1316,10 +1311,9 @@ def check_class_weight_classifiers(name, Classifier):
         assert_greater(np.mean(y_pred == 0), 0.89)
 
 
-def check_class_weight_balanced_classifiers(name, Classifier, X_train, y_train,
+def check_class_weight_balanced_classifiers(name, classifier, X_train, y_train,
                                             X_test, y_test, weights):
-    with ignore_warnings(category=DeprecationWarning):
-        classifier = Classifier()
+    classifier = clone(classifier)
     if hasattr(classifier, "n_iter"):
         classifier.set_params(n_iter=100)
 
@@ -1334,14 +1328,13 @@ def check_class_weight_balanced_classifiers(name, Classifier, X_train, y_train,
                    f1_score(y_test, y_pred, average='weighted'))
 
 
-def check_class_weight_balanced_linear_classifier(name, Classifier):
+def check_class_weight_balanced_linear_classifier(name, classifier):
     """Test class weights with non-contiguous class labels."""
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
 
-    with ignore_warnings(category=DeprecationWarning):
-        classifier = Classifier()
+    classifier = clone(classifier)
     if hasattr(classifier, "n_iter"):
         # This is a very small dataset, default n_iter are likely to prevent
         # convergence
@@ -1365,12 +1358,12 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_estimators_overwrite_params(name, Estimator):
+def check_estimators_overwrite_params(name, estimator):
     X, y = make_blobs(random_state=0, n_samples=9)
     y = multioutput_estimator_convert_y_2d(name, y)
     # some want non-negative input
     X -= X.min()
-    estimator = Estimator()
+    estimator = clone(estimator)
 
     set_testing_parameters(estimator)
     set_random_state(estimator)
@@ -1399,9 +1392,8 @@ def check_estimators_overwrite_params(name, Estimator):
                      % (name, param_name, original_value, new_value))
 
 
-def check_no_fit_attributes_set_in_init(name, Estimator):
+def check_no_fit_attributes_set_in_init(name, estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
-    estimator = Estimator()
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):
             # This check is for properties, they can be listed in dir
@@ -1416,11 +1408,11 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'was found in estimator {}'.format(attr, name))
 
 
-def check_sparsify_coefficients(name, Estimator):
+def check_sparsify_coefficients(name, estimator):
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
                   [-1, -2], [2, 2], [-2, -2]])
     y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    est = Estimator()
+    est = clone(estimator)
 
     est.fit(X, y)
     pred_orig = est.predict(X)
@@ -1438,27 +1430,27 @@ def check_sparsify_coefficients(name, Estimator):
     assert_array_equal(pred, pred_orig)
 
 
-def check_classifier_data_not_an_array(name, Estimator):
+def check_classifier_data_not_an_array(name, estimator):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
     y = [1, 1, 1, 2, 2, 2]
     y = multioutput_estimator_convert_y_2d(name, y)
-    check_estimators_data_not_an_array(name, Estimator, X, y)
+    check_estimators_data_not_an_array(name, estimator, X, y)
 
 
-def check_regressor_data_not_an_array(name, Estimator):
+def check_regressor_data_not_an_array(name, estimator):
     X, y = _boston_subset(n_samples=50)
     y = multioutput_estimator_convert_y_2d(name, y)
-    check_estimators_data_not_an_array(name, Estimator, X, y)
+    check_estimators_data_not_an_array(name, estimator, X, y)
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_estimators_data_not_an_array(name, Estimator, X, y):
+def check_estimators_data_not_an_array(name, estimator, X, y):
 
     if name in CROSS_DECOMPOSITION:
         raise SkipTest
     # separate estimators to control random seeds
-    estimator_1 = Estimator()
-    estimator_2 = Estimator()
+    estimator_1 = clone(estimator)
+    estimator_2 = clone(estimator)
     set_testing_parameters(estimator_1)
     set_testing_parameters(estimator_2)
     set_random_state(estimator_1)
@@ -1475,15 +1467,11 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
     assert_array_almost_equal(pred1, pred2, 2, name)
 
 
-def check_parameters_default_constructible(name, Estimator):
-    classifier = LinearDiscriminantAnalysis()
+def check_parameters_default_constructible(name, estimator):
     # test default-constructibility
     # get rid of deprecation warnings
+    estimator = clone(estimator)
     with ignore_warnings(category=DeprecationWarning):
-        if name in META_ESTIMATORS:
-            estimator = Estimator(classifier)
-        else:
-            estimator = Estimator()
         # test cloning
         clone(estimator)
         # test __repr__
@@ -1546,7 +1534,7 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_non_transformer_estimators_n_iter(name, Estimator):
+def check_non_transformer_estimators_n_iter(name, estimator):
     # Test that estimators that are not transformers with a parameter
     # max_iter, return the attribute of n_iter_ at least 1.
 
@@ -1564,9 +1552,9 @@ def check_non_transformer_estimators_n_iter(name, Estimator):
 
     # LassoLars stops early for the default alpha=1.0 the iris dataset.
     if name == 'LassoLars':
-        estimator = Estimator(alpha=0.)
+        estimator = clone(estimator).set_params(alpha=0.)
     else:
-        estimator = Estimator()
+        estimator = clone(estimator)
     if hasattr(estimator, 'max_iter'):
         iris = load_iris()
         X, y_ = iris.data, iris.target
@@ -1585,10 +1573,10 @@ def check_non_transformer_estimators_n_iter(name, Estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_transformer_n_iter(name, Estimator):
+def check_transformer_n_iter(name, estimator):
     # Test that transformers with a parameter max_iter, return the
     # attribute of n_iter_ at least 1.
-    estimator = Estimator()
+    estimator = clone(estimator)
     if hasattr(estimator, "max_iter"):
         if name in CROSS_DECOMPOSITION:
             # Check using default data
@@ -1642,11 +1630,11 @@ def check_get_params_invariance(name, estimator):
                     shallow_params.items()))
 
 
-def check_classifiers_regression_target(name, Estimator):
+def check_classifiers_regression_target(name, estimator):
     # Check if classifier throws an exception when fed regression targets
 
     boston = load_boston()
     X, y = boston.data, boston.target
-    e = Estimator()
+    e = clone(estimator)
     msg = 'Unknown label type: '
     assert_raises_regex(ValueError, msg, e.fit, X, y)

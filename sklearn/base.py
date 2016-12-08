@@ -13,7 +13,6 @@ from .utils.fixes import signature
 from . import __version__
 
 
-##############################################################################
 def _first_and_last_element(arr):
     """Returns first and last element of numpy array or sparse matrix."""
     if isinstance(arr, np.ndarray) or hasattr(arr, 'data'):
@@ -120,7 +119,6 @@ def clone(estimator, safe=True):
     return new_object
 
 
-###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
@@ -171,7 +169,6 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-###############################################################################
 class BaseEstimator(object):
     """Base class for all estimators in scikit-learn
 
@@ -307,8 +304,10 @@ class BaseEstimator(object):
                     UserWarning)
         self.__dict__.update(state)
 
+    def _get_tags(self):
+        return {}
 
-###############################################################################
+
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
@@ -340,8 +339,11 @@ class ClassifierMixin(object):
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
+    def _get_tags(self):
+        tags = super(ClassifierMixin, self)._get_tags()
+        return tags.copy().update(is_classifier=True)
 
-###############################################################################
+
 class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
@@ -378,8 +380,11 @@ class RegressorMixin(object):
         return r2_score(y, self.predict(X), sample_weight=sample_weight,
                         multioutput='variance_weighted')
 
+    def _get_tags(self):
+        tags = super(ClassifierMixin, self)._get_tags()
+        return tags.copy().update(is_regressor=True)
 
-###############################################################################
+
 class ClusterMixin(object):
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
@@ -401,6 +406,10 @@ class ClusterMixin(object):
         # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
+
+    def _get_tags(self):
+        tags = super(ClassifierMixin, self)._get_tags()
+        return tags.copy().update(is_clusterer=True)
 
 
 class BiclusterMixin(object):
@@ -455,7 +464,6 @@ class BiclusterMixin(object):
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-###############################################################################
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn."""
 
@@ -488,6 +496,10 @@ class TransformerMixin(object):
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
+    def _get_tags(self):
+        tags = super(ClassifierMixin, self)._get_tags()
+        return tags.copy().update(is_transformer=True)
+
 
 class DensityMixin(object):
     """Mixin class for all density estimators in scikit-learn."""
@@ -507,13 +519,27 @@ class DensityMixin(object):
         pass
 
 
-###############################################################################
 class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
+    def _get_tags(self):
+        tags = super(ClassifierMixin, self)._get_tags()
+        return tags.copy().update(is_meta_estimator=True)
 
 
-###############################################################################
+class SparseSupportMixin(object):
+    """Mixin to mark estimators that support sparse matrix input."""
+    def _get_tags(self):
+        tags = super(ClassifierMixin, self)._get_tags()
+        return tags.copy().update(sparse_support=True)
+
+
+class MultiLabelMixin(object):
+    """Mixin to mark estimators that support multilabel classification."""
+    def _get_tags(self):
+        tags = super(ClassifierMixin, self)._get_tags()
+        return tags.copy().update(multilabel=True)
+
 
 def is_classifier(estimator):
     """Returns True if the given estimator is (probably) a classifier."""
