@@ -11,6 +11,8 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 import warnings
+import sys
+import functools
 import os
 import errno
 
@@ -198,7 +200,6 @@ except ImportError:
     warnings.warn('Using `sort` instead of partition.'
                   'Upgrade numpy to 1.8 for better performace on large number'
                   'of clusters')
-
     def partition(a, kth, axis=-1, kind='introselect', order=None):
         return np.sort(a, axis=axis, order=order)
 
@@ -267,7 +268,7 @@ else:
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
-    """Helper to workaround Python 2 limitation in pickling instance methods"""
+    """Helper to workaround Python 2 limitations of pickling instance methods"""
     return getattr(obj, methodname)(*args, **kwargs)
 
 
