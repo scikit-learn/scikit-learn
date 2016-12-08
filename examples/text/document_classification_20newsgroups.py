@@ -83,7 +83,13 @@ op.add_option("--filtered",
               help="Remove newsgroup information that is easily overfit: "
                    "headers, signatures, and quoting.")
 
-(opts, args) = op.parse_args()
+
+def is_interactive():
+    return not hasattr(sys.modules['__main__ '], '__file__')
+
+# work-around for Jupyter notebook and IPython console
+argv = [] if is_interactive() else sys.argv[1:]
+(opts, args) = op.parse_args(argv)
 if len(args) > 0:
     op.error("this script takes no arguments.")
     sys.exit(1)
