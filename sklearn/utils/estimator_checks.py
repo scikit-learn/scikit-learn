@@ -737,7 +737,7 @@ def check_fit_score_takes_y(name, estimator):
             assert_true(args[1] in ["y", "Y"],
                         "Expected y or Y as second argument for method "
                         "%s of %s. Got arguments: %r."
-                        % (func_name, estimator.__name__, args))
+                        % (func_name, type(estimator).__name__, args))
 
 
 @ignore_warnings
@@ -1474,7 +1474,7 @@ def check_parameters_default_constructible(name, Estimator):
     # get rid of deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
         if name in META_ESTIMATORS:
-            estimator = Estimator(LinearDiscriminantAnalysis)
+            estimator = Estimator(LinearDiscriminantAnalysis())
         else:
             estimator = Estimator()
         # test cloning
@@ -1626,7 +1626,7 @@ def check_get_params_invariance(name, estimator):
         return
 
     else:
-        e = estimator()
+        e = clone(estimator)
 
     shallow_params = e.get_params(deep=False)
     deep_params = e.get_params(deep=True)
