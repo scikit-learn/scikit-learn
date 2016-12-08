@@ -1155,7 +1155,8 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
         Array of pairwise distances between samples, or a feature array.
 
     Y : array [n_samples_b, n_features], optional
-        An optional second feature array. Only allowed if metric != "precomputed".
+        An optional second feature array. Only allowed if
+        metric != "precomputed".
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -1190,10 +1191,10 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
     Returns
     -------
     D : generator of blocks based on the ``block_size`` parameter. The blocks,
-        when concatenated, produce a distance matrix D such that D_{i, j} is the
-        distance between the ith and jth vectors of the given matrix X, if Y is
-        None. If Y is not None, then D_{i, j} is the distance between the ith
-        array from X and the jth array from Y.
+        when concatenated, produce a distance matrix D such that D_{i, j} is
+        the distance between the ith and jth vectors of the given matrix X, if
+        Y is None. If Y is not None, then D_{i, j} is the distance between the
+        ith array from X and the jth array from Y.
 
     """
     n_samples = X.shape[0]
@@ -1253,7 +1254,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         Array of pairwise distances between samples, or a feature array.
 
     Y : array [n_samples_b, n_features], optional
-        An optional second feature array. Only allowed if metric != "precomputed".
+        An optional second feature array. Only allowed if
+        metric != "precomputed".
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
