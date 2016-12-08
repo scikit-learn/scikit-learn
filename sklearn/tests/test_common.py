@@ -21,11 +21,9 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
-from sklearn.utils.testing import META_ESTIMATORS
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -52,13 +50,9 @@ def test_all_estimators():
     assert_greater(len(estimators), 0)
 
     for name, Estimator in estimators:
-        if name in META_ESTIMATORS:
-            estimator = Estimator(LinearDiscriminantAnalysis)
-        else:
-            estimator = Estimator()
         # some can just not be sensibly default constructed
         yield (_named_check(check_parameters_default_constructible, name),
-               name, estimator)
+               name, Estimator)
 
 
 def test_non_meta_estimators():

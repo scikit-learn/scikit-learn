@@ -31,6 +31,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
@@ -1467,11 +1468,15 @@ def check_estimators_data_not_an_array(name, estimator, X, y):
     assert_array_almost_equal(pred1, pred2, 2, name)
 
 
-def check_parameters_default_constructible(name, estimator):
+def check_parameters_default_constructible(name, Estimator):
+    # THIS ONE IS STILL ON CLASSES
     # test default-constructibility
     # get rid of deprecation warnings
-    estimator = clone(estimator)
     with ignore_warnings(category=DeprecationWarning):
+        if name in META_ESTIMATORS:
+            estimator = Estimator(LinearDiscriminantAnalysis)
+        else:
+            estimator = Estimator()
         # test cloning
         clone(estimator)
         # test __repr__
