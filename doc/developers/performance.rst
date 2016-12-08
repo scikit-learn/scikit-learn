@@ -452,10 +452,10 @@ kcachegrind
 ~~~~~~~~~~~
 
 You can use ``yep`` to create a profiling report. ``kcachegrind`` provides
-a graphical environment to visualize these report. However, you need to
-translate ``gperftools`` report into ``kcachegrind`` file::
+a graphical environment to visualize this report. However, you need to
+convert ``gperftools`` report into ``kcachegrind`` file::
 
-  # Run yep to profile some file
+  # Run yep to profile some python script
   python -m yep -v benchmarks/my_file.py arcene
 
   # convert profile.log to callgrind compatible format
