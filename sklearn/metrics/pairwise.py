@@ -1206,10 +1206,13 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
         raise ValueError('block_size should be at least n_samples * %d bytes '
                          '= %.0f MiB, got %r' % (BYTES_PER_FLOAT,
                                                  min_block_mib, block_size))
+    if Y is None:
+        Y = X
+                                             
     for start in range(0, n_samples, block_n_rows):
         # get distances from block to every other sample
         stop = min(start + block_n_rows, X.shape[0])
-        yield pairwise_distances(X[start:stop], X, metric, n_jobs, **kwds)
+        yield pairwise_distances(X[start:stop], Y, metric, n_jobs, **kwds)
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
