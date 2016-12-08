@@ -118,9 +118,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             X_idx_sorted=None):
 
         random_state = check_random_state(self.random_state)
+        accept_sparse = None
+        sparse_formats = ['bsr', 'csr', 'csc', 'coo', 'dia', 'dok', 'lil']
+        is_classification = isinstance(self, ClassifierMixin)
+        if is_classification:
+            accept_sparse = sparse_formats
+
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
-            y = check_array(y, ensure_2d=False, dtype=None)
+            y = check_array(y, ensure_2d=False, dtype=None,
+                            accept_sparse=accept_sparse)
             if issparse(X):
                 X.sort_indices()
 
@@ -130,7 +137,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
-        is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
         expanded_class_weight = None
@@ -738,7 +744,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
-
 
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.

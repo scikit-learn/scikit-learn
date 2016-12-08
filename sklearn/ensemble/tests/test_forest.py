@@ -27,6 +27,7 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_32bit
@@ -159,7 +160,8 @@ def check_boston_criterion(name, criterion):
 
 
 def test_boston():
-    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
+    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae",
+                                                       "friedman_mse")):
         yield check_boston_criterion, name, criterion
 
 
@@ -228,7 +230,8 @@ def check_importances(name, criterion, X, y):
     assert_true(np.all(importances >= 0.0))
 
     for scale in [0.5, 10, 100]:
-        est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
+        est = ForestEstimator(n_estimators=20, random_state=0,
+                              criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
         assert_less(np.abs(importances - importances_bis).mean(), 0.001)
@@ -711,7 +714,8 @@ def check_min_samples_split(name):
     assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
                    "Failed with {0}".format(name))
 
-    est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
+    est = ForestEstimator(min_samples_split=0.5, n_estimators=1,
+                          random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
@@ -833,19 +837,19 @@ def test_sparse_input():
         yield check_sparse_input, name, X, sparse_matrix(X), y
 
 
-def check_no_sparse_y_support(name):
+def check_no_sparse_y_support_classifier(name):
     X, y = datasets.make_multilabel_classification(random_state=0,
                                                    n_samples=50)
     y_sparse = csr_matrix(y)
-    ForestEstimator = FOREST_ESTIMATORS[name]
-    if name not in FOREST_TRANSFORMERS:
-        assert_raises(ValueError, ForestEstimator(random_state=0).fit, X, y_sparse)
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    assert_raise_message(ValueError, "Unknown label type: 'unknown'",
+                  ForestClassifier(random_state=0).fit, X, y_sparse)
 
 
-def test_no_sparse_y_support():
+def test_no_sparse_y_support_classifier():
     # Currently we don't support sparse y
-    for name in FOREST_ESTIMATORS:
-        yield (check_no_sparse_y_support, name)
+    for name in FOREST_CLASSIFIERS:
+        yield (check_no_sparse_y_support_classifier, name)
 
 
 def check_memory_layout(name, dtype):

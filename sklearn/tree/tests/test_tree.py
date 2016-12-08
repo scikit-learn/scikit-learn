@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
@@ -602,7 +603,6 @@ def test_min_samples_split():
                        "Failed with {0}".format(name))
 
 
-
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
     X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
@@ -817,7 +817,8 @@ def test_min_impurity_split():
                                  est.tree_.impurity[node],
                                  est.min_impurity_split))
 
-        # verify leaf nodes have impurity [0,min_impurity_split] when using min_impurity_split
+        # verify leaf nodes have impurity [0,min_impurity_split] when using
+        # min_impurity_split
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             min_impurity_split=min_impurity_split,
                             random_state=0)
@@ -865,7 +866,6 @@ def test_pickle():
                          fitted_attribute[attribute],
                          "Failed to generate same attribute {0} after "
                          "pickling with {1}".format(attribute, name))
-
 
 
 def test_multioutput():
@@ -1177,7 +1177,8 @@ def test_arrays_persist():
     # non-regression for #2726
     for attr in ['n_classes', 'value', 'children_left', 'children_right',
                  'threshold', 'impurity', 'feature', 'n_node_samples']:
-        value = getattr(DecisionTreeClassifier().fit([[0], [1]], [0, 1]).tree_, attr)
+        value = getattr(DecisionTreeClassifier().fit([[0], [1]], [0, 1]).tree_,
+                        attr)
         # if pointing to freed memory, contents may be arbitrary
         assert_true(-3 <= value.flat[0] < 3,
                     'Array points to arbitrary memory')
@@ -1592,7 +1593,11 @@ def test_decision_path():
 def check_no_sparse_y_support(name):
     X, y = X_multilabel, csr_matrix(y_multilabel)
     TreeEstimator = ALL_TREES[name]
-    assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
+    if name in CLF_TREES:
+        assert_raise_message(ValueError, "Unknown label type: 'unknown'",
+                             TreeEstimator(random_state=0).fit, X, y)
+    else:
+        assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
 
 
 def test_no_sparse_y_support():
@@ -1606,11 +1611,12 @@ def test_mae():
     # on small toy dataset
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
-    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3])
+    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
-    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3], [0.6,0.3,0.1,1.0,0.3])
+    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3],
+               [0.6, 0.3, 0.1, 1.0, 0.3])
     assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
     assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
 
