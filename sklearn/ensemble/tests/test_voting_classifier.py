@@ -260,8 +260,8 @@ def test_sample_weight():
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
 
 
-def test_fit():
-    # Test sample weights inputs as list and array
+def test_estimator_weights_format():
+    # Test estimator weights inputs as list and array
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     eclf1 = VotingClassifier(estimators=[
