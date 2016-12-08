@@ -451,6 +451,18 @@ Using valgrind / callgrind / kcachegrind
 kcachegrind
 ~~~~~~~~~~~
 
+You can use ``yep`` to create a profiling report. ``kcachegrind`` provides
+a graphical environment to visualize these report. However, you need to
+translate ``gperftools`` report into ``kcachegrind`` file::
+
+  # Run yep to profile some file
+  python -m yep -v benchmarks/my_file.py arcene
+
+  # convert profile.log to callgrind compatible format
+  pprof --callgrind /usr/bin/python ./my_file.py.prof > my_file.py.callgrin
+ 
+  # open my_file.py.callgrin with kcachegrind
+  kcachegrind my_file.py.callgrin
 
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
