@@ -362,8 +362,7 @@ cdef class WeightedPQueue:
         # Resize if capacity not sufficient
         if array_ptr >= self.capacity:
             self.capacity *= 2
-            with gil:
-                safe_realloc(&self.array_, self.capacity)
+            safe_realloc(&self.array_, self.capacity)
 
         # Put element as last element of array
         array = self.array_
