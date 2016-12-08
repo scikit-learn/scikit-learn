@@ -12,7 +12,7 @@ likelihood of your contribution being merged.**
 How to contribute
 -----------------
 
-The preferred workflow for contributing to scikit-learn is to fork the 
+The preferred workflow for contributing to scikit-learn is to fork the
 [main repository](https://github.com/scikit-learn/scikit-learn) on
 GitHub, clone, and develop on a branch. Steps:
 
@@ -26,13 +26,13 @@ GitHub, clone, and develop on a branch. Steps:
    $ git clone git@github.com:YourLogin/scikit-learn.git
    $ cd scikit-learn
    ```
-   
+
 3. Create a ``feature`` branch to hold your development changes:
 
    ```bash
    $ git checkout -b my-feature
    ```
-   
+
    Always use a ``feature`` branch. It's good practice to never work on the ``master`` branch!
 
 4. Develop the feature on your feature branch. Add changed files using ``git add`` and then ``git commit`` files:
@@ -48,11 +48,13 @@ GitHub, clone, and develop on a branch. Steps:
    $ git push -u origin my-feature
    ```
 
+  *Note*: if your PR includes changes to files under the ``doc/`` or ``examples/`` folders, include in your commit message ``[doc build]``. Otherwise, include in your commit message ``[doc skip]``. This will allow the CI to avoid unnecessarily building the docs.
+
 5. Go to the GitHub web page of your fork of the scikit-learn repo.
 Click the 'Pull request' button to send your changes to the project's maintainers for
 review. This will send an email to the committers.
 
-(If any of the above seems like magic to you, please look up the 
+(If any of the above seems like magic to you, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
 
 Pull Request Checklist
@@ -179,7 +181,7 @@ following rules before submitting:
   import scipy; print("SciPy", scipy.__version__)
   import sklearn; print("Scikit-Learn", sklearn.__version__)
   ```
-   
+
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
    [reproducible](http://stackoverflow.com/help/mcve) code snippet
@@ -228,5 +230,5 @@ Further Information
 -------------------
 
 Visit the [Contributing Code](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
-section of the website for more information including conforming to the 
+section of the website for more information including conforming to the
 API spec and profiling contributed code.
