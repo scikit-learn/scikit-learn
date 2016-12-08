@@ -51,7 +51,7 @@ x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # Instanciate a Gaussian Process model
 kernel = C(1.0, (1e-3, 1e3)) * RBF(10, (1e-2, 1e2))
-gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
+gp = GaussianProcessRegressor(kernel=kernel, n_jobs=-1, n_restarts_optimizer=9)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
 gp.fit(X, y)
@@ -87,7 +87,7 @@ y += noise
 
 # Instanciate a Gaussian Process model
 gp = GaussianProcessRegressor(kernel=kernel, alpha=(dy / y) ** 2,
-                              n_restarts_optimizer=10)
+                              n_restarts_optimizer=10, n_jobs=-1)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
 gp.fit(X, y)
