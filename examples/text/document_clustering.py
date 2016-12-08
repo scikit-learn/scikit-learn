@@ -102,7 +102,7 @@ op.add_option("--verbose",
 print(__doc__)
 op.print_help()
 
-
+# work-around for Jupyter notebook and IPython console
 def is_interactive():
     return not hasattr(sys.modules['__main__'], '__file__')
 
