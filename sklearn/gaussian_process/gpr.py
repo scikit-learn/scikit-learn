@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.deprecation import deprecated
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
@@ -143,8 +144,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     @property
     @deprecated("Attribute ``rng_`` is deprecated in version 0.19 and will be"
                 " used only as a variable in version 0.21.")
-    def rng_(self):
-        return self._rng_
+    def rng(self):
+        return self._rng
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
@@ -167,7 +168,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.kernel_ = clone(self.kernel)
 
-        self._rng_ = check_random_state(self.random_state)
+        self._rng = check_random_state(self.random_state)
 
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
@@ -217,7 +218,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 bounds = self.kernel_.bounds
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
-                        self._rng_.uniform(bounds[:, 0], bounds[:, 1])
+                        self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
