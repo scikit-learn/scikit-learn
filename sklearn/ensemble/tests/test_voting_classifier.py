@@ -274,4 +274,4 @@ def test_estimator_weights_format():
                 voting='soft')
     eclf1.fit(X, y)
     eclf2.fit(X, y)
-    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
