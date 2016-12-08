@@ -292,7 +292,7 @@ class LabelPropagation(BaseLabelPropagation):
         Parameter for knn kernel
 
     alpha : float
-        DEPRECATED: It's internally fixed to zero and it'll be removed in 0.19
+        DEPRECATED: Deprecated in 0.19 and it's going to be removed in 0.21.
 
     max_iter : float
         Change maximum number of iterations allowed
@@ -344,9 +344,14 @@ class LabelPropagation(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=.0, max_iter=30, tol=1e-3, n_jobs=1):
+                 alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
         # alpha is deprecated for LabelPropagation because it doesn't have any
-        # theoretical meaning (from the reference paper).
+        # theoretical meaning (from the reference paper). Look at PR 6727.
+        if alpha is not None:
+            warnings.warn(
+                "Deprecated in 0.19 and it's going to be removed in 0.21.",
+                DeprecationWarning
+            )
         alpha = .0
         super(LabelPropagation, self).__init__(kernel=kernel, gamma=gamma,
                                                n_neighbors=n_neighbors,
