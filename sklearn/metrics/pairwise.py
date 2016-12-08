@@ -1208,7 +1208,7 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
                                                  min_block_mib, block_size))
     if Y is None:
         Y = X
-                                             
+
     for start in range(0, n_samples, block_n_rows):
         # get distances from block to every other sample
         stop = min(start + block_n_rows, X.shape[0])
