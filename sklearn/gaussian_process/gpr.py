@@ -142,8 +142,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.random_state = random_state
 
     @property
-    @deprecated("Attribute ``rng_`` is deprecated in version 0.19 and will be"
-                " used only as a variable in version 0.21.")
+    @deprecated("Attribute ``rng`` is deprecated in version 0.19 and will be"
+                " removed in version 0.21.")
     def rng(self):
         return self._rng
 
