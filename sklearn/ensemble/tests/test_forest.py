@@ -843,7 +843,7 @@ def check_no_sparse_y_support_classifier(name):
     y_sparse = csr_matrix(y)
     ForestClassifier = FOREST_CLASSIFIERS[name]
     assert_raise_message(ValueError, "Unknown label type: 'unknown'",
-                  ForestClassifier(random_state=0).fit, X, y_sparse)
+                         ForestClassifier(random_state=0).fit, X, y_sparse)
 
 
 def test_no_sparse_y_support_classifier():
