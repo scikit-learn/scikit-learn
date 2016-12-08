@@ -451,18 +451,14 @@ Using valgrind / callgrind / kcachegrind
 kcachegrind
 ~~~~~~~~~~~
 
-You can use ``yep`` to create a profiling report. ``kcachegrind`` provides
-a graphical environment to visualize this report. However, you need to
-convert ``gperftools`` report into ``kcachegrind`` file::
+You can use ``yep`` uses ``gperftools`` to create a profiling report.
+``kcachegrind`` provides a graphical environment to visualize this report::
 
   # Run yep to profile some python script
-  python -m yep -v benchmarks/my_file.py arcene
+  python -m yep -c benchmarks/my_file.py arcene
 
-  # convert profile.log to callgrind compatible format
-  pprof --callgrind /usr/bin/python ./my_file.py.prof > my_file.py.callgrin
- 
   # open my_file.py.callgrin with kcachegrind
-  kcachegrind my_file.py.callgrin
+  kcachegrind my_file.py.prof
 
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
@@ -481,4 +477,3 @@ A sample algorithmic trick: warm restarts for cross validation
 
 TODO: demonstrate the warm restart tricks for cross validation of linear
 regression with Coordinate Descent.
-
