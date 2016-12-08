@@ -108,6 +108,10 @@ Bug fixes
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
      `Kathleen Chen`_.
 
+   - Fix a bug where :class:`sklearn.ensemble.VotingClassifier` raises an error
+     when a numpy array is passed in for weights. :issue:`7983` by
+     :user:`Vincent Pham <vincentpham1991>`.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
@@ -4830,3 +4834,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ron Weiss: http://www.ee.columbia.edu/~ronw
 
 .. _Kathleen Chen: https://github.com/kchen17
+
+.. _Vincent Pham: https://github.com/vincentpham1991
