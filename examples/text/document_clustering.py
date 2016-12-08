@@ -102,10 +102,11 @@ op.add_option("--verbose",
 print(__doc__)
 op.print_help()
 
-# work-around for Jupyter notebook and IPython console
+
 def is_interactive():
     return not hasattr(sys.modules['__main__'], '__file__')
 
+# work-around for Jupyter notebook and IPython console
 argv = [] if is_interactive() else sys.argv[1:]
 (opts, args) = op.parse_args(argv)
 if len(args) > 0:
