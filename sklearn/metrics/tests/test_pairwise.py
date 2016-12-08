@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
@@ -27,6 +28,7 @@ from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances_blockwise
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
@@ -368,6 +370,49 @@ def test_pairwise_distances_argmin_min():
         X, Y, axis=0, metric="manhattan", batch_size=50)
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+
+
+def check_invalid_block_size_generator(generator):
+    for i in generator:
+        return i
+
+
+def test_pairwise_distances_blockwise_invalid_block_size():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((400, 4))
+    y = rng.random_sample((200, 4))
+    gen = pairwise_distances_blockwise(X, y, block_size=0, metric='euclidean')
+    assert_raise_message(ValueError, 'block_size should be at least n_samples '
+                         '* 8 bytes = 1 MiB, got 0',
+                         check_invalid_block_size_generator, gen)
+
+
+def test_pairwise_distances_blockwise():
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((400, 4))
+    gen = pairwise_distances_blockwise(X, block_size=1, metric="euclidean")
+    S = np.empty((0, X.shape[0]))
+    for row in gen:
+        S = np.vstack((S, row))
+    S2 = euclidean_distances(X)
+    assert_array_almost_equal(S, S2)
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((200, 4))
+    gen = pairwise_distances_blockwise(X, Y, block_size=1, metric="euclidean")
+    S = np.empty((0, Y.shape[0]))
+    for row in gen:
+        S = np.vstack((S, row))
+    S2 = euclidean_distances(X, Y)
+    assert_array_almost_equal(S, S2)
+    # absurdly large block_size
+    gen = pairwise_distances_blockwise(X, Y, block_size=10000,
+                                       metric='euclidean')
+    S = np.empty((0, Y.shape[0]))
+    for row in gen:
+        S = np.vstack((S, row))
+    assert_almost_equal(S, S2)
 
 
 def test_euclidean_distances():
