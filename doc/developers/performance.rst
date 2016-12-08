@@ -455,7 +455,7 @@ You can use ``yep`` uses ``gperftools`` to create a profiling report.
 ``kcachegrind`` provides a graphical environment to visualize this report::
 
   # Run yep to profile some python script
-  python -m yep -c benchmarks/my_file.py arcene
+  python -m yep -c my_file.py
 
   # open my_file.py.callgrin with kcachegrind
   kcachegrind my_file.py.prof
