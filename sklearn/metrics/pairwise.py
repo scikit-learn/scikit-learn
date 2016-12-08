@@ -1131,7 +1131,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
 
 DEFAULT_BLOCK_SIZE = 64
-BYTES_PER_FLOAT = 64
+BYTES_PER_FLOAT = 8
 
 
 def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
