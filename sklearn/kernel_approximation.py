@@ -404,10 +404,10 @@ class IntersectionSampler(BaseAdditiveHomogenousKernelSampler):
     See also
     --------
     AdditiveChi2Sampler : A Fourier-approximation to the additive chi squared
-    kernel.
+        kernel.
 
     JensenShannonSampler : A Fourier-approximation to the Jensen-Shannon
-    kernel.
+        kernel.
 
     References
     ----------
@@ -453,10 +453,9 @@ class JensenShannonSampler(BaseAdditiveHomogenousKernelSampler):
     See also
     --------
     AdditiveChi2Sampler : A Fourier-approximation to the additive chi squared
-    kernel.
+        kernel.
 
-    IntersectionSampler : A Fourier-approximation to the intersection
-    kernel.
+    IntersectionSampler : A Fourier-approximation to the intersection kernel.
 
     References
     ----------
