@@ -633,6 +633,8 @@ Kernels:
    :template: class.rst
 
    kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.IntersectionSampler
+   kernel_approximation.JensenShannonSampler
    kernel_approximation.Nystroem
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
