@@ -66,7 +66,7 @@ op.add_option("--chi2_select",
 op.add_option("--info_gain_select",
               action="store", type="int", dest="select_info_gain",
               help="Select some number of features using information gain"
-                    " score")
+                   " score")
 op.add_option("--confusion_matrix",
               action="store_true", dest="print_cm",
               help="Print the confusion matrix.")
