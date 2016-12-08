@@ -627,14 +627,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_score_dicts, test_score_dicts, test_sample_counts,
-             fit_time, score_time) = zip(*out)
+            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
+             score_time) = zip(*out)
         else:
-            (test_score_dicts, test_sample_counts,
-             fit_time, score_time) = zip(*out)
-
-        candidate_params = parameters[::n_splits]
-        n_candidates = len(candidate_params)
+            (test_score_dicts, test_sample_counts, fit_time,
+             score_time) = zip(*out)
 
         test_scores = _aggregate_score_dicts(test_score_dicts)
         if self.return_train_score:
