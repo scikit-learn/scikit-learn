@@ -229,7 +229,8 @@ def test_radius_neighbors_boundary_handling():
 
     # Build a LSHForest model with hyperparameter values that always guarantee
     # exact results on this toy dataset.
-    lsfh = LSHForest(min_hash_match=0, n_candidates=n_points).fit(X)
+    lsfh = LSHForest(min_hash_match=0, n_candidates=n_points,
+                     random_state=42).fit(X)
 
     # define a query aligned with the first axis
     query = [[1., 0.]]

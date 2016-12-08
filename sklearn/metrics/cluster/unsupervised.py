@@ -226,7 +226,7 @@ def calinski_harabaz_score(X, labels):
 
     Returns
     -------
-    score: float
+    score : float
         The resulting Calinski-Harabaz score.
 
     References

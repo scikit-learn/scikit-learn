@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
 from scipy.misc import comb
 from itertools import combinations
-from sklearn.utils.fixes import combinations_with_replacement
+from itertools import combinations_with_replacement
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -1028,16 +1028,23 @@ def test_cv_iterable_wrapper():
     # Since the wrapped iterable is enlisted and stored,
     # split can be called any number of times to produce
     # consistent results.
-    assert_array_equal(list(kf_iter_wrapped.split(X, y)),
-                       list(kf_iter_wrapped.split(X, y)))
+    np.testing.assert_equal(list(kf_iter_wrapped.split(X, y)),
+                            list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
     kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
-    assert_array_equal(list(kf_randomized_iter_wrapped.split(X, y)),
-                       list(kf_randomized_iter_wrapped.split(X, y)))
-    assert_true(np.any(np.array(list(kf_iter_wrapped.split(X, y))) !=
-                       np.array(list(kf_randomized_iter_wrapped.split(X, y)))))
+    np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
+                            list(kf_randomized_iter_wrapped.split(X, y)))
+
+    try:
+        np.testing.assert_equal(list(kf_iter_wrapped.split(X, y)),
+                                list(kf_randomized_iter_wrapped.split(X, y)))
+        splits_are_equal = True
+    except AssertionError:
+        splits_are_equal = False
+    assert_false(splits_are_equal, "If the splits are randomized, "
+                 "successive calls to split should yield different results")
 
 
 def test_group_kfold():
