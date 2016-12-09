@@ -512,7 +512,7 @@ class BinomialDeviance(ClassificationLossFunction):
         denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
 
         # prevents overflow and division by zero
-        if abs(denominator) < np.finfo(np.float32).tiny:
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -579,7 +579,7 @@ class MultinomialDeviance(ClassificationLossFunction):
                              (1.0 - y + residual))
 
         # prevents overflow and division by zero
-        if abs(denominator) < np.finfo(np.float32).tiny:
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -637,7 +637,7 @@ class ExponentialLoss(ClassificationLossFunction):
         denominator = np.sum(sample_weight * np.exp(-y_ * pred))
 
         # prevents overflow and division by zero
-        if abs(denominator) < np.finfo(np.float32).tiny:
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
