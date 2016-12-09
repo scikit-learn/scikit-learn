@@ -150,11 +150,11 @@ def test_check_estimators_unfitted():
     # on an unfitted estimator
     msg = "AttributeError or ValueError not raised by predict"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
-                        "estimator", NoSparseClassifier)
+                        "estimator", NoSparseClassifier())
 
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
-    check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
+    check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())
 
 
 def test_check_no_fit_attributes_set_in_init():
@@ -171,3 +171,4 @@ def test_check_no_fit_attributes_set_in_init():
                         check_no_fit_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimator)
+    check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())

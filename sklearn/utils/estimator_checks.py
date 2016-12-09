@@ -122,7 +122,7 @@ def _yield_classifier_checks(name, classifier):
         yield check_supervised_y_2d
     # test if NotFittedError is raised
     yield check_estimators_unfitted
-    if 'class_weight' in classifier().get_params().keys():
+    if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
     yield check_non_transformer_estimators_n_iter
@@ -151,7 +151,7 @@ def check_supervised_y_no_nan(name, estimator):
                          "array y with NaN value.".format(name))
 
 
-def _yield_regressor_checks(name, Regressor):
+def _yield_regressor_checks(name, regressor):
     # TODO: test with intercept
     # TODO: test with multiple responses
     # basic testing
@@ -170,7 +170,7 @@ def _yield_regressor_checks(name, Regressor):
     yield check_non_transformer_estimators_n_iter
 
 
-def _yield_transformer_checks(name, Transformer):
+def _yield_transformer_checks(name, transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
     if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
@@ -190,7 +190,7 @@ def _yield_transformer_checks(name, Transformer):
         yield check_transformer_n_iter
 
 
-def _yield_clustering_checks(name, Clusterer):
+def _yield_clustering_checks(name, clusterer):
     yield check_clusterer_compute_labels_predict
     if name not in ('WardAgglomeration', "FeatureAgglomeration"):
         # this is clustering on the features
@@ -241,8 +241,13 @@ def check_estimator(Estimator):
 
     """
     name = Estimator.__name__
-    estimator = Estimator()
-    check_parameters_default_constructible(name, estimator)
+    if isinstance(Estimator, type):
+        # got a class
+        check_parameters_default_constructible(name, Estimator)
+        estimator = Estimator()
+    else:
+        # got an instance
+        estimator = Estimator
     for check in _yield_all_checks(name, estimator):
         try:
             check(name, estimator)
@@ -1011,7 +1016,7 @@ def check_classifiers_train(name, classifier):
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
-        classifier = clone(classifier())
+        classifier = clone(classifier)
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
         set_testing_parameters(classifier)
