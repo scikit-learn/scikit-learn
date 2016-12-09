@@ -282,9 +282,9 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                               check_input=False,
                               verbose=verbose)
         # This ensure that dimensionality of code is always 2,
-        # consistant with the case n_jobs > 1
+        # consistent with the case n_jobs > 1
         if code.ndim == 1:
-            code = code[np.newaxis, :]
+            code = code[:, np.newaxis]
         return code
 
     # Enter parallel code block
@@ -811,7 +811,6 @@ class SparseCodingMixin(TransformerMixin):
         """
         check_is_fitted(self, 'components_')
 
-        # XXX : kwargs is not documented
         X = check_array(X)
         n_samples, n_features = X.shape
 
