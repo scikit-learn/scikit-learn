@@ -531,8 +531,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
                                                        random_init=False,
                                                        parallel=parallel)
-                    bound = self.perplexity(X, doc_topics_distr,
-                                            sub_sampling=False)
+                    bound = self._perplexity_precomp_distr(X, doc_topics_distr,
+                                                           sub_sampling=False)
                     if self.verbose:
                         print('iteration: %d, perplexity: %.4f'
                               % (i + 1, bound))
@@ -690,8 +690,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
         return score
 
-    def perplexity(self, X, doc_topic_distr=None, sub_sampling=False):
-        """Calculate approximate perplexity for data X.
+    def _perplexity_precomp_distr(self, X, doc_topic_distr=None,
+                                  sub_sampling=False):
+        """Calculate approximate perplexity for data X with ability to accept
+        precomputed doc_topic_distr
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
 
@@ -737,3 +739,21 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         perword_bound = bound / word_cnt
 
         return np.exp(-1.0 * perword_bound)
+
+    def perplexity(self, X, sub_sampling=False):
+        """Calculate approximate perplexity for data X.
+
+        Perplexity is defined as exp(-1. * log-likelihood per word)
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, [n_samples, n_features]
+            Document word matrix.
+
+        Returns
+        -------
+        score : float
+            Perplexity score.
+        """
+
+        return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
