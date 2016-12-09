@@ -123,10 +123,10 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
+    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
         # TODO some complication with -1 label
-            and name not in ["DecisionTreeClassifier",
-                             "ExtraTreeClassifier"]):
+            name not in ["DecisionTreeClassifier",
+                         "ExtraTreeClassifier"]):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
 
@@ -280,8 +280,8 @@ def set_testing_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
     params = estimator.get_params()
-    if ("n_iter" in params
-            and estimator.__class__.__name__ != "TSNE"):
+    if ("n_iter" in params and
+            estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -1077,8 +1077,8 @@ def check_classifiers_train(name, Classifier):
                     assert_equal(decision.shape, (n_samples,))
                     dec_pred = (decision.ravel() > 0).astype(np.int)
                     assert_array_equal(dec_pred, y_pred)
-                if (n_classes is 3
-                        and not isinstance(classifier, BaseLibSVM)):
+                if (n_classes is 3 and
+                        not isinstance(classifier, BaseLibSVM)):
                     # 1on1 of LibSVM works differently
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
@@ -1522,9 +1522,9 @@ def check_parameters_default_constructible(name, Estimator):
         try:
             def param_filter(p):
                 """Identify hyper parameters of an estimator"""
-                return (p.name != 'self'
-                        and p.kind != p.VAR_KEYWORD
-                        and p.kind != p.VAR_POSITIONAL)
+                return (p.name != 'self' and
+                        p.kind != p.VAR_KEYWORD and
+                        p.kind != p.VAR_POSITIONAL)
 
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
