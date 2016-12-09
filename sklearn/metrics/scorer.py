@@ -329,8 +329,7 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
     scorers = {}
     is_multimetric = True
     if (isinstance(scoring, dict) and
-            np.asarray(list(scoring.keys())).dtype.kind in ('S', 'U') and
-            all(map(callable, scoring.values()))):
+            np.asarray(list(scoring.keys())).dtype.kind in ('S', 'U')):
         for name, scorer in scoring.items():
             # Validate for each scorer
             scorers[name] = check_scoring(estimator, scoring=scorer)

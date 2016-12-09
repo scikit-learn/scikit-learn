@@ -592,18 +592,20 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scorer_, self.multimetric_ = check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
 
-        if self.multimetric_ and self.refit and (
-                not isinstance(self.refit, six.string_types) or
-                # This will work for both dict / list (tuple)
-                self.refit not in self.scorer_):
-            raise ValueError("For multimetric scoring, the parameter "
-                             "refit must be set to a string "
-                             "metric name to make the best_* attributes "
-                             "available for that metric. If the "
-                             "attributes are not to be made available, it "
-                             "should be set to False explicitly. %r was "
-                             "passed." % self.refit)
-            refit_metric = self.refit
+        if self.multimetric_:
+            if self.refit and (
+                    not isinstance(self.refit, six.string_types) or
+                    # This will work for both dict / list (tuple)
+                    self.refit not in self.scorer_):
+                raise ValueError("For multimetric scoring, the parameter "
+                                 "refit must be set to a string "
+                                 "metric name to make the best_* attributes "
+                                 "available for that metric. If the "
+                                 "attributes are not to be made available, it "
+                                 "should be set to False explicitly. %r was "
+                                 "passed." % self.refit)
+            else:
+                refit_metric = self.refit
         else:
             refit_metric = 'score'
 
