@@ -623,7 +623,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Discriminant Analysis
     """
 
-<<<<<<< HEAD
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4, store_covariances=False):
         if store_covariances is not None:
@@ -634,17 +633,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariance = store_covariance
-=======
-    def __init__(self, priors=None, reg_param=0.,store_covariance=False, tol=1.0e-4,store_covariances=None):
-        if store_covariances is not None:
-        	warnings.warn("'store_covariances' was renamed to 'store_covariance' in version 0.17 and "
-                      "will be removed in later versions.", DeprecationWarning)
-        	self.store_covariance = store_covariances
-
-        self.priors = np.asarray(priors) if priors is not None else None
-        self.reg_param = reg_param
-        #self.store_covariances = store_covariances
->>>>>>> 416c478cd478b6303ddc14019615dfac5bd13d3c
         self.tol = tol
 
     def fit(self, X, y, store_covariances=None, tol=None):
@@ -718,11 +706,8 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             scalings.append(S2)
             rotations.append(Vt.T)
         if self.store_covariance:
-<<<<<<< HEAD
             self.covariances_ = cov
-=======
-            self.covariance_ = cov
->>>>>>> 416c478cd478b6303ddc14019615dfac5bd13d3c
+        
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
         self.rotations_ = rotations
