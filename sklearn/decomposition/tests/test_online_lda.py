@@ -238,12 +238,12 @@ def test_lda_preplexity_mismatch():
     lda.fit(X)
     # invalid samples
     invalid_n_samples = rng.randint(4, size=(n_samples + 1, n_topics))
-    assert_raises_regexp(ValueError, r'Number of samples', lda.perplexity, X,
-                         invalid_n_samples)
+    assert_raises_regexp(ValueError, r'Number of samples',
+                         lda._perplexity_precomp_distr, X, invalid_n_samples)
     # invalid topic number
     invalid_n_topics = rng.randint(4, size=(n_samples, n_topics + 1))
-    assert_raises_regexp(ValueError, r'Number of topics', lda.perplexity, X,
-                         invalid_n_topics)
+    assert_raises_regexp(ValueError, r'Number of topics',
+                         lda._perplexity_precomp_distr, X, invalid_n_topics)
 
 
 def test_lda_perplexity():
@@ -257,15 +257,15 @@ def test_lda_perplexity():
         lda_2 = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
                                           learning_method=method,
                                           total_samples=100, random_state=0)
-        distr_1 = lda_1.fit_transform(X)
-        perp_1 = lda_1.perplexity(X, distr_1, sub_sampling=False)
+        lda_1.fit(X)
+        perp_1 = lda_1.perplexity(X, sub_sampling=False)
 
-        distr_2 = lda_2.fit_transform(X)
-        perp_2 = lda_2.perplexity(X, distr_2, sub_sampling=False)
+        lda_2.fit(X)
+        perp_2 = lda_2.perplexity(X, sub_sampling=False)
         assert_greater_equal(perp_1, perp_2)
 
-        perp_1_subsampling = lda_1.perplexity(X, distr_1, sub_sampling=True)
-        perp_2_subsampling = lda_2.perplexity(X, distr_2, sub_sampling=True)
+        perp_1_subsampling = lda_1.perplexity(X, sub_sampling=True)
+        perp_2_subsampling = lda_2.perplexity(X, sub_sampling=True)
         assert_greater_equal(perp_1_subsampling, perp_2_subsampling)
 
 
@@ -296,12 +296,9 @@ def test_perplexity_input_format():
                                     learning_method='batch',
                                     total_samples=100, random_state=0)
     lda.fit(X)
-    distr = lda._unnormalized_transform(X)
     perp_1 = lda.perplexity(X)
-    perp_2 = lda.perplexity(X, distr)
-    perp_3 = lda.perplexity(X.toarray(), distr)
+    perp_2 = lda.perplexity(X.toarray())
     assert_almost_equal(perp_1, perp_2)
-    assert_almost_equal(perp_1, perp_3)
 
 
 def test_lda_score_perplexity():
@@ -310,8 +307,7 @@ def test_lda_score_perplexity():
     lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
                                     random_state=0)
     lda.fit(X)
-    distr = lda._unnormalized_transform(X)
-    perplexity_1 = lda.perplexity(X, distr, sub_sampling=False)
+    perplexity_1 = lda.perplexity(X, sub_sampling=False)
 
     score = lda.score(X)
     perplexity_2 = np.exp(-1. * (score / np.sum(X.data)))
