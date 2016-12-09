@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_dict_equal
 
 from sklearn.base import clone, BaseEstimator
@@ -698,14 +697,6 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
-
-
-def test_X1d_inverse_transform():
-    transformer = Transf()
-    pipeline = make_pipeline(transformer)
-    X = np.ones(10)
-    msg = "1d X will not be reshaped in pipeline.inverse_transform"
-    assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)
 
 
 def test_set_feature_union_steps():
