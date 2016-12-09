@@ -56,7 +56,7 @@ from sklearn.cluster import KMeans
 from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
-from sklearn.metrics import precision_score
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
@@ -949,13 +949,13 @@ def test_grid_search_cv_results_multimetric():
     n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    scoring = ('precision', 'recall')
+    scoring = ('accuracy', 'recall')
     grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
                                param_grid=params, scoring=scoring,
                                refit=False)
     # TODO test for refit=True after review
     grid_search.fit(X, y)
-    scoring = {'precision': make_scorer(precision_score),
+    scoring = {'accuracy': make_scorer(accuracy_score),
                'recall': make_scorer(recall_score)}
     grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
                                    param_grid=params, scoring=scoring,
@@ -964,19 +964,19 @@ def test_grid_search_cv_results_multimetric():
     # TODO test for refit=True after review
 
     param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
-    score_keys = ('mean_test_precision', 'mean_train_precision',
-                  'rank_test_precision',
-                  'split0_test_precision', 'split1_test_precision',
-                  'split2_test_precision',
-                  'split0_train_precision', 'split1_train_precision',
-                  'split2_train_precision',
+    score_keys = ('mean_test_accuracy', 'mean_train_accuracy',
+                  'rank_test_accuracy',
+                  'split0_test_accuracy', 'split1_test_accuracy',
+                  'split2_test_accuracy',
+                  'split0_train_accuracy', 'split1_train_accuracy',
+                  'split2_train_accuracy',
                   'mean_test_recall', 'mean_train_recall',
                   'rank_test_recall',
                   'split0_test_recall', 'split1_test_recall',
                   'split2_test_recall',
                   'split0_train_recall', 'split1_train_recall',
                   'split2_train_recall',
-                  'std_test_precision', 'std_train_precision',
+                  'std_test_accuracy', 'std_train_accuracy',
                   'std_test_recall', 'std_train_recall',
                   'mean_fit_time', 'std_fit_time',
                   'mean_score_time', 'std_score_time')
@@ -985,22 +985,22 @@ def test_grid_search_cv_results_multimetric():
     for search, iid in zip((grid_search, grid_search_iid), (False, True)):
         assert_equal(iid, search.iid)
         assert_true(search.multimetric_)
-        checked_scoring = {'precision': make_scorer(precision_score),
+        checked_scoring = {'accuracy': make_scorer(accuracy_score),
                            'recall': make_scorer(recall_score)}
         assert_equal(search.scorer_.keys(), checked_scoring.keys())
 
         # search.predict will not work when multimetric_ is True
         # (More than one best_estimator_ to predict using)
         est = LinearSVC(random_state=0).fit(X, y)
-        assert_almost_equal(search.scorer_['precision'](est, X, y),
-                            checked_scoring['precision'](est, X, y))
+        assert_almost_equal(search.scorer_['accuracy'](est, X, y),
+                            checked_scoring['accuracy'](est, X, y))
         assert_almost_equal(search.scorer_['recall'](est, X, y),
                             checked_scoring['recall'](est, X, y))
         cv_results = search.cv_results_
 
         # Check if score and timing are reasonable
         assert_true(all(cv_results['rank_test_recall'] >= 1))
-        assert_true(all(cv_results['rank_test_precision'] >= 1))
+        assert_true(all(cv_results['rank_test_accuracy'] >= 1))
         assert_true(all(cv_results[k] >= 0) for k in score_keys
                     if 'rank' not in k)
         assert_true(all(cv_results[k] <= 1) for k in score_keys
@@ -1035,7 +1035,7 @@ def test_random_search_cv_results_multimetric():
     # random_search alone should not depend on randomization.
     n_splits = 3
     n_search_iter = 30
-    scoring = ('precision', 'recall')
+    scoring = ('accuracy', 'recall')
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
     random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                        cv=n_splits, iid=False,
@@ -1043,7 +1043,7 @@ def test_random_search_cv_results_multimetric():
                                        scoring=scoring, refit=False)
     # TODO test for refit=True after review
     random_search.fit(X, y)
-    scoring = {'precision': make_scorer(precision_score),
+    scoring = {'accuracy': make_scorer(accuracy_score),
                'recall': make_scorer(recall_score)}
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                            cv=n_splits, iid=True,
@@ -1054,19 +1054,19 @@ def test_random_search_cv_results_multimetric():
     random_search_iid.fit(X, y)
 
     param_keys = ('param_C', 'param_gamma')
-    score_keys = ('mean_test_precision', 'mean_train_precision',
-                  'rank_test_precision',
-                  'split0_test_precision', 'split1_test_precision',
-                  'split2_test_precision',
-                  'split0_train_precision', 'split1_train_precision',
-                  'split2_train_precision',
+    score_keys = ('mean_test_accuracy', 'mean_train_accuracy',
+                  'rank_test_accuracy',
+                  'split0_test_accuracy', 'split1_test_accuracy',
+                  'split2_test_accuracy',
+                  'split0_train_accuracy', 'split1_train_accuracy',
+                  'split2_train_accuracy',
                   'mean_test_recall', 'mean_train_recall',
                   'rank_test_recall',
                   'split0_test_recall', 'split1_test_recall',
                   'split2_test_recall',
                   'split0_train_recall', 'split1_train_recall',
                   'split2_train_recall',
-                  'std_test_precision', 'std_train_precision',
+                  'std_test_accuracy', 'std_train_accuracy',
                   'std_test_recall', 'std_train_recall',
                   'mean_fit_time', 'std_fit_time',
                   'mean_score_time', 'std_score_time')
@@ -1074,15 +1074,15 @@ def test_random_search_cv_results_multimetric():
 
     for search, iid in zip((random_search, random_search_iid), (False, True)):
         assert_equal(iid, search.iid)
-        checked_scoring = {'precision': make_scorer(precision_score),
+        checked_scoring = {'accuracy': make_scorer(accuracy_score),
                            'recall': make_scorer(recall_score)}
         assert_equal(search.scorer_.keys(), checked_scoring.keys())
 
         # search.predict will not work when multimetric_ is True
         # (More than one best_estimator_ to predict using)
         est = LinearSVC(random_state=0).fit(X, y)
-        assert_almost_equal(search.scorer_['precision'](est, X, y),
-                            checked_scoring['precision'](est, X, y))
+        assert_almost_equal(search.scorer_['accuracy'](est, X, y),
+                            checked_scoring['accuracy'](est, X, y))
         assert_almost_equal(search.scorer_['recall'](est, X, y),
                             checked_scoring['recall'](est, X, y))
         assert_true(search.multimetric_)
@@ -1090,7 +1090,7 @@ def test_random_search_cv_results_multimetric():
 
         # Check if score and timing are reasonable
         assert_true(all(cv_results['rank_test_recall'] >= 1))
-        assert_true(all(cv_results['rank_test_precision'] >= 1))
+        assert_true(all(cv_results['rank_test_accuracy'] >= 1))
         assert_true(all(cv_results[k] >= 0) for k in score_keys
                     if 'rank' not in k)
         assert_true(all(cv_results[k] <= 1) for k in score_keys
@@ -1106,28 +1106,8 @@ def test_random_search_cv_results_multimetric():
 
 
 def test_search_delegated_methods_in_mulimetric_setting():
-    X, y = make_classification(random_state=0)
-    params = {'C': [0.1, 0.2]}
-
-    scoring = ('precision', 'recall')
-    grid_search = GridSearchCV(SVC(), iid=False,
-                               param_grid=params, scoring=scoring, refit=False)
-    # TODO test for refit=True after review
-    grid_search.fit(X, y)
-    scoring = {'precision': make_scorer(precision_score),
-               'recall': make_scorer(recall_score)}
-    random_search_iid = RandomizedSearchCV(SVC(), n_iter=2, iid=True,
-                                           param_distributions=params,
-                                           scoring=scoring, refit=False)
-    # TODO test for refit=True after review
-    random_search_iid.fit(X, y)
-
-    for search in (grid_search, random_search_iid):
-        msg = "%s method is not available for multimetric evaluation"
-        for method in ('predict', 'transform', 'inverse_transform'):
-            assert_raise_message(AttributeError, msg % method,
-                                 getattr, search, method)
-        assert_raise_message(AttributeError, msg % 'score', search.score, X, y)
+    # TODO Add tests for predict / score / transform after review
+    pass
 
 
 def test_search_cv_results_rank_tie_breaking():

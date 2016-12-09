@@ -592,22 +592,20 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scorer_, self.multimetric_ = check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
 
-        if self.multimetric_:
-            if self.refit and (not isinstance(self.refit, six.string_types) or
-                               # This will work for both dict / list (tuple)
-                               self.refit not in self.scorer_):
-                raise ValueError("For multimetric scoring, the parameter "
-                                 "refit must be set to a string "
-                                 "metric name to make the best_* attributes "
-                                 "available for that metric. If the "
-                                 "attributes are not to be made available, it "
-                                 "should be set to False explicitly. %r was "
-                                 "passed." % self.refit)
+        if self.multimetric_ and self.refit and (
+                not isinstance(self.refit, six.string_types) or
+                # This will work for both dict / list (tuple)
+                self.refit not in self.scorer_):
+            raise ValueError("For multimetric scoring, the parameter "
+                             "refit must be set to a string "
+                             "metric name to make the best_* attributes "
+                             "available for that metric. If the "
+                             "attributes are not to be made available, it "
+                             "should be set to False explicitly. %r was "
+                             "passed." % self.refit)
             refit_metric = self.refit
-        elif self.refit:
-            refit_metric = 'score'
         else:
-            refit_metric = False
+            refit_metric = 'score'
 
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
@@ -652,6 +650,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
+            # Reshape here and not at `_aggregate_score_dicts(..., shape=...)`
+            # as fit_time / score_time are not dicts and hence do not get
+            # passed into _aggregate_score_dicts
+            # We want `array` to have `n_candidates` rows and `n_splits` cols.
             array = np.array(array, dtype=np.float64).reshape(n_splits,
                                                               n_candidates).T
             if splits:
@@ -692,16 +694,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
 
-        self.best_index_ = dict()
-        if self.refit:
-            self.best_estimator_ = dict()
-
+        # NOTE test_sample counts (weights) remain the same for all candidates
+        test_sample_counts = np.array(test_sample_counts[::n_candidates],
+                                      dtype=np.int)
         for scorer_name in self.scorer_.keys():
             # Computed the (weighted) mean and std for test scores alone
-            # NOTE test_sample counts (weights) remain the same for all
-            # candidates
-            test_sample_counts = np.array(test_sample_counts[:n_candidates],
-                                          dtype=np.int)
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,
                    weights=test_sample_counts if self.iid else None)
@@ -718,6 +715,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             self.best_params_ = candidate_params[self.best_index_]
             self.best_score_ = results["mean_test_%s" % refit_metric][
                 self.best_index_]
+
         if self.refit:
             self.best_estimator_ = clone(base_estimator).set_params(
                 **self.best_params_)
