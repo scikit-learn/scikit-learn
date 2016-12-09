@@ -57,6 +57,7 @@ def test_libsvm_iris():
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
+        assert_true(hasattr(clf, "coef_") == (k == 'linear'))
 
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
@@ -257,7 +258,7 @@ def test_oneclass():
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
                               decimal=3)
-    assert_raises(ValueError, lambda: clf.coef_)
+    assert_false(hasattr(clf, "coef_"))
 
 
 def test_oneclass_decision_function():
@@ -641,7 +642,8 @@ def test_linearsvc():
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, random_state=0).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
+                        random_state=0).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
