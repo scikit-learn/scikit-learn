@@ -178,9 +178,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             self.y_train_mean = np.zeros(1)
 
         if np.iterable(self.alpha):
-            warnings.warn("Non scalar alpha will give error "
-                          "in 0.20. Use sample_alpha in fit()"
-                          " for sample-dependent noise "
+            warnings.warn("Non scalar alpha is deprecated and "
+                          "will be removed in 0.21. Use sample_alpha"
+                          " in fit() for sample-dependent noise "
                           "estimates.", DeprecationWarning)
             if self.alpha.shape[0] != y.shape[0]:
                 if self.alpha.shape[0] == 1:
