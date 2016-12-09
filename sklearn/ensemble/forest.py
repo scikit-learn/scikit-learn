@@ -140,7 +140,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
-                 oob_feature_importances=False,
+                 permutation_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -153,7 +153,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.bootstrap = bootstrap
         self.oob_score = oob_score
-        self.oob_feature_importances = oob_feature_importances
+        self.oob_feature_importances = permutation_feature_importances
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -405,7 +405,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
-                 oob_feature_importances=False,
+                 permutation_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -418,7 +418,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             oob_score=oob_score,
-            oob_feature_importances=oob_feature_importances,
+            permutation_feature_importances=permutation_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -810,6 +810,10 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         self.oob_score_ /= self.n_outputs_
 
+    def _set_oob_feature_importances(self, X, y):
+        raise NotImplementedError(
+            "OOB feature importances not supported by regressors")
+
 
 class RandomForestClassifier(ForestClassifier):
     """A random forest classifier.
@@ -989,7 +993,7 @@ class RandomForestClassifier(ForestClassifier):
                  min_impurity_split=1e-7,
                  bootstrap=True,
                  oob_score=False,
-                 oob_feature_importances=False,
+                 permutation_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1004,7 +1008,7 @@ class RandomForestClassifier(ForestClassifier):
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
-            oob_feature_importances=oob_feature_importances,
+            permutation_feature_importances=permutation_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -1376,6 +1380,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  min_impurity_split=1e-7,
                  bootstrap=False,
                  oob_score=False,
+                 permutation_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1390,6 +1395,7 @@ class ExtraTreesClassifier(ForestClassifier):
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
+            permutation_feature_importances=permutation_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -1723,6 +1729,13 @@ class RandomTreesEmbedding(BaseForest):
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
+
+    def _set_oob_feature_importances(self, X, y):
+        """Calculate out of bag feature importances based on
+        permuting each feature and testing on out of bag data
+        """
+        raise NotImplementedError(
+            "OOB feature importances not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.

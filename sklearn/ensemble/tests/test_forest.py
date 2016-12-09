@@ -1182,3 +1182,25 @@ def test_decision_path():
         yield check_decision_path, name
     for name in FOREST_REGRESSORS:
         yield check_decision_path, name
+
+
+def check_oob_importances(name, X, y, coef):
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    clf = ForestEstimator(n_estimators=10, random_state=0,
+                          permutation_feature_importances=True, bootstrap=True)
+    clf.fit(X, y)
+    importances = clf.feature_importances_
+    n_important = np.sum(importances > 0.1)
+    assert_equal(importances.shape[0], 10)
+    assert_equal(n_important, 3)
+
+
+def test_oob_importances():
+    X, y = datasets.make_classification(n_samples=1000, n_features=10,
+                                        n_informative=3, n_redundant=0,
+                                        n_repeated=0, shuffle=False,
+                                        random_state=0)
+
+    for name in FOREST_CLASSIFIERS:
+        yield check_oob_importances, name, X, y, None
