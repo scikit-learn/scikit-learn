@@ -1361,23 +1361,6 @@ Low-level methods
 Recently deprecated
 ===================
 
-To be removed in 0.19
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   lda.LDA
-   qda.QDA
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   datasets.load_lfw_pairs
-   datasets.load_lfw_people
-
 
 To be removed in 0.20
 ---------------------

@@ -29,7 +29,6 @@ from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
 from ..externals.six import string_types
 
-import warnings
 
 __ALL__ = [
     "mean_absolute_error",
@@ -436,9 +435,8 @@ def explained_variance_score(y_true, y_pred,
     return np.average(output_scores, weights=avg_weights)
 
 
-def r2_score(y_true, y_pred,
-             sample_weight=None,
-             multioutput=None):
+def r2_score(y_true, y_pred, sample_weight=None,
+             multioutput="uniform_average"):
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
@@ -464,9 +462,7 @@ def r2_score(y_true, y_pred,
 
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
-        Default value corresponds to 'variance_weighted', this behaviour is
-        deprecated since version 0.17 and will be changed to 'uniform_average'
-        starting from 0.19.
+        Default is "uniform_average".
 
         'raw_values' :
             Returns a full set of scores in case of multioutput input.
@@ -477,6 +473,9 @@ def r2_score(y_true, y_pred,
         'variance_weighted' :
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
+
+        .. versionchanged:: 0.19
+            Default value of multioutput is 'uniform_average'.
 
     Returns
     -------
@@ -543,13 +542,6 @@ def r2_score(y_true, y_pred,
     # arbitrary set to zero to avoid -inf scores, having a constant
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if multioutput is None and y_true.shape[1] != 1:
-        warnings.warn("Default 'multioutput' behavior now corresponds to "
-                      "'variance_weighted' value which is deprecated since "
-                      "0.17, it will be changed to 'uniform_average' "
-                      "starting from 0.19.",
-                      DeprecationWarning)
-        multioutput = 'variance_weighted'
     if isinstance(multioutput, string_types):
         if multioutput == 'raw_values':
             # return scores individually
