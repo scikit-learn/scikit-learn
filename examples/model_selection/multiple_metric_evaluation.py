@@ -41,26 +41,29 @@ from sklearn.tree import DecisionTreeRegressor
 svc = LinearSVC(random_state=0)
 X, y = make_classification()
 
-scoring = {'p': make_scorer(precision_score),
-           'r': make_scorer(recall_score),
-           'a': make_scorer(accuracy_score)}
+# The scorers can either be a std scorer referenced by its name or one wrapped
+# by sklearn.metrics.scorer.make_scorer
+scoring = {'pre': make_scorer(precision_score),
+           'rec': make_scorer(recall_score),
+           'acc': 'accuracy'}
 
-# Multiple metric GridSearchCV
+# Multiple metric GridSearchCV, best_* attributes are exposed for the scorer
+# with key 'acc' ('accuracy')
 gs = GridSearchCV(svc,
                   param_grid={'C': np.linspace(0.1, 1)},
-                  scoring=scoring, cv=5)
+                  scoring=scoring, cv=5, refit='acc')
 print("GridSearch instance:\n", gs.fit(X, y), "\n")
-print("Best Estimators for all the scorers: \n", gs.best_estimator_, "\n")
-print("Best scores for all the scorers: \n", gs.best_score_, "\n")
-print("Best candidate index for all the scorers: \n", gs.best_index_, "\n")
-print("The cv_results_ dict keys: \n", list(gs.cv_results_.keys()), "\n")
+print("Best Estimator for scorer with key 'acc': \n", gs.best_estimator_, "\n")
+print("Best scores for scorer with key 'acc': \n", gs.best_score_, "\n")
+print("Best candidate index for scorer with key 'acc': \n", gs.best_index_)
+print("\nThe cv_results_ dict keys: \n", list(gs.cv_results_.keys()), "\n")
 
 
 # Multiple metric cross_val_score
 dtc = DecisionTreeRegressor()
 X, y = make_regression(n_samples=100, random_state=42)
 # For multiple metric - as list of metrics
-print("Result of cross_val_score when multiple scorers are given as a list:")
+print("Result of cross_val_score for multimetric evaluation:")
 print(cross_val_score(dtc, X, y, cv=2, scoring=['neg_mean_absolute_error',
                                                 'neg_mean_squared_error',
                                                 'neg_median_absolute_error']))
@@ -68,13 +71,11 @@ print("")
 
 # For multiple metric - as dict of callables
 neg_uae_scorer = make_scorer(mean_absolute_error)
-neg_mse_scorer = make_scorer(mean_squared_error)
 neg_mae_scorer = make_scorer(median_absolute_error)
-print("Multiple scorer callables via dict:")
 print(cross_val_score(dtc, X, y, cv=2,
-                      scoring={'neg_mean_absolute_error': neg_uae_scorer,
-                               'neg_mean_squared_error': neg_mse_scorer,
-                               'neg_median_absolute_error': neg_mae_scorer}))
+                      scoring={'neg_mean_abs_err': neg_uae_scorer,
+                               'neg_mse': 'neg_mean_squared_error',
+                               'neg_mae': neg_mae_scorer}))
 print("")
 
 # For single metric
