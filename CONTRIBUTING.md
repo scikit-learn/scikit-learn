@@ -48,8 +48,6 @@ GitHub, clone, and develop on a branch. Steps:
    $ git push -u origin my-feature
    ```
 
-  *Note*: if your PR includes changes to files under the ``doc/`` or ``examples/`` folders, include in your commit message ``[doc build]``. Otherwise, include in your commit message ``[doc skip]``. This will allow the CI to avoid unnecessarily building the docs.
-
 5. Go to the GitHub web page of your fork of the scikit-learn repo.
 Click the 'Pull request' button to send your changes to the project's maintainers for
 review. This will send an email to the committers.
@@ -114,6 +112,11 @@ following rules before you submit a pull request:
    can scale to a large number of samples > 100000, but does not
    scale in dimensionality: n_features is expected to be lower than
    100".
+
+-  If your PR includes changes to files under the ``doc/`` or
+   ``examples/`` folders, include ``[doc build]`` in your commit message.
+   Otherwise, include ``[doc skip]`` in your commit message. This will 
+   allow the CI to avoid unnecessarily building the docs.
 
 You can also check for common programming errors with the following
 tools:
