@@ -252,7 +252,7 @@ def load_wine(return_X_y=False):
 
     =================   ==============
     Classes                          3
-    Samples per class               [59,71,48]
+    Samples per class        [59,71,48]
     Samples total                  178
     Dimensionality                  13
     Features            real, positive
@@ -266,7 +266,6 @@ def load_wine(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-
     Returns
     -------
     data : Bunch
@@ -278,17 +277,10 @@ def load_wine(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-
     The copy of UCI ML Wine Data Set dataset is
-    downloaded from:
+    downloaded and modified to fit standard format from:
+    
     https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
-
-    The file has been modified:
-        -to include class labels class_0, class_1 and class_2;
-        -to have the target classification as the last column;
-        -to rename target variables from 1, 2, and 3 to 0, 1 and 2;
-        -to include to amount of datapoints and class labels.
-
 
     Examples
     --------

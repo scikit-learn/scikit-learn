@@ -16,7 +16,7 @@ regression) require features to be normalized, intuitively we can
 think of Principle Component Analysis (PCA) as being a prime example
 of when normalization is important. In PCA we are interested in the
 components that maximize the variance. If there exists components
-(e.g human height) that vary less then other components (e.g human
+(e.g human height) that vary less than other components (e.g human
 weight) because of their respective scales (meters vs. kilos) it can
 be seen how not scaling the features would cause PCA to determine that
 the direction of maximal variance more closely corresponds with the
@@ -38,7 +38,7 @@ scaled version, the orders of magnitude is roughly the same across all the
 features.
 
 The results will then be used to train a naive Bayes classifier, and a clear
-difference the prediction accuracies will be observed.
+difference in prediction accuracies will be observed.
 
 """
 from __future__ import print_function
