@@ -53,7 +53,6 @@ from scipy.sparse import hstack as sparse_hstack
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -124,8 +123,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
-                                    _LearntSelectorMixin)):
+class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -473,17 +471,12 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y = y_store_unique_indices
 
         if self.class_weight is not None:
-            valid_presets = ('auto', 'balanced', 'subsample', 'balanced_subsample')
+            valid_presets = ('balanced', 'balanced_subsample')
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'
                                      % self.class_weight)
-                if self.class_weight == "subsample":
-                    warn("class_weight='subsample' is deprecated in 0.17 and"
-                         "will be removed in 0.19. It was replaced by "
-                         "class_weight='balanced_subsample' using the balanced"
-                         "strategy.", DeprecationWarning)
                 if self.warm_start:
                     warn('class_weight presets "balanced" or "balanced_subsample" are '
                          'not recommended for warm_start if the fitted data '
@@ -495,19 +488,14 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                          'distributions. Pass the resulting weights as the '
                          'class_weight parameter.')
 
-            if (self.class_weight not in ['subsample', 'balanced_subsample'] or
+            if (self.class_weight != 'balanced_subsample' or
                     not self.bootstrap):
-                if self.class_weight == 'subsample':
-                    class_weight = 'auto'
-                elif self.class_weight == "balanced_subsample":
+                if self.class_weight == "balanced_subsample":
                     class_weight = "balanced"
                 else:
                     class_weight = self.class_weight
-                with warnings.catch_warnings():
-                    if class_weight == "auto":
-                        warnings.simplefilter('ignore', DeprecationWarning)
-                    expanded_class_weight = compute_sample_weight(class_weight,
-                                                                  y_original)
+                expanded_class_weight = compute_sample_weight(class_weight,
+                                                              y_original)
 
         return y, expanded_class_weight
 
@@ -1685,9 +1673,7 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
-        # ensure_2d=False because there are actually unit test checking we fail
-        # for 1d.
-        X = check_array(X, accept_sparse=['csc'], ensure_2d=False)
+        X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.

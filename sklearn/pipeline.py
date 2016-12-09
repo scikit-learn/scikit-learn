@@ -10,7 +10,6 @@ estimator, as a chain of transforms and estimators.
 # License: BSD
 
 from collections import defaultdict
-from warnings import warn
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -470,10 +469,6 @@ class Pipeline(_BasePipeline):
         return self._inverse_transform
 
     def _inverse_transform(self, X):
-        if hasattr(X, 'ndim') and X.ndim == 1:
-            warn("From version 0.19, a 1d X will not be reshaped in"
-                 " pipeline.inverse_transform any more.", FutureWarning)
-            X = X[None, :]
         Xt = X
         for name, transform in self.steps[::-1]:
             if transform is not None:
