@@ -626,7 +626,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4, store_covariances=False):
         if store_covariances is not None:
-        	warnings.warn("'store_covariances' was renamed to 'store_covariance'"
+            warnings.warn("'store_covariances' was renamed to 'store_covariance'"
                           "in version 0.19 and will be removed in the "
                           "version 0.21.", DeprecationWarning)
             store_covariance = store_covariances
