@@ -895,17 +895,13 @@ def check_estimators_pickle(name, estimator):
         assert_array_almost_equal(result[method], unpickled_result)
 
 
-def check_estimators_partial_fit_n_features(name, Alg):
+def check_estimators_partial_fit_n_features(name, alg):
     # check if number of features changes between calls to partial_fit.
-    if not hasattr(Alg, 'partial_fit'):
+    if not hasattr(alg, 'partial_fit'):
         return
+    alg = clone(alg)
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
-    with ignore_warnings(category=DeprecationWarning):
-        alg = Alg()
-    if not hasattr(alg, 'partial_fit'):
-        # check again as for mlp this depends on algorithm
-        return
 
     set_testing_parameters(alg)
     try:
@@ -920,14 +916,13 @@ def check_estimators_partial_fit_n_features(name, Alg):
     assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
 
 
-def check_clustering(name, Alg):
+def check_clustering(name, alg):
+    alg = clone(alg)
     X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
-    with ignore_warnings(category=DeprecationWarning):
-        alg = Alg()
     set_testing_parameters(alg)
     if hasattr(alg, "n_clusters"):
         alg.set_params(n_clusters=3)
@@ -954,10 +949,10 @@ def check_clustering(name, Alg):
     assert_array_equal(pred, pred2)
 
 
-def check_clusterer_compute_labels_predict(name, Clusterer):
+def check_clusterer_compute_labels_predict(name, clusterer):
     """Check that predict is invariant of compute_labels"""
     X, y = make_blobs(n_samples=20, random_state=0)
-    clusterer = Clusterer()
+    clusterer = clone(clusterer)
 
     if hasattr(clusterer, "compute_labels"):
         # MiniBatchKMeans
@@ -1334,13 +1329,13 @@ def check_class_weight_balanced_classifiers(name, classifier, X_train, y_train,
                    f1_score(y_test, y_pred, average='weighted'))
 
 
-def check_class_weight_balanced_linear_classifier(name, classifier):
+def check_class_weight_balanced_linear_classifier(name, Classifier):
     """Test class weights with non-contiguous class labels."""
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
 
-    classifier = clone(classifier)
+    classifier = Classifier()
     if hasattr(classifier, "n_iter"):
         # This is a very small dataset, default n_iter are likely to prevent
         # convergence
