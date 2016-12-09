@@ -723,7 +723,7 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
 
 
 def check_cv_results_grid_scores_consistency(search):
-    # TODO Remove in 0.20
+    # TODO Remove test in 0.20
     if search.multimetric_:
         assert_raise_message(AttributeError, "not available for multimetric",
                              getattr, search, 'grid_scores_')
@@ -951,13 +951,17 @@ def test_grid_search_cv_results_multimetric():
               dict(kernel=['poly', ], degree=[1, 2])]
     scoring = ('precision', 'recall')
     grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
-                               param_grid=params, scoring=scoring)
+                               param_grid=params, scoring=scoring,
+                               refit=False)
+    # TODO test for refit=True after review
     grid_search.fit(X, y)
     scoring = {'precision': make_scorer(precision_score),
                'recall': make_scorer(recall_score)}
     grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
-                                   param_grid=params, scoring=scoring)
+                                   param_grid=params, scoring=scoring,
+                                   refit=False)
     grid_search_iid.fit(X, y)
+    # TODO test for refit=True after review
 
     param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
     score_keys = ('mean_test_precision', 'mean_train_precision',
@@ -1036,14 +1040,17 @@ def test_random_search_cv_results_multimetric():
     random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                        cv=n_splits, iid=False,
                                        param_distributions=params,
-                                       scoring=scoring)
+                                       scoring=scoring, refit=False)
+    # TODO test for refit=True after review
     random_search.fit(X, y)
     scoring = {'precision': make_scorer(precision_score),
                'recall': make_scorer(recall_score)}
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                            cv=n_splits, iid=True,
                                            param_distributions=params,
-                                           scoring=scoring)
+                                           scoring=scoring,
+                                           refit=False)
+    # TODO test for refit=True after review
     random_search_iid.fit(X, y)
 
     param_keys = ('param_C', 'param_gamma')
@@ -1104,13 +1111,15 @@ def test_search_delegated_methods_in_mulimetric_setting():
 
     scoring = ('precision', 'recall')
     grid_search = GridSearchCV(SVC(), iid=False,
-                               param_grid=params, scoring=scoring)
+                               param_grid=params, scoring=scoring, refit=False)
+    # TODO test for refit=True after review
     grid_search.fit(X, y)
     scoring = {'precision': make_scorer(precision_score),
                'recall': make_scorer(recall_score)}
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=2, iid=True,
                                            param_distributions=params,
-                                           scoring=scoring)
+                                           scoring=scoring, refit=False)
+    # TODO test for refit=True after review
     random_search_iid.fit(X, y)
 
     for search in (grid_search, random_search_iid):

@@ -430,7 +430,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        return self.scorer_[refit](self.best_estimator_, X, y)
+
+        score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
+
+        return score(self.best_estimator_, X, y)
 
     def _check_is_fitted(self, method_name):
         if not self.refit:
@@ -590,14 +593,21 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             self.estimator, scoring=self.scoring)
 
         if self.multimetric_:
-            if (not isinstance(self.refit, six.string_types) or
-                    # This will work for both dict / list (tuple) scorer values
-                    self.refit not in self.scorer_):
-                raise ValueError("The parameter refit must be set to a string "
+            if self.refit and (not isinstance(self.refit, six.string_types) or
+                               # This will work for both dict / list (tuple)
+                               self.refit not in self.scorer_):
+                raise ValueError("For multimetric scoring, the parameter "
+                                 "refit must be set to a string "
                                  "metric name to make the best_* attributes "
-                                 "available for that metric. If the attributes"
-                                 " are not to be made available, it should be"
-                                 " set to False explicitly.")
+                                 "available for that metric. If the "
+                                 "attributes are not to be made available, it "
+                                 "should be set to False explicitly. %r was "
+                                 "passed." % self.refit)
+            refit_metric = self.refit
+        elif self.refit:
+            refit_metric = 'score'
+        else:
+            refit_metric = False
 
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
@@ -699,53 +709,32 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
 
-            self.best_index_[scorer_name] = np.flatnonzero(
-                results["rank_test_%s" % scorer_name] == 1)[0]
-            # best_parameters for this scorer
-            best_parameters = candidate_params[self.best_index_[scorer_name]]
-
-            if self.refit:
-                # fit the best estimator using the entire dataset
-                # clone first to work around broken estimators
-                best_estimator = clone(base_estimator).set_params(
-                    **best_parameters)
-                if y is not None:
-                    best_estimator.fit(X, y, **self.fit_params)
-                else:
-                    best_estimator.fit(X, **self.fit_params)
-                self.best_estimator_[scorer_name] = best_estimator
+        # For multimetric evaluation, store the best_index_, best_params_ and
+        # best_score_ iff refit is one of the scorer names
+        # In single metric evaluation, refit_metric is "score"
+        if self.refit or not self.multimetric_:
+            self.best_index_ = np.flatnonzero(
+                results["rank_test_%s" % refit_metric] == 1)[0]
+            self.best_params_ = candidate_params[self.best_index_]
+            self.best_score_ = results["mean_test_%s" % refit_metric][
+                self.best_index_]
+        if self.refit:
+            self.best_estimator_ = clone(base_estimator).set_params(
+                **self.best_params_)
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
+            self.best_estimator_ = best_estimator
 
         if not self.multimetric_:
-            if self.refit:
-                self.best_estimator_ = list(self.best_estimator_.values())[0]
-            self.best_index_ = list(self.best_index_.values())[0]
+            # Store the only scorer not as a dict for single metric evaluation
             self.scorer_ = list(self.scorer_.values())[0]
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
 
         return self
-
-    @property
-    def best_params_(self):
-        check_is_fitted(self, 'cv_results_')
-        if self.multimetric_:
-            ret = dict()
-            for key in self.scorer_.keys():
-                ret[key] = self.cv_results_['params'][self.best_index_[key]]
-            return ret
-        return self.cv_results_['params'][self.best_index_]
-
-    @property
-    def best_score_(self):
-        check_is_fitted(self, 'cv_results_')
-        if self.multimetric_:
-            ret = dict()
-            for key in self.scorer_.keys():
-                ret[key] = self.cv_results_['mean_test_%s'
-                                            % key][self.best_index_[key]]
-            return ret
-        return self.cv_results_['mean_test_score'][self.best_index_]
 
     @property
     def grid_scores_(self):
