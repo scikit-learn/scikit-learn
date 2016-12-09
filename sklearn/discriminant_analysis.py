@@ -680,7 +680,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        if self.store_covariances:
+        if self.store_covariance:
             cov = []
         means = []
         scalings = []
