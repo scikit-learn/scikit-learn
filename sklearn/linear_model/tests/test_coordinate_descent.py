@@ -681,7 +681,9 @@ def test_enet_float_precision():
     for normalize in [True, False]:
         for fit_intercept in [True, False]:
             coef = {}
+            coef_multi = {}
             intercept = {}
+            intercept_multi = {}
             for dtype in [np.float64, np.float32]:
                 clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
                                  fit_intercept=fit_intercept,
@@ -707,10 +709,32 @@ def test_enet_float_precision():
                 assert_array_almost_equal(clf.intercept_,
                                           clf_precompute.intercept_)
 
+                # test multioutput case
+                new_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
+                clf_multioutput = ElasticNet(alpha=0.5, max_iter=100,
+                                             fit_intercept=fit_intercept,
+                                             normalize=normalize)
+
+                ignore_warnings(clf_multioutput.fit)(X, new_y)
+
+                coef_multi[dtype] = clf_multioutput.coef_
+                print(clf_multioutput.coef_)
+                intercept_multi[dtype] = clf_multioutput.intercept_
+
+                assert_equal(clf.coef_.dtype, dtype)
+
+
             assert_array_almost_equal(coef[np.float32], coef[np.float64],
                                       decimal=4)
             assert_array_almost_equal(intercept[np.float32],
                                       intercept[np.float64],
+                                      decimal=4)
+            print(coef_multi)
+            assert_array_almost_equal(coef_multi[np.float32][0],
+                                      coef_multi[np.float64][0],
+                                      decimal=4)
+            assert_array_almost_equal(intercept_multi[np.float32],
+                                      intercept_multi[np.float64],
                                       decimal=4)
 
 

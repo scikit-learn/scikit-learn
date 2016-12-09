@@ -1676,9 +1676,9 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         # X and y must be of type float64
-        X = check_array(X, dtype=np.float64, order='F',
+        X = check_array(X, dtype=[np.float64, np.float32], order='F',
                         copy=self.copy_X and self.fit_intercept)
-        y = check_array(y, dtype=np.float64, ensure_2d=False)
+        y = check_array(y, dtype=X.dtype.type, ensure_2d=False)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
@@ -1698,7 +1698,7 @@ class MultiTaskElasticNet(Lasso):
             X, y, self.fit_intercept, self.normalize, copy=False)
 
         if not self.warm_start or self.coef_ is None:
-            self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
+            self.coef_ = np.zeros((n_tasks, n_features), dtype=X.dtype.type,
                                   order='F')
 
         l1_reg = self.alpha * self.l1_ratio * n_samples
