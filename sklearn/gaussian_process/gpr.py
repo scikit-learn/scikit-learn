@@ -109,9 +109,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         number generator.
 
     n_jobs : int, default: 1
-        n_jobs is the number of workers requested by the callers.
-        Passing n_jobs=-1 means requesting all available workers for instance
-        matching the number of CPU cores on the worker host(s).
+        Number of CPU cores used during the 'n_restarts_optimizer' iterations.
+        If given a value of -1, all cores are used.
 
     Attributes
     ----------
@@ -220,16 +219,22 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite.")
                 bounds = self.kernel_.bounds
-                theta_initials = []
-                for i in range(self.n_restarts_optimizer):
-                    theta_initial = \
-                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
-                    theta_initials.append(theta_initial)
-                optima = optima + Parallel(n_jobs=self.n_jobs,
-                                           backend="threading")(
-                    delayed(self._optima_iterations, check_pickle=False)
-                    (bounds, theta_initial, obj_func)
+                # Initial theta values for 'n_restarts_optimizer' iterations
+                # for better optima
+                theta_initials = \
+                    self.rng.uniform(bounds[:, 0], bounds[:, 1],
+                                     size=(self.n_restarts_optimizer,
+                                     len(self.kernel_.theta)))
+                # Embarrassingly Parallel helper for 'n_restarts_optimizer'
+                # iterations
+                delayed_optima = delayed(self._optima_iterations,
+                                         check_pickle=False)
+                optima_new = Parallel(n_jobs=self.n_jobs, backend="threading")(
+                    delayed_optima(bounds=bounds, theta_initial=theta_initial,
+                                   obj_func=obj_func)
                     for theta_initial in theta_initials)
+                optima = optima + optima_new
+
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
