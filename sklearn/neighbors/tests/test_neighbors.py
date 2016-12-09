@@ -480,6 +480,45 @@ def test_RadiusNeighborsClassifier_multioutput():
         assert_array_almost_equal(y_pred_mo, y_pred_so)
 
 
+def test_RadiusNeighborsClassifier_multilabel_indicator_invariance():
+
+    # Test RN classifier on multilabel-indicator data
+
+    rng = check_random_state(0)
+    n_features = 2
+    n_samples = 40
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 2, (n_samples, n_output))
+
+    X_train, y_train = X[:30], y[:30]
+    X_test = X[30:]
+    weights = [None, 'uniform', 'distance', _weight_func]
+
+    for algorithm, weights in product(ALGORITHMS, weights):
+        # ndarray multilabel-indicator
+        rnn_arr = neighbors.RadiusNeighborsClassifier(weights=weights,
+                                                      algorithm=algorithm)
+        rnn_arr.fit(X_train, y_train)
+        y_pred_arr = rnn_arr.predict(X_test)
+
+        # list of lists multilabel-indicator
+        rnn_ll = neighbors.RadiusNeighborsClassifier(weights=weights,
+                                                     algorithm=algorithm)
+        rnn_ll.fit(X_train, y_train.tolist())
+        y_pred_ll = rnn_ll.predict(X_test)
+
+        # list of arrays multilabel-indicator
+        rnn_la = neighbors.RadiusNeighborsClassifier(weights=weights,
+                                                     algorithm=algorithm)
+        rnn_la.fit(X_train, list(y_train))
+        y_pred_la = rnn_la.predict(X_test)
+
+        assert_array_almost_equal(y_pred_arr, y_pred_ll)
+        assert_array_almost_equal(y_pred_arr, y_pred_la)
+
+
 def test_kneighbors_classifier_sparse(n_samples=40,
                                       n_features=5,
                                       n_test_pts=10,
@@ -547,6 +586,45 @@ def test_KNeighborsClassifier_multioutput():
 
         for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
             assert_array_almost_equal(proba_mo, proba_so)
+
+
+def test_KNeighborsClassifier_multilabel_indicator_invariance():
+
+    # Test k-NN classifier on multilabel-indicator targets
+
+    rng = check_random_state(0)
+    n_features = 2
+    n_samples = 40
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 2, (n_samples, n_output))
+
+    X_train, y_train = X[:30], y[:30]
+    X_test = X[30:]
+    weights = [None, 'uniform', 'distance', _weight_func]
+
+    for algorithm, weights in product(ALGORITHMS, weights):
+        # ndarray multilabel-indicator
+        knn_arr = neighbors.KNeighborsClassifier(weights=weights,
+                                                 algorithm=algorithm)
+        knn_arr.fit(X_train, y_train)
+        y_pred_arr = knn_arr.predict(X_test)
+
+        # list of lists multilabel-indicator
+        knn_ll = neighbors.KNeighborsClassifier(weights=weights,
+                                                algorithm=algorithm)
+        knn_ll.fit(X_train, y_train.tolist())
+        y_pred_ll = knn_ll.predict(X_test)
+
+        # list of arrays multilabel-indicator
+        knn_la = neighbors.KNeighborsClassifier(weights=weights,
+                                                algorithm=algorithm)
+        knn_la.fit(X_train, list(y_train))
+        y_pred_la = knn_la.predict(X_test)
+
+        assert_array_almost_equal(y_pred_arr, y_pred_ll)
+        assert_array_almost_equal(y_pred_arr, y_pred_la)
 
 
 def test_kneighbors_regressor(n_samples=40,
