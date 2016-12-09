@@ -741,14 +741,14 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
     cdef unsigned int n_tasks = Y.shape[1]
 
     # to store XtA
-    cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks))
+    cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
     cdef floating XtA_axis1norm
     cdef floating dual_norm_XtA
 
     # initial value of the residuals
-    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks))
+    cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype)
 
-    cdef floating[:] norm_cols_X = np.zeros(n_features)
+    cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
     cdef floating[:] w_ii = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
