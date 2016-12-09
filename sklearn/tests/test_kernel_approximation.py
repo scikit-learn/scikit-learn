@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.sparse import csr_matrix
-from scipy.special import rel_entr
 
 from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.testing import assert_not_equal
@@ -14,6 +13,7 @@ from sklearn.kernel_approximation import IntersectionSampler
 from sklearn.kernel_approximation import JensenShannonSampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
+from sklearn.kernel_approximation import rel_entr
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 # generate data

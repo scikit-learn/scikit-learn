@@ -648,3 +648,16 @@ class Nystroem(BaseEstimator, TransformerMixin):
             params['coef0'] = self.coef0
 
         return params
+
+# Relative entropy for tests
+try:
+    from scipy.special import rel_entr
+except ImportError:
+    def xfunc(x, y):
+        if x > 0 and y > 0:
+            return x * np.log(x / y)
+        elif x == 0 and y >= 0:
+            return 0
+        else:
+            return np.inf
+    rel_entr = np.vectorize(xfunc)
