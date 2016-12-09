@@ -59,7 +59,8 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array, compute_sample_weight
+from ..utils import (check_random_state, check_array,
+                     compute_sample_weight, shuffle)
 from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount, parallel_helper
@@ -139,6 +140,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -151,6 +153,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.bootstrap = bootstrap
         self.oob_score = oob_score
+        self.oob_feature_importances = oob_feature_importances
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -286,6 +289,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
+        if not self.bootstrap and self.oob_feature_importances:
+            raise ValueError("Out of bag feature importances are only "
+                             " available if bootstrap=True")
+
         random_state = check_random_state(self.random_state)
 
         if not self.warm_start:
@@ -330,6 +337,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         if self.oob_score:
             self._set_oob_score(X, y)
+        if self.oob_feature_importances:
+            self._set_oob_feature_importances(X, y)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -341,6 +350,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
     @abstractmethod
     def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
+
+    @abstractmethod
+    def _set_oob_feature_importances(self, X, y):
+        """Calculate out of bag feature importances based on
+        permuting each feature and testing on out of bag data
+        """
 
     def _validate_y_class_weight(self, y):
         # Default implementation
@@ -390,6 +405,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -402,11 +418,65 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
             class_weight=class_weight)
+
+    def _set_oob_feature_importances(self, X, y):
+        # Convert data to arrays, y to row vector
+        X = np.array(X)
+        y = np.squeeze(np.array(y))
+
+        if y.ndim != 1:
+            raise NotImplementedError('OOB feature importances not implemented'
+                                      'for multiple output problems.')
+
+        n_features = X.shape[1]
+        random_state = check_random_state(self.random_state)
+
+        forest = self.estimators_
+
+        for tree in forest:
+            X_oob, y_oob, n_oob = self._get_oob_data(X, y, tree)
+            y_oob_pred = self._predict_oob(X_oob, tree)
+
+            feature_importances = np.zeros(n_features)
+            for feature_ind in xrange(n_features):
+                y_oob_pred_perm = self._predict_oob(X_oob, tree,
+                                                    shuffle_ind=feature_ind,
+                                                    random_state=random_state)
+                n_wrong = self._calc_mislabel_rate(y_oob, y_oob_pred)
+                n_wrong_perm = self._calc_mislabel_rate(y_oob, y_oob_pred_perm)
+
+                feature_importances[feature_ind] = (n_wrong_perm - n_wrong) / n_oob
+
+            tree._feature_importances = feature_importances
+
+    @staticmethod
+    def _get_oob_data(X, y, tree):
+        n_samples = X.shape[0]
+        oob_ind = _generate_unsampled_indices(tree.random_state, n_samples)
+
+        n_oob = len(oob_ind)
+        X_oob = X[oob_ind, :]
+        y_oob = y[oob_ind]
+        return X_oob, y_oob, n_oob
+
+    @staticmethod
+    def _predict_oob(feature_data, tree, shuffle_ind=None, random_state=None):
+        features_tmp = feature_data.copy()
+        if shuffle_ind is not None:
+            features_tmp[:, shuffle_ind] = shuffle(features_tmp[:, shuffle_ind],
+                                                   random_state=random_state)
+        return tree.predict(features_tmp)
+
+    @staticmethod
+    def _calc_mislabel_rate(expected, predicted):
+        bool_mislabel = np.squeeze(expected) != np.squeeze(predicted)
+        return np.sum(bool_mislabel)
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
@@ -919,6 +989,7 @@ class RandomForestClassifier(ForestClassifier):
                  min_impurity_split=1e-7,
                  bootstrap=True,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -933,6 +1004,7 @@ class RandomForestClassifier(ForestClassifier):
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
