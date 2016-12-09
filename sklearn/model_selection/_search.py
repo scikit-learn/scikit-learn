@@ -318,7 +318,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorers,
     Returns
     -------
     scores : dict
-        A dict mapping the scorer name to it's score value for the given
+        A dict mapping the scorer name to its score value for the given
         parameter setting on given training / test split.
 
     parameters : dict
@@ -493,9 +493,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         self._check_is_fitted('predict_log_proba')
-        if self.multimetric_:
-            raise ValueError("predict_log_proba is not be available for"
-                             " multimetric scoring.")
         return self.best_estimator_.predict_log_proba(X)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
