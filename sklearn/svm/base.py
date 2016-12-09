@@ -482,8 +482,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @property
     def coef_(self):
         if self.kernel != 'linear':
-            raise ValueError('coef_ is only available when using a '
-                             'linear kernel')
+            raise AttributeError('coef_ is only available when using a '
+                                 'linear kernel')
 
         coef = self._get_coef()
 
