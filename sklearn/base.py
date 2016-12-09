@@ -305,7 +305,7 @@ class BaseEstimator(object):
         self.__dict__.update(state)
 
     def _get_tags(self):
-        return {}
+        return {'input_types': ['ndarray']}
 
 
 class ClassifierMixin(object):
@@ -340,8 +340,9 @@ class ClassifierMixin(object):
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
     def _get_tags(self):
-        tags = super(ClassifierMixin, self)._get_tags()
-        return tags.copy().update(is_classifier=True)
+        tags = super(ClassifierMixin, self)._get_tags().copy()
+        tags.update(is_classifier=True)
+        return tags
 
 
 class RegressorMixin(object):
@@ -381,8 +382,9 @@ class RegressorMixin(object):
                         multioutput='variance_weighted')
 
     def _get_tags(self):
-        tags = super(ClassifierMixin, self)._get_tags()
-        return tags.copy().update(is_regressor=True)
+        tags = super(RegressorMixin, self)._get_tags().copy()
+        tags.update(is_regressor=True)
+        return tags
 
 
 class ClusterMixin(object):
@@ -408,8 +410,9 @@ class ClusterMixin(object):
         return self.labels_
 
     def _get_tags(self):
-        tags = super(ClassifierMixin, self)._get_tags()
-        return tags.copy().update(is_clusterer=True)
+        tags = super(ClusterMixin, self)._get_tags().copy()
+        tags.update(is_clusterer=True)
+        return tags
 
 
 class BiclusterMixin(object):
@@ -497,8 +500,9 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
     def _get_tags(self):
-        tags = super(ClassifierMixin, self)._get_tags()
-        return tags.copy().update(is_transformer=True)
+        tags = super(TransformerMixin, self)._get_tags().copy()
+        tags.update(is_transformer=True)
+        return tags
 
 
 class DensityMixin(object):

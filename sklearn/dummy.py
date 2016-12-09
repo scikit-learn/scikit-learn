@@ -322,6 +322,11 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         else:
             return [np.log(p) for p in proba]
 
+    def _get_tags(self):
+        tags = super(DummyClassifier, self)._get_tags().copy()
+        tags.update(test_accuracy=False)
+        return tags
+
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
     """
@@ -477,3 +482,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             y = np.ravel(y)
 
         return y
+
+    def _get_tags(self):
+        tags = super(DummyRegressor, self)._get_tags()
+        return tags.copy().update(no_accuracy_test=True)

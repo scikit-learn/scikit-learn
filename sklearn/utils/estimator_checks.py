@@ -1024,7 +1024,7 @@ def check_classifiers_train(name, classifier):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if name not in ['BernoulliNB', 'MultinomialNB']:
+        if classifier._get_tags().get("test_accuracy", True):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
