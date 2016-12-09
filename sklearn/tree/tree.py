@@ -508,7 +508,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             feature_importances = self.tree_.compute_feature_importances()
 
-
         return feature_importances
 
 
