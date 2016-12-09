@@ -279,7 +279,6 @@ def load_wine(return_X_y=False):
 
     The copy of UCI ML Wine Data Set dataset is
     downloaded and modified to fit standard format from:
-    
     https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
 
     Examples
@@ -330,10 +329,6 @@ def load_wine(return_X_y=False):
                                 'hue',
                                 'od280/od315_of_diluted_wines',
                                 'proline'])
-
-
-
-
 
 
 def load_iris(return_X_y=False):
@@ -611,12 +606,12 @@ def load_diabetes(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.18    
+        .. versionadded:: 0.18
     """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
-    
+
     if return_X_y:
         return data, target
 
@@ -648,7 +643,7 @@ def load_linnerud(return_X_y=False):
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
-    
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -702,7 +697,7 @@ def load_boston(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.18    
+        .. versionadded:: 0.18
 
     Examples
     --------
