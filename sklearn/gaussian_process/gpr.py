@@ -225,8 +225,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                     self.rng.uniform(bounds[:, 0], bounds[:, 1],
                                      size=(self.n_restarts_optimizer,
                                      len(self.kernel_.theta)))
-                # Embarrassingly Parallel helper for 'n_restarts_optimizer'
-                # iterations
+                # 'n_restarts_optimizer' iterations using Embarrassingly
+                # Parallel helper
                 delayed_optima = delayed(self._optima_iterations,
                                          check_pickle=False)
                 optima_new = Parallel(n_jobs=self.n_jobs, backend="threading")(
