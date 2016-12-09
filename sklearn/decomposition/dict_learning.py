@@ -722,8 +722,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             sys.stdout.flush()
         elif verbose:
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                       % (ii, dt, dt / 60))
+                print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                      % (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
@@ -897,6 +897,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
     sparse_encode
     """
+    _required_parameters = ["dictionary"]
 
     def __init__(self, dictionary, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,

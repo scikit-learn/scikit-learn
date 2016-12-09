@@ -15,8 +15,7 @@ covariance estimator (the Minimum Covariance Determinant).
 import numpy as np
 import scipy as sp
 from . import MinCovDet
-from ..base import ClassifierMixin
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_array
 
 
 class OutlierDetectionMixin(object):
@@ -91,6 +90,7 @@ class OutlierDetectionMixin(object):
 
         """
         check_is_fitted(self, 'threshold_')
+        X = check_array(X)
         is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
             values = self.decision_function(X, raw_values=True)
@@ -101,7 +101,7 @@ class OutlierDetectionMixin(object):
         return is_inlier
 
 
-class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
+class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Read more in the :ref:`User Guide <outlier_detection>`.

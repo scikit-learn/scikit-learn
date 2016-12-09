@@ -300,9 +300,15 @@ def set_testing_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
-    if "decision_function_shape" in params:
-        # SVC
-        estimator.set_params(decision_function_shape='ovo')
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    if hasattr(estimator, "n_best"):
+        estimator.n_best = 1
 
     if estimator.__class__.__name__ == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
@@ -316,7 +322,7 @@ def set_testing_parameters(estimator):
         # of components of the random matrix projection will be probably
         # greater than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
-        estimator.set_params(n_components=1)
+        estimator.set_params(n_components=8)
 
     if isinstance(estimator, SelectKBest):
         # SelectKBest has a default of k=10
@@ -446,14 +452,6 @@ def check_dict_unchanged(name, estimator):
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    if hasattr(estimator, "n_best"):
-        estimator.n_best = 1
 
     set_random_state(estimator, 1)
 

@@ -474,15 +474,12 @@ OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
 
 # some strange ones
-DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder',
+DONT_TEST = ['DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
              'MultiLabelBinarizer', 'TfidfTransformer',
              'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding',
-             'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
-             'TruncatedSVD', 'PolynomialFeatures',
-             'GaussianRandomProjectionHash', 'HashingVectorizer',
-             'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
+             'OneHotEncoder', 'FeatureHasher',
+             'HashingVectorizer', 'CheckingClassifier',
+             'PatchExtractor', 'CountVectorizer',
              # GradientBoosting base estimators, maybe should
              # exclude them in another way
              'ZeroEstimator', 'ScaledLogOddsEstimator',
