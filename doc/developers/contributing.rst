@@ -215,6 +215,11 @@ rules before submitting a pull request:
       the example. For more details on writing and building the
       documentation, see the :ref:`contribute_documentation` section.
 
+    * If your PR includes changes to files under the ``doc/`` or
+      ``examples/`` folders, include ``[doc build]`` in your commit message.
+      Otherwise, include ``[doc skip]`` in your commit message which will
+      allow the CI to avoid unnecessarily building the docs.
+
 You can also check for common programming errors with the following tools:
 
     * Code with a good unittest coverage (at least 90%, better 100%), check
@@ -309,10 +314,10 @@ following rules before submitting:
 Issues for New Contributors
 ---------------------------
 
-New contributors should look for the following tags when looking for issues. 
-We strongly recommend that new contributors tackle "easy" issues first: this 
-helps the contributor become familiar with the contribution workflow, and 
-for the core devs to become acquainted with the contributor; besides which, 
+New contributors should look for the following tags when looking for issues.
+We strongly recommend that new contributors tackle "easy" issues first: this
+helps the contributor become familiar with the contribution workflow, and
+for the core devs to become acquainted with the contributor; besides which,
 we frequently underestimate how easy an issue is to solve!
 
 .. topic:: Easy Tags
@@ -327,7 +332,7 @@ we frequently underestimate how easy an issue is to solve!
 
 .. topic:: Need Contributor Tags
 
-    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
+    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally,
     we use the Need Contributor tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the Need Contributor tag can be found
@@ -488,8 +493,8 @@ There are three other tags to help new contributors:
     but is still approachable for someone new to the project.
 
 :Needs Contributor:
-    This tag marks an issue which currently lacks a contributor or a 
-    PR that needs another contributor to take over the work. These 
+    This tag marks an issue which currently lacks a contributor or a
+    PR that needs another contributor to take over the work. These
     issues can range in difficulty, and may not be approachable
     for new contributors. Note that not all issues which need
     contributors will have this tag.
