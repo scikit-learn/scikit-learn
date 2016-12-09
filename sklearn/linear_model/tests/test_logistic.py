@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
@@ -731,16 +730,6 @@ def test_logistic_regression_class_weights():
         clf1.fit(X, y)
         clf2.fit(X, y)
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
-
-
-def test_multinomial_logistic_regression_with_classweight_auto():
-    X, y = iris.data, iris.target
-    model = LogisticRegression(multi_class='multinomial',
-                               class_weight='auto', solver='lbfgs')
-    # 'auto' is deprecated and will be removed in 0.19
-    assert_warns_message(DeprecationWarning,
-                         "class_weight='auto' heuristic is deprecated",
-                         model.fit, X, y)
 
 
 def test_logistic_regression_convergence_warnings():

@@ -17,7 +17,6 @@ from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
-from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
@@ -445,7 +444,7 @@ def _check_solver_option(solver, multi_class, penalty, dual):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='lbfgs', coef=None, copy=False,
+                             solver='lbfgs', coef=None,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
@@ -501,10 +500,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coef : array-like, shape (n_features,), default None
         Initialization value for coefficients of logistic regression.
         Useless for liblinear solver.
-
-    copy : bool, default False
-        Whether or not to produce a copy of the data. A copy is not required
-        anymore. This parameter is deprecated and will be removed in 0.19.
 
     class_weight : dict or 'balanced', optional
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -579,21 +574,19 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     -----
     You might get slightly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
-    """
-    if copy:
-        warnings.warn("A copy is not required anymore. The 'copy' parameter "
-                      "is deprecated and will be removed in 0.19.",
-                      DeprecationWarning)
 
+    .. versionchanged:: 0.19
+        The "copy" parameter was removed.
+    """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
     _check_solver_option(solver, multi_class, penalty, dual)
 
     # Preprocessing.
-    if check_input or copy:
+    if check_input:
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
     classes = np.unique(y)
@@ -632,8 +625,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         y_bin[~mask] = -1.
         # for compute_class_weight
 
-        # 'auto' is deprecated and will be removed in 0.19
-        if class_weight in ("auto", "balanced"):
+        if class_weight == "balanced":
             class_weight_ = compute_class_weight(class_weight, mask_classes,
                                                  y_bin)
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
@@ -945,7 +937,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
 
 class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         _LearntSelectorMixin, SparseCoefMixin):
+                         SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
@@ -1011,8 +1003,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         through the fit method) if sample_weight is specified.
 
         .. versionadded:: 0.17
-           *class_weight='balanced'* instead of deprecated
-           *class_weight='auto'*.
+           *class_weight='balanced'*
 
     max_iter : int, default: 100
         Useful only for the newton-cg, sag and lbfgs solvers.
@@ -1238,7 +1229,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                backend=backend)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
-                      verbose=self.verbose, solver=self.solver, copy=False,
+                      verbose=self.verbose, solver=self.solver,
                       multi_class=self.multi_class, max_iter=self.max_iter,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
@@ -1313,7 +1304,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
-                           LinearClassifierMixin, _LearntSelectorMixin):
+                           LinearClassifierMixin):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
     This class implements logistic regression using liblinear, newton-cg, sag
@@ -1559,11 +1550,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         check_classification_targets(y)
 
         class_weight = self.class_weight
-        if class_weight and not(isinstance(class_weight, dict) or
-                                class_weight in ['balanced', 'auto']):
-            # 'auto' is deprecated and will be removed in 0.19
-            raise ValueError("class_weight provided should be a "
-                             "dict or 'balanced'")
 
         # Encode for string labels
         label_encoder = LabelEncoder().fit(y)
@@ -1609,7 +1595,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             iter_classes = classes
 
         # compute the class weights for the entire dataset y
-        if class_weight in ("auto", "balanced"):
+        if class_weight == "balanced":
             class_weight = compute_class_weight(class_weight,
                                                 np.arange(len(self.classes_)),
                                                 y)
@@ -1703,7 +1689,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     X, y, pos_class=encoded_label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
-                    penalty=self.penalty, copy=False,
+                    penalty=self.penalty,
                     class_weight=class_weight,
                     multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1),

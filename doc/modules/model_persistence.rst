@@ -23,7 +23,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
 

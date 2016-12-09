@@ -62,10 +62,10 @@ else:
                'ensemble', 'exceptions', 'externals', 'feature_extraction',
                'feature_selection', 'gaussian_process', 'grid_search',
                'isotonic', 'kernel_approximation', 'kernel_ridge',
-               'lda', 'learning_curve', 'linear_model', 'manifold', 'metrics',
+               'learning_curve', 'linear_model', 'manifold', 'metrics',
                'mixture', 'model_selection', 'multiclass', 'multioutput',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'qda', 'random_projection', 'semi_supervised',
+               'preprocessing', 'random_projection', 'semi_supervised',
                'svm', 'tree', 'discriminant_analysis',
                # Non-modules:
                'clone']

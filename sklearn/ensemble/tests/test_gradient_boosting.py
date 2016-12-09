@@ -299,15 +299,6 @@ def test_feature_importances():
         clf.fit(X, y)
         assert_true(hasattr(clf, 'feature_importances_'))
 
-        # XXX: Remove this test in 0.19 after transform support to estimators
-        # is removed.
-        X_new = assert_warns(
-            DeprecationWarning, clf.transform, X, threshold="mean")
-        assert_less(X_new.shape[1], X.shape[1])
-        feature_mask = (
-            clf.feature_importances_ > clf.feature_importances_.mean())
-        assert_array_almost_equal(X_new, X[:, feature_mask])
-
 
 def test_probability_log():
     # Predict probabilities.
@@ -1072,6 +1063,7 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
         assert_array_almost_equal(
             np.array(sparse.staged_decision_function(X_sparse)),
             np.array(sparse.staged_decision_function(X)))
+
 
 @skip_if_32bit
 def test_sparse_input():
