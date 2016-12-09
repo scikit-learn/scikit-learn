@@ -63,6 +63,13 @@ def test_non_meta_estimators():
             continue
         if name.startswith("_"):
             continue
+        required_parameters = getattr(Estimator, "_required_parameters", [])
+        if len(required_parameters):
+            print("Can't test estimator {} because "
+                  "it requires parameters {}".format(
+                      name, required_parameters))
+            continue
+
         estimator = Estimator()
         for check in _yield_all_checks(name, estimator):
             yield _named_check(check, name), name, estimator

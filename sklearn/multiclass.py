@@ -176,7 +176,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
-
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs

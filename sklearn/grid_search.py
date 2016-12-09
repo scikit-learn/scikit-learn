@@ -804,6 +804,7 @@ class GridSearchCV(BaseSearchCV):
         Make a scorer from a performance metric or loss function.
 
     """
+    _required_parameters = ["estimator", "param_grid"]
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
@@ -995,6 +996,7 @@ class RandomizedSearchCV(BaseSearchCV):
         param_distributions.
 
     """
+    _required_parameters = ["estimator", "param_distribution"]
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,

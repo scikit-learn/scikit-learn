@@ -4,7 +4,7 @@
 import numpy as np
 
 from .base import SelectorMixin
-from ..base import BaseEstimator, clone
+from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..externals import six
 
 from ..exceptions import NotFittedError
@@ -76,7 +76,7 @@ def _calculate_threshold(estimator, importances, threshold):
     return threshold
 
 
-class SelectFromModel(BaseEstimator, SelectorMixin):
+class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     """Meta-transformer for selecting features based on importance weights.
 
     .. versionadded:: 0.17
@@ -121,7 +121,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     `threshold_`: float
         The threshold value used for feature selection.
     """
-
     def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold

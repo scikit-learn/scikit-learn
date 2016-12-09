@@ -145,6 +145,7 @@ class Pipeline(_BasePipeline):
     """
 
     # BaseEstimator interface
+    _required_parameters = ['steps']
 
     def __init__(self, steps):
         # shallow copy of steps
@@ -613,6 +614,8 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         Keys are transformer names, values the weights.
 
     """
+    _required_parameters = ["transformer_list"]
+
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = tosequence(transformer_list)
         self.n_jobs = n_jobs

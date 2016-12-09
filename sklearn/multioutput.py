@@ -17,7 +17,7 @@ extends single output estimators to multioutput estimators.
 import numpy as np
 
 from abc import ABCMeta
-from .base import BaseEstimator, clone
+from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin
 from .utils import check_array, check_X_y
 from .utils.fixes import parallel_helper
@@ -37,7 +37,8 @@ def _fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
-class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
+class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
+                                              MetaEstimatorMixin)):
 
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator

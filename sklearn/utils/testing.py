@@ -492,7 +492,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
 
 
 def all_estimators(include_meta_estimators=False,
-                   include_other=False, type_filter=None,
+                   include_other=None, type_filter=None,
                    include_dont_test=False):
     """Get a list of all estimators from sklearn.
 
@@ -537,6 +537,10 @@ def all_estimators(include_meta_estimators=False,
             return False
         return True
 
+    if include_other is not None:
+        warnings.warn("include_other was deprecated in version 0.19 and will"
+                      " be removed in 0.21", DeprecationWarning)
+
     all_classes = []
     # get parent folder
     path = sklearn.__path__
@@ -559,8 +563,6 @@ def all_estimators(include_meta_estimators=False,
     if not include_dont_test:
         estimators = [c for c in estimators if not c[0] in DONT_TEST]
 
-    if not include_other:
-        estimators = [c for c in estimators if not c[0] in OTHER]
     # possibly get rid of meta estimators
     if not include_meta_estimators:
         estimators = [c for c in estimators if not c[0] in META_ESTIMATORS]

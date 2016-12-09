@@ -520,23 +520,25 @@ class DensityMixin(object):
 
 
 class MetaEstimatorMixin(object):
+    _required_parameters = ["estimator"]
+
     """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
     def _get_tags(self):
-        tags = super(ClassifierMixin, self)._get_tags()
+        tags = super(MetaEstimatorMixin, self)._get_tags()
         return tags.copy().update(is_meta_estimator=True)
 
 
 class SparseSupportMixin(object):
     """Mixin to mark estimators that support sparse matrix input."""
-    def _get_tags(self):
+    def _get_tags(self=None):
         tags = super(ClassifierMixin, self)._get_tags()
         return tags.copy().update(sparse_support=True)
 
 
 class MultiLabelMixin(object):
     """Mixin to mark estimators that support multilabel classification."""
-    def _get_tags(self):
+    def _get_tags(self=None):
         tags = super(ClassifierMixin, self)._get_tags()
         return tags.copy().update(multilabel=True)
 

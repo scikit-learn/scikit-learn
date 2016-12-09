@@ -24,7 +24,6 @@ from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
@@ -1473,8 +1472,14 @@ def check_parameters_default_constructible(name, Estimator):
     # test default-constructibility
     # get rid of deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
-        if name in META_ESTIMATORS:
-            estimator = Estimator(LinearDiscriminantAnalysis())
+        required_parameters = getattr(Estimator, "_required_parameters", [])
+        if len(required_parameters):
+            if required_parameters == ["estimator"]:
+                estimator = Estimator(LinearDiscriminantAnalysis())
+            else:
+                raise SkipTest("Can't instantiate estimator {} which"
+                               "requires parameters {}".format(
+                                   name, required_parameters))
         else:
             estimator = Estimator()
         # test cloning
@@ -1507,7 +1512,7 @@ def check_parameters_default_constructible(name, Estimator):
             # true for mixins
             return
         params = estimator.get_params()
-        if name in META_ESTIMATORS:
+        if required_parameters == ["estimator"]:
             # they can need a non-default argument
             init_params = init_params[1:]
 
