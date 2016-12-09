@@ -903,6 +903,10 @@ class RandomForestClassifier(ForestClassifier):
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
 
+    permutation_feature_importances : bool (default=False)
+        Whether to use a permutation test over out-of-bag samples to
+        calculate feature importances.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
@@ -976,6 +980,9 @@ class RandomForestClassifier(ForestClassifier):
     ----------
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+    .. [2] Jerome Paul and Pierre Dupont, "Inferring statistically
+           significant features from random forests", Neurocomputing, 150,
+           Part B:471–480, 2015.
 
     See also
     --------
@@ -1288,6 +1295,10 @@ class ExtraTreesClassifier(ForestClassifier):
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
+
+    permutation_feature_importances : bool (default=False)
+        Whether to use a permutation test over out-of-bag samples to
+        calculate feature importances.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
