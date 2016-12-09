@@ -9,6 +9,8 @@ approximate kernel feature maps base on Fourier transforms.
 
 import warnings
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import svd
@@ -19,6 +21,7 @@ from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels
+from .externals import six
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -203,13 +206,17 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class BaseAdditiveHomogenousKernelSampler(BaseEstimator, TransformerMixin):
+class BaseAdditiveHomogenousKernelSampler(six.with_metaclass(ABCMeta,
+                                                             BaseEstimator,
+                                                             TransformerMixin)
+                                          ):
+    """Base class for additive homogenous kernel samplers."""
 
+    @abstractmethod
     def __init__(self, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
         self.preset_sample_intervals = None
-        self.spectrum = None
 
     def fit(self, X, y=None):
         """Set parameters."""
@@ -247,10 +254,6 @@ class BaseAdditiveHomogenousKernelSampler(BaseEstimator, TransformerMixin):
                " calling transform")
         check_is_fitted(self, "sample_interval_", msg=msg)
 
-        if not callable(self.spectrum):
-            raise ValueError("Spectrum function not defined,"
-                             " base class method call?")
-
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
 
@@ -264,13 +267,17 @@ class BaseAdditiveHomogenousKernelSampler(BaseEstimator, TransformerMixin):
         transf = self._transform_sparse if sparse else self._transform_dense
         return transf(X)
 
+    @abstractmethod
+    def _spectrum(self, omega):
+        raise NotImplementedError("No spectrum function in base class")
+
     def _transform_dense(self, X):
         non_zero = (X != 0.0)
         X_nz = X[non_zero]
 
         X_step = np.zeros_like(X)
         X_step[non_zero] = np.sqrt(X_nz * self.sample_interval_ *
-                                   self.spectrum(0))
+                                   self._spectrum(0))
 
         X_new = [X_step]
 
@@ -279,7 +286,7 @@ class BaseAdditiveHomogenousKernelSampler(BaseEstimator, TransformerMixin):
 
         for j in range(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz *
-                                self.spectrum(j * self.sample_interval_))
+                                self._spectrum(j * self.sample_interval_))
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -296,7 +303,7 @@ class BaseAdditiveHomogenousKernelSampler(BaseEstimator, TransformerMixin):
         indptr = X.indptr.copy()
 
         data_step = np.sqrt(X.data * self.sample_interval_ *
-                            self.spectrum(0))
+                            self._spectrum(0))
         X_step = sp.csr_matrix((data_step, indices, indptr),
                                shape=X.shape, dtype=X.dtype, copy=False)
         X_new = [X_step]
@@ -306,7 +313,7 @@ class BaseAdditiveHomogenousKernelSampler(BaseEstimator, TransformerMixin):
 
         for j in range(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz *
-                                self.spectrum(j * self.sample_interval_))
+                                self._spectrum(j * self.sample_interval_))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix((data_step, indices, indptr),
@@ -373,8 +380,10 @@ class AdditiveChi2Sampler(BaseAdditiveHomogenousKernelSampler):
                                                   sample_interval)
         # See reference, figure 2 c)
         self.preset_sample_intervals = {1: 0.8, 2: 0.5, 3: 0.4}
-        # spectrum function for chi2 kernel
-        self.spectrum = lambda omega: 1. / np.cosh(np.pi * omega)
+
+    def _spectrum(self, omega):
+        # Spectrum function for chi2 kernel
+        return 1. / np.cosh(np.pi * omega)
 
 
 class IntersectionSampler(BaseAdditiveHomogenousKernelSampler):
@@ -422,8 +431,10 @@ class IntersectionSampler(BaseAdditiveHomogenousKernelSampler):
                                                   sample_interval)
         # Empirically selected values
         self.preset_sample_intervals = {1: 1.2, 2: 0.8, 3: 0.7}
+
+    def _spectrum(self, omega):
         # Spectrum function for intersection kernel
-        self.spectrum = lambda omega: 2. / np.pi / (1 + 4 * omega ** 2)
+        return 2. / np.pi / (1 + 4 * omega ** 2)
 
 
 class JensenShannonSampler(BaseAdditiveHomogenousKernelSampler):
@@ -470,9 +481,10 @@ class JensenShannonSampler(BaseAdditiveHomogenousKernelSampler):
                                                    sample_interval)
         # Empirically selected values
         self.preset_sample_intervals = {1: 0.6, 2: 0.4, 3: 0.2}
+
+    def _spectrum(self, omega):
         # Spectrum function for Jensen-Shannon kernel
-        self.spectrum = lambda omega: 2. / np.log(4) /\
-            np.cosh(np.pi * omega) / (1 + 4 * omega ** 2)
+        return 2. / np.log(4) / np.cosh(np.pi * omega) / (1 + 4 * omega ** 2)
 
 
 class Nystroem(BaseEstimator, TransformerMixin):
