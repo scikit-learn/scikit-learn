@@ -115,7 +115,7 @@ following rules before you submit a pull request:
 
 -  If your PR includes changes to files under the ``doc/`` or
    ``examples/`` folders, include ``[doc build]`` in your commit message.
-   Otherwise, include ``[doc skip]`` in your commit message. This will 
+   Otherwise, include ``[doc skip]`` in your commit message which will 
    allow the CI to avoid unnecessarily building the docs.
 
 You can also check for common programming errors with the following
