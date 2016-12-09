@@ -718,7 +718,7 @@ def test_enet_float_precision():
                 ignore_warnings(clf_multioutput.fit)(X, new_y)
 
                 coef_multi[dtype] = clf_multioutput.coef_
-                print(clf_multioutput.coef_)
+
                 intercept_multi[dtype] = clf_multioutput.intercept_
 
                 assert_equal(clf.coef_.dtype, dtype)
@@ -729,7 +729,7 @@ def test_enet_float_precision():
             assert_array_almost_equal(intercept[np.float32],
                                       intercept[np.float64],
                                       decimal=4)
-            print(coef_multi)
+
             assert_array_almost_equal(coef_multi[np.float32][0],
                                       coef_multi[np.float64][0],
                                       decimal=4)
