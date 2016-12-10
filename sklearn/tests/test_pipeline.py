@@ -416,7 +416,7 @@ def test_make_union():
     names, transformers = zip(*fu.transformer_list)
     assert_equal(names, ("pca", "transf"))
     assert_equal(transformers, (pca, mock))
-    
+
 
 def test_make_union_kwargs():
     pca = PCA(svd_solver='full')
