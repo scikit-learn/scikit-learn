@@ -20,7 +20,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import is_classifier, clone
-from ..preprocessing import LabelBinarizer
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
@@ -468,9 +467,6 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
-    lb = LabelBinarizer()
-    lb.fit(y)
-
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
 
@@ -480,9 +476,18 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
-
-    if method is 'predict_proba':
-        predictions = lb.transform(predictions)
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        true_classes = np.unique(y)
+        train_classes = np.unique(y_train)
+        predictions_ = np.zeros((X_test.shape[0], true_classes.shape[0]))
+        if method is 'decision_function' and len(train_classes) == 2:
+            class_predictions = estimator.predict(X_test)
+            for i, j in enumerate(class_predictions):
+                predictions_[i, j] = predictions[i]
+        else:
+            for i, j in enumerate(train_classes):
+                predictions_[:, j] = predictions[:, i]
+        predictions = predictions_
     return predictions, test
 
 
