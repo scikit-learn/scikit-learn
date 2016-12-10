@@ -19,15 +19,39 @@ Multiclass settings
 -------------------
 
 ROC curves are typically used in binary classification to study the output of
-a classifier. In order to extend ROC curve and ROC area to multi-class
-or multi-label classification, it is necessary to binarize the output. One ROC
-curve can be drawn per label, but one can also draw a ROC curve by considering
+a classifier. Extensions of ROC curve and ROC area to multi-class
+or multi-label classification can use the One-vs-Rest or One-vs-One scheme.
+
+One-vs-Rest
+-----------
+
+The output is binarized and one ROC curve can be drawn per label,
+where the label is the positive class and all other labels are
+the negative class.
+
+The ROC area can be approximated by taking the average--unweighted or weighted
+by the a priori class distribution--of the one-vs-rest ROC areas.
+
+One can also draw a ROC curve by considering
 each element of the label indicator matrix as a binary prediction
 (micro-averaging).
 
-Another evaluation measure for multi-class classification is
+Another evaluation measure for one-vs-rest multi-class classification is
 macro-averaging, which gives equal weight to the classification of each
 label.
+
+One-vs-One
+----------
+
+Two ROC curves can be drawn per pair of labels because either of the two
+labels can be considered the positive class.
+
+The ROC area can be approximated by first computing the
+approximate ROC area of each label pair as the average of the
+two ROC AUC scores corresponding to that pair. The One-vs-One
+approximation of a multi-class ROC AUC score is the average--
+unweighted or weighted by the a priori class distribution--across
+all of the pairwise approximate ROC AUC scores.
 
 .. note::
 
@@ -42,7 +66,7 @@ import matplotlib.pyplot as plt
 from itertools import cycle
 
 from sklearn import svm, datasets
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.multiclass import OneVsRestClassifier
@@ -151,8 +175,12 @@ plt.title('An extension of Receiver operating characteristic to multi-class '
 plt.legend(loc="lower right")
 plt.show()
 
-# TODO: roc_auc_score weighted and unweighted
-
+# Compute the One-vs-Rest ROC AUC score, weighted and unweighted
+unweighted_roc_auc_ovr = roc_auc_score(y_test, y_score, multiclass="ovr")
+weighted_roc_auc_ovr = roc_auc_score(
+    y_test, y_score, multiclass="ovr", average="weighted")
+print("One-vs-Rest ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
+      unweighted_roc_auc_ovr, weighted_roc_auc_ovr))
 
 ##############################################################################
 # Plot ROC curves for the multiclass problem using One vs. One classification.
@@ -198,4 +226,9 @@ plt.title('An extension of Receiver operating characteristic to multi-class '
 plt.legend(bbox_to_anchor=(1.8, 0.55))
 plt.show()
 
-# TODO: roc_auc_scores
+# Compute the One-vs-One ROC AUC score, weighted and unweighted
+unweighted_roc_auc_ovo = roc_auc_score(y_test, y_score, multiclass="ovo")
+weighted_roc_auc_ovo = roc_auc_score(
+    y_test, y_score, multiclass="ovo", average="weighted")
+print("One-vs-One ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
+      unweighted_roc_auc_ovo, weighted_roc_auc_ovo))
