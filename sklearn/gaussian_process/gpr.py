@@ -169,6 +169,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             self.kernel_ = clone(self.kernel)
 
         self._rng = check_random_state(self.random_state)
+        # Deprecation 0.21
+        # Replace the above line by
+        # rng = check_random_state(self.random_state)
 
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
@@ -219,6 +222,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
                         self._rng.uniform(bounds[:, 0], bounds[:, 1])
+                        # Deprecation 0.21
+                        # Replace the above line by
+                        # rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
