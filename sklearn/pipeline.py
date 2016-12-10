@@ -779,6 +779,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             for name, old in self.transformer_list
         ]
 
+
 def make_union(*transformers, **kwargs):
     """Construct a FeatureUnion from the given transformers.
 
