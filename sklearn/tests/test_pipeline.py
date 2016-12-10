@@ -416,6 +416,13 @@ def test_make_union():
     names, transformers = zip(*fu.transformer_list)
     assert_equal(names, ("pca", "transf"))
     assert_equal(transformers, (pca, mock))
+    
+
+def test_make_union_kwargs():
+    pca = PCA(svd_solver='full')
+    mock = Transf()
+    fu = make_union(pca, mock, n_jobs=3)
+    assert_equal(3, fu.n_jobs)
 
 
 def test_pipeline_transform():
