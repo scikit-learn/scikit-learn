@@ -779,10 +779,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             for name, old in self.transformer_list
         ]
 
-
-# XXX it would be nice to have a keyword-only n_jobs argument to this function,
-# but that's not allowed in Python 2.x.
-def make_union(*transformers):
+def make_union(*transformers, **kwargs):
     """Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
@@ -792,6 +789,7 @@ def make_union(*transformers):
     Examples
     --------
     >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1,
            transformer_list=[('pca',
@@ -809,4 +807,4 @@ def make_union(*transformers):
     -------
     f : FeatureUnion
     """
-    return FeatureUnion(_name_estimators(transformers))
+    return FeatureUnion(_name_estimators(transformers), **kwargs)
