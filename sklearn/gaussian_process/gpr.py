@@ -222,9 +222,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
                         self._rng.uniform(bounds[:, 0], bounds[:, 1])
-                        # Deprecation 0.21
-                        # Replace the above line by
-                        # rng.uniform(bounds[:, 0], bounds[:, 1])
+                    # Deprecation 0.21
+                    # Replace the above line by
+                    # theta_initial = \
+                    #     rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
