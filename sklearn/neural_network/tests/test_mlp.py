@@ -12,7 +12,7 @@ import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 
-from sklearn.datasets import load_digits, load_boston
+from sklearn.datasets import load_digits, load_boston, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -48,6 +48,11 @@ boston = load_boston()
 
 Xboston = StandardScaler().fit_transform(boston.data)[: 200]
 yboston = boston.target[:200]
+
+iris = load_iris()
+
+X_iris = iris.data
+y_iris = iris.target
 
 
 def test_alpha():
@@ -556,3 +561,47 @@ def test_adaptive_learning_rate():
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
     assert_greater(1e-6, clf._optimizer.learning_rate)
+
+
+def test_warm_class():
+    X = X_iris[:150]
+    y = y_iris[:150]
+
+    n = len(y)
+
+    y_2classes = np.array([0]*75 + [1]*75)
+    y_3classes = np.array([0]*50 + [1]*50 + [2]*50)
+    y_4classes = np.array([0]*37 + [1]*37 + [2]*38 + [3]*38)
+    y_5classes = np.array([0]*30 + [1]*30 + [2]*30 + [3]*30 + [4]*30)
+
+    # failed in converting 7th argument `g' of _lbfgsb.setulb to C/Fortran array
+    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
+                          warm_start=True)
+
+    model.fit(X, y)
+    model.fit(X, y_2classes)
+    # model.predict(X)
+
+    # Success
+    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
+                          warm_start=True)
+
+    model.fit(X, y)
+    model.fit(X, y_3classes)
+    # model.predict(X)
+
+    # ValueError: operands could not be broadcast together with shapes (150,10) (3) (150,10)
+    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
+                          warm_start=True)
+
+    model.fit(X, y)
+    model.fit(X, y_4classes)
+    # model.predict(X)
+
+    # ValueError: total size of new array must be unchanged
+    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
+                          warm_start=True)
+
+    model.fit(X, y)
+    model.fit(X, y_5classes)
+    # model.predict(X)
