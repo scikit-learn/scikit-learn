@@ -787,6 +787,23 @@ def make_union(*transformers, **kwargs):
     and does not permit, naming the transformers. Instead, they will be given
     names automatically based on their types. It also does not allow weighting.
 
+    Parameters
+    ----------
+    transformer_list : list of (string, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer.
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1).
+
+    transformer_weights : dict, optional
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
+
+    Returns
+    -------
+    f : FeatureUnion
+
     Examples
     --------
     >>> from sklearn.decomposition import PCA, TruncatedSVD
@@ -802,10 +819,5 @@ def make_union(*transformers, **kwargs):
                               n_components=2, n_iter=5,
                               random_state=None, tol=0.0))],
            transformer_weights=None)
-
-
-    Returns
-    -------
-    f : FeatureUnion
     """
     return FeatureUnion(_name_estimators(transformers), **kwargs)
