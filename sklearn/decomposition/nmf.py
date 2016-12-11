@@ -24,7 +24,6 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted, check_non_negative
-from ..utils import deprecated
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
 
@@ -52,12 +51,6 @@ def trace_dot(X, Y):
     return np.dot(X.ravel(), Y.ravel())
 
 
-def _sparseness(x):
-    """Hoyer's measure of sparsity for a vector"""
-    sqrt_n = np.sqrt(len(x))
-    return (sqrt_n - np.linalg.norm(x, 1) / norm(x)) / (sqrt_n - 1)
-
-
 def _check_init(A, shape, whom):
     A = check_array(A)
     if np.shape(A) != shape:
@@ -78,20 +71,6 @@ def _safe_compute_error(X, W, H):
         cross_prod = trace_dot((X * H.T), W)
         error = sqrt(norm_X + norm_WH - 2. * cross_prod)
     return error
-
-
-def _check_string_param(sparseness, solver):
-    allowed_sparseness = (None, 'data', 'components')
-    if sparseness not in allowed_sparseness:
-        raise ValueError(
-            'Invalid sparseness parameter: got %r instead of one of %r' %
-            (sparseness, allowed_sparseness))
-
-    allowed_solver = ('pg', 'cd')
-    if solver not in allowed_solver:
-        raise ValueError(
-            'Invalid solver parameter: got %r instead of one of %r' %
-            (solver, allowed_solver))
 
 
 def _initialize_nmf(X, n_components, init=None, eps=1e-6,
@@ -345,115 +324,6 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     return H, grad, n_iter
 
 
-def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, alpha, l1_ratio,
-                                 sparseness, beta, eta):
-    """Helper function for _fit_projected_gradient"""
-    n_samples, n_features = X.shape
-    n_components_ = H.shape[0]
-
-    if sparseness is None:
-        Wt, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW, nls_max_iter,
-                                           alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'data':
-        Wt, gradW, iterW = _nls_subproblem(
-            safe_vstack([X.T, np.zeros((1, n_samples))]),
-            safe_vstack([H.T, np.sqrt(beta) * np.ones((1,
-                         n_components_))]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'components':
-        Wt, gradW, iterW = _nls_subproblem(
-            safe_vstack([X.T,
-                         np.zeros((n_components_, n_samples))]),
-            safe_vstack([H.T,
-                         np.sqrt(eta) * np.eye(n_components_)]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-
-    return Wt.T, gradW.T, iterW
-
-
-def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
-                                 sparseness, beta, eta):
-    """Helper function for _fit_projected_gradient"""
-    n_samples, n_features = X.shape
-    n_components_ = W.shape[1]
-
-    if sparseness is None:
-        H, gradH, iterH = _nls_subproblem(X, W, H, tolH, nls_max_iter,
-                                          alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'data':
-        H, gradH, iterH = _nls_subproblem(
-            safe_vstack([X, np.zeros((n_components_, n_features))]),
-            safe_vstack([W,
-                         np.sqrt(eta) * np.eye(n_components_)]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-    elif sparseness == 'components':
-        H, gradH, iterH = _nls_subproblem(
-            safe_vstack([X, np.zeros((1, n_features))]),
-            safe_vstack([W, np.sqrt(beta) * np.ones((1, n_components_))]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
-
-    return H, gradH, iterH
-
-
-def _fit_projected_gradient(X, W, H, tol, max_iter,
-                            nls_max_iter, alpha, l1_ratio,
-                            sparseness, beta, eta):
-    """Compute Non-negative Matrix Factorization (NMF) with Projected Gradient
-
-    References
-    ----------
-    C.-J. Lin. Projected gradient methods for non-negative matrix
-    factorization. Neural Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
-
-    P. Hoyer. Non-negative Matrix Factorization with Sparseness Constraints.
-    Journal of Machine Learning Research 2004.
-    """
-    gradW = (np.dot(W, np.dot(H, H.T)) -
-             safe_sparse_dot(X, H.T, dense_output=True))
-    gradH = (np.dot(np.dot(W.T, W), H) -
-             safe_sparse_dot(W.T, X, dense_output=True))
-
-    init_grad = squared_norm(gradW) + squared_norm(gradH.T)
-    # max(0.001, tol) to force alternating minimizations of W and H
-    tolW = max(0.001, tol) * np.sqrt(init_grad)
-    tolH = tolW
-
-    for n_iter in range(1, max_iter + 1):
-        # stopping condition
-        # as discussed in paper
-        proj_grad_W = squared_norm(gradW * np.logical_or(gradW < 0, W > 0))
-        proj_grad_H = squared_norm(gradH * np.logical_or(gradH < 0, H > 0))
-
-        if (proj_grad_W + proj_grad_H) / init_grad < tol ** 2:
-            break
-
-        # update W
-        W, gradW, iterW = _update_projected_gradient_w(X, W, H, tolW,
-                                                       nls_max_iter,
-                                                       alpha, l1_ratio,
-                                                       sparseness, beta, eta)
-        if iterW == 1:
-            tolW = 0.1 * tolW
-
-        # update H
-        H, gradH, iterH = _update_projected_gradient_h(X, W, H, tolH,
-                                                       nls_max_iter,
-                                                       alpha, l1_ratio,
-                                                       sparseness, beta, eta)
-        if iterH == 1:
-            tolH = 0.1 * tolH
-
-    H[H == 0] = 0   # fix up negative zeros
-
-    if n_iter == max_iter:
-        W, _, _ = _update_projected_gradient_w(X, W, H, tol, nls_max_iter,
-                                               alpha, l1_ratio, sparseness,
-                                               beta, eta)
-
-    return W, H, n_iter
-
-
 def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
                                random_state):
     """Helper function for _fit_coordinate_descent
@@ -604,8 +474,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                init='random', update_H=True, solver='cd',
                                tol=1e-4, max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
-                               verbose=0, shuffle=False, nls_max_iter=2000,
-                               sparseness=None, beta=1, eta=0.1):
+                               verbose=0, shuffle=False):
     """Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -668,9 +537,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    solver : 'pg' | 'cd'
+    solver : 'cd'
         Numerical solver to use:
-        'pg' is a (deprecated) Projected Gradient solver.
         'cd' is a Coordinate Descent solver.
 
     tol : float, default: 1e-4
@@ -702,21 +570,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
-    nls_max_iter : integer, default: 2000
-        Number of iterations in NLS subproblem.
-        Used only in the deprecated 'pg' solver.
-
-    sparseness : 'data' | 'components' | None, default: None
-        Where to enforce sparsity in the model.
-        Used only in the deprecated 'pg' solver.
-
-    beta : double, default: 1
-        Degree of sparseness, if sparseness is not None. Larger values mean
-        more sparseness. Used only in the deprecated 'pg' solver.
-
-    eta : double, default: 0.1
-        Degree of correctness to maintain, if sparsity is not None. Smaller
-        values mean larger error. Used only in the deprecated 'pg' solver.
 
     Returns
     -------
@@ -743,7 +596,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     X = check_array(X, accept_sparse=('csr', 'csc'))
     check_non_negative(X, "NMF (input X)")
-    _check_string_param(sparseness, solver)
 
     n_samples, n_features = X.shape
     if n_components is None:
@@ -770,23 +622,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         W, H = _initialize_nmf(X, n_components, init=init,
                                random_state=random_state)
 
-    if solver == 'pg':
-        warnings.warn("'pg' solver will be removed in release 0.19."
-                      " Use 'cd' solver instead.", DeprecationWarning)
-        if update_H:  # fit_transform
-            W, H, n_iter = _fit_projected_gradient(X, W, H, tol,
-                                                   max_iter,
-                                                   nls_max_iter,
-                                                   alpha, l1_ratio,
-                                                   sparseness,
-                                                   beta, eta)
-        else:  # transform
-            W, H, n_iter = _update_projected_gradient_w(X, W, H,
-                                                        tol, nls_max_iter,
-                                                        alpha, l1_ratio,
-                                                        sparseness, beta,
-                                                        eta)
-    elif solver == 'cd':
+    if solver == 'cd':
         W, H, n_iter = _fit_coordinate_descent(X, W, H, tol,
                                                max_iter,
                                                alpha, l1_ratio,
@@ -856,10 +692,9 @@ class NMF(BaseEstimator, TransformerMixin):
 
         - 'custom': use custom matrices W and H
 
-    solver : 'pg' | 'cd'
+    solver : 'cd'
         Numerical solver to use:
-        'pg' is a Projected Gradient solver (deprecated).
-        'cd' is a Coordinate Descent solver (recommended).
+        'cd' is a Coordinate Descent solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -900,37 +735,6 @@ class NMF(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            *shuffle* parameter used in the Coordinate Descent solver.
 
-    nls_max_iter : integer, default: 2000
-        Number of iterations in NLS subproblem.
-        Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
-
-    sparseness : 'data' | 'components' | None, default: None
-        Where to enforce sparsity in the model.
-        Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
-
-    beta : double, default: 1
-        Degree of sparseness, if sparseness is not None. Larger values mean
-        more sparseness. Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
-
-    eta : double, default: 0.1
-        Degree of correctness to maintain, if sparsity is not None. Smaller
-        values mean larger error. Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
 
     Attributes
     ----------
@@ -952,9 +756,9 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import NMF
     >>> model = NMF(n_components=2, init='random', random_state=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    NMF(alpha=0.0, beta=1, eta=0.1, init='random', l1_ratio=0.0, max_iter=200,
-      n_components=2, nls_max_iter=2000, random_state=0, shuffle=False,
-      solver='cd', sparseness=None, tol=0.0001, verbose=0)
+    NMF(alpha=0.0, init='random', l1_ratio=0.0, max_iter=200,
+      n_components=2, random_state=0, shuffle=False,
+      solver='cd', tol=0.0001, verbose=0)
 
     >>> model.components_
     array([[ 2.09783018,  0.30560234],
@@ -974,10 +778,9 @@ class NMF(BaseEstimator, TransformerMixin):
     computer sciences 92.3: 708-721, 2009.
     """
 
-    def __init__(self, n_components=None, init=None, solver='cd',
-                 tol=1e-4, max_iter=200, random_state=None,
-                 alpha=0., l1_ratio=0., verbose=0, shuffle=False,
-                 nls_max_iter=2000, sparseness=None, beta=1, eta=0.1):
+    def __init__(self, n_components=None, init=None, solver='cd', tol=1e-4,
+                 max_iter=200, random_state=None, alpha=0., l1_ratio=0.,
+                 verbose=0, shuffle=False):
         self.n_components = n_components
         self.init = init
         self.solver = solver
@@ -988,17 +791,6 @@ class NMF(BaseEstimator, TransformerMixin):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
-
-        if sparseness is not None:
-            warnings.warn("Controlling regularization through the sparseness,"
-                          " beta and eta arguments is only available"
-                          " for 'pg' solver, which will be removed"
-                          " in release 0.19. Use another solver with L1 or L2"
-                          " regularization instead.", DeprecationWarning)
-        self.nls_max_iter = nls_max_iter
-        self.sparseness = sparseness
-        self.beta = beta
-        self.eta = eta
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1029,13 +821,7 @@ class NMF(BaseEstimator, TransformerMixin):
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle,
-            nls_max_iter=self.nls_max_iter, sparseness=self.sparseness,
-            beta=self.beta, eta=self.eta)
-
-        if self.solver == 'pg':
-            self.comp_sparseness_ = _sparseness(H.ravel())
-            self.data_sparseness_ = _sparseness(W.ravel())
+            shuffle=self.shuffle)
 
         self.reconstruction_err_ = _safe_compute_error(X, W, H)
 
@@ -1081,9 +867,7 @@ class NMF(BaseEstimator, TransformerMixin):
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle,
-            nls_max_iter=self.nls_max_iter, sparseness=self.sparseness,
-            beta=self.beta, eta=self.eta)
+            shuffle=self.shuffle)
 
         return W
 
@@ -1104,185 +888,3 @@ class NMF(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'n_components_')
         return np.dot(W, self.components_)
-
-
-@deprecated("It will be removed in release 0.19. Use NMF instead."
-            "'pg' solver is still available until release 0.19.")
-class ProjectedGradientNMF(NMF):
-    """Non-Negative Matrix Factorization (NMF)
-
-    Find two non-negative matrices (W, H) whose product approximates the non-
-    negative matrix X. This factorization can be used for example for
-    dimensionality reduction, source separation or topic extraction.
-
-    The objective function is::
-
-        0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
-
-    Where::
-
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
-
-    The objective function is minimized with an alternating minimization of W
-    and H.
-
-    Read more in the :ref:`User Guide <NMF>`.
-
-    Parameters
-    ----------
-    n_components : int or None
-        Number of components, if n_components is not set all features
-        are kept.
-
-    init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
-        Method used to initialize the procedure.
-        Default: 'nndsvdar' if n_components < n_features, otherwise random.
-        Valid options:
-
-        - 'random': non-negative random matrices, scaled with:
-            sqrt(X.mean() / n_components)
-
-        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
-            initialization (better for sparseness)
-
-        - 'nndsvda': NNDSVD with zeros filled with the average of X
-            (better when sparsity is not desired)
-
-        - 'nndsvdar': NNDSVD with zeros filled with small random values
-            (generally faster, less accurate alternative to NNDSVDa
-            for when sparsity is not desired)
-
-        - 'custom': use custom matrices W and H
-
-    solver : 'pg' | 'cd'
-        Numerical solver to use:
-        'pg' is a Projected Gradient solver (deprecated).
-        'cd' is a Coordinate Descent solver (recommended).
-
-        .. versionadded:: 0.17
-           Coordinate Descent solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver.
-
-    tol : double, default: 1e-4
-        Tolerance value used in stopping conditions.
-
-    max_iter : integer, default: 200
-        Number of iterations to compute.
-
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
-
-    alpha : double, default: 0.
-        Constant that multiplies the regularization terms. Set it to zero to
-        have no regularization.
-
-        .. versionadded:: 0.17
-           *alpha* used in the Coordinate Descent solver.
-
-    l1_ratio : double, default: 0.
-        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an elementwise L2 penalty
-        (aka Frobenius Norm).
-        For l1_ratio = 1 it is an elementwise L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
-
-        .. versionadded:: 0.17
-           Regularization parameter *l1_ratio* used in the Coordinate Descent
-           solver.
-
-    shuffle : boolean, default: False
-        If true, randomize the order of coordinates in the CD solver.
-
-        .. versionadded:: 0.17
-           *shuffle* parameter used in the Coordinate Descent solver.
-
-    nls_max_iter : integer, default: 2000
-        Number of iterations in NLS subproblem.
-        Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
-
-    sparseness : 'data' | 'components' | None, default: None
-        Where to enforce sparsity in the model.
-        Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
-
-    beta : double, default: 1
-        Degree of sparseness, if sparseness is not None. Larger values mean
-        more sparseness. Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
-
-    eta : double, default: 0.1
-        Degree of correctness to maintain, if sparsity is not None. Smaller
-        values mean larger error. Used only in the deprecated 'pg' solver.
-
-        .. versionchanged:: 0.17
-           Deprecated Projected Gradient solver. Use Coordinate Descent solver
-           instead.
-
-    Attributes
-    ----------
-    components_ : array, [n_components, n_features]
-        Non-negative components of the data.
-
-    reconstruction_err_ : number
-        Frobenius norm of the matrix difference between
-        the training data and the reconstructed data from
-        the fit produced by the model. ``|| X - WH ||_2``
-
-    n_iter_ : int
-        Actual number of iterations.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
-    >>> from sklearn.decomposition import NMF
-    >>> model = NMF(n_components=2, init='random', random_state=0)
-    >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    NMF(alpha=0.0, beta=1, eta=0.1, init='random', l1_ratio=0.0, max_iter=200,
-      n_components=2, nls_max_iter=2000, random_state=0, shuffle=False,
-      solver='cd', sparseness=None, tol=0.0001, verbose=0)
-
-    >>> model.components_
-    array([[ 2.09783018,  0.30560234],
-           [ 2.13443044,  2.13171694]])
-    >>> model.reconstruction_err_ #doctest: +ELLIPSIS
-    0.00115993...
-
-    References
-    ----------
-    C.-J. Lin. Projected gradient methods for non-negative matrix
-    factorization. Neural Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
-
-    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
-    large scale nonnegative matrix and tensor factorizations."
-    IEICE transactions on fundamentals of electronics, communications and
-    computer sciences 92.3: 708-721, 2009.
-    """
-
-    def __init__(self, n_components=None, solver='pg', init=None,
-                 tol=1e-4, max_iter=200, random_state=None,
-                 alpha=0., l1_ratio=0., verbose=0,
-                 nls_max_iter=2000, sparseness=None, beta=1, eta=0.1):
-        super(ProjectedGradientNMF, self).__init__(
-            n_components=n_components, init=init, solver='pg', tol=tol,
-            max_iter=max_iter, random_state=random_state, alpha=alpha,
-            l1_ratio=l1_ratio, verbose=verbose, nls_max_iter=nls_max_iter,
-            sparseness=sparseness, beta=beta, eta=eta)
