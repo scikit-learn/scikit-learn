@@ -215,10 +215,22 @@ rules before submitting a pull request:
       the example. For more details on writing and building the
       documentation, see the :ref:`contribute_documentation` section.
 
-    * If your PR includes changes to files under the ``doc/`` or
-      ``examples/`` folders, include ``[doc build]`` in your commit message.
-      Otherwise, include ``[doc skip]`` in your commit message which will
-      allow the CI to avoid unnecessarily building the docs.
+A Note about CI:
+----------------
+    * Travis is used for testing on Linux platforms
+    * Appveyor is used for testing on Windows platforms
+    * CircleCI is used to build the docs for viewing
+
+    Please note that if one of the following markers appear in the latest commit message, the following actions are taken.
+
+    ====================== ===================
+    Commit Message Marker  Action Taken by CI
+    ---------------------- -------------------
+    [ci skip]              CI is skipped completely
+    [doc skip]             Docs are not built
+    [doc quick]            Docs built, but excludes example gallery plots
+    [doc build]            Docs built including example gallery plots
+    ====================== ===================
 
 You can also check for common programming errors with the following tools:
 
