@@ -15,8 +15,6 @@ import inspect
 import pkgutil
 import warnings
 import sys
-import re
-import platform
 import struct
 
 import scipy as sp
@@ -634,28 +632,6 @@ def skip_if_32bit(func):
         else:
             return func(*args, **kwargs)
     return run_test
-
-
-def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
-                  message='Multi-process bug in Mac OS X >= 10.7 '
-                          '(see issue #636)'):
-    """Test decorator that skips test if OS is Mac OS X and its
-    major version is one of ``versions``.
-    """
-    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
-                  " in 0.19: use the safer and more generic"
-                  " if_safe_multiprocessing_with_blas instead",
-                  DeprecationWarning)
-    mac_version, _, _ = platform.mac_ver()
-    skip = '.'.join(mac_version.split('.')[:2]) in versions
-
-    def decorator(func):
-        if skip:
-            @wraps(func)
-            def func(*args, **kwargs):
-                raise SkipTest(message)
-        return func
-    return decorator
 
 
 def if_safe_multiprocessing_with_blas(func):
