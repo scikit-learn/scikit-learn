@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array, safe_mask
+from ..utils import check_array, safe_mask, check_X_y
 from ..externals import six
 
 
@@ -120,3 +120,61 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         Xt = np.zeros((X.shape[0], support.size), dtype=X.dtype)
         Xt[:, support] = X
         return Xt
+
+
+def wrapper_scorer(score_func, X, y=None):
+    """ A wrapper function around score functions. This function takes as
+        input the feature matrix X and/or the target vector y and sends it
+        as parameter to the score function.
+
+    Parameters
+    ----------
+    score_func : callable
+        Function taking array(s) X and/or y, and returning a pair of arrays
+        (scores, pvalues) or a single array with scores.
+        
+    X : array-like, shape = [n_samples, n_features]
+        The training input samples/Feature matrix.
+
+    y : array-like or None, shape = [n_samples]
+        The target values (class labels in classification, real numbers in
+        regression).
+
+    Notes
+    -----
+    The negative score values returned by a score function are changed to
+    zero as both negative and zero score values signify the same thing.
+    E.g. Mutual information between two random variables is a non-negative
+    value, which measures the dependency between the variables. It is equal
+    to zero if and only if two random variables are independent, and higher
+    values mean higher dependency.
+    """
+
+    if not callable(score_func):
+        raise TypeError("The score function should be a callable, %s (%s) "
+                        "was passed."
+                        % (score_func, type(score_func)))
+
+    if y == None:
+        X = check_array(X, ('csr', 'csc'))
+    else:
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
+
+    if y == None:
+        score_func_ret = score_func(X)
+    else:
+        score_func_ret = score_func(X, y)
+
+    if isinstance(score_func_ret, (list, tuple)):
+        scores, pvalues = score_func_ret
+        pvalues = np.asarray(pvalues)
+    else:
+        scores = score_func_ret
+        pvalues = None
+    scores = np.asarray(scores)
+    scores[scores < 0.0] = 0.0
+
+    if pvalues == None:
+        return scores
+    else:
+        return scores, pvalues

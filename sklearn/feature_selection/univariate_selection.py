@@ -17,7 +17,7 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import norm, safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
-from .base import SelectorMixin
+from .base import SelectorMixin, wrapper_scorer
 
 
 def _clean_nans(scores):
@@ -302,15 +302,16 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
     def __init__(self, score_func):
         self.score_func = score_func
 
-    def fit(self, X, y):
-        """Run score function on (X, y) and get the appropriate features.
+    def fit(self, X, y=None):
+        """Run score function on (X, y) or X only and get the appropriate
+           features.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like or None, shape = [n_samples]
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -319,7 +320,10 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
+        if y == None:
+            X = check_array(X, ('csr', 'csc'))
+        else:
+            X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -327,7 +331,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
                             % (self.score_func, type(self.score_func)))
 
         self._check_params(X, y)
-        score_func_ret = self.score_func(X, y)
+        score_func_ret = wrapper_scorer(self.score_func, X, y)
         if isinstance(score_func_ret, (list, tuple)):
             self.scores_, self.pvalues_ = score_func_ret
             self.pvalues_ = np.asarray(self.pvalues_)
@@ -339,7 +343,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
 
         return self
 
-    def _check_params(self, X, y):
+    def _check_params(self, X, y=None):
         pass
 
 
@@ -393,7 +397,7 @@ class SelectPercentile(_BaseFilter):
         super(SelectPercentile, self).__init__(score_func)
         self.percentile = percentile
 
-    def _check_params(self, X, y):
+    def _check_params(self, X, y=None):
         if not 0 <= self.percentile <= 100:
             raise ValueError("percentile should be >=0, <=100; got %r"
                              % self.percentile)
@@ -467,7 +471,7 @@ class SelectKBest(_BaseFilter):
         super(SelectKBest, self).__init__(score_func)
         self.k = k
 
-    def _check_params(self, X, y):
+    def _check_params(self, X, y=None):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
             raise ValueError("k should be >=0, <= n_features; got %r."
                              "Use k='all' to return all features."
