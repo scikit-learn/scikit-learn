@@ -915,7 +915,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
     else:
         Y_normalized = normalize(Y, copy=True)
 
-    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=dense_output)
+    K = safe_sparse_dot(X_normalized, Y_normalized.T,
+                        dense_output=dense_output)
 
     return K
 
@@ -1134,24 +1135,73 @@ DEFAULT_BLOCK_SIZE = 64
 BYTES_PER_FLOAT = 8
 
 
+def _generate_pairwise_distances_blockwise(X, Y=None, metric='euclidean',
+                                           n_jobs=1,
+                                           block_size=DEFAULT_BLOCK_SIZE,
+                                           block_n_rows=1,
+                                           **kwds):
+    """Generate blocks of the distance matrix from X and optional Y.
+
+    Parameters
+    ----------
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+        [n_samples_a, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
+
+    Y : array [n_samples_b, n_features], optional
+        An optional second feature array. Only allowed if
+        metric != "precomputed".
+
+    metric : string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array.
+
+    n_jobs : int
+        The number of jobs to use for the computation.
+
+    block_size : int, default=64
+        The maximum number of mebibytes (MiB) of memory per job (see``n_jobs``)
+        to use at a time for calculating pairwise distances.
+
+    block_n_rows : int
+        Number of rows to be computed for each block.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+
+    Returns
+    -------
+    D : generator of blocks based on the ``block_size`` parameter.
+
+    """
+    if metric != 'precomputed' and Y is None:
+        Y = X
+    n_samples = X.shape[0]
+    for start in range(0, n_samples, block_n_rows):
+        # get distances from block to every other sample
+        stop = min(start + block_n_rows, X.shape[0])
+        yield pairwise_distances(X[start:stop], Y, metric, n_jobs, **kwds)
+
+
 def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
                                  block_size=DEFAULT_BLOCK_SIZE, **kwds):
-    """ Compute the distance matrix from a vector array X and optional Y.
+    """Compute the distance matrix from a vector array X and optional Y.
 
-    This method takes either a vector array or a distance matrix, and returns
-    a distance matrix. If the input is a vector array, the distances are
-    computed. If the input is a distances matrix, it is returned instead.
+    This method takes either a vector array or a distance matrix, and generates
+    blocks of a distance matrix. If the input is a vector array, the distances
+    are computed. If the input is a distances matrix, it is returned in blocks
+    instead.
 
     This is equivalent to calling:
 
         pairwise_distances(X, y, metric, n_jobs)
 
-    but uses much less memory.
+    but may use less memory.
 
     Parameters
     ----------
-    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+        [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
     Y : array [n_samples_b, n_features], optional
@@ -1190,13 +1240,19 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
 
     Returns
     -------
-    D : generator of blocks based on the ``block_size`` parameter. The blocks,
-        when concatenated, produce a distance matrix D such that D_{i, j} is
-        the distance between the ith and jth vectors of the given matrix X, if
-        Y is None. If Y is not None, then D_{i, j} is the distance between the
-        ith array from X and the jth array from Y.
+    D : generator of blocks based on the ``block_size`` parameter.
+        The blocks, when concatenated, produce a distance matrix D such that
+        D_{i, j} is the distance between the ith and jth vectors of the given
+        matrix X, if Y is None. If Y is not None, then D_{i, j} is the distance
+        between the ith array from X and the jth array from Y.
 
     """
+    if (metric not in _VALID_METRICS and
+            not callable(metric) and metric != "precomputed"):
+        raise ValueError("Unknown metric %s. "
+                         "Valid metrics are %s, or 'precomputed', or a "
+                         "callable" % (metric, _VALID_METRICS))
+
     n_samples = X.shape[0]
     block_n_rows = block_size * (2 ** 20) // (BYTES_PER_FLOAT * n_samples)
     if block_n_rows > n_samples:
@@ -1206,13 +1262,12 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
         raise ValueError('block_size should be at least n_samples * %d bytes '
                          '= %.0f MiB, got %r' % (BYTES_PER_FLOAT,
                                                  min_block_mib, block_size))
-    if Y is None:
-        Y = X
 
-    for start in range(0, n_samples, block_n_rows):
-        # get distances from block to every other sample
-        stop = min(start + block_n_rows, X.shape[0])
-        yield pairwise_distances(X[start:stop], Y, metric, n_jobs, **kwds)
+    return _generate_pairwise_distances_blockwise(X, Y, metric=metric,
+                                                  n_jobs=n_jobs,
+                                                  block_size=block_size,
+                                                  block_n_rows=block_n_rows,
+                                                  **kwds)
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):

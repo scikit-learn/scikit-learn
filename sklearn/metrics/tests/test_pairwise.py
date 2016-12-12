@@ -372,19 +372,23 @@ def test_pairwise_distances_argmin_min():
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
 
-def check_invalid_block_size_generator(generator):
-    for i in generator:
-        return i
-
-
 def test_pairwise_distances_blockwise_invalid_block_size():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((400, 4))
-    y = rng.random_sample((200, 4))
-    gen = pairwise_distances_blockwise(X, y, block_size=0, metric='euclidean')
+    X = np.empty((400, 4))
+    y = np.empty((200, 4))
     assert_raise_message(ValueError, 'block_size should be at least n_samples '
                          '* 8 bytes = 1 MiB, got 0',
-                         check_invalid_block_size_generator, gen)
+                         pairwise_distances_blockwise, X, y, block_size=0,
+                         metric='euclidean')
+
+
+def check_pairwise_distances_blockwise(X, Y, block_size, metric,
+                                       true_distances):
+    if Y is None:
+        Y = X
+    gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
+                                       metric=metric)
+    blockwise_distances = np.vstack(list(gen))
+    assert_array_almost_equal(blockwise_distances, true_distances)
 
 
 def test_pairwise_distances_blockwise():
@@ -392,27 +396,48 @@ def test_pairwise_distances_blockwise():
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((400, 4))
-    gen = pairwise_distances_blockwise(X, block_size=1, metric="euclidean")
-    S = np.empty((0, X.shape[0]))
-    for row in gen:
-        S = np.vstack((S, row))
-    S2 = euclidean_distances(X)
-    assert_array_almost_equal(S, S2)
+    S = euclidean_distances(X)
+    check_pairwise_distances_blockwise(X, None, block_size=1,
+                                       metric='euclidean', true_distances=S)
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((200, 4))
-    gen = pairwise_distances_blockwise(X, Y, block_size=1, metric="euclidean")
-    S = np.empty((0, Y.shape[0]))
-    for row in gen:
-        S = np.vstack((S, row))
-    S2 = euclidean_distances(X, Y)
-    assert_array_almost_equal(S, S2)
+    S = euclidean_distances(X, Y)
+    check_pairwise_distances_blockwise(X, Y, block_size=1,
+                                       metric='euclidean', true_distances=S)
     # absurdly large block_size
-    gen = pairwise_distances_blockwise(X, Y, block_size=10000,
-                                       metric='euclidean')
-    S = np.empty((0, Y.shape[0]))
-    for row in gen:
-        S = np.vstack((S, row))
-    assert_almost_equal(S, S2)
+    check_pairwise_distances_blockwise(X, Y, block_size=10000,
+                                       metric='euclidean', true_distances=S)
+    # "cityblock" uses scikit-learn metric, cityblock (function) is
+    # scipy.spatial.
+    S = pairwise_distances(X, Y, metric=cityblock)
+    check_pairwise_distances_blockwise(X, Y, block_size=1,
+                                       metric='cityblock', true_distances=S)
+    # The manhattan metric should be equivalent to cityblock.
+    check_pairwise_distances_blockwise(X, Y, block_size=1,
+                                       metric='manhattan', true_distances=S)
+    # Test cosine as a string metric versus cosine callable
+    # The string "cosine" uses sklearn.metric,
+    # while the function cosine is scipy.spatial
+    S = pairwise_distances(X, Y, metric=cosine)
+    check_pairwise_distances_blockwise(X, Y, block_size=1,
+                                       metric='cosine', true_distances=S)
+    # Test with sparse X and Y,
+    # currently only supported for Euclidean, L1 and cosine.
+    X_sparse = csr_matrix(X)
+    Y_sparse = csr_matrix(Y)
+    S = euclidean_distances(X_sparse, Y_sparse)
+    check_pairwise_distances_blockwise(X_sparse, Y_sparse, block_size=1,
+                                       metric='euclidean', true_distances=S)
+    S = cosine_distances(X_sparse, Y_sparse)
+    check_pairwise_distances_blockwise(X_sparse, Y_sparse, block_size=1,
+                                       metric='cosine', true_distances=S)
+    S = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
+    check_pairwise_distances_blockwise(X_sparse, Y_sparse.tocsc(),
+                                       block_size=1, metric='manhattan',
+                                       true_distances=S)
+    # Test that a value error is raised if the metric is unknown
+    assert_raises(ValueError, pairwise_distances_blockwise, X, Y,
+                  metric="blah")
 
 
 def test_euclidean_distances():
