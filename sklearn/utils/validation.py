@@ -248,13 +248,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if isinstance(accept_sparse, six.string_types):
         accept_sparse = [accept_sparse]
 
-    if accept_sparse in [None, False]:
-        if accept_sparse is None:
-            warnings.warn(
-                    "Passing None to parameter 'accept_sparse' is "
-                    "deprecated in 0.19. Use False instead.",
-                    DeprecationWarning)
-
+    if accept_sparse is False:
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
                         'convert to a dense numpy array.')
@@ -358,6 +352,15 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     X_converted : object
         The converted and validated X.
     """
+    # accept_sparse 'None' deprecation check
+    if accept_sparse is None:
+        warnings.warn(
+                "Passing 'None' to parameter 'accept_sparse' is "
+                "deprecated in version 0.19 and will be deprecated "
+                "in 0.21. Use 'False' instead.",
+                DeprecationWarning)
+        accept_sparse = False
+
     # store whether originally we wanted numeric dtype
     dtype_numeric = dtype == "numeric"
 

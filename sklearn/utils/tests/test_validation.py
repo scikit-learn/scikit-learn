@@ -350,11 +350,7 @@ def test_check_array_accept_sparse_type_exception():
                          check_array, X_csr, accept_sparse=[invalid_type])
 
     # Test deprecation of 'None'
-    msg = "Passing None to parameter 'accept_sparse' is " \
-          "deprecated in 0.19. Use False instead."
-
-    assert_raise_message((DeprecationWarning, TypeError), msg,
-                         check_array, X_csr, accept_sparse=None)
+    assert_warns(DeprecationWarning, check_array, X, accept_sparse=None)
 
 
 def test_check_array_accept_sparse_no_exception():
