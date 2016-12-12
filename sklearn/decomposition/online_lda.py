@@ -544,7 +544,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return self
 
     def _unnormalized_transform(self, X):
-        """Transform data X according to fitted model without normalization.
+        """Transform data X according to fitted model.
 
         Parameters
         ----------
@@ -554,7 +554,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Returns
         -------
         doc_topic_distr : shape=(n_samples, n_topics)
-            Unnormalized document topic distribution for X.
+            Document topic distribution for X.
         """
 
         if not hasattr(self, 'components_'):
@@ -576,7 +576,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         return doc_topic_distr
 
     def transform(self, X):
-        """Transform data X according to the fitted model with normalization.
+        """Transform data X according to the fitted model.
+
+           .. versionchanged:: 0.18
+              *doc_topic_distr* is now normalized
 
         Parameters
         ----------
@@ -586,7 +589,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Returns
         -------
         doc_topic_distr : shape=(n_samples, n_topics)
-            Normalized document topic distribution for X.
+            Document topic distribution for X.
         """
 
         doc_topic_distr = self._unnormalized_transform(X)
@@ -744,6 +747,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """Calculate approximate perplexity for data X.
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
+        
+        .. versionchanged:: 0.19
+           *doc_topic_distr* argument has been depricated because user no longer
+           has access to unnormalized distribution
 
         Parameters
         ----------
@@ -761,8 +768,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
 
         if doc_topic_distr is not None:
-            DeprecationWarning("Argument 'doc_topic_distr' is deprecated as "
-                               "of 0.19 and support for this argument will "
-                               "be removed in 0.21.")
+            warnings.warn("Argument 'doc_topic_distr' is deprecated and will "
+                          "be ignored as of 0.19. Support for this argument "
+                          "will be removed in 0.21.", DeprecationWarning)
 
         return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
