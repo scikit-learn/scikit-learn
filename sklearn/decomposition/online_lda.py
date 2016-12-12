@@ -17,7 +17,7 @@ from scipy.special import gammaln
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import (check_random_state, check_array, deprecated,
+from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
 from ..utils.validation import check_non_negative
 from ..utils.extmath import logsumexp
