@@ -54,6 +54,7 @@ def test_neighbors_accuracy_with_n_candidates():
 
         accuracies[i] = accuracies[i] / float(n_iter)
     # Sorted accuracies should be equal to original accuracies
+    print('accuracies:', accuracies)
     assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
     # Highest accuracy should be strictly greater than the lowest

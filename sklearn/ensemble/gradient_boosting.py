@@ -742,8 +742,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.warm_start = warm_start
         self.presort = presort
 
-        self.estimators_ = np.empty((0, 0), dtype=np.object)
-
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
@@ -923,9 +921,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, call `fit`"
-                                 " before making predictions`.")
+        check_is_fitted(self, 'estimators_')
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.

@@ -330,7 +330,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if hasattr(self, "oob_score_") and self.warm_start:
             del self.oob_score_
 
-        if not self.warm_start or len(self.estimators_) == 0:
+        if not self.warm_start or not hasattr(self, 'estimators_'):
             # Free allocated memory, if any
             self.estimators_ = []
             self.estimators_features_ = []

@@ -33,6 +33,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 
 from ._criterion import Criterion
@@ -103,14 +104,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
-
-        self.n_features_ = None
-        self.n_outputs_ = None
-        self.classes_ = None
-        self.n_classes_ = None
-
-        self.tree_ = None
-        self.max_features_ = None
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -398,7 +391,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
@@ -451,6 +444,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
@@ -492,9 +486,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.tree_ is None:
-            raise NotFittedError("Estimator not fitted, call `fit` before"
-                                 " `feature_importances_`.")
+        check_is_fitted(self, 'tree_')
 
         return self.tree_.compute_feature_importances()
 
@@ -761,6 +753,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 
