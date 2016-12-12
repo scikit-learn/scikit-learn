@@ -43,7 +43,8 @@ def test_all_estimator_no_base_class():
 def test_all_estimators():
     # Test that estimators are default-constructible, cloneable
     # and have working repr.
-    estimators = all_estimators(include_meta_estimators=True)
+    estimators = all_estimators(include_meta_estimators=True,
+                                include_dont_test=True)
 
     # Meta sanity-check to make sure that the estimator introspection runs
     # properly
@@ -57,7 +58,8 @@ def test_all_estimators():
 
 def test_non_meta_estimators():
     # input validation etc for non-meta estimators
-    estimators = all_estimators()
+    estimators = all_estimators(include_meta_estimators=True,
+                                include_dont_test=True)
     for name, Estimator in estimators:
         if issubclass(Estimator, BiclusterMixin):
             continue
