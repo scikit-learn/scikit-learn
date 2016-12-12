@@ -914,10 +914,6 @@ def test_cross_val_predict_with_method():
     X, y = shuffle(X, y, random_state=0)
     classes = len(set(y))
 
-    y[:50] = 0
-    y[50:100] = 1
-    X[:100], y[:100] = shuffle(X[:100], y[:100], random_state=0)
-
     kfold = KFold(len(iris.target))
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
@@ -933,15 +929,44 @@ def test_cross_val_predict_with_method():
         # Naive loop (should be same as cross_val_predict):
         for train, test in kfold.split(X, y):
             est.fit(X[train], y[train])
+            expected_predictions[test] = func(X[test])
+
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+
+def test_cross_val_predict_corner_case():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    classes = len(set(y))
+
+    # Modifies the dataset so that in a particular fold, produced by
+    # kfold.split, the training set is composed of only 2 classes instead of 3
+    y[:50] = 0
+    y[50:100] = 1
+    X[:100], y[:100] = shuffle(X[:100], y[:100], random_state=0)
+
+    kfold = KFold(len(iris.target))
+
+    methods = ['predict_proba', 'predict_log_proba']
+    for method in methods:
+        est = LogisticRegression()
+
+        predictions = cross_val_predict(est, X, y, method=method)
+        assert_equal(len(predictions), len(y))
+
+        expected_predictions = np.zeros([len(y), classes])
+        func = getattr(est, method)
+
+        # Naive loop (should be same as cross_val_predict):
+        for train, test in kfold.split(X, y):
+            est.fit(X[train], y[train])
             train_classes = np.unique(y[train])
             expected_predictions_ = func(X[test])
-            if method is 'decision_function' and len(train_classes) == 2:
-                expected_test_predictions = est.predict(X[test])
-                for i, j in enumerate(expected_test_predictions):
-                    expected_predictions[i, j] = expected_predictions_[i]
-            else:
-                for i, j in enumerate(train_classes):
-                    expected_predictions[test, j] = expected_predictions_[:, i]
+            for i, j in enumerate(train_classes):
+                expected_predictions[test, j] = expected_predictions_[:, i]
 
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold)

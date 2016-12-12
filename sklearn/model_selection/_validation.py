@@ -476,17 +476,12 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+    if method in ['predict_proba', 'predict_log_proba']:
         true_classes = np.unique(y)
         train_classes = np.unique(y_train)
         predictions_ = np.zeros((X_test.shape[0], true_classes.shape[0]))
-        if method is 'decision_function' and len(train_classes) == 2:
-            class_predictions = estimator.predict(X_test)
-            for i, j in enumerate(class_predictions):
-                predictions_[i, j] = predictions[i]
-        else:
-            for i, j in enumerate(train_classes):
-                predictions_[:, j] = predictions[:, i]
+        for i, j in enumerate(train_classes):
+            predictions_[:, j] = predictions[:, i]
         predictions = predictions_
     return predictions, test
 
