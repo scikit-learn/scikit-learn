@@ -324,7 +324,6 @@ def test_lda_fit_perplexity():
     # The following is taken from the body of the fit method
     X = lda._check_non_neg_array(X, "LatentDirichletAllocation.fit")
     n_samples, n_features = X.shape
-    batch_size = lda.batch_size
     lda._init_latent_vars(n_features)
     lda._em_step(X, total_samples=n_samples, batch_update=True)
     doc_topics_distr, _ = lda._e_step(X, cal_sstats=False, random_init=False)
