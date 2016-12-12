@@ -955,8 +955,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         self : returns a trained MLP model.
         """
-        num_classes = len(unique_labels(y))
         if getattr(self, 'classes_', None) is not None:
+            num_classes = len(unique_labels(y))
             if num_classes != len(self.classes_):
                 raise ValueError("The current output has %s unique labels. "
                                  " Model expected %s unique labels." %
