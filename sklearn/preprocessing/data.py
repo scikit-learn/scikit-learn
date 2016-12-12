@@ -1384,6 +1384,11 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
+    def _get_tags(self):
+        tags = super(Normalizer, self)._get_tags().copy()
+        tags.update(stateless=True)
+        return tags
+
 
 def binarize(X, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix
@@ -1494,6 +1499,11 @@ class Binarizer(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
+
+    def _get_tags(self):
+        tags = super(Binarizer, self)._get_tags().copy()
+        tags.update(stateless=True)
+        return tags
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):

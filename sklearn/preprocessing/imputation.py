@@ -375,3 +375,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+    def _get_tags(self):
+        tags = super(Imputer, self)._get_tags().copy()
+        tags.update(missing_values=True)
+        return tags

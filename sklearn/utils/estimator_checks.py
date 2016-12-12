@@ -83,7 +83,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if name not in ['Imputer']:
+    if not estimator._get_tags().get("missing_values", False):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
@@ -172,14 +172,10 @@ def _yield_regressor_checks(name, regressor):
 def _yield_transformer_checks(name, transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
-                    'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
-        yield check_transformer_data_not_an_array
+    yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
-    if name not in ['AdditiveChi2Sampler', 'Binarizer',
-                    'FunctionTransformer', 'Normalizer']:
-        # basic tests
-        yield check_transformer_general
+    yield check_transformer_general
+    if not transformer._get_tags().get("stateless"):
         yield check_transformers_unfitted
     # Dependent on external solvers and hence accessing the iter
     # param is non-trivial.
@@ -682,7 +678,7 @@ def _check_transformer(name, transformer, X, y):
             assert_equal(len(X_pred3), n_samples)
 
         # raises error on malformed input for transform
-        if hasattr(X, 'T'):
+        if hasattr(X, 'T') and not transformer._get_tags().get("stateless"):
             # If it's not an array, it does not have a 'T' property
             assert_raises(ValueError, transformer.transform, X.T)
 

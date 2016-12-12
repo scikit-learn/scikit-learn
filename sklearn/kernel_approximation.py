@@ -108,6 +108,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
 
+    def _get_tags(self):
+        tags = super(RBFSampler, self)._get_tags().copy()
+        tags.update(stateless=True)
+        return tags
+
 
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
@@ -201,6 +206,11 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         np.cos(projection, projection)
         projection *= np.sqrt(2.) / np.sqrt(self.n_components)
         return projection
+
+    def _get_tags(self):
+        tags = super(SkewedChi2Sampler, self)._get_tags().copy()
+        tags.update(stateless=True)
+        return tags
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
@@ -356,6 +366,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             X_new.append(X_step)
 
         return sp.hstack(X_new)
+
+    def _get_tags(self):
+        tags = super(AdditiveChi2Sampler, self)._get_tags().copy()
+        tags.update(stateless=True)
+        return tags
 
 
 class Nystroem(BaseEstimator, TransformerMixin):

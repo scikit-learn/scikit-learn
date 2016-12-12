@@ -92,3 +92,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
         return func(X, *((y,) if self.pass_y else ()),
                     **(kw_args if kw_args else {}))
+
+    def _get_tags(self):
+        tags = super(FunctionTransformer, self)._get_tags().copy()
+        tags.update(stateless=True)
+        return tags
