@@ -74,6 +74,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Currently may not work as expected; does not seem to use multiple 
+        processors. See notes below.
 
     Returns
     -------
@@ -95,6 +97,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     :func:`NearestNeighbors.radius_neighbors_graph
     <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
     with ``mode='distance'``.
+    
+    Note about n_jobs: this does not seem to use multiple processors. Calls
+    NearestNeighbour, passing the n_jobs parameter to it, but NearestNeighbour
+    has not yet been parrallelized.
 
     References
     ----------
