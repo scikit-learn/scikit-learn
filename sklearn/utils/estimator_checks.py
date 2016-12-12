@@ -305,7 +305,7 @@ def set_testing_parameters(estimator):
         estimator.n_components = 1
 
     if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
+        estimator.n_clusters = min(estimator.n_clusters, 2)
 
     if hasattr(estimator, "n_best"):
         estimator.n_best = 1
@@ -323,6 +323,9 @@ def set_testing_parameters(estimator):
         # greater than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
         estimator.set_params(n_components=8)
+
+    if estimator.__class__.__name__ == "GaussianRandomProjectionHash":
+        estimator.set_params(n_components=32)
 
     if isinstance(estimator, SelectKBest):
         # SelectKBest has a default of k=10
