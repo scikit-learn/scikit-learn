@@ -223,7 +223,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -249,13 +249,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self.fit(X, **params)
 
@@ -271,11 +271,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self, 'X_fit_')
 
@@ -287,11 +287,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_features)
+        X_new : array-like, shape (n_samples, n_features)
 
         References
         ----------

@@ -116,6 +116,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             sample_weight = np.empty(X.shape[0], dtype=np.float64)
             sample_weight[:] = 1. / X.shape[0]
         else:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
             # Normalize existing weights
             sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
 

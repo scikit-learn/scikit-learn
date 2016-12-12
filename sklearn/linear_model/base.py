@@ -229,22 +229,6 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     def fit(self, X, y):
         """Fit model."""
 
-    @deprecated(" and will be removed in 0.19.")
-    def decision_function(self, X):
-        """Decision function of the linear model.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        C : array, shape = (n_samples,)
-            Returns predicted values.
-        """
-        return self._decision_function(X)
-
     def _decision_function(self, X):
         check_is_fitted(self, "coef_")
 
@@ -376,7 +360,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
         check_is_fitted(self, "coef_", msg=msg)
@@ -406,7 +390,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, "coef_", msg=msg)
@@ -477,12 +461,6 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("``residues_`` is deprecated and will be removed in 0.19")
-    def residues_(self):
-        """Get the residues of the fitted model."""
-        return self._residues
 
     def fit(self, X, y, sample_weight=None):
         """

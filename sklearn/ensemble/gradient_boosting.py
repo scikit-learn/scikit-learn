@@ -31,7 +31,6 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -55,7 +54,6 @@ from ..utils import check_array
 from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
-from ..utils import deprecated
 from ..utils.extmath import logsumexp
 from ..utils.fixes import expit
 from ..utils.fixes import bincount
@@ -715,8 +713,7 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
-                                              _LearntSelectorMixin)):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
@@ -1125,30 +1122,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
 
-    @deprecated(" and will be removed in 0.19")
-    def decision_function(self, X):
-        """Compute the decision function of ``X``.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        score : array, shape = [n_samples, n_classes] or [n_samples]
-            The decision function of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-            Regression and binary classification produce an array of shape
-            [n_samples].
-        """
-
-        self._check_initialized()
-        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
-        score = self._decision_function(X)
-        if score.shape[1] == 1:
-            return score.ravel()
-        return score
 
     def _staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
@@ -1176,30 +1149,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
             yield score.copy()
-
-    @deprecated(" and will be removed in 0.19")
-    def staged_decision_function(self, X):
-        """Compute decision function of ``X`` for each iteration.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        score : generator of array, shape = [n_samples, k]
-            The decision function of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
-            Regression and binary classification are special cases with
-            ``k == 1``, otherwise ``k==n_classes``.
-        """
-        for dec in self._staged_decision_function(X):
-            # no yield from in Python2.X
-            yield dec
 
     @property
     def feature_importances_(self):
@@ -1537,7 +1486,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y: array of shape = ["n_samples]
+        y : array of shape = ["n_samples]
             The predicted values.
         """
         score = self.decision_function(X)

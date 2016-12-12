@@ -10,15 +10,7 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
-from .utils.deprecation import deprecated
-from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
 from . import __version__
-
-
-@deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class ChangedBehaviorWarning(_ChangedBehaviorWarning):
-    pass
 
 
 ##############################################################################
@@ -43,10 +35,10 @@ def clone(estimator, safe=True):
 
     Parameters
     ----------
-    estimator: estimator object, or list, tuple or set of objects
+    estimator : estimator object, or list, tuple or set of objects
         The estimator or group of estimators to be cloned
 
-    safe: boolean, optional
+    safe : boolean, optional
         If safe is false, clone will fall back to a deepcopy on objects
         that are not estimators.
 
@@ -134,13 +126,13 @@ def _pprint(params, offset=0, printer=repr):
 
     Parameters
     ----------
-    params: dict
+    params : dict
         The dictionary to pretty print
 
-    offset: int
+    offset : int
         The offset in characters to add at the begin of each line.
 
-    printer:
+    printer : callable
         The function to convert entries to strings, typically
         the builtin str or repr
 
@@ -510,7 +502,7 @@ class DensityMixin(object):
 
         Returns
         -------
-        score: float
+        score : float
         """
         pass
 
