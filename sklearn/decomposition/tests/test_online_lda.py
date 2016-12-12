@@ -313,6 +313,29 @@ def test_lda_score_perplexity():
     perplexity_2 = np.exp(-1. * (score / np.sum(X.data)))
     assert_almost_equal(perplexity_1, perplexity_2)
 
+def test_lda_fit_perplexity():
+    # Test that the perplexity computed during fit is consistent with what is
+    # returned by the perplexity method
+    n_topics, X = _build_sparse_mtx()
+    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
+                                     learning_method='batch', random_state=0,
+                                     evaluate_every=1)
+                                    
+    # The following is taken from the body of the fit method
+    X = lda._check_non_neg_array(X, "LatentDirichletAllocation.fit")
+    n_samples, n_features = X.shape
+    batch_size = lda.batch_size
+    lda._init_latent_vars(n_features)
+    lda._em_step(X, total_samples=n_samples, batch_update=True)
+    doc_topics_distr, _ = lda._e_step(X, cal_sstats=False, random_init=False)
+    bound = lda._perplexity_precomp_distr(X, doc_topics_distr)
+
+    # Now call fit method followed by perplexity method
+    lda.fit(X)
+    perplexity = lda.perplexity(X)
+
+    assert_almost_equal(bound, perplexity)
+
 
 def test_lda_empty_docs():
     """Test LDA on empty document (all-zero rows)."""
