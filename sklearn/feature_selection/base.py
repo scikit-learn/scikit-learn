@@ -132,7 +132,7 @@ def wrapper_scorer(score_func, X, y=None):
     score_func : callable
         Function taking array(s) X and/or y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
-        
+
     X : array-like, shape = [n_samples, n_features]
         The training input samples/Feature matrix.
 
@@ -155,12 +155,12 @@ def wrapper_scorer(score_func, X, y=None):
                         "was passed."
                         % (score_func, type(score_func)))
 
-    if y == None:
+    if y is None:
         X = check_array(X, ('csr', 'csc'))
     else:
         X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
-    if y == None:
+    if y is None:
         score_func_ret = score_func(X)
     else:
         score_func_ret = score_func(X, y)
@@ -174,7 +174,7 @@ def wrapper_scorer(score_func, X, y=None):
     scores = np.asarray(scores)
     scores[scores < 0.0] = 0.0
 
-    if pvalues == None:
+    if pvalues is None:
         return scores
     else:
         return scores, pvalues
