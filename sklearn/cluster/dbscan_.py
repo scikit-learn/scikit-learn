@@ -74,7 +74,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Currently may not work as expected; might not use multiple processors. 
+        Currently may not work as expected; might not use multiple processors.
         See notes below.
 
     Returns
