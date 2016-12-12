@@ -1130,3 +1130,29 @@ that implement common linear model patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
+Estimator Tags
+--------------
+Scikit-learn introduced estimator tags in version 0.19.
+These are annotations of estimators that allow programmatic inspection of their
+capabilities, such as sparse matrix support, supported output types and
+supported methods.
+The estimator tags are a dictionary returned by the method ``_get_tags()``.
+These tags are used by the common tests and the ``check_estimator`` function to decide
+what tests to run and what input data is appropriate.
+
+The current set of estimator tags are:
+
+input_validation - whether the estimator does input-validation. This is only meant for stateless and dummy transformers!
+multioutput - whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
+multilabel -  whether the estimator supports multilabel output
+stateless - whether the estimator needs access to data for fitting. Even though
+an estimator is stateless, it might still need a call to ``fit`` for initialization.
+missing_values - whether the estimator supports data with missing values
+test_accuracy - whether to test estimator for reasonable test set score.
+
+In addition to the tags, estimators are also need to declare any non-optional
+parameters to ``__init__`` in the ``_required_parameters`` class attribute,
+which is a list or tuple.  If ``__init__`` is only ``["estimator"]``, then the
+estimator will be instantiated with an instance of
+``LinearDiscriminantAnalysis`` in the tests.
