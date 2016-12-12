@@ -48,7 +48,7 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
-from sklearn.utils.validation import has_fit_parameter
+from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -64,6 +64,16 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
+
+
+def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
+    if sparse.issparse(x):
+        assert_array_almost_equal(x.data, y.data,
+                                  decimal=decimal,
+                                  err_msg=err_msg)
+    else:
+        assert_array_almost_equal(x, y, decimal=decimal,
+                                  err_msg=err_msg)
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -657,25 +667,25 @@ def _check_transformer(name, transformer, X, y):
             X_pred3 = transformer.fit_transform(X, y=y_)
         if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
             for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
-                assert_array_almost_equal(
+                assert_almost_equal_dense_sparse(
                     x_pred, x_pred2, 2,
                     "fit_transform and transform outcomes not consistent in %s"
                     % transformer)
-                assert_array_almost_equal(
+                assert_almost_equal_dense_sparse(
                     x_pred, x_pred3, 2,
                     "consecutive fit_transform outcomes not consistent in %s"
                     % transformer)
         else:
-            assert_array_almost_equal(
+            assert_almost_equal_dense_sparse(
                 X_pred, X_pred2, 2,
                 "fit_transform and transform outcomes not consistent in %s"
                 % transformer)
-            assert_array_almost_equal(
+            assert_almost_equal_dense_sparse(
                 X_pred, X_pred3, 2,
                 "consecutive fit_transform outcomes not consistent in %s"
                 % transformer)
-            assert_equal(len(X_pred2), n_samples)
-            assert_equal(len(X_pred3), n_samples)
+            assert_equal(_num_samples(X_pred2), n_samples)
+            assert_equal(_num_samples(X_pred3), n_samples)
 
         # raises error on malformed input for transform
         if hasattr(X, 'T') and not transformer._get_tags().get("stateless"):
@@ -714,7 +724,7 @@ def check_pipeline_consistency(name, estimator):
             func_pipeline = getattr(pipeline, func_name)
             result = func(X, y)
             result_pipe = func_pipeline(X, y)
-            assert_array_almost_equal(result, result_pipe)
+            assert_almost_equal_dense_sparse(result, result_pipe)
 
 
 @ignore_warnings
@@ -888,7 +898,7 @@ def check_estimators_pickle(name, estimator):
 
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
-        assert_array_almost_equal(result[method], unpickled_result)
+        assert_almost_equal_dense_sparse(result[method], unpickled_result)
 
 
 def check_estimators_partial_fit_n_features(name, alg):

@@ -29,9 +29,8 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_array
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -1023,7 +1022,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             a matrix of term/token counts
         """
         if not sp.issparse(X):
-            X = sp.csc_matrix(X)
+            X = sp.csc_matrix(X, dtype=np.float64)
+        X = check_array(X, accept_sparse=["csc", "csr"])
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
@@ -1035,7 +1035,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self
