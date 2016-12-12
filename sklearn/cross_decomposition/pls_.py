@@ -4,6 +4,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
+import scipy
 from distutils.version import LooseVersion
 from sklearn.utils.extmath import svd_flip
 
@@ -20,7 +21,7 @@ from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
-import scipy
+
 pinv2_args = {}
 if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
     # check_finite=False is an optimization available only in scipy >=0.12
@@ -460,6 +461,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         return self.fit(X, y, **fit_params).transform(X, y)
+
+    def _get_tags(self):
+        tags = super(_PLS, self)._get_tags().copy()
+        tags.update(test_accuracy=False)
+        return tags
 
 
 class PLSRegression(_PLS):
