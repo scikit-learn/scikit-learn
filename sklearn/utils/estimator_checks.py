@@ -1004,6 +1004,7 @@ def check_classifiers_train(name, classifier):
     # generate binary problem from multi-class one
     y_b = y_m[y_m != 2]
     X_b = X_m[y_m != 2]
+    tags = classifier._get_tags()
     for (X, y) in [(X_m, y_m), (X_b, y_b)]:
         classes = np.unique(y)
         n_classes = len(classes)
@@ -1024,11 +1025,12 @@ def check_classifiers_train(name, classifier):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if classifier._get_tags().get("test_accuracy", True):
+        if tags.get("test_accuracy", True):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
-        assert_raises(ValueError, classifier.predict, X.T)
+        if tags.get("input_validation", True):
+            assert_raises(ValueError, classifier.predict, X.T)
         if hasattr(classifier, "decision_function"):
             try:
                 # decision_function agrees with predict
@@ -1043,12 +1045,10 @@ def check_classifiers_train(name, classifier):
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
-                # raises error on malformed input
-                assert_raises(ValueError,
-                              classifier.decision_function, X.T)
-                # raises error on malformed input for decision_function
-                assert_raises(ValueError,
-                              classifier.decision_function, X.T)
+                if tags.get("input_validation", True):
+                    # raises error on malformed input for decision_function
+                    assert_raises(ValueError,
+                                  classifier.decision_function, X.T)
             except NotImplementedError:
                 pass
         if hasattr(classifier, "predict_proba"):
@@ -1059,10 +1059,9 @@ def check_classifiers_train(name, classifier):
             # check that probas for all classes sum to one
             assert_array_almost_equal(np.sum(y_prob, axis=1),
                                       np.ones(n_samples))
-            # raises error on malformed input
-            assert_raises(ValueError, classifier.predict_proba, X.T)
-            # raises error on malformed input for predict_proba
-            assert_raises(ValueError, classifier.predict_proba, X.T)
+            if tags.get("input_validation", True):
+                # raises error on malformed input for predict_proba
+                assert_raises(ValueError, classifier.predict_proba, X.T)
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
                 y_log_prob = classifier.predict_log_proba(X)
@@ -1143,7 +1142,8 @@ def check_supervised_y_2d(name, estimator):
     y_pred_2d = estimator.predict(X)
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
-    if name not in MULTI_OUTPUT:
+    if (name not in MULTI_OUTPUT and not
+            estimator._get_tags().get("multioutput", "False")):
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
         assert_true("DataConversionWarning('A column-vector y"
@@ -1247,7 +1247,7 @@ def check_regressors_train(name, regressor):
     # TODO: find out why PLS and CCA fail. RANSAC is random
     # and furthermore assumes the presence of outliers, hence
     # skipped
-    if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
+    if regressor._get_tags().get("test_accuracy", True):
         assert_greater(regressor.score(X, y_), 0.5)
 
 
@@ -1645,4 +1645,5 @@ def check_classifiers_regression_target(name, estimator):
     X, y = boston.data, boston.target
     e = clone(estimator)
     msg = 'Unknown label type: '
-    assert_raises_regex(ValueError, msg, e.fit, X, y)
+    if estimator._get_tags().get("input_validation", True):
+        assert_raises_regex(ValueError, msg, e.fit, X, y)
