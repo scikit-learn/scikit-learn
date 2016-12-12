@@ -305,7 +305,8 @@ class BaseEstimator(object):
         self.__dict__.update(state)
 
     def _get_tags(self):
-        return {'input_types': ['ndarray']}
+        return {'input_types': ['ndarray'], 'test_accuracy': True,
+                'input_validation': True, 'multioutput': False}
 
 
 class ClassifierMixin(object):
