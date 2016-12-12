@@ -895,7 +895,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
-        'mu' solver always does the maximum number of iteration.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms.
@@ -1097,7 +1096,6 @@ class NMF(BaseEstimator, TransformerMixin):
 
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
-        'mu' solver always does the maximum number of iteration.
 
     random_state : integer seed, RandomState instance, or None (default)
         Random number generator seed control.
