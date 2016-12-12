@@ -116,10 +116,10 @@ API changes summary
 -------------------
 
    - Ensure that estimators' attributes ending with ``_`` are not set
-     in the constructor but only in the ``fit`` method. Most notably
-     if you implemented your own estimator deriving from
-     :class:`ensemble.BaseEnsemble` you may be affected by this if you
-     are using ``self.estimators_`` in your constructor.
+     in the constructor but only in the ``fit`` method. Most notably,
+     ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
+     now only have ``self.estimators_`` available after ``fit``.
+     :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
 
 .. _changes_0_18_1:
