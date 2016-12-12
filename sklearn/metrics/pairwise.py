@@ -1140,7 +1140,7 @@ def _generate_pairwise_distances_blockwise(X, Y=None, metric='euclidean',
                                            block_size=DEFAULT_BLOCK_SIZE,
                                            block_n_rows=1,
                                            **kwds):
-    """Generate blocks of the distance matrix from X and optional Y.
+    """Generates blocks of the distance matrix from X and optional Y.
 
     Parameters
     ----------
