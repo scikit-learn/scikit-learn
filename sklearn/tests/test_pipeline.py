@@ -424,6 +424,7 @@ def test_make_union_kwargs():
     fu = make_union(pca, mock, n_jobs=3)
     assert_equal(fu.transformer_list, make_union(pca, mock).transformer_list)
     assert_equal(3, fu.n_jobs)
+    assert_raises(TypeError, make_union,pca, mock, invalidFakeKwarg=42)
 
 
 def test_pipeline_transform():
