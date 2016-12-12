@@ -789,16 +789,10 @@ def make_union(*transformers, **kwargs):
 
     Parameters
     ----------
-    transformer_list : list of (string, transformer) tuples
-        List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer.
+    *transformers : list of estimators
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
-
-    transformer_weights : dict, optional
-        Multiplicative weights for features per transformer.
-        Keys are transformer names, values the weights.
 
     Returns
     -------
