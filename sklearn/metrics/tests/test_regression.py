@@ -93,6 +93,18 @@ def test__check_reg_targets():
             assert_raises(ValueError, _check_reg_targets, y1, y2, None)
 
 
+def test__check_reg_targets_exception():
+    invalid_multioutput = 'this_value_is_not_valid'
+    expected_message = ("Allowed 'multioutput' string values are.+"
+                        "You provided multioutput={!r}".format(
+                            invalid_multioutput))
+    assert_raises_regex(ValueError, expected_message,
+                        _check_reg_targets,
+                        [1, 2, 3],
+                        [[1], [2], [3]],
+                        invalid_multioutput)
+
+
 def test_regression_multioutput_array():
     y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]

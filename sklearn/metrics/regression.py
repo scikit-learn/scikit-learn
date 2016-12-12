@@ -87,9 +87,15 @@ def _check_reg_targets(y_true, y_pred, multioutput):
                          "({0}!={1})".format(y_true.shape[1], y_pred.shape[1]))
 
     n_outputs = y_true.shape[1]
-    multioutput_options = (None, 'raw_values', 'uniform_average',
-                           'variance_weighted')
-    if multioutput not in multioutput_options:
+    allowed_multioutput_str = ('raw_values', 'uniform_average',
+                               'variance_weighted')
+    if isinstance(multioutput, string_types):
+        if multioutput not in allowed_multioutput_str:
+            raise ValueError("Allowed 'multioutput' string values are {}. "
+                             "You provided multioutput={!r}".format(
+                                 allowed_multioutput_str,
+                                 multioutput))
+    elif multioutput is not None:
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in "
@@ -504,7 +510,8 @@ def r2_score(y_true, y_pred, sample_weight=None,
     0.948...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> r2_score(y_true, y_pred, multioutput='variance_weighted')  # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
+    ... # doctest: +ELLIPSIS
     0.938...
     >>> y_true = [1,2,3]
     >>> y_pred = [1,2,3]
