@@ -1056,12 +1056,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors : sparse matrix, [n_samples, n_features]
         """
-        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.float):
-            # preserve float family dtype
-            X = sp.csr_matrix(X, copy=copy)
-        else:
-            # convert counts or binary occurrences to floats
-            X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
+        X = check_array(X, accept_sparse=["csr"], copy=copy,
+                        dtype=[np.float64, np.float32])
 
         n_samples, n_features = X.shape
 
@@ -1087,10 +1083,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     @property
     def idf_(self):
-        if hasattr(self, "_idf_diag"):
-            return np.ravel(self._idf_diag.sum(axis=0))
-        else:
-            return None
+        # if _idf_diag is not set, this will raise an attribute error,
+        # which means hasatt(self, "idf_") is False
+        return np.ravel(self._idf_diag.sum(axis=0))
 
 
 class TfidfVectorizer(CountVectorizer):
