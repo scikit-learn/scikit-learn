@@ -322,7 +322,6 @@ Samples generator
 
    decomposition.PCA
    decomposition.IncrementalPCA
-   decomposition.ProjectedGradientNMF
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
@@ -1058,7 +1057,7 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.DistanceMetric
    neighbors.KernelDensity
    neighbors.LocalOutlierFactor
-	      
+
 .. autosummary::
    :toctree: generated/
    :template: function.rst
