@@ -576,25 +576,25 @@ def test_warm_class():
         # failed in converting 7th argument `g' of _lbfgsb.setulb to
         # C/Fortran array
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                              warm_start=True)
+                            warm_start=True)
         clf.fit(X, y)
         assert_raises(ValueError, clf.fit, X, y_2classes)
 
         # Success
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                              warm_start=True)
+                            warm_start=True)
         clf.fit(X, y)
         clf.fit(X, y_3classes)
 
         # ValueError: operands could not be broadcast together with shapes
         # (150,10) (3) (150,10)
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                              warm_start=True)
+                            warm_start=True)
         clf.fit(X, y)
         assert_raises(ValueError, clf.fit, X, y_4classes)
 
         # ValueError: total size of new array must be unchanged
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                              warm_start=True)
+                            warm_start=True)
         clf.fit(X, y)
         assert_raises(ValueError, clf.fit, X, y_5classes)
