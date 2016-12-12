@@ -28,7 +28,7 @@ Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
 Additionally, latent semantic analysis can also be used to reduce dimensionality
-and discover latent patterns in the data. 
+and discover latent patterns in the data.
 
 It can be noted that k-means (and minibatch k-means) are very sensitive to
 feature scaling and that in this case the IDF weighting helps improve the
@@ -102,7 +102,13 @@ op.add_option("--verbose",
 print(__doc__)
 op.print_help()
 
-(opts, args) = op.parse_args()
+
+def is_interactive():
+    return not hasattr(sys.modules['__main__'], '__file__')
+
+# work-around for Jupyter notebook and IPython console
+argv = [] if is_interactive() else sys.argv[1:]
+(opts, args) = op.parse_args(argv)
 if len(args) > 0:
     op.error("this script takes no arguments.")
     sys.exit(1)
@@ -117,7 +123,7 @@ categories = [
     'sci.space',
 ]
 # Uncomment the following to do the analysis on all the categories
-#categories = None
+# categories = None
 
 print("Loading 20 newsgroups dataset for categories:")
 print(categories)

@@ -73,6 +73,25 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return np.ones(X.shape[0])
 
 
+class NoSampleWeightPandasSeriesType(BaseEstimator):
+    def fit(self, X, y, sample_weight=None):
+        # Convert data
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
+                         y_numeric=True)
+        # Function is only called after we verify that pandas is installed
+        from pandas import Series
+        if isinstance(sample_weight, Series):
+            raise ValueError("Estimator does not accept 'sample_weight'"
+                             "of type pandas.Series")
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        return np.ones(X.shape[0])
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -86,6 +105,15 @@ def test_check_estimator():
     # check that fit does input validation
     msg = "TypeError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
+    # check that sample_weights in fit accepts pandas.Series type
+    try:
+        from pandas import Series  # noqa
+        msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
+               "'sample_weight' parameter is of type pandas.Series")
+        assert_raises_regex(
+            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+    except ImportError:
+        pass
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)

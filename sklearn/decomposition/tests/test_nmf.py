@@ -13,8 +13,8 @@ from sklearn.utils.testing import assert_raise_message, assert_no_warnings
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm, fast_dot
 from sklearn.base import clone
@@ -165,13 +165,13 @@ def test_nmf_sparse_input():
                    random_state=0, tol=1e-2)
         est2 = clone(est1)
 
-        W1 = est1.fit_transform(A)
-        W2 = est2.fit_transform(A_sparse)
-        H1 = est1.components_
-        H2 = est2.components_
+    W1 = est1.fit_transform(A)
+    W2 = est2.fit_transform(A_sparse)
+    H1 = est1.components_
+    H2 = est2.components_
 
-        assert_array_almost_equal(W1, W2)
-        assert_array_almost_equal(H1, H2)
+    assert_array_almost_equal(W1, W2)
+    assert_array_almost_equal(H1, H2)
 
 
 def test_nmf_sparse_transform():

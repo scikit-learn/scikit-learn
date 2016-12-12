@@ -871,7 +871,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver (recommended).
+        'cd' is a Coordinate Descent solver.
         'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
@@ -1073,7 +1073,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver (recommended).
+        'cd' is a Coordinate Descent solver.
         'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
