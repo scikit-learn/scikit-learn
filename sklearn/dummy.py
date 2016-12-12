@@ -485,7 +485,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         return y
 
     def _get_tags(self):
-        tags = super(DummyClassifier, self)._get_tags().copy()
+        tags = super(DummyRegressor, self)._get_tags().copy()
         tags.update(test_accuracy=False, multioutput=True,
                     input_validation=False)
         return tags
