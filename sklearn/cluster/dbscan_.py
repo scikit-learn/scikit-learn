@@ -97,7 +97,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     :func:`NearestNeighbors.radius_neighbors_graph
     <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
     with ``mode='distance'``.
-    
+
     Note about n_jobs: this does not seem to use multiple processors. Calls
     NearestNeighbour, passing the n_jobs parameter to it, but NearestNeighbour
     has not yet been parrallelized.
