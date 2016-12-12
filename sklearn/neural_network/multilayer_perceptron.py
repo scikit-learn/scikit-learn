@@ -939,6 +939,30 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         return self._label_binarizer.inverse_transform(y_pred)
 
+    def fit(self, X, y):
+        """Fit the model to data matrix X and target(s) y.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : returns a trained MLP model.
+        """
+        num_classes = len(unique_labels(y))
+        if getattr(self, 'classes_', None) is not None:
+            if num_classes != len(self.classes_):
+                raise ValueError("The current output has %s unique labels. "
+                                 " Model expected %s unique labels." %
+                                 (num_classes, len(self.classes_)))
+        return self._fit(X, y, incremental=False)
+
     @property
     def partial_fit(self):
         """Fit the model to data matrix X and target y.

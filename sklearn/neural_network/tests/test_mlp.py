@@ -567,41 +567,34 @@ def test_warm_class():
     X = X_iris[:150]
     y = y_iris[:150]
 
-    n = len(y)
-
     y_2classes = np.array([0]*75 + [1]*75)
     y_3classes = np.array([0]*50 + [1]*50 + [2]*50)
     y_4classes = np.array([0]*37 + [1]*37 + [2]*38 + [3]*38)
     y_5classes = np.array([0]*30 + [1]*30 + [2]*30 + [3]*30 + [4]*30)
 
-    # failed in converting 7th argument `g' of _lbfgsb.setulb to C/Fortran array
-    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
-                          warm_start=True)
+    with ignore_warnings(category=Warning):
+        # failed in converting 7th argument `g' of _lbfgsb.setulb to
+        # C/Fortran array
+        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
+                              warm_start=True)
+        clf.fit(X, y)
+        assert_raises(ValueError, clf.fit, X, y_2classes)
 
-    model.fit(X, y)
-    model.fit(X, y_2classes)
-    # model.predict(X)
+        # Success
+        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
+                              warm_start=True)
+        clf.fit(X, y)
+        clf.fit(X, y_3classes)
 
-    # Success
-    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
-                          warm_start=True)
+        # ValueError: operands could not be broadcast together with shapes
+        # (150,10) (3) (150,10)
+        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
+                              warm_start=True)
+        clf.fit(X, y)
+        assert_raises(ValueError, clf.fit, X, y_4classes)
 
-    model.fit(X, y)
-    model.fit(X, y_3classes)
-    # model.predict(X)
-
-    # ValueError: operands could not be broadcast together with shapes (150,10) (3) (150,10)
-    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
-                          warm_start=True)
-
-    model.fit(X, y)
-    model.fit(X, y_4classes)
-    # model.predict(X)
-
-    # ValueError: total size of new array must be unchanged
-    model = MLPClassifier(hidden_layer_sizes=10, solver='lbfgs',
-                          warm_start=True)
-
-    model.fit(X, y)
-    model.fit(X, y_5classes)
-    # model.predict(X)
+        # ValueError: total size of new array must be unchanged
+        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
+                              warm_start=True)
+        clf.fit(X, y)
+        assert_raises(ValueError, clf.fit, X, y_5classes)
