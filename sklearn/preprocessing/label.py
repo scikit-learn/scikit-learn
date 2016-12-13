@@ -173,6 +173,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y = np.asarray(y)
         return self.classes_[y]
 
+    def _get_tags(self):
+        tags = super(LabelEncoder, self)._get_tags().copy()
+        tags['input_types'] = ["1dlabels"]
+        return tags
+
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion
@@ -406,6 +411,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y_inv = y_inv.toarray()
 
         return y_inv
+
+    def _get_tags(self):
+        tags = super(LabelBinarizer, self)._get_tags().copy()
+        tags['input_types'] = ["1dlabels"]
+        return tags
 
 
 def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
@@ -847,3 +857,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                                  'Also got {0}'.format(unexpected))
             return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
+
+    def _get_tags(self):
+        tags = super(MultiLabelBinarizer, self)._get_tags().copy()
+        tags['input_types'] = ["2dlabels"]
+        return tags
