@@ -21,9 +21,12 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
+from sklearn.exceptions import SkipTestWarning
 
 import sklearn
+from warnings import warn
 from sklearn.cluster.bicluster import BiclusterMixin
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -67,10 +70,15 @@ def test_non_meta_estimators():
             continue
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
-            print("Can't test estimator {} because "
-                  "it requires parameters {}".format(
-                      name, required_parameters))
-            continue
+            if required_parameters == ["estimator"]:
+                estimator = Estimator(LinearDiscriminantAnalysis())
+            else:
+                warn(SkipTestWarning, "Can't instantiate "
+                     "estimator {} which requires parameters {}".format(
+                         name, required_parameters))
+                continue
+        else:
+            estimator = Estimator()
 
         estimator = Estimator()
         for check in _yield_all_checks(name, estimator):

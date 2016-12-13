@@ -206,6 +206,12 @@ def _yield_clustering_checks(name, clusterer):
 
 
 def _yield_all_checks(name, estimator):
+    input_types = estimator._get_tags().get("input_types", ["2darray"])
+    if "2darray" not in input_types:
+        warnings.warn("Can't test estimator {} which requires input "
+                      " of type {}".format(name, input_types),
+                      SkipTestWarning)
+        return
     for check in _yield_non_meta_checks(name, estimator):
         yield check
     if isinstance(estimator, ClassifierMixin):

@@ -509,3 +509,8 @@ class PatchExtractor(BaseEstimator):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
                 image, patch_size, self.max_patches, self.random_state)
         return patches
+
+    def _get_tags(self):
+        tags = super(PatchExtractor, self)._get_tags().copy()
+        tags['input_types'] = ["3darray"]
+        return tags
