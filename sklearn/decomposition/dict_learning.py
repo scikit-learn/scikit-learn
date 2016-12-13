@@ -649,7 +649,6 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
     return_n_iter : bool
         Whether or not to return the number of iterations.
 
-
     Returns
     -------
     code : array of shape (n_samples, n_components)
