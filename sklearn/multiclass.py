@@ -216,6 +216,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         return self
 
+    @if_delegate_has_method(['_first_estimator', 'estimator'])
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
 
@@ -407,6 +408,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def _first_estimator(self):
         return self.estimators_[0]
 
+    def _get_tags(self):
+        tags = super(OneVsRestClassifier, self)._get_tags().copy()
+        tags.update(multioutput=True)
+        return tags
+
 
 def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
@@ -489,6 +495,9 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
 
         self.classes_ = np.unique(y)
+        if len(self.classes_) == 1:
+            raise ValueError("OneVsOneClassifier can not be fit when only one"
+                             "class is present.")
         n_classes = self.classes_.shape[0]
         estimators_indices = list(zip(*(Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_ovo_binary)
@@ -504,6 +513,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         return self
 
+    @if_delegate_has_method(delegate='estimator')
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
 
@@ -600,7 +610,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  for est, Xi in zip(self.estimators_, Xs)]).T
         Y = _ovr_decision_function(predictions,
                                    confidences, len(self.classes_))
-
+        if len(self.n_classes_) == 2:
+            return Y[:, 1]
         return Y
 
     @property
