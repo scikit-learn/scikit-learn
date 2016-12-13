@@ -261,14 +261,16 @@ def check_estimator(Estimator):
         Class to check. Estimator is a class object (not an instance).
 
     """
-    name = Estimator.__name__
     if isinstance(Estimator, type):
         # got a class
+        name = Estimator.__name__
         check_parameters_default_constructible(name, Estimator)
         estimator = Estimator()
     else:
         # got an instance
         estimator = Estimator
+        name = type(estimator).__name__
+
     for check in _yield_all_checks(name, estimator):
         try:
             check(name, estimator)
@@ -1061,12 +1063,13 @@ def check_classifiers_train(name, classifier):
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes is 2:
-                    assert_equal(decision.shape, (n_samples,))
+                    if not tags.get("multioutput", False):
+                        assert_equal(decision.shape, (n_samples,))
+                    else:
+                        assert_equal(decision.shape, (n_samples, 1))
                     dec_pred = (decision.ravel() > 0).astype(np.int)
                     assert_array_equal(dec_pred, y_pred)
-                if (n_classes is 3
-                        and not isinstance(classifier, BaseLibSVM)):
-                    # 1on1 of LibSVM works differently
+                else:
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
