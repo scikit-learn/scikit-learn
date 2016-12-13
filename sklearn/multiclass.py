@@ -493,6 +493,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        check_classification_targets(y)
 
         self.classes_ = np.unique(y)
         if len(self.classes_) == 1:
@@ -578,6 +579,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Predicted multi-class targets.
         """
         Y = self.decision_function(X)
+        if self.n_classes_ == 2:
+            return self.classes_[(Y > 0).astype(np.int)]
         return self.classes_[Y.argmax(axis=1)]
 
     def decision_function(self, X):
@@ -610,7 +613,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  for est, Xi in zip(self.estimators_, Xs)]).T
         Y = _ovr_decision_function(predictions,
                                    confidences, len(self.classes_))
-        if len(self.n_classes_) == 2:
+        if self.n_classes_ == 2:
             return Y[:, 1]
         return Y
 
@@ -717,6 +720,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         _check_estimator(self.estimator)
         random_state = check_random_state(self.random_state)
+        check_classification_targets(y)
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
