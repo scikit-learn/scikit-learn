@@ -34,6 +34,11 @@ get_build_type() {
 		echo SKIP: [doc skip] marker found
 		return
 	fi
+	if [[ "$commit_msg" =~ \[doc\ quick\] ]]
+	then
+		echo QUICK: [doc quick] marker found
+		return
+	fi
 	if [[ "$commit_msg" =~ \[doc\ build\] ]]
 	then
 		echo BUILD: [doc build] marker found
@@ -52,12 +57,12 @@ get_build_type() {
 		echo QUICK BUILD: no changed filenames for $git_range
 		return
 	fi
-	if echo "$filenames" | grep -q -e ^examples/ -e ^doc/
+	if echo "$filenames" | grep -q -e ^examples/
 	then
-		echo BUILD: detected doc/ or examples/ filename modified in $git_range: $(echo "$filenames" | grep -e ^examples/ -e ^doc/ | head -n1)
+		echo BUILD: detected examples/ filename modified in $git_range: $(echo "$filenames" | grep -e ^examples/ | head -n1)
 		return
 	fi
-	echo QUICK BUILD: no doc/ or examples/ filename modified in $git_range:
+	echo QUICK BUILD: no examples/ filename modified in $git_range:
 	echo "$filenames"
 }
 
@@ -110,8 +115,10 @@ popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
+# Using sphinx 1.4 for now until sphinx-gallery has a fix for sphinx 1.5
+# See https://github.com/sphinx-gallery/sphinx-gallery/pull/178 for more details
 conda create -n testenv --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx pillow
+  cython nose coverage matplotlib sphinx=1.4 pillow
 source activate testenv
 
 # Build and install scikit-learn in dev mode
