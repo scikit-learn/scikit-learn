@@ -1076,8 +1076,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
                 np.log(X.data, X.data)
                 X.data += 1
             else:
-                np.log(X, X)
-                X += 1
+                mask = X != 0
+                X[mask] = np.log(X[mask])
+                X[mask] += 1
 
         if self.use_idf:
             check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')

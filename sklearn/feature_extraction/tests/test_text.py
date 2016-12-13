@@ -35,6 +35,7 @@ from collections import defaultdict, Mapping
 from functools import partial
 import pickle
 from io import StringIO
+from scipy import sparse
 
 
 JUNK_FOOD_DOCS = (
@@ -320,7 +321,7 @@ def test_tf_idf_smoothing():
          [1, 1, 0],
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
-    tfidf = tr.fit_transform(X).toarray()
+    tfidf = tr.fit_transform(X)
     assert_true((tfidf >= 0).all())
 
 
@@ -340,6 +341,7 @@ def test_tfidf_no_smoothing():
     X = [[1, 1, 0],
          [1, 1, 0],
          [1, 0, 0]]
+    X = sparse.csr_matrix(X)
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
     clean_warning_registry()
