@@ -313,6 +313,7 @@ def test_lda_score_perplexity():
     perplexity_2 = np.exp(-1. * (score / np.sum(X.data)))
     assert_almost_equal(perplexity_1, perplexity_2)
 
+
 def test_lda_fit_perplexity():
     # Test that the perplexity computed during fit is consistent with what is
     # returned by the perplexity method
@@ -320,7 +321,7 @@ def test_lda_fit_perplexity():
     lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
                                      learning_method='batch', random_state=0,
                                      evaluate_every=1)
-                                    
+
     # The following is taken from the body of the fit method
     X = lda._check_non_neg_array(X, "LatentDirichletAllocation.fit")
     n_samples, n_features = X.shape

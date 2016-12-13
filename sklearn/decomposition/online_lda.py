@@ -505,7 +505,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             warnings.warn("The default value for 'learning_method' will be "
                           "changed from 'online' to 'batch' in the release 0.20. "
                           "This warning was introduced in 0.18.",
-                          DeprecationWarning)          
+                          DeprecationWarning)
             learning_method = 'online'
 
         batch_size = self.batch_size
@@ -747,7 +747,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """Calculate approximate perplexity for data X.
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
-        
+
         .. versionchanged:: 0.19
            *doc_topic_distr* argument has been depricated because user no longer
            has access to unnormalized distribution
