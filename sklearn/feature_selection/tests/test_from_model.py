@@ -27,8 +27,7 @@ def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=None)
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
-        model.fit(data, y)
-        assert_raises(ValueError, model.transform, data)
+        assert_raises(ValueError, model.fit, data, y)
 
 
 def test_input_estimator_unchanged():
