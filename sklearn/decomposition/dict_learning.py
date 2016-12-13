@@ -637,14 +637,14 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
         initialization may be used or may be ignored depending on the
         init_method.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    callback :
+        Callable that gets invoked every five iterations.
 
     verbose :
         Degree of output the procedure will print.
 
-    callback :
-        Callable that gets invoked every five iterations.
+    random_state : int or RandomState
+        Pseudo number generator state used for random sampling.
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
