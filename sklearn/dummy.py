@@ -404,7 +404,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              "'mean', 'median', 'quantile' or 'constant'"
                              % self.strategy)
 
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         multi_output=True)
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
