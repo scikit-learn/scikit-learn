@@ -541,6 +541,13 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                         break
                     last_bound = bound
                 self.n_iter_ += 1
+
+        # calculate final perplexity value on train set
+        doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
+                                           random_init=False, parallel=parallel)
+        self.bound_ = self._perplexity_precomp_distr(X, doc_topics_distr,
+                                                     sub_sampling=False)
+
         return self
 
     def _unnormalized_transform(self, X):
