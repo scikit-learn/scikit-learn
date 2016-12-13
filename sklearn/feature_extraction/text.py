@@ -937,7 +937,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                      key=itemgetter(1))]
 
     def _get_tags(self):
-        tags = super(HashingVectorizer, self)._get_tags().copy()
+        tags = super(CountVectorizer, self)._get_tags().copy()
         tags['input_types'] = ["string"]
         return tags
 
@@ -1386,6 +1386,6 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
     def _get_tags(self):
-        tags = super(HashingVectorizer, self)._get_tags().copy()
+        tags = super(TfidfVectorizer, self)._get_tags().copy()
         tags['input_types'] = ["string"]
         return tags

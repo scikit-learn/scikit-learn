@@ -490,7 +490,7 @@ DONT_TEST = ['DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
 
 def all_estimators(include_meta_estimators=False,
                    include_other=None, type_filter=None,
-                   include_dont_test=False):
+                   include_dont_test=None):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -538,6 +538,11 @@ def all_estimators(include_meta_estimators=False,
         warnings.warn("include_other was deprecated in version 0.19 and will"
                       " be removed in 0.21", DeprecationWarning)
 
+    if include_dont_test is not None:
+        warnings.warn("include_dont_test was deprecated in version 0.19 and"
+                      " will be removed in 0.21",
+                      DeprecationWarning)
+
     all_classes = []
     # get parent folder
     path = sklearn.__path__
@@ -556,9 +561,6 @@ def all_estimators(include_meta_estimators=False,
                       c[0] != 'BaseEstimator')]
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
-
-    if not include_dont_test:
-        estimators = [c for c in estimators if not c[0] in DONT_TEST]
 
     # possibly get rid of meta estimators
     if not include_meta_estimators:

@@ -206,12 +206,22 @@ def _yield_clustering_checks(name, clusterer):
 
 
 def _yield_all_checks(name, estimator):
-    input_types = estimator._get_tags().get("input_types", ["2darray"])
+    try:
+        tags = estimator._get_tags()
+    except AttributeError:
+        tags = {}
+    input_types = tags.get("input_types", ["2darray"])
     if "2darray" not in input_types:
         warnings.warn("Can't test estimator {} which requires input "
                       " of type {}".format(name, input_types),
                       SkipTestWarning)
         return
+    if tags.get("_skip_test", False):
+        warnings.warn("Explicit SKIP via _skip_test tag for estimator "
+                      "{}.".format(name),
+                      SkipTestWarning)
+        return
+
     for check in _yield_non_meta_checks(name, estimator):
         yield check
     if isinstance(estimator, ClassifierMixin):
@@ -1534,7 +1544,7 @@ def check_parameters_default_constructible(name, Estimator):
                              "parameter %s for %s has no default value"
                              % (init_param.name, type(estimator).__name__))
             if type(init_param.default) is type:
-                assert_in(init_param.default, [np.float64])
+                assert_in(init_param.default, [np.float64, np.int64])
             else:
                 assert_in(type(init_param.default),
                           [str, int, float, bool, tuple, type(None),

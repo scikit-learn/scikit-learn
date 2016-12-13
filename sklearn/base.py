@@ -308,7 +308,7 @@ class BaseEstimator(object):
         return {'input_types': ['2darray'], 'test_accuracy':
                 True, 'input_validation': True, 'multioutput':
                 False, "missing_values": False, 'stateless':
-                False, 'multilabel': False}
+                False, 'multilabel': False, "_skip_test": False}
 
 
 class ClassifierMixin(object):

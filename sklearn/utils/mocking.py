@@ -72,3 +72,9 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         else:
             score = 0.
         return score
+
+    def _get_tags(self):
+        tags = super(CheckingClassifier, self)._get_tags().copy()
+        tags.update(test_accuracy=False, input_validation=False,
+                    _skip_test=True)
+        return tags

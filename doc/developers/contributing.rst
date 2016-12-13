@@ -1150,6 +1150,7 @@ stateless - whether the estimator needs access to data for fitting. Even though
 an estimator is stateless, it might still need a call to ``fit`` for initialization.
 missing_values - whether the estimator supports data with missing values
 test_accuracy - whether to test estimator for reasonable test set score.
+_skip_test - whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
 
 In addition to the tags, estimators are also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
