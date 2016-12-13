@@ -88,6 +88,7 @@ print('done in %.2fs.' % (time() - t0))
 ###############################################################################
 # Learn the dictionary from reference patches
 
+
 def learn_and_show(sparse_coder, name):
     t0 = time()
     dictionary = sparse_coder.fit(data).components_
@@ -101,9 +102,10 @@ def learn_and_show(sparse_coder, name):
                    interpolation='nearest')
         plt.xticks(())
         plt.yticks(())
-    plt.suptitle('Dictionary learned from face patches with {}\n'.format(name) +
-                 'Train time %.1fs on %d patches' % (dt, len(data)),
-                 fontsize=16)
+    plt.suptitle(
+        'Dictionary learned from face patches with {}\n'.format(name) +
+        'Train time %.1fs on %d patches' % (dt, len(data)),
+        fontsize=16)
     plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
@@ -146,6 +148,7 @@ def show_with_diff(image, reference, title):
     plt.suptitle(title, size=16)
     plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
 
+
 show_with_diff(distorted, face, 'Distorted image')
 
 ###############################################################################
@@ -167,6 +170,7 @@ transform_algorithms = [
     ('Least-angle regression\n5 atoms', 'lars',
      {'transform_n_nonzero_coefs': 5}),
     ('Thresholding\n alpha=0.1', 'threshold', {'transform_alpha': .1})]
+
 
 def test_reconstruction(sparse_coder, dict_name):
     reconstructions = {}
@@ -192,6 +196,7 @@ def test_reconstruction(sparse_coder, dict_name):
                        dict_name + '\n' + title + ' (time: %.1fs)' % dt)
 
     plt.show()
+
 
 print('Reconstructions for L1 dictionary.')
 test_reconstruction(coder_lars, 'LARS dictionary')

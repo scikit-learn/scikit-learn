@@ -727,9 +727,9 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
             sys.stdout.write(".")
             sys.stdout.flush()
         elif verbose:
-            print ("Iteration % 3i "
-                   "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
-                   % (ii, dt, dt / 60, current_cost))
+            print("Iteration % 3i "
+                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                  % (ii, dt, dt / 60, current_cost))
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=coding_method,
@@ -939,8 +939,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             sys.stdout.flush()
         elif verbose:
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                       % (ii, dt, dt / 60))
+                print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                      % (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
@@ -959,7 +959,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         # Update dictionary
         dictionary = _update_dict_cd(dictionary, B, A, verbose=verbose,
-                                  random_state=random_state)
+                                     random_state=random_state)
         # XXX: Can the residuals be of any use?
 
         # Maybe we need a stopping criteria based on the amount of

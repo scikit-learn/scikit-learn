@@ -34,6 +34,7 @@ def test_dict_learning_lars_shapes():
                               random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
+
 def test_dict_learning_ksvd_shapes():
     n_components = 5
     dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
