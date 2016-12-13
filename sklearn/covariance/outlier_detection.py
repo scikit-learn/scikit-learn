@@ -62,11 +62,11 @@ class OutlierDetectionMixin(object):
 
         """
         check_is_fitted(self, 'threshold_')
+        X = check_array(X)
         mahal_dist = self.mahalanobis(X)
         if raw_values:
             decision = mahal_dist
         else:
-            check_is_fitted(self, 'threshold_')
             transformed_mahal_dist = mahal_dist ** 0.33
             decision = self.threshold_ ** 0.33 - transformed_mahal_dist
 
