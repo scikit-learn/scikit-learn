@@ -100,7 +100,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     Note about n_jobs: this does not seem to use multiple processors. Calls
     NearestNeighbour, passing the n_jobs parameter to it, but NearestNeighbour
-    has not yet been parrallelized.
+    has not yet been parrallelized. Setting algorithm="brute" uses multiple
+    cores, but may cause a slow down instead.
 
     References
     ----------
