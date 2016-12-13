@@ -1533,9 +1533,12 @@ def check_parameters_default_constructible(name, Estimator):
             assert_not_equal(init_param.default, init_param.empty,
                              "parameter %s for %s has no default value"
                              % (init_param.name, type(estimator).__name__))
-            assert_in(type(init_param.default),
-                      [str, int, float, bool, tuple, type(None),
-                       np.float64, types.FunctionType, Memory])
+            if type(init_param.default) is type:
+                assert_in(init_param.default, [np.float64])
+            else:
+                assert_in(type(init_param.default),
+                          [str, int, float, bool, tuple, type(None),
+                           np.float64, types.FunctionType, Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert_true(init_param.default is None)

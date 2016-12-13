@@ -498,6 +498,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                              input_type='string', dtype=self.dtype,
                              non_negative=self.non_negative)
 
+    def _get_tags(self):
+        tags = super(HashingVectorizer, self)._get_tags().copy()
+        tags['input_types'] = ["string"]
+        return tags
+
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
@@ -930,6 +935,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
+
+    def _get_tags(self):
+        tags = super(HashingVectorizer, self)._get_tags().copy()
+        tags['input_types'] = ["string"]
+        return tags
 
 
 def _make_int_array():
@@ -1374,3 +1384,8 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
+    def _get_tags(self):
+        tags = super(HashingVectorizer, self)._get_tags().copy()
+        tags['input_types'] = ["string"]
+        return tags

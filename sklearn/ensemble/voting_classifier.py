@@ -99,6 +99,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     [1 1 1 2 2 2]
     >>>
     """
+    _required_parameters = ['estimators']
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1):
         self.estimators = estimators

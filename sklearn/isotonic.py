@@ -419,3 +419,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         super(IsotonicRegression, self).__setstate__(state)
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)
+
+    def _get_tags(self):
+        tags = super(IsotonicRegression, self)._get_tags().copy()
+        tags['input_types'] = ["1darray"]
+        return tags
