@@ -80,7 +80,6 @@ def test_non_meta_estimators():
         else:
             estimator = Estimator()
 
-        estimator = Estimator()
         for check in _yield_all_checks(name, estimator):
             yield _named_check(check, name), name, estimator
 
