@@ -544,7 +544,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         # calculate final perplexity value on train set
         doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
-                                           random_init=False, parallel=parallel)
+                                           random_init=False,
+                                           parallel=parallel)
         self.bound_ = self._perplexity_precomp_distr(X, doc_topics_distr,
                                                      sub_sampling=False)
 
@@ -756,8 +757,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Perplexity is defined as exp(-1. * log-likelihood per word)
 
         .. versionchanged:: 0.19
-           *doc_topic_distr* argument has been depricated because user no longer
-           has access to unnormalized distribution
+           *doc_topic_distr* argument has been depricated because user no
+           longer has access to unnormalized distribution
 
         Parameters
         ----------
