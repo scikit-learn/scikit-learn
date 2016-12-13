@@ -1726,8 +1726,9 @@ class MultiTaskElasticNet(Lasso):
         return self
 
     def _get_tags(self):
-        tags = super(MultiTaskElasticNet, self)._get_tags()
-        return tags.copy().update(multioutput_only=True)
+        tags = super(MultiTaskElasticNet, self)._get_tags().copy()
+        tags.update(multioutput_only=True)
+        return tags
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -1898,8 +1899,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2023,8 +2024,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.selection = selection
 
     def _get_tags(self):
-        tags = super(MultiTaskElasticNetCV, self)._get_tags()
-        return tags.copy().update(multioutput_only=True)
+        tags = super(MultiTaskElasticNetCV, self)._get_tags().copy()
+        tags.update(multioutput_only=True)
+        return tags
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2163,5 +2165,6 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             selection=selection)
 
     def _get_tags(self):
-        tags = super(MultiTaskLassoCV, self)._get_tags()
-        return tags.copy().update(multioutput_only=True)
+        tags = super(MultiTaskLassoCV, self)._get_tags().copy()
+        tags.update(multioutput_only=True)
+        return tags

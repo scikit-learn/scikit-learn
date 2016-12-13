@@ -540,22 +540,25 @@ class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
     def _get_tags(self):
-        tags = super(MetaEstimatorMixin, self)._get_tags()
-        return tags.copy().update(is_meta_estimator=True)
+        tags = super(MetaEstimatorMixin, self)._get_tags().copy()
+        tags.update(is_meta_estimator=True)
+        return tags
 
 
 class SparseSupportMixin(object):
     """Mixin to mark estimators that support sparse matrix input."""
     def _get_tags(self=None):
-        tags = super(ClassifierMixin, self)._get_tags()
-        return tags.copy().update(sparse_support=True)
+        tags = super(ClassifierMixin, self)._get_tags().copy()
+        tags.update(sparse_support=True)
+        return tags
 
 
 class MultiLabelMixin(object):
     """Mixin to mark estimators that support multilabel classification."""
     def _get_tags(self=None):
-        tags = super(ClassifierMixin, self)._get_tags()
-        return tags.copy().update(multilabel=True)
+        tags = super(ClassifierMixin, self)._get_tags().copy()
+        tags.update(multilabel=True)
+        return tags
 
 
 def is_classifier(estimator):
