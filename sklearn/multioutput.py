@@ -22,6 +22,7 @@ from .base import RegressorMixin, ClassifierMixin
 from .utils import check_array, check_X_y
 from .utils.fixes import parallel_helper
 from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.multiclass import check_classification_targets
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
@@ -75,6 +76,9 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                          multi_output=True,
                          accept_sparse=True)
 
+        if isinstance(self, ClassifierMixin):
+            check_classification_targets(y)
+
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
                              "multi target regression but has only one.")
@@ -86,7 +90,17 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_estimator)(
             self.estimator, X, y[:, i], sample_weight) for i in range(y.shape[1]))
+
+        if isinstance(self, ClassifierMixin):
+            if len(self.estimators_) == 1:
+                # we unravel in case of 1d output as this is how
+                # we did it in the random forest...
+                self.classes_ = self.estimators_[0].classes_
+            else:
+                self.classes_ = [est.classes_ for est in self.estimators_]
+
         return self
+
 
     def predict(self, X):
         """Predict multi-output variable using a model
@@ -113,6 +127,11 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                                          for e in self.estimators_)
 
         return np.asarray(y).T
+
+    def _get_tags(self):
+        tags = super(MultiOutputEstimator, self)._get_tags().copy()
+        tags.update(multioutput_only=True)
+        return tags
 
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):

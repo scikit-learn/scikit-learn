@@ -25,8 +25,10 @@ from sklearn.exceptions import SkipTestWarning
 
 import sklearn
 from warnings import warn
+from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import Ridge
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -69,7 +71,10 @@ def test_non_meta_estimators():
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
             if required_parameters == ["estimator"]:
-                estimator = Estimator(estimator=LinearDiscriminantAnalysis())
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(Ridge())
+                else:
+                    estimator = Estimator(LinearDiscriminantAnalysis())
             else:
                 warn("Can't instantiate "
                      "estimator {} which requires parameters {}".format(

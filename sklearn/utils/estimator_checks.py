@@ -31,15 +31,16 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import Ridge
 
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
-                          TransformerMixin, ClusterMixin, BaseEstimator)
+                          TransformerMixin, ClusterMixin, BaseEstimator,
+                          _DEFAULT_TAGS)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
@@ -64,6 +65,18 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
+
+
+def _safe_tags(estimator, key=None):
+    # if estimator doesn't have _get_tags, use _DEFAULT_TAGS
+    # if estimator has tags but not key, use _DEFAULT_TAGS[key]
+    if hasattr(estimator, "_get_tags"):
+        if key is not None:
+            return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
+        return estimator._get_tags()
+    if key is not None:
+        return _DEFAULT_TAGS[key]
+    return _DEFAULT_TAGS
 
 
 def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
@@ -93,7 +106,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if not estimator._get_tags().get("missing_values", False):
+    if not _safe_tags(estimator, "missing_values"):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
@@ -144,7 +157,7 @@ def check_supervised_y_no_nan(name, estimator):
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
     y = np.ones(10) * np.inf
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
              "dtype('float64')."
@@ -185,7 +198,7 @@ def _yield_transformer_checks(name, transformer):
     yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
-    if not transformer._get_tags().get("stateless"):
+    if not _safe_tags(transformer, "stateless"):
         yield check_transformers_unfitted
     # Dependent on external solvers and hence accessing the iter
     # param is non-trivial.
@@ -206,10 +219,7 @@ def _yield_clustering_checks(name, clusterer):
 
 
 def _yield_all_checks(name, estimator):
-    try:
-        tags = estimator._get_tags()
-    except AttributeError:
-        tags = {}
+    tags = _safe_tags(estimator)
     input_types = tags.get("input_types", ["2darray"])
     if "2darray" not in input_types:
         warnings.warn("Can't test estimator {} which requires input "
@@ -439,7 +449,7 @@ def check_dtype_object(name, estimator):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10).astype(object)
     y = (X[:, 0] * 4).astype(np.int)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
 
@@ -476,7 +486,7 @@ def check_dict_unchanged(name, estimator):
         X = 2 * rnd.uniform(size=(20, 3))
 
     y = X[:, 0].astype(np.int)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
 
@@ -502,7 +512,7 @@ def check_fit2d_predict1d(name, estimator):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
 
@@ -527,7 +537,7 @@ def check_fit2d_1sample(name, estimator):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
 
@@ -549,7 +559,7 @@ def check_fit2d_1feature(name, estimator):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
 
@@ -571,7 +581,7 @@ def check_fit1d_1feature(name, estimator):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(np.int)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
 
@@ -594,7 +604,7 @@ def check_fit1d_1sample(name, estimator):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = np.array([1])
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
 
@@ -706,7 +716,7 @@ def _check_transformer(name, transformer, X, y):
             assert_equal(_num_samples(X_pred3), n_samples)
 
         # raises error on malformed input for transform
-        if hasattr(X, 'T') and not transformer._get_tags().get("stateless"):
+        if hasattr(X, 'T') and not _safe_tags(transformer, "stateless"):
             # If it's not an array, it does not have a 'T' property
             assert_raises(ValueError, transformer.transform, X.T)
 
@@ -726,7 +736,7 @@ def check_pipeline_consistency(name, estimator):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
     set_random_state(estimator)
@@ -752,7 +762,7 @@ def check_fit_score_takes_y(name, estimator):
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
     set_random_state(estimator)
@@ -777,7 +787,7 @@ def check_estimators_dtypes(name, estimator):
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
     y = X_train_int_64[:, 0]
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
@@ -806,7 +816,7 @@ def check_estimators_empty_data_messages(name, estimator):
     X_zero_features = np.empty(0).reshape(3, 0)
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
-    y = multioutput_estimator_convert_y_2d(name, np.array([1, 0, 1]))
+    y = multioutput_estimator_convert_y_2d(estimator, np.array([1, 0, 1]))
     msg = ("0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
            "is required.")
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
@@ -822,7 +832,7 @@ def check_estimators_nan_inf(name, estimator):
     X_train_inf[0, 0] = np.inf
     y = np.ones(10)
     y[:5] = 0
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     error_string_fit = "Estimator doesn't check for NaN and inf in fit."
     error_string_predict = ("Estimator doesn't check for NaN and inf in"
                             " predict.")
@@ -895,7 +905,7 @@ def check_estimators_pickle(name, estimator):
     X -= X.min()
 
     # some estimators only take multioutputs
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
 
     estimator = clone(estimator)
 
@@ -1031,7 +1041,7 @@ def check_classifiers_train(name, classifier):
     # generate binary problem from multi-class one
     y_b = y_m[y_m != 2]
     X_b = X_m[y_m != 2]
-    tags = classifier._get_tags()
+    tags = _safe_tags(classifier)
     for (X, y) in [(X_m, y_m), (X_b, y_b)]:
         classes = np.unique(y)
         n_classes = len(classes)
@@ -1101,7 +1111,7 @@ def check_classifiers_train(name, classifier):
 def check_estimators_fit_returns_self(name, estimator):
     """Check if self is returned when calling fit"""
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     # some want non-negative input
     X -= X.min()
 
@@ -1147,7 +1157,7 @@ def check_estimators_unfitted(name, estimator):
 
 @ignore_warnings(category=DeprecationWarning)
 def check_supervised_y_2d(name, estimator):
-    if "MultiTask" in name:
+    if _safe_tags(estimator, "multioutput_only"):
         # These only work on 2d, so this test makes no sense
         return
     rnd = np.random.RandomState(0)
@@ -1219,7 +1229,7 @@ def check_regressors_int(name, regressor):
     X = X[:50]
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(regressor, y)
     rnd = np.random.RandomState(0)
     # separate estimators to control random seeds
     regressor_1 = clone(regressor)
@@ -1248,7 +1258,7 @@ def check_regressors_train(name, regressor):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(regressor, y)
     rnd = np.random.RandomState(0)
     regressor = clone(regressor)
     set_testing_parameters(regressor)
@@ -1284,7 +1294,7 @@ def check_regressors_no_decision_function(name, regressor):
     # checks whether regressors have decision_function or predict_proba
     rng = np.random.RandomState(0)
     X = rng.normal(size=(10, 4))
-    y = multioutput_estimator_convert_y_2d(name, X[:, 0])
+    y = multioutput_estimator_convert_y_2d(regressor, X[:, 0])
     regressor = clone(regressor)
 
     set_testing_parameters(regressor)
@@ -1386,7 +1396,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 @ignore_warnings(category=DeprecationWarning)
 def check_estimators_overwrite_params(name, estimator):
     X, y = make_blobs(random_state=0, n_samples=9)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     # some want non-negative input
     X -= X.min()
     estimator = clone(estimator)
@@ -1459,13 +1469,13 @@ def check_sparsify_coefficients(name, estimator):
 def check_classifier_data_not_an_array(name, estimator):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
     y = [1, 1, 1, 2, 2, 2]
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     check_estimators_data_not_an_array(name, estimator, X, y)
 
 
 def check_regressor_data_not_an_array(name, estimator):
     X, y = _boston_subset(n_samples=50)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     check_estimators_data_not_an_array(name, estimator, X, y)
 
 
@@ -1501,7 +1511,10 @@ def check_parameters_default_constructible(name, Estimator):
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
             if required_parameters == ["estimator"]:
-                estimator = Estimator(LinearDiscriminantAnalysis())
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(Ridge())
+                else:
+                    estimator = Estimator(LinearDiscriminantAnalysis())
             else:
                 raise SkipTest("Can't instantiate estimator {} which"
                                "requires parameters {}".format(
@@ -1564,10 +1577,10 @@ def check_parameters_default_constructible(name, Estimator):
                 assert_equal(param_value, init_param.default)
 
 
-def multioutput_estimator_convert_y_2d(name, y):
+def multioutput_estimator_convert_y_2d(estimator, y):
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
-    if "MultiTask" in name:
+    if _safe_tags(estimator, "multioutput_only"):
         return np.reshape(y, (-1, 1))
     return y
 
@@ -1597,7 +1610,7 @@ def check_non_transformer_estimators_n_iter(name, estimator):
     if hasattr(estimator, 'max_iter'):
         iris = load_iris()
         X, y_ = iris.data, iris.target
-        y_ = multioutput_estimator_convert_y_2d(name, y_)
+        y_ = multioutput_estimator_convert_y_2d(estimator, y_)
 
         set_random_state(estimator, 0)
         if name == 'AffinityPropagation':

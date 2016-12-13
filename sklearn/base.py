@@ -12,6 +12,17 @@ from .externals import six
 from .utils.fixes import signature
 from . import __version__
 
+_DEFAULT_TAGS = {
+    'input_types': ['2darray'],
+    'test_accuracy': True,
+    'input_validation': True,
+    'multioutput': False,
+    "missing_values": False,
+    'stateless': False,
+    'multilabel': False,
+    '_skip_test': False,
+    'multioutput_only': False}
+
 
 def _first_and_last_element(arr):
     """Returns first and last element of numpy array or sparse matrix."""
@@ -305,10 +316,7 @@ class BaseEstimator(object):
         self.__dict__.update(state)
 
     def _get_tags(self):
-        return {'input_types': ['2darray'], 'test_accuracy':
-                True, 'input_validation': True, 'multioutput':
-                False, "missing_values": False, 'stateless':
-                False, 'multilabel': False, "_skip_test": False}
+        return _DEFAULT_TAGS
 
 
 class ClassifierMixin(object):

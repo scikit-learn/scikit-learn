@@ -1725,6 +1725,10 @@ class MultiTaskElasticNet(Lasso):
         # return self for chaining fit and predict calls
         return self
 
+    def _get_tags(self):
+        tags = super(MultiTaskElasticNet, self)._get_tags()
+        return tags.copy().update(multioutput_only=True)
+
 
 class MultiTaskLasso(MultiTaskElasticNet):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
@@ -2018,6 +2022,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
+    def _get_tags(self):
+        tags = super(MultiTaskElasticNetCV, self)._get_tags()
+        return tags.copy().update(multioutput_only=True)
+
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     """Multi-task L1/L2 Lasso with built-in cross-validation.
@@ -2153,3 +2161,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
+
+    def _get_tags(self):
+        tags = super(MultiTaskLassoCV, self)._get_tags()
+        return tags.copy().update(multioutput_only=True)
