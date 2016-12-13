@@ -16,6 +16,7 @@ import numpy as np
 import scipy as sp
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
+from ..metrics import accuracy_score
 
 
 class OutlierDetectionMixin(object):
@@ -176,3 +177,29 @@ class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
         self.threshold_ = sp.stats.scoreatpercentile(
             self.dist_, 100. * (1. - self.contamination))
         return self
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+
+        """
+        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
