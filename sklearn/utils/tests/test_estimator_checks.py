@@ -170,5 +170,5 @@ def test_check_no_fit_attributes_set_in_init():
     assert_raises_regex(AssertionError, msg,
                         check_no_fit_attributes_set_in_init,
                         'estimator_name',
-                        NonConformantEstimator)
+                        NonConformantEstimator())
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())
