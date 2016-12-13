@@ -71,7 +71,7 @@ def test_non_meta_estimators():
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
             if required_parameters == ["estimator"]:
-                estimator = Estimator(LinearDiscriminantAnalysis())
+                estimator = Estimator(estimator=LinearDiscriminantAnalysis())
             else:
                 warn("Can't instantiate "
                      "estimator {} which requires parameters {}".format(
