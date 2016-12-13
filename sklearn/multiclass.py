@@ -46,7 +46,7 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
-from .utils.validation import check_X_y
+from .utils.validation import check_X_y, check_array
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -714,6 +714,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
+        X, y = check_X_y(X, y)
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {1}"
                              "".format(self.code_size))
@@ -761,6 +762,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Predicted multi-class targets.
         """
         check_is_fitted(self, 'estimators_')
+        X = check_array(X)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]
