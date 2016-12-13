@@ -10,14 +10,7 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
-from .utils.deprecation import deprecated
-from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
-
-
-@deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class ChangedBehaviorWarning(_ChangedBehaviorWarning):
-    pass
+from . import __version__
 
 
 ##############################################################################
@@ -42,10 +35,10 @@ def clone(estimator, safe=True):
 
     Parameters
     ----------
-    estimator: estimator object, or list, tuple or set of objects
+    estimator : estimator object, or list, tuple or set of objects
         The estimator or group of estimators to be cloned
 
-    safe: boolean, optional
+    safe : boolean, optional
         If safe is false, clone will fall back to a deepcopy on objects
         that are not estimators.
 
@@ -73,6 +66,9 @@ def clone(estimator, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
+        if param1 is param2:
+            # this should always happen
+            continue
         if isinstance(param1, np.ndarray):
             # For most ndarrays, we do not test for complete equality
             if not isinstance(param2, type(param1)):
@@ -109,13 +105,14 @@ def clone(estimator, safe=True):
                     and param1.shape == param2.shape
                 )
         else:
-            new_obj_val = new_object_params[name]
-            params_set_val = params_set[name]
-            # The following construct is required to check equality on special
-            # singletons such as np.nan that are not equal to them-selves:
-            equality_test = (new_obj_val == params_set_val or
-                             new_obj_val is params_set_val)
-        if not equality_test:
+            # fall back on standard equality
+            equality_test = param1 == param2
+        if equality_test:
+            warnings.warn("Estimator %s modifies parameters in __init__."
+                          " This behavior is deprecated as of 0.18 and "
+                          "support for this behavior will be removed in 0.20."
+                          % type(estimator).__name__, DeprecationWarning)
+        else:
             raise RuntimeError('Cannot clone object %s, as the constructor '
                                'does not seem to set parameter %s' %
                                (estimator, name))
@@ -129,13 +126,13 @@ def _pprint(params, offset=0, printer=repr):
 
     Parameters
     ----------
-    params: dict
+    params : dict
         The dictionary to pretty print
 
-    offset: int
+    offset : int
         The offset in characters to add at the begin of each line.
 
-    printer:
+    printer : callable
         The function to convert entries to strings, typically
         the builtin str or repr
 
@@ -217,7 +214,7 @@ class BaseEstimator(object):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -291,6 +288,24 @@ class BaseEstimator(object):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name),),)
+
+    def __getstate__(self):
+        if type(self).__module__.startswith('sklearn.'):
+            return dict(self.__dict__.items(), _sklearn_version=__version__)
+        else:
+            return dict(self.__dict__.items())
+
+    def __setstate__(self, state):
+        if type(self).__module__.startswith('sklearn.'):
+            pickle_version = state.pop("_sklearn_version", "pre-0.18")
+            if pickle_version != __version__:
+                warnings.warn(
+                    "Trying to unpickle estimator {0} from version {1} when "
+                    "using version {2}. This might lead to breaking code or "
+                    "invalid results. Use at your own risk.".format(
+                        self.__class__.__name__, pickle_version, __version__),
+                    UserWarning)
+        self.__dict__.update(state)
 
 
 ###############################################################################
@@ -487,7 +502,7 @@ class DensityMixin(object):
 
         Returns
         -------
-        score: float
+        score : float
         """
         pass
 

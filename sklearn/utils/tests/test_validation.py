@@ -8,9 +8,9 @@ from itertools import product
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
-from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 
-from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_true, assert_false, assert_equal
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
@@ -122,9 +122,6 @@ def test_check_array():
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
     # ensure_2d
-    assert_warns(DeprecationWarning, check_array, [0, 1, 2])
-    X_array = check_array([0, 1, 2])
-    assert_equal(X_array.ndim, 2)
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
     # don't allow ndim > 3
@@ -236,6 +233,16 @@ def test_check_array_pandas_dtype_object_conversion():
     assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
 
 
+def test_check_array_on_mock_dataframe():
+    arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    mock_df = MockDataFrame(arr)
+    checked_arr = check_array(mock_df)
+    assert_equal(checked_arr.dtype,
+                 arr.dtype)
+    checked_arr = check_array(mock_df, dtype=np.float32)
+    assert_equal(checked_arr.dtype, np.dtype(np.float32))
+
+
 def test_check_array_dtype_stability():
     # test that lists with ints don't get converted to floats
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -327,12 +334,6 @@ def test_check_array_min_samples_and_features_messages():
     # Invalid edge case when checking the default minimum sample of a scalar
     msg = "Singleton array array(42) cannot be considered a valid collection."
     assert_raise_message(TypeError, msg, check_array, 42, ensure_2d=False)
-
-    # But this works if the input data is forced to look like a 2 array with
-    # one sample and one feature:
-    X_checked = assert_warns(DeprecationWarning, check_array, [42],
-                             ensure_2d=True)
-    assert_array_equal(np.array([[42]]), X_checked)
 
     # Simulate a model that would need at least 2 samples to be well defined
     X = np.ones((1, 10))

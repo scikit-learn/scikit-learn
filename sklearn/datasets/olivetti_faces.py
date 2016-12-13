@@ -1,8 +1,8 @@
 """Modified Olivetti faces dataset.
 
-The original database was available from (now defunct)
+The original database was available from
 
-    http://www.uk.research.att.com/facedatabase.html
+    http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
@@ -67,7 +67,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -98,7 +98,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     This dataset consists of 10 pictures each of 40 individuals. The original
     database was available from (now defunct)
 
-        http://www.uk.research.att.com/facedatabase.html
+        http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
     The version retrieved here comes in MATLAB format from the personal
     web page of Sam Roweis:
@@ -111,6 +111,9 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         makedirs(data_home)
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
+
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
         fhandle = urlopen(DATA_URL)
@@ -121,6 +124,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         del mfile
     else:
         faces = joblib.load(filepath)
+
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
     faces = np.float32(faces)

@@ -4,27 +4,25 @@
 import numpy as np
 
 from .base import SelectorMixin
-from ..base import TransformerMixin, BaseEstimator, clone
+from ..base import BaseEstimator, clone
 from ..externals import six
 
-from ..utils import safe_mask, check_array, deprecated
-from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
+from ..utils.fixes import norm
 
 
-def _get_feature_importances(estimator):
+def _get_feature_importances(estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
-    if hasattr(estimator, "feature_importances_"):
-        importances = estimator.feature_importances_
+    importances = getattr(estimator, "feature_importances_", None)
 
-    elif hasattr(estimator, "coef_"):
+    if importances is None and hasattr(estimator, "coef_"):
         if estimator.coef_.ndim == 1:
             importances = np.abs(estimator.coef_)
 
         else:
-            importances = np.sum(np.abs(estimator.coef_), axis=0)
+            importances = norm(estimator.coef_, axis=0, ord=norm_order)
 
-    else:
+    elif importances is None:
         raise ValueError(
             "The underlying estimator %s has no `coef_` or "
             "`feature_importances_` attribute. Either pass a fitted estimator"
@@ -78,71 +76,6 @@ def _calculate_threshold(estimator, importances, threshold):
     return threshold
 
 
-class _LearntSelectorMixin(TransformerMixin):
-    # Note because of the extra threshold parameter in transform, this does
-    # not naturally extend from SelectorMixin
-    """Transformer mixin selecting features based on importance weights.
-
-    This implementation can be mixin on any estimator that exposes a
-    ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
-    importance of individual features for feature selection.
-    """
-    @deprecated('Support to use estimators as feature selectors will be '
-                'removed in version 0.19. Use SelectFromModel instead.')
-    def transform(self, X, threshold=None):
-        """Reduce X to its most important features.
-
-        Uses ``coef_`` or ``feature_importances_`` to determine the most
-        important features.  For models with a ``coef_`` for each class, the
-        absolute sum over the classes is used.
-
-        Parameters
-        ----------
-        X : array or scipy sparse matrix of shape [n_samples, n_features]
-            The input samples.
-
-        threshold : string, float or None, optional (default=None)
-            The threshold value to use for feature selection. Features whose
-            importance is greater or equal are kept while the others are
-            discarded. If "median" (resp. "mean"), then the threshold value is
-            the median (resp. the mean) of the feature importances. A scaling
-            factor (e.g., "1.25*mean") may also be used. If None and if
-            available, the object attribute ``threshold`` is used. Otherwise,
-            "mean" is used by default.
-
-        Returns
-        -------
-        X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the selected features.
-        """
-        check_is_fitted(self, ('coef_', 'feature_importances_'),
-                        all_or_any=any)
-
-        X = check_array(X, 'csc')
-        importances = _get_feature_importances(self)
-        if len(importances) != X.shape[1]:
-            raise ValueError("X has different number of features than"
-                             " during model fitting.")
-
-        if threshold is None:
-            threshold = getattr(self, 'threshold', None)
-        threshold = _calculate_threshold(self, importances, threshold)
-
-        # Selection
-        try:
-            mask = importances >= threshold
-        except TypeError:
-            # Fails in Python 3.x when threshold is str;
-            # result is array of True
-            raise ValueError("Invalid threshold: all features are discarded.")
-
-        if np.any(mask):
-            mask = safe_mask(X, mask)
-            return X[:, mask]
-        else:
-            raise ValueError("Invalid threshold: all features are discarded.")
-
-
 class SelectFromModel(BaseEstimator, SelectorMixin):
     """Meta-transformer for selecting features based on importance weights.
 
@@ -173,6 +106,11 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
+    norm_order : non-zero int, inf, -inf, default 1
+        Order of the norm used to filter the vectors of coefficients below
+        ``threshold`` in the case where the ``coef_`` attribute of the
+        estimator is of dimension 2.
+
     Attributes
     ----------
     `estimator_`: an estimator
@@ -183,10 +121,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     `threshold_`: float
         The threshold value used for feature selection.
     """
-    def __init__(self, estimator, threshold=None, prefit=False):
+
+    def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
+        self.norm_order = norm_order
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
@@ -198,7 +138,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             raise ValueError(
                 'Either fit the model before transform or set "prefit=True"'
                 ' while passing the fitted estimator to the constructor.')
-        scores = _get_feature_importances(estimator)
+        scores = _get_feature_importances(estimator, self.norm_order)
         self.threshold_ = _calculate_threshold(estimator, scores,
                                                self.threshold)
         return scores >= self.threshold_
@@ -225,8 +165,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         if self.prefit:
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")
-        if not hasattr(self, "estimator_"):
-            self.estimator_ = clone(self.estimator)
+        self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
         return self
 

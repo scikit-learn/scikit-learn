@@ -9,7 +9,6 @@ License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
 import warnings
-import sys
 
 import numpy as np
 from scipy import sparse
@@ -117,7 +116,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    return_distance: bool (optional)
+    return_distance : bool (optional)
         If True, return the distance between the clusters.
 
     Returns

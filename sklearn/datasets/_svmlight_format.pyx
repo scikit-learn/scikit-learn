@@ -27,7 +27,7 @@ cdef bytes COLON = u':'.encode('ascii')
 @cython.wraparound(False)
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id):
-    cdef array.array data, indices, indptr, query
+    cdef array.array data, indices, indptr
     cdef bytes line
     cdef char *hash_ptr
     cdef char *line_cstr
@@ -45,7 +45,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         data = array.array("d")
     indices = array.array("i")
     indptr = array.array("i", [0])
-    query = array.array("i")
+    query = np.arange(0, dtype=np.int64)
 
     if multilabel:
         labels = []
@@ -80,8 +80,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         if n_features and features[0].startswith(qid_prefix):
             _, value = features[0].split(COLON, 1)
             if query_id:
-                array.resize_smart(query, len(query) + 1)
-                query[len(query) - 1] = int(value)
+                query.resize(len(query) + 1)
+                query[len(query) - 1] = np.int64(value)
             features.pop(0)
             n_features -= 1
 

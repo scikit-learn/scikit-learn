@@ -14,9 +14,10 @@ from math import log
 import numpy as np
 
 from scipy.optimize import fmin_bfgs
+from sklearn.preprocessing import LabelEncoder
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
-from .preprocessing import LabelBinarizer
+from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted
 from .utils.fixes import signature
@@ -50,7 +51,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach. It is not advised to use isotonic calibration
-        with too few calibration samples ``(<<1000)`` since it tends to overfit.
+        with too few calibration samples ``(<<1000)`` since it tends to
+        overfit.
         Use sigmoids (Platt's calibration) in this case.
 
     cv : integer, cross-validation generator, iterable or "prefit", optional
@@ -63,8 +65,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` 
-        is neither binary nor multiclass, :class:`sklearn.model_selection.KFold` 
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
+        neither binary nor multiclass, :class:`sklearn.model_selection.KFold`
         is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -78,7 +80,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     classes_ : array, shape (n_classes)
         The class labels.
 
-    calibrated_classifiers_: list (len() equal to cv or 1 if cv == "prefit")
+    calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
         The list of calibrated classifiers, one for each crossvalidation fold,
         which has been fitted on all but the validation fold and calibrated
         on the validation fold.
@@ -124,15 +126,16 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
                          force_all_finite=False)
         X, y = indexable(X, y)
-        lb = LabelBinarizer().fit(y)
-        self.classes_ = lb.classes_
+        le = LabelBinarizer().fit(y)
+        self.classes_ = le.classes_
 
         # Check that each cross-validation fold can have at least one
         # example per class
         n_folds = self.cv if isinstance(self.cv, int) \
             else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
         if n_folds and \
-           np.any([np.sum(y == class_) < n_folds for class_ in self.classes_]):
+                np.any([np.sum(y == class_) < n_folds for class_ in
+                        self.classes_]):
             raise ValueError("Requesting %d-fold cross-validation but provided"
                              " less than %d examples for at least one class."
                              % (n_folds, n_folds))
@@ -175,7 +178,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method)
+                    this_estimator, method=self.method,
+                    classes=self.classes_)
                 if sample_weight is not None:
                     calibrated_classifier.fit(X[test], y[test],
                                               sample_weight[test])
@@ -253,6 +257,11 @@ class _CalibratedClassifier(object):
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
 
+    classes : array-like, shape (n_classes,), optional
+            Contains unique classes used to fit the base estimator.
+            if None, then classes is extracted from the given target values
+            in fit().
+
     References
     ----------
     .. [1] Obtaining calibrated probability estimates from decision trees
@@ -267,9 +276,10 @@ class _CalibratedClassifier(object):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid'):
+    def __init__(self, base_estimator, method='sigmoid', classes=None):
         self.base_estimator = base_estimator
         self.method = method
+        self.classes = classes
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -285,7 +295,8 @@ class _CalibratedClassifier(object):
             raise RuntimeError('classifier has no decision_function or '
                                'predict_proba method.')
 
-        idx_pos_class = np.arange(df.shape[1])
+        idx_pos_class = self.label_encoder_.\
+            transform(self.base_estimator.classes_)
 
         return df, idx_pos_class
 
@@ -308,9 +319,15 @@ class _CalibratedClassifier(object):
         self : object
             Returns an instance of self.
         """
-        lb = LabelBinarizer()
-        Y = lb.fit_transform(y)
-        self.classes_ = lb.classes_
+
+        self.label_encoder_ = LabelEncoder()
+        if self.classes is None:
+            self.label_encoder_.fit(y)
+        else:
+            self.label_encoder_.fit(self.classes)
+
+        self.classes_ = self.label_encoder_.classes_
+        Y = label_binarize(y, self.classes_)
 
         df, idx_pos_class = self._preproc(X)
         self.calibrators_ = []

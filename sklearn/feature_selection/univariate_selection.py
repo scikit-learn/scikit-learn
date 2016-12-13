@@ -162,7 +162,8 @@ def _chisquare(f_obs, f_exp):
     chisq = f_obs
     chisq -= f_exp
     chisq **= 2
-    chisq /= f_exp
+    with np.errstate(invalid="ignore"):
+        chisq /= f_exp
     chisq = chisq.sum(axis=0)
     return chisq, special.chdtrc(k - 1, chisq)
 
@@ -318,7 +319,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -595,8 +596,8 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features
-                      * np.arange(n_features)]
+        selected = sv[sv <= float(self.alpha) / n_features *
+                      np.arange(1, n_features + 1)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()

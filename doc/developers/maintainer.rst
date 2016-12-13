@@ -48,3 +48,5 @@ Making a release
     $ python setup.py bdist_wininst upload
 
    And upload them also to sourceforge
+
+7. FOR FINAL RELEASE: Update the release date in What's New

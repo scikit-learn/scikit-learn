@@ -1,22 +1,24 @@
-# These tests are those of the deprecated GMM class
-
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
 import unittest
 import copy
 import sys
-import warnings
 
-from nose.tools import assert_true
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_raises)
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import (assert_true, assert_greater,
+                                   assert_raise_message, assert_warns_message,
+                                   ignore_warnings)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.utils.testing import ignore_warnings
 
 
 rng = np.random.RandomState(0)
@@ -31,7 +33,7 @@ def test_sample_gaussian():
     mu = rng.randint(10) * rng.rand(n_features)
     cv = (rng.rand(n_features) + 1.0) ** 2
 
-    samples = mixture.sample_gaussian(
+    samples = mixture.gmm._sample_gaussian(
         mu, cv, covariance_type='diag', n_samples=n_samples)
 
     assert_true(np.allclose(samples.mean(axis), mu, atol=1.3))
@@ -39,7 +41,7 @@ def test_sample_gaussian():
 
     # the same for spherical covariances
     cv = (rng.rand() + 1.0) ** 2
-    samples = mixture.sample_gaussian(
+    samples = mixture.gmm._sample_gaussian(
         mu, cv, covariance_type='spherical', n_samples=n_samples)
 
     assert_true(np.allclose(samples.mean(axis), mu, atol=1.5))
@@ -49,16 +51,15 @@ def test_sample_gaussian():
     # and for full covariances
     A = rng.randn(n_features, n_features)
     cv = np.dot(A.T, A) + np.eye(n_features)
-    samples = mixture.sample_gaussian(
+    samples = mixture.gmm._sample_gaussian(
         mu, cv, covariance_type='full', n_samples=n_samples)
     assert_true(np.allclose(samples.mean(axis), mu, atol=1.3))
     assert_true(np.allclose(np.cov(samples), cv, atol=2.5))
 
     # Numerical stability check: in SciPy 0.12.0 at least, eigh may return
     # tiny negative values in its second return value.
-    from sklearn.mixture import sample_gaussian
-    x = sample_gaussian([0, 0], [[4, 3], [1, .1]],
-                        covariance_type='full', random_state=42)
+    x = mixture.gmm._sample_gaussian(
+        [0, 0], [[4, 3], [1, .1]], covariance_type='full', random_state=42)
     assert_true(np.isfinite(x).all())
 
 
@@ -81,7 +82,11 @@ def test_lmvnpdf_diag():
     X = rng.randint(10) * rng.rand(n_samples, n_features)
 
     ref = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, cv, 'diag')
+    lpr = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated in 0.18 and will be removed in 0.20.",
+                             mixture.log_multivariate_normal_density,
+                             X, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
 
 
@@ -94,10 +99,12 @@ def test_lmvnpdf_spherical():
 
     cv = np.tile(spherecv, (n_features, 1))
     reference = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, spherecv,
-                                                  'spherical')
+    lpr = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated in 0.18 and will be removed in 0.20.",
+                             mixture.log_multivariate_normal_density,
+                             X, mu, spherecv, 'spherical')
     assert_array_almost_equal(lpr, reference)
-
 
 def test_lmvnpdf_full():
     n_features, n_components, n_samples = 2, 3, 10
@@ -109,7 +116,11 @@ def test_lmvnpdf_full():
     fullcv = np.array([np.diag(x) for x in cv])
 
     reference = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, fullcv, 'full')
+    lpr = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated in 0.18 and will be removed in 0.20.",
+                             mixture.log_multivariate_normal_density,
+                             X, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
 
 
@@ -195,7 +206,8 @@ class GMMTester():
         n_samples = len(gaussidx)
         X = rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
 
-        ll, responsibilities = g.score_samples(X)
+        with ignore_warnings(category=DeprecationWarning):
+            ll, responsibilities = g.score_samples(X)
 
         self.assertEqual(len(ll), n_samples)
         self.assertEqual(responsibilities.shape,
@@ -216,7 +228,8 @@ class GMMTester():
         g.covars_ = np.maximum(self.covars[self.covariance_type], 0.1)
         g.weights_ = self.weights
 
-        samples = g.sample(n)
+        with ignore_warnings(category=DeprecationWarning):
+            samples = g.sample(n)
         self.assertEqual(samples.shape, (n, self.n_features))
 
     # This function tests the deprecated old GMM class
@@ -224,38 +237,42 @@ class GMMTester():
     def test_train(self, params='wmc'):
         g = mixture.GMM(n_components=self.n_components,
                         covariance_type=self.covariance_type)
-        g.weights_ = self.weights
-        g.means_ = self.means
-        g.covars_ = 20 * self.covars[self.covariance_type]
+        with ignore_warnings(category=DeprecationWarning):
+            g.weights_ = self.weights
+            g.means_ = self.means
+            g.covars_ = 20 * self.covars[self.covariance_type]
 
         # Create a training set by sampling from the predefined distribution.
-        X = g.sample(n_samples=100)
-        g = self.model(n_components=self.n_components,
-                       covariance_type=self.covariance_type,
-                       random_state=rng, min_covar=1e-1,
-                       n_iter=1, init_params=params)
-        g.fit(X)
+        with ignore_warnings(category=DeprecationWarning):
+            X = g.sample(n_samples=100)
+            g = self.model(n_components=self.n_components,
+                           covariance_type=self.covariance_type,
+                           random_state=rng, min_covar=1e-1,
+                           n_iter=1, init_params=params)
+            g.fit(X)
 
         # Do one training iteration at a time so we can keep track of
         # the log likelihood to make sure that it increases after each
         # iteration.
         trainll = []
-        for _ in range(5):
-            g.params = params
+        with ignore_warnings(category=DeprecationWarning):
+            for _ in range(5):
+                g.params = params
+                g.init_params = ''
+                g.fit(X)
+                trainll.append(self.score(g, X))
+            g.n_iter = 10
             g.init_params = ''
-            g.fit(X)
-            trainll.append(self.score(g, X))
-        g.n_iter = 10
-        g.init_params = ''
-        g.params = params
-        g.fit(X)  # finish fitting
+            g.params = params
+            g.fit(X)  # finish fitting
 
         # Note that the log likelihood will sometimes decrease by a
         # very small amount after it has more or less converged due to
         # the addition of min_covar to the covariance (to prevent
         # underflow).  This is why the threshold is set to -0.5
         # instead of 0.
-        delta_min = np.diff(trainll).min()
+        with ignore_warnings(category=DeprecationWarning):
+            delta_min = np.diff(trainll).min()
         self.assertTrue(
             delta_min > self.threshold,
             "The min nll increase is %f which is lower than the admissible"
@@ -274,8 +291,9 @@ class GMMTester():
                        covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-3, n_iter=5,
                        init_params=params)
-        g.fit(X)
-        trainll = g.score(X)
+        with ignore_warnings(category=DeprecationWarning):
+            g.fit(X)
+            trainll = g.score(X)
         self.assertTrue(np.sum(np.abs(trainll / 100 / X.shape[1])) < 5)
 
     # This function tests the deprecated old GMM class
@@ -290,17 +308,19 @@ class GMMTester():
                        covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-7, n_iter=5,
                        init_params=params)
-        g.fit(X)
-        trainll = g.score(X)
-        if isinstance(g, mixture.DPGMM):
-            self.assertTrue(np.sum(np.abs(trainll / 100)) < 5)
-        else:
-            self.assertTrue(np.sum(np.abs(trainll / 100)) < 2)
+        with ignore_warnings(category=DeprecationWarning):
+            g.fit(X)
+            trainll = g.score(X)
+            if isinstance(g, mixture.dpgmm._DPGMMBase):
+                self.assertTrue(np.sum(np.abs(trainll / 100)) < 5)
+            else:
+                self.assertTrue(np.sum(np.abs(trainll / 100)) < 2)
 
     # This function tests the deprecated old GMM class
     @ignore_warnings(category=DeprecationWarning)
     def score(self, g, X):
-        return g.score(X).sum()
+        with ignore_warnings(category=DeprecationWarning):
+            return g.score(X).sum()
 
 
 class TestGMMWithSphericalCovars(unittest.TestCase, GMMTester):
@@ -335,9 +355,10 @@ def test_multiple_init():
     X[:10] += 2
     g = mixture.GMM(n_components=2, covariance_type='spherical',
                     random_state=rng, min_covar=1e-7, n_iter=5)
-    train1 = g.fit(X).score(X).sum()
-    g.n_init = 5
-    train2 = g.fit(X).score(X).sum()
+    with ignore_warnings(category=DeprecationWarning):
+        train1 = g.fit(X).score(X).sum()
+        g.n_init = 5
+        train2 = g.fit(X).score(X).sum()
     assert_true(train2 >= train1 - 1.e-2)
 
 
@@ -348,10 +369,11 @@ def test_n_parameters():
     X = rng.randn(n_samples, n_dim)
     n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
     for cv_type in ['full', 'tied', 'diag', 'spherical']:
-        g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
-                        random_state=rng, min_covar=1e-7, n_iter=1)
-        g.fit(X)
-        assert_true(g._n_parameters() == n_params[cv_type])
+        with ignore_warnings(category=DeprecationWarning):
+            g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                            random_state=rng, min_covar=1e-7, n_iter=1)
+            g.fit(X)
+            assert_true(g._n_parameters() == n_params[cv_type])
 
 
 # This function tests the deprecated old GMM class
@@ -363,13 +385,14 @@ def test_1d_1component():
     X = rng.randn(n_samples, n_dim)
     g_full = mixture.GMM(n_components=n_components, covariance_type='full',
                          random_state=rng, min_covar=1e-7, n_iter=1)
-    g_full.fit(X)
-    g_full_bic = g_full.bic(X)
-    for cv_type in ['tied', 'diag', 'spherical']:
-        g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
-                        random_state=rng, min_covar=1e-7, n_iter=1)
-        g.fit(X)
-        assert_array_almost_equal(g.bic(X), g_full_bic)
+    with ignore_warnings(category=DeprecationWarning):
+        g_full.fit(X)
+        g_full_bic = g_full.bic(X)
+        for cv_type in ['tied', 'diag', 'spherical']:
+            g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                            random_state=rng, min_covar=1e-7, n_iter=1)
+            g.fit(X)
+            assert_array_almost_equal(g.bic(X), g_full_bic)
 
 
 def assert_fit_predict_correct(model, X):

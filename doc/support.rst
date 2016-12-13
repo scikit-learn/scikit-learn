@@ -28,7 +28,7 @@ User questions
   tag.
 
 - For general theoretical or methodological Machine Learning questions
-  `metaoptimize.com/qa <http://metaoptimize.com/qa>`_ is probably a more
+  `stack exchange <http://stats.stackexchange.com/>`_ is probably a more
   suitable venue.
 
 In both cases please use a descriptive question in the title field (e.g.
@@ -93,9 +93,10 @@ Documentation resources
 This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
+    * `0.18 <http://scikit-learn.org/0.18/>`_
     * `0.17 <http://scikit-learn.org/0.17/>`_
     * `0.16 <http://scikit-learn.org/0.16/>`_
     * `0.15 <http://scikit-learn.org/0.15/>`_
 
 Printable pdf documentation for all versions can be found `here
-<http://sourceforge.net/projects/scikit-learn/files/documentation/>`_.
+<https://sourceforge.net/projects/scikit-learn/files/documentation/>`_.

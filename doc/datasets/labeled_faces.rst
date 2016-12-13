@@ -115,4 +115,4 @@ an evaluation ``10_folds`` set meant to compute performance metrics using a
 Examples
 --------
 
-:ref:`example_applications_face_recognition.py`
+:ref:`sphx_glr_auto_examples_applications_face_recognition.py`

@@ -1,10 +1,11 @@
 """
 Testing for the tree module (sklearn.tree).
 """
+import copy
 import pickle
 from functools import partial
 from itertools import product
-import platform
+import struct
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -27,7 +28,6 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 
@@ -41,14 +41,15 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
-from sklearn.tree.tree import SPARSE_SPLITTERS
 from sklearn.tree._tree import TREE_LEAF
+from sklearn.tree.tree import CRITERIA_CLF
+from sklearn.tree.tree import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", )
+REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -380,11 +381,6 @@ def test_importances():
         assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
         assert_equal(n_important, 3, "Failed with {0}".format(name))
 
-        X_new = assert_warns(
-            DeprecationWarning, clf.transform, X, threshold="mean")
-        assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
-        assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
-
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
     clf.fit(iris.data, iris.target)
@@ -510,6 +506,7 @@ def test_error():
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.).fit, X, y)
         assert_raises(ValueError,
                       TreeEstimator(min_weight_fraction_leaf=-1).fit,
                       X, y)
@@ -522,8 +519,12 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=1.1).fit,
                       X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_split=2.5).fit,
+                      X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit,
+                      X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -594,7 +595,6 @@ def test_min_samples_split():
 
         assert_greater(np.min(node_samples), 9,
                        "Failed with {0}".format(name))
-
 
 
 def test_min_samples_leaf():
@@ -670,6 +670,30 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
             "min_weight_fraction_leaf={1}".format(
                 name, est.min_weight_fraction_leaf))
 
+    # test case with no weights passed in
+    total_weight = X.shape[0]
+
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 6)):
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+        else:
+            out = est.tree_.apply(X)
+
+        node_weights = np.bincount(out)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            total_weight * est.min_weight_fraction_leaf,
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf))
+
 
 def test_min_weight_fraction_leaf():
     # Check on dense input
@@ -679,6 +703,132 @@ def test_min_weight_fraction_leaf():
     # Check on sparse input
     for name in SPARSE_TREES:
         yield check_min_weight_fraction_leaf, name, "multilabel", True
+
+
+def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
+                                                         sparse=False):
+    """Test the interaction between min_weight_fraction_leaf and min_samples_leaf
+    when sample_weights is not provided in fit."""
+    if sparse:
+        X = DATASETS[datasets]["X_sparse"].astype(np.float32)
+    else:
+        X = DATASETS[datasets]["X"].astype(np.float32)
+    y = DATASETS[datasets]["y"]
+
+    total_weight = X.shape[0]
+    TreeEstimator = ALL_TREES[name]
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
+        # test integer min_samples_leaf
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            min_samples_leaf=5,
+                            random_state=0)
+        est.fit(X, y)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+        else:
+            out = est.tree_.apply(X)
+
+        node_weights = np.bincount(out)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            max((total_weight *
+                 est.min_weight_fraction_leaf), 5),
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}, "
+            "min_samples_leaf={2}".format(name,
+                                          est.min_weight_fraction_leaf,
+                                          est.min_samples_leaf))
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
+        # test float min_samples_leaf
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            min_samples_leaf=.1,
+                            random_state=0)
+        est.fit(X, y)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+        else:
+            out = est.tree_.apply(X)
+
+        node_weights = np.bincount(out)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            max((total_weight * est.min_weight_fraction_leaf),
+                (total_weight * est.min_samples_leaf)),
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}, "
+            "min_samples_leaf={2}".format(name,
+                                          est.min_weight_fraction_leaf,
+                                          est.min_samples_leaf))
+
+
+def test_min_weight_fraction_leaf_with_min_samples_leaf():
+    # Check on dense input
+    for name in ALL_TREES:
+        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
+               name, "iris")
+
+    # Check on sparse input
+    for name in SPARSE_TREES:
+        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
+               name, "multilabel", True)
+
+
+def test_min_impurity_split():
+    # test if min_impurity_split creates leaves with impurity
+    # [0, min_impurity_split) when min_samples_leaf = 1 and
+    # min_samples_split = 2.
+    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    y = iris.target
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
+        TreeEstimator = ALL_TREES[name]
+        min_impurity_split = .5
+
+        # verify leaf nodes without min_impurity_split less than
+        # impurity 1e-7
+        est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        assert_less_equal(est.min_impurity_split, 1e-7,
+                     "Failed, min_impurity_split = {0} > 1e-7".format(
+                         est.min_impurity_split))
+        est.fit(X, y)
+        for node in range(est.tree_.node_count):
+            if (est.tree_.children_left[node] == TREE_LEAF or
+                est.tree_.children_right[node] == TREE_LEAF):
+                assert_equal(est.tree_.impurity[node], 0.,
+                             "Failed with {0} "
+                             "min_impurity_split={1}".format(
+                                 est.tree_.impurity[node],
+                                 est.min_impurity_split))
+
+        # verify leaf nodes have impurity [0,min_impurity_split] when using min_impurity_split
+        est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                            min_impurity_split=min_impurity_split,
+                            random_state=0)
+        est.fit(X, y)
+        for node in range(est.tree_.node_count):
+            if (est.tree_.children_left[node] == TREE_LEAF or
+                est.tree_.children_right[node] == TREE_LEAF):
+                assert_greater_equal(est.tree_.impurity[node], 0,
+                                     "Failed with {0}, "
+                                     "min_impurity_split={1}".format(
+                                         est.tree_.impurity[node],
+                                         est.min_impurity_split))
+                assert_less_equal(est.tree_.impurity[node], min_impurity_split,
+                                  "Failed with {0}, "
+                                  "min_impurity_split={1}".format(
+                                      est.tree_.impurity[node],
+                                      est.min_impurity_split))
 
 
 def test_pickle():
@@ -709,7 +859,6 @@ def test_pickle():
                          fitted_attribute[attribute],
                          "Failed to generate same attribute {0} after "
                          "pickling with {1}".format(attribute, name))
-
 
 
 def test_multioutput():
@@ -1071,7 +1220,7 @@ def test_realloc():
 
 
 def test_huge_allocations():
-    n_bits = int(platform.architecture()[0].rstrip('bit'))
+    n_bits = 8 * struct.calcsize("P")
 
     X = np.random.randn(10, 2)
     y = np.random.randint(0, 2, 10)
@@ -1131,18 +1280,19 @@ def check_sparse_input(tree, dataset, max_depth=None):
 
 
 def test_sparse_input():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ("clf_small", "toy", "digits", "multilabel",
-                                  "sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros")):
+    for tree_type, dataset in product(SPARSE_TREES, ("clf_small", "toy",
+                                                     "digits", "multilabel",
+                                                     "sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros")):
         max_depth = 3 if dataset == "digits" else None
-        yield (check_sparse_input, tree, dataset, max_depth)
+        yield (check_sparse_input, tree_type, dataset, max_depth)
 
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    for tree, dataset in product(REG_TREES, ["boston", "reg_small"]):
-        if tree in SPARSE_TREES:
-            yield (check_sparse_input, tree, dataset, 2)
+    for tree_type, dataset in product(SPARSE_TREES, ["boston", "reg_small"]):
+        if tree_type in REG_TREES:
+            yield (check_sparse_input, tree_type, dataset, 2)
 
 
 def check_sparse_parameters(tree, dataset):
@@ -1190,10 +1340,10 @@ def check_sparse_parameters(tree, dataset):
 
 
 def test_sparse_parameters():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ["sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros"]):
-        yield (check_sparse_parameters, tree, dataset)
+    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros"]):
+        yield (check_sparse_parameters, tree_type, dataset)
 
 
 def check_sparse_criterion(tree, dataset):
@@ -1217,10 +1367,10 @@ def check_sparse_criterion(tree, dataset):
 
 
 def test_sparse_criterion():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ["sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros"]):
-        yield (check_sparse_criterion, tree, dataset)
+    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros"]):
+        yield (check_sparse_criterion, tree_type, dataset)
 
 
 def check_explicit_sparse_zeros(tree, max_depth=3,
@@ -1293,8 +1443,8 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
 
 
 def test_explicit_sparse_zeros():
-    for tree in SPARSE_TREES:
-        yield (check_explicit_sparse_zeros, tree)
+    for tree_type in SPARSE_TREES:
+        yield (check_explicit_sparse_zeros, tree_type)
 
 
 @ignore_warnings
@@ -1443,3 +1593,44 @@ def test_no_sparse_y_support():
     # Currently we don't support sparse y
     for name in ALL_TREES:
         yield (check_no_sparse_y_support, name)
+
+
+def test_mae():
+    # check MAE criterion produces correct results
+    # on small toy dataset
+    dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
+                                   max_leaf_nodes=2)
+    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3])
+    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
+    assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
+
+    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3], [0.6,0.3,0.1,1.0,0.3])
+    assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
+    assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
+
+
+def test_criterion_copy():
+    # Let's check whether copy of our criterion has the same type
+    # and properties as original
+    n_outputs = 3
+    n_classes = np.arange(3, dtype=np.intp)
+    n_samples = 100
+
+    def _pickle_copy(obj):
+        return pickle.loads(pickle.dumps(obj))
+    for copy_func in [copy.copy, copy.deepcopy, _pickle_copy]:
+        for _, typename in CRITERIA_CLF.items():
+            criteria = typename(n_outputs, n_classes)
+            result = copy_func(criteria).__reduce__()
+            typename_, (n_outputs_, n_classes_), _ = result
+            assert_equal(typename, typename_)
+            assert_equal(n_outputs, n_outputs_)
+            assert_array_equal(n_classes, n_classes_)
+
+        for _, typename in CRITERIA_REG.items():
+            criteria = typename(n_outputs, n_samples)
+            result = copy_func(criteria).__reduce__()
+            typename_, (n_outputs_, n_samples_), _ = result
+            assert_equal(typename, typename_)
+            assert_equal(n_outputs, n_outputs_)
+            assert_equal(n_samples, n_samples_)

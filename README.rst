@@ -23,10 +23,8 @@
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
 
-
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
-
 
 scikit-learn
 ============
@@ -36,40 +34,24 @@ SciPy and distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the AUTHORS.rst file for a complete list of contributors.
+the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
 
-**Note** `scikit-learn` was previously referred to as `scikits.learn`.
+Website: http://scikit-learn.org
 
 
-Important links
-===============
-
-- Official source code repo: https://github.com/scikit-learn/scikit-learn
-- HTML documentation (stable release): http://scikit-learn.org
-- HTML documentation (development version): http://scikit-learn.org/dev/
-- Download releases: http://sourceforge.net/projects/scikit-learn/files/
-- Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
-- Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-- IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
+Installation
+------------
 
 Dependencies
-============
+~~~~~~~~~~~~
 
-scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.5.
-(using the same codebase thanks to an embedded copy of
-`six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3 and 3.4.
+scikit-learn requires:
 
-The required dependencies to build the software are NumPy >= 1.6.1,
-SciPy >= 0.9 and a working C/C++ compiler. For the development version,
-you will also require Cython >=0.23.
-
-For running the examples Matplotlib >= 1.1.1 is required and for running the
-tests you need nose >= 1.1.2.
-
-This configuration matches the Ubuntu Precise 12.04 LTS release from April
-2012.
+- Python (>= 2.7 or >= 3.3)
+- NumPy (>= 1.6.1)
+- SciPy (>= 0.9)
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
@@ -78,68 +60,109 @@ CBLAS exists in many implementations; see `Linear algebra libraries
 <http://scikit-learn.org/stable/modules/computational_performance.html#linear-algebra-libraries>`_
 for known issues.
 
+User installation
+~~~~~~~~~~~~~~~~~
 
-Install
-=======
+If you already have a working installation of numpy and scipy,
+the easiest way to install scikit-learn is using ``pip`` ::
 
-This package uses distutils, which is the default way of installing
-python modules. To install in your home directory, use::
+    pip install -U scikit-learn
 
-  python setup.py install --user
+or ``conda``::
 
-To install for all users on Unix/Linux::
+    conda install scikit-learn
 
-  python setup.py build
-  sudo python setup.py install
+The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
 
-For more detailed installation instructions,
-see the web page http://scikit-learn.org/stable/install.html
 
 Development
-===========
+-----------
 
-Code
-----
+We welcome new contributors of all experience levels. The scikit-learn
+community goals are to be helpful, welcoming, and effective. The
+`Development Guide <http://scikit-learn.org/stable/developers/index.html>`_
+has detailed information about contributing code, documentation, tests, and
+more. We've included some basic information in this README.
 
-GIT
-~~~
+Important links
+~~~~~~~~~~~~~~~
+
+- Official source code repo: https://github.com/scikit-learn/scikit-learn
+- Download releases: https://pypi.python.org/pypi/scikit-learn
+- Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
+
+Source code
+~~~~~~~~~~~
 
 You can check the latest sources with the command::
 
     git clone https://github.com/scikit-learn/scikit-learn.git
 
-or if you have write privileges::
-
-    git clone git@github.com:scikit-learn/scikit-learn.git
-
-
-Contributing
-~~~~~~~~~~~~
+Setting up a development environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Quick tutorial on how to go about setting up your environment to
 contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+
+Testing
+~~~~~~~
+
+After installation, you can launch the test suite from outside the
+source directory (you will need to have the ``nose`` package installed)::
+
+    nosetests -v sklearn
+
+Under Windows, it is recommended to use the following command (adjust the path
+to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
+interact with tests that use ``multiprocessing``::
+
+    C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
+
+See the web page http://scikit-learn.org/stable/developers/advanced_installation.html#testing
+for more information.
+
+    Random number generation can be controlled during testing by setting
+    the ``SKLEARN_SEED`` environment variable.
+
+Submitting a Pull Request
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
 with our guidelines: http://scikit-learn.org/stable/developers/index.html
 
 
-Testing
--------
+Project History
+---------------
 
-After installation, you can launch the test suite from outside the
-source directory (you will need to have the ``nose`` package installed)::
+The project was started in 2007 by David Cournapeau as a Google Summer
+of Code project, and since then many volunteers have contributed. See
+the  `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
 
-   $ nosetests -v sklearn
+The project is currently maintained by a team of volunteers.
 
-Under Windows, it is recommended to use the following command (adjust the path
-to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
-interact with tests that use ``multiprocessing``::
+**Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 
-   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
-See the web page http://scikit-learn.org/stable/install.html#testing
-for more information.
+Help and Support
+----------------
 
-    Random number generation can be controlled during testing by setting
-    the ``SKLEARN_SEED`` environment variable.
+Documentation
+~~~~~~~~~~~~~
+
+- HTML documentation (stable release): http://scikit-learn.org
+- HTML documentation (development version): http://scikit-learn.org/dev/
+- FAQ: http://scikit-learn.org/stable/faq.html
+
+Communication
+~~~~~~~~~~~~~
+
+- Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
+- IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
+- Stack Overflow: http://stackoverflow.com/questions/tagged/scikit-learn
+- Website: http://scikit-learn.org
+
+Citation
+~~~~~~~~
+
+If you use scikit-learn in a scientific publication, we would appreciate citations: http://scikit-learn.org/stable/about.html#citing-scikit-learn

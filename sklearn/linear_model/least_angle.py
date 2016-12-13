@@ -21,7 +21,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y
+from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -141,7 +141,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_
 
     .. [3] `Wikipedia entry on the Lasso
-           <https://en.wikipedia.org/wiki/Lasso_(statistics)#Lasso_method>`_
+           <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
 
@@ -404,7 +404,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # resize the coefs and alphas array
                 add_features = 2 * max(1, (max_features - n_active))
                 coefs = np.resize(coefs, (n_iter + add_features, n_features))
+                coefs[-add_features:] = 0
                 alphas = np.resize(alphas, n_iter + add_features)
+                alphas[-add_features:] = 0
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
             alpha = alphas[n_iter, np.newaxis]
@@ -736,7 +738,7 @@ class LassoLars(Lars):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients will not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        Only coefficients up to the smallest alpha value (``alphas_[alphas_ >
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
@@ -1005,7 +1007,7 @@ class LarsCV(Lars):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform.
 
     cv : int, cross-validation generator or an iterable, optional
@@ -1056,7 +1058,7 @@ class LarsCV(Lars):
     cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1152,7 +1154,7 @@ class LarsCV(Lars):
         # Store our parameters
         self.alpha_ = best_alpha
         self.cv_alphas_ = all_alphas
-        self.cv_mse_path_ = mse_path
+        self.mse_path_ = mse_path
 
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
@@ -1164,6 +1166,12 @@ class LarsCV(Lars):
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
+
+    @property
+    @deprecated("Attribute mse_path_ is deprecated in 0.18 and "
+                "will be removed in 0.20. Use 'cv_mse_path_' instead")
+    def cv_mse_path_(self):
+        return self.mse_path_
 
 
 class LassoLarsCV(LarsCV):
@@ -1187,7 +1195,7 @@ class LassoLarsCV(LarsCV):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        Only coefficients up to the smallest alpha value (``alphas_[alphas_ >
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
@@ -1265,7 +1273,7 @@ class LassoLarsCV(LarsCV):
     cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1322,7 +1330,7 @@ class LassoLarsIC(LassoLars):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        Only coefficients up to the smallest alpha value (``alphas_[alphas_ >
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.

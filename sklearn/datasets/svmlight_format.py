@@ -100,12 +100,12 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     Returns
     -------
-    X: scipy.sparse matrix of shape (n_samples, n_features)
+    X : scipy.sparse matrix of shape (n_samples, n_features)
 
-    y: ndarray of shape (n_samples,), or, in the multilabel a list of
+    y : ndarray of shape (n_samples,), or, in the multilabel a list of
         tuples of length n_samples.
 
-    query_id: array of shape (n_samples,)
+    query_id : array of shape (n_samples,)
        query_id for each sample. Only returned when query_id is set to
        True.
 
@@ -166,7 +166,7 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     data = frombuffer_empty(data, actual_dtype)
     indices = frombuffer_empty(ind, np.intc)
     indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
-    query = frombuffer_empty(query, np.intc)
+    query = frombuffer_empty(query, np.int64)
 
     data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
     return data, indices, indptr, labels, query
@@ -198,7 +198,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         closed by this function. File-like objects must be opened in binary
         mode.
 
-    n_features: int or None
+    n_features : int or None
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
 
@@ -206,11 +206,11 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         in any of the input files, but setting it to a lower value will cause
         an exception to be raised.
 
-    multilabel: boolean, optional
+    multilabel : boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based: boolean or "auto", optional
+    zero_based : boolean or "auto", optional
         Whether column indices in f are zero-based (True) or one-based
         (False). If column indices are one-based, they are transformed to
         zero-based to match Python/NumPy conventions.
@@ -219,7 +219,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         are unfortunately not self-identifying. Using "auto" or True should
         always be safe.
 
-    query_id: boolean, defaults to False
+    query_id : boolean, defaults to False
         If True, will return the query_id array for each file.
 
     dtype : numpy data type, default np.float64
@@ -374,7 +374,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         Array containing pairwise preference constraints (qid in svmlight
         format).
 
-    multilabel: boolean, optional
+    multilabel : boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 

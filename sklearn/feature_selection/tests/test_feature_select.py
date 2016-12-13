@@ -371,6 +371,40 @@ def test_select_heuristics_regression():
         assert_less(np.sum(support[5:] == 1), 3)
 
 
+def test_boundary_case_ch2():
+    # Test boundary case, and always aim to select 1 feature.
+    X = np.array([[10, 20], [20, 20], [20, 30]])
+    y = np.array([[1], [0], [0]])
+    scores, pvalues = chi2(X, y)
+    assert_array_almost_equal(scores, np.array([4., 0.71428571]))
+    assert_array_almost_equal(pvalues, np.array([0.04550026, 0.39802472]))
+
+    filter_fdr = SelectFdr(chi2, alpha=0.1)
+    filter_fdr.fit(X, y)
+    support_fdr = filter_fdr.get_support()
+    assert_array_equal(support_fdr, np.array([True, False]))
+
+    filter_kbest = SelectKBest(chi2, k=1)
+    filter_kbest.fit(X, y)
+    support_kbest = filter_kbest.get_support()
+    assert_array_equal(support_kbest, np.array([True, False]))
+
+    filter_percentile = SelectPercentile(chi2, percentile=50)
+    filter_percentile.fit(X, y)
+    support_percentile = filter_percentile.get_support()
+    assert_array_equal(support_percentile, np.array([True, False]))
+
+    filter_fpr = SelectFpr(chi2, alpha=0.1)
+    filter_fpr.fit(X, y)
+    support_fpr = filter_fpr.get_support()
+    assert_array_equal(support_fpr, np.array([True, False]))
+
+    filter_fwe = SelectFwe(chi2, alpha=0.1)
+    filter_fwe.fit(X, y)
+    support_fwe = filter_fwe.get_support()
+    assert_array_equal(support_fwe, np.array([True, False]))
+
+
 def test_select_fdr_regression():
     # Test that fdr heuristic actually has low FDR.
     def single_fdr(alpha, n_informative, random_state):
@@ -404,7 +438,7 @@ def test_select_fdr_regression():
             # FDR = E(FP / (TP + FP)) <= alpha
             false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
                                                        random_state) for
-                                            random_state in range(30)])
+                                            random_state in range(100)])
             assert_greater_equal(alpha, false_discovery_rate)
 
             # Make sure that the empirical false discovery rate increases
@@ -483,6 +517,21 @@ def test_tied_pvalues():
         Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
         assert_equal(Xt.shape, (2, 2))
         assert_not_in(9998, Xt)
+
+
+def test_scorefunc_multilabel():
+    # Test whether k-best and percentiles works with multilabels with chi2.
+
+    X = np.array([[10000, 9999, 0], [100, 9999, 0], [1000, 99, 0]])
+    y = [[1, 1], [0, 1], [1, 0]]
+
+    Xt = SelectKBest(chi2, k=2).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
+
+    Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
 
 
 def test_tied_scores():

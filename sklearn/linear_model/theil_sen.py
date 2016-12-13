@@ -102,7 +102,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     spatial_median : array, shape = [n_features]
         Spatial median.
 
-    n_iter: int
+    n_iter : int
         Number of iterations needed.
 
     References

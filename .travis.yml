@@ -6,13 +6,7 @@ language: python
 # Pre-install packages for the ubuntu distribution
 cache:
   apt: true
-  # We use three different cache directory
-  # to work around a Travis bug with multi-platform cache
   directories:
-  - $HOME/sklearn_build_ubuntu
-  - $HOME/sklearn_build_oldest
-  - $HOME/sklearn_build_latest
-  - $HOME/sklearn_build_numpy_dev
   - $HOME/.cache/pip
   - $HOME/download
 addons:
@@ -33,15 +27,20 @@ env:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
     - DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_ubuntu" COVERAGE=true
+      COVERAGE=true
     # This environment tests the oldest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
-      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.21"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_oldest"
+    - DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
+      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.23"
     # This environment tests the newest supported anaconda env
+    # It also runs tests requiring Pandas.
     - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
+      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" PANDAS_VERSION="0.18.0"
+      CYTHON_VERSION="0.23.4"
+    # flake8 linting on diff wrt common ancestor with upstream/master
+    - RUN_FLAKE8="true" SKIP_TESTS="true"
+      DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
       NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.23.4"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
+
 
 matrix:
   allow_failures:
@@ -59,7 +58,6 @@ matrix:
     # the before_install step with and addons/apt/packages declaration.
     -  python: 3.5
        env: DISTRIB="scipy-dev-wheels"
-            CACHED_BUILD_DIR="$HOME/sklearn_build_numpy_dev"
        sudo: True
        before_install: sudo apt-get install -yqq libatlas3gf-base libatlas-dev
 

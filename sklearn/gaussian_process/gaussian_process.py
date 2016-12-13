@@ -20,7 +20,8 @@ from ..utils import deprecated
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
-@deprecated("l1_cross_distances is deprecated and will be removed in 0.20.")
+@deprecated("l1_cross_distances was deprecated in version 0.18 "
+            "and will be removed in 0.20.")
 def l1_cross_distances(X):
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
@@ -29,16 +30,16 @@ def l1_cross_distances(X):
     Parameters
     ----------
 
-    X: array_like
+    X : array_like
         An array with shape (n_samples, n_features)
 
     Returns
     -------
 
-    D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
+    D : array with shape (n_samples * (n_samples - 1) / 2, n_features)
         The array of componentwise L1 cross-distances.
 
-    ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
+    ij : arrays with shape (n_samples * (n_samples - 1) / 2, 2)
         The indices i and j of the vectors in X associated to the cross-
         distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
     """
@@ -58,13 +59,14 @@ def l1_cross_distances(X):
     return D, ij
 
 
-@deprecated("GaussianProcess is deprecated and will be removed in 0.20. "
-            "Use the GaussianProcessRegressor instead.")
+@deprecated("GaussianProcess was deprecated in version 0.18 and will be "
+            "removed in 0.20. Use the GaussianProcessRegressor instead.")
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """The legacy Gaussian Process model class.
 
-    Note that this class is deprecated and will be removed in 0.20.
-    Use the GaussianProcessRegressor instead.
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use the :class:`GaussianProcessRegressor` instead.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -167,7 +169,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to shuffle the sequence of coordinates of theta in
         the Welch optimizer. If an integer is given, it fixes the seed.
         Defaults to the global numpy random number generator.
@@ -208,7 +210,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
         and M.D.  Morris (1992). Screening, predicting, and computer
         experiments.  Technometrics, 34(1) 15--25.`
-        http://www.jstor.org/pss/1269548
+        http://www.jstor.org/stable/1269548
     """
 
     _regression_types = {
@@ -514,7 +516,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
 
                 y, MSE = np.zeros(n_eval), np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                for k in range(max(1, int(n_eval / batch_size))):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to], MSE[batch_from:batch_to] = \
@@ -526,7 +528,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             else:
 
                 y = np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                for k in range(max(1, int(n_eval / batch_size))):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to] = \
@@ -616,14 +618,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Get generalized least squares solution
         Ft = linalg.solve_triangular(C, F, lower=True)
-        try:
-            Q, G = linalg.qr(Ft, econ=True)
-        except:
-            #/usr/lib/python2.6/dist-packages/scipy/linalg/decomp.py:1177:
-            # DeprecationWarning: qr econ argument will be removed after scipy
-            # 0.7. The economy transform will then be available through the
-            # mode='economic' argument.
-            Q, G = linalg.qr(Ft, mode='economic')
+        Q, G = linalg.qr(Ft, mode='economic')
 
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]

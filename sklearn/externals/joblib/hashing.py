@@ -187,24 +187,28 @@ class NumpyHasher(Hasher):
             the Pickler class.
         """
         if isinstance(obj, self.np.ndarray) and not obj.dtype.hasobject:
-            # Compute a hash of the object:
-            try:
-                # memoryview is not supported for some dtypes,
-                # e.g. datetime64, see
-                # https://github.com/numpy/numpy/issues/4983.  The
-                # workaround is to view the array as bytes before
-                # taking the memoryview
-                obj_bytes_view = obj.view(self.np.uint8)
-                self._hash.update(self._getbuffer(obj_bytes_view))
-            # ValueError is raised by .view when the array is not contiguous
-            # BufferError is raised by Python 3 in the hash update if
-            # the array is Fortran rather than C contiguous
-            except (ValueError, BufferError):
+            # Compute a hash of the object
+            # The update function of the hash requires a c_contiguous buffer.
+            if obj.shape == ():
+                # 0d arrays need to be flattened because viewing them as bytes
+                # raises a ValueError exception.
+                obj_c_contiguous = obj.flatten()
+            elif obj.flags.c_contiguous:
+                obj_c_contiguous = obj
+            elif obj.flags.f_contiguous:
+                obj_c_contiguous = obj.T
+            else:
                 # Cater for non-single-segment arrays: this creates a
                 # copy, and thus aleviates this issue.
                 # XXX: There might be a more efficient way of doing this
-                obj_bytes_view = obj.flatten().view(self.np.uint8)
-                self._hash.update(self._getbuffer(obj_bytes_view))
+                obj_c_contiguous = obj.flatten()
+
+            # memoryview is not supported for some dtypes, e.g. datetime64, see
+            # https://github.com/numpy/numpy/issues/4983. The
+            # workaround is to view the array as bytes before
+            # taking the memoryview.
+            self._hash.update(
+                self._getbuffer(obj_c_contiguous.view(self.np.uint8)))
 
             # We store the class, to be able to distinguish between
             # Objects with the same binary content, but different
