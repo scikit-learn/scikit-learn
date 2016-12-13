@@ -388,6 +388,7 @@ def check_estimator_sparse_data(name, estimator):
     X[X < .8] = 0
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X = X_csr.asformat(sparse_format)
         # catch deprecation warnings
@@ -403,7 +404,10 @@ def check_estimator_sparse_data(name, estimator):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
-                assert_equal(pred.shape, (X.shape[0],))
+                if _safe_tags(estimator, "multioutput_only"):
+                    assert_equal(pred.shape, (X.shape[0], 1))
+                else:
+                    assert_equal(pred.shape, (X.shape[0],))
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X)
                 assert_equal(probs.shape, (X.shape[0], 4))
@@ -432,6 +436,8 @@ def check_sample_weights_pandas_series(name, estimator):
             X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
             y = pd.Series([1, 1, 1, 2, 2, 2])
             weights = pd.Series([1] * 6)
+            if _safe_tags(estimator, "multioutput_only"):
+                y = pd.DataFrame(y)
             try:
                 estimator.fit(X, y, sample_weight=weights)
             except ValueError:
