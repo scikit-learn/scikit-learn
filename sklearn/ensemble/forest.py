@@ -426,9 +426,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             class_weight=class_weight)
 
     def _set_permutation_feature_importances(self, X, y):
-        # Convert data to arrays, y to row vector
-        X = np.array(X)
-        y = np.squeeze(np.array(y))
+        # y to row vector
+        y = np.squeeze(y)
 
         if y.ndim != 1:
             raise NotImplementedError('permutation feature importances not '
@@ -442,13 +441,13 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         for tree in forest:
             X_oob, y_oob, n_oob = self._get_oob_data(X, y, tree)
             y_oob_pred = self._predict_oob(X_oob, tree)
+            n_wrong = self._calc_mislabel_rate(y_oob, y_oob_pred)
 
             feature_importances = np.zeros(n_features)
-            for feature_ind in xrange(n_features):
+            for feature_ind in range(n_features):
                 y_oob_pred_perm = self._predict_oob(X_oob, tree,
                                                     shuffle_ind=feature_ind,
                                                     random_state=random_state)
-                n_wrong = self._calc_mislabel_rate(y_oob, y_oob_pred)
                 n_wrong_perm = self._calc_mislabel_rate(y_oob, y_oob_pred_perm)
 
                 feature_importances[feature_ind] = (n_wrong_perm - n_wrong) / n_oob
