@@ -10,6 +10,7 @@ from copy import deepcopy
 import numpy as np
 from scipy import sparse
 import struct
+import inspect
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
@@ -779,6 +780,10 @@ def check_fit_score_takes_y(name, estimator):
         if func is not None:
             func(X, y)
             args = [p.name for p in signature(func).parameters.values()]
+            if not inspect.ismethod(func):
+                # if_delegate_has_method makes methods into functions
+                # with an explicit "self", so need to shift arguments
+                args = args[1:]
             assert_true(args[1] in ["y", "Y"],
                         "Expected y or Y as second argument for method "
                         "%s of %s. Got arguments: %r."
