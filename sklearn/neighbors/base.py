@@ -14,7 +14,7 @@ from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
-from ..base import BaseEstimator
+from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
@@ -99,7 +99,8 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
+class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator,
+                                       MultiOutputMixin)):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod

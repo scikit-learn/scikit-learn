@@ -57,15 +57,6 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
-                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
-                'GaussianProcessRegressor',
-                'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
-                'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
-                'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
-                'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
-                'RANSACRegressor', 'RadiusNeighborsRegressor',
-                'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
 
 def _safe_tags(estimator, key=None):
@@ -1191,8 +1182,7 @@ def check_supervised_y_2d(name, estimator):
     y_pred_2d = estimator.predict(X)
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
-    if (name not in MULTI_OUTPUT and not
-            estimator._get_tags().get("multioutput", "False")):
+    if not estimator._get_tags().get("multioutput", "False"):
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
         assert_true("DataConversionWarning('A column-vector y"

@@ -19,7 +19,7 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_X_y
@@ -445,7 +445,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
+class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel, MultiOutputMixin)):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -1043,7 +1043,7 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(LinearModel):
+class _BaseRidgeCV(LinearModel, MultiOutputMixin):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,

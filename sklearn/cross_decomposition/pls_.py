@@ -9,6 +9,7 @@ from distutils.version import LooseVersion
 from sklearn.utils.extmath import svd_flip
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..externals import six
 
@@ -123,7 +124,7 @@ def _center_scale_xy(X, Y, scale=True):
 
 
 class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
-           RegressorMixin):
+           RegressorMixin, MultiOutputMixin):
     """Partial Least Squares (PLS)
 
     This class implements the generic PLS algorithm, constructors' parameters

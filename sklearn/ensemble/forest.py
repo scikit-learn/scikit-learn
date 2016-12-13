@@ -50,7 +50,7 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
 
-from ..base import ClassifierMixin, RegressorMixin
+from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..metrics import r2_score
@@ -124,7 +124,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, MultiOutputMixin)):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes

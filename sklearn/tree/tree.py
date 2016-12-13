@@ -27,7 +27,7 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..externals import six
 from ..utils import check_array
 from ..utils import check_random_state
@@ -71,7 +71,8 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
+                                          MultiOutputMixin)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.

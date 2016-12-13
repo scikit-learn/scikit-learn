@@ -40,6 +40,7 @@ import scipy.sparse as sp
 import itertools
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
@@ -130,7 +131,8 @@ class _ConstantPredictor(BaseEstimator):
                          X.shape[0], axis=0)
 
 
-class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
+                          MultiOutputMixin):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
@@ -407,11 +409,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     @property
     def _first_estimator(self):
         return self.estimators_[0]
-
-    def _get_tags(self):
-        tags = super(OneVsRestClassifier, self)._get_tags().copy()
-        tags.update(multioutput=True)
-        return tags
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):

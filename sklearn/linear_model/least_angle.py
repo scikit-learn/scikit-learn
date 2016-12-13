@@ -20,7 +20,7 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
@@ -491,7 +491,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class Lars(LinearModel, RegressorMixin):
+class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.

@@ -13,7 +13,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
@@ -500,7 +500,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 # ElasticNet model
 
 
-class ElasticNet(LinearModel, RegressorMixin):
+class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function::
@@ -1006,7 +1006,8 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
+class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel,
+                                       MultiOutputMixin)):
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
