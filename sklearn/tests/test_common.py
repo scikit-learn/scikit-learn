@@ -122,8 +122,8 @@ def test_class_weight_balanced_linear_classifiers():
         linear_classifiers = [
             (name, clazz)
             for name, clazz in classifiers
-            if ('class_weight' in clazz().get_params().keys() and
-                issubclass(clazz, LinearClassifierMixin))]
+            if (issubclass(clazz, LinearClassifierMixin) and
+                'class_weight' in clazz().get_params().keys())]
 
     for name, Classifier in linear_classifiers:
         yield _named_check(check_class_weight_balanced_linear_classifier,
