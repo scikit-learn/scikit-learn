@@ -10,7 +10,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
-from sklearn.linear_model import Lasso, LogisticRegression
+from sklearn.linear_model import Lasso, SGDClassifier, SGDRegressor, LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
@@ -25,12 +25,34 @@ def test_multi_target_regression():
     for n in range(3):
         rgr = GradientBoostingRegressor(random_state=0)
         rgr.fit(X_train, y_train[:, n])
-        references[:,n] = rgr.predict(X_test)
+        references[:, n] = rgr.predict(X_test)
 
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     rgr.fit(X_train, y_train)
     y_pred = rgr.predict(X_test)
 
+    assert_almost_equal(references, y_pred)
+
+
+def test_multi_target_regression_partial_fit():
+    X, y = datasets.make_regression(n_targets=3)
+    X_train, y_train = X[:50], y[:50]
+    X_test, y_test = X[50:], y[50:]
+
+    references = np.zeros_like(y_test)
+    half_index = 25
+    for n in range(3):
+        sgr = SGDRegressor(random_state=0)
+        sgr.partial_fit(X_train[:half_index], y_train[:half_index, n])
+        sgr.partial_fit(X_train[half_index:], y_train[half_index:, n])
+        references[:, n] = sgr.predict(X_test)
+
+    sgr = MultiOutputRegressor(SGDRegressor(random_state=0))
+
+    sgr.partial_fit(X_train[:half_index], y_train[:half_index])
+    sgr.partial_fit(X_train[half_index:], y_train[half_index:])
+
+    y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
 
 
@@ -57,11 +79,12 @@ def test_multi_target_sparse_regression():
         rgr.fit(X_train, y_train)
         rgr_sparse.fit(sparse(X_train), y_train)
 
-        assert_almost_equal(rgr.predict(X_test), rgr_sparse.predict(sparse(X_test)))
+        assert_almost_equal(rgr.predict(X_test),
+                            rgr_sparse.predict(sparse(X_test)))
 
 
 def test_multi_target_sample_weights_api():
-    X = [[1,2,3], [4,5,6]]
+    X = [[1, 2, 3], [4, 5, 6]]
     y = [[3.141, 2.718], [2.718, 3.141]]
     w = [0.8, 0.6]
 
@@ -76,19 +99,19 @@ def test_multi_target_sample_weights_api():
 
 def test_multi_target_sample_weights():
     # weighted regressor
-    Xw = [[1,2,3], [4,5,6]]
+    Xw = [[1, 2, 3], [4, 5, 6]]
     yw = [[3.141, 2.718], [2.718, 3.141]]
     w = [2., 1.]
     rgr_w = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     rgr_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
-    X = [[1,2,3], [1,2,3], [4,5,6]]
+    X = [[1, 2, 3], [1, 2, 3], [4, 5, 6]]
     y = [[3.141, 2.718], [3.141, 2.718], [2.718, 3.141]]
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     rgr.fit(X, y)
 
-    X_test = [[1.5,2.5,3.5], [3.5,4.5,5.5]]
+    X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
     assert_almost_equal(rgr.predict(X_test), rgr_w.predict(X_test))
 
 # Import the data
@@ -102,6 +125,33 @@ y = np.column_stack((y1, y2, y3))
 n_samples, n_features = X.shape
 n_outputs = y.shape[1]
 n_classes = len(np.unique(y1))
+classes = np.column_stack(map(np.unique, (y1, y2, y3)))
+
+
+def test_multi_output_classification_partial_fit():
+    # test if multi_target initializes correctly with base estimator and fit
+    # assert predictions work as expected for predict, prodict_proba and score
+
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+
+    # train the multi_target_linear and also get the predictions.
+    half_index = int(X.shape[0] / 2)
+    multi_target_linear.partial_fit(
+        X[:half_index], y[:half_index], classes=classes)
+    multi_target_linear.partial_fit(X[half_index:], y[half_index:])
+
+    predictions = multi_target_linear.predict(X)
+    assert_equal((n_samples, n_outputs), predictions.shape)
+
+    # train the forest with each column and assert that predictions are equal
+    for i in range(3):
+        # create a clone with the same state
+        sgd_linear_clf = clone(sgd_linear_clf)
+        sgd_linear_clf.partial_fit(
+            X[:half_index], y[:half_index, i], classes=classes[:, i])
+        sgd_linear_clf.partial_fit(X[half_index:], y[half_index:, i])
+        assert_equal(list(sgd_linear_clf.predict(X)), list(predictions[:, i]))
 
 
 def test_multi_output_classification():
