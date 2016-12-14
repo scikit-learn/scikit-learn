@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 from itertools import chain, combinations
+from collections import defaultdict
 import numbers
 import warnings
 
@@ -184,7 +185,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(BaseEstimator, TransformerMixin):
-
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -448,7 +448,6 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
 
 class StandardScaler(BaseEstimator, TransformerMixin):
-
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen independently on each feature by computing
@@ -699,7 +698,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
-
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -899,7 +897,6 @@ def maxabs_scale(X, axis=0, copy=True):
 
 
 class RobustScaler(BaseEstimator, TransformerMixin):
-
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1141,7 +1138,6 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
-
     """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
@@ -1204,7 +1200,6 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1381,7 +1376,6 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
 
 class Normalizer(BaseEstimator, TransformerMixin):
-
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1492,7 +1486,6 @@ def binarize(X, threshold=0.0, copy=True):
 
 
 class Binarizer(BaseEstimator, TransformerMixin):
-
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     Values greater than the threshold map to 1, while values less than
@@ -1560,7 +1553,6 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
-
     """Center a kernel matrix
 
     Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
@@ -1735,7 +1727,6 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
-
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
     The input to this transformer should be a matrix of integers, denoting
@@ -1831,7 +1822,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
-
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values
@@ -1970,37 +1960,39 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
 
 class CountFeaturizer(BaseEstimator, TransformerMixin):
-
-    """
-    Adds in a new feature column containing the number of occurences of
-    each row in the given data set.
+    """Adds a feature representing each feature value's count in training
 
     Formally, for each data point X_i in the dataset X, it will add in
     a new feature count_X_i to the end of X_i where count_X_i is the number of
     occurences of X_i in the dataset X given the equality indicator
-    'inclusion'
+    'inclusion'.
+
+    If a y argument is given during the fit and transform steps, then the
+    count in the transform step will be conditional on the y.
 
     This preprocessing step is useful when the number of occurences
     of a particular piece of data is helpful in computing the prediction.
 
     Parameters
     ----------
-    inclusion: set, list, numpy.ndarray, or string (only 'all'), default='all'
+    inclusion : 'all', set, list, or numpy.ndarray
         The inclusion criteria for counting
-        - 'all' (default): Every feature is taken into consideration when
-        counting how many of each row is in the dataset.
-        - collection of indices: A collection of values where if the index v is
-        in 'inclusion', then the vth feature will be put into the equality
-        checks when counting how often each row occurs.
 
-    removal_policy: set, list, numpy.ndarray, or None, default=None
-        - None (default): No features are removed on transformation.
-        - 'inclusion': Every feature counted will be removed and replaced with
-        the count feature. This is equivalent to having the 'inclusion' and
-        'removal_policy' parameter being set to the exact same collection.
-        - collection of indices: For each index v in 'removal_policy', the vth
-        feature will be removed in the transformation (and be replaced with
-        the new count feature).
+        - 'all' (default) : Every feature given is counted
+        - collection of indices : Only the given collection of features is
+        counted
+
+    Attributes
+    ----------
+    count_cache_ : defaultdict(int)
+        The counts of each example learned during 'fit'
+
+    col_num_X_ : int
+        The number of columns of 'X' learned during 'fit'
+
+    col_num_Y_ : int
+        The number of clumns of 'y' learned during 'fit'
+        If 0, then the fit is not conditional on the y given
 
     Examples
     --------
@@ -2034,155 +2026,147 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     WIP, I will make the documentation .rst afterwards
     """
 
-    def __init__(self, inclusion='all', removal_policy=None):
-        # removal policy currently not implemented, but the method
-        # signatures are set
-        CountFeaturizer._check_params(inclusion=inclusion,
-                                      removal_policy=removal_policy)
-        if type(inclusion) == str:
-            self.inclusion = inclusion
-        elif inclusion is None:
-            self.inclusion = np.array([])
-        else:
-            self.inclusion = np.array(inclusion)
-        if removal_policy is None or type(removal_policy) == str:
-            self.removal_policy = removal_policy
-        else:
-            self.removal_policy = np.array(removal_policy)
-        self.count_cache = {}
+    def __init__(self, inclusion='all'):
 
-        # the num_feature variable acts as a way to ensure that the number of
-        # columns of X going into fit() is the same as the number of columns
-        # of X going into transform()
-        self.num_features = 0
+        self.inclusion = inclusion
+        self.count_cache_ = None
+        self.col_num_X_ = 0
+        self.col_num_Y_ = 0
 
     @staticmethod
-    def _check_params(inclusion=None, removal_policy=None):
-
-        if inclusion is not None and inclusion != 'all':
-            if not CountFeaturizer._valid_data_type(inclusion):
-                raise ValueError("Illegal data type in inclusion")
-
-        if removal_policy is not None and removal_policy != 'inclusion' and \
-                not CountFeaturizer._valid_data_type(removal_policy):
-            raise ValueError("Illegal data type in removal_policy")
+    def _check_params(inclusion=None):
+        if (inclusion is not None and inclusion != 'all' and
+                not CountFeaturizer._valid_data_type(inclusion)):
+            raise ValueError("Illegal data type in inclusion")
 
     @staticmethod
     def _valid_data_type(type_check):
-        """
-        Defines the data types that are compatible with CountFeaturizer
-        Currently, only Python lists and numpy arrays are accepted
-        """
         return type(type_check) == np.ndarray or type(type_check) == list \
             or type(type_check) == set
 
-    @staticmethod
-    def _check_well_formed(X):
-        """
-        Ensures that X is well formed, meaning that every single row of X must
-        have the same number of elements
-        [[1, 2], [3, 4]] is "well formed"
-        but [[1], [3, 5, 7]] is not "well formed"
-        Assumes that check_array(X) has already been called
-        """
-        # This is a temporary method but I am unsure whether there already
-        # exists something similar in the utils.validation.py
-        # There did not seem to be anything I could use to check well-formed
-        # in utils.validation.check_array()
-
-        num_columns = len(X[0])
-        for i in range(1, len(X)):
-            if len(X[i]) != num_columns:
-                raise ValueError("Malformed input array X")
-
-    def _extract_tuple(self, data_row):
-        """
-        Extracts the values of the data_row[inclusion] into an ordered tuple
-        for use as a dictionary key
-        """
-        if type(self.inclusion) == str and self.inclusion == 'all':
-            return tuple(data_row)
-        else:
-            num_features = len(data_row)
-            return tuple([data_row[i]
-                          for i in range(num_features)
-                          if (i in self.inclusion)])
-
-    def _final_num_features(self, cols_X):
-        """
-        Given the number of columns of X, uses the number of elements in
-        'inclusion' and 'removal_policy' to calclulate the number of
-        features in the output of transform()
-        """
-        if type(self.removal_policy) == str \
-                and self.removal_policy == 'inclusion':
-            if type(self.inclusion) == str and \
-                    self.inclusion == 'all':
-                return 1
-            else:
-                return cols_X - self.inclusion.size + 1
-        elif self.removal_policy is not None:
-            return cols_X - len(self.removal_policy) + 1
-        return cols_X + 1
-
     def fit(self, X, y=None):
+        """Fits the CountFeaturizer to X, y
+
+        Stores the counts for each example X, conditional on y
+
+        Parameters
+        ----------
+        X : array
+            The data set to learn the counts from, conditional to 'y'
+
+        y : None, array
+            The 'y' that the counts are conditional to
+            - None (default) : The counts learned are not conditional on 'y'
+            - array : The counts learned are conditional on the given 'y'
+
+        Returns
+        -------
+        self
         """
-        Sets the value of count_cache which holds the counts of each data point
-        """
+
+        CountFeaturizer._check_params(inclusion=self.inclusion)
         X = check_array(X)
-        CountFeaturizer._check_well_formed(X)
-        cols_X = len(X[0])
-        if self._final_num_features(cols_X) <= 0:
-            # the removal_policy and inclusion were set such that the output
-            # array of transform() is expected to have 0 or a negative
-            # number of columns
-            raise ValueError("inclusion or removal_policy incompatible")
-        self.num_features = cols_X
-        self.count_cache = {}
-        for data_i in X:
-            data_i_tuple = self._extract_tuple(data_i)
-            if data_i_tuple not in self.count_cache:
-                self.count_cache[data_i_tuple] = 1
-            else:
-                self.count_cache[data_i_tuple] += 1
+        len_data = len(X)
+
+        if y:
+            y = check_array(y)
+            if len_data != len(y):
+                raise ValueError("There must be a y for every X; " +
+                                 "len(y) != len(X)")
+            self.col_num_Y_ = len(y[0])
+        else:
+            self.col_num_Y_ = 0
+
+        self.count_cache_ = defaultdict(int)
+        self.col_num_X_ = len(X[0])
+
+        if type(self.inclusion) == str and self.inclusion == 'all':
+            inclusion_used = np.array(range(self.col_num_X_))
+        elif self.inclusion is None:
+            inclusion_used = np.array([])
+        elif CountFeaturizer._valid_data_type(self.inclusion):
+            inclusion_used = np.array(self.inclusion)
+
+        if self.col_num_Y_:
+            for i in range(len_data):
+                X_key = tuple(X[i][j]
+                              for j in range(self.col_num_X_)
+                              if j in inclusion_used)
+                y_key = tuple(y[i])
+                self.count_cache_[(X_key, y_key)] += 1
+        else:
+            for i in range(len_data):
+                X_key = tuple(X[i][j]
+                              for j in range(self.col_num_X_)
+                              if j in inclusion_used)
+                self.count_cache_[X_key] += 1
+
         return self
 
-    def transform(self, X):
-        """
-        Transforms the inputted data with the new 'count' feature (column)
-        and returns it
-        The data set returned from the transformation will always be a
+    def transform(self, X, y=None):
+        """Transforms X to include the counts learned during 'fit'
+
+        Augments 'X' with a new column containing the counts of each example,
+        conditional on 'y'.
+
+        Parameters
+        ----------
+        X : array
+            The X to transform
+
+        y : None, array
+            The 'y' that the counts are conditional to
+            - None (default) : The counts learned are not conditional on 'y'
+            - array : The counts learned are conditional on the given 'y'
+
+        Returns
+        -------
+        transformed : numpy.ndarray
+            The transformed input
+
+        Notes
+        -----
+        The data returned from the transformation will always be a
         numpy.ndarray
         """
 
-        if not self.count_cache:
+        if self.col_num_X_ == 0:
             raise ValueError("Transformer must be fit() before transform()")
         X = check_array(X)
-        CountFeaturizer._check_well_formed(X)
         len_data = len(X)
         num_features = len(X[0])
-        if self.num_features != num_features:
-            raise ValueError("transform() must have same number of" +
-                             " features as it was fitted with")
-        num_features_transform = self._final_num_features(num_features)
-        removal_policy_list = []
-        if type(self.removal_policy) == str \
-                and self.removal_policy == 'inclusion':
-            if type(self.inclusion) == str and \
-                    self.inclusion == 'all':
-                removal_policy_list = range(num_features)
-            else:
-                removal_policy_list = self.inclusion
-        elif not (self.removal_policy is None):
-            removal_policy_list = self.removal_policy
-        transformed = np.zeros((len_data, num_features_transform))
-        transformed[:, :-1] = \
-            X[:, list(set(range(num_features)) - set(removal_policy_list))]
-        for i in range(len_data):
-            data_i_tuple = self._extract_tuple(X[i])
-            if data_i_tuple in self.count_cache:
-                transformed[i, num_features_transform - 1] = \
-                    self.count_cache[data_i_tuple]
-            else:
-                transformed[i, num_features_transform - 1] = 0
+        if self.col_num_X_ != num_features:
+            raise ValueError("Dimensions mismatch in X during transform")
+        if y:
+            y = check_array(y)
+            if len_data != len(y):
+                raise ValueError("There must be a y for every X; " +
+                                 "len(y) != len(X)")
+            elif self.col_num_Y_ != len(y[0]):
+                raise ValueError("Dimension mismatch in y during transform")
+        transformed = np.zeros((len_data, num_features + 1))
+        transformed[:, :-1] = X
+
+        if type(self.inclusion) == str and self.inclusion == 'all':
+            inclusion_used = np.array(range(self.col_num_X_))
+        elif self.inclusion is None:
+            inclusion_used = np.array([])
+        elif CountFeaturizer._valid_data_type(self.inclusion):
+            inclusion_used = np.array(self.inclusion)
+
+        if self.col_num_Y_:
+            for i in range(len_data):
+                X_key = tuple(X[i][j]
+                              for j in range(self.col_num_X_)
+                              if j in inclusion_used)
+                y_key = tuple(y[i])
+                transformed[i, num_features] = \
+                    self.count_cache_[(X_key, y_key)]
+        else:
+            for i in range(len_data):
+                X_key = tuple(X[i][j]
+                              for j in range(self.col_num_X_)
+                              if j in inclusion_used)
+                transformed[i, num_features] = self.count_cache_[X_key]
+
         return transformed
