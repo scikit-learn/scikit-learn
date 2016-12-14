@@ -2068,7 +2068,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         X = check_array(X)
         len_data = len(X)
 
-        if y:
+        if y is not None:
             y = check_array(y)
             if len_data != len(y):
                 raise ValueError("There must be a y for every X; " +
@@ -2137,7 +2137,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         num_features = len(X[0])
         if self.col_num_X_ != num_features:
             raise ValueError("Dimensions mismatch in X during transform")
-        if y:
+        if y is not None:
             y = check_array(y)
             if len_data != len(y):
                 raise ValueError("There must be a y for every X; " +
