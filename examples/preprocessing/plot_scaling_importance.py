@@ -8,37 +8,37 @@ Importance of Feature Scaling
 Features scaling though standardization (or Z-score normalization)
 can be an important preprocessing step for many machine learning
 algorithms. Standardization involves rescaling the features such
-that they’ll have the properties of a standard normal distribution
+that they have the properties of a standard normal distribution
 with a mean of zero and a standard deviation of one.
 
-While many algorithms (such as SVM, K-nearest neighbors and logistic
+While many algorithms (such as SVM, K-nearest neighbors, and logistic
 regression) require features to be normalized, intuitively we can
 think of Principle Component Analysis (PCA) as being a prime example
 of when normalization is important. In PCA we are interested in the
-components that maximize the variance. If there exists components
-(e.g human height) that vary less than other components (e.g human
-weight) because of their respective scales (meters vs. kilos) it can
-be seen how not scaling the features would cause PCA to determine that
-the direction of maximal variance more closely corresponds with the
-'weight' axis. As a change in height of one meter can be considered much
-more important than the change in weight of one kilogram, it is easily
-seen that this determination is incorrect. In the case of PCA, scaling
-features using normalization is preferred over using min-max scaling as
-the primary components are computed using the correlation matrix as
-opposed to the covariance matrix.
+components that maximize the variance. If one component (e.g. human
+height) varies less than another (e.g. weight) because of their
+respective scales (meters vs. kilos), PCA might determine that the
+direction of maximal variance more closely corresponds with the
+'weight' axis, if those features are not scaled. As a change in
+height of one meter can be considered much more important than the
+change in weight of one kilogram, this is clearly incorrect.
 
-In order to illustrate this in an example, PCA will be performed on a
-dataset which has been standardized using Standard Scaler and a copy
-which has remained untouched. The results with be visualized and a clear
-difference noted. The 1st principal component in the unscaled set is shown.
-It can be seen that feature #13 dominates the direction, being a whole
-two orders of magnitude above the other features. This is contrasted when
-observing the prinicpal component for the scaled version of the data. In the
-scaled version, the orders of magnitude is roughly the same across all the
-features.
+To illustrate this, PCA is performed comparing the use of the unscaled
+data against the same with :class:`preprocessing.StandardScaler` applied
+The results are visualized and a clear difference noted. The 1st principal
+component in the unscaled set can be seen. It can be seen that feature #13
+dominates the direction, being a whole two orders of magnitude above the
+other features. This is contrasted when observing the principal component
+for the scaled version of the data. In the scaled version, the orders of
+magnitude are roughly the same across all the features.
 
-The results will then be used to train a naive Bayes classifier, and a clear
-difference in prediction accuracies will be observed.
+The dataset used is the Wine Dataset available at UCI. This dataset
+has continuous features that are heterogeneous in scale due to differing
+properties that they measure (i.e alcohol content, and malic acid).
+
+The results are then used to train a naive Bayes classifier, and a clear
+difference in prediction accuracies will be observed wherein the dataset
+which is scaled before PCA vastly outperforms the unscaled version.
 
 """
 from __future__ import print_function
@@ -52,7 +52,7 @@ from sklearn.datasets import load_wine
 print(__doc__)
 
 # Code source: Tyler Lanigan <tylerlanigan@gmail.com>
-# 			   Sebastian Raschka <mail@sebastianraschka.com>
+#              Sebastian Raschka <mail@sebastianraschka.com>
 
 # License: BSD 3 clause
 

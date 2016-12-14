@@ -245,7 +245,7 @@ def load_files(container_path, description=None, categories=None,
 def load_wine(return_X_y=False):
     """Load and return the wine dataset (classification).
 
-            .. versionadded:: 0.18
+    .. versionadded:: 0.18
 
     The wine dataset is a classic and very easy multi-class classification
     dataset.

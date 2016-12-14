@@ -53,16 +53,20 @@ Data Set Characteristics:
 This is a copy of UCI ML Wine recognition datasets.
 https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
 
-These data are the results of a chemical analysis of wines grown in the same region in Italy but derived from three different cultivars. The analysis determined the quantities of 13 constituents found in each of the three types of wines.
+The data is the results of a chemical analysis of wines grown in the same region in Italy by three different cultivators. There are thirteen different measurements taken for different constituents found in the three types of wine.
 
 Original Owners: 
 
 Forina, M. et al, PARVUS - 
 An Extendible Package for Data Exploration, Classification and Correlation. 
 Institute of Pharmaceutical and Food Analysis and Technologies, Via Brigata Salerno, 
-16147 Genoa, Italy. 
+16147 Genoa, Italy.
 
-Relevant Papers
+Citation:
+
+Lichman, M. (2013). UCI Machine Learning Repository [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California, School of Information and Computer Science. 
+
+References
 ----------
 (1) 
 S. Aeberhard, D. Coomans and O. de Vel, 
