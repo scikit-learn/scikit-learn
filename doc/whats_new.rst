@@ -99,6 +99,10 @@ Bug fixes
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
 
+   - Fixed a bug in :class:`sklearn.ensemble.GradientBoostingClassifier`
+     and :class:`sklearn.ensemble.GradientBoostingRegressor`
+     where a float being compared to ``0.0`` using ``==`` caused a divide by zero
+     error. This was fixed in :issue:`7970` by :user:`He Chen <chenhe95>`.
 
    - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
      sparse array X and initial centroids, where X's means were unnecessarily
