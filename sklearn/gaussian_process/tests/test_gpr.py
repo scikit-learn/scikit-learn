@@ -333,10 +333,3 @@ def test_n_jobs_parallel():
         assert_almost_equal(y1, y3)
         assert_almost_equal(y1_cov, y2_cov)
         assert_almost_equal(y1_cov, y3_cov)
-        # Failing tests
-        # assert_almost_equal(gpr1.alpha_, gpr2.alpha_, 4)
-        # assert_almost_equal(gpr1.alpha_, gpr3.alpha_, 4)
-        # assert_almost_equal(gpr1.log_marginal_likelihood_value_,
-        #                    gpr2.log_marginal_likelihood_value_, 5)
-        # assert_almost_equal(gpr1.log_marginal_likelihood_value_,
-        #                    gpr3.log_marginal_likelihood_value_, 5)
