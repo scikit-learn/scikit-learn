@@ -1075,7 +1075,7 @@ def check_classifiers_train(name, classifier):
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes is 2:
-                    if not tags.get("multioutput", False):
+                    if not tags.get("multioutput_only", False):
                         assert_equal(decision.shape, (n_samples,))
                     else:
                         assert_equal(decision.shape, (n_samples, 1))
