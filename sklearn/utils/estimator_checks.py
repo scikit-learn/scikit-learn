@@ -12,6 +12,7 @@ from scipy import sparse
 import struct
 
 from sklearn.externals.six.moves import zip
+from sklearn.externals.six import text_type
 from sklearn.externals.joblib import hash, Memory
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -1564,7 +1565,7 @@ def check_parameters_default_constructible(name, Estimator):
             else:
                 assert_in(type(init_param.default),
                           [str, int, float, bool, tuple, type(None),
-                           np.float64, types.FunctionType, Memory])
+                           np.float64, types.FunctionType, Memory, text_type])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert_true(init_param.default is None)
