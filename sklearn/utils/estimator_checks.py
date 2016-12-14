@@ -1286,7 +1286,7 @@ def check_regressors_train(name, regressor):
     # TODO: find out why PLS and CCA fail. RANSAC is random
     # and furthermore assumes the presence of outliers, hence
     # skipped
-    if regressor._get_tags().get("test_accuracy", True):
+    if _safe_tags(regressor, "test_accuracy"):
         assert_greater(regressor.score(X, y_), 0.5)
 
 
@@ -1690,5 +1690,5 @@ def check_classifiers_regression_target(name, estimator):
     X, y = boston.data, boston.target
     e = clone(estimator)
     msg = 'Unknown label type: '
-    if estimator._get_tags().get("input_validation", True):
+    if _safe_tags(estimator, "input_validation"):
         assert_raises_regex(ValueError, msg, e.fit, X, y)

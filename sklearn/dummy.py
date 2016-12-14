@@ -9,7 +9,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .base import MultiOutputMixin
+from .base import MultiOutputMixin, _update_tags
 from .utils import check_random_state
 from .utils.validation import check_array, check_X_y
 from .utils.validation import check_consistent_length
@@ -324,9 +324,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             return [np.log(p) for p in proba]
 
     def _get_tags(self):
-        tags = super(DummyClassifier, self)._get_tags().copy()
-        tags.update(test_accuracy=False, input_validation=False)
-        return tags
+        return _update_tags(super(DummyClassifier, self),
+                            input_validation=False, test_accuracy=False)
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
@@ -486,6 +485,5 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         return y
 
     def _get_tags(self):
-        tags = super(DummyRegressor, self)._get_tags().copy()
-        tags.update(test_accuracy=False, input_validation=False)
-        return tags
+        return _update_tags(super(DummyRegressor, self), test_accuracy=False,
+                            input_validation=False)

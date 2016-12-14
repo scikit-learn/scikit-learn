@@ -9,7 +9,7 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
@@ -366,6 +366,5 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         return self
 
     def _get_tags(self):
-        tags = super(DictVectorizer, self)._get_tags().copy()
-        tags['input_types'] = ["dict"]
-        return tags
+        return _update_tags(self, super(DictVectorizer, self),
+                            input_types=["dict"])

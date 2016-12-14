@@ -14,7 +14,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
@@ -1385,9 +1385,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
     def _get_tags(self):
-        tags = super(Normalizer, self)._get_tags().copy()
-        tags.update(stateless=True)
-        return tags
+        return _update_tags(self, super(Normalizer, self), stateless=True)
 
 
 def binarize(X, threshold=0.0, copy=True):
@@ -1501,9 +1499,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
     def _get_tags(self):
-        tags = super(Binarizer, self)._get_tags().copy()
-        tags.update(stateless=True)
-        return tags
+        return _update_tags(self, super(Binarizer, self), stateless=True)
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):

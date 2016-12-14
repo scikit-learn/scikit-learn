@@ -14,7 +14,7 @@ import scipy.sparse as sp
 from scipy.linalg import svd
 
 from .base import BaseEstimator
-from .base import TransformerMixin
+from .base import TransformerMixin, _update_tags
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
@@ -109,9 +109,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         return projection
 
     def _get_tags(self):
-        tags = super(RBFSampler, self)._get_tags().copy()
-        tags.update(stateless=True)
-        return tags
+        return _update_tags(self, super(RBFSampler, self), stateless=True)
 
 
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
@@ -208,9 +206,8 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return projection
 
     def _get_tags(self):
-        tags = super(SkewedChi2Sampler, self)._get_tags().copy()
-        tags.update(stateless=True)
-        return tags
+        return _update_tags(self, super(SkewedChi2Sampler, self),
+                            stateless=True)
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
@@ -368,9 +365,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return sp.hstack(X_new)
 
     def _get_tags(self):
-        tags = super(AdditiveChi2Sampler, self)._get_tags().copy()
-        tags.update(stateless=True)
-        return tags
+        return _update_tags(self, super(AdditiveChi2Sampler, self),
+                            stateless=True)
 
 
 class Nystroem(BaseEstimator, TransformerMixin):

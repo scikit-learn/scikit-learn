@@ -23,7 +23,7 @@ import unicodedata
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
@@ -499,9 +499,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                              non_negative=self.non_negative)
 
     def _get_tags(self):
-        tags = super(HashingVectorizer, self)._get_tags().copy()
-        tags['input_types'] = ["string"]
-        return tags
+        return _update_tags(self, super(HashingVectorizer, self),
+                            input_types=["string"])
 
 
 def _document_frequency(X):
@@ -937,9 +936,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                      key=itemgetter(1))]
 
     def _get_tags(self):
-        tags = super(CountVectorizer, self)._get_tags().copy()
-        tags['input_types'] = ["string"]
-        return tags
+        return _update_tags(self, super(CountVectorizer, self),
+                            input_types=["dict"])
 
 
 def _make_int_array():
@@ -1391,6 +1389,5 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
     def _get_tags(self):
-        tags = super(TfidfVectorizer, self)._get_tags().copy()
-        tags['input_types'] = ["string"]
-        return tags
+        return _update_tags(self, super(TfidfVectorizer, self),
+                            input_types=["dict"])

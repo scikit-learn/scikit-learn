@@ -24,6 +24,14 @@ _DEFAULT_TAGS = {
     'multioutput_only': False}
 
 
+def _update_tags(estimator, sup, **kwargs):
+    if hasattr(sup, "_get_tags"):
+        tags_old = sup._get_tags().copy()
+        tags_old.update(kwargs)
+    else:
+        return kwargs.copy()
+
+
 def _first_and_last_element(arr):
     """Returns first and last element of numpy array or sparse matrix."""
     if isinstance(arr, np.ndarray) or hasattr(arr, 'data'):
@@ -315,9 +323,6 @@ class BaseEstimator(object):
                     UserWarning)
         self.__dict__.update(state)
 
-    def _get_tags(self):
-        return _DEFAULT_TAGS
-
 
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn."""
@@ -351,9 +356,7 @@ class ClassifierMixin(object):
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
     def _get_tags(self):
-        tags = super(ClassifierMixin, self)._get_tags().copy()
-        tags.update(is_classifier=True)
-        return tags
+        return _update_tags(super(ClassifierMixin, self), is_classifier=True)
 
 
 class RegressorMixin(object):
@@ -393,9 +396,7 @@ class RegressorMixin(object):
                         multioutput='variance_weighted')
 
     def _get_tags(self):
-        tags = super(RegressorMixin, self)._get_tags().copy()
-        tags.update(is_regressor=True)
-        return tags
+        return _update_tags(super(RegressorMixin, self), is_regressor=True)
 
 
 class ClusterMixin(object):
@@ -421,9 +422,7 @@ class ClusterMixin(object):
         return self.labels_
 
     def _get_tags(self):
-        tags = super(ClusterMixin, self)._get_tags().copy()
-        tags.update(is_clusterer=True)
-        return tags
+        return _update_tags(super(ClusterMixin, self), is_clusterer=True)
 
 
 class BiclusterMixin(object):
@@ -511,9 +510,7 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
     def _get_tags(self):
-        tags = super(TransformerMixin, self)._get_tags().copy()
-        tags.update(is_transformer=True)
-        return tags
+        return _update_tags(super(TransformerMixin, self), is_transformer=True)
 
 
 class DensityMixin(object):
@@ -538,27 +535,21 @@ class MetaEstimatorMixin(object):
     _required_parameters = ["estimator"]
 
     """Mixin class for all meta estimators in scikit-learn."""
-    # this is just a tag for the moment
-    def _get_tags(self):
-        tags = super(MetaEstimatorMixin, self)._get_tags().copy()
-        tags.update(is_meta_estimator=True)
-        return tags
 
 
 class SparseSupportMixin(object):
     """Mixin to mark estimators that support sparse matrix input."""
+    # NOT USED YET
+
     def _get_tags(self):
-        tags = super(SparseSupportMixin, self)._get_tags().copy()
-        tags.update(sparse_support=True)
-        return tags
+        return _update_tags(super(SparseSupportMixin, self),
+                            sparse_support=True)
 
 
 class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
     def _get_tags(self):
-        tags = super(MultiOutputMixin, self)._get_tags().copy()
-        tags.update(multioutput=True)
-        return tags
+        return _update_tags(super(MultiOutputMixin, self), multioutput=True)
 
 
 def is_classifier(estimator):

@@ -7,7 +7,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from . import _hashing
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 
 
 def _iteritems(d):
@@ -153,6 +153,5 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         return X
 
     def _get_tags(self):
-        tags = super(FeatureHasher, self)._get_tags().copy()
-        tags['input_types'] = [self.input_type]
-        return tags
+        return _update_tags(self, super(FeatureHasher, self),
+                            input_types=[self.input_type])

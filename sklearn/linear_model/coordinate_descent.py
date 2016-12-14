@@ -13,7 +13,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin, MultiOutputMixin
+from ..base import RegressorMixin, MultiOutputMixin, _update_tags
 from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
@@ -1727,9 +1727,7 @@ class MultiTaskElasticNet(Lasso):
         return self
 
     def _get_tags(self):
-        tags = super(MultiTaskElasticNet, self)._get_tags().copy()
-        tags.update(multioutput_only=True)
-        return tags
+        return _update_tags(self, super(MultiTaskElasticNet, self), multioutput_only=True)
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2025,9 +2023,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.selection = selection
 
     def _get_tags(self):
-        tags = super(MultiTaskElasticNetCV, self)._get_tags().copy()
-        tags.update(multioutput_only=True)
-        return tags
+        return _update_tags(self, super(MultiTaskElasticNetCV, self),
+                            multioutput_only=True)
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2166,6 +2163,5 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             selection=selection)
 
     def _get_tags(self):
-        tags = super(MultiTaskLassoCV, self)._get_tags().copy()
-        tags.update(multioutput_only=True)
-        return tags
+        return _update_tags(self, super(MultiTaskLassoCV, self),
+                            multioutput_only=True)

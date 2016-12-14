@@ -8,7 +8,7 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..utils import check_array
 from ..utils.fixes import astype
 from ..utils.sparsefuncs import _get_median
@@ -377,6 +377,5 @@ class Imputer(BaseEstimator, TransformerMixin):
         return X
 
     def _get_tags(self):
-        tags = super(Imputer, self)._get_tags().copy()
-        tags.update(missing_values=True)
-        return tags
+        return _update_tags(self, super(Imputer, self),
+                            missing_values=True)

@@ -18,7 +18,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin
+from .base import RegressorMixin, ClassifierMixin, _update_tags
 from .utils import check_array, check_X_y
 from .utils.fixes import parallel_helper
 from .utils.validation import check_is_fitted, has_fit_parameter
@@ -119,9 +119,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.asarray(y).T
 
     def _get_tags(self):
-        tags = super(MultiOutputEstimator, self)._get_tags().copy()
-        tags.update(multioutput_only=True)
-        return tags
+        return _update_tags(self, super(MultiOutputEstimator, self),
+                            multioutput_only=True)
 
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
@@ -265,7 +264,5 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
     def _get_tags(self):
-        tags = super(MultiOutputClassifier, self)._get_tags().copy()
-        # this one is just too weird for now
-        tags.update(_skip_test=True)
-        return tags
+        return _update_tags(self, super(MultiOutputClassifier, self),
+                            _skip_test=True)

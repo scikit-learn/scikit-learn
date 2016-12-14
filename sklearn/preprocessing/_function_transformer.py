@@ -1,4 +1,4 @@
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..utils import check_array
 
 
@@ -94,6 +94,5 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                     **(kw_args if kw_args else {}))
 
     def _get_tags(self):
-        tags = super(FunctionTransformer, self)._get_tags().copy()
-        tags.update(stateless=True)
-        return tags
+        return _update_tags(self, super(FunctionTransformer, self),
+                            stateless=True)

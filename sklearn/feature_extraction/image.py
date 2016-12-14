@@ -17,7 +17,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
 from ..utils.fixes import astype
-from ..base import BaseEstimator
+from ..base import BaseEstimator, _update_tags
 
 __all__ = ['PatchExtractor',
            'extract_patches_2d',
@@ -511,6 +511,5 @@ class PatchExtractor(BaseEstimator):
         return patches
 
     def _get_tags(self):
-        tags = super(PatchExtractor, self)._get_tags().copy()
-        tags['input_types'] = ["3darray"]
-        return tags
+        return _update_tags(self, super(PatchExtractor, self),
+                            input_types=["3darray"])

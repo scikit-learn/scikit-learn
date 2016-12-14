@@ -9,7 +9,7 @@ from distutils.version import LooseVersion
 from sklearn.utils.extmath import svd_flip
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..base import MultiOutputMixin
+from ..base import MultiOutputMixin, _update_tags
 from ..utils import check_array, check_consistent_length
 from ..externals import six
 
@@ -464,9 +464,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         return self.fit(X, y, **fit_params).transform(X, y)
 
     def _get_tags(self):
-        tags = super(_PLS, self)._get_tags().copy()
-        tags.update(test_accuracy=False)
-        return tags
+        return _update_tags(super(_PLS, self), test_accuracy=True)
 
 
 class PLSRegression(_PLS):
