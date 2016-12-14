@@ -125,6 +125,10 @@ Bug fixes
      the ``perplexity`` method because the user no longer has access to the
      unnormalized document topic distribution needed for the perplexity
      calculation. :issue:`7954` by :user:`Gary Foreman <garyForeman>`.
+   - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
+     :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
+     ``min_impurity_split`` parameter.
+     :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
 
 API changes summary
 -------------------
@@ -134,7 +138,6 @@ API changes summary
      ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
-
 
 .. _changes_0_18_1:
 

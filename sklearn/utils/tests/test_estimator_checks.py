@@ -7,6 +7,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_raises_regex, assert_true
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
+from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
@@ -154,3 +155,19 @@ def test_check_estimators_unfitted():
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
+
+
+def test_check_no_fit_attributes_set_in_init():
+    class NonConformantEstimator(object):
+        def __init__(self):
+            self.you_should_not_set_this_ = None
+
+    msg = ("By convention, attributes ending with '_'.+"
+           'should not be initialized in the constructor.+'
+           "Attribute 'you_should_not_set_this_' was found.+"
+           'in estimator estimator_name')
+
+    assert_raises_regex(AssertionError, msg,
+                        check_no_fit_attributes_set_in_init,
+                        'estimator_name',
+                        NonConformantEstimator)

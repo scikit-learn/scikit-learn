@@ -30,7 +30,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_dict_equal
 
 
@@ -488,11 +487,8 @@ def check_fit2d_predict1d(name, Estimator):
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
         if hasattr(estimator, method):
-            try:
-                assert_warns(DeprecationWarning,
-                             getattr(estimator, method), X[0])
-            except ValueError:
-                pass
+            assert_raise_message(ValueError, "Reshape your data",
+                                 getattr(estimator, method), X[0])
 
 
 @ignore_warnings
@@ -1416,8 +1412,8 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 "By convention, attributes ending with '_' are "
                 'estimated from data in scikit-learn. Consequently they '
                 'should not be initialized in the constructor of an '
-                'estimator but in the fit method. Attribute {0!r} '
-                'was found in estimator {1}'.format(estimator, attr))
+                'estimator but in the fit method. Attribute {!r} '
+                'was found in estimator {}'.format(attr, name))
 
 
 def check_sparsify_coefficients(name, Estimator):
