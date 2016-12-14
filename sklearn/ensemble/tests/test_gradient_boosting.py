@@ -961,6 +961,19 @@ def test_max_leaf_nodes_max_depth():
         assert_equal(tree.max_depth, 1)
 
 
+def test_min_impurity_split():
+    # Test if min_impurity_split of base estimators is set
+    # Regression test for #8006
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [GradientBoostingRegressor,
+                      GradientBoostingClassifier]
+
+    for GBEstimator in all_estimators:
+        est = GBEstimator(min_impurity_split=0.1).fit(X, y)
+        for tree in est.estimators_.flat:
+            assert_equal(tree.min_impurity_split, 0.1)
+
+
 def test_warm_start_wo_nestimators_change():
     # Test if warm_start does nothing if n_estimators is not changed.
     # Regression test for #3513.
