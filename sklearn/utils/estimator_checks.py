@@ -1667,14 +1667,7 @@ def check_get_params_invariance(name, estimator):
         def transform(self, X):
             return X
 
-    if name in ('FeatureUnion', 'Pipeline'):
-        e = estimator([('clf', T())])
-
-    elif name in ('GridSearchCV', 'RandomizedSearchCV', 'SelectFromModel'):
-        return
-
-    else:
-        e = clone(estimator)
+    e = clone(estimator)
 
     shallow_params = e.get_params(deep=False)
     deep_params = e.get_params(deep=True)

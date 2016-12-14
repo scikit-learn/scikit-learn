@@ -370,6 +370,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         T : array-like, shape = [n_samples, n_classes]
         """
         check_is_fitted(self, 'estimators_')
+        if len(self.estimators_) == 1:
+            return self.estimators_[0].decision_function(X)
         return np.array([est.decision_function(X).ravel()
                          for est in self.estimators_]).T
 
