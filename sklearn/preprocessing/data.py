@@ -2027,11 +2027,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, inclusion='all'):
-
         self.inclusion = inclusion
-        self.count_cache_ = None
-        self.col_num_X_ = 0
-        self.col_num_Y_ = 0
 
     @staticmethod
     def _check_params(inclusion=None):
@@ -2048,6 +2044,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """Fits the CountFeaturizer to X, y
 
         Stores the counts for each example X, conditional on y
+        Both X and y must be appropriately reshaped to a 2D list
 
         Parameters
         ----------
@@ -2087,7 +2084,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         elif CountFeaturizer._valid_data_type(self.inclusion):
             inclusion_used = np.array(self.inclusion)
 
-        if self.col_num_Y_:
+        if y is not None:
             for i in range(len_data):
                 X_key = tuple(X[i][j]
                               for j in range(self.col_num_X_)
@@ -2153,8 +2150,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             inclusion_used = np.array([])
         elif CountFeaturizer._valid_data_type(self.inclusion):
             inclusion_used = np.array(self.inclusion)
-
-        if self.col_num_Y_:
+        if y is not None:
             for i in range(len_data):
                 X_key = tuple(X[i][j]
                               for j in range(self.col_num_X_)

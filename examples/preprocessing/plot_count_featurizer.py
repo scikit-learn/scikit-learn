@@ -18,21 +18,17 @@ from collections import OrderedDict
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 
-# with reference to auto_examples/ensemble/plot_ensemble_oob
+RANDOM_STATE = 30
 
-
-RANDOM_STATE = 123
-
-n_datapoints = 1000  # 500
-n_informative = 30  # 15
-n_features = 30  # 25
+n_datapoints = 1000
+n_informative = 30
+n_features = 30
 n_redundant = 0
 
 # Generate a binary classification dataset.
 X, y = make_classification(n_samples=n_datapoints, n_features=n_features,
                            n_clusters_per_class=1, n_informative=n_informative,
                            n_redundant=n_redundant, random_state=RANDOM_STATE)
-
 
 # only make these selected features "categorical"
 discretized_features = [0, 1]
@@ -51,7 +47,7 @@ time_start = time.time()
 
 # X_count is X with an additional feature column 'count'
 cf = CountFeaturizer(inclusion=discretized_features)
-X_count = cf.fit_transform(X)
+X_count = cf.fit_transform(X, y.reshape(-1, 1))
 
 cf_time_preprocessing = time.time() - time_start
 time_start = time.time()
@@ -59,7 +55,7 @@ time_start = time.time()
 ohe = OneHotEncoder()
 X_one_hot_part = ohe.fit_transform(X[:, discretized_features])
 
-# build the original matrix with back
+# build the original matrix back, including the one-hot features
 X_one_hot = ssp.hstack([X_one_hot_part, X_non_discretized]).toarray()
 
 ohe_time_preprocessing = time.time() - time_start
