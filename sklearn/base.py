@@ -356,7 +356,7 @@ class ClassifierMixin(object):
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
     def _get_tags(self):
-        return _update_tags(super(ClassifierMixin, self), is_classifier=True)
+        return _update_tags(self, super(ClassifierMixin, self), is_classifier=True)
 
 
 class RegressorMixin(object):
@@ -396,7 +396,7 @@ class RegressorMixin(object):
                         multioutput='variance_weighted')
 
     def _get_tags(self):
-        return _update_tags(super(RegressorMixin, self), is_regressor=True)
+        return _update_tags(self, super(RegressorMixin, self), is_regressor=True)
 
 
 class ClusterMixin(object):
@@ -422,7 +422,7 @@ class ClusterMixin(object):
         return self.labels_
 
     def _get_tags(self):
-        return _update_tags(super(ClusterMixin, self), is_clusterer=True)
+        return _update_tags(self, super(ClusterMixin, self), is_clusterer=True)
 
 
 class BiclusterMixin(object):
@@ -510,7 +510,7 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
     def _get_tags(self):
-        return _update_tags(super(TransformerMixin, self), is_transformer=True)
+        return _update_tags(self, super(TransformerMixin, self), is_transformer=True)
 
 
 class DensityMixin(object):
@@ -542,14 +542,14 @@ class SparseSupportMixin(object):
     # NOT USED YET
 
     def _get_tags(self):
-        return _update_tags(super(SparseSupportMixin, self),
+        return _update_tags(self, super(SparseSupportMixin, self),
                             sparse_support=True)
 
 
 class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
     def _get_tags(self):
-        return _update_tags(super(MultiOutputMixin, self), multioutput=True)
+        return _update_tags(self, super(MultiOutputMixin, self), multioutput=True)
 
 
 def is_classifier(estimator):
