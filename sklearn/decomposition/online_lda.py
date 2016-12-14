@@ -564,7 +564,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr : shape=(n_samples, n_topics)
             Document topic distribution for X.
         """
-
         if not hasattr(self, 'components_'):
             raise NotFittedError("no 'components_' attribute in model."
                                  " Please fit model first.")
@@ -599,10 +598,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr : shape=(n_samples, n_topics)
             Document topic distribution for X.
         """
-
         doc_topic_distr = self._unnormalized_transform(X)
         doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
-
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
@@ -694,7 +691,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
             Use approximate bound as score.
         """
-
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.score")
 
         doc_topic_distr = self._unnormalized_transform(X)
@@ -751,7 +747,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         return np.exp(-1.0 * perword_bound)
 
-    def perplexity(self, X, doc_topic_distr=None, sub_sampling=False):
+    def perplexity(self, X, doc_topic_distr='deprecated', sub_sampling=False):
         """Calculate approximate perplexity for data X.
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
@@ -774,8 +770,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
             Perplexity score.
         """
-
-        if doc_topic_distr is not None:
+        if doc_topic_distr != 'deprecated':
             warnings.warn("Argument 'doc_topic_distr' is deprecated and will "
                           "be ignored as of 0.19. Support for this argument "
                           "will be removed in 0.21.", DeprecationWarning)
