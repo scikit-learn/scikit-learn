@@ -74,8 +74,13 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Currently may not work as expected; might not use multiple processors.
-        See notes below.
+        Currently may not work as expected. When ``algorithm="brute"``, the 
+        ``n_jobs`` parameter is used to compute a brute force, multiple 
+        processors approach which can cause a slow down. For faster 
+        computation, we recommend using other NearestNeighbors algorithms by
+        choosing another value for the parameter ``algorithm``. However,
+        these NearestNeighbors methods are not parrellelized in 
+        scikit-learn and will not use the ``n_jobs`` parameter.
 
     Returns
     -------
@@ -97,11 +102,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     :func:`NearestNeighbors.radius_neighbors_graph
     <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
     with ``mode='distance'``.
-
-    Note about n_jobs: this does not seem to use multiple processors. Calls
-    NearestNeighbour, passing the n_jobs parameter to it, but NearestNeighbour
-    has not been parrallelized. Setting algorithm="brute" uses multiple
-    cores, but will cause a slow down.
 
     References
     ----------
