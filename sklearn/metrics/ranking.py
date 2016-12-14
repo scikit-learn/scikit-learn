@@ -775,7 +775,7 @@ def dcg_score(y_true, y_score, k=5):
     ----------
     y_true : array, shape = [n_samples]
         Ground truth (true relevance labels).
-    y_score : array, shape = [n_samples, n_classes]
+    y_score : array, shape = [n_samples]
         Predicted scores.
     k : int
         Rank.
@@ -788,6 +788,8 @@ def dcg_score(y_true, y_score, k=5):
     ----------
     .. [1] `Wikipedia entry for the Discounted Cumulative Gain
            <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
+    .. [2] `Gist about Ranking Metrics`
+           <https://gist.github.com/mblondel/7337391>
     """
     order = np.argsort(y_score)[::-1]
     y_true = np.take(y_true, order[:k])
