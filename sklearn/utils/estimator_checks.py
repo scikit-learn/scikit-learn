@@ -1182,7 +1182,7 @@ def check_supervised_y_2d(name, estimator):
     y_pred_2d = estimator.predict(X)
     msg = "expected 1 DataConversionWarning, got: %s" % (
         ", ".join([str(w_x) for w_x in w]))
-    if not estimator._get_tags().get("multioutput", "False"):
+    if not _safe_tags(estimator, "multioutput"):
         # check that we warned if we don't support multi-output
         assert_greater(len(w), 0, msg)
         assert_true("DataConversionWarning('A column-vector y"
