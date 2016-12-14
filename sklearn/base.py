@@ -541,15 +541,6 @@ class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn."""
 
 
-class SparseSupportMixin(object):
-    """Mixin to mark estimators that support sparse matrix input."""
-    # NOT USED YET
-
-    def _get_tags(self):
-        return _update_tags(self, super(SparseSupportMixin, self),
-                            sparse_support=True)
-
-
 class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
     def _get_tags(self):
