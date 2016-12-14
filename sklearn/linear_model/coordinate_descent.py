@@ -1727,7 +1727,8 @@ class MultiTaskElasticNet(Lasso):
         return self
 
     def _get_tags(self):
-        return _update_tags(self, super(MultiTaskElasticNet, self), multioutput_only=True)
+        return _update_tags(self, super(MultiTaskElasticNet, self),
+                            multioutput_only=True)
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -1762,8 +1763,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
