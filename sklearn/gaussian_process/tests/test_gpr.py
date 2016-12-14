@@ -13,7 +13,7 @@ from sklearn.gaussian_process.kernels \
 
 from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
-            assert_almost_equal, assert_equal)
+            assert_almost_equal, assert_equal, assert_array_almost_equal)
 
 
 def f(x):
@@ -320,16 +320,39 @@ def test_n_jobs_parallel():
     # Test to check the functioning of n_jobs parameter.
     for kernel in kernels:
         gpr1 = GaussianProcessRegressor(kernel=kernel, n_jobs=1,
-                                        n_restarts_optimizer=5).fit(X, y)
+                                        n_restarts_optimizer=5,
+                                        random_state=42).fit(X, y)
         gpr2 = GaussianProcessRegressor(kernel=kernel, n_jobs=2,
-                                        n_restarts_optimizer=5).fit(X, y)
+                                        n_restarts_optimizer=5,
+                                        random_state=42).fit(X, y)
         gpr3 = GaussianProcessRegressor(kernel=kernel, n_jobs=-1,
-                                        n_restarts_optimizer=5).fit(X, y)
+                                        n_restarts_optimizer=5,
+                                        random_state=42).fit(X, y)
         y1, y1_cov = gpr1.predict(X, return_cov=True)
         y2, y2_cov = gpr2.predict(X, return_cov=True)
         y3, y3_cov = gpr3.predict(X, return_cov=True)
-        # Successfully passed tests
+
         assert_almost_equal(y1, y2)
         assert_almost_equal(y1, y3)
         assert_almost_equal(y1_cov, y2_cov)
         assert_almost_equal(y1_cov, y3_cov)
+
+        assert_array_almost_equal(gpr1.X_train_, gpr2.X_train_)
+        assert_array_almost_equal(gpr1.X_train_, gpr3.X_train_)
+
+        assert_array_almost_equal(gpr1.y_train_, gpr2.y_train_)
+        assert_array_almost_equal(gpr1.y_train_, gpr3.y_train_)
+
+        assert_array_almost_equal(gpr1.alpha_, gpr2.alpha_)
+        assert_array_almost_equal(gpr1.alpha_, gpr3.alpha_)
+
+        assert_array_almost_equal(gpr1.log_marginal_likelihood_value_,
+                                  gpr2.log_marginal_likelihood_value_)
+        assert_array_almost_equal(gpr1.log_marginal_likelihood_value_,
+                                  gpr3.log_marginal_likelihood_value_)
+
+        assert_array_almost_equal(gpr1.L_, gpr2.L_)
+        assert_array_almost_equal(gpr1.L_, gpr3.L_)
+
+        assert_equal(gpr1.kernel_, gpr2.kernel_)
+        assert_equal(gpr1.kernel_, gpr3.kernel_)
