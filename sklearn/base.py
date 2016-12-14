@@ -547,7 +547,7 @@ class MetaEstimatorMixin(object):
 
 class SparseSupportMixin(object):
     """Mixin to mark estimators that support sparse matrix input."""
-    def _get_tags(self=None):
+    def _get_tags(self):
         tags = super(SparseSupportMixin, self)._get_tags().copy()
         tags.update(sparse_support=True)
         return tags
@@ -555,7 +555,7 @@ class SparseSupportMixin(object):
 
 class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
-    def _get_tags(self=None):
+    def _get_tags(self):
         tags = super(MultiOutputMixin, self)._get_tags().copy()
         tags.update(multioutput=True)
         return tags
