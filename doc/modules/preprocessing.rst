@@ -146,7 +146,7 @@ full formula is::
 
     X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 
-    X_scaled = X_std / (max - min) + min
+    X_scaled = X_std * (max - min) + min
 
 :class:`MaxAbsScaler` works in a very similar fashion, but scales in a way
 that the training data lies within the range ``[-1, 1]`` by dividing through
