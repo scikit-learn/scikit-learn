@@ -137,9 +137,9 @@ See the [VZ2010]_ for details and [VVZ2010]_ for combination with the :class:`RB
 Intersection Kernel
 -------------------
 
-The intersection kernel is a kernel on histograms, often used in computer vision.
-When dealing with RLH or Docstrum descriptors, it may be more efficient than additive
-chi squared kernel.
+The intersection kernel is a kernel on histograms, often used in computer
+vision. When dealing with RLH or Docstrum descriptors, it may be more efficient
+than additive chi squared kernel.
 
 The intersection kernel is given by
 
@@ -147,24 +147,24 @@ The intersection kernel is given by
 
         k(x, y) = \sum_i \mathrm{min} (x_i, y_i)
 
-Similar to the additive chi squared kernel, the intersection kernel is additive and
-homogenous, thus, the class :class:`IntersectionSampler` implements the same sampling
-method as :class:`AdditiveChi2Sampler`. Refer to :ref:`additive_chi_kernel_approx`
-for details of the method.
+Similar to the additive chi squared kernel, the intersection kernel is additive
+and homogenous, thus, the class :class:`IntersectionSampler` implements the
+same sampling method as :class:`AdditiveChi2Sampler`. Refer to
+:ref:`additive_chi_kernel_approx` for details of the method.
 
-The approximate feature map provided by :class:`IntersectionSampler` can be combined
-with the approximate feature map provided by :class:`RBFSampler` to yield an approximate
-feature map for the exponentiated intersection kernel.
+The approximate feature map provided by :class:`IntersectionSampler` can be
+combined with the approximate feature map provided by :class:`RBFSampler` to
+yield an approximate feature map for the exponentiated intersection kernel.
 
 .. _jensen_shannon_kernel_approx:
 
 Jensen-Shannon Kernel
 ---------------------
 
-The Jensen-Shannon kernel is a kernel on histograms, often used in computer vision.
-Its corresponding squared metric is the Jensen-Shannon divergence (or symmetrized
-Kullback-Leibler divergence), so it may be useful in applications benefitting
-from information-theoretic metrics.
+The Jensen-Shannon kernel is a kernel on histograms, often used in computer
+vision. Its corresponding squared metric is the Jensen-Shannon divergence (or
+symmetrized Kullback-Leibler divergence), so it may be useful in applications
+benefitting from information-theoretic metrics.
 
 The Jensen-Shannon kernel as used here is given by
 
@@ -173,14 +173,14 @@ The Jensen-Shannon kernel as used here is given by
         k(x, y) = \sum_i \frac{x_i}{2} \mathrm{log}_2 \frac{x_i+y_i}{x_i}
 					   + \frac{y_i}{2} \mathrm{log}_2 \frac{x_i+y_i}{y_i}
 
-Similar to the additive chi squared kernel, the Jensen-Shannon kernel is additive and
-homogenous, thus, the class :class:`JensenShannonSampler` implements the same sampling
-method as :class:`AdditiveChi2Sampler`. Refer to :ref:`additive_chi_kernel_approx`
-for details of the method.
+Similar to the additive chi squared kernel, the Jensen-Shannon kernel is
+additive and homogenous, thus, the class :class:`JensenShannonSampler`
+implements the same sampling method as :class:`AdditiveChi2Sampler`. Refer to
+:ref:`additive_chi_kernel_approx` for details of the method.
 
-The approximate feature map provided by :class:`JensenShannonSampler` can be combined
-with the approximate feature map provided by :class:`RBFSampler` to yield an approximate
-feature map for the exponentiated Jensen-Shannon kernel.
+The approximate feature map provided by :class:`JensenShannonSampler` can be
+combined with the approximate feature map provided by :class:`RBFSampler` to
+yield an approximate feature map for the exponentiated Jensen-Shannon kernel.
 
 .. _skewed_chi_kernel_approx:
 
