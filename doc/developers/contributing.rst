@@ -263,6 +263,24 @@ and Cython optimizations.
    <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
+.. topic:: Continuous Integration (CI)
+
+   * Travis is used for testing on Linux platforms
+   * Appveyor is used for testing on Windows platforms
+   * CircleCI is used to build the docs for viewing
+
+   Please note that if one of the following markers appear in the latest commit
+   message, the following actions are taken.
+
+     ====================== ===================
+     Commit Message Marker  Action Taken by CI
+     ---------------------- -------------------
+     [ci skip]              CI is skipped completely
+     [doc skip]             Docs are not built
+     [doc quick]            Docs built, but excludes example gallery plots
+     [doc build]            Docs built including example gallery plots
+     ====================== ===================
+
 .. _filing_bugs:
 
 Filing Bugs
@@ -309,10 +327,10 @@ following rules before submitting:
 Issues for New Contributors
 ---------------------------
 
-New contributors should look for the following tags when looking for issues. 
-We strongly recommend that new contributors tackle "easy" issues first: this 
-helps the contributor become familiar with the contribution workflow, and 
-for the core devs to become acquainted with the contributor; besides which, 
+New contributors should look for the following tags when looking for issues.
+We strongly recommend that new contributors tackle "easy" issues first: this
+helps the contributor become familiar with the contribution workflow, and
+for the core devs to become acquainted with the contributor; besides which,
 we frequently underestimate how easy an issue is to solve!
 
 .. topic:: Easy Tags
@@ -327,7 +345,7 @@ we frequently underestimate how easy an issue is to solve!
 
 .. topic:: Need Contributor Tags
 
-    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
+    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally,
     we use the Need Contributor tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the Need Contributor tag can be found
@@ -488,8 +506,8 @@ There are three other tags to help new contributors:
     but is still approachable for someone new to the project.
 
 :Needs Contributor:
-    This tag marks an issue which currently lacks a contributor or a 
-    PR that needs another contributor to take over the work. These 
+    This tag marks an issue which currently lacks a contributor or a
+    PR that needs another contributor to take over the work. These
     issues can range in difficulty, and may not be approachable
     for new contributors. Note that not all issues which need
     contributors will have this tag.
