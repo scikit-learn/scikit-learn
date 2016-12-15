@@ -418,6 +418,20 @@ def test_make_union():
     assert_equal(transformers, (pca, mock))
 
 
+def test_make_union_kwargs():
+    pca = PCA(svd_solver='full')
+    mock = Transf()
+    fu = make_union(pca, mock, n_jobs=3)
+    assert_equal(fu.transformer_list, make_union(pca, mock).transformer_list)
+    assert_equal(3, fu.n_jobs)
+    # invalid keyword parameters should raise an error message
+    assert_raise_message(
+        TypeError,
+        'Unknown keyword arguments: "transformer_weights"',
+        make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
+    )
+
+
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
     # Also test pipeline.transform and pipeline.inverse_transform
