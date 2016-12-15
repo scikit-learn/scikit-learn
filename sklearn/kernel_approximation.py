@@ -227,7 +227,7 @@ class BaseAdditiveHomogenousKernelSampler(six.with_metaclass(ABCMeta,
                                  " base class method call?")
             if self.sample_steps in self.preset_sample_intervals.keys():
                 self.sample_interval_ = \
-                                self.preset_sample_intervals[self.sample_steps]
+                    self.preset_sample_intervals[self.sample_steps]
             else:
                 raise ValueError("If sample_steps is not in %s,"
                                  " you need to provide sample_interval" %
