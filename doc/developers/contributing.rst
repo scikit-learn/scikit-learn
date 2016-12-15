@@ -269,7 +269,9 @@ and Cython optimizations.
    * Appveyor is used for testing on Windows platforms
    * CircleCI is used to build the docs for viewing
 
-   Please note that if one of the following markers appear in the latest commit message, the following actions are taken.
+   Please note that if one of the following markers appear in the latest commit
+   message, the following actions are taken.
+
      ====================== ===================
      Commit Message Marker  Action Taken by CI
      ---------------------- -------------------
