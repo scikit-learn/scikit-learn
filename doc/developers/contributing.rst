@@ -215,23 +215,6 @@ rules before submitting a pull request:
       the example. For more details on writing and building the
       documentation, see the :ref:`contribute_documentation` section.
 
-A Note about CI:
-----------------
-    * Travis is used for testing on Linux platforms
-    * Appveyor is used for testing on Windows platforms
-    * CircleCI is used to build the docs for viewing
-
-    Please note that if one of the following markers appear in the latest commit message, the following actions are taken.
-
-    ====================== ===================
-    Commit Message Marker  Action Taken by CI
-    ---------------------- -------------------
-    [ci skip]              CI is skipped completely
-    [doc skip]             Docs are not built
-    [doc quick]            Docs built, but excludes example gallery plots
-    [doc build]            Docs built including example gallery plots
-    ====================== ===================
-
 You can also check for common programming errors with the following tools:
 
     * Code with a good unittest coverage (at least 90%, better 100%), check
@@ -279,6 +262,22 @@ and Cython optimizations.
    and the `Astropy Workflow for Developers
    <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
+
+.. topic:: Continuous Integration (CI)
+
+   * Travis is used for testing on Linux platforms
+   * Appveyor is used for testing on Windows platforms
+   * CircleCI is used to build the docs for viewing
+
+   Please note that if one of the following markers appear in the latest commit message, the following actions are taken.
+     ====================== ===================
+     Commit Message Marker  Action Taken by CI
+     ---------------------- -------------------
+     [ci skip]              CI is skipped completely
+     [doc skip]             Docs are not built
+     [doc quick]            Docs built, but excludes example gallery plots
+     [doc build]            Docs built including example gallery plots
+     ====================== ===================
 
 .. _filing_bugs:
 
