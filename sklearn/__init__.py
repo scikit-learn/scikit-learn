@@ -83,9 +83,11 @@ def config_context(**kwargs):
     config = get_config().copy()
     set_config(**kwargs)
 
-    yield
-    set_config(**{k: config[k] for k, v in kwargs.items()
-                  if v is not None})
+    try:
+        yield
+    finally:
+        set_config(**{k: config[k] for k, v in kwargs.items()
+                      if v is not None})
 
 
 # Make sure that DeprecationWarning within this package always gets printed

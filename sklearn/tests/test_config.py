@@ -42,6 +42,17 @@ def test_config_context():
     assert_raises(TypeError, config_context(do_something_else=True).__enter__)
 
 
+def test_config_context_exception():
+    assert_equal(get_config(), {'assume_finite': False})
+    try:
+        with config_context(assume_finite=True):
+            assert_equal(get_config(), {'assume_finite': True})
+            raise ValueError()
+    except ValueError:
+        pass
+    assert_equal(get_config(), {'assume_finite': False})
+
+
 def test_set_config():
     assert_equal(get_config(), {'assume_finite': False})
     set_config(assume_finite=None)
