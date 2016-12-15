@@ -780,18 +780,28 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         ]
 
 
-# XXX it would be nice to have a keyword-only n_jobs argument to this function,
-# but that's not allowed in Python 2.x.
-def make_union(*transformers):
+def make_union(*transformers, **kwargs):
     """Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
     names automatically based on their types. It also does not allow weighting.
 
+    Parameters
+    ----------
+    *transformers : list of estimators
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1).
+
+    Returns
+    -------
+    f : FeatureUnion
+
     Examples
     --------
     >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1,
            transformer_list=[('pca',
@@ -803,10 +813,11 @@ def make_union(*transformers):
                               n_components=2, n_iter=5,
                               random_state=None, tol=0.0))],
            transformer_weights=None)
-
-
-    Returns
-    -------
-    f : FeatureUnion
     """
-    return FeatureUnion(_name_estimators(transformers))
+    n_jobs = kwargs.pop('n_jobs', 1)
+    if kwargs:
+        # We do not currently support `transformer_weights` as we may want to
+        # change its type spec in make_union
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
+    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs)
