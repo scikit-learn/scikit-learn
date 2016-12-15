@@ -95,6 +95,11 @@ Enhancements
      the norms returned will be the same as for dense matrices (:issue:`7771`).
      By `Ang Lu <https://github.com/luang008>`_.
 
+   - Used Embarrassingly Parallel helper in the :func:`fit` in
+     :class:`gaussian_process.GaussianProcessRegressor` and tested the same for
+     different ``n_jobs`` parameter values.
+     :issue:`7997` by :user:`Aman Pratik <amanp10>`
+
 Bug fixes
 .........
 

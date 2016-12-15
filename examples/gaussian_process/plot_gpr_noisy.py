@@ -38,9 +38,7 @@ y = 0.5 * np.sin(3 * X[:, 0]) + rng.normal(0, 0.5, X.shape[0])
 plt.figure(0)
 kernel = 1.0 * RBF(length_scale=100.0, length_scale_bounds=(1e-2, 1e3)) \
     + WhiteKernel(noise_level=1, noise_level_bounds=(1e-10, 1e+1))
-gp = GaussianProcessRegressor(kernel=kernel,
-                              alpha=0.0, n_jobs=2,
-                              n_restarts_optimizer=3).fit(X, y)
+gp = GaussianProcessRegressor(kernel=kernel, alpha=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
 y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
 plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
@@ -58,9 +56,7 @@ plt.tight_layout()
 plt.figure(1)
 kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e3)) \
     + WhiteKernel(noise_level=1e-5, noise_level_bounds=(1e-10, 1e+1))
-gp = GaussianProcessRegressor(kernel=kernel,
-                              alpha=0.0, n_jobs=2,
-                              n_restarts_optimizer=3).fit(X, y)
+gp = GaussianProcessRegressor(kernel=kernel, alpha=0.0).fit(X, y)
 X_ = np.linspace(0, 5, 100)
 y_mean, y_cov = gp.predict(X_[:, np.newaxis], return_cov=True)
 plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
