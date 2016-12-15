@@ -717,8 +717,8 @@ def test_multilabel_representation_invariance():
                                            allow_unlabeled=True)
 
     # To make sure at least one empty label is present
-    y1 = np.vstack([y1, [[0]*n_classes]])
-    y2 = np.vstack([y2, [[0]*n_classes]])
+    y1 = np.vstack([y1, [[0] * n_classes]])
+    y2 = np.vstack([y2, [[0] * n_classes]])
 
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
