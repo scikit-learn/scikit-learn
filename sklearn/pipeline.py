@@ -814,4 +814,10 @@ def make_union(*transformers, **kwargs):
                               random_state=None, tol=0.0))],
            transformer_weights=None)
     """
-    return FeatureUnion(_name_estimators(transformers), **kwargs)
+    n_jobs = kwargs.pop('n_jobs', 1)
+    if kwargs:
+        # We do not currently support `transformer_weights` as we may want to
+        # change its type spec in make_union
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
+    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs)
