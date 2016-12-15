@@ -47,9 +47,9 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     yy = a * xx - (clf.intercept_[0]) / w[1]
 
     # plot the parallels to the separating hyperplane that pass through the
-    # support vectors (margin away from hyperplane in direction 
+    # support vectors (margin away from hyperplane in direction
     # perpendicular to hyperplane). This is sqrt(1+a^2) away vertically in
-    # 2-d. 
+    # 2-d.
     margin = 1 / np.sqrt(np.sum(clf.coef_ ** 2))
     yy_down = yy - np.sqrt(1 + a ** 2) * margin
     yy_up = yy + np.sqrt(1 + a ** 2) * margin
