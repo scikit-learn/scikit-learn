@@ -82,7 +82,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         classes : array, shape (n_classes, n_outputs)
             Classes across all calls to partial_fit.
-            Can be obtained by via `[np.unique(y[:, i]) for i in range(y.shape[1])]`, where y is the
+            Can be obtained by via
+            `[np.unique(y[:, i]) for i in range(y.shape[1])]`, where y is the
             target matrix of the entire dataset.
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
@@ -114,10 +115,12 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         first_time = not hasattr(self, 'estimators_')
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_partial_fit_estimator)(
-            self.estimators_[i] if not first_time else self.estimator,
-            X, y[:, i],
-            classes[:, i] if classes is not None else None, sample_weight, first_time) for i in range(y.shape[1]))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_estimator)(
+                self.estimators_[i] if not first_time else self.estimator,
+                X, y[:, i],
+                classes[:, i] if classes is not None else None,
+                sample_weight, first_time) for i in range(y.shape[1]))
         return self
 
     def fit(self, X, y, sample_weight=None):
@@ -161,8 +164,10 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("Underlying regressor does not support"
                              " sample weights.")
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_estimator)(
-            self.estimator, X, y[:, i], sample_weight) for i in range(y.shape[1]))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_estimator)(
+                self.estimator, X, y[:, i], sample_weight)
+            for i in range(y.shape[1]))
         return self
 
     def predict(self, X):
@@ -187,8 +192,9 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         X = check_array(X, accept_sparse=True)
 
-        y = Parallel(n_jobs=self.n_jobs)(delayed(parallel_helper)(e, 'predict', X)
-                                         for e in self.estimators_)
+        y = Parallel(n_jobs=self.n_jobs)(
+            delayed(parallel_helper)(e, 'predict', X)
+            for e in self.estimators_)
 
         return np.asarray(y).T
 
