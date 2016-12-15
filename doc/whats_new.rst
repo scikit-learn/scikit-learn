@@ -85,12 +85,12 @@ Enhancements
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
-     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with norm 'max'
-     the norms returned will be the same as for dense matrices (:issue:`7771`).
-     By `Ang Lu <https://github.com/luang008>`_.
+     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
+     norm 'max' the norms returned will be the same as for dense matrices.
+     :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
 
-   - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`. A TypeError
-     will be raised for any other kwargs, including ``transformer_weights``. :issue:`8028`
+   - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
+     A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
 
 Bug fixes
