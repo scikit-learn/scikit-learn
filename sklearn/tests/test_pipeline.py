@@ -427,7 +427,7 @@ def test_make_union_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        "__init__() got an unexpected keyword argument 'invalidFakeKwarg'",
+        'Unknown keyword arguments: "invalidFakeKwarg"',
         make_union, pca, mock, invalidFakeKwarg=42
     )
 
