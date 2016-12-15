@@ -963,10 +963,14 @@ def test_cross_val_predict_corner_case():
         # Naive loop (should be same as cross_val_predict):
         for train, test in kfold.split(X, y):
             est.fit(X[train], y[train])
-            train_classes = np.unique(y[train])
             expected_predictions_ = func(X[test])
-            for i, j in enumerate(train_classes):
-                expected_predictions[test, j] = expected_predictions_[:, i]
+            # To avoid 2 dimensional indexing
+            exp_pred_test = np.zeros((len(test), classes))
+            if method is 'decision_function' and len(est.classes_) == 2:
+                exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+            else:
+                exp_pred_test[:, est.classes_] = expected_predictions_
+            expected_predictions[test] = exp_pred_test
 
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold)

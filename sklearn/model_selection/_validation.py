@@ -28,6 +28,7 @@ from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
+from ..preprocessing import LabelEncoder
 
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
@@ -394,6 +395,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
         raise AttributeError('{} not implemented in estimator'
                              .format(method))
 
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -476,12 +481,13 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
-    if method in ['predict_proba', 'predict_log_proba']:
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         true_classes = np.unique(y)
-        train_classes = np.unique(y_train)
         predictions_ = np.zeros((X_test.shape[0], true_classes.shape[0]))
-        for i, j in enumerate(train_classes):
-            predictions_[:, j] = predictions[:, i]
+        if method is 'decision_function' and len(estimator.classes_) == 2:
+            predictions_[:, estimator.classes_[-1]] = predictions
+        else:
+            predictions_[:, estimator.classes_] = predictions
         predictions = predictions_
     return predictions, test
 
