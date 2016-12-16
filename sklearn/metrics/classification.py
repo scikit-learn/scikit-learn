@@ -1354,7 +1354,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     The balanced accuracy is used in binary classification problems to deal
     with imbalanced datasets. It is defined as the arithmetic mean of sensitivity
     (true positive rate) and specificity (true negative rate), or the average
-    recall obtained on either class. It is also equal to the AUC score
+    recall obtained on either class. It is also equal to the ROC AUC score
     given binary inputs.
 
     The best value is 1 and the worst value is 0.

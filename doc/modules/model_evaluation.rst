@@ -373,7 +373,7 @@ If the classifier performs equally well on either class, this term reduces to th
 conventional accuracy (i.e., the number of correct predictions divided by the total
 number of predictions). In contrast, if the conventional accuracy is above chance only
 because the classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to chance.
+accuracy, as appropriate, will drop to 50%.
 
 If :math:`\hat{y}_i\in\{0,1\}` is the predicted value of
 the :math:`i`-th sample and :math:`y_i\in\{0,1\}` is the corresponding true value,
@@ -385,7 +385,7 @@ then the balanced accuracy is defined as
 
 where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
 
-Under this definition, the balanced accuracy coincides with `AUC score <https://en.wikipedia.org/wiki/AUC>`_
+Under this definition, the balanced accuracy coincides with :func:`roc_auc_score`
 given binary ``y_true`` and ``y_pred``:
 
   >>> import numpy as np
