@@ -80,6 +80,10 @@ def test_isotonic_regression():
     y_ = np.array([3, 6, 6, 8, 8, 8, 10])
     assert_array_equal(y_, isotonic_regression(y))
 
+    y = np.array([10, 0, 2])
+    y_ = np.array([4, 4, 4])
+    assert_array_equal(y_, isotonic_regression(y))
+
     x = np.arange(len(y))
     ir = IsotonicRegression(y_min=0., y_max=1.)
     ir.fit(x, y)
@@ -336,6 +340,29 @@ def test_isotonic_duplicate_min_entry():
     ir.fit(x, y)
     all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
     assert_true(all_predictions_finite)
+
+
+def test_isotonic_ymin_ymax():
+    # Test from @NelleV's issue:
+    # https://github.com/scikit-learn/scikit-learn/issues/6921
+    x = np.array([1.263, 1.318, -0.572, 0.307, -0.707, -0.176, -1.599, 1.059,
+                  1.396, 1.906, 0.210, 0.028, -0.081, 0.444, 0.018, -0.377,
+                  -0.896, -0.377, -1.327, 0.180])
+    y = isotonic_regression(x, y_min=0., y_max=0.1)
+
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 0.1))
+
+    # Also test decreasing case since the logic there is different
+    y = isotonic_regression(x, y_min=0., y_max=0.1, increasing=False)
+
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 0.1))
+
+    # Finally, test with only one bound
+    y = isotonic_regression(x, y_min=0., increasing=False)
+
+    assert(np.all(y >= 0))
 
 
 def test_isotonic_zero_weight_loop():

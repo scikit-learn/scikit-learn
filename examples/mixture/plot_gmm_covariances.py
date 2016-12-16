@@ -47,14 +47,14 @@ colors = ['navy', 'turquoise', 'darkorange']
 def make_ellipses(gmm, ax):
     for n, color in enumerate(colors):
         if gmm.covariance_type == 'full':
-            covars = gmm.covariances_[n][:2, :2]
+            covariances = gmm.covariances_[n][:2, :2]
         elif gmm.covariance_type == 'tied':
-            covars = gmm.covariances_[:2, :2]
+            covariances = gmm.covariances_[:2, :2]
         elif gmm.covariance_type == 'diag':
-            covars = np.diag(gmm.covariances_[n][:2])
+            covariances = np.diag(gmm.covariances_[n][:2])
         elif gmm.covariance_type == 'spherical':
-            covars = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
-        v, w = np.linalg.eigh(covars)
+            covariances = np.eye(gmm.means_.shape[1]) * gmm.covariances_[n]
+        v, w = np.linalg.eigh(covariances)
         u = w[0] / np.linalg.norm(w[0])
         angle = np.arctan2(u[1], u[0])
         angle = 180 * angle / np.pi  # convert to degrees
@@ -69,7 +69,7 @@ iris = datasets.load_iris()
 
 # Break up the dataset into non-overlapping training (75%) and testing
 # (25%) sets.
-skf = StratifiedKFold(n_folds=4)
+skf = StratifiedKFold(n_splits=4)
 # Only take the first fold.
 train_index, test_index = next(iter(skf.split(iris.data, iris.target)))
 
@@ -82,9 +82,9 @@ y_test = iris.target[test_index]
 n_classes = len(np.unique(y_train))
 
 # Try GMMs using different types of covariances.
-estimators = dict((covar_type, GaussianMixture(n_components=n_classes,
-                   covariance_type=covar_type, max_iter=20))
-                  for covar_type in ['spherical', 'diag', 'tied', 'full'])
+estimators = dict((cov_type, GaussianMixture(n_components=n_classes,
+                   covariance_type=cov_type, max_iter=20, random_state=0))
+                  for cov_type in ['spherical', 'diag', 'tied', 'full'])
 
 n_estimators = len(estimators)
 

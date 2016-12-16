@@ -13,9 +13,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from .base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
-from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (check_array, check_random_state, check_X_y,
-                     deprecated)
+from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
@@ -497,7 +495,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if self.class_weight in ['balanced', 'auto']:
+        if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
                              " use compute_class_weight('{0}', classes, y). "
@@ -545,7 +543,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                          sample_weight=sample_weight)
 
 
-class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
+class SGDClassifier(BaseSGDClassifier):
     """Linear classifiers (SVM, logistic regression, a.o.) with SGD training.
 
     This estimator implements regularized linear models with stochastic
@@ -635,9 +633,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     learning_rate : string, optional
         The learning rate schedule:
-        constant: eta = eta0
-        optimal: eta = 1.0 / (alpha * (t + t0)) [default]
-        invscaling: eta = eta0 / pow(t, power_t)
+
+        - 'constant': eta = eta0
+        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
+        - 'invscaling': eta = eta0 / pow(t, power_t)
+
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double
@@ -666,7 +666,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So average=10 will begin averaging after seeing 10 samples.
+        average. So ``average=10`` will begin averaging after seeing 10
+        samples.
 
     Attributes
     ----------
@@ -731,7 +732,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         Elkan.
 
         Binary probability estimates for loss="modified_huber" are given by
-        (clip(decision_function(X), -1, 1) + 1) / 2.
+        (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
+        it is necessary to perform proper probability calibration by wrapping
+        the classifier with
+        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------
@@ -966,21 +970,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
-    @deprecated(" and will be removed in 0.19.")
-    def decision_function(self, X):
-        """Predict using the linear model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-
-        Returns
-        -------
-        array, shape (n_samples,)
-           Predicted target values per element in X.
-        """
-        return self._decision_function(X)
-
     def _decision_function(self, X):
         """Predict using the linear model
 
@@ -1087,7 +1076,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.intercept_ = np.atleast_1d(self.intercept_)
 
 
-class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
+class SGDRegressor(BaseSGDRegressor):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -1162,10 +1151,13 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         and the correct label are ignored if they are less than this threshold.
 
     learning_rate : string, optional
-        The learning rate:
-        constant: eta = eta0
-        optimal: eta = 1.0/(alpha * t)
-        invscaling: eta = eta0 / pow(t, power_t) [default]
+        The learning rate schedule:
+
+        - 'constant': eta = eta0
+        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
+        - 'invscaling': eta = eta0 / pow(t, power_t)
+
+        where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double, optional
         The initial learning rate [default 0.01].
@@ -1181,7 +1173,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So ``average=10 will`` begin averaging after seeing 10
+        average. So ``average=10`` will begin averaging after seeing 10
         samples.
 
     Attributes

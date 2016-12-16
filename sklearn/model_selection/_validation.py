@@ -23,45 +23,17 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
+from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
-
-from ._split import KFold
-from ._split import LabelKFold
-from ._split import LeaveOneLabelOut
-from ._split import LeaveOneOut
-from ._split import LeavePLabelOut
-from ._split import LeavePOut
-from ._split import ShuffleSplit
-from ._split import LabelShuffleSplit
-from ._split import StratifiedKFold
-from ._split import StratifiedShuffleSplit
-from ._split import PredefinedSplit
-from ._split import check_cv, _safe_split
+from ._split import check_cv
 
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
 
-ALL_CVS = {'KFold': KFold,
-           'LabelKFold': LabelKFold,
-           'LeaveOneLabelOut': LeaveOneLabelOut,
-           'LeaveOneOut': LeaveOneOut,
-           'LeavePLabelOut': LeavePLabelOut,
-           'LeavePOut': LeavePOut,
-           'ShuffleSplit': ShuffleSplit,
-           'LabelShuffleSplit': LabelShuffleSplit,
-           'StratifiedKFold': StratifiedKFold,
-           'StratifiedShuffleSplit': StratifiedShuffleSplit,
-           'PredefinedSplit': PredefinedSplit}
 
-LABEL_CVS = {'LabelKFold': LabelKFold,
-             'LeaveOneLabelOut': LeaveOneLabelOut,
-             'LeavePLabelOut': LeavePLabelOut,
-             'LabelShuffleSplit': LabelShuffleSplit}
-
-
-def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
+def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=1, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
@@ -80,7 +52,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -98,7 +70,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -139,7 +111,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     Examples
     --------
     >>> from sklearn import datasets, linear_model
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
@@ -153,7 +125,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
         Make a scorer from a performance metric or loss function.
 
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -164,13 +136,14 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
                                               train, test, verbose, None,
                                               fit_params)
-                      for train, test in cv.split(X, y, labels))
+                      for train, test in cv.split(X, y, groups))
     return np.array(scores)[:, 0]
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
-                   return_parameters=False, error_score='raise'):
+                   return_parameters=False, return_n_test_samples=False,
+                   return_times=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -227,15 +200,18 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     n_test_samples : int
         Number of test samples.
 
-    scoring_time : float
-        Time spent for fitting and scoring in seconds.
+    fit_time : float
+        Time spent for fitting in seconds.
+
+    score_time : float
+        Time spent for scoring in seconds.
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
     """
     if verbose > 1:
         if parameters is None:
-            msg = "no parameters to be set"
+            msg = ''
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
                           for k, v in parameters.items()))
@@ -261,6 +237,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             estimator.fit(X_train, y_train, **fit_params)
 
     except Exception as e:
+        # Note fit time as time until error
+        fit_time = time.time() - start_time
+        score_time = 0.0
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
@@ -276,20 +255,25 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                              " make sure that it has been spelled correctly.)")
 
     else:
+        fit_time = time.time() - start_time
         test_score = _score(estimator, X_test, y_test, scorer)
+        score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_score = _score(estimator, X_train, y_train, scorer)
-
-    scoring_time = time.time() - start_time
 
     if verbose > 2:
         msg += ", score=%f" % test_score
     if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        total_time = score_time + fit_time
+        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    ret = [train_score] if return_train_score else []
-    ret.extend([test_score, _num_samples(X_test), scoring_time])
+    ret = [train_score, test_score] if return_train_score else [test_score]
+
+    if return_n_test_samples:
+        ret.append(_num_samples(X_test))
+    if return_times:
+        ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
     return ret
@@ -301,13 +285,20 @@ def _score(estimator, X_test, y_test, scorer):
         score = scorer(estimator, X_test)
     else:
         score = scorer(estimator, X_test, y_test)
+    if hasattr(score, 'item'):
+        try:
+            # e.g. unwrap memmapped scalars
+            score = score.item()
+        except ValueError:
+            # non-scalar?
+            pass
     if not isinstance(score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s) instead."
                          % (str(score), type(score)))
     return score
 
 
-def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
+def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
                       method='predict'):
     """Generate cross-validated estimates for each input data point
@@ -326,7 +317,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -339,7 +330,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -383,14 +374,14 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     Examples
     --------
     >>> from sklearn import datasets, linear_model
-    >>> from sklearn.cross_validation import cross_val_predict
+    >>> from sklearn.model_selection import cross_val_predict
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y)
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
@@ -405,7 +396,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
                         pre_dispatch=pre_dispatch)
     prediction_blocks = parallel(delayed(_fit_and_predict)(
         clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, labels))
+        for train, test in cv.split(X, y, groups))
 
     # Concatenate the predictions
     predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
@@ -497,11 +488,11 @@ def _check_is_permutation(indices, n_samples):
     Returns
     -------
     is_partition : bool
-        True iff sorted(locs) is range(n)
+        True iff sorted(indices) is np.arange(n)
     """
     if len(indices) != n_samples:
         return False
-    hit = np.zeros(n_samples, bool)
+    hit = np.zeros(n_samples, dtype=bool)
     hit[indices] = True
     if not np.all(hit):
         return False
@@ -518,7 +509,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def permutation_test_score(estimator, X, y, labels=None, cv=None,
+def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=1, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -537,9 +528,15 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
-        Group labels for the samples used while splitting the dataset into
-        train/test set.
+    groups : array-like, with shape (n_samples,), optional
+        Labels to constrain permutation within groups, i.e. ``y`` values
+        are permuted among samples with the same group identifier.
+        When not specified, ``y`` values are permuted among all samples.
+
+        When a grouped cross-validator is used, the group labels are
+        also passed on to the ``split`` method of the cross-validator. The
+        cross-validator uses them for grouping the samples  while splitting
+        the dataset into train/test set.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -555,7 +552,7 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -599,7 +596,7 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
         vol. 11
 
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -607,11 +604,11 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    score = _permutation_test_score(clone(estimator), X, y, labels, cv, scorer)
+    score = _permutation_test_score(clone(estimator), X, y, groups, cv, scorer)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_permutation_test_score)(
-            clone(estimator), X, _shuffle(y, labels, random_state),
-            labels, cv, scorer)
+            clone(estimator), X, _shuffle(y, groups, random_state),
+            groups, cv, scorer)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
@@ -621,31 +618,32 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
 permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 
 
-def _permutation_test_score(estimator, X, y, labels, cv, scorer):
+def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
-    for train, test in cv.split(X, y, labels):
+    for train, test in cv.split(X, y, groups):
         estimator.fit(X[train], y[train])
         avg_score.append(scorer(estimator, X[test], y[test]))
     return np.mean(avg_score)
 
 
-def _shuffle(y, labels, random_state):
-    """Return a shuffled copy of y eventually shuffle among same labels."""
-    if labels is None:
+def _shuffle(y, groups, random_state):
+    """Return a shuffled copy of y eventually shuffle among same groups."""
+    if groups is None:
         indices = random_state.permutation(len(y))
     else:
-        indices = np.arange(len(labels))
-        for label in np.unique(labels):
-            this_mask = (labels == label)
+        indices = np.arange(len(groups))
+        for group in np.unique(groups):
+            this_mask = (groups == group)
             indices[this_mask] = random_state.permutation(indices[this_mask])
     return y[indices]
 
 
-def learning_curve(estimator, X, y, labels=None,
+def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
                    exploit_incremental_learning=False, n_jobs=1,
-                   pre_dispatch="all", verbose=0):
+                   pre_dispatch="all", verbose=0, shuffle=False,
+                   random_state=None):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -672,7 +670,7 @@ def learning_curve(estimator, X, y, labels=None,
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -695,7 +693,7 @@ def learning_curve(estimator, X, y, labels=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -721,7 +719,14 @@ def learning_curve(estimator, X, y, labels=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
-    Returns
+    shuffle : boolean, optional
+        Whether to shuffle training data before taking prefixes of it
+        based on``train_sizes``.
+
+    random_state : None, int or RandomState
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
+
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
@@ -737,17 +742,17 @@ def learning_curve(estimator, X, y, labels=None,
     Notes
     -----
     See :ref:`examples/model_selection/plot_learning_curve.py
-    <example_model_selection_plot_learning_curve.py>`
+    <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    cv_iter = cv.split(X, y, labels)
-    # Make a list since we will be iterating multiple times over the folds
-    cv_iter = list(cv_iter)
+    # Store it as list as we will be iterating over the list multiple times
+    cv_iter = list(cv.split(X, y, groups))
+
     scorer = check_scoring(estimator, scoring=scoring)
 
     n_max_training_samples = len(cv_iter[0][0])
@@ -762,18 +767,27 @@ def learning_curve(estimator, X, y, labels=None,
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
+
+    if shuffle:
+        rng = check_random_state(random_state)
+        cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
+
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv.split(X, y, labels))
+            scorer, verbose) for train, test in cv_iter)
     else:
+        train_test_proportions = []
+        for train, test in cv_iter:
+            for n_train_samples in train_sizes_abs:
+                train_test_proportions.append((train[:n_train_samples], test))
+
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            clone(estimator), X, y, scorer, train, test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
-            for train, test in cv_iter
-            for n_train_samples in train_sizes_abs)
-        out = np.array(out)[:, :2]
+            for train, test in train_test_proportions)
+        out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
@@ -834,7 +848,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     train_sizes_abs = np.unique(train_sizes_abs)
     if n_ticks > train_sizes_abs.shape[0]:
         warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
-                      "of ticks will be less than than the size of "
+                      "of ticks will be less than the size of "
                       "'train_sizes' %d instead of %d)."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
@@ -862,7 +876,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array((train_scores, test_scores)).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, labels=None,
+def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=1, pre_dispatch="all",
                      verbose=0):
     """Validation curve.
@@ -895,7 +909,7 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
     param_range : array-like, shape (n_values,)
         The values of the parameter that will be evaluated.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -908,7 +922,7 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -940,14 +954,12 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
 
     Notes
     -----
-    See
-    :ref:`examples/model_selection/plot_validation_curve.py
-    <example_model_selection_plot_validation_curve.py>`
+    See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-
     scorer = check_scoring(estimator, scoring=scoring)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
@@ -955,9 +967,10 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
-        for train, test in cv.split(X, y, labels) for v in param_range)
+        # NOTE do not change order of iteration to allow one time cv splitters
+        for train, test in cv.split(X, y, groups) for v in param_range)
 
-    out = np.asarray(out)[:, :2]
+    out = np.asarray(out)
     n_params = len(param_range)
     n_cv_folds = out.shape[0] // n_params
     out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))

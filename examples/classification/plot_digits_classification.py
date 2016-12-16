@@ -27,7 +27,7 @@ digits = datasets.load_digits()
 # The data that we are interested in is made of 8x8 images of digits, let's
 # have a look at the first 4 images, stored in the `images` attribute of the
 # dataset.  If we were working from image files, we could load them using
-# pylab.imread.  Note that each image must have the same size. For these
+# matplotlib.pyplot.imread.  Note that each image must have the same size. For these
 # images, we know which digit they represent: it is given in the 'target' of
 # the dataset.
 images_and_labels = list(zip(digits.images, digits.target))

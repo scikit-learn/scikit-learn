@@ -2,7 +2,7 @@
 
 # Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 import warnings
@@ -45,7 +45,7 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
     ----------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
     """
     if loss in ('log', 'multinomial'):
         # inverse Lipschitz constant for log loss
@@ -108,15 +108,15 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     alpha : float, optional
         Constant that multiplies the regularization term. Defaults to 1.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The max number of passes over the training data if the stopping
-        criterea is not reached. Defaults to 1000.
+        criteria is not reached. Defaults to 1000.
 
-    tol: double, optional
-        The stopping criterea for the weights. The iterations will stop when
+    tol : double, optional
+        The stopping criteria for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol. Defaults to .001
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level.
 
     random_state : int seed, RandomState instance, or None (default)
@@ -131,7 +131,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         going through all the samples. The value should be precomputed
         to speed up cross validation.
 
-    warm_start_mem: dict, optional
+    warm_start_mem : dict, optional
         The initialization parameters used for warm starting. Warm starting is
         currently used in LogisticRegression but not in Ridge.
         It contains:
@@ -186,7 +186,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     ----------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
 
     See also
     --------

@@ -168,7 +168,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     Returns
     -------
-    shrinkage: float
+    shrinkage : float
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
@@ -486,13 +486,17 @@ class OAS(EmpiricalCovariance):
     The formula used here does not correspond to the one given in the
     article. It has been taken from the Matlab program available from the
     authors' webpage (http://tbayes.eecs.umich.edu/yilun/covestimation).
+    In the original article, formula (23) states that 2/p is multiplied by 
+    Trace(cov*cov) in both the numerator and denominator, this operation is omitted
+    in the author's MATLAB program because for a large p, the value of 2/p is so 
+    small that it doesn't affect the value of the estimator. 
 
     Parameters
     ----------
     store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered: bool, default=False
+    assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -541,7 +545,7 @@ class OAS(EmpiricalCovariance):
 
         Returns
         -------
-        self: object
+        self : object
             Returns self.
 
         """

@@ -16,34 +16,16 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
-from .deprecation import deprecated
-from ..exceptions import DataConversionWarning as _DataConversionWarning
-from ..exceptions import NonBLASDotWarning as _NonBLASDotWarning
-from ..exceptions import NotFittedError as _NotFittedError
+from ..exceptions import NonBLASDotWarning
+from ..exceptions import NotFittedError
+from ..exceptions import DataConversionWarning
 
-
-@deprecated("DataConversionWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class DataConversionWarning(_DataConversionWarning):
-    pass
-
-
-@deprecated("NonBLASDotWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class NonBLASDotWarning(_NonBLASDotWarning):
-    pass
-
-
-@deprecated("NotFittedError has been moved into the sklearn.exceptions module."
-            " It will not be available here from version 0.19")
-class NotFittedError(_NotFittedError):
-    pass
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
-warnings.simplefilter('ignore', _NonBLASDotWarning)
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -174,10 +156,11 @@ def check_consistent_length(*arrays):
         Objects that will be checked for consistent length.
     """
 
-    uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
+    lengths = [_num_samples(X) for X in arrays if X is not None]
+    uniques = np.unique(lengths)
     if len(uniques) > 1:
-        raise ValueError("Found arrays with inconsistent numbers of samples: "
-                         "%s" % str(uniques))
+        raise ValueError("Found input variables with inconsistent numbers of"
+                         " samples: %r" % [int(l) for l in lengths])
 
 
 def indexable(*iterables):
@@ -274,7 +257,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                 warn_on_dtype=False, estimator=None):
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2nd numpy array.
+    By default, the input is converted to an at least 2D numpy array.
     If the dtype of the array is object, attempt converting to float,
     raising on failure.
 
@@ -310,7 +293,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         Whether to raise an error on np.inf and np.nan in X.
 
     ensure_2d : boolean (default=True)
-        Whether to make X at least 2d.
+        Whether to raise a value error if X is not 2d.
 
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
@@ -382,16 +365,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
         if ensure_2d:
             if array.ndim == 1:
-                if ensure_min_samples >= 2:
-                    raise ValueError("%s expects at least 2 samples provided "
-                                     "in a 2 dimensional array-like input"
-                                     % estimator_name)
-                warnings.warn(
-                    "Passing 1d arrays as data is deprecated in 0.17 and will "
-                    "raise ValueError in 0.19. Reshape your data either using "
+                raise ValueError(
+                    "Got X with X.ndim=1. Reshape your data either using "
                     "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.",
-                    DeprecationWarning)
+                    "X.reshape(1, -1) if it contains a single sample.")
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
@@ -425,7 +402,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, _DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning)
     return array
 
 
@@ -555,7 +532,7 @@ def column_or_1d(y, warn=False):
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
                           "(n_samples, ), for example using ravel().",
-                          _DataConversionWarning, stacklevel=2)
+                          DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
     raise ValueError("bad input shape {0}".format(shape))
@@ -685,8 +662,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        # FIXME NotFittedError_ --> NotFittedError in 0.19
-        raise _NotFittedError(msg % {'name': type(estimator).__name__})
+        raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
 def check_non_negative(X, whom):

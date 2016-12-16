@@ -3,8 +3,6 @@
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
-import subprocess
-
 descr = """A set of python modules for machine learning and data mining"""
 
 import sys
@@ -12,6 +10,7 @@ import os
 import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
+import traceback
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -42,6 +41,10 @@ import sklearn
 
 VERSION = sklearn.__version__
 
+SCIPY_MIN_VERSION = '0.9'
+NUMPY_MIN_VERSION = '1.6.1'
+
+
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
@@ -58,6 +61,12 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
+        extras_require={
+            'alldeps': (
+                'numpy >= {0}'.format(NUMPY_MIN_VERSION),
+                'scipy >= {0}'.format(SCIPY_MIN_VERSION),
+            ),
+        },
     )
 else:
     extra_setuptools_args = dict()
@@ -74,9 +83,6 @@ class CleanCommand(Clean):
         cwd = os.path.abspath(os.path.dirname(__file__))
         remove_c_files = not os.path.exists(os.path.join(cwd, 'PKG-INFO'))
         if remove_c_files:
-            cython_hash_file = os.path.join(cwd, 'cythonize.dat')
-            if os.path.exists(cython_hash_file):
-                os.unlink(cython_hash_file)
             print('Will remove generated .c files')
         if os.path.exists('build'):
             shutil.rmtree('build')
@@ -131,10 +137,6 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-scipy_min_version = '0.9'
-numpy_min_version = '1.6.1'
-
-
 def get_scipy_status():
     """
     Returns a dictionary containing a boolean specifying whether SciPy
@@ -146,9 +148,10 @@ def get_scipy_status():
         import scipy
         scipy_version = scipy.__version__
         scipy_status['up_to_date'] = parse_version(
-            scipy_version) >= parse_version(scipy_min_version)
+            scipy_version) >= parse_version(SCIPY_MIN_VERSION)
         scipy_status['version'] = scipy_version
     except ImportError:
+        traceback.print_exc()
         scipy_status['up_to_date'] = False
         scipy_status['version'] = ""
     return scipy_status
@@ -165,24 +168,13 @@ def get_numpy_status():
         import numpy
         numpy_version = numpy.__version__
         numpy_status['up_to_date'] = parse_version(
-            numpy_version) >= parse_version(numpy_min_version)
+            numpy_version) >= parse_version(NUMPY_MIN_VERSION)
         numpy_status['version'] = numpy_version
     except ImportError:
+        traceback.print_exc()
         numpy_status['up_to_date'] = False
         numpy_status['version'] = ""
     return numpy_status
-
-
-def generate_cython():
-    cwd = os.path.abspath(os.path.dirname(__file__))
-    print("Cythonizing sources")
-    p = subprocess.call([sys.executable, os.path.join(cwd,
-                                                      'build_tools',
-                                                      'cythonize.py'),
-                         'sklearn'],
-                        cwd=cwd)
-    if p != 0:
-        raise RuntimeError("Running cythonize failed!")
 
 
 def setup_package():
@@ -207,11 +199,10 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 2',
-                                 'Programming Language :: Python :: 2.6',
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.3',
                                  'Programming Language :: Python :: 3.4',
+                                 'Programming Language :: Python :: 3.5',
                                  ],
                     cmdclass=cmdclass,
                     **extra_setuptools_args)
@@ -222,7 +213,7 @@ def setup_package():
                                                     'egg_info',
                                                     '--version',
                                                     'clean'))):
-        # For these actions, NumPy is not required, nor Cythonization
+        # For these actions, NumPy is not required
         #
         # They are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
@@ -236,10 +227,10 @@ def setup_package():
     else:
         numpy_status = get_numpy_status()
         numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
-            numpy_min_version)
+            NUMPY_MIN_VERSION)
         scipy_status = get_scipy_status()
         scipy_req_str = "scikit-learn requires SciPy >= {0}.\n".format(
-            scipy_min_version)
+            SCIPY_MIN_VERSION)
 
         instructions = ("Installation instructions are available on the "
                         "scikit-learn website: "
@@ -269,26 +260,6 @@ def setup_package():
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration
-
-        if len(sys.argv) >= 2 and sys.argv[1] not in 'config':
-            # Cythonize if needed
-
-            print('Generating cython files')
-            cwd = os.path.abspath(os.path.dirname(__file__))
-            if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
-                # Generate Cython sources, unless building from source release
-                generate_cython()
-
-            # Clean left-over .so file
-            for dirpath, dirnames, filenames in os.walk(
-                    os.path.join(cwd, 'sklearn')):
-                for filename in filenames:
-                    extension = os.path.splitext(filename)[1]
-                    if extension in (".so", ".pyd", ".dll"):
-                        pyx_file = str.replace(filename, extension, '.pyx')
-                        print(pyx_file)
-                        if not os.path.exists(os.path.join(dirpath, pyx_file)):
-                            os.unlink(os.path.join(dirpath, filename))
 
     setup(**metadata)
 

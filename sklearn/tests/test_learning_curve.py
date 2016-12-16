@@ -84,6 +84,15 @@ class MockEstimatorWithParameter(BaseEstimator):
         return X is self.X_subset
 
 
+class MockEstimatorFailing(BaseEstimator):
+    """Dummy classifier to test error_score in learning curve"""
+    def fit(self, X_subset, y_subset):
+        raise ValueError()
+
+    def score(self, X=None, y=None):
+        return None
+
+
 def test_learning_curve():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
@@ -134,6 +143,24 @@ def test_learning_curve_verbose():
         sys.stdout = old_stdout
 
     assert("[learning_curve]" in out)
+
+
+def test_learning_curve_error_score():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockEstimatorFailing()
+    _, _, test_scores = learning_curve(estimator, X, y, cv=3, error_score=0)
+    all_zeros = not np.any(test_scores)
+    assert(all_zeros)
+
+
+def test_learning_curve_error_score_default_raise():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockEstimatorFailing()
+    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3)
 
 
 def test_learning_curve_incremental_learning_not_possible():

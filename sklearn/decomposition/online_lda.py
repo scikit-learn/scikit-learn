@@ -5,7 +5,7 @@ Online Latent Dirichlet Allocation with variational inference
 =============================================================
 
 This implementation is modified from Matthew D. Hoffman's onlineldavb code
-Link: http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
+Link: http://matthewdhoffman.com/code/onlineldavb.tar
 """
 
 # Author: Chyi-Kwei Yau
@@ -14,6 +14,7 @@ Link: http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
@@ -159,6 +160,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
+        The default learning method is going to be changed to 'batch' in the 0.20 release.
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -224,7 +226,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     ----------
     components_ : array, [n_topics, n_features]
         Topic word distribution. ``components_[i, j]`` represents word j in
-        topic `i`. In the literature, this is called lambda.
+        topic `i`.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
@@ -241,12 +243,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Chong Wang, John Paisley, 2013
 
     [3] Matthew D. Hoffman's onlineldavb code. Link:
-        http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
+        http://matthewdhoffman.com//code/onlineldavb.tar
 
     """
 
     def __init__(self, n_topics=10, doc_topic_prior=None,
-                 topic_word_prior=None, learning_method='online',
+                 topic_word_prior=None, learning_method=None,
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
@@ -283,7 +285,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid 'learning_offset' parameter: %r"
                              % self.learning_offset)
 
-        if self.learning_method not in ("batch", "online"):
+        if self.learning_method not in ("batch", "online", None):
             raise ValueError("Invalid 'learning_method' parameter: %r"
                              % self.learning_method)
 
@@ -337,7 +339,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Returns
         -------
         (doc_topic_distr, suff_stats) :
-            `doc_topic_distr` is unnormailzed topic distribution for each
+            `doc_topic_distr` is unnormalized topic distribution for each
             document. In the literature, this is called `gamma`.
             `suff_stats` is expected sufficient statistics for the M-step.
             When `cal_sstats == False`, it will be None.
@@ -350,7 +352,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # TODO: make Parallel._effective_n_jobs public instead?
         n_jobs = _get_n_jobs(self.n_jobs)
         if parallel is None:
-            parallel = Parallel(n_jobs=n_jobs, verbose=self.verbose)
+            parallel = Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1))
         results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
@@ -469,7 +471,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 (n_features, self.components_.shape[1]))
 
         n_jobs = _get_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=self.verbose) as parallel:
+        with Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
                 self._em_step(X[idx_slice, :],
                               total_samples=self.total_samples,
@@ -499,6 +501,13 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
+        if learning_method == None:
+            warnings.warn("The default value for 'learning_method' will be "
+                          "changed from 'online' to 'batch' in the release 0.20. "
+                          "This warning was introduced in 0.18.",
+                          DeprecationWarning)          
+            learning_method = 'online'
+
         batch_size = self.batch_size
 
         # initialize parameters
@@ -506,7 +515,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # change to perplexity later
         last_bound = None
         n_jobs = _get_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=self.verbose) as parallel:
+        with Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1)) as parallel:
             for i in xrange(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):

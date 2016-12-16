@@ -51,13 +51,13 @@ linear algebra libraries optimizations etc.). Here we see on a setting
 with few features that independently of estimator choice the bulk mode is
 always faster, and for some of them by 1 to 2 orders of magnitude:
 
-.. |atomic_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_001.png
+.. |atomic_prediction_latency| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_001.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
 .. centered:: |atomic_prediction_latency|
 
-.. |bulk_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_002.png
+.. |bulk_prediction_latency| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_002.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -65,7 +65,7 @@ always faster, and for some of them by 1 to 2 orders of magnitude:
 
 To benchmark different estimators for your case you can simply change the
 ``n_features`` parameter in this example:
-:ref:`example_applications_plot_prediction_latency.py`. This should give
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
 
 Influence of the Number of Features
@@ -79,7 +79,7 @@ From a computing perspective it also means that the number of basic operations
 too. Here is a graph of the evolution of the prediction latency with the
 number of features:
 
-.. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_003.png
+.. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_003.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -148,7 +148,7 @@ describe it fully. Of course sparsity influences in turn the prediction time
 as the sparse dot-product takes time roughly proportional to the number of
 non-zero coefficients.
 
-.. |en_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_001.png
+.. |en_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_001.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -163,7 +163,7 @@ support vector. In the following graph the ``nu`` parameter of
 :class:`sklearn.svm.classes.NuSVR` was used to influence the number of
 support vectors.
 
-.. |nusvr_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_002.png
+.. |nusvr_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_002.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -175,7 +175,7 @@ important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
 
-.. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_003.png
+.. |gbt_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_003.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -199,7 +199,7 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_004.png
+ .. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
@@ -215,10 +215,10 @@ Prediction Throughput
 Another important metric to care about when sizing production systems is the
 throughput i.e. the number of predictions you can make in a given amount of
 time. Here is a benchmark from the
-:ref:`example_applications_plot_prediction_latency.py` example that measures
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py` example that measures
 this quantity for a number of estimators on synthetic data:
 
-.. |throughput_benchmark| image::  ../auto_examples/applications/images/plot_prediction_latency_004.png
+.. |throughput_benchmark| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_004.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 

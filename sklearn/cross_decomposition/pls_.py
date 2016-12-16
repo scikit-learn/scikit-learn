@@ -53,6 +53,11 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         else:  # mode A
             # Mode A regress each X column on y_score
             x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
+        # If y_score only has zeros x_weights will only have zeros. In
+        # this case add an epsilon to converge to a more acceptable
+        # solution
+        if np.dot(x_weights.T, x_weights) < eps:
+            x_weights += eps
         # 1.2 Normalize u
         x_weights /= np.sqrt(np.dot(x_weights.T, x_weights)) + eps
         # 1.3 Update x_score: the X latent scores
@@ -148,7 +153,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
     mode : "A" classical PLS and "B" CCA. See notes.
 
-    norm_y_weights: boolean, normalize Y weights to one? (default False)
+    norm_y_weights : boolean, normalize Y weights to one? (default False)
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
@@ -190,7 +195,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coef_: array, [p, q]
+    coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
@@ -512,7 +517,7 @@ class PLSRegression(_PLS):
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coef_: array, [p, q]
+    coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like

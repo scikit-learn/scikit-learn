@@ -401,7 +401,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm
-      https://code.google.com/p/jbirch/
+      https://code.google.com/archive/p/jbirch
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
@@ -481,7 +481,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        leaves: array-like
+        leaves : array-like
             List of the leaf nodes.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
@@ -538,7 +538,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        labels: ndarray, shape(n_samples)
+        labels : ndarray, shape(n_samples)
             Labelled data.
         """
         X = check_array(X, accept_sparse='csr')

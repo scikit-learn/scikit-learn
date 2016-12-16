@@ -12,7 +12,6 @@ covariance estimator (the Minimum Covariance Determinant).
 #
 # License: BSD 3 clause
 
-import warnings
 import numpy as np
 import scipy as sp
 from . import MinCovDet
@@ -107,26 +106,6 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
 
     Read more in the :ref:`User Guide <outlier_detection>`.
 
-    Attributes
-    ----------
-    `contamination` : float, 0. < contamination < 0.5
-      The amount of contamination of the data set, i.e. the proportion of \
-      outliers in the data set.
-
-    location_ : array-like, shape (n_features,)
-        Estimated robust location
-
-    covariance_ : array-like, shape (n_features, n_features)
-        Estimated robust covariance matrix
-
-    precision_ : array-like, shape (n_features, n_features)
-        Estimated pseudo inverse matrix.
-        (stored only if store_precision is True)
-
-    support_ : array-like, shape (n_samples,)
-        A mask of the observations that have been used to compute the
-        robust estimates of location and shape.
-
     Parameters
     ----------
     store_precision : bool
@@ -150,6 +129,22 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
     contamination : float, 0. < contamination < 0.5
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
+
+    Attributes
+    ----------
+    location_ : array-like, shape (n_features,)
+        Estimated robust location
+
+    covariance_ : array-like, shape (n_features, n_features)
+        Estimated robust covariance matrix
+
+    precision_ : array-like, shape (n_features, n_features)
+        Estimated pseudo inverse matrix.
+        (stored only if store_precision is True)
+
+    support_ : array-like, shape (n_samples,)
+        A mask of the observations that have been used to compute the
+        robust estimates of location and shape.
 
     See Also
     --------

@@ -10,7 +10,7 @@ from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
 from .utils import deprecated
 from .utils.fixes import astype
-from ._isotonic import _isotonic_regression, _make_unique
+from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
 
@@ -120,33 +120,22 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    y = np.asarray(y, dtype=np.float64)
+    order = np.s_[:] if increasing else np.s_[::-1]
+    y = np.array(y[order], dtype=np.float64)
     if sample_weight is None:
-        sample_weight = np.ones(len(y), dtype=y.dtype)
+        sample_weight = np.ones(len(y), dtype=np.float64)
     else:
-        sample_weight = np.asarray(sample_weight, dtype=np.float64)
-    if not increasing:
-        y = y[::-1]
-        sample_weight = sample_weight[::-1]
+        sample_weight = np.array(sample_weight[order], dtype=np.float64)
 
+    _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
-        y = np.copy(y)
-        sample_weight = np.copy(sample_weight)
-        # upper bound on the cost function
-        C = np.dot(sample_weight, y * y) * 10
-        if y_min is not None:
-            y[0] = y_min
-            sample_weight[0] = C
-        if y_max is not None:
-            y[-1] = y_max
-            sample_weight[-1] = C
-
-    solution = np.empty(len(y))
-    y_ = _isotonic_regression(y, sample_weight, solution)
-    if increasing:
-        return y_
-    else:
-        return y_[::-1]
+        # Older versions of np.clip don't accept None as a bound, so use np.inf
+        if y_min is None:
+            y_min = -np.inf
+        if y_max is None:
+            y_max = np.inf
+        np.clip(y, y_min, y_max, y)
+    return y[order]
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
@@ -417,8 +406,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator. """
-        # copy __dict__
-        state = dict(self.__dict__)
+        state = super(IsotonicRegression, self).__getstate__()
         # remove interpolation method
         state.pop('f_', None)
         return state
@@ -428,6 +416,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         We need to rebuild the interpolation function.
         """
-        self.__dict__.update(state)
+        super(IsotonicRegression, self).__setstate__(state)
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)
