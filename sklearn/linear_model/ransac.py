@@ -111,6 +111,12 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     max_trials : int, optional
         Maximum number of iterations for random sample selection.
 
+    max_skips : int, optional
+        Maximum number of iterations that can pass without finding a valid
+        inlier set due to zero inliers or invalid data defined by
+        `is_data_valid` or invalid models defined by `is_data_valid`. As soon
+        as a valid inlier set and model are  found, this
+
     stop_n_inliers : int, optional
         Stop iteration if at least this number of inliers are found.
 
@@ -177,7 +183,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     def __init__(self, base_estimator=None, min_samples=None,
                  residual_threshold=None, is_data_valid=None,
-                 is_model_valid=None, max_trials=100,
+                 is_model_valid=None, max_trials=100, max_skips=np.inf,
                  stop_n_inliers=np.inf, stop_score=np.inf,
                  stop_probability=0.99, residual_metric=None,
                  loss='absolute_loss', random_state=None):
@@ -188,6 +194,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.is_data_valid = is_data_valid
         self.is_model_valid = is_model_valid
         self.max_trials = max_trials
+        self.max_skips = max_skips
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
         self.stop_probability = stop_probability
@@ -306,6 +313,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         inlier_mask_best = None
         X_inlier_best = None
         y_inlier_best = None
+        n_skips_no_inliers = 0
+        n_skips_invalid_data = 0
+        n_skips_invalid_model = 0
 
         # number of data samples
         n_samples = X.shape[0]
@@ -314,6 +324,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         n_samples, _ = X.shape
 
         for self.n_trials_ in range(1, self.max_trials + 1):
+
+            if (n_skips_no_inliers + n_skips_invalid_data +
+                    n_skips_invalid_model) > self.max_skips:
+                break
 
             # choose random sample set
             subset_idxs = sample_without_replacement(n_samples, min_samples,
@@ -324,6 +338,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # check if random sample set is valid
             if (self.is_data_valid is not None
                     and not self.is_data_valid(X_subset, y_subset)):
+                n_skips_invalid_data += 1
                 continue
 
             # fit model for current random sample set
@@ -336,6 +351,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # check if estimated model is valid
             if (self.is_model_valid is not None and not
                     self.is_model_valid(base_estimator, X_subset, y_subset)):
+                n_skips_invalid_model += 1
                 continue
 
             # residuals of all data for current random sample model
@@ -356,6 +372,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # less inliers -> skip current random sample
             if n_inliers_subset < n_inliers_best:
+                n_skips_no_inliers += 1
                 continue
 
             # extract inlier data set
@@ -391,13 +408,44 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         # if none of the iterations met the required criteria
         if inlier_mask_best is None:
-            raise ValueError(
-                "RANSAC could not find a valid consensus set. All `max_trials`"
-                " iterations were skipped because each randomly chosen"
-                " sub-sample either: didn't produce a valid set of inliers"
-                " due to a small `residual_threshold` or was invalidated by"
-                " `is_data_valid` or `is_model_valid` if either of these"
-                " functions have been defined by the user.")
+            if ((n_skips_no_inliers + n_skips_invalid_data +
+                     n_skips_invalid_model) > self.max_skips):
+                raise ValueError(
+                    "RANSAC skipped more iterations than `max_skips` without"
+                    " finding a valid consensus set. Iterations were skipped"
+                    " because each randomly chosen sub-sample failed the"
+                    " passing criteria. %d iterations found zero inliers due"
+                    " to a small `residual_threshold`, %d iterations returned"
+                    " `False` for `is_data_valid` and %d iterations returned "
+                    " `False` for `is_model_valid`" % (n_skips_no_inliers,
+                                                       n_skips_invalid_data,
+                                                       n_skips_invalid_model))
+            else:
+                raise ValueError(
+                    "RANSAC could not find a valid consensus set. All"
+                    " `max_trials` iterations were skipped because each"
+                    " randomly chosen sub-sample failed the passing criteria."
+                    " %d iterations found zero inliers due to a small"
+                    " `residual_threshold`, %d iterations returned `False` for"
+                    "`is_data_valid` and %d iterations returned `False` for"
+                    " `is_model_valid`" % (n_skips_no_inliers,
+                                           n_skips_invalid_data,
+                                           n_skips_invalid_model))
+        else:
+            if (n_skips_no_inliers + n_skips_invalid_data +
+                    n_skips_invalid_model) > self.max_skips:
+                warnings.warn("RANSAC found a valid consensus set but exited"
+                              " early due to skipping more iterations than"
+                              " `max_skips`. Iterations were"
+                              " skipped when randomly chosen sub-samples"
+                              " failed the passing criteria. %d iterations"
+                              " found zero inliers due to a small"
+                              " `residual_threshold`, %d iterations returned"
+                              " `False` for `is_data_valid` and %d iterations"
+                              " returned `False` for `is_model_valid`" %
+                              (n_skips_no_inliers,
+                               n_skips_invalid_data,
+                               n_skips_invalid_model),UserWarning)
 
         # estimate final model using all inliers
         base_estimator.fit(X_inlier_best, y_inlier_best)
