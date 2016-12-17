@@ -155,9 +155,11 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            Detection Evaluation Richard Lippmann, Joshua W. Haines,
            David J. Fried, Jonathan Korba, Kumar Das
 
-    .. [2] A Geometric Framework for Unsupervised Anomaly Detection: Detecting
-           Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
-           Michael Prerau, Leonid Portnoy, Sal Stolfo
+    .. [2] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
+           unsupervised outlier detection using finite mixtures with
+           discounting learning algorithms. In Proceedings of the sixth
+           ACM SIGKDD international conference on Knowledge discovery
+           and data mining, pages 320–324. ACM Press, 2000.
 
     """
     kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
