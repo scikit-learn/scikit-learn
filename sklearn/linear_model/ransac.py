@@ -112,10 +112,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         Maximum number of iterations for random sample selection.
 
     max_skips : int, optional
-        Maximum number of iterations that can pass without finding a valid
-        inlier set due to zero inliers or invalid data defined by
-        `is_data_valid` or invalid models defined by `is_data_valid`. As soon
-        as a valid inlier set and model are  found, this
+        Maximum number of iterations that can be skipped due to finding zero
+        inliers or invalid data defined by `is_data_valid` or invalid models
+        defined by `is_data_valid`.
 
     stop_n_inliers : int, optional
         Stop iteration if at least this number of inliers are found.
