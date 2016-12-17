@@ -159,7 +159,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            unsupervised outlier detection using finite mixtures with
            discounting learning algorithms. In Proceedings of the sixth
            ACM SIGKDD international conference on Knowledge discovery
-           and data mining, pages 320–324. ACM Press, 2000.
+           and data mining, pages 320-324. ACM Press, 2000.
 
     """
     kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
