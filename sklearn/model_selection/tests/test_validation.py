@@ -51,6 +51,7 @@ from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
 from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -974,6 +975,83 @@ def test_cross_val_predict_corner_case():
 
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+
+def test_cross_val_predict_different_label_types():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    classes = len(set(y))
+
+    # unordered integer labels
+    y_ = np.empty(y.shape)
+    for i, c in zip(range(3), [-1, 4, 6]):
+        y_[np.where(y == i)] = c
+
+    # Modifies the dataset so that in a particular fold, produced by
+    # kfold.split, the training set is composed of only 2 classes instead of 3
+    y_[:50] = -1
+    y_[50:100] = 4
+    X[:100], y_[:100] = shuffle(X[:100], y_[:100], random_state=0)
+
+    # string labels
+    y_str = np.empty(y.shape, dtype=object)
+    for i, c in zip(range(3), iris.target_names):
+        y_str[np.where(y == i)] = c
+
+    # Modifies the dataset so that in a particular fold, produced by
+    # kfold.split, the training set is composed of only 2 classes instead of 3
+    y_str[:50] = iris.target_names[0]
+    y_str[50:100] = iris.target_names[1]
+    X[:100], y_str[:100] = shuffle(X[:100], y_str[:100], random_state=0)
+
+    kfold = KFold(len(iris.target))
+
+    le = LabelEncoder()
+    est = LogisticRegression()
+
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    for method in methods:
+
+        # Testing labels as unordered integers
+        predictions = cross_val_predict(est, X, y_, method=method)
+        assert_equal(len(predictions), len(y_))
+
+        predictions = cross_val_predict(est, X, y_, method=method,
+                                        cv=kfold)
+
+        expected_predictions = np.zeros([len(y_), classes])
+        func = getattr(est, method)
+
+        # Transforming the class labels for passing to the estimator
+        y_ = le.fit_transform(y_)
+
+        # Naive loop (should be same as cross_val_predict):
+        for train, test in kfold.split(X, y_):
+            est.fit(X[train], y_[train])
+            expected_predictions[test] = func(X[test])
+
+        assert_array_almost_equal(expected_predictions, predictions)
+
+        # Testing labels as strings
+        predictions = cross_val_predict(est, X, y_str, method=method)
+        assert_equal(len(predictions), len(y_str))
+
+        predictions = cross_val_predict(est, X, y_str, method=method,
+                                        cv=kfold)
+
+        expected_predictions = np.zeros([len(y_str), classes])
+        func = getattr(est, method)
+
+        # Transforming the class labels for passing to the estimator
+        y_str = le.fit_transform(y_str)
+
+        # Naive loop (should be same as cross_val_predict):
+        for train, test in kfold.split(X, y_str):
+            est.fit(X[train], y_str[train])
+            expected_predictions[test] = func(X[test])
+
         assert_array_almost_equal(expected_predictions, predictions)
 
 
