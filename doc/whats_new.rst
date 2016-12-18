@@ -85,6 +85,12 @@ Enhancements
      do not set attributes on the estimator.
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
+   - Added type checking to the ``accept_sparse`` parameter in
+     :mod:`sklearn.utils.validation` methods. This parameter now accepts only
+     boolean, string, or list/tuple of strings values. `None` is no longer an
+     accepted type, and has been marked as deprecated.
+     :issue:`7880` by `Josh Karnofsky <https://github.com/jkarno>`_.
+
 Bug fixes
 .........
 

@@ -218,21 +218,21 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     spmatrix : scipy sparse matrix
         Input to validate and convert.
 
-    accept_sparse : string, boolean or list/tuple of strings (default=False)
+    accept_sparse : string, boolean or list/tuple of strings
         String[s] representing allowed sparse matrix formats ('csc',
         'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). If the input is sparse but
         not in the allowed format, it will be converted to the first listed
         format. True allows the input to be any format. False means
         that a sparse matrix input will raise an error.
 
-    dtype : string, type or None (default=none)
+    dtype : string, type or None
         Data type of result. If None, the dtype of the input is preserved.
 
-    copy : boolean (default=False)
+    copy : boolean
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean (default=True)
+    force_all_finite : boolean
         Whether to raise an error on np.inf and np.nan in X.
 
     Returns
@@ -252,8 +252,10 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
                         'convert to a dense numpy array.')
-    elif (isinstance(accept_sparse, (list, tuple)) and
-          len(accept_sparse)):
+    elif (isinstance(accept_sparse, (list, tuple))):
+        if len(accept_sparse) == 0:
+            raise ValueError("When providing 'accept_sparse' as a tuple or list, "
+                             "it must contain at least one string value.")
         # ensure correct sparse format
         if spmatrix.format not in accept_sparse:
             # create new with correct sparse
@@ -261,9 +263,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
             changed_format = True
     elif accept_sparse is not True:
         # any other type
-        raise ValueError(("Parameter 'accept_sparse' should be a string, "
+        raise ValueError("Parameter 'accept_sparse' should be a string, "
                           "boolean or list of strings. You provided "
-                          "'accept_sparse={}'.").format(accept_sparse))
+                          "'accept_sparse={}'.".format(accept_sparse))
 
     if dtype != spmatrix.dtype:
         # convert dtype
@@ -355,9 +357,9 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     # accept_sparse 'None' deprecation check
     if accept_sparse is None:
         warnings.warn(
-                "Passing 'None' to parameter 'accept_sparse' is "
-                "deprecated in version 0.19 and will be deprecated "
-                "in 0.21. Use 'False' instead.",
+                "Passing 'None' to parameter 'accept_sparse' in methods "
+                "check_array and check_X_y is deprecated in version 0.19 "
+                "and will be removed in 0.21. Use 'False' instead.",
                 DeprecationWarning)
         accept_sparse = False
 
