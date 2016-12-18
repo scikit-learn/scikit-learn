@@ -148,7 +148,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         Returns
         -------
         is_inlier : array, shape (n_samples,)
-            Returns 1 for anomalies/outliers and -1 for inliers.
+            Returns -1 for anomalies/outliers and 1 for inliers.
         """
 
         return self.fit(X)._predict()
