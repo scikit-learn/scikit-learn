@@ -123,6 +123,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
                 sample_weight, first_time) for i in range(y.shape[1]))
         return self
 
+    @if_delegate_has_method('estimator')
     def fit(self, X, y, sample_weight=None):
         """ Fit the model to data.
         Fit a separate model for each output variable.
@@ -147,10 +148,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Returns self.
         """
 
-        if not hasattr(self.estimator, "fit"):
-            raise ValueError(
-                "The base estimator should implement a fit method")
-
         X, y = check_X_y(X, y,
                          multi_output=True,
                          accept_sparse=True)
@@ -161,7 +158,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if (sample_weight is not None and
                 not has_fit_parameter(self.estimator, 'sample_weight')):
-            raise ValueError("Underlying regressor does not support"
+            raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
@@ -170,6 +167,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             for i in range(y.shape[1]))
         return self
 
+    @if_delegate_has_method('estimator')
     def predict(self, X):
         """Predict multi-output variable using a model
          trained for each target variable.
@@ -186,9 +184,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Note: Separate models are generated for each predictor.
         """
         check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimator, "predict"):
-            raise ValueError(
-                "The base estimator should implement a predict method")
 
         X = check_array(X, accept_sparse=True)
 
