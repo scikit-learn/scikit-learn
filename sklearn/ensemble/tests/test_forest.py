@@ -41,7 +41,7 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.fixes import bincount
-from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import check_random_state, check_array
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
 
@@ -946,6 +946,13 @@ def check_class_weights(name):
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # When sample_weights is an unsupported array type, it checks if it raises
+    # an exception. With Python 2.x lists it complains there is no copy()
+    # method. On success the list should be automatically converted.
+    clf = ForestClassifier()
+    sample_weight = [1.] * len(iris.data)
+    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
 
 
 def test_class_weights():
