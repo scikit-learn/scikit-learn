@@ -41,7 +41,7 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.fixes import bincount
-from sklearn.utils.validation import check_random_state, check_array
+from sklearn.utils.validation import check_random_state
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
 
