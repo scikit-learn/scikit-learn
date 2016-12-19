@@ -236,8 +236,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
                         'convert to a dense numpy array.')
     elif isinstance(accept_sparse, (list, tuple)):
         if len(accept_sparse) == 0:
-            raise ValueError("When providing 'accept_sparse' as a tuple or list, "
-                             "it must contain at least one string value.")
+            raise ValueError("When providing 'accept_sparse' "
+                             "as a tuple or list, it must contain at "
+                             "least one string value.")
         # ensure correct sparse format
         if spmatrix.format not in accept_sparse:
             # create new with correct sparse
@@ -246,8 +247,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     elif accept_sparse is not True:
         # any other type
         raise ValueError("Parameter 'accept_sparse' should be a string, "
-                          "boolean or list of strings. You provided "
-                          "'accept_sparse={}'.".format(accept_sparse))
+                         "boolean or list of strings. You provided "
+                         "'accept_sparse={}'.".format(accept_sparse))
 
     if dtype != spmatrix.dtype:
         # convert dtype
