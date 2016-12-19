@@ -28,7 +28,12 @@ X = rng_global.randn(n_samples, n_features)
 def test_dict_learning_shapes():
     n_components = 5
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
-    assert_true(dico.components_.shape == (n_components, n_features))
+    assert_equal(dico.components_.shape, (n_components, n_features))
+
+    n_components = 1
+    dico = DictionaryLearning(n_components, random_state=0).fit(X)
+    assert_equal(dico.components_.shape, (n_components, n_features))
+    assert_equal(dico.transform(X).shape, (X.shape[0], n_components))
 
 
 def test_dict_learning_overcomplete():
