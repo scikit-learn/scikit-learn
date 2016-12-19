@@ -77,7 +77,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Data.
 
         y : (sparse) array-like, shape (n_samples, n_outputs)
-            Multi-output targets. 
+            Multi-output targets.
 
         classes : list of numpy arrays, shape (n_outputs)
             each array is unique classes for one output in str/int
