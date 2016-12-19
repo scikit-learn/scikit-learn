@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 import scipy.sparse as sp
 from sklearn.utils import shuffle
@@ -158,7 +157,7 @@ def test_multi_output_classification_partial_fit():
 def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    with pytest.raises(ValueError) as excinfo:
+    with assert_raises(ValueError) as excinfo:
         multi_target_linear.partial_fit(X, y)
     excinfo.match("classes must be passed on the first call to partial_fit.")
 
