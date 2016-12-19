@@ -87,9 +87,9 @@ Enhancements
 
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
-     boolean, string, or list/tuple of strings values. `None` is no longer an
-     accepted type, and has been marked as deprecated.
-     :issue:`7880` by `Josh Karnofsky <https://github.com/jkarno>`_.
+     boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
+     and should be replaced by ``accept_sparse=False``.
+     :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
 
 Bug fixes
 .........
