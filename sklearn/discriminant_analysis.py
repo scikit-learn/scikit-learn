@@ -631,7 +631,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         self.store_covariance = store_covariance
         self.tol = tol
 
-    def fit(self, X, y, store_covariance=None, self.store_covariances=None,
+    def fit(self, X, y, store_covariance=None, store_covariances=None,
     	    tol =None):
         """Fit the model according to the given training data and parameters.
 
