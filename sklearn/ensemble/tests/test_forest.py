@@ -947,9 +947,8 @@ def check_class_weights(name):
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
-    # When sample_weights is an unsupported array type, it checks if it raises
-    # an exception. With Python 2.x lists it complains there is no copy()
-    # method. On success the list should be automatically converted.
+    # Using a Python 2.x list as the sample_weight parameter used to raise
+    # an exception. This test makes sure such code will now run correctly.
     clf = ForestClassifier()
     sample_weight = [1.] * len(iris.data)
     clf.fit(iris.data, iris.target, sample_weight=sample_weight)
