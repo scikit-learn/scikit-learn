@@ -40,12 +40,12 @@ logger = logging.getLogger()
 
 
 def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
-                   percent10=False, download_if_missing=True):
+                   percent10=True, download_if_missing=True):
     """Load and return the kddcup 99 dataset (classification).
 
     The KDD Cup '99 dataset was created by processing the tcpdump portions
     of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
-    created by MIT Lincoln Lab [1] . The artificial data was generated using
+    created by MIT Lincoln Lab [1]. The artificial data was generated using
     a closed network and hand-injected attacks to produce a large number of
     different types of attack with normal activity in the background.
     As the initial goal was to produce a large training set for supervised
@@ -134,7 +134,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
     download_if_missing : bool, default=True
@@ -216,7 +216,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
 
 def _fetch_brute_kddcup99(subset=None, data_home=None,
                           download_if_missing=True, random_state=None,
-                          shuffle=False, percent10=False):
+                          shuffle=False, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -244,7 +244,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
     Returns
