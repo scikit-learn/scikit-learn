@@ -1,7 +1,9 @@
 """
 Benchmarks of Non-Negative Matrix Factorization
 """
-# Author : Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
+# Authors: Tom Dupre la Tour (benchmark)
+#          Chih-Jen Linn (original projected gradient NMF implementation)
+#          Anthony Di Franco (projected gradient, Python and NumPy port)
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -29,10 +31,14 @@ from sklearn.utils.validation import check_is_fitted, check_non_negative
 
 mem = Memory(cachedir='.', verbose=0)
 
-
 ###################
 # Start of _PGNMF #
 ###################
+# This class implements a projected gradient solver for the NMF.
+# The projected gradient solver was removed from scikit-learn in version 0.19,
+# and a simplified copy is used here for comparison purpose only.
+# It is not tested, and it may change or disappear without notice.
+
 
 def _norm(x):
     """Dot product-based Euclidean norm implementation
