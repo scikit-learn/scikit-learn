@@ -159,7 +159,7 @@ def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     with assert_raises(ValueError) as excinfo:
         multi_target_linear.partial_fit(X, y)
-    excinfo.match("classes must be passed on the first call to partial_fit.")
+    assert_equal(str(excinfo.exception), "classes must be passed on the first call to partial_fit.")
 
 
 def test_multi_output_classification():
@@ -282,7 +282,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
     sgd_linear_clf = SGDClassifier(random_state=1)
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
-    X_test = [[1.5, 2.5, 3.5],]
+    X_test = [[1.5, 2.5, 3.5]]
     assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
 
 def test_multi_output_exceptions():
