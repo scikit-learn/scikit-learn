@@ -1357,6 +1357,25 @@ Low-level methods
    utils.shuffle
 
 
+:mod:`sklearn.plot`: Plotting functions
+=======================================
+
+.. automodule:: sklearn.plot
+   :no-members:
+   :no-inherited-members:
+
+This module is experimental. Use at your own risk.
+Use of this module requires the matplotlib library.
+
+.. currentmodule:: sklearn.plot
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   plot_heatmap
+
+
 Recently deprecated
 ===================
 
