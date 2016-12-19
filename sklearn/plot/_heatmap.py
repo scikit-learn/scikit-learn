@@ -3,7 +3,7 @@ import numpy as np
 
 def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
                  yticklabels=None, cmap=None, vmin=None, vmax=None, ax=None,
-                 fmt="{:.2f}"):
+                 fmt="{:.2f}", xtickrotation=45, norm=None):
     """Plot a matrix as heatmap with explicit numbers.
 
     Parameters
@@ -38,25 +38,33 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
 
     fmt : string, default="{:.2f}"
         Format string to convert value to text.
+
+    xtickrotation : float, default=45
+        Rotation of the xticklabels.
+
+    norm : matplotlib normalizer
+        Normalizer passed to pcolor
     """
     import matplotlib.pyplot as plt
     if ax is None:
         ax = plt.gca()
-    img = ax.pcolor(values, cmap=cmap, vmin=None, vmax=None)
+    img = ax.pcolor(values, cmap=cmap, vmin=None, vmax=None, norm=norm)
     # this will allow us to access the pixel values:
     img.update_scalarmappable()
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+
+    ax.set_xlim(0, values.shape[1])
+    ax.set_ylim(0, values.shape[0])
+
     if xticklabels is None:
         xticklabels = [""] * values.shape[1]
     if yticklabels is None:
         yticklabels = [""] * values.shape[0]
 
-    ax.xaxis.set_ticks_position('bottom')
-
     # +.5 makes the ticks centered on the pixels
     ax.set_xticks(np.arange(values.shape[1]) + .5)
-    ax.set_xticklabels(xticklabels, ha="center")
+    ax.set_xticklabels(xticklabels, ha="center", rotation=xtickrotation)
     ax.set_yticks(np.arange(values.shape[0]) + .5)
     ax.set_yticklabels(yticklabels, va="center")
     ax.set_aspect(1)
