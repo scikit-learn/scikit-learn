@@ -1056,8 +1056,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *warm_start* to support *lbfgs*, *newton-cg*, *sag* solvers.
 
     n_jobs : int, default: 1
-        Number of CPU cores used during the cross-validation loop. If given
-        a value of -1, all cores are used.
+        Number of CPU cores used for fitting one classifier per class
+        if multi_class='ovr'.
+        If given a value of -1, all cores are used.
 
     Attributes
     ----------
