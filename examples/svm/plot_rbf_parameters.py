@@ -51,11 +51,11 @@ vectors (larger ``C`` values) hence the diagonal of good performing models.
 
 Finally one can also observe that for some intermediate values of ``gamma`` we
 get equally performing models when ``C`` becomes very large: it is not
-necessary to regularize by limiting the number of support vectors. The radius of
-the RBF kernel alone acts as a good structural regularizer. In practice though
-it might still be interesting to limit the number of support vectors with a
-lower value of ``C`` so as to favor models that use less memory and that are
-faster to predict.
+necessary to regularize by limiting the number of support vectors. The radius
+of the RBF kernel alone acts as a good structural regularizer. In practice
+though it might still be interesting to limit the number of support vectors
+with a lower value of ``C`` so as to favor models that use less memory and that
+are faster to predict.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be
@@ -65,7 +65,6 @@ expense of compute time. Increasing the value number of ``C_range`` and
 map.
 
 '''
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -76,6 +75,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
+from sklearn.plot import plot_heatmap
+
+print(__doc__)
 
 
 # Utility function to move the midpoint of a colormap to be around
@@ -183,14 +185,10 @@ scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
 # interesting range while not brutally collapsing all the low score values to
 # the same color.
 
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(10, 10))
 plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
-plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot,
-           norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
-plt.xlabel('gamma')
-plt.ylabel('C')
-plt.colorbar()
-plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
-plt.yticks(np.arange(len(C_range)), C_range)
+plot_heatmap(scores, cmap=plt.cm.hot, xlabel="gamma", ylabel="C",
+             xticklabels=gamma_range, yticklabels=C_range,
+             norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
 plt.title('Validation accuracy')
 plt.show()
