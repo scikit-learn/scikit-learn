@@ -177,10 +177,11 @@ Bug fixes
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
      in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
+     in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
+
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
-
 
    - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
      sparse array X and initial centroids, where X's means were unnecessarily
@@ -207,6 +208,13 @@ Bug fixes
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+   - Fixes to the input validation in :class:`sklearn.covariance.EllipticEnvelope` by
+     `Andreas Müller`_.
+
+   - Fix shape output shape of :class:`sklearn.decomposition.DictionaryLearning` transform
+     for one-dimensional data by `Andreas Müller`_.
+
+   - Several fixes to input validation in :class:`multiclass.OutputCodeClassifier` by `Andreas Müller`_
 
    - Fix a bug where
      :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
@@ -267,6 +275,32 @@ API changes summary
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+
+   - Gradient boosting base models are not longer estimators. By `Andreas Müller`_.
+
+   - `feature_extraction.text.TfidfTransformer` now supports numpy arrays as inputs, and produces numpy
+     arrays for list inputs and numpy array inputs. By `Andreas `Müller_.
+
+   - `feature_selection.SelectFromModel` now validates the ``threshold``
+     parameter and sets the ``threshold_`` attribute during the call to
+     ``fit``, and no longer during the call to ``transform```, by `Andreas Müller`_.
+
+   - `features_selection.SelectFromModel` now has a ``partial_fit`` method only if the underlying
+     estimator does. By `Andreas Müller`_.
+
+   - All checks in ``utils.estimator_checks``, in particular :func:`utils.estimator_checks.check_estimator` now
+     accept estimator instances. All checks apart from ``check_estimator`` do not accept estimator classes any more.
+     By `Andreas Müller`_.
+
+   - The ``include_others`` and ``dont_test`` parameters of :func:`utils.testing.all_estimators` are deprecated
+     and are assumed ``True``, by  `Andreas Müller`_.
+
+
+   - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now do input validation on ``X`` and check
+     whether ``X`` and ``y`` are of the same length, by `Andreas Müller`_.
+
+   - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method only if the underlying estimator does.
+     By `Andreas Müller`_. 
 .. _changes_0_18_1:
 
 Version 0.18.1

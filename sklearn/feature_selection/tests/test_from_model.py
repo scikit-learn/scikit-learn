@@ -1,6 +1,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
@@ -27,8 +28,7 @@ def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=None)
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
-        model.fit(data, y)
-        assert_raises(ValueError, model.transform, data)
+        assert_raises(ValueError, model.fit, data, y)
 
 
 def test_input_estimator_unchanged():
@@ -119,6 +119,10 @@ def test_partial_fit():
     X_transform = transformer.transform(data)
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
     assert_array_equal(X_transform, transformer.transform(data))
+
+    # check that if est doesn't have partial_fit, neither does SelectFromModel
+    transformer = SelectFromModel(estimator=RandomForestClassifier())
+    assert_false(hasattr(transformer, "partial_fit"))
 
 
 def test_calling_fit_reinitializes():

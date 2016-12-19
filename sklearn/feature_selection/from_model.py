@@ -4,11 +4,12 @@
 import numpy as np
 
 from .base import SelectorMixin
-from ..base import BaseEstimator, clone
+from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..externals import six
 
 from ..exceptions import NotFittedError
 from ..utils.fixes import norm
+from ..utils.metaestimators import if_delegate_has_method
 
 
 def _get_feature_importances(estimator, norm_order=1):
@@ -76,7 +77,7 @@ def _calculate_threshold(estimator, importances, threshold):
     return threshold
 
 
-class SelectFromModel(BaseEstimator, SelectorMixin):
+class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     """Meta-transformer for selecting features based on importance weights.
 
     .. versionadded:: 0.17
@@ -121,7 +122,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     threshold_ : float
         The threshold value used for feature selection.
     """
-
     def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold
@@ -138,6 +138,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             raise ValueError(
                 'Either fit the model before transform or set "prefit=True"'
                 ' while passing the fitted estimator to the constructor.')
+        # XXX duplicate computation if we called fit before
         scores = _get_feature_importances(estimator, self.norm_order)
         self.threshold_ = _calculate_threshold(estimator, scores,
                                                self.threshold)
@@ -167,8 +168,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
                 "Since 'prefit=True', call transform directly")
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
+        scores = _get_feature_importances(self.estimator_, self.norm_order)
+        self.threshold_ = _calculate_threshold(self.estimator, scores,
+                                               self.threshold)
         return self
 
+    @if_delegate_has_method('estimator')
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 

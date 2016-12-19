@@ -10,7 +10,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .utils import check_random_state
-from .utils.validation import check_array
+from .utils.validation import check_array, check_X_y
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .utils.random import random_choice_csc
@@ -117,6 +117,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         self.sparse_output_ = sp.issparse(y)
 
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        check_consistent_length(X, y)
+
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
@@ -181,7 +184,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -190,7 +193,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         # Compute probability only once
         if self.strategy == "stratified":
             proba = self.predict_proba(X)
-            if self.n_outputs_ == 1:
+            if self.n_outputs_ == 1 and not self.output_2d_:
                 proba = [proba]
 
         if self.sparse_output_:
@@ -395,7 +398,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              "'mean', 'median', 'quantile' or 'constant'"
                              % self.strategy)
 
-        y = check_array(y, ensure_2d=False)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         multi_output=True)
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 

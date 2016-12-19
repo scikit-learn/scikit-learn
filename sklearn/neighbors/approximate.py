@@ -93,7 +93,7 @@ class GaussianRandomProjectionHash(ProjectionToHashMixin,
                                    GaussianRandomProjection):
     """Use GaussianRandomProjection to produce a cosine LSH fingerprint"""
     def __init__(self,
-                 n_components=8,
+                 n_components=32,
                  random_state=None):
         super(GaussianRandomProjectionHash, self).__init__(
             n_components=n_components,

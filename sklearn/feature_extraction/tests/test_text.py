@@ -35,6 +35,7 @@ from collections import defaultdict, Mapping
 from functools import partial
 import pickle
 from io import StringIO
+from scipy import sparse
 
 
 JUNK_FOOD_DOCS = (
@@ -309,7 +310,7 @@ def test_tf_idf_smoothing():
          [1, 1, 0],
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
-    tfidf = tr.fit_transform(X).toarray()
+    tfidf = tr.fit_transform(X)
     assert_true((tfidf >= 0).all())
 
     # check normalization
@@ -320,7 +321,7 @@ def test_tf_idf_smoothing():
          [1, 1, 0],
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
-    tfidf = tr.fit_transform(X).toarray()
+    tfidf = tr.fit_transform(X)
     assert_true((tfidf >= 0).all())
 
 
@@ -329,7 +330,7 @@ def test_tfidf_no_smoothing():
          [1, 1, 0],
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
-    tfidf = tr.fit_transform(X).toarray()
+    tfidf = tr.fit_transform(X)
     assert_true((tfidf >= 0).all())
 
     # check normalization
@@ -340,6 +341,7 @@ def test_tfidf_no_smoothing():
     X = [[1, 1, 0],
          [1, 1, 0],
          [1, 0, 0]]
+    X = sparse.csr_matrix(X)
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
     clean_warning_registry()
@@ -357,7 +359,7 @@ def test_tfidf_no_smoothing():
 def test_sublinear_tf():
     X = [[1], [2], [3]]
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
-    tfidf = tr.fit_transform(X).toarray()
+    tfidf = tr.fit_transform(X)
     assert_equal(tfidf[0], 1)
     assert_greater(tfidf[1], tfidf[0])
     assert_greater(tfidf[2], tfidf[1])
@@ -420,7 +422,7 @@ def test_vectorizer():
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = t2.fit(counts_train).transform(counts_train).toarray()
-    assert_equal(t2.idf_, None)
+    assert_false(hasattr(t2, "idf_"))
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
