@@ -1404,7 +1404,8 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     estimator = Estimator()
     for attr in dir(estimator):
-        if attr.endswith("_") and not attr.startswith("__"):
+        if (attr.endswith("_") and not attr.startswith("__") and not
+                hasattr(Estimator, attr)):
             # This check is for properties, they can be listed in dir
             # while at the same time have hasattr return False as long
             # as the property getter raises an AttributeError
