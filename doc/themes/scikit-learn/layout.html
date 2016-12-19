@@ -272,7 +272,8 @@
     {% endif %}
 
     {%- if pagename != "install" %}
-      <p class="doc-version">This documentation is for {{project}} <b style="font-size: 110%;">version {{ release|e }}</b> &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+      <p class="doc-version" style="font-size: 110%;"><b>{{project}} v{{ release|e }}</b><br/>
+      <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {%- endif %}
     <p class="citing">Please <b><a href="about.html#citing-scikit-learn" style="font-size: 110%;">cite us </a></b>if you use the software.</p>
     {{ toc }}
