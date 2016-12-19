@@ -284,7 +284,7 @@ API changes summary
 
    - :class:`feature_extraction.text.TfidfTransformer` now supports numpy
      arrays as inputs, and produces numpy arrays for list inputs and numpy
-     array inputs. By `Andreas `Müller_.
+     array inputs. By `Andreas Müller_`.
 
    - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
      parameter and sets the ``threshold_`` attribute during the call to
