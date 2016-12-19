@@ -13,39 +13,6 @@ from .utils.fixes import signature
 from . import __version__
 
 
-_PRINTOPTIONS = {'parameters': 'all', 'info': False}
-
-
-def set_print(parameters=None, info=None):
-    """Set estimator print options.
-
-    WARNING: This functionality is experimental and might be removed or changed
-    at any time.
-
-    Parameters
-    ----------
-    parameters : None, 'all' or 'changed', default=None
-        Which parameters to show when printing estimators.
-        If None, this setting is not changed, if 'all',
-        all parameters are shown, if 'changed', only the
-        parameters that are not at their default value are shown.
-
-    info : bool or None, default=None
-        Whether to show additional information about an estimator.
-        If None, this setting is not changed.
-
-    Returns
-    -------
-    printoptions : dict
-        Current print options.
-    """
-    if parameters is not None:
-        _PRINTOPTIONS['parameters'] = parameters
-    if info is not None:
-        _PRINTOPTIONS['info'] = info
-    return _PRINTOPTIONS
-
-
 ##############################################################################
 def _first_and_last_element(arr):
     """Returns first and last element of numpy array or sparse matrix."""
@@ -319,31 +286,25 @@ class BaseEstimator(object):
 
     def _changed_params(self):
         params = self.get_params(deep=False)
-        if _PRINTOPTIONS['parameters'] == 'changed':
-            filtered_params = {}
-            init_params = signature(self.__init__).parameters
-            for k, v in params.items():
-                if v != init_params[k].default:
-                    filtered_params[k] = v
-            return filtered_params
-        return params
+        filtered_params = {}
+        init_params = signature(self.__init__).parameters
+        for k, v in params.items():
+            if v != init_params[k].default:
+                filtered_params[k] = v
+        return filtered_params
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        params = self._changed_params()
+        params = self.get_params(deep=False)
         return '%s(%s)' % (class_name, _pprint(params,
                                                offset=len(class_name),),)
 
     def _repr_html_(self):
         class_name = self.__class__.__name__
         params = self._changed_params()
-        return "<b>{}</b>({})".format(class_name, _pprint(
+        my_repr = "<b>{}</b>({})".format(class_name, _pprint(
             params))
-
-    def _repr_pretty_(self, p, cycle):
-        # for interactive use such as IPython console and notebooks
-        my_repr = repr(self)
-        if _PRINTOPTIONS['info'] is True:
+        if False:
             print_attributes = ['classes_', 'n_outputs_']
             for attr in print_attributes:
                 value = getattr(self, attr, None)
@@ -353,8 +314,7 @@ class BaseEstimator(object):
             if n_features is not None:
                 my_repr += "\n- {0}={1}".format('n_features', n_features)
 
-        # representation for ipython / jupyter
-        return p.text(my_repr)
+        return my_repr
 
     def __getstate__(self):
         if type(self).__module__.startswith('sklearn.'):
