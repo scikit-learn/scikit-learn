@@ -252,7 +252,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
                         'convert to a dense numpy array.')
-    elif (isinstance(accept_sparse, (list, tuple))):
+    elif isinstance(accept_sparse, (list, tuple)):
         if len(accept_sparse) == 0:
             raise ValueError("When providing 'accept_sparse' as a tuple or list, "
                              "it must contain at least one string value.")
@@ -359,8 +359,8 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         warnings.warn(
                 "Passing 'None' to parameter 'accept_sparse' in methods "
                 "check_array and check_X_y is deprecated in version 0.19 "
-                "and will be removed in 0.21. Use 'False' instead.",
-                DeprecationWarning)
+                "and will be removed in 0.21. Use 'accept_sparse=False' "
+                " instead.", DeprecationWarning)
         accept_sparse = False
 
     # store whether originally we wanted numeric dtype
