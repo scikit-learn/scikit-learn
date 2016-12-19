@@ -13,7 +13,8 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.multiclass import (check_classification_targets,
+                                      type_of_target)
 from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
@@ -103,6 +104,10 @@ def test_ovr_partial_fit():
                                              random_state=0))
     pred1 = ovr1.fit(X, y).predict(X)
     assert_equal(np.mean(pred == y), np.mean(pred1 == y))
+
+    # test partial_fit only exists if estimator has it:
+    ovr = OneVsRestClassifier(SVC())
+    assert_false(hasattr(ovr, "partial_fit"))
 
 
 def test_ovr_partial_fit_exceptions():
@@ -428,7 +433,8 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    for base_classifier in [SVC(kernel='linear', random_state=0), LinearSVC(random_state=0)]:
+    for base_classifier in [SVC(kernel='linear', random_state=0),
+                            LinearSVC(random_state=0)]:
         # SVC has sparse coef with sparse input data
 
         ovr = OneVsRestClassifier(base_classifier)
@@ -439,7 +445,8 @@ def test_ovr_coef_():
             assert_equal(shape[0], n_classes)
             assert_equal(shape[1], iris.data.shape[1])
             # don't densify sparse coefficients
-            assert_equal(sp.issparse(ovr.estimators_[0].coef_), sp.issparse(ovr.coef_))
+            assert_equal(sp.issparse(ovr.estimators_[0].coef_),
+                         sp.issparse(ovr.coef_))
 
 
 def test_ovr_coef_exceptions():
