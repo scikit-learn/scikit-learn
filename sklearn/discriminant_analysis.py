@@ -625,17 +625,14 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
                  tol=1.0e-4, store_covariances=False):
-        if store_covariances is not None:
-            warnings.warn("'store_covariances' was renamed to 'store_covariance'"
-                          "in version 0.19 and will be removed in the "
-                          "version 0.21.", DeprecationWarning)
-            store_covariance = store_covariances
+       
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
 
-    def fit(self, X, y, store_covariances=None, tol=None):
+    def fit(self, X, y, store_covariance=None, self.store_covariances=None,
+    	    tol =None):
         """Fit the model according to the given training data and parameters.
 
             .. versionchanged:: 0.17
@@ -654,12 +651,10 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             Target values (integers)
         """
         if store_covariances:
-            warnings.warn("The parameter 'store_covariances' is deprecated as "
-                          "of version 0.17 and will be removed in 0.19. The "
-                          "parameter is no longer necessary because the value "
-                          "is set via the estimator initialisation or "
-                          "set_params method.", DeprecationWarning)
-            self.store_covariances = store_covariances
+            warnings.warn("'store_covariances' was renamed to 'store_covariance'"
+                          "in version 0.19 and will be removed in the "
+                          "version 0.21.", DeprecationWarning)
+            self.store_covariance = store_covariances
         if tol:
             warnings.warn("The parameter 'tol' is deprecated as of version "
                           "0.17 and will be removed in 0.19. The parameter is "
