@@ -263,6 +263,24 @@ and Cython optimizations.
    <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
+.. topic:: Continuous Integration (CI)
+
+   * Travis is used for testing on Linux platforms
+   * Appveyor is used for testing on Windows platforms
+   * CircleCI is used to build the docs for viewing
+
+   Please note that if one of the following markers appear in the latest commit
+   message, the following actions are taken.
+
+     ====================== ===================
+     Commit Message Marker  Action Taken by CI
+     ---------------------- -------------------
+     [ci skip]              CI is skipped completely
+     [doc skip]             Docs are not built
+     [doc quick]            Docs built, but excludes example gallery plots
+     [doc build]            Docs built including example gallery plots
+     ====================== ===================
+
 .. _filing_bugs:
 
 Filing Bugs
@@ -309,10 +327,10 @@ following rules before submitting:
 Issues for New Contributors
 ---------------------------
 
-New contributors should look for the following tags when looking for issues. 
-We strongly recommend that new contributors tackle "easy" issues first: this 
-helps the contributor become familiar with the contribution workflow, and 
-for the core devs to become acquainted with the contributor; besides which, 
+New contributors should look for the following tags when looking for issues.
+We strongly recommend that new contributors tackle "easy" issues first: this
+helps the contributor become familiar with the contribution workflow, and
+for the core devs to become acquainted with the contributor; besides which,
 we frequently underestimate how easy an issue is to solve!
 
 .. topic:: Easy Tags
@@ -327,7 +345,7 @@ we frequently underestimate how easy an issue is to solve!
 
 .. topic:: Need Contributor Tags
 
-    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
+    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally,
     we use the Need Contributor tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the Need Contributor tag can be found
@@ -382,6 +400,17 @@ can be added to further the documentation. Not starting the
 documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
 opposed to how it works "under the hood".
+
+You may also be asked to show your changes when it's built. When you create
+a pull request or make changes in an existing one modifying the docs, CircleCI
+automatically builds them. Thus, you can easily view your changes in the built
+artifacts using the following formula:
+
+``http://scikit-learn.org/circle?{BUILD_NUMBER}``
+
+Note: When you visit the details page of the CircleCI tests, you can find your
+BUILD_NUMBER mentioned as 'build #' which is different from your pull request
+number, which is presented as 'pull/#'.
 
 Finally, follow the formatting rules below to make it consistently good:
 
@@ -477,8 +506,8 @@ There are three other tags to help new contributors:
     but is still approachable for someone new to the project.
 
 :Needs Contributor:
-    This tag marks an issue which currently lacks a contributor or a 
-    PR that needs another contributor to take over the work. These 
+    This tag marks an issue which currently lacks a contributor or a
+    PR that needs another contributor to take over the work. These
     issues can range in difficulty, and may not be approachable
     for new contributors. Note that not all issues which need
     contributors will have this tag.
@@ -702,7 +731,7 @@ Python 3.x support
 All scikit-learn code should work unchanged in both Python 2.[67]
 and 3.2 or newer. Since Python 3.x is not backwards compatible,
 that may require changes to code and it certainly requires testing
-on both 2.6 or 2.7, and 3.2 or newer.
+on both 2.7 and 3.2 or newer.
 
 For most numerical algorithms, Python 3.x support is easy:
 just remember that ``print`` is a function and

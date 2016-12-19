@@ -1,4 +1,3 @@
-
 """
 Logistic Regression
 """
@@ -18,7 +17,6 @@ from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
-from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
@@ -28,7 +26,6 @@ from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
 from ..utils.extmath import row_norms
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
 from ..utils.fixes import expit
 from ..utils.multiclass import check_classification_targets
@@ -447,7 +444,7 @@ def _check_solver_option(solver, multi_class, penalty, dual):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='lbfgs', coef=None, copy=False,
+                             solver='lbfgs', coef=None,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
@@ -503,10 +500,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coef : array-like, shape (n_features,), default None
         Initialization value for coefficients of logistic regression.
         Useless for liblinear solver.
-
-    copy : bool, default False
-        Whether or not to produce a copy of the data. A copy is not required
-        anymore. This parameter is deprecated and will be removed in 0.19.
 
     class_weight : dict or 'balanced', optional
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -581,21 +574,19 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     -----
     You might get slightly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
-    """
-    if copy:
-        warnings.warn("A copy is not required anymore. The 'copy' parameter "
-                      "is deprecated and will be removed in 0.19.",
-                      DeprecationWarning)
 
+    .. versionchanged:: 0.19
+        The "copy" parameter was removed.
+    """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
     _check_solver_option(solver, multi_class, penalty, dual)
 
     # Preprocessing.
-    if check_input or copy:
+    if check_input:
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        y = check_array(y, ensure_2d=False, copy=copy, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
     classes = np.unique(y)
@@ -634,8 +625,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         y_bin[~mask] = -1.
         # for compute_class_weight
 
-        # 'auto' is deprecated and will be removed in 0.19
-        if class_weight in ("auto", "balanced"):
+        if class_weight == "balanced":
             class_weight_ = compute_class_weight(class_weight, mask_classes,
                                                  y_bin)
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
@@ -925,9 +915,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         y_test = np.ones(y_test.shape, dtype=np.float64)
         y_test[~mask] = -1.
 
-    # To deal with object dtypes, we need to convert into an array of floats.
-    y_test = check_array(y_test, dtype=np.float64, ensure_2d=False)
-
     scores = list()
 
     if isinstance(scoring, six.string_types):
@@ -950,7 +937,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
 
 class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         _LearntSelectorMixin, SparseCoefMixin):
+                         SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
@@ -1016,8 +1003,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         through the fit method) if sample_weight is specified.
 
         .. versionadded:: 0.17
-           *class_weight='balanced'* instead of deprecated
-           *class_weight='auto'*.
+           *class_weight='balanced'*
 
     max_iter : int, default: 100
         Useful only for the newton-cg, sag and lbfgs solvers.
@@ -1243,7 +1229,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                backend=backend)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
-                      verbose=self.verbose, solver=self.solver, copy=False,
+                      verbose=self.verbose, solver=self.solver,
                       multi_class=self.multi_class, max_iter=self.max_iter,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
@@ -1318,7 +1304,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
-                           LinearClassifierMixin, _LearntSelectorMixin):
+                           LinearClassifierMixin):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
     This class implements logistic regression using liblinear, newton-cg, sag
@@ -1561,64 +1547,59 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
+        check_classification_targets(y)
+
+        class_weight = self.class_weight
+
+        # Encode for string labels
+        label_encoder = LabelEncoder().fit(y)
+        y = label_encoder.transform(y)
+        if isinstance(class_weight, dict):
+            class_weight = dict((label_encoder.transform([cls])[0], v)
+                                for cls, v in class_weight.items())
+
+        # The original class labels
+        classes = self.classes_ = label_encoder.classes_
+        encoded_labels = label_encoder.transform(label_encoder.classes_)
 
         if self.solver == 'sag':
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
 
-        check_classification_targets(y)
-
-        if y.ndim == 2 and y.shape[1] == 1:
-            warnings.warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples, ), for example using ravel().",
-                DataConversionWarning)
-            y = np.ravel(y)
-
-        check_consistent_length(X, y)
-
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
         folds = list(cv.split(X, y))
 
-        self._enc = LabelEncoder()
-        self._enc.fit(y)
-
-        labels = self.classes_ = np.unique(y)
-        n_classes = len(labels)
+        # Use the label encoded classes
+        n_classes = len(encoded_labels)
 
         if n_classes < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
-                             " class: %r" % self.classes_[0])
+                             " class: %r" % classes[0])
+
         if n_classes == 2:
             # OvR in case of binary problems is as good as fitting
             # the higher label
             n_classes = 1
-            labels = labels[1:]
+            encoded_labels = encoded_labels[1:]
+            classes = classes[1:]
 
         # We need this hack to iterate only once over labels, in the case of
         # multi_class = multinomial, without changing the value of the labels.
-        iter_labels = labels
         if self.multi_class == 'multinomial':
-            iter_labels = [None]
-
-        if self.class_weight and not(isinstance(self.class_weight, dict) or
-                                     self.class_weight in
-                                     ['balanced', 'auto']):
-            # 'auto' is deprecated and will be removed in 0.19
-            raise ValueError("class_weight provided should be a "
-                             "dict or 'balanced'")
+            iter_encoded_labels = iter_classes = [None]
+        else:
+            iter_encoded_labels = encoded_labels
+            iter_classes = classes
 
         # compute the class weights for the entire dataset y
-        if self.class_weight in ("auto", "balanced"):
-            classes = np.unique(y)
-            class_weight = compute_class_weight(self.class_weight, classes, y)
-            class_weight = dict(zip(classes, class_weight))
-        else:
-            class_weight = self.class_weight
+        if class_weight == "balanced":
+            class_weight = compute_class_weight(class_weight,
+                                                np.arange(len(self.classes_)),
+                                                y)
+            class_weight = dict(enumerate(class_weight))
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -1638,7 +1619,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight
                       )
-            for label in iter_labels
+            for label in iter_encoded_labels
             for train, test in folds)
 
         if self.multi_class == 'multinomial':
@@ -1669,9 +1650,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
                                                 len(self.Cs_)))
 
-        self.coefs_paths_ = dict(zip(labels, coefs_paths))
+        self.coefs_paths_ = dict(zip(classes, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
-        self.scores_ = dict(zip(labels, scores))
+        self.scores_ = dict(zip(classes, scores))
 
         self.C_ = list()
         self.coef_ = np.empty((n_classes, X.shape[1]))
@@ -1682,10 +1663,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
-        for index, label in enumerate(iter_labels):
+        for index, (cls, encoded_label) in enumerate(
+                zip(iter_classes, iter_encoded_labels)):
+
             if self.multi_class == 'ovr':
-                scores = self.scores_[label]
-                coefs_paths = self.coefs_paths_[label]
+                # The scores_ / coefs_paths_ dict have unencoded class
+                # labels as their keys
+                scores = self.scores_[cls]
+                coefs_paths = self.coefs_paths_[cls]
 
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
@@ -1698,11 +1683,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
 
+                # Note that y is label encoded and hence pos_class must be
+                # the encoded label / None (for 'multinomial')
                 w, _, _ = logistic_regression_path(
-                    X, y, pos_class=label, Cs=[C_], solver=self.solver,
+                    X, y, pos_class=encoded_label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
-                    penalty=self.penalty, copy=False,
+                    penalty=self.penalty,
                     class_weight=class_weight,
                     multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1),

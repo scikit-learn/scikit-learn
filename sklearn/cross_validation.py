@@ -109,6 +109,10 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
 class LeaveOneOut(_PartitionIterator):
     """Leave-One-Out cross validation iterator.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeaveOneOut` instead.
+
     Provides train/test indices to split data in train test sets. Each
     sample is used once as a test set (singleton) while the remaining
     samples form the training set.
@@ -170,6 +174,10 @@ class LeaveOneOut(_PartitionIterator):
 
 class LeavePOut(_PartitionIterator):
     """Leave-P-Out cross validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeavePOut` instead.
 
     Provides train/test indices to split data in train test sets. This results
     in testing on all distinct samples of size p, while the remaining n - p
@@ -266,6 +274,10 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
 class KFold(_BaseKFold):
     """K-Folds cross validation iterator.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.KFold` instead.
+
     Provides train/test indices to split data in train test sets. Split
     dataset into k consecutive folds (without shuffling by default).
 
@@ -356,6 +368,10 @@ class KFold(_BaseKFold):
 
 class LabelKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping labels.
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.GroupKFold` instead.
 
     The same label will not appear in two different folds (the number of
     distinct labels has to be at least equal to the number of folds).
@@ -458,6 +474,10 @@ class LabelKFold(_BaseKFold):
 
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.StratifiedKFold` instead.
 
     Provides train/test indices to split data in train test sets.
 
@@ -581,6 +601,10 @@ class StratifiedKFold(_BaseKFold):
 class LeaveOneLabelOut(_PartitionIterator):
     """Leave-One-Label_Out cross-validation iterator
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeaveOneGroupOut` instead.
+
     Provides train/test indices to split data according to a third-party
     provided label. This label information can be used to encode arbitrary
     domain specific stratifications of the samples as integers.
@@ -650,6 +674,10 @@ class LeaveOneLabelOut(_PartitionIterator):
 
 class LeavePLabelOut(_PartitionIterator):
     """Leave-P-Label_Out cross-validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.LeavePGroupsOut` instead.
 
     Provides train/test indices to split data according to a third-party
     provided label. This label information can be used to encode arbitrary
@@ -761,6 +789,10 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
 class ShuffleSplit(BaseShuffleSplit):
     """Random permutation cross-validation iterator.
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.ShuffleSplit` instead.
 
     Yields indices to split data into training and test sets.
 
@@ -963,6 +995,10 @@ def _approximate_mode(class_counts, n_draws, rng):
 class StratifiedShuffleSplit(BaseShuffleSplit):
     """Stratified ShuffleSplit cross validation iterator
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.StratifiedShuffleSplit` instead.
+
     Provides train/test indices to split data in train test sets.
 
     This cross-validation object is a merge of StratifiedKFold and
@@ -1085,6 +1121,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 class PredefinedSplit(_PartitionIterator):
     """Predefined split cross validation iterator
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.PredefinedSplit` instead.
+
     Splits the data into training/test set folds according to a predefined
     scheme. Each sample can be assigned to at most one test set fold, as
     specified by the user through the ``test_fold`` parameter.
@@ -1139,6 +1179,10 @@ class PredefinedSplit(_PartitionIterator):
 
 class LabelShuffleSplit(ShuffleSplit):
     """Shuffle-Labels-Out cross-validation iterator
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.GroupShuffleSplit` instead.
 
     Provides randomized train/test indices to split data according to a
     third-party provided label. This label information can be used to encode
@@ -1240,6 +1284,10 @@ def _index_param_value(X, v, indices):
 def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.cross_val_predict` instead.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -1420,6 +1468,10 @@ def _check_is_partition(locs, n):
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.cross_val_score` instead.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -1724,6 +1776,10 @@ def _shuffle(y, labels, random_state):
 def check_cv(cv, X=None, y=None, classifier=False):
     """Input checker utility for building a CV in a user friendly way.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.check_cv` instead.
+
     Parameters
     ----------
     cv : int, cross-validation generator or an iterable, optional
@@ -1754,7 +1810,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
     Returns
     -------
-    checked_cv: a cross-validation generator instance.
+    checked_cv : a cross-validation generator instance.
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
@@ -1780,6 +1836,10 @@ def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
                            random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.permutation_test_score` instead.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -1881,6 +1941,10 @@ permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 
 def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.train_test_split` instead.
 
     Quick utility that wraps input validation and
     ``next(iter(ShuffleSplit(n_samples)))`` and application to input

@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_equal, assert_raises_regex
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
@@ -22,7 +22,8 @@ from sklearn.metrics import recall_score
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
-                                  Perceptron, LogisticRegression)
+                                  Perceptron, LogisticRegression,
+                                  SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline
@@ -89,20 +90,37 @@ def test_ovr_partial_fit():
     assert_greater(np.mean(y == pred), 0.65)
 
     # Test when mini batches doesn't have all classes
-    ovr = OneVsRestClassifier(MultinomialNB())
-    ovr.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
-    ovr.partial_fit(iris.data[60:], iris.target[60:])
-    pred = ovr.predict(iris.data)
-    ovr2 = OneVsRestClassifier(MultinomialNB())
-    pred2 = ovr2.fit(iris.data, iris.target).predict(iris.data)
+    # with SGDClassifier
+    X = np.abs(np.random.randn(14, 2))
+    y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
 
-    assert_almost_equal(pred, pred2)
-    assert_equal(len(ovr.estimators_), len(np.unique(iris.target)))
-    assert_greater(np.mean(iris.target == pred), 0.65)
+    ovr = OneVsRestClassifier(SGDClassifier(n_iter=1, shuffle=False,
+                                            random_state=0))
+    ovr.partial_fit(X[:7], y[:7], np.unique(y))
+    ovr.partial_fit(X[7:], y[7:])
+    pred = ovr.predict(X)
+    ovr1 = OneVsRestClassifier(SGDClassifier(n_iter=1, shuffle=False,
+                                             random_state=0))
+    pred1 = ovr1.fit(X, y).predict(X)
+    assert_equal(np.mean(pred == y), np.mean(pred1 == y))
+
+
+def test_ovr_partial_fit_exceptions():
+    ovr = OneVsRestClassifier(MultinomialNB())
+    X = np.abs(np.random.randn(14, 2))
+    y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
+    ovr.partial_fit(X[:7], y[:7], np.unique(y))
+    # A new class value which was not in the first call of partial_fit
+    # It should raise ValueError
+    y1 = [5] + y[7:-1]
+    assert_raises_regex(ValueError, "Mini-batch contains \[.+\] while classes"
+                                    " must be subset of \[.+\]",
+                        ovr.partial_fit, X=X[7:], y=y1)
 
 
 def test_ovr_ovo_regressor():
-    # test that ovr and ovo work on regressors which don't have a decision_function
+    # test that ovr and ovo work on regressors which don't have a decision_
+    # function
     ovr = OneVsRestClassifier(DecisionTreeRegressor())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovr.estimators_), n_classes)
@@ -204,7 +222,6 @@ def test_ovr_multiclass():
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
                      ElasticNet()):
-
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
@@ -314,14 +331,24 @@ def test_ovr_multilabel_predict_proba():
         X_test = X[80:]
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
-        # decision function only estimator. Fails in current implementation.
+        # Decision function only estimator.
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
-        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+        assert_false(hasattr(decision_only, 'predict_proba'))
 
         # Estimator with predict_proba disabled, depending on parameters.
         decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        assert_false(hasattr(decision_only, 'predict_proba'))
         decision_only.fit(X_train, Y_train)
-        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+        assert_false(hasattr(decision_only, 'predict_proba'))
+        assert_true(hasattr(decision_only, 'decision_function'))
+
+        # Estimator which can get predict_proba enabled after fitting
+        gs = GridSearchCV(svm.SVC(probability=False),
+                          param_grid={'probability': [True]})
+        proba_after_fit = OneVsRestClassifier(gs)
+        assert_false(hasattr(proba_after_fit, 'predict_proba'))
+        proba_after_fit.fit(X_train, Y_train)
+        assert_true(hasattr(proba_after_fit, 'predict_proba'))
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
@@ -339,9 +366,9 @@ def test_ovr_single_label_predict_proba():
     X_test = X[80:]
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
-    # decision function only estimator. Fails in current implementation.
+    # Decision function only estimator.
     decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
-    assert_raises(AttributeError, decision_only.predict_proba, X_test)
+    assert_false(hasattr(decision_only, 'predict_proba'))
 
     Y_pred = clf.predict(X_test)
     Y_proba = clf.predict_proba(X_test)

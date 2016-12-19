@@ -15,7 +15,7 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import _preprocess_data
-from ..utils import check_array, check_X_y, deprecated
+from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -49,10 +49,10 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         Xy = np.dot(X.T, y) that can be precomputed.
 
     l1_ratio : float
-        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``.
-        For ``l1_ratio = 0`` the penalty is an L2 penalty. ``For
-        l1_ratio = 1`` it is an L1 penalty.  For ``0 < l1_ratio <
-        1``, the penalty is a combination of L1 and L2.
+        The elastic net mixing parameter, with ``0 < l1_ratio <= 1``.
+        For ``l1_ratio = 0`` the penalty is an L2 penalty. (currently not
+        supported) ``For l1_ratio = 1`` it is an L1 penalty. For
+        ``0 < l1_ratio <1``, the penalty is a combination of L1 and L2.
 
     eps : float, optional
         Length of the path. ``eps=1e-3`` means that
@@ -77,6 +77,11 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
     """
+    if l1_ratio == 0:
+        raise ValueError("Automatic alpha grid generation is not supported for"
+                         " l1_ratio=0. Please supply a grid by providing "
+                         "your estimator with the appropriate `alphas=` "
+                         "argument.")
     n_samples = len(y)
 
     sparse_center = False
@@ -620,7 +625,6 @@ class ElasticNet(LinearModel, RegressorMixin):
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
-        self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.precompute = precompute
@@ -629,7 +633,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.tol = tol
         self.warm_start = warm_start
         self.positive = positive
-        self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
 
@@ -692,7 +695,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         if self.selection not in ['cyclic', 'random']:
             raise ValueError("selection should be either random or cyclic.")
 
-        if not self.warm_start or self.coef_ is None:
+        if not self.warm_start or not hasattr(self, "coef_"):
             coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
                              order='F')
         else:
@@ -740,21 +743,6 @@ class ElasticNet(LinearModel, RegressorMixin):
     def sparse_coef_(self):
         """ sparse representation of the fitted ``coef_`` """
         return sparse.csr_matrix(self.coef_)
-
-    @deprecated(" and will be removed in 0.19")
-    def decision_function(self, X):
-        """Decision function of the linear model
-
-        Parameters
-        ----------
-        X : numpy array or scipy.sparse matrix of shape (n_samples, n_features)
-
-        Returns
-        -------
-        T : array, shape (n_samples,)
-            The predicted decision function
-        """
-        return self._decision_function(X)
 
     def _decision_function(self, X):
         """Decision function of the linear model
@@ -1559,7 +1547,7 @@ class MultiTaskElasticNet(Lasso):
 
     i.e. the sum of norm of each row.
 
-    Read more in the :ref:`User Guide <multi_task_lasso>`.
+    Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
     Parameters
     ----------
@@ -1658,7 +1646,6 @@ class MultiTaskElasticNet(Lasso):
                  warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
-        self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.max_iter = max_iter
@@ -1732,7 +1719,8 @@ class MultiTaskElasticNet(Lasso):
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of iterations')
+                          ' to increase the number of iterations',
+                          ConvergenceWarning)
 
         # return self for chaining fit and predict calls
         return self
@@ -1841,7 +1829,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
-        self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.max_iter = max_iter

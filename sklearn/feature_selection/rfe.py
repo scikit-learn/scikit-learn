@@ -406,7 +406,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select,
-                  step=self.step, verbose=self.verbose - 1)
+                  step=self.step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter

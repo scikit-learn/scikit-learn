@@ -1,4 +1,3 @@
-
 """
 The :mod:`sklearn.model_selection._validation` module includes classes and
 functions to validate the model.
@@ -751,9 +750,9 @@ def learning_curve(estimator, X, y, groups=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    cv_iter = cv.split(X, y, groups)
-    # Make a list since we will be iterating multiple times over the folds
-    cv_iter = list(cv_iter)
+    # Store it as list as we will be iterating over the list multiple times
+    cv_iter = list(cv.split(X, y, groups))
+
     scorer = check_scoring(estimator, scoring=scoring)
 
     n_max_training_samples = len(cv_iter[0][0])
@@ -776,9 +775,8 @@ def learning_curve(estimator, X, y, groups=None,
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train,
-            test, train_sizes_abs, scorer, verbose)
-            for train, test in cv_iter)
+            clone(estimator), X, y, classes, train, test, train_sizes_abs,
+            scorer, verbose) for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
@@ -962,7 +960,6 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-
     scorer = check_scoring(estimator, scoring=scoring)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
@@ -970,6 +967,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
+        # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
 
     out = np.asarray(out)

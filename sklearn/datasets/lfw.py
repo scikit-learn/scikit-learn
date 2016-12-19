@@ -26,8 +26,6 @@ detector from various online websites.
 from os import listdir, makedirs, remove, rename
 from os.path import join, exists, isdir
 
-from sklearn.utils import deprecated
-
 import logging
 import numpy as np
 
@@ -246,7 +244,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     (gallery).
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Parameters
     ----------
@@ -376,17 +374,6 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
-@deprecated("Function 'load_lfw_people' has been deprecated in 0.17 and will "
-            "be removed in 0.19."
-            "Use fetch_lfw_people(download_if_missing=False) instead.")
-def load_lfw_people(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_people(download_if_missing=False)
-
-    Check fetch_lfw_people.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_people(download_if_missing=download_if_missing, **kwargs)
-
-
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
@@ -412,7 +399,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
 
@@ -503,14 +490,3 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     return Bunch(data=pairs.reshape(len(pairs), -1), pairs=pairs,
                  target=target, target_names=target_names,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
-
-
-@deprecated("Function 'load_lfw_pairs' has been deprecated in 0.17 and will "
-            "be removed in 0.19."
-            "Use fetch_lfw_pairs(download_if_missing=False) instead.")
-def load_lfw_pairs(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_pairs(download_if_missing=False)
-
-    Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_pairs(download_if_missing=download_if_missing, **kwargs)

@@ -71,7 +71,12 @@ class IncrementalPCA(_BasePCA):
     explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
         If all components are stored, the sum of explained variances is equal
-        to 1.0
+        to 1.0.
+
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
 
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, aggregate over calls to ``partial_fit``.
@@ -148,15 +153,15 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
 
         Returns
         -------
-        self: object
+        self : object
             Returns the instance itself.
         """
         self.components_ = None
@@ -166,6 +171,7 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.explained_variance_ = None
         self.explained_variance_ratio_ = None
+        self.singular_values_ = None
         self.noise_variance_ = None
 
         X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
@@ -186,13 +192,13 @@ class IncrementalPCA(_BasePCA):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
         Returns
         -------
-        self: object
+        self : object
             Returns the instance itself.
         """
         if check_input:

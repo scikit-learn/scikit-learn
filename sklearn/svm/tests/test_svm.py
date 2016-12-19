@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings, assert_raises
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.multiclass import OneVsRestClassifier
@@ -57,6 +56,7 @@ def test_libsvm_iris():
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
+        assert_true(hasattr(clf, "coef_") == (k == 'linear'))
 
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
@@ -84,17 +84,6 @@ def test_libsvm_iris():
                                         kernel='linear',
                                         random_seed=0)
     assert_array_equal(pred, pred2)
-
-
-@ignore_warnings
-def test_single_sample_1d():
-    # Test whether SVCs work on a single sample given as a 1-d array
-
-    clf = svm.SVC().fit(X, Y)
-    clf.predict(X[0])
-
-    clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    clf.predict(X[0])
 
 
 def test_precomputed():
@@ -381,13 +370,6 @@ def test_decision_function_shape():
     dec = clf.decision_function(X_train)
     assert_equal(dec.shape, (len(X_train), 10))
 
-    # check deprecation warning
-    clf = svm.SVC(kernel='linear', C=0.1).fit(X_train, y_train)
-    msg = "change the shape of the decision function"
-    dec = assert_warns_message(ChangedBehaviorWarning, msg,
-                               clf.decision_function, X_train)
-    assert_equal(dec.shape, (len(X_train), 10))
-
 
 def test_svr_predict():
     # Test SVR's decision_function
@@ -641,7 +623,8 @@ def test_linearsvc():
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, random_state=0).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
+                        random_state=0).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation
@@ -949,3 +932,45 @@ def test_decision_function_shape_two_class():
             clf = OneVsRestClassifier(estimator(
                 decision_function_shape="ovr")).fit(X, y)
             assert_equal(len(clf.predict(X)), len(y))
+
+
+def test_ovr_decision_function():
+    # One point from each quadrant represents one class
+    X_train = np.array([[1, 1], [-1, 1], [-1, -1], [1, -1]])
+    y_train = [0, 1, 2, 3]
+
+    # First point is closer to the decision boundaries than the second point
+    base_points = np.array([[5, 5], [10, 10]])
+
+    # For all the quadrants (classes)
+    X_test = np.vstack((
+        base_points * [1, 1],    # Q1
+        base_points * [-1, 1],   # Q2
+        base_points * [-1, -1],  # Q3
+        base_points * [1, -1]    # Q4
+        ))
+
+    y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
+
+    clf = svm.SVC(kernel='linear', decision_function_shape='ovr')
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+
+    # Test if the prediction is the same as y
+    assert_array_equal(y_pred, y_test)
+
+    deci_val = clf.decision_function(X_test)
+
+    # Assert that the predicted class has the maximum value
+    assert_array_equal(np.argmax(deci_val, axis=1), y_pred)
+
+    # Get decision value at test points for the predicted class
+    pred_class_deci_val = deci_val[range(8), y_pred].reshape((4, 2))
+
+    # Assert pred_class_deci_val > 0 here
+    assert_greater(np.min(pred_class_deci_val), 0.0)
+
+    # Test if the first point has lower decision value on every quadrant
+    # compared to the second point
+    assert_true(np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1]))

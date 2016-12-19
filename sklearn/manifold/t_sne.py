@@ -237,7 +237,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    neighbors: int64 array, shape (n_samples, K)
+    neighbors : int64 array, shape (n_samples, K)
         Array with element [i, j] giving the index for the jth
         closest neighbor to point i.
 
@@ -667,7 +667,6 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
-        self.embedding_ = None
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.

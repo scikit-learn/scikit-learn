@@ -481,7 +481,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        leaves: array-like
+        leaves : array-like
             List of the leaf nodes.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
@@ -538,7 +538,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
         Returns
         -------
-        labels: ndarray, shape(n_samples)
+        labels : ndarray, shape(n_samples)
             Labelled data.
         """
         X = check_array(X, accept_sparse='csr')

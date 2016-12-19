@@ -116,29 +116,29 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_: array-like, shape = (n_samples,)
+    y_train_ : array-like, shape = (n_samples,)
         Target values in training data (also required for prediction)
 
     classes_ : array-like, shape = (n_classes,)
         Unique class labels.
 
-    kernel_: kernel object
+    kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_: array-like, shape = (n_samples, n_samples)
+    L_ : array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in X_train_
 
-    pi_: array-like, shape = (n_samples,)
+    pi_ : array-like, shape = (n_samples,)
         The probabilities of the positive class for the training points
         X_train_
 
-    W_sr_: array-like, shape = (n_samples,)
+    W_sr_ : array-like, shape = (n_samples,)
         Square root of W, the Hessian of log-likelihood of the latent function
         values for the observed labels. Since W is diagonal, only the diagonal
         of sqrt(W) is stored.
 
-    log_marginal_likelihood_value_: float
+    log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
     """
@@ -515,7 +515,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    multi_class: string, default : "one_vs_rest"
+    multi_class : string, default : "one_vs_rest"
         Specifies how multi-class classification problems are handled.
         Supported are "one_vs_rest" and "one_vs_one". In "one_vs_rest",
         one binary Gaussian process classifier is fitted for each class, which

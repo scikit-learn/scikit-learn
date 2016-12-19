@@ -36,7 +36,7 @@ class IsolationForest(BaseBagging):
     length from the root node to the terminating node.
 
     This path length, averaged over a forest of such random trees, is a
-    measure of abnormality and our decision function.
+    measure of normality and our decision function.
 
     Random partitioning produces noticeably shorter paths for anomalies.
     Hence, when a forest of random trees collectively produce shorter path
@@ -154,9 +154,7 @@ class IsolationForest(BaseBagging):
         self : object
             Returns self.
         """
-        # ensure_2d=False because there are actually unit test checking we fail
-        # for 1d.
-        X = check_array(X, accept_sparse=['csc'], ensure_2d=False)
+        X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
