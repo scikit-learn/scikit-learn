@@ -430,10 +430,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
             pred_or_true = count_nonzero(y_true + y_pred, axis=1)
             pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
             score = pred_and_true / pred_or_true
-
-            # If there is no label, it results in a Nan instead, we set
-            # the jaccard to 1: lim_{x->0} x/x = 1
-            # Note with py2.6 and np 1.3: we can't check safely for nan.
             score[pred_or_true == 0.0] = 1.0
     else:
         score = y_true == y_pred
@@ -714,7 +710,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    beta: float
+    beta : float
         Weight of precision in harmonic mean.
 
     labels : list, optional
@@ -1369,6 +1365,14 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report : string
         Text summary of the precision, recall, F1 score for each class.
 
+        The reported averages are a prevalence-weighted macro-average across
+        classes (equivalent to :func:`precision_recall_fscore_support` with
+        ``average='weighted'``).
+
+        Note that in binary classification, recall of the positive class
+        is also known as "sensitivity"; recall of the negative class is
+        "specificity".
+
     Examples
     --------
     >>> from sklearn.metrics import classification_report
@@ -1395,42 +1399,35 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     last_line_heading = 'avg / total'
 
     if target_names is None:
-        target_names = ['%s' % l for l in labels]
+        target_names = [u'%s' % l for l in labels]
     name_width = max(len(cn) for cn in target_names)
     width = max(name_width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
-    fmt = '%% %ds' % width  # first column: class name
-    fmt += '  '
-    fmt += ' '.join(['% 9s' for _ in headers])
-    fmt += '\n'
-
-    headers = [""] + headers
-    report = fmt % tuple(headers)
-    report += '\n'
+    head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
+    report = head_fmt.format(u'', *headers, width=width)
+    report += u'\n\n'
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
                                                   sample_weight=sample_weight)
 
-    for i, label in enumerate(labels):
-        values = [target_names[i]]
-        for v in (p[i], r[i], f1[i]):
-            values += ["{0:0.{1}f}".format(v, digits)]
-        values += ["{0}".format(s[i])]
-        report += fmt % tuple(values)
+    row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
+    rows = zip(target_names, p, r, f1, s)
+    for row in rows:
+        report += row_fmt.format(*row, width=width, digits=digits)
 
-    report += '\n'
+    report += u'\n'
 
     # compute averages
-    values = [last_line_heading]
-    for v in (np.average(p, weights=s),
-              np.average(r, weights=s),
-              np.average(f1, weights=s)):
-        values += ["{0:0.{1}f}".format(v, digits)]
-    values += ['{0}'.format(np.sum(s))]
-    report += fmt % tuple(values)
+    report += row_fmt.format(last_line_heading,
+                             np.average(p, weights=s),
+                             np.average(r, weights=s),
+                             np.average(f1, weights=s),
+                             np.sum(s),
+                             width=width, digits=digits)
+
     return report
 
 

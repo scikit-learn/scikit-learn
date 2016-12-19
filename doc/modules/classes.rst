@@ -322,7 +322,6 @@ Samples generator
 
    decomposition.PCA
    decomposition.IncrementalPCA
-   decomposition.ProjectedGradientNMF
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
@@ -844,6 +843,7 @@ details.
    metrics.explained_variance_score
    metrics.mean_absolute_error
    metrics.mean_squared_error
+   metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
 
@@ -1057,7 +1057,7 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.DistanceMetric
    neighbors.KernelDensity
    neighbors.LocalOutlierFactor
-	      
+
 .. autosummary::
    :toctree: generated/
    :template: function.rst
@@ -1359,23 +1359,6 @@ Low-level methods
 
 Recently deprecated
 ===================
-
-To be removed in 0.19
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   lda.LDA
-   qda.QDA
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   datasets.load_lfw_pairs
-   datasets.load_lfw_people
 
 
 To be removed in 0.20

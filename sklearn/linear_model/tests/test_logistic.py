@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
@@ -278,7 +277,7 @@ def test_consistency_path():
 
 def test_liblinear_dual_random_state():
     # random_state is relevant for liblinear solver only if dual=True
-    X, y = make_classification(n_samples=20)
+    X, y = make_classification(n_samples=20, random_state=0)
     lr1 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
     lr1.fit(X, y)
     lr2 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15)
@@ -295,7 +294,7 @@ def test_liblinear_dual_random_state():
 
 
 def test_logistic_loss_and_grad():
-    X_ref, y = make_classification(n_samples=20)
+    X_ref, y = make_classification(n_samples=20, random_state=0)
     n_features = X_ref.shape[1]
 
     X_sp = X_ref.copy()
@@ -403,7 +402,8 @@ def test_multinomial_logistic_regression_string_inputs():
     # Test with string labels for LogisticRegression(CV)
     n_samples, n_features, n_classes = 50, 5, 3
     X_ref, y = make_classification(n_samples=n_samples, n_features=n_features,
-                                   n_classes=n_classes, n_informative=3)
+                                   n_classes=n_classes, n_informative=3,
+                                   random_state=0)
     y_str = LabelEncoder().fit(['bar', 'baz', 'foo']).inverse_transform(y)
     # For numerical labels, let y values be taken from set (-1, 0, 1)
     y = np.array(y) - 1
@@ -732,20 +732,10 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
-def test_multinomial_logistic_regression_with_classweight_auto():
-    X, y = iris.data, iris.target
-    model = LogisticRegression(multi_class='multinomial',
-                               class_weight='auto', solver='lbfgs')
-    # 'auto' is deprecated and will be removed in 0.19
-    assert_warns_message(DeprecationWarning,
-                         "class_weight='auto' heuristic is deprecated",
-                         model.fit, X, y)
-
-
 def test_logistic_regression_convergence_warnings():
     # Test that warnings are raised if model does not converge
 
-    X, y = make_classification(n_samples=20, n_features=20)
+    X, y = make_classification(n_samples=20, n_features=20, random_state=0)
     clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
     assert_equal(clf_lib.n_iter_, 2)
@@ -834,7 +824,7 @@ def test_liblinear_decision_function_zero():
     # are zero. This is a test to verify that we do not do the same.
     # See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
     # and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
-    X, y = make_classification(n_samples=5, n_features=5)
+    X, y = make_classification(n_samples=5, n_features=5, random_state=0)
     clf = LogisticRegression(fit_intercept=False)
     clf.fit(X, y)
 
@@ -846,7 +836,7 @@ def test_liblinear_decision_function_zero():
 def test_liblinear_logregcv_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
-    X, y = make_classification(n_samples=10, n_features=5)
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     clf = LogisticRegressionCV(solver='liblinear')
     clf.fit(sparse.csr_matrix(X), y)
 

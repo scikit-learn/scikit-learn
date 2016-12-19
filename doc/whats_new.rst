@@ -35,6 +35,12 @@ New features
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
+   - The new solver ``mu`` implements a Multiplicate Update in
+     :class:`decomposition.NMF`, allowing the optimization of all
+     beta-divergences, including the Frobenius norm, the generalized
+     Kullback-Leibler divergence and the Itakura-Saito divergence.
+     By `Tom Dupre la Tour`_.
+
 Enhancements
 ............
 
@@ -48,9 +54,8 @@ Enhancements
      nearest cluster center. :issue:`7721` by :user:`Jon Crall <Erotemic>`.
 
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
-     that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
-     <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
-     Batula`_ and :user:`Dylan Werner-Meier <unautre>`.
+     that matches the ``classes_`` attribute of ``best_estimator_``. :issue:`7661`
+     by :user:`Alyssa Batula <abatula>`_ and :user:`Dylan Werner-Meier <unautre>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -85,6 +90,15 @@ Enhancements
      do not set attributes on the estimator.
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
+   - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
+     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
+     norm 'max' the norms returned will be the same as for dense matrices.
+     :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
+
+   - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
+     A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
+     by :user:`Alexander Booth <alexandercbooth>`.
+     
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
      boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
@@ -94,36 +108,39 @@ Enhancements
 Bug fixes
 .........
 
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
-     exactly implement Benjamini-Hochberg procedure. It formerly may have
-     selected fewer features than it should.
-     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
-
-   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
-     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
-
-   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
-     regressors now assumes uniform sample weights by default if the
-     ``sample_weight`` argument is not passed to the ``fit`` function.
-     Previously, the parameter was silently ignored. :issue:`7301`
-     by :user:`Nelson Liu <nelson-liu>`.
-
-   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
-     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
-
-   - Tree splitting criterion classes' cloning/pickling is now memory safe
-     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
-
-   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
-     attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
-     Krivich <kiote>`.
-
-   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
-     string labels. :issue:`5874` by `Raghav RV`_.
-
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
      in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
+   - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
+     ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
+     :user:`Ralf Gommers <rgommers>`.
+
+
+   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
+     sparse array X and initial centroids, where X's means were unnecessarily
+     being subtracted from the centroids. :issue:`7872` by `Josh Karnofsky <https://github.com/jkarno>`_.
+
+   - Fix estimators to accept a ``sample_weight`` parameter of type
+     ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
+     `Kathleen Chen`_.
+
+   - Fix a bug where :class:`sklearn.ensemble.VotingClassifier` raises an error
+     when a numpy array is passed in for weights. :issue:`7983` by
+     :user:`Vincent Pham <vincentpham1991>`.
+
+   - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
+     :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
+     ``min_impurity_split`` parameter.
+     :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
+API changes summary
+-------------------
+
+   - Ensure that estimators' attributes ending with ``_`` are not set
+     in the constructor but only in the ``fit`` method. Most notably,
+     ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
+     now only have ``self.estimators_`` available after ``fit``.
+     :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
 .. _changes_0_18_1:
 
@@ -165,7 +182,7 @@ Bug fixes
      with SVD and Eigen solver are now of the same length. :issue:`7632`
      by :user:`JPFrancoia <JPFrancoia>`
 
-   - Fixes issue in :ref:`univariate_feature_selection` where score 
+   - Fixes issue in :ref:`univariate_feature_selection` where score
      functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
@@ -182,6 +199,33 @@ Bug fixes
      ``CalibratedClassifierCV`` now handles the case where the training set
      has less number of classes than the total data. :issue:`7799` by
      `Srivatsan Ramesh`_
+
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
+   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
+     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. :issue:`7301`
+     by :user:`Nelson Liu <nelson-liu>`.
+
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
+
+   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
+     attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
+     Krivich <kiote>`.
+
+   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
+     string labels. :issue:`5874` by `Raghav RV`_.
 
    - Fixed a bug where :func:`sklearn.model_selection.train_test_split` raised
      an error when ``stratify`` is a list of string labels. :issue:`7593` by
@@ -203,13 +247,28 @@ Bug fixes
 API changes summary
 -------------------
 
+Trees and forests
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. :issue:`7301` by `Nelson
+     Liu`_.
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe.
+     :issue:`7680` by `Ibraim Ganiev`_.
+
+
 Linear, kernelized and related models
 
-   - Length of `explained_variance_ratio` of
+   - Length of ``explained_variance_ratio`` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis`
      changed for both Eigen and SVD solvers. The attribute has now a length
      of min(n_components, n_classes - 1). :issue:`7632`
      by :user:`JPFrancoia <JPFrancoia>`
+
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     ``n_features > n_samples``. :issue:`6178` by `Bertrand Thirion`_
 
 .. _changes_0_18:
 
@@ -353,7 +412,7 @@ Other estimators
 
    - New :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
      replace former mixture models, employing faster inference
-     for sounder results. :issue:`7295` by :user:`Wei Xue <xuewei4d>` and 
+     for sounder results. :issue:`7295` by :user:`Wei Xue <xuewei4d>` and
      :user:`Thierry Guillemot <tguillemot>`.
 
    - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
@@ -476,7 +535,7 @@ Decomposition, manifold learning and clustering
    - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
      with ``np.float32`` and ``np.float64`` input data without converting it.
      This allows to reduce the memory consumption by using ``np.float32``.
-     :issue:`6846` by :user:`Sebastian Säger <ssaeger>` and 
+     :issue:`6846` by :user:`Sebastian Säger <ssaeger>` and
      :user:`YenChen Lin <yenchenlin>`.
 
 Preprocessing and feature selection
@@ -485,7 +544,7 @@ Preprocessing and feature selection
      :issue:`5929` by :user:`Konstantin Podshumok <podshumok>`.
 
    - :class:`feature_extraction.FeatureHasher` now accepts string values.
-     :issue:`6173` by :user:`Ryad Zenine <ryadzenine>` and 
+     :issue:`6173` by :user:`Ryad Zenine <ryadzenine>` and
      :user:`Devashish Deshpande <dsquareindia>`.
 
    - Keyword arguments can now be supplied to ``func`` in
@@ -499,7 +558,7 @@ Preprocessing and feature selection
 Model evaluation and meta-estimators
 
    - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
-     now support ``partial_fit``. By :user:`Asish Panda <kaichogami>` and 
+     now support ``partial_fit``. By :user:`Asish Panda <kaichogami>` and
      :user:`Philipp Dowling <phdowling>`.
 
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
@@ -527,7 +586,7 @@ Metrics
 
    - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
-     :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from 
+     :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from
      :user:`Mads Jensen <indianajensen>` and :user:`Nelson Liu <nelson-liu>`.
 
    - Support sparse contingency matrices in cluster evaluation
@@ -647,7 +706,7 @@ Decomposition, manifold learning and clustering
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By 
+      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By
       :user:`Peter Fischer <yanlend>`.
 
     - Attribute ``explained_variance_ratio_`` calculated with the SVD solver
@@ -930,7 +989,7 @@ New features
      :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
      respectively similar to :class:`cross_validation.KFold` and
      :class:`cross_validation.ShuffleSplit`, except that the folds are
-     conditioned on a label array. By `Brian McFee`_, :user:`Jean 
+     conditioned on a label array. By `Brian McFee`_, :user:`Jean
      Kossaifi <JeanKossaifi>` and `Gilles Louppe`_.
 
    - :class:`decomposition.LatentDirichletAllocation` implements the Latent
@@ -1020,7 +1079,7 @@ Enhancements
      By `Trevor Stephens`_.
 
    - Provide an option for sparse output from
-     :func:`sklearn.metrics.pairwise.cosine_similarity`. By 
+     :func:`sklearn.metrics.pairwise.cosine_similarity`. By
      :user:`Jaidev Deshpande <jaidevd>`.
 
    - Add :func:`minmax_scale` to provide a function interface for
@@ -1231,7 +1290,7 @@ Bug fixes
       By `Tom Dupre la Tour`_.
 
     - Fixed bug :issue:`5495` when
-      doing OVR(SVC(decision_function_shape="ovr")). Fixed by 
+      doing OVR(SVC(decision_function_shape="ovr")). Fixed by
       :user:`Elvis Dohmatob <dohmatob>`.
 
 
@@ -4803,3 +4862,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
 
 .. _Ron Weiss: http://www.ee.columbia.edu/~ronw
+
+.. _Kathleen Chen: https://github.com/kchen17
+
+.. _Vincent Pham: https://github.com/vincentpham1991
