@@ -1006,7 +1006,7 @@ def test_cross_val_predict_different_label_types():
     y_str[50:100] = iris.target_names[1]
     X[:100], y_str[:100] = shuffle(X[:100], y_str[:100], random_state=0)
 
-    kfold = KFold(len(iris.target))
+    kfold = KFold(classes)
 
     le = LabelEncoder()
     est = LogisticRegression()
@@ -1030,7 +1030,14 @@ def test_cross_val_predict_different_label_types():
         # Naive loop (should be same as cross_val_predict):
         for train, test in kfold.split(X, y_):
             est.fit(X[train], y_[train])
-            expected_predictions[test] = func(X[test])
+            expected_predictions_ = func(X[test])
+            # To avoid 2 dimensional indexing
+            exp_pred_test = np.zeros((len(test), classes))
+            if method is 'decision_function' and len(est.classes_) == 2:
+                exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+            else:
+                exp_pred_test[:, est.classes_] = expected_predictions_
+            expected_predictions[test] = exp_pred_test
 
         assert_array_almost_equal(expected_predictions, predictions)
 
@@ -1050,7 +1057,14 @@ def test_cross_val_predict_different_label_types():
         # Naive loop (should be same as cross_val_predict):
         for train, test in kfold.split(X, y_str):
             est.fit(X[train], y_str[train])
-            expected_predictions[test] = func(X[test])
+            expected_predictions_ = func(X[test])
+            # To avoid 2 dimensional indexing
+            exp_pred_test = np.zeros((len(test), classes))
+            if method is 'decision_function' and len(est.classes_) == 2:
+                exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+            else:
+                exp_pred_test[:, est.classes_] = expected_predictions_
+            expected_predictions[test] = exp_pred_test
 
         assert_array_almost_equal(expected_predictions, predictions)
 
