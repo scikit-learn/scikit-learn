@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import scipy.sparse as sp
 from sklearn.utils import shuffle
@@ -125,7 +126,7 @@ y = np.column_stack((y1, y2, y3))
 n_samples, n_features = X.shape
 n_outputs = y.shape[1]
 n_classes = len(np.unique(y1))
-classes = np.column_stack(map(np.unique, (y1, y2, y3)))
+classes = map(np.unique, (y1, y2, y3))
 
 
 def test_multi_output_classification_partial_fit():
@@ -149,9 +150,17 @@ def test_multi_output_classification_partial_fit():
         # create a clone with the same state
         sgd_linear_clf = clone(sgd_linear_clf)
         sgd_linear_clf.partial_fit(
-            X[:half_index], y[:half_index, i], classes=classes[:, i])
+            X[:half_index], y[:half_index, i], classes=classes[i])
         sgd_linear_clf.partial_fit(X[half_index:], y[half_index:, i])
         assert_equal(list(sgd_linear_clf.predict(X)), list(predictions[:, i]))
+
+
+def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    with pytest.raises(ValueError) as excinfo:
+        multi_target_linear.partial_fit(X, y)
+    excinfo.match("classes must be passed on the first call to partial_fit.")
 
 
 def test_multi_output_classification():
@@ -258,6 +267,24 @@ def test_multi_output_classification_sample_weights():
     X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
     assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
 
+
+def test_multi_output_classification_partial_fit_sample_weights():
+    # weighted classifier
+    Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
+    yw = [[3, 2], [2, 3], [3, 2]]
+    w = np.asarray([2., 1., 1.])
+    sgd_linear_clf = SGDClassifier(random_state=1)
+    clf_w = MultiOutputClassifier(sgd_linear_clf)
+    clf_w.fit(Xw, yw, w)
+
+    # unweighted, but with repeated samples
+    X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
+    y = [[3, 2], [3, 2], [2, 3], [3, 2]]
+    sgd_linear_clf = SGDClassifier(random_state=1)
+    clf = MultiOutputClassifier(sgd_linear_clf)
+    clf.fit(X, y)
+    X_test = [[1.5, 2.5, 3.5],]
+    assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
 
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and

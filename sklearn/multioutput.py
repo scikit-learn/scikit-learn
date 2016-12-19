@@ -68,7 +68,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """ Fit linear model with Stochastic Gradient Descent..
+        """ Fit the model to data with Stochastic Gradient Descent.
         Fit a separate model for each output variable.
 
         Parameters
@@ -77,11 +77,10 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Data.
 
         y : (sparse) array-like, shape (n_samples, n_outputs)
-            Multi-output targets. An indicator matrix turns on multilabel
-            estimation.
+            Multi-output targets. 
 
-        classes : array, shape (n_classes, n_outputs)
-            Classes across all calls to partial_fit.
+        classes : list of numpy arrays, shape (n_outputs)
+            each array is unique classes for one output in str/int
             Can be obtained by via
             `[np.unique(y[:, i]) for i in range(y.shape[1])]`, where y is the
             target matrix of the entire dataset.
@@ -106,11 +105,11 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
-                             "multi target regression but has only one.")
+                             "multi-output regression but has only one.")
 
         if (sample_weight is not None and
                 not has_fit_parameter(self.estimator, 'sample_weight')):
-            raise ValueError("Underlying regressor does not support"
+            raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
         first_time = not hasattr(self, 'estimators_')
@@ -119,7 +118,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             delayed(_partial_fit_estimator)(
                 self.estimators_[i] if not first_time else self.estimator,
                 X, y[:, i],
-                classes[:, i] if classes is not None else None,
+                classes[i] if classes is not None else None,
                 sample_weight, first_time) for i in range(y.shape[1]))
         return self
 
@@ -154,7 +153,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
-                             "multi target regression but has only one.")
+                             "multi-output regression but has only one.")
 
         if (sample_weight is not None and
                 not has_fit_parameter(self.estimator, 'sample_weight')):
@@ -218,7 +217,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
 
     def partial_fit(self, X, y, sample_weight=None):
-        """ Fit linear model with Stochastic Gradient Descent..
+        """ Fit the model to data with Stochastic Gradient Descent..
         Fit a separate model for each output variable.
 
         Parameters
@@ -227,8 +226,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
             Data.
 
         y : (sparse) array-like, shape (n_samples, n_outputs)
-            Multi-output targets. An indicator matrix turns on multilabel
-            estimation.
+            Multi-output targets.
 
         sample_weight : array-like, shape = (n_samples) or None
             Sample weights. If None, then samples are equally weighted.
