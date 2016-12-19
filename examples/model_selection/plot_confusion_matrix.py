@@ -24,15 +24,13 @@ using :ref:`grid_search`.
 
 """
 
-print(__doc__)
-
-import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
+from sklearn.plot import plot_heatmap
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -59,29 +57,15 @@ def plot_confusion_matrix(cm, classes,
     """
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
-    else:
-        print('Confusion matrix, without normalization')
 
+    print(title)
     print(cm)
 
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    fmt = '{:.2f}' if normalize else '{:d}'
+    plot_heatmap(cm, xticklabels=classes, yticklabels=classes, cmap=cmap,
+                 xlabel="Predicted label", ylabel="True label", fmt=fmt)
+
     plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    fmt = '.2f' if normalize else 'd'
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], fmt),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
 
 # Compute confusion matrix
 cnf_matrix = confusion_matrix(y_test, y_pred)
