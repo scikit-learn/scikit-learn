@@ -218,7 +218,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         return self
 
-    @if_delegate_has_method(['_first_estimator', 'estimator'])
+    @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
 
@@ -497,7 +497,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.classes_ = np.unique(y)
         if len(self.classes_) == 1:
             raise ValueError("OneVsOneClassifier can not be fit when only one"
-                             "class is present.")
+                             " class is present.")
         n_classes = self.classes_.shape[0]
         estimators_indices = list(zip(*(Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_ovo_binary)
@@ -506,8 +506,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.estimators_ = estimators_indices[0]
         try:
-            self.pairwise_indices_ = estimators_indices[1] \
-                                     if self._pairwise else None
+            self.pairwise_indices_ = (
+                estimators_indices[1] if self._pairwise else None)
         except AttributeError:
             self.pairwise_indices_ = None
 
@@ -553,8 +553,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             n_jobs=self.n_jobs)(
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
-                for estimator, (i, j) in izip(
-                        self.estimators_, (combinations)))
+                for estimator, (i, j) in izip(self.estimators_,
+                                              (combinations)))
 
         self.pairwise_indices_ = None
 

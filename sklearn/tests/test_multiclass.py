@@ -515,6 +515,10 @@ def test_ovo_partial_fit_predict():
     assert_equal(len(ovo1.estimators_), len(np.unique(iris.target)))
     assert_greater(np.mean(iris.target == pred1), 0.65)
 
+    # test partial_fit only exists if estimator has it:
+    ovr = OneVsOneClassifier(SVC())
+    assert_false(hasattr(ovr, "partial_fit"))
+
 
 def test_ovo_decision_function():
     n_samples = iris.data.shape[0]
@@ -613,6 +617,24 @@ def test_ovo_string_y():
     assert_array_equal(y, ovo.predict(X))
 
 
+def test_ovo_one_class():
+    # Test error for OvO with one class
+    X = np.eye(4)
+    y = np.array(['a'] * 4)
+
+    ovo = OneVsOneClassifier(LinearSVC())
+    assert_raise_message(ValueError, "when only one class", ovo.fit, X, y)
+
+
+def test_ovo_float_y():
+    # Test that the OvO errors on float targets
+    X = iris.data
+    y = iris.data[:, 0]
+
+    ovo = OneVsOneClassifier(LinearSVC())
+    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+
+
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
@@ -639,6 +661,15 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ecoc_float_y():
+    # Test that the OCC errors on float targets
+    X = iris.data
+    y = iris.data[:, 0]
+
+    ovo = OutputCodeClassifier(LinearSVC())
+    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
 
 
 def test_pairwise_indices():
