@@ -610,11 +610,16 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Discriminant Analysis
     """
 
-    def __init__(self, priors=None, reg_param=0., store_covariances=False,
-                 tol=1.0e-4):
+    def __init__(self, priors=None, reg_param=0., store_covariance=False,
+                 tol=1.0e-4, store_covariances=False):
+        if store_covariances is not None:
+            warnings.warn("'store_covariances' was renamed to 'store_covariance'"
+                          "in version 0.19 and will be removed in the "
+                          "version 0.21.", DeprecationWarning)
+            store_covariance = store_covariances
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
-        self.store_covariances = store_covariances
+        self.store_covariance = store_covariance
         self.tol = tol
 
     def fit(self, X, y):
@@ -648,7 +653,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        if self.store_covariances:
+        if self.store_covariance:
             cov = []
         means = []
         scalings = []
@@ -668,13 +673,14 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            if self.store_covariances:
+            if self.store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-        if self.store_covariances:
+        if self.store_covariance:
             self.covariances_ = cov
+        
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
         self.rotations_ = rotations
