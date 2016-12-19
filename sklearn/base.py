@@ -317,19 +317,28 @@ class BaseEstimator(object):
                 setattr(self, key, value)
         return self
 
-    def __repr__(self):
-        class_name = self.__class__.__name__
+    def _changed_params(self):
         params = self.get_params(deep=False)
-        # Consider the constructor parameters excluding 'self'
         if _PRINTOPTIONS['parameters'] == 'changed':
             filtered_params = {}
             init_params = signature(self.__init__).parameters
             for k, v in params.items():
                 if v != init_params[k].default:
                     filtered_params[k] = v
-            params = filtered_params
+            return filtered_params
+        return params
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        params = self._changed_params()
         return '%s(%s)' % (class_name, _pprint(params,
                                                offset=len(class_name),),)
+
+    def _repr_html_(self):
+        class_name = self.__class__.__name__
+        params = self._changed_params()
+        return "<b>{}</b>({})".format(class_name, _pprint(
+            params))
 
     def _repr_pretty_(self, p, cycle):
         # for interactive use such as IPython console and notebooks
