@@ -125,7 +125,7 @@ y = np.column_stack((y1, y2, y3))
 n_samples, n_features = X.shape
 n_outputs = y.shape[1]
 n_classes = len(np.unique(y1))
-classes = map(np.unique, (y1, y2, y3))
+classes = list(map(np.unique, (y1, y2, y3)))
 
 
 def test_multi_output_classification_partial_fit():
