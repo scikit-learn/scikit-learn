@@ -6,6 +6,7 @@
 import copy
 import warnings
 from uuid import uuid4
+from collections import Sequence
 
 import numpy as np
 from scipy import sparse
@@ -122,7 +123,7 @@ def clone(estimator, safe=True):
 
 
 ###############################################################################
-def _pprint(params, offset=0, printer=repr):
+def _pprint(params, offset=0, printer=repr, cutoff=500):
     """Pretty print the dictionary 'params'
 
     Parameters
@@ -151,9 +152,9 @@ def _pprint(params, offset=0, printer=repr):
             # architectures and versions.
             this_repr = '%s=%s' % (k, str(v))
         else:
-            # use repr of the rest
+            # use printer of the rest
             this_repr = '%s=%s' % (k, printer(v))
-        if len(this_repr) > 500:
+        if cutoff is not None and len(this_repr) > cutoff:
             this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
             if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
@@ -170,6 +171,16 @@ def _pprint(params, offset=0, printer=repr):
     # Strip trailing space to avoid nightmare in doctests
     lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
     return lines
+
+
+def _html_repr(thing):
+    if hasattr(thing, "_repr_html_"):
+        return thing._repr_html_()
+    elif isinstance(thing, tuple):
+        return "({})".format(", ". join([_html_repr(vv) for vv in thing]))
+    elif isinstance(thing, list):
+        return "[{}]".format(", ". join([_html_repr(vv) for vv in thing]))
+    return repr(thing)
 
 
 ###############################################################################
@@ -319,9 +330,9 @@ class BaseEstimator(object):
 
             </script>""".format(this_id)
         more_params_str = ", <a id='more_params_{0}'>...</a><span id='default_params_{0}'>, {1}</span>".format(
-            this_id, _pprint(default_params))
+            this_id, _pprint(default_params, printer=_html_repr, cutoff=None)) if default_params else ""
         my_repr = "{}<b>{}</b>({}{})".format(js, class_name, _pprint(
-            changed_params), more_params_str if default_params else "")
+            changed_params, printer=_html_repr, cutoff=None), more_params_str)
         if False:
             print_attributes = ['classes_', 'n_outputs_']
             for attr in print_attributes:
