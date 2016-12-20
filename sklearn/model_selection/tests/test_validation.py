@@ -310,7 +310,12 @@ def test_cross_val_score_precomputed():
     score_precomputed = cross_val_score(svm, linear_kernel, y)
     svm = SVC(kernel="linear")
     score_linear = cross_val_score(svm, X, y)
-    assert_array_equal(score_precomputed, score_linear)
+    assert_array_almost_equal(score_precomputed, score_linear)
+
+    # test with callable
+    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
+    score_callable = cross_val_score(svm, X, y)
+    assert_array_almost_equal(score_precomputed, score_callable)
 
     # Error raised for non-square X
     svm = SVC(kernel="precomputed")

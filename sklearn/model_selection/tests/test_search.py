@@ -443,15 +443,6 @@ def test_grid_search_precomputed_kernel_error_nonsquare():
     assert_raises(ValueError, cv.fit, K_train, y_train)
 
 
-def test_grid_search_precomputed_kernel_error_kernel_function():
-    # Test that grid search returns an error when using a kernel_function
-    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
-    kernel_function = lambda x1, x2: np.dot(x1, x2.T)
-    clf = SVC(kernel=kernel_function)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, X_, y_)
-
-
 class BrokenClassifier(BaseEstimator):
     """Broken classifier that cannot be fit twice"""
 
