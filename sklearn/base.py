@@ -5,6 +5,7 @@
 
 import copy
 import warnings
+from uuid import uuid4
 
 import numpy as np
 from scipy import sparse
@@ -287,11 +288,14 @@ class BaseEstimator(object):
     def _changed_params(self):
         params = self.get_params(deep=False)
         filtered_params = {}
+        default_params = {}
         init_params = signature(self.__init__).parameters
         for k, v in params.items():
-            if v != init_params[k].default:
+            if v == init_params[k].default:
+                default_params[k] = v
+            else:
                 filtered_params[k] = v
-        return filtered_params
+        return filtered_params, default_params
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -301,9 +305,23 @@ class BaseEstimator(object):
 
     def _repr_html_(self):
         class_name = self.__class__.__name__
-        params = self._changed_params()
-        my_repr = "<b>{}</b>({})".format(class_name, _pprint(
-            params))
+        changed_params, default_params = self._changed_params()
+        this_id = uuid4()
+        js = """
+            <script type="text/javascript">
+
+            $(document).ready(function(){{
+                $("#default_params_{0}").hide();
+                $("#more_params_{0}").click(function(){{
+                    $("#default_params_{0}").toggle();
+                }});
+            }});
+
+            </script>""".format(this_id)
+        more_params_str = ", <a id='more_params_{0}'>...</a><span id='default_params_{0}'>, {1}</span>".format(
+            this_id, _pprint(default_params))
+        my_repr = "{}<b>{}</b>({}{})".format(js, class_name, _pprint(
+            changed_params), more_params_str if default_params else "")
         if False:
             print_attributes = ['classes_', 'n_outputs_']
             for attr in print_attributes:
