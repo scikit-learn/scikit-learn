@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils.testing import assert_warns
 
 from sklearn.exceptions import NotFittedError
 from sklearn.externals.six.moves import xrange
@@ -238,12 +239,12 @@ def test_lda_preplexity_mismatch():
     lda.fit(X)
     # invalid samples
     invalid_n_samples = rng.randint(4, size=(n_samples + 1, n_topics))
-    assert_raises_regexp(ValueError, r'Number of samples', lda.perplexity, X,
-                         invalid_n_samples)
+    assert_raises_regexp(ValueError, r'Number of samples',
+                         lda._perplexity_precomp_distr, X, invalid_n_samples)
     # invalid topic number
     invalid_n_topics = rng.randint(4, size=(n_samples, n_topics + 1))
-    assert_raises_regexp(ValueError, r'Number of topics', lda.perplexity, X,
-                         invalid_n_topics)
+    assert_raises_regexp(ValueError, r'Number of topics',
+                         lda._perplexity_precomp_distr, X, invalid_n_topics)
 
 
 def test_lda_perplexity():
@@ -257,15 +258,15 @@ def test_lda_perplexity():
         lda_2 = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
                                           learning_method=method,
                                           total_samples=100, random_state=0)
-        distr_1 = lda_1.fit_transform(X)
-        perp_1 = lda_1.perplexity(X, distr_1, sub_sampling=False)
+        lda_1.fit(X)
+        perp_1 = lda_1.perplexity(X, sub_sampling=False)
 
-        distr_2 = lda_2.fit_transform(X)
-        perp_2 = lda_2.perplexity(X, distr_2, sub_sampling=False)
+        lda_2.fit(X)
+        perp_2 = lda_2.perplexity(X, sub_sampling=False)
         assert_greater_equal(perp_1, perp_2)
 
-        perp_1_subsampling = lda_1.perplexity(X, distr_1, sub_sampling=True)
-        perp_2_subsampling = lda_2.perplexity(X, distr_2, sub_sampling=True)
+        perp_1_subsampling = lda_1.perplexity(X, sub_sampling=True)
+        perp_2_subsampling = lda_2.perplexity(X, sub_sampling=True)
         assert_greater_equal(perp_1_subsampling, perp_2_subsampling)
 
 
@@ -295,12 +296,10 @@ def test_perplexity_input_format():
     lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
                                     learning_method='batch',
                                     total_samples=100, random_state=0)
-    distr = lda.fit_transform(X)
+    lda.fit(X)
     perp_1 = lda.perplexity(X)
-    perp_2 = lda.perplexity(X, distr)
-    perp_3 = lda.perplexity(X.toarray(), distr)
+    perp_2 = lda.perplexity(X.toarray())
     assert_almost_equal(perp_1, perp_2)
-    assert_almost_equal(perp_1, perp_3)
 
 
 def test_lda_score_perplexity():
@@ -308,12 +307,43 @@ def test_lda_score_perplexity():
     n_topics, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=10,
                                     random_state=0)
-    distr = lda.fit_transform(X)
-    perplexity_1 = lda.perplexity(X, distr, sub_sampling=False)
+    lda.fit(X)
+    perplexity_1 = lda.perplexity(X, sub_sampling=False)
 
     score = lda.score(X)
     perplexity_2 = np.exp(-1. * (score / np.sum(X.data)))
     assert_almost_equal(perplexity_1, perplexity_2)
+
+
+def test_lda_fit_perplexity():
+    # Test that the perplexity computed during fit is consistent with what is
+    # returned by the perplexity method
+    n_topics, X = _build_sparse_mtx()
+    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
+                                    learning_method='batch', random_state=0,
+                                    evaluate_every=1)
+    lda.fit(X)
+
+    # Perplexity computed at end of fit method
+    perplexity1 = lda.bound_
+
+    # Result of perplexity method on the train set
+    perplexity2 = lda.perplexity(X)
+
+    assert_almost_equal(perplexity1, perplexity2)
+
+
+def test_doc_topic_distr_deprecation():
+    # Test that the appropriate warning message is displayed when a user
+    # attempts to pass the doc_topic_distr argument to the perplexity method
+    n_topics, X = _build_sparse_mtx()
+    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=1,
+                                    learning_method='batch',
+                                    total_samples=100, random_state=0)
+    distr1 = lda.fit_transform(X)
+    distr2 = None
+    assert_warns(DeprecationWarning, lda.perplexity, X, distr1)
+    assert_warns(DeprecationWarning, lda.perplexity, X, distr2)
 
 
 def test_lda_empty_docs():

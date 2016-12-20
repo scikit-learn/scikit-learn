@@ -122,6 +122,11 @@ Bug fixes
      when a numpy array is passed in for weights. :issue:`7983` by
      :user:`Vincent Pham <vincentpham1991>`.
 
+   - Fix a bug in :class:`sklearn.decomposition.LatentDirichletAllocation`
+     where the ``perplexity`` method was returning incorrect results because
+     the ``transform`` method returns normalized document topic distributions
+     as of version 0.18. :issue:`7954` by :user:`Gary Foreman <garyForeman>`.
+     
    - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
@@ -135,6 +140,12 @@ API changes summary
      ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
+     
+   - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
+     in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
+     user no longer has access to the unnormalized document topic distribution
+     needed for the perplexity calculation. :issue:`7954` by
+     :user:`Gary Foreman <garyForeman>`.
 
 .. _changes_0_18_1:
 
