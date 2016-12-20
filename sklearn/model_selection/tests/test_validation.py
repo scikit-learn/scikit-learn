@@ -937,7 +937,7 @@ def test_cross_val_predict_with_method():
         assert_array_almost_equal(expected_predictions, predictions)
 
 
-def test_cross_val_predict_corner_case():
+def test_cross_val_predict_class_subset():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
