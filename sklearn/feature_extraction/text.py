@@ -512,7 +512,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
-    scipy.sparse.coo_matrix.
+    scipy.sparse.csr_matrix.
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
