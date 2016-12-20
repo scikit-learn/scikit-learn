@@ -15,7 +15,6 @@ extends single output estimators to multioutput estimators.
 # License: BSD 3 clause
 
 import numpy as np
-import copy
 
 from abc import ABCMeta
 from .base import BaseEstimator, clone
