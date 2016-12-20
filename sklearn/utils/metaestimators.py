@@ -82,7 +82,15 @@ def if_delegate_has_method(delegate):
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
-    from ..gaussian_process.kernels import Kernel as GPKernel
+
+    # We want to handle kernels but not GPKernels specially.
+    # We only test for GPKernels if the module is pre-loaded:
+    from .. import __name__ as pkg_name
+    import sys
+    if pkg_name + '.gaussian_process.kernels' in sys.modules:
+        from ..gaussian_process.kernels import Kernel as GPKernel
+    else:
+        GPKernel = None
 
     if (hasattr(estimator, 'kernel') and callable(estimator.kernel) and
             not isinstance(estimator.kernel, GPKernel)):
