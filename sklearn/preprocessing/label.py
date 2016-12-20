@@ -492,7 +492,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     if y_type == "multilabel-indicator":
         y_n_classes = y.shape[1] if hasattr(y, 'shape') else len(y[0])
         if classes.size != y_n_classes:
-            raise ValueError("classes {0} missmatch with the labels {1}"
+            raise ValueError("classes {0} mismatch with the labels {1}"
                              "found in the data".format(classes,
                                                         unique_labels(y)))
 

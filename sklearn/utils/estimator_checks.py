@@ -50,7 +50,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from sklearn.datasets import load_iris, load_boston, make_blobs, \
+    make_multilabel_classification
 
 
 BOSTON = None
@@ -120,6 +121,8 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
+    yield check_classifiers_multilabel_representation_invariance
+
     if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
         # TODO some complication with -1 label
             and name not in ["DecisionTreeClassifier",
@@ -1077,6 +1080,36 @@ def check_classifiers_train(name, Classifier):
                 y_log_prob = classifier.predict_log_proba(X)
                 assert_array_almost_equal(y_log_prob, np.log(y_prob), 8)
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
+
+
+def check_classifiers_multilabel_representation_invariance(name, Classifier):
+
+    if name not in MULTI_OUTPUT:
+        raise SkipTest
+
+    X, y = make_multilabel_classification(n_samples=100,
+                                          n_features=20,
+                                          n_classes=5,
+                                          n_labels=3,
+                                          length=50,
+                                          allow_unlabeled=True,
+                                          random_state=0)
+    X_train, y_train = X[:80], y[:80]
+    X_test = X[80:]
+
+    y_train_ll = y_train.tolist()
+    y_train_la = list(y_train)
+
+    classifier = Classifier()
+
+    set_testing_parameters(classifier)
+    set_random_state(classifier)
+
+    y_pred = classifier.fit(X_train, y_train).predict(X_test)
+    y_pred_ll = classifier.fit(X_train, y_train_ll).predict(X_test)
+    y_pred_la = classifier.fit(X_train, y_train_la).predict(X_test)
+    assert_array_equal(y_pred, y_pred_la)
+    assert_array_equal(y_pred, y_pred_ll)
 
 
 @ignore_warnings(category=DeprecationWarning)
