@@ -60,17 +60,15 @@ def test_multi_target_regression_partial_fit():
 def test_multi_target_regression_one_target():
     # Test multi target regression raises
     X, y = datasets.make_regression(n_targets=1)
-    X_train, y_train = X[:50], y[:50]
-    X_test, y_test = X[50:], y[50:]
 
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
-    assert_raises(ValueError, rgr.fit, X_train, y_train)
+    assert_raises(ValueError, rgr.fit, X, y)
 
 
 def test_multi_target_sparse_regression():
     X, y = datasets.make_regression(n_targets=3)
     X_train, y_train = X[:50], y[:50]
-    X_test, y_test = X[50:], y[50:]
+    X_test = X[50:]
 
     for sparse in [sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
                    sp.lil_matrix]:
@@ -131,6 +129,7 @@ def test_multi_target_sample_weights():
     X_test = [[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]
     assert_almost_equal(rgr.predict(X_test), rgr_w.predict(X_test))
 
+
 # Import the data
 iris = datasets.load_iris()
 # create a multiple targets by randomized shuffling and concatenating y.
@@ -175,7 +174,8 @@ def test_multi_output_classification_partial_fit():
 def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    assert_raises_regex(ValueError, "classes must be passed on the first call to partial_fit.",
+    assert_raises_regex(ValueError, "classes must be passed on the first call "
+                                    "to partial_fit.",
                         multi_target_linear.partial_fit, X, y)
 
 
