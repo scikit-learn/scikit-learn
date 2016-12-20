@@ -99,6 +99,9 @@ Enhancements
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
 
+   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
+     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
+
 Bug fixes
 .........
 
