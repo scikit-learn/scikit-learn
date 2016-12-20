@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.base import clone
@@ -97,6 +98,22 @@ def test_multi_target_sample_weights_api():
     rgr.fit(X, y, w)
 
 
+def test_multi_target_sample_weight_partial_fit():
+    # weighted regressor
+    X = [[1, 2, 3], [4, 5, 6]]
+    y = [[3.141, 2.718], [2.718, 3.141]]
+    w = [2., 1.]
+    rgr_w = MultiOutputRegressor(SGDRegressor(random_state=0))
+    rgr_w.partial_fit(X, y, w)
+
+    # weighted with different weights
+    w = [2., 2.]
+    rgr = MultiOutputRegressor(SGDRegressor(random_state=0))
+    rgr.partial_fit(X, y, w)
+
+    assert_not_equal(rgr.predict(X)[0][0], rgr_w.predict(X)[0][0])
+
+
 def test_multi_target_sample_weights():
     # weighted regressor
     Xw = [[1, 2, 3], [4, 5, 6]]
@@ -130,7 +147,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
-    # assert predictions work as expected for predict, prodict_proba and score
+    # assert predictions work as expected for predict
 
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
@@ -144,7 +161,7 @@ def test_multi_output_classification_partial_fit():
     predictions = multi_target_linear.predict(X)
     assert_equal((n_samples, n_outputs), predictions.shape)
 
-    # train the forest with each column and assert that predictions are equal
+    # train the linear classification with each column and assert that predictions are equal
     for i in range(3):
         # create a clone with the same state
         sgd_linear_clf = clone(sgd_linear_clf)
@@ -157,9 +174,8 @@ def test_multi_output_classification_partial_fit():
 def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    with assert_raises(ValueError) as excinfo:
-        multi_target_linear.partial_fit(X, y)
-    assert_equal(str(excinfo.exception), "classes must be passed on the first call to partial_fit.")
+    assert_raises_regex(ValueError, "classes must be passed on the first call to partial_fit.",
+                        multi_target_linear.partial_fit, X, y)
 
 
 def test_multi_output_classification():
