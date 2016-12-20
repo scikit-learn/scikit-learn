@@ -92,6 +92,12 @@ def test_f_regression():
     assert_true((pv[:5] < 0.05).all())
     assert_true((pv[5:] > 1.e-4).all())
 
+    # with centering, compare with sparse
+    F, pv = f_regression(X, y, center=True)
+    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
+    assert_array_almost_equal(F_sparse, F)
+    assert_array_almost_equal(pv_sparse, pv)
+
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
     F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
