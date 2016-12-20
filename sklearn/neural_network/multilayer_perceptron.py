@@ -910,7 +910,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             self.classes_ = self._label_binarizer.classes_
         else:
             classes = unique_labels(y)
-            if np.setdiff1d(classes, self.classes_, assume_unique=True):
+            if np.setdiff1d(classes, self.classes_, assume_unique=True).any():
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
@@ -955,13 +955,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         self : returns a trained MLP model.
         """
-        if getattr(self, 'classes_', None) is not None:
-            num_classes = len(unique_labels(y))
-            if num_classes != len(self.classes_):
-                raise ValueError("The current output has %s unique labels. "
-                                 " Model expected %s unique labels." %
-                                 (num_classes, len(self.classes_)))
-        return self._fit(X, y, incremental=False)
+        if self.warm_start and hasattr(self, "classes_"):
+            incremental = True
+        else:
+            incremental = False
+        return self._fit(X, y, incremental=incremental)
 
     @property
     def partial_fit(self):

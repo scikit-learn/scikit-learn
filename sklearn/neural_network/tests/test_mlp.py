@@ -23,7 +23,8 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings)
+                                   assert_false, ignore_warnings,
+                                   assert_raise_message)
 
 
 np.seterr(all='warn')
@@ -563,7 +564,7 @@ def test_adaptive_learning_rate():
     assert_greater(1e-6, clf._optimizer.learning_rate)
 
 
-def test_warm_class():
+def test_warm_start():
     X = X_iris[:150]
     y = y_iris[:150]
 
@@ -573,28 +574,31 @@ def test_warm_class():
     y_5classes = np.array([0]*30 + [1]*30 + [2]*30 + [3]*30 + [4]*30)
 
     with ignore_warnings(category=Warning):
-        # failed in converting 7th argument `g' of _lbfgsb.setulb to
-        # C/Fortran array
+
+        # Test with 2 unique labels
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
                             warm_start=True)
         clf.fit(X, y)
-        assert_raises(ValueError, clf.fit, X, y_2classes)
+        clf.fit(X, y_2classes)
 
-        # Success
+        # Test with 3 unique labels
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
                             warm_start=True)
         clf.fit(X, y)
         clf.fit(X, y_3classes)
 
-        # ValueError: operands could not be broadcast together with shapes
-        # (150,10) (3) (150,10)
+        # Test with 4 unique labels
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
                             warm_start=True)
         clf.fit(X, y)
-        assert_raises(ValueError, clf.fit, X, y_4classes)
+        message = ("`y` has classes not in `self.classes_`. `self.classes_`"
+                   " has [0 1 2]. 'y' has [0 1 2 3].")
+        assert_raise_message(ValueError, message, clf.fit, X, y_4classes)
 
-        # ValueError: total size of new array must be unchanged
+        # Test with 5 unique labels
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
                             warm_start=True)
         clf.fit(X, y)
-        assert_raises(ValueError, clf.fit, X, y_5classes)
+        message = ("`y` has classes not in `self.classes_`. `self.classes_`"
+                   " has [0 1 2]. 'y' has [0 1 2 3 4].")
+        assert_raise_message(ValueError, message, clf.fit, X, y_5classes)
