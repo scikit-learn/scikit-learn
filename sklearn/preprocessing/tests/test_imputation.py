@@ -2,6 +2,8 @@
 import numpy as np
 from scipy import sparse
 
+from sklearn.base import clone
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -10,6 +12,8 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.imputation import Imputer
+from sklearn.preprocessing.imputation import MissingIndicator
+
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -374,3 +378,45 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
+
+
+def test_missing_indicator():
+    X1 = np.array([
+         [-1,  -1,   1,   3],
+         [4,  -1,   0,  -1],
+         [8,  -1,   1,  0],
+         [0,  -1,   0,  15],
+         [16,  -1,   1,  19]
+    ])
+    X2 = np.array([
+         [5,  1,   -1,   -1],
+         [-1,  -1,   2,  3],
+         [2,  3,   4,  0],
+         [0,  -1,   5,  -1],
+         [11,  -1,   1,  1]
+    ])
+
+    # features = "all":
+    MI = MissingIndicator(missing_values = -1)
+    MI.fit(X1)
+    X2_tr = MI.transform(X2)
+    mask = X2 == -1
+    assert_array_equal(X2_tr, mask)
+
+    # features = "train"
+    MI = clone(MI).set_params(features = "train")
+    MI.fit(X1)
+    X2_tr = MI.transform(X2)
+    features = MI.feat_with_missing_
+    mask = X2[:, features] == -1
+    assert_array_equal(X2_tr, mask)
+
+    # features = [1, 2]
+    features = [1, 2]
+    MI = clone(MI).set_params(features = features)
+    MI.fit(X1)
+    X2_tr = MI.transform(X2)
+    mask = X2[:, features] == -1
+    assert_array_equal(X2_tr, mask)
+
+
