@@ -98,6 +98,12 @@ Enhancements
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
+     
+   - Added type checking to the ``accept_sparse`` parameter in
+     :mod:`sklearn.utils.validation` methods. This parameter now accepts only
+     boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
+     and should be replaced by ``accept_sparse=False``.
+     :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
 
    - :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`
      and :func:`model_selection.cross_val_score` now allow estimators with callable
