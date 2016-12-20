@@ -6,7 +6,6 @@
 import copy
 import warnings
 from uuid import uuid4
-from collections import Sequence
 
 import numpy as np
 from scipy import sparse
@@ -329,8 +328,10 @@ class BaseEstimator(object):
             }});
 
             </script>""".format(this_id)
-        more_params_str = ", <a id='more_params_{0}'>...</a><span id='default_params_{0}'>, {1}</span>".format(
+        more_params_str = "<a id='more_params_{0}'>...</a><span id='default_params_{0}'>, {1}</span>".format(
             this_id, _pprint(default_params, printer=_html_repr, cutoff=None)) if default_params else ""
+        if changed_params:
+            more_params_str = ", " + more_params_str
         my_repr = "{}<b>{}</b>({}{})".format(js, class_name, _pprint(
             changed_params, printer=_html_repr, cutoff=None), more_params_str)
         if False:
