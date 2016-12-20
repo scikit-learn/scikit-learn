@@ -450,7 +450,7 @@ Let's take an example with the following counts. The first term is present
 100% of the time hence not very interesting. The two other features only
 in less than 50% of the time hence probably more representative of the
 content of the documents::
-
+ 
   >>> counts = [[3, 0, 1],
   ...           [2, 0, 0],
   ...           [3, 0, 0],
@@ -460,10 +460,6 @@ content of the documents::
   ...
   >>> tfidf = transformer.fit_transform(counts)
   >>> tfidf                         # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
-  <6x3 sparse matrix of type '<... 'numpy.float64'>'
-      with 9 stored elements in Compressed Sparse ... format>
-
-  >>> tfidf.toarray()                        # doctest: +ELLIPSIS
   array([[ 0.81940995,  0.        ,  0.57320793],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
