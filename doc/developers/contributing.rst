@@ -408,6 +408,11 @@ artifacts using the following formula:
 
 ``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 
+We attempt to assemble a more precise set of changed files in the
+documentation at:
+
+``http://scikit-learn.org/circle?{BUILD_NUMBER}/_changed.html``
+
 Note: When you visit the details page of the CircleCI tests, you can find your
 BUILD_NUMBER mentioned as 'build #' which is different from your pull request
 number, which is presented as 'pull/#'.
