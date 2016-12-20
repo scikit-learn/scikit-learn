@@ -43,8 +43,6 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
                            first_time=True):
     if first_time:
         estimator = clone(estimator)
-    else:
-        estimator = copy.copy(estimator)
 
     if sample_weight is not None:
         if classes is not None:
@@ -68,7 +66,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """ Fit the model to data with Stochastic Gradient Descent.
+        """ Fit the model to data with SGD.
         Fit a separate model for each output variable.
 
         Parameters
@@ -122,7 +120,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
                 sample_weight, first_time) for i in range(y.shape[1]))
         return self
 
-    @if_delegate_has_method('estimator')
     def fit(self, X, y, sample_weight=None):
         """ Fit the model to data.
         Fit a separate model for each output variable.
@@ -147,6 +144,9 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Returns self.
         """
 
+        if not hasattr(self.estimator, "fit"):
+            raise ValueError("The base estimator should implement a fit method")
+
         X, y = check_X_y(X, y,
                          multi_output=True,
                          accept_sparse=True)
@@ -166,7 +166,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             for i in range(y.shape[1]))
         return self
 
-    @if_delegate_has_method('estimator')
     def predict(self, X):
         """Predict multi-output variable using a model
          trained for each target variable.
@@ -183,6 +182,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Note: Separate models are generated for each predictor.
         """
         check_is_fitted(self, 'estimators_')
+        if not hasattr(self.estimator, "predict"):
+            raise ValueError("The base estimator should implement a predict method")
 
         X = check_array(X, accept_sparse=True)
 
@@ -217,7 +218,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
 
     def partial_fit(self, X, y, sample_weight=None):
-        """ Fit the model to data with Stochastic Gradient Descent..
+        """ Fit the model to data with SGD.
         Fit a separate model for each output variable.
 
         Parameters

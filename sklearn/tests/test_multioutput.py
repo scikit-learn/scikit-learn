@@ -161,7 +161,8 @@ def test_multi_output_classification_partial_fit():
     predictions = multi_target_linear.predict(X)
     assert_equal((n_samples, n_outputs), predictions.shape)
 
-    # train the linear classification with each column and assert that predictions are equal
+    # train the linear classification with each column and assert that
+    # predictions are equal
     for i in range(3):
         # create a clone with the same state
         sgd_linear_clf = clone(sgd_linear_clf)
@@ -300,6 +301,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
     assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
+
 
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
