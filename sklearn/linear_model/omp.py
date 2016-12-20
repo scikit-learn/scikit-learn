@@ -577,7 +577,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the formula)
 
     intercept_ : float or array, shape (n_targets,)
@@ -804,7 +804,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     intercept_ : float or array, shape (n_targets,)
         Independent term in decision function.
 
-    coef_ : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the problem formulation).
 
     n_nonzero_coefs_ : int
