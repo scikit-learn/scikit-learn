@@ -577,7 +577,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the formula)
 
     intercept_ : float or array, shape (n_targets,)
