@@ -484,7 +484,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         true_classes = np.unique(y)
         predictions_ = np.zeros((X_test.shape[0], true_classes.shape[0]))
-        if method is 'decision_function' and len(estimator.classes_) == 2:
+        if method == 'decision_function' and len(estimator.classes_) == 2:
             predictions_[:, estimator.classes_[-1]] = predictions
         else:
             predictions_[:, estimator.classes_] = predictions
