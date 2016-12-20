@@ -328,8 +328,12 @@ class BaseEstimator(object):
             }});
 
             </script>""".format(this_id)
-        more_params_str = "<a id='more_params_{0}'>...</a><span id='default_params_{0}'>, {1}</span>".format(
-            this_id, _pprint(default_params, printer=_html_repr, cutoff=None)) if default_params else ""
+        more_params_str = ("<a id='more_params_{0}'>...</a>"
+                           "<span id='default_params_{0}'>, {1}</span>".format(
+                               this_id, _pprint(default_params,
+                                                printer=_html_repr,
+                                                cutoff=None))
+                           if default_params else "")
         if changed_params:
             more_params_str = ", " + more_params_str
         my_repr = "{}<b>{}</b>({}{})".format(js, class_name, _pprint(
