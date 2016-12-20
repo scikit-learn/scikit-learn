@@ -340,10 +340,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     # accept_sparse 'None' deprecation check
     if accept_sparse is None:
         warnings.warn(
-                "Passing 'None' to parameter 'accept_sparse' in methods "
-                "check_array and check_X_y is deprecated in version 0.19 "
-                "and will be removed in 0.21. Use 'accept_sparse=False' "
-                " instead.", DeprecationWarning)
+            "Passing 'None' to parameter 'accept_sparse' in methods "
+            "check_array and check_X_y is deprecated in version 0.19 "
+            "and will be removed in 0.21. Use 'accept_sparse=False' "
+            " instead.", DeprecationWarning)
         accept_sparse = False
 
     # store whether originally we wanted numeric dtype
