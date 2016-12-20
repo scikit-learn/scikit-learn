@@ -27,7 +27,7 @@ __all__ = [
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if value_to_mask == "NaN" or np.isnan(value_to_mask):
+    if value_to_mask is np.nan:
         return np.isnan(X)
     else:
         return X == value_to_mask
@@ -148,22 +148,29 @@ class Imputer(BaseEstimator, TransformerMixin):
             raise ValueError("Can only impute missing values on axis 0 and 1, "
                              " got axis={0}".format(self.axis))
 
+        # Validate missing_values and convert from "NaN" to np.nan
+        if (isinstance(self.missing_values, six.string_types) and
+                self.missing_values == "NaN"):
+            missing_values = np.nan
+        else:
+            missing_values = self.missing_values
+
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
         if self.axis == 0:
             X = check_array(X, accept_sparse='csc', dtype=np.float64,
-                            force_all_finite=False)
+                            allow_nan=True, force_all_finite=True)
 
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
-                                                    self.missing_values,
+                                                    missing_values,
                                                     self.axis)
             else:
                 self.statistics_ = self._dense_fit(X,
                                                    self.strategy,
-                                                   self.missing_values,
+                                                   missing_values,
                                                    self.axis)
 
         return self
@@ -250,7 +257,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
-        X = check_array(X, force_all_finite=False)
+        X = check_array(X, allow_nan=True, force_all_finite=True)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
@@ -307,10 +314,18 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
+        # Validate missing_values and convert from "NaN" to np.nan
+        if (isinstance(self.missing_values, six.string_types) and
+                self.missing_values == "NaN"):
+            missing_values = np.nan
+        else:
+            missing_values = self.missing_values
+
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
+                            allow_nan=True, force_all_finite=True,
+                            copy=self.copy)
             statistics = self.statistics_
             if X.shape[1] != statistics.shape[0]:
                 raise ValueError("X has %d features per sample, expected %d"
@@ -321,18 +336,19 @@ class Imputer(BaseEstimator, TransformerMixin):
         # when the imputation is done per sample
         else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
+                            allow_nan=True, force_all_finite=True,
+                            copy=self.copy)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
                                               self.strategy,
-                                              self.missing_values,
+                                              missing_values,
                                               self.axis)
 
             else:
                 statistics = self._dense_fit(X,
                                              self.strategy,
-                                             self.missing_values,
+                                             missing_values,
                                              self.axis)
 
         # Delete the invalid rows/columns
@@ -352,8 +368,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                              "missing values: %s" % missing)
 
         # Do actual imputation
-        if sparse.issparse(X) and self.missing_values != 0:
-            mask = _get_mask(X.data, self.missing_values)
+        if sparse.issparse(X) and missing_values != 0:
+            mask = _get_mask(X.data, missing_values)
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
@@ -363,7 +379,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 X = X.toarray()
 
-            mask = _get_mask(X, self.missing_values)
+            mask = _get_mask(X, missing_values)
             n_missing = np.sum(mask, axis=self.axis)
             values = np.repeat(valid_statistics, n_missing)
 
