@@ -18,6 +18,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
+from sklearn.datasets import make_multilabel_classification
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -501,6 +502,22 @@ def test_kneighbors_classifier_sparse(n_samples=40,
             X_eps = sparsev(X[:n_test_pts] + epsilon)
             y_pred = knn.predict(X_eps)
             assert_array_equal(y_pred, y[:n_test_pts])
+
+
+def test_kneighbors_classifier_sparse_multilabel_y():
+    X, y = make_multilabel_classification(random_state=0, n_samples=100)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = neighbors.KNeighborsClassifier(n_neighbors=3)
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    y_sparse = csr_matrix(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_sparse,
+                                                        random_state=0)
+    clf.fit(X_train, y_train)
+    y_sparse_pred = clf.predict(X_test)
+    assert_array_almost_equal(y_pred, y_sparse_pred.toarray())
 
 
 def test_KNeighborsClassifier_multioutput():

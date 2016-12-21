@@ -9,6 +9,7 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
+from scipy.sparse import csc_matrix
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
@@ -166,6 +167,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
+
+        if(self.issparse_):
+            y_pred = csc_matrix(y_pred)
 
         return y_pred
 
@@ -374,7 +378,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             else:
                 mode = np.array([weighted_mode(pl, w)[0]
                                  for (pl, w)
-                                 in zip(pred_labels[inliers], weights[inliers])],
+                                 in zip(pred_labels[inliers],
+                                 weights[inliers])],
                                 dtype=np.int)
 
             mode = mode.ravel()
