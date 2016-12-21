@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import scipy.sparse as sp
 from sklearn.utils import shuffle
 from sklearn.utils.testing import assert_almost_equal
@@ -155,33 +156,38 @@ def test_multiclass_multioutput_estimator():
 
 
 def test_multiclass_multioutput_estimator_predict_proba():
+    seed = 542
+
     # make test deterministic
-    rng = np.random.RandomState(123456)
+    rng = np.random.RandomState(seed)
 
     # random features
     X = rng.normal(size=(5, 5))
 
     # random labels
-    Y = np.concatenate([
-            rng.choice(['a', 'b'], (5, 1)),      # first column, 2 values
-            rng.choice(['d', 'e', 'f'], (5, 1))  # second column, 3 values
-        ], axis=1)
+    random.seed(seed)
+    y1 = (np.array([random.choice(['a', 'b']) for _ in range(5)])
+            .reshape(5, 1))
+    y2 = (np.array([random.choice(['d', 'e', 'f']) for _ in range(5)])
+            .reshape(5, 1))
 
-    clf = MultiOutputClassifier(LogisticRegression())
+    Y = np.concatenate([y1, y2], axis=1)
+
+    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
 
     clf.fit(X, Y)
 
     y_result = clf.predict_proba(X)
-    y_actual = [np.array([[0.73996937, 0.26003063],
-                          [0.11147269, 0.88852731],
-                          [0.16569063, 0.83430937],
-                          [0.20739375, 0.79260625],
-                          [0.33812811, 0.66187189]]),
-                np.array([[0.71126319, 0.13434051, 0.1543963],
-                          [0.15217478, 0.17881813, 0.66900709],
-                          [0.11890199, 0.52362368, 0.35747432],
-                          [0.14928393, 0.28032183, 0.57039424],
-                          [0.63719488, 0.15286739, 0.20993773]])]
+    y_actual = [np.array([[0.23481764, 0.76518236],
+                          [0.67196072, 0.32803928],
+                          [0.54681448, 0.45318552],
+                          [0.34883923, 0.65116077],
+                          [0.73687069, 0.26312931]]),
+                np.array([[0.5171785, 0.23878628, 0.24403522],
+                          [0.22141451, 0.64102704, 0.13755846],
+                          [0.16751315, 0.18256843, 0.64991843],
+                          [0.27357372, 0.55201592, 0.17441036],
+                          [0.65745193, 0.26062899, 0.08191907]])]
 
     for i in range(len(y_actual)):
         assert_almost_equal(y_result[i], y_actual[i])
