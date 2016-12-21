@@ -3,6 +3,7 @@ import scipy.sparse as sp
 from sklearn.utils import shuffle
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -142,6 +143,17 @@ n_samples, n_features = X.shape
 n_outputs = y.shape[1]
 n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
+
+
+def test_multi_output_classification_partial_fit_parallelism():
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
+    mor = MultiOutputClassifier(sgd_linear_clf)
+    mor.partial_fit(X, y, classes)
+    est1 = mor.estimators_[0]
+    mor.partial_fit(X, y)
+    est2 = mor.estimators_[0]
+    # parallelism requires this to be the case for a sane implementation
+    assert_false(est1 is est2)
 
 
 def test_multi_output_classification_partial_fit():

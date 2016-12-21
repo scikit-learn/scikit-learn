@@ -15,6 +15,7 @@ extends single output estimators to multioutput estimators.
 # License: BSD 3 clause
 
 import numpy as np
+import copy
 
 from abc import ABCMeta
 from .base import BaseEstimator, clone
@@ -42,6 +43,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
                            first_time=True):
     if first_time:
         estimator = clone(estimator)
+    else:
+        estimator = copy.deepcopy(estimator)
 
     if sample_weight is not None:
         if classes is not None:
