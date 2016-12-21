@@ -49,7 +49,7 @@ def set_config(assume_finite=None):
 
 
 @_contextmanager
-def config_context(**kwargs):
+def config_context(**new_config):
     """Context manager for global scikit-learn configuration
 
     Parameters
@@ -62,8 +62,8 @@ def config_context(**kwargs):
 
     Notes
     -----
-    Only settings that are set by this context manager will be returned to
-    previous values when the context manager is exited. This is not
+    All settings, not just those presently modified, will be returned to
+    their previous values when the context manager is exited. This is not
     thread-safe.
 
     Examples
@@ -80,14 +80,13 @@ def config_context(**kwargs):
     ...
     ValueError: Input contains NaN, ...
     """
-    config = get_config().copy()
-    set_config(**kwargs)
+    old_config = get_config().copy()
+    set_config(**new_config)
 
     try:
         yield
     finally:
-        set_config(**{k: config[k] for k, v in kwargs.items()
-                      if v is not None})
+        set_config(**old_config)
 
 
 # Make sure that DeprecationWarning within this package always gets printed
