@@ -978,26 +978,6 @@ cdef class HaversineDistance(DistanceMetric):
     .. math::
        D(x, y) = 2\arcsin[\sqrt{\sin^2((x1 - y1) / 2)
                                 + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
-
-    Example:
-    >>> # Find distance in kilometers between two points on earth.
-    >>> # using common lat/lon input in degrees
-    >>> # Point A: The Museum of Natural History NYC
-    >>> latlon1_deg = np.array([[40.780874, -73.972932]])
-    >>> # Point B: Grand Central Station NYC
-    >>> latlon2_deg = np.array([[40.752186, -73.977641]])
-    >>> # Convert to radians
-    >>> latlon1_rad = np.deg2rad(latlon1_deg)
-    >>> latlon2_rad = np.deg2rad(latlon2_deg)
-    >>> # Get the haversine metric
-    >>> import sklearn.neighbors
-    >>> haversine = sklearn.neighbors.DistanceMetric.get_metric('haversine')
-    >>> dist_ = haversine.pairwise(latlon1_rad, latlon2_rad)
-    >>> # Convert to kilometers
-    >>> EARTH_RADIUS_KM = 6367.0
-    >>> dist_km = dist_ * EARTH_RADIUS_KM
-    >>> print('dist_km = %.4f kilometers' % (dist_km[0, 0],))
-    >>> dist_km = 3.2125 kilometers
     """
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
