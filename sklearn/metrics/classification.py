@@ -481,10 +481,9 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 
-    .. [3] `Jurman, Riccadonna, and Furlanello. (2012). A Comparison of MCC and
-            CEN Error Measures in Multi-Class Prediction
-        <http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`
-
+    .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
+        K-category correlation coefficient
+        <http://www.sciencedirect.com/science/article/pii/S1476927104000799>`_
 
     Examples
     --------
@@ -503,33 +502,17 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     if y_type == "multiclass":
         C = confusion_matrix(y_pred, y_true, sample_weight=sample_weight)
         N = len(C)
-        mcc_numer = ((np.diag(C)[:, np.newaxis, np.newaxis] * C).sum() -
-                     (C[np.newaxis, :, :] * C[:, :, np.newaxis]).sum())
-        mcc_denom_part1 = np.sum([
+        cov_ytyp = ((np.diag(C)[:, np.newaxis, np.newaxis] * C).sum() -
+                    (C[np.newaxis, :, :] * C[:, :, np.newaxis]).sum())
+        cov_ytyt = np.sum([
             (C[:, k].sum() * (C[:, :k].sum() + C[:, k + 1:].sum()))
             for k in range(N)
         ])
-        mcc_denom_part2 = np.sum([
+        cov_ypyp = np.sum([
             (C[k, :].sum() * (C[:k, :].sum() + C[k + 1:, :].sum()))
             for k in range(N)
         ])
-        mcc_denom = np.sqrt(mcc_denom_part1 * mcc_denom_part2)
-        mcc = mcc_numer / mcc_denom
-        # Equivalent to:
-        # mcc_numer = sum([
-        #     C[k, k] * C[m, l] - C[l, k] * C[k, m]
-        #     for k in range(N) for m in range(N) for l in range(N)
-        # ])
-        # mcc_denom_part1 = sum([
-        #     C[:, k].sum() *
-        #     np.sum([C[g, f] for f in range(N) for g in range(N) if f != k])
-        #     for k in range(N)
-        # ])
-        # mcc_denom_part2 = np.sum([
-        #     C[k, :].sum() *
-        #     np.sum([C[f, g] for f in range(N) for g in range(N) if f != k])
-        #     for k in range(N)
-        # ])
+        mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
     elif y_type == "binary":
         mean_yt = np.average(y_true, weights=sample_weight)
         mean_yp = np.average(y_pred, weights=sample_weight)
