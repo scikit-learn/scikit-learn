@@ -290,27 +290,25 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     cdef SIZE_t node_count = tree.node_count
 
     cdef SIZE_t stack_capacity = node_count * 2
-    cdef Node **node_stack
     cdef double[::1] weight_stack = np_ones((stack_capacity,), dtype=np_float64)
     cdef SIZE_t stack_size = 1
     cdef double left_sample_frac
     cdef double current_weight
     cdef double total_weight = 0.0
     cdef Node *current_node
-    underlying_stack = np_zeros((stack_capacity,), dtype=np.intp)
-    node_stack = <Node **>(<np.ndarray> underlying_stack).data
+    cdef SIZE_t[::1] node_stack = np_zeros((stack_capacity,), dtype=np.intp)
 
     for i in range(X.shape[0]):
         # init stacks for new example
         stack_size = 1
-        node_stack[0] = root_node
+        node_stack[0] = 0
         weight_stack[0] = 1.0
         total_weight = 0.0
 
         while stack_size > 0:
             # get top node on stack
             stack_size -= 1
-            current_node = node_stack[stack_size]
+            current_node = root_node + node_stack[stack_size]
 
             if current_node.left_child == TREE_LEAF:
                 out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
@@ -324,19 +322,17 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                     # push left or right child on stack
                     if X[i, feature_index] <= current_node.split_value.threshold:
                         # left
-                        node_stack[stack_size] = (root_node +
-                                                  current_node.left_child)
+                        node_stack[stack_size] = current_node.left_child
                     else:
                         # right
-                        node_stack[stack_size] = (root_node +
-                                                  current_node.right_child)
+                        node_stack[stack_size] = current_node.right_child
                     stack_size += 1
                 else:
                     # split feature in complement set
                     # push both children onto stack
 
                     # push left child
-                    node_stack[stack_size] = root_node + current_node.left_child
+                    node_stack[stack_size] = current_node.left_child
                     current_weight = weight_stack[stack_size]
                     left_sample_frac = root_node[current_node.left_child].n_node_samples / \
                                        <double>current_node.n_node_samples
@@ -351,7 +347,7 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                     stack_size +=1
 
                     # push right child
-                    node_stack[stack_size] = root_node + current_node.right_child
+                    node_stack[stack_size] = current_node.right_child
                     weight_stack[stack_size] = current_weight * \
                                                (1.0 - left_sample_frac)
                     stack_size +=1
