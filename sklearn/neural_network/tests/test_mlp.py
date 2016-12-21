@@ -568,10 +568,10 @@ def test_warm_start():
     X = X_iris[:150]
     y = y_iris[:150]
 
-    y_2classes = np.array([0]*75 + [1]*75)
-    y_3classes = np.array([0]*50 + [1]*50 + [2]*50)
-    y_4classes = np.array([0]*37 + [1]*37 + [2]*38 + [3]*38)
-    y_5classes = np.array([0]*30 + [1]*30 + [2]*30 + [3]*30 + [4]*30)
+    y_2classes = np.array([0] * 75 + [1] * 75)
+    y_3classes = np.array([0] * 50 + [1] * 50 + [2] * 50)
+    y_4classes = np.array([0] * 37 + [1] * 37 + [2] * 38 + [3] * 38)
+    y_5classes = np.array([0] * 30 + [1] * 30 + [2] * 30 + [3] * 30 + [4] * 30)
 
     with ignore_warnings(category=Warning):
 
