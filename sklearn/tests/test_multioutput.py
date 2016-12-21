@@ -10,7 +10,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import Lasso, LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
@@ -118,9 +118,12 @@ def test_multi_output_classification():
     assert_equal((n_samples, n_outputs), predictions.shape)
 
     predict_proba = multi_target_forest.predict_proba(X)
-    assert_equal((n_samples, n_classes, n_outputs), predict_proba.shape)
 
-    assert_array_equal(np.argmax(predict_proba, axis=1), predictions)
+    assert len(predict_proba) == n_outputs
+    for class_probabilities in predict_proba:
+        assert_equal((n_samples, n_classes), class_probabilities.shape)
+
+    assert_array_equal(np.argmax(np.dstack(predict_proba), axis=1), predictions)
 
     # train the forest with each column and assert that predictions are equal
     for i in range(3):
@@ -128,7 +131,7 @@ def test_multi_output_classification():
         forest_.fit(X, y[:, i])
         assert_equal(list(forest_.predict(X)), list(predictions[:, i]))
         assert_array_equal(list(forest_.predict_proba(X)),
-                           list(predict_proba[:, :, i]))
+                           list(predict_proba[i]))
 
 
 def test_multiclass_multioutput_estimator():
@@ -148,6 +151,39 @@ def test_multiclass_multioutput_estimator():
         multi_class_svc_.fit(X, y[:, i])
         assert_equal(list(multi_class_svc_.predict(X)),
                      list(predictions[:, i]))
+
+
+def test_multiclass_multioutput_estimator_predict_proba():
+    # make test deterministic
+    rs = np.random.RandomState(123456)
+
+    # random features
+    X = rs.normal(size=(5, 5))
+
+    # random labels
+    Y = np.concatenate([
+            rs.choice(['a', 'b'], (5, 1)),      # first column, 2 values
+            rs.choice(['d', 'e', 'f'], (5, 1))  # second column, 3 values
+        ], axis=1)
+
+    clf = MultiOutputClassifier(LogisticRegression())
+
+    clf.fit(X, Y)
+
+    y_result = clf.predict_proba(X)
+    y_actual = [np.array([[0.73996937, 0.26003063],
+                          [0.11147269, 0.88852731],
+                          [0.16569063, 0.83430937],
+                          [0.20739375, 0.79260625],
+                          [0.33812811, 0.66187189]]),
+                np.array([[0.71126319, 0.13434051, 0.1543963],
+                          [0.15217478, 0.17881813, 0.66900709],
+                          [0.11890199, 0.52362368, 0.35747432],
+                          [0.14928393, 0.28032183, 0.57039424],
+                          [0.63719488, 0.15286739, 0.20993773]])]
+
+    for i in range(len(y_actual)):
+        assert_almost_equal(y_result[i], y_actual[i])
 
 
 def test_multi_output_classification_sample_weights():
