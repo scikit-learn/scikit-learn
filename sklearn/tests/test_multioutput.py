@@ -1,5 +1,4 @@
 import numpy as np
-import random
 import scipy.sparse as sp
 from sklearn.utils import shuffle
 from sklearn.utils.testing import assert_almost_equal
@@ -165,11 +164,8 @@ def test_multiclass_multioutput_estimator_predict_proba():
     X = rng.normal(size=(5, 5))
 
     # random labels
-    random.seed(seed)
-    y1 = (np.array([random.choice(['a', 'b']) for _ in range(5)])
-            .reshape(5, 1))
-    y2 = (np.array([random.choice(['d', 'e', 'f']) for _ in range(5)])
-            .reshape(5, 1))
+    y1 = np.array(['b', 'a', 'a', 'b', 'a']).reshape(5, 1)  # 2 classes
+    y2 = np.array(['d', 'e', 'f', 'e', 'd']).reshape(5, 1)  # 3 classes
 
     Y = np.concatenate([y1, y2], axis=1)
 
