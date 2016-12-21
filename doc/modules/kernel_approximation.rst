@@ -154,7 +154,8 @@ same sampling method as :class:`AdditiveChi2Sampler`. Refer to
 
 The approximate feature map provided by :class:`IntersectionSampler` can be
 combined with the approximate feature map provided by :class:`RBFSampler` to
-yield an approximate feature map for the exponentiated intersection kernel.
+yield an approximate feature map for the laplacian kernel (since the squared
+distance corresponding to the intersection kernel is Manhattan distance).
 
 .. _jensen_shannon_kernel_approx:
 
@@ -170,8 +171,8 @@ The Jensen-Shannon kernel as used here is given by
 
 .. math::
 
-        k(x, y) = \sum_i \frac{x_i}{2} \mathrm{log}_2 \frac{x_i+y_i}{x_i}
-					   + \frac{y_i}{2} \mathrm{log}_2 \frac{x_i+y_i}{y_i}
+        k(x, y) = \frac{1}{2}\sum_i x_i\mathrm{log}_2 \frac{x_i+y_i}{x_i}
+                                  + y_i\mathrm{log}_2 \frac{x_i+y_i}{y_i}
 
 Similar to the additive chi squared kernel, the Jensen-Shannon kernel is
 additive and homogenous, thus, the class :class:`JensenShannonSampler`
