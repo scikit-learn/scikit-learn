@@ -446,7 +446,8 @@ def test_matthews_corrcoef_multiclass():
     y_pred = [0, 0, 1, 2]
     sample_weight = [1, 1, 0, 0]
     mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true, y_pred, sample_weight)
+                               matthews_corrcoef, y_true, y_pred,
+                               sample_weight)
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
