@@ -220,7 +220,7 @@ METRIC_UNDEFINED_BINARY = [
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
     "matthews_corrcoef_score",
-    "balanced_accuracy_score"
+    "balanced_accuracy_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
