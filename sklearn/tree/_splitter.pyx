@@ -1007,7 +1007,7 @@ cdef class BaseSparseSplitter(Splitter):
                                          end_negative, start_positive)
 
 
-cdef int compare_SIZE_t(const void* a, const void* b) nogil except *:
+cdef int compare_SIZE_t(const void* a, const void* b) nogil:
     """Comparison function for sort."""
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
 
