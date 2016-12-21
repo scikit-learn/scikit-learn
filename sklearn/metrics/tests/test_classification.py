@@ -408,13 +408,13 @@ def test_matthews_corrcoef_multiclass():
     assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
 
     # with multiclass > 2 it is not possible to achieve -1
-    y_true     = [0, 0, 1, 1, 2, 2]
+    y_true = [0, 0, 1, 1, 2, 2]
     y_pred_bad = [2, 2, 0, 0, 1, 1]
     assert_almost_equal(matthews_corrcoef(y_true, y_pred_bad), -.5)
 
     # Maximizing false positives and negatives minimizes the MCC
     # The minimum will be different for depending on the input
-    y_true     = [0, 0, 1, 1, 2, 2]
+    y_true = [0, 0, 1, 1, 2, 2]
     y_pred_min = [1, 1, 0, 0, 0, 0]
     assert_almost_equal(matthews_corrcoef(y_true, y_pred_min), -0.6123724)
 
