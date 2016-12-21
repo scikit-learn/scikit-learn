@@ -9,7 +9,7 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_matrix, hstack
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
@@ -156,20 +156,36 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
 
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+
+        if self._issparse:
+            y_pred_sparse = []
+
         for k, classes_k in enumerate(classes_):
-            if weights is None:
-                mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
+
+            if self._issparse and self.outputs_2d_:
+                if weights is None:
+                    mode, _ = stats.mode(_y[neigh_ind, k].toarray(), axis=1)
+                else:
+                    mode, _ = weighted_mode(_y[neigh_ind, k].toarray(),
+                                            weights, axis=1)
             else:
-                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
+                if weights is None:
+                    mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
+                else:
+                    mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
             mode = np.asarray(mode.ravel(), dtype=np.intp)
             y_pred[:, k] = classes_k.take(mode)
+            if self._issparse:
+                y_pred_sparse.append(csc_matrix(y_pred[:, k]).T)
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
-        if(self._issparse):
+        if self._issparse:
             y_pred = csc_matrix(y_pred)
+            y_pred_sparse = hstack(y_pred_sparse)
+            y_pred = y_pred_sparse
 
         return y_pred
 

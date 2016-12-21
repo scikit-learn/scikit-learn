@@ -775,14 +775,20 @@ class SupervisedIntegerMixin(object):
         check_classification_targets(y)
 
         self._issparse = issparse(y)
-        if(issparse(y) and self.outputs_2d_):
-            y = y.toarray()
 
         self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
+        if self._issparse and self.outputs_2d_:
+            self._y = y
+            for k in range(self._y.shape[1]):
+                classes = np.array([0, 1], dtype=np.int)
+                self.classes_.append(classes)
+
+        else:
+            self._y = np.empty(y.shape, dtype=np.int)
+            for k in range(self._y.shape[1]):
+                classes, self._y[:, k] = np.unique(y[:, k],
+                                                   return_inverse=True)
+                self.classes_.append(classes)
 
         if not self.outputs_2d_:
             self.classes_ = self.classes_[0]
