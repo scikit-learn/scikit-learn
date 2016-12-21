@@ -76,7 +76,7 @@ cdef class Stack:
     cdef SIZE_t top
     cdef StackRecord* stack_
 
-    cdef bint is_empty(self) nogil
+    cdef bint is_empty(self) nogil except *
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
                   SIZE_t n_constant_features) nogil except *
@@ -126,9 +126,9 @@ cdef class WeightedPQueue:
     cdef SIZE_t array_ptr
     cdef WeightedPQueueRecord* array_
 
-    cdef bint is_empty(self) nogil
-    cdef void reset(self) nogil
-    cdef SIZE_t size(self) nogil
+    cdef bint is_empty(self) nogil except *
+    cdef void reset(self) nogil except *
+    cdef SIZE_t size(self) nogil except *
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except *
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil except *
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except *
