@@ -579,7 +579,9 @@ def test_warm_start():
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
                             warm_start=True)
         clf.fit(X, y)
-        clf.fit(X, y_2classes)
+        message = ("`y` has classes not in `self.classes_`. `self.classes_`"
+                   " has [0 1 2]. 'y' has [0 1].")
+        assert_raise_message(ValueError, message, clf.fit, X, y_2classes)
 
         # Test with 3 unique labels
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',

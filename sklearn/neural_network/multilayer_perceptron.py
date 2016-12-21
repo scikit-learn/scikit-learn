@@ -908,9 +908,15 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
+        elif self.warm_start:
+            classes = unique_labels(y)
+            if set(classes) != set(self.classes_):
+                raise ValueError("`y` has classes not in `self.classes_`."
+                                 " `self.classes_` has %s. 'y' has %s." %
+                                 (self.classes_, classes))
         else:
             classes = unique_labels(y)
-            if np.setdiff1d(classes, self.classes_, assume_unique=True).any():
+            if np.setdiff1d(classes, self.classes_, assume_unique=True):
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
