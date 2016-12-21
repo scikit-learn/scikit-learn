@@ -209,7 +209,7 @@ cdef class Splitter:
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
 
     cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
+                         SIZE_t* n_constant_features) nogil except *:
         """Find the best split on node samples[start:end].
 
         This is a placeholder method. The majority of computation will be done
@@ -218,12 +218,12 @@ cdef class Splitter:
 
         pass
 
-    cdef void node_value(self, double* dest) nogil:
+    cdef void node_value(self, double* dest) nogil except *:
         """Copy the value of node samples[start:end] into dest."""
 
         self.criterion.node_value(dest)
 
-    cdef double node_impurity(self) nogil:
+    cdef double node_impurity(self) nogil except *:
         """Return the impurity of the current node."""
 
         return self.criterion.node_impurity()
@@ -296,7 +296,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.presort), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
+                         SIZE_t* n_constant_features) nogil except *:
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -513,18 +513,19 @@ cdef class BestSplitter(BaseDenseSplitter):
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
-cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil except *:
     cdef int maxd = 2 * <int>log(n)
     introsort(Xf, samples, n, maxd)
 
 
-cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples, SIZE_t i, SIZE_t j) nogil:
+cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples,
+                      SIZE_t i, SIZE_t j) nogil except *:
     # Helper for sort
     Xf[i], Xf[j] = Xf[j], Xf[i]
     samples[i], samples[j] = samples[j], samples[i]
 
 
-cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil:
+cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil except *:
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
     cdef DTYPE_t a = Xf[0], b = Xf[n / 2], c = Xf[n - 1]
@@ -546,7 +547,8 @@ cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil:
 
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
-cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil:
+cdef void introsort(DTYPE_t* Xf, SIZE_t *samples,
+                    SIZE_t n, int maxd) nogil except *:
     cdef DTYPE_t pivot
     cdef SIZE_t i, l, r
 
@@ -579,7 +581,7 @@ cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil:
 
 
 cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
-                           SIZE_t start, SIZE_t end) nogil:
+                           SIZE_t start, SIZE_t end) nogil except *:
     # Restore heap order in Xf[start:end] by moving the max element to start.
     cdef SIZE_t child, maxind, root
 
@@ -601,7 +603,7 @@ cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
             root = maxind
 
 
-cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil except *:
     cdef SIZE_t start, end
 
     # heapify
@@ -632,7 +634,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                                  self.presort), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
+                         SIZE_t* n_constant_features) nogil except *:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
@@ -906,7 +908,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     cdef inline SIZE_t _partition(self, double threshold,
                                   SIZE_t end_negative, SIZE_t start_positive,
-                                  SIZE_t zero_pos) nogil:
+                                  SIZE_t zero_pos) nogil except *:
         """Partition samples[start:end] based on threshold."""
 
         cdef double value
@@ -944,7 +946,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     cdef inline void extract_nnz(self, SIZE_t feature,
                                  SIZE_t* end_negative, SIZE_t* start_positive,
-                                 bint* is_samples_sorted) nogil:
+                                 bint* is_samples_sorted) nogil except *:
         """Extract and partition values for a given feature.
 
         The extracted values are partitioned between negative values
@@ -1005,7 +1007,7 @@ cdef class BaseSparseSplitter(Splitter):
                                          end_negative, start_positive)
 
 
-cdef int compare_SIZE_t(const void* a, const void* b) nogil:
+cdef int compare_SIZE_t(const void* a, const void* b) nogil except *:
     """Comparison function for sort."""
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
 
@@ -1013,7 +1015,7 @@ cdef int compare_SIZE_t(const void* a, const void* b) nogil:
 cdef inline void binary_search(INT32_t* sorted_array,
                                INT32_t start, INT32_t end,
                                SIZE_t value, SIZE_t* index,
-                               INT32_t* new_start) nogil:
+                               INT32_t* new_start) nogil except *:
     """Return the index of value in the sorted array.
 
     If not found, return -1. new_start is the last pivot + 1
@@ -1045,7 +1047,7 @@ cdef inline void extract_nnz_index_to_samples(INT32_t* X_indices,
                                               SIZE_t* index_to_samples,
                                               DTYPE_t* Xf,
                                               SIZE_t* end_negative,
-                                              SIZE_t* start_positive) nogil:
+                                              SIZE_t* start_positive) nogil except *:
     """Extract and partition values for a feature using index_to_samples.
 
     Complexity is O(indptr_end - indptr_start).
@@ -1087,7 +1089,7 @@ cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
                                            SIZE_t* end_negative,
                                            SIZE_t* start_positive,
                                            SIZE_t* sorted_samples,
-                                           bint* is_samples_sorted) nogil:
+                                           bint* is_samples_sorted) nogil except *:
     """Extract and partition values for a given feature using binary search.
 
     If n_samples = end - start and n_indices = indptr_end - indptr_start,
@@ -1148,7 +1150,7 @@ cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
 
 
 cdef inline void sparse_swap(SIZE_t* index_to_samples, SIZE_t* samples,
-                             SIZE_t pos_1, SIZE_t pos_2) nogil  :
+                             SIZE_t pos_1, SIZE_t pos_2) nogil except *:
     """Swap sample pos_1 and pos_2 preserving sparse invariant."""
     samples[pos_1], samples[pos_2] =  samples[pos_2], samples[pos_1]
     index_to_samples[samples[pos_1]] = pos_1
@@ -1167,7 +1169,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                      self.presort), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
+                         SIZE_t* n_constant_features) nogil except *:
         """Find the best split on node samples[start:end], using sparse
            features.
         """
@@ -1394,7 +1396,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                        self.presort), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil:
+                         SIZE_t* n_constant_features) nogil except *:
         """Find a random split on node samples[start:end], using sparse
            features.
         """

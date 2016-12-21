@@ -55,13 +55,13 @@ cdef class Criterion:
     # Methods
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil
-    cdef void reset(self) nogil
-    cdef void reverse_reset(self) nogil
-    cdef void update(self, SIZE_t new_pos) nogil
-    cdef double node_impurity(self) nogil
+                   SIZE_t end) nogil except *
+    cdef void reset(self) nogil except *
+    cdef void reverse_reset(self) nogil except *
+    cdef void update(self, SIZE_t new_pos) nogil except *
+    cdef double node_impurity(self) nogil except *
     cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil
-    cdef void node_value(self, double* dest) nogil
-    cdef double impurity_improvement(self, double impurity) nogil
-    cdef double proxy_impurity_improvement(self) nogil
+                                double* impurity_right) nogil except *
+    cdef void node_value(self, double* dest) nogil except *
+    cdef double impurity_improvement(self, double impurity) nogil except *
+    cdef double proxy_impurity_improvement(self) nogil except *

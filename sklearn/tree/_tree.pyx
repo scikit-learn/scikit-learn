@@ -91,12 +91,12 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray X_idx_sorted=None) except *:
         """Build a decision tree from the training set (X, y)."""
         pass
 
     cdef inline _check_input(self, object X, np.ndarray y,
-                             np.ndarray sample_weight):
+                             np.ndarray sample_weight) except *:
         """Check input dtype, layout and format"""
         if issparse(X):
             X = X.tocsc()
@@ -141,7 +141,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray X_idx_sorted=None) except *:
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -272,7 +272,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 # Best first builder ----------------------------------------------------------
 
 cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
-                                 PriorityHeap frontier) nogil:
+                                 PriorityHeap frontier) nogil except *:
     """Adds record ``rec`` to the priority queue ``frontier``; returns -1
     on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
@@ -291,7 +291,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
                   SIZE_t max_depth, SIZE_t max_leaf_nodes,
-                  double min_impurity_split):
+                  double min_impurity_split) except *:
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -417,7 +417,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
-                                    PriorityHeapRecord* res) nogil:
+                                    PriorityHeapRecord* res) nogil except *:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
@@ -665,7 +665,7 @@ cdef class Tree:
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
-    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil:
+    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except *:
         """Guts of _resize. Returns 0 for success, -1 for error."""
         if capacity == self.capacity and self.nodes != NULL:
             return 0
@@ -702,7 +702,8 @@ cdef class Tree:
 
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples, double weighted_n_node_samples) nogil:
+                          SIZE_t n_node_samples,
+                          double weighted_n_node_samples) nogil except *:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -756,7 +757,7 @@ cdef class Tree:
         else:
             return self._apply_dense(X)
 
-    cdef inline np.ndarray _apply_dense(self, object X):
+    cdef inline np.ndarray _apply_dense(self, object X) except *:
         """Finds the terminal region (=leaf node) for each sample in X."""
 
         # Check input
@@ -798,7 +799,7 @@ cdef class Tree:
 
         return out
 
-    cdef inline np.ndarray _apply_sparse_csr(self, object X):
+    cdef inline np.ndarray _apply_sparse_csr(self, object X) except *:
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
@@ -880,7 +881,7 @@ cdef class Tree:
         else:
             return self._decision_path_dense(X)
 
-    cdef inline object _decision_path_dense(self, object X):
+    cdef inline object _decision_path_dense(self, object X) except *:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
@@ -940,7 +941,7 @@ cdef class Tree:
 
         return out
 
-    cdef inline object _decision_path_sparse_csr(self, object X):
+    cdef inline object _decision_path_sparse_csr(self, object X) except *:
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
@@ -1071,7 +1072,7 @@ cdef class Tree:
 
         return importances
 
-    cdef np.ndarray _get_value_ndarray(self):
+    cdef np.ndarray _get_value_ndarray(self) except *:
         """Wraps value as a 3-d NumPy array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -1087,7 +1088,7 @@ cdef class Tree:
         arr.base = <PyObject*> self
         return arr
 
-    cdef np.ndarray _get_node_ndarray(self):
+    cdef np.ndarray _get_node_ndarray(self) except *:
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying

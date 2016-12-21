@@ -55,7 +55,7 @@ def _realloc_test():
 
 # rand_r replacement using a 32bit XorShift generator
 # See http://www.jstatsoft.org/v08/i14/paper for details
-cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
+cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil except *:
     seed[0] ^= <UINT32_t>(seed[0] << 13)
     seed[0] ^= <UINT32_t>(seed[0] >> 17)
     seed[0] ^= <UINT32_t>(seed[0] << 5)
@@ -63,7 +63,7 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
 
 
-cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
+cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size) except *:
     """Return copied data as 1D numpy array of intp's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
@@ -71,19 +71,19 @@ cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
 
 
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
-                            UINT32_t* random_state) nogil:
+                            UINT32_t* random_state) nogil except *:
     """Generate a random integer in [0; end)."""
     return low + our_rand_r(random_state) % (high - low)
 
 
 cdef inline double rand_uniform(double low, double high,
-                                UINT32_t* random_state) nogil:
+                                UINT32_t* random_state) nogil except *:
     """Generate a random double in [low; high)."""
     return ((high - low) * <double> our_rand_r(random_state) /
             <double> RAND_R_MAX) + low
 
 
-cdef inline double log(double x) nogil:
+cdef inline double log(double x) nogil except *:
     return ln(x) / ln(2.0)
 
 
@@ -117,12 +117,12 @@ cdef class Stack:
     def __dealloc__(self):
         free(self.stack_)
 
-    cdef bint is_empty(self) nogil:
+    cdef bint is_empty(self) nogil except *:
         return self.top <= 0
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil:
+                  SIZE_t n_constant_features) nogil except *:
         """Push a new element onto the stack.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -153,7 +153,7 @@ cdef class Stack:
         self.top = top + 1
         return 0
 
-    cdef int pop(self, StackRecord* res) nogil:
+    cdef int pop(self, StackRecord* res) nogil except *:
         """Remove the top element from the stack and copy to ``res``.
 
         Returns 0 if pop was successful (and ``res`` is set); -1
@@ -175,7 +175,7 @@ cdef class Stack:
 # PriorityHeap data structure
 # =============================================================================
 
-cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
+cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil except *:
     """Restore heap invariant parent.improvement > child.improvement from
        ``pos`` upwards. """
     if pos == 0:
@@ -189,7 +189,7 @@ cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
 
 
 cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos,
-                       SIZE_t heap_length) nogil:
+                       SIZE_t heap_length) nogil except *:
     """Restore heap invariant parent.improvement > children.improvement from
        ``pos`` downwards. """
     cdef SIZE_t left_pos = 2 * (pos + 1) - 1
@@ -239,13 +239,13 @@ cdef class PriorityHeap:
     def __dealloc__(self):
         free(self.heap_)
 
-    cdef bint is_empty(self) nogil:
+    cdef bint is_empty(self) nogil except *:
         return self.heap_ptr <= 0
 
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right) nogil:
+                  double impurity_right) nogil except *:
         """Push record on the priority heap.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -284,7 +284,7 @@ cdef class PriorityHeap:
         self.heap_ptr = heap_ptr + 1
         return 0
 
-    cdef int pop(self, PriorityHeapRecord* res) nogil:
+    cdef int pop(self, PriorityHeapRecord* res) nogil except *:
         """Remove max element from the heap. """
         cdef SIZE_t heap_ptr = self.heap_ptr
         cdef PriorityHeapRecord* heap = self.heap_
@@ -340,18 +340,18 @@ cdef class WeightedPQueue:
     def __dealloc__(self):
         free(self.array_)
 
-    cdef void reset(self) nogil:
+    cdef void reset(self) nogil except *:
         """Reset the WeightedPQueue to its state at construction"""
         self.array_ptr = 0
         safe_realloc(&self.array_, self.capacity)
 
-    cdef bint is_empty(self) nogil:
+    cdef bint is_empty(self) nogil except *:
         return self.array_ptr <= 0
 
-    cdef SIZE_t size(self) nogil:
+    cdef SIZE_t size(self) nogil except *:
         return self.array_ptr
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except *:
         """Push record on the array.
         Returns 0 if successful; -1 on out of memory error.
         """
@@ -380,7 +380,7 @@ cdef class WeightedPQueue:
         self.array_ptr = array_ptr + 1
         return 0
 
-    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil:
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil except *:
         """Remove a specific value/weight record from the array.
         Returns 0 if successful, -1 if record not found."""
         cdef SIZE_t array_ptr = self.array_ptr
@@ -408,7 +408,7 @@ cdef class WeightedPQueue:
         self.array_ptr = array_ptr - 1
         return 0
 
-    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except *:
         """Remove the top (minimum) element from array.
         Returns 0 if successful, -1 if nothing to remove."""
         cdef SIZE_t array_ptr = self.array_ptr
@@ -429,7 +429,7 @@ cdef class WeightedPQueue:
         self.array_ptr = array_ptr - 1
         return 0
 
-    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
+    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except *:
         """Write the top element from array to a pointer.
         Returns 0 if successful, -1 if nothing to write."""
         cdef WeightedPQueueRecord* array = self.array_
@@ -440,7 +440,7 @@ cdef class WeightedPQueue:
         weight[0] = array[0].weight
         return 0
 
-    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil:
+    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil except *:
         """Given an index between [0,self.current_capacity], access
         the appropriate heap and return the requested weight"""
         cdef WeightedPQueueRecord* array = self.array_
@@ -448,7 +448,7 @@ cdef class WeightedPQueue:
         # get weight at index
         return array[index].weight
 
-    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil:
+    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil except *:
         """Given an index between [0,self.current_capacity], access
         the appropriate heap and return the requested value"""
         cdef WeightedPQueueRecord* array = self.array_
@@ -501,19 +501,19 @@ cdef class WeightedMedianCalculator:
         self.k = 0
         self.sum_w_0_k = 0
 
-    cdef SIZE_t size(self) nogil:
+    cdef SIZE_t size(self) nogil except *:
         """Return the number of samples in the
         WeightedMedianCalculator"""
         return self.samples.size()
 
-    cdef void reset(self) nogil:
+    cdef void reset(self) nogil except *:
         """Reset the WeightedMedianCalculator to its state at construction"""
         self.samples.reset()
         self.total_weight = 0
         self.k = 0
         self.sum_w_0_k = 0
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except *:
         """Push a value and its associated weight
         to the WeightedMedianCalculator to be considered
         in the median calculation.
@@ -528,9 +528,9 @@ cdef class WeightedMedianCalculator:
                                                 original_median)
         return return_value
 
-    cdef int update_median_parameters_post_push(self, DOUBLE_t data,
-                                                DOUBLE_t weight,
-                                                DOUBLE_t original_median) nogil:
+    cdef int update_median_parameters_post_push(
+            self, DOUBLE_t data, DOUBLE_t weight,
+            DOUBLE_t original_median) nogil except *:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after an insertion"""
 
@@ -570,7 +570,7 @@ cdef class WeightedMedianCalculator:
                 self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
             return 0
 
-    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil:
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil except *:
         """Remove a value from the MedianHeap, removing it
         from consideration in the median calculation
         """
@@ -585,7 +585,7 @@ cdef class WeightedMedianCalculator:
                                                   original_median)
         return return_value
 
-    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except *:
         """Pop a value from the MedianHeap, starting from the
         left and moving to the right.
         """
@@ -605,9 +605,9 @@ cdef class WeightedMedianCalculator:
                                                   original_median)
         return return_value
 
-    cdef int update_median_parameters_post_remove(self, DOUBLE_t data,
-                                                  DOUBLE_t weight,
-                                                  double original_median) nogil:
+    cdef int update_median_parameters_post_remove(
+            self, DOUBLE_t data, DOUBLE_t weight,
+            double original_median) nogil except *:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
         # reset parameters because it there are no elements
@@ -655,7 +655,7 @@ cdef class WeightedMedianCalculator:
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
             return 0
 
-    cdef DOUBLE_t get_median(self) nogil:
+    cdef DOUBLE_t get_median(self) nogil except *:
         """Write the median to a pointer, taking into account
         sample weights."""
         if self.sum_w_0_k == (self.total_weight / 2.0):
