@@ -19,7 +19,6 @@
 from cpython cimport Py_INCREF, PyObject
 
 from libc.stdlib cimport free
-from libc.stdlib cimport realloc
 from libc.string cimport memcpy
 from libc.string cimport memset
 
@@ -676,16 +675,8 @@ cdef class Tree:
             else:
                 capacity = 2 * self.capacity
 
-        # XXX no safe_realloc here because we need to grab the GIL
-        cdef void* ptr = realloc(self.nodes, capacity * sizeof(Node))
-        if ptr == NULL:
-            return -1
-        self.nodes = <Node*> ptr
-        ptr = realloc(self.value,
-                      capacity * self.value_stride * sizeof(double))
-        if ptr == NULL:
-            return -1
-        self.value = <double*> ptr
+        safe_realloc(&self.nodes, capacity)
+        safe_realloc(&self.value, capacity)
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
