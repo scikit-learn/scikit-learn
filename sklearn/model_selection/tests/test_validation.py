@@ -936,33 +936,44 @@ def test_cross_val_predict_with_method():
                                         cv=kfold)
         assert_array_almost_equal(expected_predictions, predictions)
 
+        # Test alternative representations of y
+        predictions_y1 = cross_val_predict(est, X, y+1, method=method,
+                                           cv=kfold)
+        assert_array_equal(predictions, predictions_y1)
+
+        predictions_y2 = cross_val_predict(est, X, y-2, method=method,
+                                           cv=kfold)
+        assert_array_equal(predictions, predictions_y2)
+
+        predictions_ystr = cross_val_predict(est, X, y.astype('U'),
+                                             method=method, cv=kfold)
+        assert_array_equal(predictions, predictions_ystr)
+
 
 def test_cross_val_predict_class_subset():
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X, y = shuffle(X, y, random_state=0)
-    classes = len(set(y))
 
-    # Modifies the dataset so that in a particular fold, produced by
-    # kfold.split, the training set is composed of only 2 classes instead of 3
-    y[:50] = 0
-    y[50:100] = 1
-    X[:100], y[:100] = shuffle(X[:100], y[:100], random_state=0)
+    X = np.arange(8).reshape(4, 2)
+    y = np.array([0, 0, 1, 2])
+    classes = 3
 
-    kfold = KFold(len(iris.target))
+    kfold3 = KFold(n_splits=3)
+    kfold4 = KFold(n_splits=4)
 
-    methods = ['predict_proba', 'predict_log_proba']
+    le = LabelEncoder()
+
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
         est = LogisticRegression()
-
-        predictions = cross_val_predict(est, X, y, method=method)
-        assert_equal(len(predictions), len(y))
 
         expected_predictions = np.zeros([len(y), classes])
         func = getattr(est, method)
 
+        # Test with n_splits=3
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold3)
+
         # Naive loop (should be same as cross_val_predict):
-        for train, test in kfold.split(X, y):
+        for train, test in kfold3.split(X, y):
             est.fit(X[train], y[train])
             expected_predictions_ = func(X[test])
             # To avoid 2 dimensional indexing
@@ -973,63 +984,15 @@ def test_cross_val_predict_class_subset():
                 exp_pred_test[:, est.classes_] = expected_predictions_
             expected_predictions[test] = exp_pred_test
 
-        predictions = cross_val_predict(est, X, y, method=method,
-                                        cv=kfold)
         assert_array_almost_equal(expected_predictions, predictions)
 
-
-def test_cross_val_predict_different_label_types():
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X, y = shuffle(X, y, random_state=0)
-    classes = len(set(y))
-
-    # unordered integer labels
-    y_ = np.empty(y.shape)
-    for i, c in zip(range(3), [-1, 4, 6]):
-        y_[np.where(y == i)] = c
-
-    # Modifies the dataset so that in a particular fold, produced by
-    # kfold.split, the training set is composed of only 2 classes instead of 3
-    y_[:50] = -1
-    y_[50:100] = 4
-    X[:100], y_[:100] = shuffle(X[:100], y_[:100], random_state=0)
-
-    # string labels
-    y_str = np.empty(y.shape, dtype=object)
-    for i, c in zip(range(3), iris.target_names):
-        y_str[np.where(y == i)] = c
-
-    # Modifies the dataset so that in a particular fold, produced by
-    # kfold.split, the training set is composed of only 2 classes instead of 3
-    y_str[:50] = iris.target_names[0]
-    y_str[50:100] = iris.target_names[1]
-    X[:100], y_str[:100] = shuffle(X[:100], y_str[:100], random_state=0)
-
-    kfold = KFold(classes)
-
-    le = LabelEncoder()
-    est = LogisticRegression()
-
-    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
-    for method in methods:
-
-        # Testing labels as unordered integers
-        predictions = cross_val_predict(est, X, y_, method=method)
-        assert_equal(len(predictions), len(y_))
-
-        predictions = cross_val_predict(est, X, y_, method=method,
-                                        cv=kfold)
-
-        expected_predictions = np.zeros([len(y_), classes])
-        func = getattr(est, method)
-
-        # Transforming the class labels for passing to the estimator
-        y_ = le.fit_transform(y_)
+        # Test with n_splits=4
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold4)
 
         # Naive loop (should be same as cross_val_predict):
-        for train, test in kfold.split(X, y_):
-            est.fit(X[train], y_[train])
+        for train, test in kfold4.split(X, y):
+            est.fit(X[train], y[train])
             expected_predictions_ = func(X[test])
             # To avoid 2 dimensional indexing
             exp_pred_test = np.zeros((len(test), classes))
@@ -1041,22 +1004,16 @@ def test_cross_val_predict_different_label_types():
 
         assert_array_almost_equal(expected_predictions, predictions)
 
-        # Testing labels as strings
-        predictions = cross_val_predict(est, X, y_str, method=method)
-        assert_equal(len(predictions), len(y_str))
+        # Testing unordered labels
+        y = [1, 1, -4, 6]
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold3)
 
-        predictions = cross_val_predict(est, X, y_str, method=method,
-                                        cv=kfold)
-
-        expected_predictions = np.zeros([len(y_str), classes])
-        func = getattr(est, method)
-
-        # Transforming the class labels for passing to the estimator
-        y_str = le.fit_transform(y_str)
+        y = le.fit_transform(y)
 
         # Naive loop (should be same as cross_val_predict):
-        for train, test in kfold.split(X, y_str):
-            est.fit(X[train], y_str[train])
+        for train, test in kfold3.split(X, y):
+            est.fit(X[train], y[train])
             expected_predictions_ = func(X[test])
             # To avoid 2 dimensional indexing
             exp_pred_test = np.zeros((len(test), classes))
