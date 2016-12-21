@@ -398,6 +398,60 @@ def test_matthews_corrcoef():
                   matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.)
 
 
+def test_matthews_corrcoef_multiclass():
+    rng = np.random.RandomState(0)
+    ord_a = ord('a')
+    n_classes = 4
+    y_true = [chr(ord_a + i) for i in rng.randint(0, n_classes, size=20)]
+
+    # corrcoef of same vectors must be 1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
+
+    # with multiclass > 2 it is not possible to achieve -1
+    y_true     = [0, 0, 1, 1, 2, 2]
+    y_pred_bad = [2, 2, 0, 0, 1, 1]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred_bad), -.5)
+
+    # Maximizing false positives and negatives minimizes the MCC
+    # The minimum will be different for depending on the input
+    y_true     = [0, 0, 1, 1, 2, 2]
+    y_pred_min = [1, 1, 0, 0, 0, 0]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred_min), -0.6123724)
+
+    # Zero variance will result in an mcc of zero and a Runtime Warning
+    y_true = [0, 1, 2]
+    y_pred = [3, 3, 3]
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, y_true, y_pred)
+    assert_almost_equal(mcc, 0.0)
+
+    # These two weighted vectors have 0 correlation and hence mcc should be 0
+    y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
+    y_2 = [1, 1, 1, 2, 2, 2, 0, 0, 0]
+    np.cov(y_1, y_2)
+    assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.)
+
+    # We can test that binary assumptions hold using the multiclass computation
+    # by masking the weight of samples not in the first two classes
+
+    # Masking the last label should let us get an MCC of -1
+    y_true = [0, 0, 1, 1, 2]
+    y_pred = [1, 1, 0, 0, 2]
+    sample_weight = [1, 1, 1, 1, 0]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred, sample_weight), -1)
+
+    # For the zero vector case, the corrcoef cannot be calculated and should
+    # result in a RuntimeWarning
+    y_true = [0, 0, 1, 2]
+    y_pred = [0, 0, 1, 2]
+    sample_weight = [1, 1, 0, 0]
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, y_true, y_pred, sample_weight)
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
+
+
 def test_precision_recall_f1_score_multiclass():
     # Test Precision Recall and F1 Score for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)

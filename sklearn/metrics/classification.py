@@ -438,16 +438,16 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
-    """Compute the Matthews correlation coefficient (MCC) for binary classes
+    """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
-    measure of the quality of binary (two-class) classifications. It takes into
-    account true and false positives and negatives and is generally regarded as
-    a balanced measure which can be used even if the classes are of very
-    different sizes. The MCC is in essence a correlation coefficient value
-    between -1 and +1. A coefficient of +1 represents a perfect prediction, 0
-    an average random prediction and -1 an inverse prediction.  The statistic
-    is also known as the phi coefficient. [source: Wikipedia]
+    measure of the quality classifications.  It takes into account true and
+    false positives and negatives and is generally regarded as a balanced
+    measure which can be used even if the classes are of very different sizes.
+    The MCC is in essence a correlation coefficient value between -1 and +1. A
+    coefficient of +1 represents a perfect prediction, 0 an average random
+    prediction and -1 an inverse prediction.  The statistic is also known as
+    the phi coefficient. [source: Wikipedia]
 
     Only in the binary case does this relate to information about true and
     false positives and negatives. See references below.
@@ -481,6 +481,11 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 
+    .. [3] `Jurman, Riccadonna, and Furlanello. (2012). A Comparison of MCC and
+            CEN Error Measures in Multi-Class Prediction
+        <http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`
+
+
     Examples
     --------
     >>> from sklearn.metrics import matthews_corrcoef
@@ -488,28 +493,57 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
     -0.33...
-
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-
-    if y_type != "binary":
-        raise ValueError("%s is not supported" % y_type)
-
     lb = LabelEncoder()
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
-    mean_yt = np.average(y_true, weights=sample_weight)
-    mean_yp = np.average(y_pred, weights=sample_weight)
 
-    y_true_u_cent = y_true - mean_yt
-    y_pred_u_cent = y_pred - mean_yp
+    if y_type == "multiclass":
+        C = confusion_matrix(y_pred, y_true, sample_weight=sample_weight)
+        N = len(C)
+        mcc_numer = ((np.diag(C)[:, np.newaxis, np.newaxis] * C).sum() -
+                     (C[np.newaxis, :, :] * C[:, :, np.newaxis]).sum())
+        mcc_denom_part1 = np.sum([
+            (C[:, k].sum() * (C[:, :k].sum() + C[:, k + 1:].sum()))
+            for k in range(N)
+        ])
+        mcc_denom_part2 = np.sum([
+            (C[k, :].sum() * (C[:k, :].sum() + C[k + 1:, :].sum()))
+            for k in range(N)
+        ])
+        mcc_denom = np.sqrt(mcc_denom_part1 * mcc_denom_part2)
+        mcc = mcc_numer / mcc_denom
+        # Equivalent to:
+        # mcc_numer = sum([
+        #     C[k, k] * C[m, l] - C[l, k] * C[k, m]
+        #     for k in range(N) for m in range(N) for l in range(N)
+        # ])
+        # mcc_denom_part1 = sum([
+        #     C[:, k].sum() *
+        #     np.sum([C[g, f] for f in range(N) for g in range(N) if f != k])
+        #     for k in range(N)
+        # ])
+        # mcc_denom_part2 = np.sum([
+        #     C[k, :].sum() *
+        #     np.sum([C[f, g] for f in range(N) for g in range(N) if f != k])
+        #     for k in range(N)
+        # ])
+    elif y_type == "binary":
+        mean_yt = np.average(y_true, weights=sample_weight)
+        mean_yp = np.average(y_pred, weights=sample_weight)
 
-    cov_ytyp = np.average(y_true_u_cent * y_pred_u_cent, weights=sample_weight)
-    var_yt = np.average(y_true_u_cent ** 2, weights=sample_weight)
-    var_yp = np.average(y_pred_u_cent ** 2, weights=sample_weight)
+        y_true_u_cent = y_true - mean_yt
+        y_pred_u_cent = y_pred - mean_yp
 
-    mcc = cov_ytyp / np.sqrt(var_yt * var_yp)
+        cov_ytyp = np.average(y_true_u_cent * y_pred_u_cent, weights=sample_weight)
+        var_yt = np.average(y_true_u_cent ** 2, weights=sample_weight)
+        var_yp = np.average(y_pred_u_cent ** 2, weights=sample_weight)
+
+        mcc = cov_ytyp / np.sqrt(var_yt * var_yp)
+    else:
+        raise ValueError("%s is not supported" % y_type)
 
     if np.isnan(mcc):
         return 0.
