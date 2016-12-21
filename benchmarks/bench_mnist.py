@@ -62,7 +62,7 @@ memory = Memory(os.path.join(get_data_home(), 'mnist_benchmark_data'),
 def load_data(dtype=np.float32, order='F'):
     """Load the data, then cache and memmap the train/test split"""
     ######################################################################
-    ## Load dataset
+    # Load dataset
     print("Loading dataset...")
     data = fetch_mldata('MNIST original')
     X = check_array(data['data'], dtype=dtype, order=order)
@@ -71,7 +71,7 @@ def load_data(dtype=np.float32, order='F'):
     # Normalize features
     X = X / 255
 
-    ## Create train-test split (as [Joachims, 2006])
+    # Create train-test split (as [Joachims, 2006])
     print("Creating train-test split...")
     n_train = 60000
     X_train = X[:n_train]

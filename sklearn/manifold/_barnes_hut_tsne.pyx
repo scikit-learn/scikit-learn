@@ -195,7 +195,7 @@ cdef inline void index2offset(int* offset, int index, int n_dimensions) nogil:
     # Quite likely there's a fancy bitshift way of doing this
     # since the offset is equivalent to the binary representation
     # of the integer index
-    # We read the the offset array left-to-right 
+    # We read the offset array left-to-right
     # such that the least significat bit is on the right
     cdef int rem, k, shift
     for k in range(n_dimensions):
@@ -212,7 +212,7 @@ cdef inline void index2offset(int* offset, int index, int n_dimensions) nogil:
 
 cdef inline int offset2index(int* offset, int n_dimensions) nogil:
     # Calculate the 1:1 index for a given offset array
-    # We read the the offset array right-to-left
+    # We read the offset array right-to-left
     # such that the least significat bit is on the right
     cdef int dim
     cdef int index = 0

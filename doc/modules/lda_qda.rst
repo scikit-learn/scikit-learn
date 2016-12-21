@@ -17,7 +17,7 @@ These classifiers are attractive because they have closed-form solutions that
 can be easily computed, are inherently multiclass, have proven to work well in
 practice and have no hyperparameters to tune.
 
-.. |ldaqda| image:: ../auto_examples/classification/images/plot_lda_qda_001.png
+.. |ldaqda| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_qda_001.png
         :target: ../auto_examples/classification/plot_lda_qda.html
         :scale: 80
 
@@ -31,7 +31,7 @@ flexible.
 
 .. topic:: Examples:
 
-    :ref:`example_classification_plot_lda_qda.py`: Comparison of LDA and QDA
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`: Comparison of LDA and QDA
     on synthetic data.
 
 Dimensionality reduction using Linear Discriminant Analysis
@@ -41,7 +41,7 @@ Dimensionality reduction using Linear Discriminant Analysis
 perform supervised dimensionality reduction, by projecting the input data to a
 linear subspace consisting of the directions which maximize the separation
 between classes (in a precise sense discussed in the mathematics section
-below). The dimension of the output is necessarily less that the number of
+below). The dimension of the output is necessarily less than the number of
 classes, so this is a in general a rather strong dimensionality reduction, and
 only makes senses in a multiclass setting.
 
@@ -54,7 +54,7 @@ This parameter has no influence on
 
 .. topic:: Examples:
 
-    :ref:`example_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA
+    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA
     for dimensionality reduction of the Iris dataset
 
 Mathematical formulation of the LDA and QDA classifiers
@@ -83,7 +83,7 @@ matrices, or by a regularized estimator: see the section on shrinkage below).
 
 In the case of LDA, the Gaussians for each class are assumed to share the same
 covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
-linear decision surfaces between, as can be seen by comparing the the
+linear decision surfaces between, as can be seen by comparing the
 log-probability ratios :math:`\log[P(y=k | X) / P(y=l | X)]`:
 
 .. math::
@@ -96,7 +96,7 @@ In the case of QDA, there are no assumptions on the covariance matrices
 .. note:: **Relation with Gaussian Naive Bayes**
 
 	  If in the QDA model one assumes that the covariance matrices are diagonal,
-	  then this means that we assume the classes are conditionally independent,
+	  then the inputs are assumed to be conditionally independent in each class,
 	  and the resulting classifier is equivalent to the Gaussian Naive Bayes
 	  classifier :class:`naive_bayes.GaussianNB`.
 
@@ -148,7 +148,7 @@ an estimate for the covariance matrix). Setting this parameter to a value
 between these two extrema will estimate a shrunk version of the covariance
 matrix.
 
-.. |shrinkage| image:: ../auto_examples/classification/images/plot_lda_001.png
+.. |shrinkage| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_001.png
         :target: ../auto_examples/classification/plot_lda.html
         :scale: 75
 
@@ -174,7 +174,7 @@ a high number of features.
 
 .. topic:: Examples:
 
-    :ref:`example_classification_plot_lda.py`: Comparison of LDA classifiers
+    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
     with and without shrinkage.
 
 .. topic:: References:

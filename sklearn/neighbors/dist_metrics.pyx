@@ -130,7 +130,7 @@ cdef class DistanceMetric:
     --------------  --------------------  --------  -------------------------------
     "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
-    "chebyshev"     ChebyshevDistance     -         ``sum(max(|x - y|))``
+    "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
     "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
     "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
@@ -177,7 +177,7 @@ cdef class DistanceMetric:
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "maching"          MatchingDistance         NNEQ / N
+    "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
@@ -499,7 +499,7 @@ cdef class ManhattanDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # Chebyshev Distance
-#  d = max_i(abs(x_i), abs(y_i))
+#  d = max_i(abs(x_i - y_i))
 cdef class ChebyshevDistance(DistanceMetric):
     """Chebyshev/Infinity Distance
 
@@ -1091,17 +1091,6 @@ cdef class PyFuncDistance(DistanceMetric):
     """
     def __init__(self, func, **kwargs):
         self.func = func
-        x = np.random.random(10)
-        try:
-            d = self.func(x, x, **kwargs)
-        except TypeError:
-            raise ValueError("func must be a callable taking two arrays")
-
-        try:
-            d = float(d)
-        except TypeError:
-            raise ValueError("func must return a float")
-
         self.kwargs = kwargs
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
@@ -1111,7 +1100,15 @@ cdef class PyFuncDistance(DistanceMetric):
         with gil:
             x1arr = _buffer_to_ndarray(x1, size)
             x2arr = _buffer_to_ndarray(x2, size)
-            return self.func(x1arr, x2arr, **self.kwargs)
+            d = self.func(x1arr, x2arr, **self.kwargs)
+            try:
+                # Cython generates code here that results in a TypeError
+                # if d is the wrong type.
+                return d
+            except TypeError:
+                raise TypeError("Custom distance function must accept two "
+                                "vectors and return a float.")
+            
 
 
 cdef inline double fmax(double a, double b) nogil:

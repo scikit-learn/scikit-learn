@@ -59,7 +59,7 @@ faster to predict.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be
-smoothed out by increasing the number of CV iterations ``n_iter`` at the
+smoothed out by increasing the number of CV iterations ``n_splits`` at the
 expense of compute time. Increasing the value number of ``C_range`` and
 ``gamma_range`` steps will increase the resolution of the hyper-parameter heat
 map.
@@ -128,7 +128,7 @@ X_2d = scaler.fit_transform(X_2d)
 C_range = np.logspace(-2, 10, 13)
 gamma_range = np.logspace(-9, 3, 13)
 param_grid = dict(gamma=gamma_range, C=C_range)
-cv = StratifiedShuffleSplit(n_iter=5, test_size=0.2, random_state=42)
+cv = StratifiedShuffleSplit(n_splits=5, test_size=0.2, random_state=42)
 grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
 grid.fit(X, y)
 
@@ -171,11 +171,8 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     plt.yticks(())
     plt.axis('tight')
 
-# plot the scores of the grid
-# grid_scores_ contains parameter settings and scores
-# We extract just the scores
-scores = [x[1] for x in grid.grid_scores_]
-scores = np.array(scores).reshape(len(C_range), len(gamma_range))
+scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
+                                                     len(gamma_range))
 
 # Draw heatmap of the validation accuracy as a function of gamma and C
 #

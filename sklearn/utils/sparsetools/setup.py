@@ -7,15 +7,13 @@ def configuration(parent_package='', top_path=None):
     config = Configuration('sparsetools', parent_package, top_path)
 
     config.add_extension('_traversal',
-                         sources=['_traversal.c'],
-                         include_dirs=[numpy.get_include()],
-                         #libraries=libraries
-                         )
+                         sources=['_traversal.pyx'],
+                         include_dirs=[numpy.get_include()])
     config.add_extension('_graph_tools',
-                         sources=['_graph_tools.c'],
-                         include_dirs=[numpy.get_include()],
-                         #libraries=libraries
-                         )
+                         sources=['_graph_tools.pyx'],
+                         include_dirs=[numpy.get_include()])
+
+    config.add_subpackage('tests')
 
     return config
 

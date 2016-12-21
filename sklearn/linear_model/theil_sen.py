@@ -102,7 +102,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     spatial_median : array, shape = [n_features]
         Spatial median.
 
-    n_iter: int
+    n_iter : int
         Number of iterations needed.
 
     References
@@ -276,7 +276,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
-      http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf
+      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,

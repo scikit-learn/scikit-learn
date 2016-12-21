@@ -12,6 +12,7 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .utils import check_random_state
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
+from .utils.validation import check_is_fitted
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
@@ -168,8 +169,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples] or [n_samples, n_outputs]
             Predicted target values for X.
         """
-        if not hasattr(self, "classes_"):
-            raise ValueError("DummyClassifier not fitted.")
+        check_is_fitted(self, 'classes_')
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         # numpy random_state expects Python int and not long as size argument
@@ -249,8 +249,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             the model, where classes are ordered arithmetically, for each
             output.
         """
-        if not hasattr(self, "classes_"):
-            raise ValueError("DummyClassifier not fitted.")
+        check_is_fitted(self, 'classes_')
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         # numpy random_state expects Python int and not long as size argument
@@ -465,9 +464,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         y : array, shape = [n_samples]  or [n_samples, n_outputs]
             Predicted target values for X.
         """
-        if not hasattr(self, "constant_"):
-            raise ValueError("DummyRegressor not fitted.")
-
+        check_is_fitted(self, "constant_")
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         n_samples = X.shape[0]
 

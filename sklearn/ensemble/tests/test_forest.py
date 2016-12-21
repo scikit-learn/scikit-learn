@@ -147,7 +147,7 @@ def check_boston_criterion(name, criterion):
                           random_state=1)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
-    assert_greater(score, 0.95, "Failed with max_features=None, criterion %s "
+    assert_greater(score, 0.94, "Failed with max_features=None, criterion %s "
                                 "and score = %f" % (criterion, score))
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
@@ -159,7 +159,7 @@ def check_boston_criterion(name, criterion):
 
 
 def test_boston():
-    for name, criterion in product(FOREST_REGRESSORS, ("mse", )):
+    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
         yield check_boston_criterion, name, criterion
 
 
@@ -208,12 +208,6 @@ def check_importances(name, criterion, X, y):
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
-    # XXX: Remove this test in 0.19 after transform support to estimators
-    # is removed.
-    X_new = assert_warns(
-        DeprecationWarning, est.transform, X, threshold="mean")
-    assert_less(0 < X_new.shape[1], X.shape[1])
-
     # Check with parallel
     importances = est.feature_importances_
     est.set_params(n_jobs=2)
@@ -244,7 +238,7 @@ def test_importances():
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
         yield check_importances, name, criterion, X, y
 
-    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse"]):
+    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
         yield check_importances, name, criterion, X, y
 
 
@@ -566,6 +560,8 @@ def test_random_trees_dense_equal():
     assert_array_equal(X_transformed_sparse.toarray(), X_transformed_dense)
 
 
+# Ignore warnings from switching to more power iterations in randomized_svd
+@ignore_warnings
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.
@@ -951,6 +947,12 @@ def check_class_weights(name):
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
+    # Using a Python 2.x list as the sample_weight parameter used to raise
+    # an exception. This test makes sure such code will now run correctly.
+    clf = ForestClassifier()
+    sample_weight = [1.] * len(iris.data)
+    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+
 
 def test_class_weights():
     for name in FOREST_CLASSIFIERS:
@@ -966,11 +968,9 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
     clf.fit(X, _y)
-    # smoke test for subsample and balanced subsample
+    # smoke test for balanced subsample
     clf = ForestClassifier(class_weight='balanced_subsample', random_state=0)
     clf.fit(X, _y)
-    clf = ForestClassifier(class_weight='subsample', random_state=0)
-    ignore_warnings(clf.fit)(X, _y)
 
 
 def test_class_weight_balanced_and_bootstrap_multi_output():
@@ -989,7 +989,7 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
     # Warning warm_start with preset
-    clf = ForestClassifier(class_weight='auto', warm_start=True,
+    clf = ForestClassifier(class_weight='balanced', warm_start=True,
                            random_state=0)
     assert_warns(UserWarning, clf.fit, X, y)
     assert_warns(UserWarning, clf.fit, X, _y)

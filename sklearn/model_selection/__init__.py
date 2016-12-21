@@ -1,13 +1,14 @@
 from ._split import BaseCrossValidator
 from ._split import KFold
-from ._split import LabelKFold
+from ._split import GroupKFold
 from ._split import StratifiedKFold
-from ._split import LeaveOneLabelOut
+from ._split import TimeSeriesSplit
+from ._split import LeaveOneGroupOut
 from ._split import LeaveOneOut
-from ._split import LeavePLabelOut
+from ._split import LeavePGroupsOut
 from ._split import LeavePOut
 from ._split import ShuffleSplit
-from ._split import LabelShuffleSplit
+from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
 from ._split import PredefinedSplit
 from ._split import train_test_split
@@ -27,12 +28,13 @@ from ._search import fit_grid_point
 
 __all__ = ('BaseCrossValidator',
            'GridSearchCV',
+           'TimeSeriesSplit',
            'KFold',
-           'LabelKFold',
-           'LabelShuffleSplit',
-           'LeaveOneLabelOut',
+           'GroupKFold',
+           'GroupShuffleSplit',
+           'LeaveOneGroupOut',
            'LeaveOneOut',
-           'LeavePLabelOut',
+           'LeavePGroupsOut',
            'LeavePOut',
            'ParameterGrid',
            'ParameterSampler',

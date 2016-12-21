@@ -15,7 +15,7 @@ print(__doc__)
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -3,10 +3,7 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 """
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-# Licence: BSD 3 clause
-
-from nose.tools import raises
-from nose.tools import assert_true
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -14,7 +11,7 @@ from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
 from sklearn.datasets import make_regression
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater, assert_true, raises
 
 
 f = lambda x: x * np.sin(x)
@@ -131,6 +128,16 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+def test_batch_size():
+    # TypeError when using batch_size on Python 3, see
+    # https://github.com/scikit-learn/scikit-learn/issues/7329 for more
+    # details
+    gp = GaussianProcess()
+    gp.fit(X, y)
+    gp.predict(X, batch_size=1)
+    gp.predict(X, batch_size=1, eval_MSE=True)
 
 
 def test_random_starts():

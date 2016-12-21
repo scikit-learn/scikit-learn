@@ -16,34 +16,16 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
-from .deprecation import deprecated
-from ..exceptions import DataConversionWarning as _DataConversionWarning
-from ..exceptions import NonBLASDotWarning as _NonBLASDotWarning
-from ..exceptions import NotFittedError as _NotFittedError
+from ..exceptions import NonBLASDotWarning
+from ..exceptions import NotFittedError
+from ..exceptions import DataConversionWarning
 
-
-@deprecated("DataConversionWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class DataConversionWarning(_DataConversionWarning):
-    pass
-
-
-@deprecated("NonBLASDotWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class NonBLASDotWarning(_NonBLASDotWarning):
-    pass
-
-
-@deprecated("NotFittedError has been moved into the sklearn.exceptions module."
-            " It will not be available here from version 0.19")
-class NotFittedError(_NotFittedError):
-    pass
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
-warnings.simplefilter('ignore', _NonBLASDotWarning)
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -174,10 +156,11 @@ def check_consistent_length(*arrays):
         Objects that will be checked for consistent length.
     """
 
-    uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
+    lengths = [_num_samples(X) for X in arrays if X is not None]
+    uniques = np.unique(lengths)
     if len(uniques) > 1:
-        raise ValueError("Found arrays with inconsistent numbers of samples: "
-                         "%s" % str(uniques))
+        raise ValueError("Found input variables with inconsistent numbers of"
+                         " samples: %r" % [int(l) for l in lengths])
 
 
 def indexable(*iterables):
@@ -217,20 +200,21 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     spmatrix : scipy sparse matrix
         Input to validate and convert.
 
-    accept_sparse : string, list of string or None (default=None)
+    accept_sparse : string, boolean or list/tuple of strings
         String[s] representing allowed sparse matrix formats ('csc',
-        'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). None means that sparse
-        matrix input will raise an error.  If the input is sparse but not in
-        the allowed format, it will be converted to the first listed format.
+        'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). If the input is sparse but
+        not in the allowed format, it will be converted to the first listed
+        format. True allows the input to be any format. False means
+        that a sparse matrix input will raise an error.
 
-    dtype : string, type or None (default=none)
+    dtype : string, type or None
         Data type of result. If None, the dtype of the input is preserved.
 
-    copy : boolean (default=False)
+    copy : boolean
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
 
-    force_all_finite : boolean (default=True)
+    force_all_finite : boolean
         Whether to raise an error on np.inf and np.nan in X.
 
     Returns
@@ -238,19 +222,33 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     spmatrix_converted : scipy sparse matrix.
         Matrix that is ensured to have an allowed type.
     """
-    if accept_sparse in [None, False]:
-        raise TypeError('A sparse matrix was passed, but dense '
-                        'data is required. Use X.toarray() to '
-                        'convert to a dense numpy array.')
     if dtype is None:
         dtype = spmatrix.dtype
 
     changed_format = False
-    if (isinstance(accept_sparse, (list, tuple))
-            and spmatrix.format not in accept_sparse):
-        # create new with correct sparse
-        spmatrix = spmatrix.asformat(accept_sparse[0])
-        changed_format = True
+
+    if isinstance(accept_sparse, six.string_types):
+        accept_sparse = [accept_sparse]
+
+    if accept_sparse is False:
+        raise TypeError('A sparse matrix was passed, but dense '
+                        'data is required. Use X.toarray() to '
+                        'convert to a dense numpy array.')
+    elif isinstance(accept_sparse, (list, tuple)):
+        if len(accept_sparse) == 0:
+            raise ValueError("When providing 'accept_sparse' "
+                             "as a tuple or list, it must contain at "
+                             "least one string value.")
+        # ensure correct sparse format
+        if spmatrix.format not in accept_sparse:
+            # create new with correct sparse
+            spmatrix = spmatrix.asformat(accept_sparse[0])
+            changed_format = True
+    elif accept_sparse is not True:
+        # any other type
+        raise ValueError("Parameter 'accept_sparse' should be a string, "
+                         "boolean or list of strings. You provided "
+                         "'accept_sparse={}'.".format(accept_sparse))
 
     if dtype != spmatrix.dtype:
         # convert dtype
@@ -268,13 +266,13 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
-def check_array(array, accept_sparse=None, dtype="numeric", order=None,
+def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
                 warn_on_dtype=False, estimator=None):
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2nd numpy array.
+    By default, the input is converted to an at least 2D numpy array.
     If the dtype of the array is object, attempt converting to float,
     raising on failure.
 
@@ -283,11 +281,12 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     array : object
         Input object to check / convert.
 
-    accept_sparse : string, list of string or None (default=None)
+    accept_sparse : string, boolean or list/tuple of strings (default=False)
         String[s] representing allowed sparse matrix formats, such as 'csc',
-        'csr', etc.  None means that sparse matrix input will raise an error.
-        If the input is sparse but not in the allowed format, it will be
-        converted to the first listed format.
+        'csr', etc. If the input is sparse but not in the allowed format,
+        it will be converted to the first listed format. True allows the input
+        to be any format. False means that a sparse matrix input will
+        raise an error.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -297,6 +296,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
+        When order is None (default), then if copy=False, nothing is ensured
+        about the memory layout of the output array; otherwise (copy=True)
+        the memory layout of the returned array is kept as close as possible
+        to the original array.
 
     copy : boolean (default=False)
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -306,7 +309,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         Whether to raise an error on np.inf and np.nan in X.
 
     ensure_2d : boolean (default=True)
-        Whether to make X at least 2d.
+        Whether to raise a value error if X is not 2d.
 
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
@@ -334,8 +337,14 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     X_converted : object
         The converted and validated X.
     """
-    if isinstance(accept_sparse, str):
-        accept_sparse = [accept_sparse]
+    # accept_sparse 'None' deprecation check
+    if accept_sparse is None:
+        warnings.warn(
+            "Passing 'None' to parameter 'accept_sparse' in methods "
+            "check_array and check_X_y is deprecated in version 0.19 "
+            "and will be removed in 0.21. Use 'accept_sparse=False' "
+            " instead.", DeprecationWarning)
+        accept_sparse = False
 
     # store whether originally we wanted numeric dtype
     dtype_numeric = dtype == "numeric"
@@ -378,16 +387,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
         if ensure_2d:
             if array.ndim == 1:
-                if ensure_min_samples >= 2:
-                    raise ValueError("%s expects at least 2 samples provided "
-                                     "in a 2 dimensional array-like input"
-                                     % estimator_name)
-                warnings.warn(
-                    "Passing 1d arrays as data is deprecated in 0.17 and will "
-                    "raise ValueError in 0.19. Reshape your data either using "
+                raise ValueError(
+                    "Got X with X.ndim=1. Reshape your data either using "
                     "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.",
-                    DeprecationWarning)
+                    "X.reshape(1, -1) if it contains a single sample.")
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
@@ -421,11 +424,11 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, _DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning)
     return array
 
 
-def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
+def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
               copy=False, force_all_finite=True, ensure_2d=True,
               allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
@@ -446,11 +449,12 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
     y : nd-array, list or sparse matrix
         Labels.
 
-    accept_sparse : string, list of string or None (default=None)
+    accept_sparse : string, boolean or list of string (default=False)
         String[s] representing allowed sparse matrix formats, such as 'csc',
-        'csr', etc.  None means that sparse matrix input will raise an error.
-        If the input is sparse but not in the allowed format, it will be
-        converted to the first listed format.
+        'csr', etc. If the input is sparse but not in the allowed format,
+        it will be converted to the first listed format. True allows the input
+        to be any format. False means that a sparse matrix input will
+        raise an error.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -551,7 +555,7 @@ def column_or_1d(y, warn=False):
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
                           "(n_samples, ), for example using ravel().",
-                          _DataConversionWarning, stacklevel=2)
+                          DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
     raise ValueError("bad input shape {0}".format(shape))
@@ -681,8 +685,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        # FIXME NotFittedError_ --> NotFittedError in 0.19
-        raise _NotFittedError(msg % {'name': type(estimator).__name__})
+        raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
 def check_non_negative(X, whom):

@@ -2,10 +2,9 @@
 # License: BSD 3 clause
 
 from .stochastic_gradient import BaseSGDClassifier
-from ..feature_selection.from_model import _LearntSelectorMixin
 
 
-class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
+class Perceptron(BaseSGDClassifier):
     """Perceptron
 
     Read more in the :ref:`User Guide <perceptron>`.
@@ -84,7 +83,7 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     References
     ----------
 
-    http://en.wikipedia.org/wiki/Perceptron and references therein.
+    https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=True, verbose=0, eta0=1.0, n_jobs=1,

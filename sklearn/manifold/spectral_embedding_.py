@@ -195,7 +195,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     References
     ----------
-    * http://en.wikipedia.org/wiki/LOBPCG
+    * https://en.wikipedia.org/wiki/LOBPCG
 
     * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
       Block Preconditioned Conjugate Gradient Method
@@ -479,7 +479,7 @@ class SpectralEmbedding(BaseEstimator):
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)
         elif not callable(self.affinity):
-            raise ValueError(("'affinity' is expected to be an an affinity "
+            raise ValueError(("'affinity' is expected to be an affinity "
                               "name or a callable. Got: %s") % self.affinity)
 
         affinity_matrix = self._get_affinity_matrix(X)
@@ -494,7 +494,7 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -505,7 +505,7 @@ class SpectralEmbedding(BaseEstimator):
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self.fit(X)
         return self.embedding_

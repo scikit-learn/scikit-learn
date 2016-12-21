@@ -1,5 +1,4 @@
-Documentation for scikit-learn
--------------------------------
+#Documentation for scikit-learn
 
 This section contains the full manual and web page as displayed in
 http://scikit-learn.org. To generate the full web page, including
@@ -27,13 +26,12 @@ costing us bandwidth. You can run OptiPNG with::
 
     make optipng
 
-Development documentation automated build
------------------------------------------
+#Development documentation automated build
 
 A Rackspace cloud server named 'docbuilder' is continuously building the master branch
 to update the http://scikit-learn.org/dev tree of the website.
 
 The configuration of this server is managed at:
 
-  http://github.com/scikit-learn/sklearn-docbuilder
+  https://github.com/scikit-learn/sklearn-docbuilder
 

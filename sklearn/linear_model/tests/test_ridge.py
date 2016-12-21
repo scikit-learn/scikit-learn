@@ -297,11 +297,18 @@ def _test_ridge_loo(filter_):
 
     ret = []
 
-    ridge_gcv = _RidgeGCV(fit_intercept=False)
-    ridge = Ridge(alpha=1.0, fit_intercept=False)
+    fit_intercept = filter_ == DENSE_FILTER
+    if fit_intercept:
+        X_diabetes_ = X_diabetes - X_diabetes.mean(0)
+    else:
+        X_diabetes_ = X_diabetes
+    ridge_gcv = _RidgeGCV(fit_intercept=fit_intercept)
+    ridge = Ridge(alpha=1.0, fit_intercept=fit_intercept)
+
+    # because fit_intercept is applied
 
     # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute(X_diabetes_, y_diabetes, fit_intercept)
     errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
     values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
 
@@ -310,10 +317,10 @@ def _test_ridge_loo(filter_):
     values2 = []
     for i in range(n_samples):
         sel = np.arange(n_samples) != i
-        X_new = X_diabetes[sel]
+        X_new = X_diabetes_[sel]
         y_new = y_diabetes[sel]
         ridge.fit(X_new, y_new)
-        value = ridge.predict([X_diabetes[i]])[0]
+        value = ridge.predict([X_diabetes_[i]])[0]
         error = (y_diabetes[i] - value) ** 2
         errors2.append(error)
         values2.append(value)
@@ -324,7 +331,7 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute_svd(X_diabetes_, y_diabetes, fit_intercept)
     errors3, c = ridge_gcv._errors_svd(ridge.alpha, y_diabetes, *decomp)
     values3, c = ridge_gcv._values_svd(ridge.alpha, y_diabetes, *decomp)
 
@@ -352,7 +359,7 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv3.alpha_, alpha_)
 
     # check that we get same best alpha with a scorer
-    scorer = get_scorer('mean_squared_error')
+    scorer = get_scorer('neg_mean_squared_error')
     ridge_gcv4 = RidgeCV(fit_intercept=False, scoring=scorer)
     ridge_gcv4.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv4.alpha_, alpha_)
