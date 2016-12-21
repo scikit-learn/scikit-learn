@@ -168,7 +168,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
-        if(self.issparse_):
+        if(self._issparse):
             y_pred = csc_matrix(y_pred)
 
         return y_pred
