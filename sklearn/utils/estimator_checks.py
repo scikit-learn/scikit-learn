@@ -1860,11 +1860,12 @@ def check_classifiers_multilabel_representation_invariance(name, Classifier):
                                           length=50,
                                           allow_unlabeled=True,
                                           random_state=0)
+
     X_train, y_train = X[:80], y[:80]
     X_test = X[80:]
 
-    y_train_ll = y_train.tolist()
-    y_train_la = list(y_train)
+    y_train_list_of_lists = y_train.tolist()
+    y_train_list_of_arrays = list(y_train)
 
     classifier = Classifier()
 
@@ -1872,10 +1873,15 @@ def check_classifiers_multilabel_representation_invariance(name, Classifier):
     set_random_state(classifier)
 
     y_pred = classifier.fit(X_train, y_train).predict(X_test)
-    y_pred_ll = classifier.fit(X_train, y_train_ll).predict(X_test)
-    y_pred_la = classifier.fit(X_train, y_train_la).predict(X_test)
-    assert_array_equal(y_pred, y_pred_la)
-    assert_array_equal(y_pred, y_pred_ll)
+
+    y_pred_list_of_lists = classifier.fit(X_train, y_train_list_of_lists)\
+        .predict(X_test)
+
+    y_pred_list_of_arrays = classifier.fit(X_train, y_train_list_of_arrays)\
+        .predict(X_test)
+
+    assert_array_equal(y_pred, y_pred_list_of_arrays)
+    assert_array_equal(y_pred, y_pred_list_of_lists)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
