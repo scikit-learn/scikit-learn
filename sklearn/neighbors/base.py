@@ -773,7 +773,7 @@ class SupervisedIntegerMixin(object):
 
         check_classification_targets(y)
 
-        self.issparse_ = issparse(y)
+        self._issparse = issparse(y)
         if(issparse(y) and self.outputs_2d_):
             y = y.toarray()
 
