@@ -63,7 +63,7 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil except *:
     return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
 
 
-cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size) except *:
+cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
     """Return copied data as 1D numpy array of intp's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size

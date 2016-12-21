@@ -182,7 +182,7 @@ cdef class Splitter:
         self.sample_weight = sample_weight
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil:
+                         double* weighted_n_node_samples) nogil except *:
         """Reset splitter on node samples[start:end].
 
         Parameters

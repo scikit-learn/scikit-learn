@@ -91,12 +91,12 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None) except *:
+                np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
     cdef inline _check_input(self, object X, np.ndarray y,
-                             np.ndarray sample_weight) except *:
+                             np.ndarray sample_weight):
         """Check input dtype, layout and format"""
         if issparse(X):
             X = X.tocsc()
@@ -141,7 +141,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None) except *:
+                np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -291,7 +291,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
                   SIZE_t max_depth, SIZE_t max_leaf_nodes,
-                  double min_impurity_split) except *:
+                  double min_impurity_split):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -757,7 +757,7 @@ cdef class Tree:
         else:
             return self._apply_dense(X)
 
-    cdef inline np.ndarray _apply_dense(self, object X) except *:
+    cdef inline np.ndarray _apply_dense(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
 
         # Check input
@@ -799,7 +799,7 @@ cdef class Tree:
 
         return out
 
-    cdef inline np.ndarray _apply_sparse_csr(self, object X) except *:
+    cdef inline np.ndarray _apply_sparse_csr(self, object X):
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
         # Check input
@@ -881,7 +881,7 @@ cdef class Tree:
         else:
             return self._decision_path_dense(X)
 
-    cdef inline object _decision_path_dense(self, object X) except *:
+    cdef inline object _decision_path_dense(self, object X):
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
@@ -941,7 +941,7 @@ cdef class Tree:
 
         return out
 
-    cdef inline object _decision_path_sparse_csr(self, object X) except *:
+    cdef inline object _decision_path_sparse_csr(self, object X):
         """Finds the decision path (=node) for each sample in X."""
 
         # Check input
@@ -1072,7 +1072,7 @@ cdef class Tree:
 
         return importances
 
-    cdef np.ndarray _get_value_ndarray(self) except *:
+    cdef np.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -1088,7 +1088,7 @@ cdef class Tree:
         arr.base = <PyObject*> self
         return arr
 
-    cdef np.ndarray _get_node_ndarray(self) except *:
+    cdef np.ndarray _get_node_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying

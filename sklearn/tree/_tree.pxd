@@ -62,20 +62,20 @@ cdef class Tree:
     cdef void _resize(self, SIZE_t capacity) except *
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except *
 
-    cdef np.ndarray _get_value_ndarray(self) except *
-    cdef np.ndarray _get_node_ndarray(self) except *
+    cdef np.ndarray _get_value_ndarray(self)
+    cdef np.ndarray _get_node_ndarray(self)
 
-    cpdef np.ndarray predict(self, object X) except *
+    cpdef np.ndarray predict(self, object X)
 
-    cpdef np.ndarray apply(self, object X) except *
-    cdef np.ndarray _apply_dense(self, object X) except *
-    cdef np.ndarray _apply_sparse_csr(self, object X) except *
+    cpdef np.ndarray apply(self, object X)
+    cdef np.ndarray _apply_dense(self, object X)
+    cdef np.ndarray _apply_sparse_csr(self, object X)
 
-    cpdef object decision_path(self, object X) except *
-    cdef object _decision_path_dense(self, object X) except *
-    cdef object _decision_path_sparse_csr(self, object X) except *
+    cpdef object decision_path(self, object X)
+    cdef object _decision_path_dense(self, object X)
+    cdef object _decision_path_sparse_csr(self, object X)
 
-    cpdef compute_feature_importances(self, normalize=*) except *
+    cpdef compute_feature_importances(self, normalize=*)
 
 
 # =============================================================================
@@ -100,5 +100,5 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*,
-                np.ndarray X_idx_sorted=*) except *
-    cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight) except *
+                np.ndarray X_idx_sorted=*)
+    cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
