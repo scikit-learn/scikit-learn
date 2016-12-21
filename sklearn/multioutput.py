@@ -214,7 +214,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
@@ -225,7 +225,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
                              "predict_proba method")
 
         results = [estimator.predict_proba(X) for estimator in
-                            self.estimators_]
+                   self.estimators_]
         return results
 
     def score(self, X, y):

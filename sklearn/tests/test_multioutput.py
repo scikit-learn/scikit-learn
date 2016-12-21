@@ -123,7 +123,8 @@ def test_multi_output_classification():
     for class_probabilities in predict_proba:
         assert_equal((n_samples, n_classes), class_probabilities.shape)
 
-    assert_array_equal(np.argmax(np.dstack(predict_proba), axis=1), predictions)
+    assert_array_equal(np.argmax(np.dstack(predict_proba), axis=1),
+                       predictions)
 
     # train the forest with each column and assert that predictions are equal
     for i in range(3):
@@ -155,15 +156,15 @@ def test_multiclass_multioutput_estimator():
 
 def test_multiclass_multioutput_estimator_predict_proba():
     # make test deterministic
-    rs = np.random.RandomState(123456)
+    rng = np.random.RandomState(123456)
 
     # random features
-    X = rs.normal(size=(5, 5))
+    X = rng.normal(size=(5, 5))
 
     # random labels
     Y = np.concatenate([
-            rs.choice(['a', 'b'], (5, 1)),      # first column, 2 values
-            rs.choice(['d', 'e', 'f'], (5, 1))  # second column, 3 values
+            rng.choice(['a', 'b'], (5, 1)),      # first column, 2 values
+            rng.choice(['d', 'e', 'f'], (5, 1))  # second column, 3 values
         ], axis=1)
 
     clf = MultiOutputClassifier(LogisticRegression())
