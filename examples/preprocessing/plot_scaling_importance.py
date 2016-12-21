@@ -23,14 +23,16 @@ direction of maximal variance more closely corresponds with the
 height of one meter can be considered much more important than the
 change in weight of one kilogram, this is clearly incorrect.
 
-To illustrate this, PCA is performed comparing the use of the unscaled
-data against the same with :class:`preprocessing.StandardScaler` applied
-The results are visualized and a clear difference noted. The 1st principal
-component in the unscaled set can be seen. It can be seen that feature #13
-dominates the direction, being a whole two orders of magnitude above the
-other features. This is contrasted when observing the principal component
-for the scaled version of the data. In the scaled version, the orders of
-magnitude are roughly the same across all the features.
+:class:`StandardScaler <sklearn.preprocessing.StandardScaler>`
+
+To illustrate this, PCA is performed comparing the use of data with
+:class:`StandardScaler <sklearn.preprocessing.StandardScaler>` applied,
+to unscaled data. The results are visualized and a clear difference noted.
+The 1st principal component in the unscaled set can be seen.It can be seen
+that feature #13 dominates the direction, being a whole two orders of
+magnitude above the other features. This is contrasted when observing
+the principal component for the scaled version of the data. In the scaled
+version, the orders of magnitude are roughly the same across all the features.
 
 The dataset used is the Wine Dataset available at UCI. This dataset
 has continuous features that are heterogeneous in scale due to differing
