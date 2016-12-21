@@ -20,10 +20,13 @@ from scipy.sparse import csr_matrix
 
 from sklearn.tree._tree cimport Node
 from sklearn.tree._tree cimport Tree
+from sklearn.tree._tree cimport CategoryCacheMgr
 from sklearn.tree._tree cimport DTYPE_t
 from sklearn.tree._tree cimport SIZE_t
 from sklearn.tree._tree cimport INT32_t
+from sklearn.tree._tree cimport UINT32_t
 from sklearn.tree._utils cimport safe_realloc
+from sklearn.tree._utils cimport goes_left
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
@@ -48,6 +51,8 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
                                                       Py_ssize_t K,
                                                       Py_ssize_t n_samples,
                                                       Py_ssize_t n_features,
+                                                      INT32_t* n_categories,
+                                                      UINT32_t** cachebits,
                                                       float64 *out):
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
@@ -82,6 +87,12 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
         ``n_samples == X.shape[0]``.
     n_features : int
         The number of features; ``n_samples == X.shape[1]``.
+    n_categories : INT32_t pointer
+        Array of length n_features containing the number of categories
+        (for categorical features) or -1 (for non-categorical features)
+    cachebits : UINT32_t pointer pointer
+        Array of length node_count containing category cache buffers
+        for categorical features
     out : np.float64_t pointer
         The pointer to the data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
@@ -89,13 +100,19 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
     """
     cdef Py_ssize_t i
     cdef Node *node
+    cdef UINT32_t* node_cache
+
     for i in range(n_samples):
         node = root_node
+        node_cache = cachebits[0]
         # While node not a leaf
         while node.left_child != TREE_LEAF:
-            if X[i * n_features + node.feature] <= node.split_value.threshold:
+            if goes_left(X[i * n_features + node.feature], node.split_value,
+                         n_categories[node.feature], node_cache):
+                node_cache = cachebits[node.left_child]
                 node = root_node + node.left_child
             else:
+                node_cache = cachebits[node.right_child]
                 node = root_node + node.right_child
         out[i * K + k] += scale * value[node - root_node]
 
@@ -213,6 +230,10 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
             for k in range(K):
                 tree = estimators[i, k].tree_
 
+                # Make category cache buffers for this tree's nodes
+                cache_mgr = CategoryCacheMgr()
+                cache_mgr.populate(tree.nodes, tree.node_count, tree.n_categories)
+
                 # avoid buffer validation by casting to ndarray
                 # and get data pointer
                 # need brackets because of casting operator priority
@@ -220,6 +241,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                     <DTYPE_t*> (<np.ndarray> X).data,
                     tree.nodes, tree.value,
                     scale, k, K, X.shape[0], X.shape[1],
+                    tree.n_categories, cache_mgr.bits,
                     <float64 *> (<np.ndarray> out).data)
                 ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
 
@@ -297,11 +319,19 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     cdef double total_weight = 0.0
     cdef Node *current_node
     cdef SIZE_t[::1] node_stack = np_zeros((stack_capacity,), dtype=np.intp)
+    cdef UINT32_t** cachebits
+    cdef UINT32_t* node_cache
+
+    # Make category cache buffers for this tree's nodes
+    cache_mgr = CategoryCacheMgr()
+    cache_mgr.populate(root_node, node_count, tree.n_categories)
+    cachebits = cache_mgr.bits
 
     for i in range(X.shape[0]):
         # init stacks for new example
         stack_size = 1
         node_stack[0] = 0
+        node_cache = cachebits[0]
         weight_stack[0] = 1.0
         total_weight = 0.0
 
@@ -309,6 +339,7 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
             # get top node on stack
             stack_size -= 1
             current_node = root_node + node_stack[stack_size]
+            node_cache = cachebits[node_stack[stack_size]]
 
             if current_node.left_child == TREE_LEAF:
                 out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
@@ -320,7 +351,9 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                 if feature_index != -1:
                     # split feature in target set
                     # push left or right child on stack
-                    if X[i, feature_index] <= current_node.split_value.threshold:
+                    if goes_left(X[i, feature_index], current_node.split_value,
+                                 tree.n_categories[current_node.feature],
+                                 node_cache):
                         # left
                         node_stack[stack_size] = current_node.left_child
                     else:
