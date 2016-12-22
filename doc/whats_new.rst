@@ -98,7 +98,7 @@ Enhancements
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
-     
+
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
      boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
@@ -140,11 +140,17 @@ Bug fixes
      where the ``perplexity`` method was returning incorrect results because
      the ``transform`` method returns normalized document topic distributions
      as of version 0.18. :issue:`7954` by :user:`Gary Foreman <garyForeman>`.
-     
+
    - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
+   - Fix a bug where
+     :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
+     negative errors for negative values of ``ytrue - ypred`` leading to
+     wrong values when calling ``__call__``.
+     :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
 
 API changes summary
 -------------------
@@ -154,7 +160,7 @@ API changes summary
      ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
-     
+
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
      user no longer has access to the unnormalized document topic distribution
