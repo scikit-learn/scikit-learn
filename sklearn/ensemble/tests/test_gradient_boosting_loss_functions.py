@@ -15,6 +15,7 @@ from sklearn.ensemble.gradient_boosting import LeastSquaresError
 from sklearn.ensemble.gradient_boosting import RegressionLossFunction
 from sklearn.ensemble.gradient_boosting import LOSS_FUNCTIONS
 from sklearn.ensemble.gradient_boosting import _weighted_percentile
+from sklearn.ensemble.gradient_boosting import QuantileLossFunction
 
 
 def test_binomial_deviance():
@@ -139,6 +140,16 @@ def test_weighted_percentile_zero_weight():
     sw.fill(0.0)
     score = _weighted_percentile(y, sw, 50)
     assert score == 1.0
+
+
+def test_quantile_loss_function():
+    # Non regression test for the QuantileLossFunction object
+    # There was a sign problem when evaluating the function
+    # for negative values of 'ytrue - ypred'
+    x = np.asarray([-1.0, 0.0, 1.0])
+    y_found = QuantileLossFunction(1, 0.9)(x, np.zeros_like(x))
+    y_expected = np.asarray([0.1, 0.0, 0.9]).mean()
+    np.testing.assert_allclose(y_found, y_expected)
 
 
 def test_sample_weight_deviance():
