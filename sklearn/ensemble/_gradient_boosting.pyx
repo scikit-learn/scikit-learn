@@ -130,8 +130,8 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     cdef Tree tree
     cdef Node** nodes = NULL
     cdef double** values = NULL
-    safe_realloc(&nodes, n_stages * n_outputs)
-    safe_realloc(&values, n_stages * n_outputs)
+    safe_realloc(<void ***>&nodes, n_stages * n_outputs, sizeof(void*))
+    safe_realloc(<void ***>&values, n_stages * n_outputs, sizeof(void*))
     for stage_i in range(n_stages):
         for output_i in range(n_outputs):
             tree = estimators[stage_i, output_i].tree_
@@ -147,8 +147,8 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     # which features are nonzero in the present sample.
     cdef SIZE_t* feature_to_sample = NULL
 
-    safe_realloc(&X_sample, n_features)
-    safe_realloc(&feature_to_sample, n_features)
+    safe_realloc(&X_sample, n_features, sizeof(DTYPE_t))
+    safe_realloc(&feature_to_sample, n_features, sizeof(SIZE_t))
 
     memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
 

@@ -590,7 +590,7 @@ cdef class Tree:
         self.n_features = n_features
         self.n_outputs = n_outputs
         self.n_classes = NULL
-        safe_realloc(&self.n_classes, n_outputs)
+        safe_realloc(&self.n_classes, n_outputs, sizeof(SIZE_t))
 
         self.max_n_classes = np.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
@@ -688,8 +688,8 @@ cdef class Tree:
             else:
                 capacity = 2 * self.capacity
 
-        safe_realloc(&self.nodes, capacity)
-        safe_realloc(&self.value, capacity * self.value_stride)
+        safe_realloc(&self.nodes, capacity, sizeof(Node))
+        safe_realloc(&self.value, capacity * self.value_stride, sizeof(double))
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
@@ -843,8 +843,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features)
-        safe_realloc(&feature_to_sample, n_features)
+        safe_realloc(&X_sample, n_features, sizeof(DTYPE_t))
+        safe_realloc(&feature_to_sample, n_features, sizeof(SIZE_t))
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
@@ -989,8 +989,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features)
-        safe_realloc(&feature_to_sample, n_features)
+        safe_realloc(&X_sample, n_features, sizeof(DTYPE_t))
+        safe_realloc(&feature_to_sample, n_features, sizeof(SIZE_t))
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))

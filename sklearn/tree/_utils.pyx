@@ -24,15 +24,15 @@ np.import_array()
 # Helper functions
 # =============================================================================
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *:
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems, size_t nbytes_elem) nogil except *:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
-    cdef size_t nbytes = nelems * sizeof(p[0][0])
-    if nbytes / sizeof(p[0][0]) != nelems:
+    cdef size_t nbytes = nelems * nbytes_elem
+    if nbytes / nbytes_elem != nelems:
         # Overflow in the multiplication
         with gil:
             raise MemoryError("could not allocate (%d * %d) bytes"
-                              % (nelems, sizeof(p[0][0])))
+                              % (nelems, nbytes_elem))
     cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
         with gil:
@@ -46,7 +46,7 @@ def _realloc_test():
     # Helper for tests. Tries to allocate <size_t>(-1) / 2 * sizeof(size_t)
     # bytes, which will always overflow.
     cdef SIZE_t* p = NULL
-    safe_realloc(&p, <size_t>(-1) / 2)
+    safe_realloc(&p, <size_t>(-1) / 2, sizeof(SIZE_t))
     if p != NULL:
         free(p)
         assert False
@@ -132,7 +132,7 @@ cdef class Stack:
         if top >= self.capacity:
             self.capacity *= 2
             # Since safe_realloc can raise MemoryError, use `except -1`
-            safe_realloc(&self.stack_, self.capacity)
+            safe_realloc(&self.stack_, self.capacity, sizeof(StackRecord))
 
         stack = self.stack_
         stack[top].start = start
@@ -192,7 +192,7 @@ cdef class PriorityHeap:
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
         self.heap_ptr = 0
-        safe_realloc(&self.heap_, capacity)
+        safe_realloc(&self.heap_, capacity, sizeof(PriorityHeapRecord))
 
     def __dealloc__(self):
         free(self.heap_)
@@ -248,7 +248,7 @@ cdef class PriorityHeap:
         if heap_ptr >= self.capacity:
             self.capacity *= 2
             # Since safe_realloc can raise MemoryError, use `except -1`
-            safe_realloc(&self.heap_, self.capacity)
+            safe_realloc(&self.heap_, self.capacity, sizeof(PriorityHeapRecord))
 
         # Put element as last element of heap
         heap = self.heap_
@@ -318,7 +318,7 @@ cdef class WeightedPQueue:
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
         self.array_ptr = 0
-        safe_realloc(&self.array_, capacity)
+        safe_realloc(&self.array_, capacity, sizeof(WeightedPQueueRecord))
 
     def __dealloc__(self):
         free(self.array_)
@@ -331,7 +331,7 @@ cdef class WeightedPQueue:
         """
         self.array_ptr = 0
         # Since safe_realloc can raise MemoryError, use `except *`
-        safe_realloc(&self.array_, self.capacity)
+        safe_realloc(&self.array_, self.capacity, sizeof(WeightedPQueueRecord))
         return 0
 
     cdef bint is_empty(self) nogil:
@@ -354,7 +354,7 @@ cdef class WeightedPQueue:
         if array_ptr >= self.capacity:
             self.capacity *= 2
             # Since safe_realloc can raise MemoryError, use `except -1`
-            safe_realloc(&self.array_, self.capacity)
+            safe_realloc(&self.array_, self.capacity, sizeof(WeightedPQueueRecord))
 
         # Put element as last element of array
         array = self.array_

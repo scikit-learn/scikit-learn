@@ -147,7 +147,7 @@ cdef class Splitter:
 
         # Create a new array which will be used to store nonzero
         # samples from the feature of interest
-        cdef SIZE_t* samples = safe_realloc(&self.samples, n_samples)
+        cdef SIZE_t* samples = safe_realloc(&self.samples, n_samples, sizeof(SIZE_t))
 
         cdef SIZE_t i, j
         cdef double weighted_n_samples = 0.0
@@ -169,15 +169,15 @@ cdef class Splitter:
         self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
-        cdef SIZE_t* features = safe_realloc(&self.features, n_features)
+        cdef SIZE_t* features = safe_realloc(&self.features, n_features, sizeof(SIZE_t))
 
         for i in range(n_features):
             features[i] = i
 
         self.n_features = n_features
 
-        safe_realloc(&self.feature_values, n_samples)
-        safe_realloc(&self.constant_features, n_features)
+        safe_realloc(&self.feature_values, n_samples, sizeof(DTYPE_t))
+        safe_realloc(&self.constant_features, n_features, sizeof(SIZE_t))
 
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
@@ -295,7 +295,7 @@ cdef class BaseDenseSplitter(Splitter):
                                         <SIZE_t> self.X_idx_sorted.itemsize)
 
             self.n_total_samples = X.shape[0]
-            safe_realloc(&self.sample_mask, self.n_total_samples)
+            safe_realloc(&self.sample_mask, self.n_total_samples, sizeof(SIZE_t))
             memset(self.sample_mask, 0, self.n_total_samples*sizeof(SIZE_t))
 
         return 0
@@ -924,8 +924,8 @@ cdef class BaseSparseSplitter(Splitter):
         self.n_total_samples = n_total_samples
 
         # Initialize auxiliary array used to perform split
-        safe_realloc(&self.index_to_samples, n_total_samples)
-        safe_realloc(&self.sorted_samples, n_samples)
+        safe_realloc(&self.index_to_samples, n_total_samples, sizeof(SIZE_t))
+        safe_realloc(&self.sorted_samples, n_samples, sizeof(SIZE_t))
 
         cdef SIZE_t* index_to_samples = self.index_to_samples
         cdef SIZE_t p

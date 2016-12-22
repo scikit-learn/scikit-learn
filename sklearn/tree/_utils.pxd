@@ -10,13 +10,14 @@
 
 import numpy as np
 cimport numpy as np
-from _tree cimport Node 
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+
+cdef struct Node  # Forward declaration
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
@@ -37,13 +38,12 @@ ctypedef fused realloc_ptr:
     (unsigned char*)
     (WeightedPQueueRecord*)
     (DOUBLE_t*)
-    (DOUBLE_t**)
     (Node*)
-    (Node**)
     (StackRecord*)
     (PriorityHeapRecord*)
+    (void**)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems, size_t elem_bytes) nogil except *
 
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
