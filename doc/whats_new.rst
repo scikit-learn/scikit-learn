@@ -98,7 +98,7 @@ Enhancements
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
-     
+
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
      boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
@@ -140,11 +140,17 @@ Bug fixes
      where the ``perplexity`` method was returning incorrect results because
      the ``transform`` method returns normalized document topic distributions
      as of version 0.18. :issue:`7954` by :user:`Gary Foreman <garyForeman>`.
-     
+
    - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
+   - Fix :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba` to
+     return a list of 2d arrays, rather than a 3d array. In the case where
+     different target columns had different numbers of classes, a `ValueError`
+     would be raised on trying to stack matrices with different dimensions.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
 API changes summary
 -------------------
@@ -154,12 +160,21 @@ API changes summary
      ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
-     
+
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
      user no longer has access to the unnormalized document topic distribution
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
+
+   - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
+     function used to return a 3d array (``n_samples``, ``n_classes``,
+     ``n_outputs``). In the case where different target columns had different
+     numbers of classes, a `ValueError` would be raised on trying to stack
+     matrices with different dimensions. This function now returns a list of
+     arrays where the length of the list is ``n_outputs``, and each array is
+     (``n_samples``, ``n_classes``) for that particular output.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
 .. _changes_0_18_1:
 
