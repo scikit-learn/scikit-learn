@@ -426,7 +426,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                     " randomly chosen sub-sample failed the passing criteria."
                     " %d iterations found zero inliers due to a small"
                     " `residual_threshold`, %d iterations returned `False` for"
-                    "`is_data_valid` and %d iterations returned `False` for"
+                    " `is_data_valid` and %d iterations returned `False` for"
                     " `is_model_valid`" % (n_skips_no_inliers,
                                            n_skips_invalid_data,
                                            n_skips_invalid_model))
@@ -444,7 +444,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                               " returned `False` for `is_model_valid`" %
                               (n_skips_no_inliers,
                                n_skips_invalid_data,
-                               n_skips_invalid_model),UserWarning)
+                               n_skips_invalid_model), UserWarning)
 
         # estimate final model using all inliers
         base_estimator.fit(X_inlier_best, y_inlier_best)

@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 
@@ -151,17 +152,76 @@ def test_ransac_resid_thresh_no_inliers():
     # ValueError with a message should be raised
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
-                                       residual_threshold=0.0, random_state=0)
+                                       residual_threshold=0.0, random_state=0,
+                                       max_trials=5)
 
-    msg = (
-        "RANSAC could not find a valid consensus set. All `max_trials`"
-        " iterations were skipped because each randomly chosen"
-        " sub-sample either: didn't produce a valid set of inliers"
-        " due to a small `residual_threshold` or was invalidated by"
-        " `is_data_valid` or `is_model_valid` if either of these"
-        " functions have been defined by the user.")
+    msg = ("RANSAC could not find a valid consensus set.*5 iterations found"
+           " zero inliers")
+    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
 
-    assert_raise_message(ValueError, msg, ransac_estimator.fit, X, y)
+
+def test_ransac_no_valid_data():
+    def is_data_valid(X, y):
+        return False
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator,
+                                       is_data_valid=is_data_valid,
+                                       max_trials=5)
+
+    msg = ("RANSAC could not find a valid consensus set.*5 iterations returned"
+           " `False` for `is_data_valid`")
+    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+
+
+def test_ransac_no_valid_model():
+    def is_model_valid(estimator, X, y):
+        return False
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator,
+                                       is_model_valid=is_model_valid,
+                                       max_trials=5)
+
+    msg = ("RANSAC could not find a valid consensus set.*5 iterations returned"
+           " `False` for `is_model_valid`")
+    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+
+
+def test_ransac_exceed_max_skips():
+    def is_data_valid(X, y):
+        return False
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator,
+                                       is_data_valid=is_data_valid,
+                                       max_trials=5,
+                                       max_skips=3)
+
+    msg = ("RANSAC skipped more iterations than `max_skips`.*4 iterations"
+           " returned `False` for `is_data_valid`")
+    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+
+
+def test_ransac_warn_exceed_max_skips():
+    global cause_skip
+    cause_skip = False
+
+    def is_data_valid(X, y):
+        global cause_skip
+        if not cause_skip:
+            cause_skip = True
+            return True
+        else:
+            return False
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator,
+                                       is_data_valid=is_data_valid,
+                                       max_skips=3,
+                                       max_trials=5)
+
+    assert_warns(UserWarning, ransac_estimator.fit, X, y)
 
 
 def test_ransac_sparse_coo():
