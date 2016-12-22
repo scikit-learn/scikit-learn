@@ -7,6 +7,7 @@ from ._split import LeaveOneGroupOut
 from ._split import LeaveOneOut
 from ._split import LeavePGroupsOut
 from ._split import LeavePOut
+from ._split import RepeatedKFold
 from ._split import ShuffleSplit
 from ._split import GroupShuffleSplit
 from ._split import StratifiedShuffleSplit
@@ -36,6 +37,7 @@ __all__ = ('BaseCrossValidator',
            'LeaveOneOut',
            'LeavePGroupsOut',
            'LeavePOut',
+           'RepeatedKFold',
            'ParameterGrid',
            'ParameterSampler',
            'PredefinedSplit',

@@ -42,6 +42,7 @@ from sklearn.model_selection import PredefinedSplit
 from sklearn.model_selection import check_cv
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RepeatedKFold
 
 from sklearn.linear_model import Ridge
 
@@ -802,6 +803,52 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
            "that at least n_groups + 1 (4) unique groups be present")
     assert_raise_message(ValueError, msg, next,
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
+
+
+def test_repeated_kfold_value_errors():
+    kf = KFold(n_splits=2)
+    # cv instance is not of KFold
+    gkf = GroupKFold(n_splits=3)
+    assert_raises(ValueError, RepeatedKFold, gkf)
+
+    # random state is not int
+    random_states1 = [np.random.RandomState()]
+    assert_raises(ValueError, RepeatedKFold, kf, random_states=random_states1)
+
+    # size of random_states is not equal to n_repeats
+    random_states2 = [0]
+    assert_raises(ValueError, RepeatedKFold, kf, n_repeats=2,
+                  random_states=random_states2)
+
+    # n_repeats is not integer or <= 1
+    assert_raises(ValueError, RepeatedKFold, kf, n_repeats=1)
+    assert_raises(ValueError, RepeatedKFold, kf, n_repeats=1.5)
+
+
+def test_repeated_kfold_determinstic_split():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    random_states = [1944695409, 258173307]
+    splits = RepeatedKFold(
+        KFold(
+            n_splits=2),
+        n_repeats=2,
+        random_states=random_states).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [1, 3])
+    assert_array_equal(test, [0, 2, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 2, 4])
+    assert_array_equal(test, [1, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 4])
+    assert_array_equal(test, [0, 1, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 3])
+    assert_array_equal(test, [2, 4])
 
 
 def test_train_test_split_errors():
