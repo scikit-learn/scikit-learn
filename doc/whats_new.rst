@@ -44,6 +44,9 @@ New features
 Enhancements
 ............
 
+   - :func:`metrics.matthews_corrcoef` now support multiclass classification.
+     :issue:`8094` by :user:`Jon Crall <Erotemic>`.
+
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
      :class:`decomposition.TruncatedSVD` now expose the singular values
      from the underlying SVD. They are stored in the attribute
