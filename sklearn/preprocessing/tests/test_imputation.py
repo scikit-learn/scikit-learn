@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.preprocessing.imputation import MissingIndicator
@@ -381,42 +382,67 @@ def test_imputation_copy():
 
 
 def test_missing_indicator():
+    X1_orig = np.array([
+             [-1,  -1,   1,   3],
+             [4,  -1,   0,  -1],
+             [8,  -1,   1,  0],
+             [0,  -1,   0,  15],
+             [16,  -1,   1,  19]
+    ])
+    X2_orig = np.array([
+             [5,  1,   1,   -1],
+             [-1,  -1,   2,  3],
+             [2,  3,   4,  0],
+             [0,  -1,   5,  -1],
+             [11,  -1,   1,  1]
+    ])
+
+    for X1, X2, missing_values in [(X1_orig, X2_orig, -1),
+                                   (X1_orig + 1, X2_orig + 1, 0)]:
+        mask = X2 == missing_values
+        expect_feat_missing = np.where(np.any(X1 == missing_values, axis=0))[0]
+        for retype in [np.array, sparse.csr_matrix,
+                       sparse.csc_matrix, sparse.lil_matrix]:
+            # features = "train":
+            MI = MissingIndicator(missing_values=missing_values)
+            MI.fit(retype(X1))
+            X2_tr = MI.transform(X2)
+            features = MI.feat_with_missing_
+            assert_array_equal(expect_feat_missing, features)
+            assert_array_equal(np.asarray(X2_tr), mask[:, features])
+
+            # features = "all"
+            MI = clone(MI).set_params(features="all")
+            MI.fit(retype(X1))
+            X2_tr = MI.transform(X2)
+            features = np.arange(X2.shape[1])
+            assert_array_equal(np.asarray(X2_tr), mask[:, features])
+
+            # features = [1, 2]
+            features = [1, 2]
+            MI = clone(MI).set_params(features=features)
+            MI.fit(retype(X1))
+            X2_tr = MI.transform(X2)
+            assert_array_equal(np.asarray(X2_tr), mask[:, features])
+
+
+def test_missing_indicator_warning():
     X1 = np.array([
-         [-1,  -1,   1,   3],
-         [4,  -1,   0,  -1],
-         [8,  -1,   1,  0],
-         [0,  -1,   0,  15],
-         [16,  -1,   1,  19]
+          [-1,  1,  3],
+          [4,  0, -1],
+          [8,  1,  0]
     ])
     X2 = np.array([
-         [5,  1,   -1,   -1],
-         [-1,  -1,   2,  3],
-         [2,  3,   4,  0],
-         [0,  -1,   5,  -1],
-         [11,  -1,   1,  1]
+          [5, -1, -1],
+          [-1,  2,  3],
+          [2,  4,  0]
     ])
-
-    # features = "all":
-    MI = MissingIndicator(missing_values = -1)
+    MI = MissingIndicator(missing_values=-1)
     MI.fit(X1)
-    X2_tr = MI.transform(X2)
-    mask = X2 == -1
-    assert_array_equal(X2_tr, mask)
-
-    # features = "train"
-    MI = clone(MI).set_params(features = "train")
-    MI.fit(X1)
-    X2_tr = MI.transform(X2)
-    features = MI.feat_with_missing_
-    mask = X2[:, features] == -1
-    assert_array_equal(X2_tr, mask)
-
-    # features = [1, 2]
-    features = [1, 2]
-    MI = clone(MI).set_params(features = features)
-    MI.fit(X1)
-    X2_tr = MI.transform(X2)
-    mask = X2[:, features] == -1
-    assert_array_equal(X2_tr, mask)
-
-
+    missing_features_fit = np.where(np.any(X1 == -1, axis=0))[0]
+    missing_features_tr = np.where(np.any(X2 == -1, axis=0))[0]
+    extra_missing_features = np.setdiff1d(missing_features_tr,
+                                          missing_features_fit)
+    warn_msg = "The features %s have missing values in transform " \
+               "but have no missing values in fit" % extra_missing_features
+    assert_warns_message(RuntimeWarning, warn_msg, MI.transform, X2)
