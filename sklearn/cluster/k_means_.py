@@ -36,7 +36,6 @@ from ..externals.six import string_types
 from ..externals.six import next
 from ..externals.progiter import ProgIter
 
-
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
 
@@ -1334,7 +1333,7 @@ class MiniBatchKMeans(KMeans):
     """
 
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
-                 batch_size=100, verbose=1, compute_labels=True,
+                 batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=3, reassignment_ratio=0.01):
 
