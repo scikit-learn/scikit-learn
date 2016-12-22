@@ -950,6 +950,25 @@ def test_cross_val_predict_with_method():
         assert_array_equal(predictions, predictions_ystr)
 
 
+def get_expected_predictions(X, y, cv, classes, est, method):
+
+    expected_predictions = np.zeros([len(y), classes])
+    func = getattr(est, method)
+
+    for train, test in cv.split(X, y):
+        est.fit(X[train], y[train])
+        expected_predictions_ = func(X[test])
+        # To avoid 2 dimensional indexing
+        exp_pred_test = np.zeros((len(test), classes))
+        if method is 'decision_function' and len(est.classes_) == 2:
+            exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+        else:
+            exp_pred_test[:, est.classes_] = expected_predictions_
+        expected_predictions[test] = exp_pred_test
+
+    return expected_predictions
+
+
 def test_cross_val_predict_class_subset():
 
     X = np.arange(8).reshape(4, 2)
@@ -965,64 +984,29 @@ def test_cross_val_predict_class_subset():
     for method in methods:
         est = LogisticRegression()
 
-        expected_predictions = np.zeros([len(y), classes])
-        func = getattr(est, method)
-
         # Test with n_splits=3
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
 
-        # Naive loop (should be same as cross_val_predict):
-        for train, test in kfold3.split(X, y):
-            est.fit(X[train], y[train])
-            expected_predictions_ = func(X[test])
-            # To avoid 2 dimensional indexing
-            exp_pred_test = np.zeros((len(test), classes))
-            if method is 'decision_function' and len(est.classes_) == 2:
-                exp_pred_test[:, est.classes_[-1]] = expected_predictions_
-            else:
-                exp_pred_test[:, est.classes_] = expected_predictions_
-            expected_predictions[test] = exp_pred_test
-
+        # Runs a naive loop (should be same as cross_val_predict):
+        expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+                                                        est, method)
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Test with n_splits=4
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold4)
-
-        # Naive loop (should be same as cross_val_predict):
-        for train, test in kfold4.split(X, y):
-            est.fit(X[train], y[train])
-            expected_predictions_ = func(X[test])
-            # To avoid 2 dimensional indexing
-            exp_pred_test = np.zeros((len(test), classes))
-            if method is 'decision_function' and len(est.classes_) == 2:
-                exp_pred_test[:, est.classes_[-1]] = expected_predictions_
-            else:
-                exp_pred_test[:, est.classes_] = expected_predictions_
-            expected_predictions[test] = exp_pred_test
-
+        expected_predictions = get_expected_predictions(X, y, kfold4, classes,
+                                                        est, method)
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Testing unordered labels
         y = [1, 1, -4, 6]
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
-
         y = le.fit_transform(y)
-
-        # Naive loop (should be same as cross_val_predict):
-        for train, test in kfold3.split(X, y):
-            est.fit(X[train], y[train])
-            expected_predictions_ = func(X[test])
-            # To avoid 2 dimensional indexing
-            exp_pred_test = np.zeros((len(test), classes))
-            if method is 'decision_function' and len(est.classes_) == 2:
-                exp_pred_test[:, est.classes_[-1]] = expected_predictions_
-            else:
-                exp_pred_test[:, est.classes_] = expected_predictions_
-            expected_predictions[test] = exp_pred_test
-
+        expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+                                                        est, method)
         assert_array_almost_equal(expected_predictions, predictions)
 
 
