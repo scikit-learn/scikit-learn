@@ -150,6 +150,7 @@ Bug fixes
      :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
      negative errors for negative values of ``ytrue - ypred`` leading to
      wrong values when calling ``__call__``.
+     :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
 
 API changes summary
 -------------------
