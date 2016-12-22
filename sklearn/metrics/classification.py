@@ -506,7 +506,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
         np.cov(y_pred == k, y_true == k, bias=True, fweights=sample_weight)
         for k in range(len(lb.classes_))
     )
-    covariance = np.sum(class_covariances, axis=0).ravel()
+    covariance = np.sum(class_covariances, axis=0)
     cov_ypyp, cov_ytyp, _, cov_ytyt = covariance.ravel()
     mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
