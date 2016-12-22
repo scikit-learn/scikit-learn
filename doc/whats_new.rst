@@ -146,6 +146,12 @@ Bug fixes
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
 
+   - Fix a bug where
+     :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
+     negative errors for negative values of ``ytrue - ypred`` leading to
+     wrong values when calling ``__call__``.
+     :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
+
    - Fix :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba` to
      return a list of 2d arrays, rather than a 3d array. In the case where
      different target columns had different numbers of classes, a `ValueError`
