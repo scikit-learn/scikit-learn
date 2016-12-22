@@ -366,8 +366,6 @@ def test_matthews_corrcoef():
     y_true_inv = ["b" if i == "a" else "a" for i in y_true]
 
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
-    y_true_inv2 = label_binarize(y_true, ["a", "b"]) * -1
-    assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
     # result in a RuntimeWarning

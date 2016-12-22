@@ -494,40 +494,21 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     -0.33...
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type not in {"binary", "multiclass"}:
+        raise ValueError("%s is not supported" % y_type)
+
     lb = LabelEncoder()
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    if y_type == "multiclass":
-        C = confusion_matrix(y_pred, y_true, sample_weight=sample_weight)
-        N = len(C)
-        cov_ytyp = ((np.diag(C)[:, np.newaxis, np.newaxis] * C).sum() -
-                    (C[np.newaxis, :, :] * C[:, :, np.newaxis]).sum())
-        cov_ytyt = np.sum([
-            (C[:, k].sum() * (C[:, :k].sum() + C[:, k + 1:].sum()))
-            for k in range(N)
-        ])
-        cov_ypyp = np.sum([
-            (C[k, :].sum() * (C[:k, :].sum() + C[k + 1:, :].sum()))
-            for k in range(N)
-        ])
-        mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-    elif y_type == "binary":
-        mean_yt = np.average(y_true, weights=sample_weight)
-        mean_yp = np.average(y_pred, weights=sample_weight)
-
-        y_true_u_cent = y_true - mean_yt
-        y_pred_u_cent = y_pred - mean_yp
-
-        cov_ytyp = np.average(y_true_u_cent * y_pred_u_cent,
-                              weights=sample_weight)
-        var_yt = np.average(y_true_u_cent ** 2, weights=sample_weight)
-        var_yp = np.average(y_pred_u_cent ** 2, weights=sample_weight)
-
-        mcc = cov_ytyp / np.sqrt(var_yt * var_yp)
-    else:
-        raise ValueError("%s is not supported" % y_type)
+    class_covariances = (
+        np.cov(y_pred == k, y_true == k, bias=True, fweights=sample_weight)
+        for k in range(len(lb.classes_))
+    )
+    covariance = np.sum(class_covariances, axis=0).ravel()
+    cov_ypyp, cov_ytyp, _, cov_ytyt = covariance.ravel()
+    mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
     if np.isnan(mcc):
         return 0.
