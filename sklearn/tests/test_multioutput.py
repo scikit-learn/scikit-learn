@@ -12,7 +12,8 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
-from sklearn.linear_model import Lasso, SGDClassifier, SGDRegressor, LogisticRegression
+from sklearn.linear_model import Lasso, SGDClassifier, SGDRegressor,\
+    LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
