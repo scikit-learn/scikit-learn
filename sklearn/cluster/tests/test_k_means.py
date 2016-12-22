@@ -313,6 +313,10 @@ def test_mb_k_means_plus_plus_init_dense_array():
 
 
 def test_mb_kmeans_verbose():
+    """
+    nosetests -s sklearn/cluster/tests/test_k_means.py:test_mb_kmeans_verbose
+    nosetests -s sklearn/cluster/tests/test_k_means.py
+    """
     mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
                                  random_state=42, verbose=1)
     old_stdout = sys.stdout
