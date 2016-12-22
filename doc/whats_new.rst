@@ -41,6 +41,10 @@ New features
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      By `Tom Dupre la Tour`_.
 
+   - Added :func:`metrics.regression.mean_squared_log_error`, a risk metric
+     for targets with an exponential trend.
+     :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
+
 Enhancements
 ............
 
