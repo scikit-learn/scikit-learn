@@ -214,16 +214,18 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
         Returns
         -------
-        T : (sparse) array-like, shape = (n_samples, n_classes, n_outputs)
-            The class probabilities of the samples for each of the outputs
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs \
+            such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimator, "predict_proba"):
             raise ValueError("The base estimator should implement"
                              "predict_proba method")
 
-        results = np.dstack([estimator.predict_proba(X) for estimator in
-                            self.estimators_])
+        results = [estimator.predict_proba(X) for estimator in
+                   self.estimators_]
         return results
 
     def score(self, X, y):

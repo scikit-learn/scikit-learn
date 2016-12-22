@@ -152,6 +152,12 @@ Bug fixes
      wrong values when calling ``__call__``.
      :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
 
+   - Fix :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba` to
+     return a list of 2d arrays, rather than a 3d array. In the case where
+     different target columns had different numbers of classes, a `ValueError`
+     would be raised on trying to stack matrices with different dimensions.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
+
 API changes summary
 -------------------
 
@@ -166,6 +172,15 @@ API changes summary
      user no longer has access to the unnormalized document topic distribution
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
+
+   - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
+     function used to return a 3d array (``n_samples``, ``n_classes``,
+     ``n_outputs``). In the case where different target columns had different
+     numbers of classes, a `ValueError` would be raised on trying to stack
+     matrices with different dimensions. This function now returns a list of
+     arrays where the length of the list is ``n_outputs``, and each array is
+     (``n_samples``, ``n_classes``) for that particular output.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
 .. _changes_0_18_1:
 
