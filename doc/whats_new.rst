@@ -41,7 +41,7 @@ New features
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      By `Tom Dupre la Tour`_.
 
-   - Added :func:`metrics.regression.mean_squared_log_error`, which computes 
+   - Added :func:`metrics.mean_squared_log_error`, which computes 
      the mean square error of the logarithmic transformation of targets, 
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
