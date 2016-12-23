@@ -51,7 +51,7 @@ def check_clusterings(labels_true, labels_pred):
     return labels_true, labels_pred
 
 
-def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
+def contingency_matrix(labels_true, labels_pred=None, eps=None, sparse=False):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -83,6 +83,9 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
         Will be a ``scipy.sparse.csr_matrix`` if ``sparse=True``.
     """
 
+    if labels_pred is None:
+        return labels_true
+
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
 
@@ -110,7 +113,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
 
 # clustering measures
 
-def adjusted_rand_score(labels_true, labels_pred):
+def adjusted_rand_score(labels_true, labels_pred=None):
     """Rand index adjusted for chance.
 
     The Rand Index computes a similarity measure between two clusterings
@@ -191,21 +194,26 @@ def adjusted_rand_score(labels_true, labels_pred):
     adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
-    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples = labels_true.shape[0]
-    n_classes = np.unique(labels_true).shape[0]
-    n_clusters = np.unique(labels_pred).shape[0]
 
-    # Special limit cases: no clustering since the data is not split;
-    # or trivial clustering where each document is assigned a unique cluster.
-    # These are perfect matches hence return 1.0.
-    if (n_classes == n_clusters == 1 or
-            n_classes == n_clusters == 0 or
-            n_classes == n_clusters == n_samples):
-        return 1.0
+    if labels_pred is not None:
+        labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+        n_samples = labels_true.shape[0]
+        n_classes = np.unique(labels_true).shape[0]
+        n_clusters = np.unique(labels_pred).shape[0]
 
-    # Compute the ARI using the contingency data
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+        # Special limit cases: no clustering since the data is not split;
+        # or trivial clustering where each document is assigned a unique cluster.
+        # These are perfect matches hence return 1.0.
+        if (n_classes == n_clusters == 1 or
+                n_classes == n_clusters == 0 or
+                n_classes == n_clusters == n_samples):
+            return 1.0
+
+        # Compute the ARI using the contingency data
+        contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    else:
+        contingency = labels_true
+
     sum_comb_c = sum(comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
@@ -215,7 +223,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
-def homogeneity_completeness_v_measure(labels_true, labels_pred):
+def homogeneity_completeness_v_measure(labels_true, labels_pred=None):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
@@ -787,7 +795,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     return nmi
 
 
-def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred=None, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
@@ -849,8 +857,12 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
            <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
-    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples, = labels_true.shape
+
+    if labels_pred is None:
+        n_samples = np.sum(labels_true)
+    else:
+        labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+        n_samples, = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred, sparse=True)
     tk = np.dot(c.data, c.data) - n_samples
