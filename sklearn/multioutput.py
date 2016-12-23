@@ -68,7 +68,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """ Fit the model to data.
+        """Incrementally fit the model to data.
         Fit a separate model for each output variable.
 
         Parameters
@@ -220,7 +220,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
 
     def partial_fit(self, X, y, sample_weight=None):
-        """ Fit the model to data.
+        """Incrementally fit the model to data.
         Fit a separate model for each output variable.
 
         Parameters

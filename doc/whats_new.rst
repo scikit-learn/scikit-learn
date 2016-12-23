@@ -44,6 +44,10 @@ New features
 Enhancements
 ............
 
+   - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
+     now support incremental fit using `partial_fit`.
+     issue: `8053` by :user:`Peng Yu <yupbank>`.
+
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
      :class:`decomposition.TruncatedSVD` now expose the singular values
      from the underlying SVD. They are stored in the attribute
