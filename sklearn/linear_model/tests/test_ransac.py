@@ -11,7 +11,6 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials

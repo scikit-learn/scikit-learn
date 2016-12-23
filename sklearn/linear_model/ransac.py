@@ -408,7 +408,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         # if none of the iterations met the required criteria
         if inlier_mask_best is None:
             if ((n_skips_no_inliers + n_skips_invalid_data +
-                     n_skips_invalid_model) > self.max_skips):
+                    n_skips_invalid_model) > self.max_skips):
                 raise ValueError(
                     "RANSAC skipped more iterations than `max_skips` without"
                     " finding a valid consensus set. Iterations were skipped"
