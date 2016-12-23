@@ -376,12 +376,12 @@ class AdditiveChi2Sampler(BaseAdditiveHomogenousKernelSampler):
     2011
     """
 
+    # See reference, figure 2 c)
     preset_sample_intervals = {1: 0.8, 2: 0.5, 3: 0.4}
 
     def __init__(self, sample_steps=2, sample_interval=None):
         super(AdditiveChi2Sampler, self).__init__(sample_steps,
                                                   sample_interval)
-        # See reference, figure 2 c)
 
     def _spectrum(self, omega):
         # Spectrum function for chi2 kernel
@@ -428,12 +428,12 @@ class IntersectionSampler(BaseAdditiveHomogenousKernelSampler):
     2011
     """
 
+    # Empirically selected values
     preset_sample_intervals = {1: 1.2, 2: 0.8, 3: 0.7}
 
     def __init__(self, sample_steps=2, sample_interval=None):
         super(IntersectionSampler, self).__init__(sample_steps,
                                                   sample_interval)
-        # Empirically selected values
 
     def _spectrum(self, omega):
         # Spectrum function for intersection kernel
@@ -479,12 +479,12 @@ class JensenShannonSampler(BaseAdditiveHomogenousKernelSampler):
     2011
     """
 
+    # Empirically selected values
     preset_sample_intervals = {1: 0.6, 2: 0.4, 3: 0.2}
 
     def __init__(self, sample_steps=2, sample_interval=None):
         super(JensenShannonSampler, self).__init__(sample_steps,
                                                    sample_interval)
-        # Empirically selected values
 
     def _spectrum(self, omega):
         # Spectrum function for Jensen-Shannon kernel
