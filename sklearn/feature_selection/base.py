@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array, safe_mask, check_X_y
+from ..utils import check_array, check_X_y, safe_mask
 from ..externals import six
 
 
@@ -123,9 +123,7 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
 
 
 def wrapper_scorer(score_func, X, y=None):
-    """ A wrapper function around score functions. This function takes as
-        input the feature matrix X and/or the target vector y and sends it
-        as parameter to the score function.
+    """ A wrapper function around score functions.
 
     Parameters
     ----------
@@ -142,6 +140,8 @@ def wrapper_scorer(score_func, X, y=None):
 
     Notes
     -----
+    This function takes as input the feature matrix X and/or the target vector
+    y and sends it as parameter to the score function.
     The negative score values returned by a score function are changed to
     zero as both negative and zero score values signify the same thing.
     E.g. Mutual information between two random variables is a non-negative
@@ -151,14 +151,14 @@ def wrapper_scorer(score_func, X, y=None):
     """
 
     if not callable(score_func):
-        raise TypeError("The score function should be a callable, %s (%s) "
+        raise ValueError("The score function should be a callable, %s (%s) "
                         "was passed."
                         % (score_func, type(score_func)))
 
     if y is None:
         X = check_array(X, ('csr', 'csc'))
     else:
-        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
+        X, y = check_X_y(X, y, ('csr', 'csc'), multi_output=True)
 
     if y is None:
         score_func_ret = score_func(X)
