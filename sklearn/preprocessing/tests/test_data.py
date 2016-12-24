@@ -1679,9 +1679,3 @@ def test_count_featurizer_ft_standard_inclusion():
     assert_array_equal(
         cf_inclusion_4.fit_transform(X2),
         np.array([[0, 2, 1, 2], [0, 2, 3, 2], [1, 0, 5, 1], [1, 1, 5, 1]]))
-
-
-def test_count_featurizer_standard_removal():
-    cf_removal = CountFeaturizer(removal_policy=[0, 1])
-    X = np.array([[1, 1], [1, 2], [1, 1]])
-    assert_array_equal(cf_removal.fit_transform(X), np.array([[2], [1], [2]]))
