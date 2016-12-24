@@ -783,12 +783,42 @@ class partialURLOpener(urllib.FancyURLopener):
 
 
 def md5(path):
+    """
+    Calculate the md5 hash of the file at path.
+
+    Parameters
+    -----------
+    path: String
+        Path of file to calculate MD5 hash of.
+
+    Returns
+    -------
+    md5hash : String
+        MD5 hash of the file at the provided path.
+
+    """
+
     md5hash = hashlib.md5()
     md5hash.update(open(path, 'rb').read())
     return md5hash.hexdigest()
 
 
 def validate_file_md5(expected_checksum, path):
+    """
+    Compare the MD5 checksum of a file at a path with
+    an expected MD5 checksum. If they do not match,
+    remove the file at path and throw a ValueError.
+
+    Parameters
+    -----------
+    expected_checksum: String
+        Expected MD5 checksum of file at path.
+
+    path: String
+        Path of file to compare MD5 hash of.
+
+    """
+
     if expected_checksum != md5(path):
         remove(path)
         raise ValueError("{} has an MD5 hash differing "
@@ -811,6 +841,7 @@ def fetch_and_verify_dataset(URL, path, checksum):
 
     checksum: String
         MD5 checksum to verify against the data
+
     """
 
     existing_size = 0
