@@ -12,6 +12,7 @@ from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score
+from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
@@ -275,3 +276,21 @@ def test_estimator_weights_format():
     eclf1.fit(X, y)
     eclf2.fit(X, y)
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
+
+def test_predict_for_hard_voting():
+    # Test predictions array data type error
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = SVC(probability=True, random_state=123)
+    eclf1 = VotingClassifier(estimators=[
+                ('lr', clf1), ('rf', clf2), ('svc', clf3)], weights=[1, 2, 3],
+                voting='hard')
+
+    eclf1.fit(X, y)  # For Iris dataset
+    eclf1.predict(X)
+
+    X1, y1 = make_classification(n_samples=150, n_features=4, n_informative=4,
+                                 n_redundant=0, n_classes=5)
+    eclf1.fit(X1, y1)  # For custom dataset
+    eclf1.predict(X1)
