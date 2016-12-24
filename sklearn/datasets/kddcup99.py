@@ -11,19 +11,14 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 import sys
 import errno
 from gzip import GzipFile
-from io import BytesIO
 import logging
 import os
 from os.path import exists, join
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 import numpy as np
 
-from .base import get_data_home
-from .base import Bunch
+from .base import get_data_home, Bunch
+from .base import fetch_and_verify_dataset, validate_file_md5
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -33,7 +28,7 @@ URL10 = 'https://ndownloader.figshare.com/files/5976042'
 
 URL = 'https://ndownloader.figshare.com/files/5976045'
 
-
+logging.basicConfig()
 logger = logging.getLogger()
 
 
@@ -269,8 +264,13 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
         dir_suffix = ""
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
+        archive_path = join(kddcup_dir, "kddcup99_10_data")
+        expected_checksum = "c421989ff187d340c1265ac3080a3229"
     else:
         kddcup_dir = join(data_home, "kddcup99" + dir_suffix)
+        archive_path = join(kddcup_dir, "kddcup99_data")
+        expected_checksum = "3745289f84bdd907c03baca24f9f81bc"
+
     samples_path = join(kddcup_dir, "samples")
     targets_path = join(kddcup_dir, "targets")
     available = exists(samples_path)
@@ -278,9 +278,9 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
         URL_ = URL10 if percent10 else URL
-        logger.warning("Downloading %s" % URL_)
-        f = BytesIO(urlopen(URL_).read())
-
+        logger.info("Downloading %s" % URL_)
+        fetch_and_verify_dataset(URL_, archive_path, expected_checksum)
+        print "before dt"
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),
@@ -324,15 +324,20 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
               ('dst_host_srv_rerror_rate', float),
               ('labels', 'S16')]
         DT = np.dtype(dt)
-
-        file_ = GzipFile(fileobj=f, mode='r')
+        print "after dt"
+        print "extracting archive"
+        logger.info("extracting archive")
+        file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
             if six.PY3:
                 line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
-        print('extraction done')
+        print "extraction done"
+        logger.info('extraction done')
+        os.remove(archive_path)
+
         Xy = np.asarray(Xy, dtype=object)
         for j in range(42):
             Xy[:, j] = Xy[:, j].astype(DT[j])
@@ -345,6 +350,21 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
+
+        # check md5 of dumped samples and targets
+        if percent10:
+            expected_samples_checksum = "md1b292b59b96894de38da4a984df2a483"
+            validate_file_md5(expected_samples_checksum, samples_path)
+
+            expected_targets_checksum = "956a3e4d5ea62aedeb226fd104798dc9"
+            validate_file_md5(expected_targets_checksum, targets_path)
+
+        else:
+            expected_samples_checksum = "7b6f71d4557254f26d73e52d2b39b46e"
+            validate_file_md5(expected_samples_checksum, samples_path)
+
+            expected_targets_checksum = "0422b093c0bc5bf60b586c8060698ef3"
+            validate_file_md5(expected_targets_checksum, targets_path)
     elif not available:
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")

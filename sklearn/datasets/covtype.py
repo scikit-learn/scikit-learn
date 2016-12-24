@@ -15,18 +15,14 @@ Courtesy of Jock A. Blackard and Colorado State University.
 # License: BSD 3 clause
 
 from gzip import GzipFile
-from io import BytesIO
 import logging
 from os.path import exists, join
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from os import remove
 
 import numpy as np
 
-from .base import get_data_home
-from .base import Bunch
+from .base import get_data_home, Bunch
+from .base import fetch_and_verify_dataset, validate_file_md5
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
@@ -35,8 +31,7 @@ from ..utils import check_random_state
 
 URL = 'https://ndownloader.figshare.com/files/5976039'
 
-
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def fetch_covtype(data_home=None, download_if_missing=True,
@@ -89,19 +84,30 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     if download_if_missing and not available:
         makedirs(covtype_dir, exist_ok=True)
-        logger.warning("Downloading %s" % URL)
-        f = BytesIO(urlopen(URL).read())
-        Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')
+        logger.info("Downloading %s" % URL)
+
+        archive_path = join(covtype_dir, "covtype.data.gz")
+        expected_checksum = "99670d8d942f09d459c7d4486fca8af5"
+        fetch_and_verify_dataset(URL, archive_path, expected_checksum)
+        Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
+        # delete archive
+        remove(archive_path)
 
         X = Xy[:, :-1]
         y = Xy[:, -1].astype(np.int32)
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(y, targets_path, compress=9)
-    elif not available:
-        if not download_if_missing:
-            raise IOError("Data not found and `download_if_missing` is False")
 
+        # check md5 of dumped samples and targets
+        expected_samples_checksum = "19b80d5fa6590346b357b4cb75562f0e"
+        validate_file_md5(expected_samples_checksum, samples_path)
+
+        expected_targets_checksum = "b79a24223e6a55bd486b7f796e8e5305"
+        validate_file_md5(expected_targets_checksum, targets_path)
+
+    elif not available and not download_if_missing:
+        raise IOError("Data not found and `download_if_missing` is False")
     try:
         X, y
     except NameError:

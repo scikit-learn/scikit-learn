@@ -36,21 +36,18 @@ Notes:
 # License: BSD 3 clause
 
 from io import BytesIO
-from os import makedirs
-from os.path import exists
+from os import makedirs, remove
+from os.path import exists, join
 
-try:
-    # Python 2
-    from urllib2 import urlopen
+import sys
+if sys.version_info[0] < 3:
     PY2 = True
-except ImportError:
-    # Python 3
-    from urllib.request import urlopen
+else:
     PY2 = False
 
 import numpy as np
 
-from sklearn.datasets.base import get_data_home, Bunch
+from sklearn.datasets.base import get_data_home, Bunch, fetch_and_verify_dataset, validate_file_md5
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
@@ -225,7 +222,11 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
-        X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
+        expected_samples_checksum = "baa67cf5601507f07a37fdf240ea430c"
+        samples_path = join(data_home, "samples.zip")
+        fetch_and_verify_dataset(SAMPLES_URL, samples_path, expected_samples_checksum)
+        X = np.load(samples_path)
+        remove(samples_path)
 
         for f in X.files:
             fhandle = BytesIO(X[f])
@@ -236,13 +237,17 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
                                                            data_home))
-
-        X = np.load(BytesIO(urlopen(COVERAGES_URL).read()))
+        expected_coverages_checksum = "b3a8b24ec0390285a5f9e2528ad1013e"
+        coverages_path = join(data_home, "coverages.zip")
+        fetch_and_verify_dataset(COVERAGES_URL, coverages_path,
+                                 expected_coverages_checksum)
+        X = np.load(coverages_path)
+        remove(coverages_path)
 
         coverages = []
         for f in X.files:
             fhandle = BytesIO(X[f])
-            print(' - converting', f)
+            print('converting {}'.format(f))
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages, dtype=dtype)
 
@@ -251,6 +256,9 @@ def fetch_species_distributions(data_home=None,
                       train=train,
                       **extra_params)
         joblib.dump(bunch, archive_path, compress=9)
+        # check hash of dumped joblib
+        expected_checksum = "06206a67fa54ea1cf0e963560bd15cf0"
+        validate_file_md5(expected_checksum, archive_path)
     else:
         bunch = joblib.load(archive_path)
 

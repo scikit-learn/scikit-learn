@@ -21,21 +21,14 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from io import BytesIO
-from os.path import exists
-from os import makedirs
+from os.path import exists, join
+from os import makedirs, remove
 import tarfile
-
-try:
-    # Python 2
-    from urllib2 import urlopen
-except ImportError:
-    # Python 3+
-    from urllib.request import urlopen
 
 import numpy as np
 
 from .base import get_data_home, Bunch
+from .base import fetch_and_verify_dataset, validate_file_md5
 from .base import _pkl_filepath
 from ..externals import joblib
 
@@ -94,11 +87,14 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
             raise IOError("Data not found and `download_if_missing` is False")
 
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
-        archive_fileobj = BytesIO(urlopen(DATA_URL).read())
+        archive_path = join(data_home, "cal_housing.tgz")
+        expected_checksum = "130d0eececf165046ec4dc621d121d80"
+        fetch_and_verify_dataset(DATA_URL, archive_path, expected_checksum)
         fileobj = tarfile.open(
             mode="r:gz",
-            fileobj=archive_fileobj).extractfile(
+            name=archive_path).extractfile(
                 'CaliforniaHousing/cal_housing.data')
+        remove(archive_path)
 
         cal_housing = np.loadtxt(fileobj, delimiter=',')
         # Columns are not in the same order compared to the previous
@@ -106,6 +102,10 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
         cal_housing = cal_housing[:, columns_index]
         joblib.dump(cal_housing, filepath, compress=6)
+        # assert that dumped file has correct md5 hash
+        expected_checksum = "39c2dc70c4aad72e44b741c37163e6cc"
+        validate_file_md5(expected_checksum, filepath)
+
     else:
         cal_housing = joblib.load(filepath)
 

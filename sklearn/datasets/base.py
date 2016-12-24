@@ -6,6 +6,7 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+from __future__ import print_function
 
 import os
 import csv
@@ -18,10 +19,16 @@ from os.path import exists
 from os.path import expanduser
 from os.path import isdir
 from os.path import splitext
-from os import listdir
-from os import makedirs
+from os.path import getsize
+from os import listdir, makedirs, rename, remove
+
+try:
+    import urllib.request as urllib  # for backwards compatibility
+except ImportError:
+    import urllib
 
 import numpy as np
+import hashlib
 
 from ..utils import check_random_state
 
@@ -608,7 +615,7 @@ def load_boston(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.18    
+        .. versionadded:: 0.18
 
     Examples
     --------
@@ -764,3 +771,78 @@ def _pkl_filepath(*args, **kwargs):
         basename += py3_suffix
     new_args = args[:-1] + (basename + ext,)
     return join(*new_args)
+
+
+class partialURLOpener(urllib.FancyURLopener):
+    """
+    Override HTTP Error 206 (partial file being sent)
+    """
+    def http_error_206(self, url, fp, errcode, errmsg, headers, data=None):
+        # Ignore the expected "error" code
+        pass
+
+
+def md5(path):
+    md5hash = hashlib.md5()
+    md5hash.update(open(path, 'rb').read())
+    return md5hash.hexdigest()
+
+def validate_file_md5(expected_checksum, path):
+    if expected_checksum != md5(path):
+        remove(path)
+        raise ValueError("{} has an MD5 hash differing "
+                         "from expected, file may be "
+                         "corrupted.".format(path))
+
+
+def fetch_and_verify_dataset(URL, path, checksum):
+    """
+    Fetch a dataset from a URL and check the MD5 checksum to ensure
+    fetch was completed and the correct file was downloaded
+
+    Parameters
+    -----------
+    URL: String
+        URL to fetch the download from.
+
+    path: String
+        Path to save the file to.
+
+    checksum: String
+        MD5 checksum to verify against the data
+    """
+
+    existing_size = 0
+    resume_url_downloader = partialURLOpener()
+    path_temp = path + ".tmp"
+    if exists(path_temp):
+        # since path_temp exists, resume download
+        temp_file = open(path_temp,"ab")
+        # get the amount of path_temp we've downloaded
+        existing_size = getsize(path_temp)
+        print("Resuming download from previous temp file, "
+              "already have {} bytes".format(existing_size))
+        # Download only the remainder of the file
+        resume_url_downloader.addheader("Range","bytes={}-".format(existing_size))
+    else:
+        # no path_temp, so download from scratch
+        temp_file= open(path_temp,"wb")
+
+    dataset_url = resume_url_downloader.open(URL)
+    while 1:
+        chunk = dataset_url.read(8192)
+        if not chunk:
+            break
+        temp_file.write(chunk)
+
+    dataset_url.close()
+    temp_file.close()
+    # verify checksum of downloaded temp file
+    print("verifying checksum")
+    if checksum != md5(path_temp):
+        remove(path_temp)
+        raise ValueError("Downloaded file had an MD5 hash differing "
+                         "from expected, file could have been corrupted.")
+    print("done verifying checksum")
+    # move temporary file to the expected location
+    rename(path_temp, path)

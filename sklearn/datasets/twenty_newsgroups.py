@@ -50,16 +50,11 @@ from .base import get_data_home
 from .base import Bunch
 from .base import load_files
 from .base import _pkl_filepath
+from .base import fetch_and_verify_dataset, validate_file_md5
 from ..utils import check_random_state
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..externals import joblib, six
-
-if six.PY3:
-    from urllib.request import urlopen
-else:
-    from urllib2 import urlopen
-
+from ..externals import joblib
 
 logger = logging.getLogger(__name__)
 
@@ -80,16 +75,9 @@ def download_20newsgroups(target_dir, cache_path):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    if os.path.exists(archive_path):
-        # Download is not complete as the .tar.gz file is removed after
-        # download.
-        logger.warning("Download was incomplete, downloading again.")
-        os.remove(archive_path)
-
     logger.warning("Downloading dataset from %s (14 MB)", URL)
-    opener = urlopen(URL)
-    with open(archive_path, 'wb') as f:
-        f.write(opener.read())
+    expected_checksum = "d6e9e45cb8cb77ec5276dfa6dfc14318"
+    fetch_and_verify_dataset(URL, archive_path, expected_checksum)
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
@@ -101,6 +89,10 @@ def download_20newsgroups(target_dir, cache_path):
     compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
     with open(cache_path, 'wb') as f:
         f.write(compressed_content)
+
+    # check md5 of written file
+    expected_checksum = "4259916082467db1b096c6c05299f17c"
+    validate_file_md5(expected_checksum, cache_path)
 
     shutil.rmtree(target_dir)
     return cache

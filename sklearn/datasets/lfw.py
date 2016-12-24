@@ -29,12 +29,7 @@ from os.path import join, exists, isdir
 import logging
 import numpy as np
 
-try:
-    import urllib.request as urllib  # for backwards compatibility
-except ImportError:
-    import urllib
-
-from .base import get_data_home, Bunch
+from .base import get_data_home, Bunch, fetch_and_verify_dataset
 from ..externals.joblib import Memory
 
 from ..externals.six import b
@@ -50,6 +45,11 @@ TARGET_FILENAMES = {
     'pairsDevTrain.txt': "https://ndownloader.figshare.com/files/5976012",
     'pairsDevTest.txt': "https://ndownloader.figshare.com/files/5976009",
     'pairs.txt': "https://ndownloader.figshare.com/files/5976006",
+}
+TARGET_CHECKSUMS = {
+    'pairsDevTrain.txt': "4f27cbf15b2da4a85c1907eb4181ad21",
+    'pairsDevTest.txt': "5132f7440eb68cf58910c8a45a2ac10b",
+    'pairs.txt': "9f1ba174e4e1c508ff7cdf10ac338a7d",
 }
 
 
@@ -72,13 +72,15 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     lfw_home = join(data_home, "lfw_home")
 
     if funneled:
-        archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
         data_folder_path = join(lfw_home, "lfw_funneled")
+        archive_path = join(data_folder_path, FUNNELED_ARCHIVE_NAME)
         archive_url = FUNNELED_ARCHIVE_URL
+        expected_archive_checksum = "1b42dfed7d15c9b2dd63d5e5840c86ad"
     else:
-        archive_path = join(lfw_home, ARCHIVE_NAME)
         data_folder_path = join(lfw_home, "lfw")
+        archive_path = join(data_folder_path, ARCHIVE_NAME)
         archive_url = ARCHIVE_URL
+        expected_archive_checksum = "a17d05bd522c52d84eca14327a23d494"
 
     if not exists(lfw_home):
         makedirs(lfw_home)
@@ -89,7 +91,9 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
             if download_if_missing:
                 url = TARGET_FILENAMES[target_filename]
                 logger.warning("Downloading LFW metadata: %s", url)
-                urllib.urlretrieve(url, target_filepath)
+                expected_checksum = TARGET_CHECKSUMS[target_filename]
+                fetch_and_verify_dataset(url, target_filepath,
+                                         expected_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -100,8 +104,9 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 archive_path_temp = archive_path + ".tmp"
                 logger.warning("Downloading LFW data (~200MB): %s",
                                archive_url)
-                urllib.urlretrieve(archive_url, archive_path_temp)
-                rename(archive_path_temp, archive_path)
+
+                fetch_and_verify_dataset(archive_url, archive_path,
+                                         expected_archive_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
