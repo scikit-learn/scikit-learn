@@ -947,6 +947,12 @@ def check_class_weights(name):
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
+    # Using a Python 2.x list as the sample_weight parameter used to raise
+    # an exception. This test makes sure such code will now run correctly.
+    clf = ForestClassifier()
+    sample_weight = [1.] * len(iris.data)
+    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+
 
 def test_class_weights():
     for name in FOREST_CLASSIFIERS:
