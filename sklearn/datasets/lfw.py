@@ -23,7 +23,7 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from os import listdir, makedirs, remove, rename
+from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
 
 import logging
@@ -101,7 +101,6 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
-                archive_path_temp = archive_path + ".tmp"
                 logger.warning("Downloading LFW data (~200MB): %s",
                                archive_url)
 

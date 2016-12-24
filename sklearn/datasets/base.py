@@ -524,12 +524,12 @@ def load_diabetes(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.18    
+        .. versionadded:: 0.18
     """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
-    
+
     if return_X_y:
         return data, target
 
@@ -561,7 +561,7 @@ def load_linnerud(return_X_y=False):
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
-    
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -787,6 +787,7 @@ def md5(path):
     md5hash.update(open(path, 'rb').read())
     return md5hash.hexdigest()
 
+
 def validate_file_md5(expected_checksum, path):
     if expected_checksum != md5(path):
         remove(path)
@@ -817,16 +818,17 @@ def fetch_and_verify_dataset(URL, path, checksum):
     path_temp = path + ".tmp"
     if exists(path_temp):
         # since path_temp exists, resume download
-        temp_file = open(path_temp,"ab")
+        temp_file = open(path_temp, "ab")
         # get the amount of path_temp we've downloaded
         existing_size = getsize(path_temp)
         print("Resuming download from previous temp file, "
               "already have {} bytes".format(existing_size))
         # Download only the remainder of the file
-        resume_url_downloader.addheader("Range","bytes={}-".format(existing_size))
+        resume_url_downloader.addheader("Range", "bytes="
+                                        "{}-".format(existing_size))
     else:
         # no path_temp, so download from scratch
-        temp_file= open(path_temp,"wb")
+        temp_file = open(path_temp, "wb")
 
     dataset_url = resume_url_downloader.open(URL)
     while 1:

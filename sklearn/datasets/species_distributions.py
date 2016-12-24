@@ -40,16 +40,18 @@ from os import makedirs, remove
 from os.path import exists, join
 
 import sys
+
+import numpy as np
+
+from .base import get_data_home, Bunch
+from .base import fetch_and_verify_dataset, validate_file_md5
+from sklearn.datasets.base import _pkl_filepath
+from sklearn.externals import joblib
+
 if sys.version_info[0] < 3:
     PY2 = True
 else:
     PY2 = False
-
-import numpy as np
-
-from sklearn.datasets.base import get_data_home, Bunch, fetch_and_verify_dataset, validate_file_md5
-from sklearn.datasets.base import _pkl_filepath
-from sklearn.externals import joblib
 
 SAMPLES_URL = "https://ndownloader.figshare.com/files/5976075"
 COVERAGES_URL = "https://ndownloader.figshare.com/files/5976078"
@@ -63,14 +65,17 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
     This will return a numpy array of the given dtype
     """
     header = [F.readline() for i in range(header_length)]
-    make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
-    header = dict([make_tuple(line) for line in header])
+    header = dict([_make_tuple(line) for line in header])
 
     M = np.loadtxt(F, dtype=dtype)
     nodata = int(header[b'NODATA_value'])
     if nodata != -9999:
         M[nodata] = -9999
     return M
+
+
+def _make_tuple(line):
+    return (line.split()[0], float(line.split()[1]))
 
 
 def _load_csv(F):
@@ -224,7 +229,8 @@ def fetch_species_distributions(data_home=None,
                                                           data_home))
         expected_samples_checksum = "baa67cf5601507f07a37fdf240ea430c"
         samples_path = join(data_home, "samples.zip")
-        fetch_and_verify_dataset(SAMPLES_URL, samples_path, expected_samples_checksum)
+        fetch_and_verify_dataset(SAMPLES_URL, samples_path,
+                                 expected_samples_checksum)
         X = np.load(samples_path)
         remove(samples_path)
 
