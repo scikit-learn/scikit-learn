@@ -28,8 +28,7 @@ URL10 = 'https://ndownloader.figshare.com/files/5976042'
 
 URL = 'https://ndownloader.figshare.com/files/5976045'
 
-logging.basicConfig()
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
@@ -280,7 +279,6 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
         URL_ = URL10 if percent10 else URL
         logger.info("Downloading %s" % URL_)
         fetch_and_verify_dataset(URL_, archive_path, expected_checksum)
-        print "before dt"
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),
@@ -324,8 +322,6 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
               ('dst_host_srv_rerror_rate', float),
               ('labels', 'S16')]
         DT = np.dtype(dt)
-        print "after dt"
-        print "extracting archive"
         logger.info("extracting archive")
         file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
@@ -334,7 +330,6 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
                 line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
-        print "extraction done"
         logger.info('extraction done')
         os.remove(archive_path)
 

@@ -838,11 +838,9 @@ def fetch_and_verify_dataset(URL, path, checksum):
     dataset_url.close()
     temp_file.close()
     # verify checksum of downloaded temp file
-    print("verifying checksum")
     if checksum != md5(path_temp):
         remove(path_temp)
         raise ValueError("Downloaded file had an MD5 hash differing "
                          "from expected, file could have been corrupted.")
-    print("done verifying checksum")
     # move temporary file to the expected location
     rename(path_temp, path)
