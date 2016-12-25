@@ -1195,10 +1195,10 @@ def test_nested_cv():
 
 
 def test_train_test_default_warning():
-    assert_warns(DeprecationWarning, ShuffleSplit, train_size=0.75)
-    assert_warns(DeprecationWarning, GroupShuffleSplit, train_size=0.75)
-    assert_warns(DeprecationWarning, StratifiedShuffleSplit, train_size=0.75)
-    assert_warns(DeprecationWarning, train_test_split, range(3),
+    assert_warns(FutureWarning, ShuffleSplit, train_size=0.75)
+    assert_warns(FutureWarning, GroupShuffleSplit, train_size=0.75)
+    assert_warns(FutureWarning, StratifiedShuffleSplit, train_size=0.75)
+    assert_warns(FutureWarning, train_test_split, range(3),
                  train_size=0.75)
 
 
