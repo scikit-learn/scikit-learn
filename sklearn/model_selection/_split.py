@@ -1651,7 +1651,6 @@ def train_test_split(*arrays, **options):
         if ``train_size`` is unspecified, otherwise it will complement
         the specified ``train_size``.
 
-
     train_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
