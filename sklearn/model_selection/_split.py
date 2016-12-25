@@ -997,11 +997,14 @@ class ShuffleSplit(BaseShuffleSplit):
     n_splits : int, default 10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, or 'default', default 'default'
+    test_size : float, int, None, optional
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. If 'default', the value is set to 0.1.
+        complement of the train size. By default, the value is set to 0.1.
+        The default will change in version 0.21. It will remain 0.1 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
     train_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1080,12 +1083,14 @@ class GroupShuffleSplit(ShuffleSplit):
     n_splits : int (default 5)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, or 'default', default 'default'
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the groups to include in the test split. If
-        int, represents the absolute number of test groups. If None,
-        the value is automatically set to the complement of the train
-        size. If 'default', the value is set to 0.2.
+    test_size : float, int, None, optional
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default, the value is set to 0.1.
+        The default will change in version 0.21. It will remain 0.2 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1216,12 +1221,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     n_splits : int, default 10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, or 'default', default 'default'
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
-        If 'default', the value is set to 0.1.
+    test_size : float, int, None, optional
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default, the value is set to 0.1.
+        The default will change in version 0.21. It will remain 0.1 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1635,12 +1642,15 @@ def train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    test_size : float, int, None, or 'default', default 'default'
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None or
-        'default', the value is automatically set to the complement of
-        the train size. If train size is also None, test size is set to 0.25.
+    test_size : float, int, None, optional
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default, the value is set to 0.25.
+        The default will change in version 0.21. It will remain 0.25 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
+
 
     train_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the
