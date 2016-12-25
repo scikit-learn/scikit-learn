@@ -93,7 +93,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.warning("Downloading LFW metadata: %s", url)
                 expected_checksum = TARGET_CHECKSUMS[target_filename]
                 _fetch_and_verify_dataset(url, target_filepath,
-                                         expected_checksum)
+                                          expected_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -105,7 +105,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                                archive_url)
 
                 _fetch_and_verify_dataset(archive_url, archive_path,
-                                         expected_archive_checksum)
+                                          expected_archive_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
