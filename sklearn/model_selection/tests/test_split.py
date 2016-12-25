@@ -1193,11 +1193,14 @@ def test_nested_cv():
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
 
+
 def test_train_test_default_warning():
     assert_warns(DeprecationWarning, ShuffleSplit, train_size=0.75)
     assert_warns(DeprecationWarning, GroupShuffleSplit, train_size=0.75)
     assert_warns(DeprecationWarning, StratifiedShuffleSplit, train_size=0.75)
-    assert_warns(DeprecationWarning, train_test_split, range(3), train_size=0.75)
+    assert_warns(DeprecationWarning, train_test_split, range(3),
+                 train_size=0.75)
+
 
 def test_build_repr():
     class MockSplitter:

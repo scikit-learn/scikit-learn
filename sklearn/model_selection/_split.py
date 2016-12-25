@@ -1736,6 +1736,7 @@ def train_test_split(*arrays, **options):
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests
 
+
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params
     cls = self.__class__
