@@ -13,7 +13,7 @@ import csv
 import sys
 import shutil
 from os import environ, listdir, makedirs, rename, remove
-from os.path import dirname, exists, expanduser, getsize, join, splitext
+from os.path import dirname, exists, expanduser, getsize, isdir, join, splitext
 import hashlib
 
 try:
