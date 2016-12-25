@@ -1000,17 +1000,17 @@ class ShuffleSplit(BaseShuffleSplit):
     test_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, and `train_size` is None,
-        the value is set to 0.1. If None and `train_size` is not None, the
-        value is automatically set to the complement of the train size.
+        absolute number of test samples. If None, and ``train_size`` is None,
+        the value is set to 0.1. If None and ``train_size`` is not None, the
+        value is automatically set to the complement of ``train_size``.
 
     train_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None, and
-        `test_size` is None, the value is set to 0.9. If None and
-        `test_size` is not None, the value is automatically set to the
-        complement of the test size.
+        ``test_size`` is None, the value is set to 0.9. If None and
+        ``test_size`` is not None, the value is automatically set to the
+        complement of ``test_size``.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1039,7 +1039,6 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 1] TEST: [2]
     TRAIN: [2 1] TEST: [0]
     TRAIN: [0 2] TEST: [3]
-
     """
 
     def _iter_indices(self, X, y=None, groups=None):
@@ -1086,17 +1085,17 @@ class GroupShuffleSplit(ShuffleSplit):
     test_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, and `train_size` is None,
-        the value is set to 0.2. If None and `train_size` is not None, the
-        value is automatically set to the complement of the train size.
+        absolute number of test samples. If None, and ``train_size`` is None,
+        the value is set to 0.2. If None and ``train_size`` is not None, the
+        value is automatically set to the complement of ``train_size``.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None, and
-        `test_size` is None, the value is set to 0.8. If None and
-        `test_size` is not None, the value is automatically set to the
-        complement of the test size.
+        ``test_size`` is None, the value is set to 0.8. If None and
+        ``test_size`` is not None, the value is automatically set to the
+        complement of ``test_size``.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1105,9 +1104,6 @@ class GroupShuffleSplit(ShuffleSplit):
     def __init__(self, n_splits=5, test_size=None, train_size=None,
                  random_state=None):
         if test_size is None and train_size is None:
-            warnings.warn("The default value of the test_size parameter"
-                          "will change from 0.1 to 0.2 in version 0.21.",
-                          DeprecationWarning)
             test_size = 0.2
             train_size = 0.8
 
@@ -1223,17 +1219,17 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     test_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, and `train_size` is None,
-        the value is set to 0.1. If None and `train_size` is not None, the
-        value is automatically set to the complement of the train size.
+        absolute number of test samples. If None, and ``train_size`` is None,
+        the value is set to 0.1. If None and ``train_size`` is not None, the
+        value is automatically set to the complement of ``train_size``.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None, and
-        `test_size` is None, the value is set to 0.9. If None and
-        `test_size` is not None, the value is automatically set to the
-        complement of the test size.
+        ``test_size`` is None, the value is set to 0.9. If None and
+        ``test_size`` is not None, the value is automatically set to the
+        complement of ``test_size``.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1649,17 +1645,17 @@ def train_test_split(*arrays, **options):
     test_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, and `train_size` is None,
-        the value is set to 0.25. If None and `train_size` is not None, the
-        value is automatically set to the complement of the train size.
+        absolute number of test samples. If None, and ``train_size`` is None,
+        the value is set to 0.25. If None and ``train_size`` is not None, the
+        value is automatically set to the complement of ``train_size``.
 
     train_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None, and
-        `test_size` is None, the value is set to 0.75. If None and
-        `test_size` is not None, the value is automatically set to the
-        complement of the test size.
+        ``test_size`` is None, the value is set to 0.75. If None and
+        ``test_size`` is not None, the value is automatically set to the
+        complement of ``test_size``.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1720,9 +1716,6 @@ def train_test_split(*arrays, **options):
         raise TypeError("Invalid parameters passed: %s" % str(options))
 
     if test_size is None and train_size is None:
-        warnings.warn("The default value of the test_size parameter"
-                      "will change from 0.25 to 0.1 in version 0.21.",
-                      DeprecationWarning)
         test_size = 0.25
 
     arrays = indexable(*arrays)
