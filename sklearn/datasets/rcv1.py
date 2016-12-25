@@ -16,7 +16,7 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import Bunch
 from .base import _pkl_filepath
-from .base import fetch_and_verify_dataset, validate_file_md5
+from .base import _fetch_and_verify_dataset, _validate_file_md5
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
@@ -149,8 +149,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
             logger.warning("Downloading %s" % file_url)
             archive_path = join(rcv1_dir, file_name)
             expected_archive_checksum = FILE_CHECKSUMS[file_name]
-            fetch_and_verify_dataset(file_url, archive_path,
-                                     expected_archive_checksum)
+            _fetch_and_verify_dataset(file_url, archive_path,
+                                      expected_archive_checksum)
             files.append(GzipFile(filename=archive_path))
 
         # delete archives
@@ -169,10 +169,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         # check md5 of dumped files
         expected_checksum = "90c20c9920439d87920f33467e36235d"
-        validate_file_md5(expected_checksum, samples_path)
+        _validate_file_md5(expected_checksum, samples_path)
 
         expected_checksum = "1152f2044de5e269a1bd197ab7875413"
-        validate_file_md5(expected_checksum, sample_id_path)
+        _validate_file_md5(expected_checksum, sample_id_path)
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
@@ -183,8 +183,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         logger.warning("Downloading %s" % URL_topics)
         topics_archive_path = join(rcv1_dir, "rcv1v2.topics.qrels.gz")
         expected_topics_checksum = "4b932c58566ebfd82065d3946e454a39"
-        fetch_and_verify_dataset(URL_topics, topics_archive_path,
-                                 expected_topics_checksum)
+        _fetch_and_verify_dataset(URL_topics, topics_archive_path,
+                                  expected_topics_checksum)
 
         # parse the target file
         n_cat = -1
@@ -231,10 +231,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         # check md5 of dumped files
         expected_checksum = "ad7dc1459cc43d13769936115fd0d821"
-        validate_file_md5(expected_checksum, sample_topics_path)
+        _validate_file_md5(expected_checksum, sample_topics_path)
 
         expected_checksum = "63a175f505a14e021b52dda970118f46"
-        validate_file_md5(expected_checksum, topics_path)
+        _validate_file_md5(expected_checksum, topics_path)
 
     else:
         y = joblib.load(sample_topics_path)

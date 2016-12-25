@@ -18,7 +18,7 @@ from os.path import exists, join
 import numpy as np
 
 from .base import get_data_home, Bunch
-from .base import fetch_and_verify_dataset, validate_file_md5
+from .base import _fetch_and_verify_dataset, _validate_file_md5
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -278,7 +278,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
         _mkdirp(kddcup_dir)
         URL_ = URL10 if percent10 else URL
         logger.info("Downloading %s" % URL_)
-        fetch_and_verify_dataset(URL_, archive_path, expected_checksum)
+        _fetch_and_verify_dataset(URL_, archive_path, expected_checksum)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),
@@ -349,17 +349,17 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
         # check md5 of dumped samples and targets
         if percent10:
             expected_samples_checksum = "md1b292b59b96894de38da4a984df2a483"
-            validate_file_md5(expected_samples_checksum, samples_path)
+            _validate_file_md5(expected_samples_checksum, samples_path)
 
             expected_targets_checksum = "956a3e4d5ea62aedeb226fd104798dc9"
-            validate_file_md5(expected_targets_checksum, targets_path)
+            _validate_file_md5(expected_targets_checksum, targets_path)
 
         else:
             expected_samples_checksum = "7b6f71d4557254f26d73e52d2b39b46e"
-            validate_file_md5(expected_samples_checksum, samples_path)
+            _validate_file_md5(expected_samples_checksum, samples_path)
 
             expected_targets_checksum = "0422b093c0bc5bf60b586c8060698ef3"
-            validate_file_md5(expected_targets_checksum, targets_path)
+            _validate_file_md5(expected_targets_checksum, targets_path)
     elif not available:
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")

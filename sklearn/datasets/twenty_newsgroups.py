@@ -50,7 +50,7 @@ from .base import get_data_home
 from .base import Bunch
 from .base import load_files
 from .base import _pkl_filepath
-from .base import fetch_and_verify_dataset, validate_file_md5
+from .base import _fetch_and_verify_dataset, _validate_file_md5
 from ..utils import check_random_state
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
@@ -77,7 +77,7 @@ def download_20newsgroups(target_dir, cache_path):
 
     logger.warning("Downloading dataset from %s (14 MB)", URL)
     expected_checksum = "d6e9e45cb8cb77ec5276dfa6dfc14318"
-    fetch_and_verify_dataset(URL, archive_path, expected_checksum)
+    _fetch_and_verify_dataset(URL, archive_path, expected_checksum)
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
@@ -92,7 +92,7 @@ def download_20newsgroups(target_dir, cache_path):
 
     # check md5 of written file
     expected_checksum = "4259916082467db1b096c6c05299f17c"
-    validate_file_md5(expected_checksum, cache_path)
+    _validate_file_md5(expected_checksum, cache_path)
 
     shutil.rmtree(target_dir)
     return cache

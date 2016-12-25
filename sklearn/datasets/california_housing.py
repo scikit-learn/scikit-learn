@@ -28,7 +28,7 @@ import tarfile
 import numpy as np
 
 from .base import get_data_home, Bunch
-from .base import fetch_and_verify_dataset, validate_file_md5
+from .base import _fetch_and_verify_dataset, _validate_file_md5
 from .base import _pkl_filepath
 from ..externals import joblib
 
@@ -89,7 +89,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
         archive_path = join(data_home, "cal_housing.tgz")
         expected_checksum = "130d0eececf165046ec4dc621d121d80"
-        fetch_and_verify_dataset(DATA_URL, archive_path, expected_checksum)
+        _fetch_and_verify_dataset(DATA_URL, archive_path, expected_checksum)
         fileobj = tarfile.open(
             mode="r:gz",
             name=archive_path).extractfile(
@@ -104,7 +104,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         joblib.dump(cal_housing, filepath, compress=6)
         # assert that dumped file has correct md5 hash
         expected_checksum = "39c2dc70c4aad72e44b741c37163e6cc"
-        validate_file_md5(expected_checksum, filepath)
+        _validate_file_md5(expected_checksum, filepath)
 
     else:
         cal_housing = joblib.load(filepath)

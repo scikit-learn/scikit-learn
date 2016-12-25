@@ -29,7 +29,7 @@ from os.path import join, exists, isdir
 import logging
 import numpy as np
 
-from .base import get_data_home, Bunch, fetch_and_verify_dataset
+from .base import get_data_home, Bunch, _fetch_and_verify_dataset
 from ..externals.joblib import Memory
 
 from ..externals.six import b
@@ -92,7 +92,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 url = TARGET_FILENAMES[target_filename]
                 logger.warning("Downloading LFW metadata: %s", url)
                 expected_checksum = TARGET_CHECKSUMS[target_filename]
-                fetch_and_verify_dataset(url, target_filepath,
+                _fetch_and_verify_dataset(url, target_filepath,
                                          expected_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
@@ -104,7 +104,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.warning("Downloading LFW data (~200MB): %s",
                                archive_url)
 
-                fetch_and_verify_dataset(archive_url, archive_path,
+                _fetch_and_verify_dataset(archive_url, archive_path,
                                          expected_archive_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)

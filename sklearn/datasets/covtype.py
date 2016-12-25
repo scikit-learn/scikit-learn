@@ -22,7 +22,7 @@ from os import remove
 import numpy as np
 
 from .base import get_data_home, Bunch
-from .base import fetch_and_verify_dataset, validate_file_md5
+from .base import _fetch_and_verify_dataset, _validate_file_md5
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
@@ -88,7 +88,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
         archive_path = join(covtype_dir, "covtype.data.gz")
         expected_checksum = "99670d8d942f09d459c7d4486fca8af5"
-        fetch_and_verify_dataset(URL, archive_path, expected_checksum)
+        _fetch_and_verify_dataset(URL, archive_path, expected_checksum)
         Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
         # delete archive
         remove(archive_path)
@@ -101,10 +101,10 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
         # check md5 of dumped samples and targets
         expected_samples_checksum = "19b80d5fa6590346b357b4cb75562f0e"
-        validate_file_md5(expected_samples_checksum, samples_path)
+        _validate_file_md5(expected_samples_checksum, samples_path)
 
         expected_targets_checksum = "b79a24223e6a55bd486b7f796e8e5305"
-        validate_file_md5(expected_targets_checksum, targets_path)
+        _validate_file_md5(expected_targets_checksum, targets_path)
 
     elif not available and not download_if_missing:
         raise IOError("Data not found and `download_if_missing` is False")

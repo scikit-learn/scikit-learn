@@ -44,7 +44,7 @@ import sys
 import numpy as np
 
 from .base import get_data_home, Bunch
-from .base import fetch_and_verify_dataset, validate_file_md5
+from .base import _fetch_and_verify_dataset, _validate_file_md5
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
@@ -229,7 +229,7 @@ def fetch_species_distributions(data_home=None,
                                                           data_home))
         expected_samples_checksum = "baa67cf5601507f07a37fdf240ea430c"
         samples_path = join(data_home, "samples.zip")
-        fetch_and_verify_dataset(SAMPLES_URL, samples_path,
+        _fetch_and_verify_dataset(SAMPLES_URL, samples_path,
                                  expected_samples_checksum)
         X = np.load(samples_path)
         remove(samples_path)
@@ -245,7 +245,7 @@ def fetch_species_distributions(data_home=None,
                                                            data_home))
         expected_coverages_checksum = "b3a8b24ec0390285a5f9e2528ad1013e"
         coverages_path = join(data_home, "coverages.zip")
-        fetch_and_verify_dataset(COVERAGES_URL, coverages_path,
+        _fetch_and_verify_dataset(COVERAGES_URL, coverages_path,
                                  expected_coverages_checksum)
         X = np.load(coverages_path)
         remove(coverages_path)
@@ -264,7 +264,7 @@ def fetch_species_distributions(data_home=None,
         joblib.dump(bunch, archive_path, compress=9)
         # check hash of dumped joblib
         expected_checksum = "06206a67fa54ea1cf0e963560bd15cf0"
-        validate_file_md5(expected_checksum, archive_path)
+        _validate_file_md5(expected_checksum, archive_path)
     else:
         bunch = joblib.load(archive_path)
 
