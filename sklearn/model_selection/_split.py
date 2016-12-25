@@ -1085,7 +1085,7 @@ class GroupShuffleSplit(ShuffleSplit):
         proportion of the groups to include in the test split. If
         int, represents the absolute number of test groups. If None,
         the value is automatically set to the complement of the train
-        size. If 'default', the value is set to 0.1.
+        size. If 'default', the value is set to 0.2.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1099,6 +1099,14 @@ class GroupShuffleSplit(ShuffleSplit):
 
     def __init__(self, n_splits=5, test_size="default", train_size=None,
                  random_state=None):
+        if test_size == "default":
+            if train_size is not None:
+                warnings.warn("test_size will always complement train_size "
+                              "unless both are specified or both are "
+                              "unspecified in version 0.21.",
+                              DeprecationWarning)
+        test_size = 0.2
+
         super(GroupShuffleSplit, self).__init__(
             n_splits=n_splits,
             test_size=test_size,
