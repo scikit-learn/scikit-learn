@@ -1105,7 +1105,7 @@ class GroupShuffleSplit(ShuffleSplit):
                               "unless both are specified or both are "
                               "unspecified in version 0.21.",
                               DeprecationWarning)
-        test_size = 0.2
+            test_size = 0.2
 
         super(GroupShuffleSplit, self).__init__(
             n_splits=n_splits,
