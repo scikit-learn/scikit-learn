@@ -1107,8 +1107,8 @@ class GroupShuffleSplit(ShuffleSplit):
         if test_size == "default":
             if train_size is not None:
                 warnings.warn("From version 0.21, test_size will always "
-                              "complement train_size unless both are specified "
-                              "or both are unspecified.",
+                              "complement train_size unless both "
+                              "are specified or both are unspecified.",
                               FutureWarning)
             test_size = 0.2
 
@@ -1351,8 +1351,8 @@ def _validate_shuffle_split_init(test_size, train_size):
     if test_size == "default":
         if train_size is not None:
                 warnings.warn("From version 0.21, test_size will always "
-                              "complement train_size unless both are specified "
-                              "or both are unspecified.",
+                              "complement train_size unless both "
+                              "are specified or both are unspecified.",
                               FutureWarning)
         test_size = 0.1
 
@@ -1720,8 +1720,8 @@ def train_test_split(*arrays, **options):
         test_size = None
         if train_size is not None:
                 warnings.warn("From version 0.21, test_size will always "
-                              "complement train_size unless both are specified "
-                              "or both are unspecified.",
+                              "complement train_size unless both "
+                              "are specified or both are unspecified.",
                               FutureWarning)
 
     if test_size is None and train_size is None:
