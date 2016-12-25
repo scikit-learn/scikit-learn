@@ -12,15 +12,9 @@ import os
 import csv
 import sys
 import shutil
-from os import environ
-from os.path import dirname
-from os.path import join
-from os.path import exists
-from os.path import expanduser
-from os.path import isdir
-from os.path import splitext
-from os.path import getsize
-from os import listdir, makedirs, rename, remove
+from os import environ, listdir, makedirs, rename, remove
+from os.path import dirname, exists, expanduser, getsize, join, splitext
+import hashlib
 
 try:
     import urllib.request as urllib  # for backwards compatibility
@@ -28,7 +22,6 @@ except ImportError:
     import urllib
 
 import numpy as np
-import hashlib
 
 from ..utils import check_random_state
 
@@ -820,6 +813,7 @@ def validate_file_md5(expected_checksum, path):
     """
 
     if expected_checksum != md5(path):
+        # remove the corrupted file
         remove(path)
         raise ValueError("{} has an MD5 hash differing "
                          "from expected, file may be "
@@ -871,9 +865,7 @@ def fetch_and_verify_dataset(URL, path, checksum):
     dataset_url.close()
     temp_file.close()
     # verify checksum of downloaded temp file
-    if checksum != md5(path_temp):
-        remove(path_temp)
-        raise ValueError("Downloaded file had an MD5 hash differing "
-                         "from expected, file could have been corrupted.")
+    validate_file_md5(checksum, path_temp)
+
     # move temporary file to the expected location
     rename(path_temp, path)
