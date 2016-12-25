@@ -17,7 +17,7 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
-from ..utils import check_array
+from ..utils import check_array, check_X_y
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import bincount
@@ -2007,26 +2007,17 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
 
         CountFeaturizer._check_params(inclusion=self.inclusion)
-        X = check_array(X)
-        len_data = len(X)
 
         if y is not None:
-            y = np.array(y)
-            if len_data != len(y):
-                raise ValueError("There must be a y for every X; " +
-                                 "len(y) != len(X)")
-            if type(y[0]) == np.ndarray:
-                self.col_num_Y_ = len(y[0])
-            else:
-                self.col_num_Y_ = 1
+            X, y = check_X_y(X, y)
+            self.col_num_Y_ = len(y.take([0]))
         else:
+            X = check_array(X)
             self.col_num_Y_ = 0
 
+        len_data = len(X)
         self.count_cache_ = defaultdict(int)
-        if type(X[0]) == np.ndarray:
-            self.col_num_X_ = len(X[0])
-        else:
-            self.col_num_X_ = 1
+        self.col_num_X_ = len(X[0])
 
         if type(self.inclusion) == str and self.inclusion == 'all':
             inclusion_used = np.array(range(self.col_num_X_))
@@ -2039,7 +2030,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                 X_key = tuple(X[i][j]
                               for j in range(self.col_num_X_)
                               if j in inclusion_used)
-                y_key = tuple(y[i])
+                y_key = tuple(y.take([i]))
                 self.count_cache_[(X_key, y_key)] += 1
         else:
             for i in range(len_data):
@@ -2079,24 +2070,21 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         if self.col_num_X_ == 0:
             raise ValueError("Transformer must be fit() before transform()")
-        X = check_array(X)
-        len_data = len(X)
-        if type(X[0]) == np.ndarray:
-            num_features = len(X[0])
-        else:
-            num_features = 1
-        if self.col_num_X_ != num_features:
-            raise ValueError("Dimensions mismatch in X during transform")
+
         if y is not None:
-            if type(y[0]) == np.ndarray:
-                num_dim_y = len(y[0])
-            else:
-                num_dim_y = 1
+            X, y = check_X_y(X, y)
+            num_dim_y = len(y.take([0]))
             if len_data != len(y):
                 raise ValueError("There must be a y for every X; " +
                                  "len(y) != len(X)")
             elif self.col_num_Y_ != num_dim_y:
                 raise ValueError("Dimension mismatch in y during transform")
+        else:
+            X = check_array(X)
+        len_data = len(X)
+        num_features = len(X[0])
+        if self.col_num_X_ != num_features:
+            raise ValueError("Dimensions mismatch in X during transform")
         transformed = np.zeros((len_data, num_features + 1))
         transformed[:, :-1] = X
 
@@ -2112,7 +2100,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                 X_key = tuple(X[i][j]
                               for j in range(self.col_num_X_)
                               if j in inclusion_used)
-                y_key = tuple(y[i])
+                y_key = tuple(y.take([i]))
                 transformed[i, num_features] = \
                     self.count_cache_[(X_key, y_key)]
         else:
