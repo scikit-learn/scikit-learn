@@ -517,7 +517,7 @@ def test_shuffle_split():
         assert_array_equal(t2[1], t3[1])
         assert_array_equal(t3[1], t4[1])
 
-
+@ignore_warnings
 def test_stratified_shuffle_split_init():
     X = np.arange(7)
     y = np.asarray([0, 1, 1, 1, 2, 2, 2])
@@ -805,6 +805,7 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
 
+@ignore_warnings
 def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split)
     assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
@@ -921,6 +922,7 @@ def train_test_split_list_input():
         np.testing.assert_equal(y_test3, y_test2)
 
 
+@ignore_warnings
 def test_shufflesplit_errors():
     # When the {test|train}_size is a float/invalid, error is raised at init
     assert_raises(ValueError, ShuffleSplit, test_size=None, train_size=None)
