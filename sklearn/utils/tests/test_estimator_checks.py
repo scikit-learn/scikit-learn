@@ -150,7 +150,7 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg,
                         check_estimator, ChangesWrongAttribute)
     # check that `fit` doesn't add any public attribute
-    msg = ('Estiamtor adds public attribute\(s\) during the fit method.'
+    msg = ('Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')

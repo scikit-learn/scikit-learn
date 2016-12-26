@@ -503,7 +503,7 @@ def check_dont_overwrite_parameters(name, Estimator):
 
     # check that fit doesn't add any public attribute
     assert_true(not attrs_added_by_fit,
-                ('Estiamtor adds public attribute(s) during'
+                ('Estimator adds public attribute(s) during'
                  ' the fit method.'
                  ' Estimators are only allowed to add private attributes'
                  ' either started with _ or ended'
