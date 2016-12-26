@@ -1108,7 +1108,7 @@ class GroupShuffleSplit(ShuffleSplit):
             if train_size is not None:
                 warnings.warn("From version 0.21, test_size will always "
                               "complement train_size unless both "
-                              "are specified or both are unspecified.",
+                              "are specified.",
                               FutureWarning)
             test_size = 0.2
 
@@ -1350,10 +1350,10 @@ def _validate_shuffle_split_init(test_size, train_size):
     """
     if test_size == "default":
         if train_size is not None:
-                warnings.warn("From version 0.21, test_size will always "
-                              "complement train_size unless both "
-                              "are specified or both are unspecified.",
-                              FutureWarning)
+            warnings.warn("From version 0.21, test_size will always "
+                          "complement train_size unless both "
+                          "are specified.",
+                          FutureWarning)
         test_size = 0.1
 
     if test_size is None and train_size is None:
@@ -1365,7 +1365,7 @@ def _validate_shuffle_split_init(test_size, train_size):
                 raise ValueError(
                     'test_size=%f should be smaller '
                     'than 1.0 or be an integer' % test_size)
-        elif (np.asarray(test_size).dtype.kind != 'i'):
+        elif np.asarray(test_size).dtype.kind != 'i':
             # int values are checked during split based on the input
             raise ValueError("Invalid value for test_size: %r" % test_size)
 
@@ -1718,10 +1718,10 @@ def train_test_split(*arrays, **options):
     if test_size == 'default':
         test_size = None
         if train_size is not None:
-                warnings.warn("From version 0.21, test_size will always "
-                              "complement train_size unless both "
-                              "are specified or both are unspecified.",
-                              FutureWarning)
+            warnings.warn("From version 0.21, test_size will always "
+                          "complement train_size unless both "
+                          "are specified.",
+                          FutureWarning)
 
     if test_size is None and train_size is None:
         test_size = 0.25
