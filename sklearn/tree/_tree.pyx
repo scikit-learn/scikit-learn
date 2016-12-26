@@ -676,7 +676,7 @@ cdef class Tree:
                 capacity = 2 * self.capacity
 
         safe_realloc(&self.nodes, capacity)
-        safe_realloc(&self.value, capacity)
+        safe_realloc(&self.value, capacity * self.value_stride)
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
