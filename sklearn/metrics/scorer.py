@@ -283,7 +283,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
 
 
 def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
-    """Check the scoring parameter in cases when multiple metric is allowed
+    """Check the scoring parameter in cases when multiple metrics are allowed
 
     Parameters
     ----------
@@ -314,7 +314,7 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
     -------
 
     scorers_dict : dict
-        A dict mapping all the scorer names to it's validated scorer.
+        A dict mapping each scorer name to its validated scorer.
 
         The validated scorer could be None if ``allow_none`` is ``True``
         (``{'score': None}``).
@@ -323,7 +323,7 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
         used.
 
     is_multimetric : bool
-        True if scorer is a list/tuple or dict of callbles
+        True if scorer is a list/tuple or dict of callables
         False if scorer is None/str/callable
     """
     scorers = {}
