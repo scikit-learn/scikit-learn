@@ -946,82 +946,43 @@ def test_grid_search_cv_results_multimetric():
                                random_state=42)
 
     n_splits = 3
-    n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
     scoring = ('accuracy', 'recall')
-    grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
-                               param_grid=params, scoring=scoring,
-                               refit=False)
-    # TODO test for refit=True after review
-    grid_search.fit(X, y)
+    grid_search_multi = GridSearchCV(SVC(), cv=n_splits, iid=False,
+                                     param_grid=params, scoring=scoring,
+                                     refit=False)
+    grid_search_acc = GridSearchCV(SVC(), cv=n_splits, iid=False,
+                                   param_grid=params, scoring='accuracy',
+                                   refit=False)
+    grid_search_rec = GridSearchCV(SVC(), cv=n_splits, iid=False,
+                                   param_grid=params, scoring='recall',
+                                   refit=False)
+    grid_search_multi.fit(X, y)
+    grid_search_acc.fit(X, y)
+    grid_search_rec.fit(X, y)
+
     scoring = {'accuracy': make_scorer(accuracy_score),
                'recall': make_scorer(recall_score)}
-    grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
-                                   param_grid=params, scoring=scoring,
-                                   refit=False)
-    grid_search_iid.fit(X, y)
-    # TODO test for refit=True after review
+    grid_search_iid_multi = GridSearchCV(SVC(), cv=n_splits, iid=True,
+                                         param_grid=params, scoring=scoring,
+                                         refit=False)
+    grid_search_iid_acc = GridSearchCV(SVC(), cv=n_splits, iid=True,
+                                       param_grid=params, scoring='accuracy',
+                                       refit='accuracy')
+    grid_search_iid_rec = GridSearchCV(SVC(), cv=n_splits, iid=True,
+                                       param_grid=params, scoring='recall',
+                                       refit='recall')
+    grid_search_iid_multi.fit(X, y)
+    grid_search_iid_acc.fit(X, y)
+    grid_search_iid_rec.fit(X, y)
 
-    param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
-    score_keys = ('mean_test_accuracy', 'mean_train_accuracy',
-                  'rank_test_accuracy',
-                  'split0_test_accuracy', 'split1_test_accuracy',
-                  'split2_test_accuracy',
-                  'split0_train_accuracy', 'split1_train_accuracy',
-                  'split2_train_accuracy',
-                  'mean_test_recall', 'mean_train_recall',
-                  'rank_test_recall',
-                  'split0_test_recall', 'split1_test_recall',
-                  'split2_test_recall',
-                  'split0_train_recall', 'split1_train_recall',
-                  'split2_train_recall',
-                  'std_test_accuracy', 'std_train_accuracy',
-                  'std_test_recall', 'std_train_recall',
-                  'mean_fit_time', 'std_fit_time',
-                  'mean_score_time', 'std_score_time')
-    n_candidates = n_grid_points
-
-    for search, iid in zip((grid_search, grid_search_iid), (False, True)):
-        assert_equal(iid, search.iid)
-        assert_true(search.multimetric_)
-        checked_scoring = {'accuracy': make_scorer(accuracy_score),
-                           'recall': make_scorer(recall_score)}
-        assert_equal(search.scorer_.keys(), checked_scoring.keys())
-
-        # search.predict will not work when multimetric_ is True
-        # (More than one best_estimator_ to predict using)
-        est = LinearSVC(random_state=0).fit(X, y)
-        assert_almost_equal(search.scorer_['accuracy'](est, X, y),
-                            checked_scoring['accuracy'](est, X, y))
-        assert_almost_equal(search.scorer_['recall'](est, X, y),
-                            checked_scoring['recall'](est, X, y))
-        cv_results = search.cv_results_
-
-        # Check if score and timing are reasonable
-        assert_true(all(cv_results['rank_test_recall'] >= 1))
-        assert_true(all(cv_results['rank_test_accuracy'] >= 1))
-        assert_true(all(cv_results[k] >= 0) for k in score_keys
-                    if 'rank' not in k)
-        assert_true(all(cv_results[k] <= 1) for k in score_keys
-                    if ('time' not in k) and ('rank' not in k))
-        # Check cv_results structure
-        check_cv_results_array_types(search, param_keys, score_keys)
-        check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
-        # Check masking
-        cv_results = grid_search.cv_results_
-        n_candidates = len(grid_search.cv_results_['params'])
-        assert_true(all((cv_results['param_C'].mask[i] and
-                         cv_results['param_gamma'].mask[i] and
-                         not cv_results['param_degree'].mask[i])
-                        for i in range(n_candidates)
-                        if cv_results['param_kernel'][i] == 'linear'))
-        assert_true(all((not cv_results['param_C'].mask[i] and
-                         not cv_results['param_gamma'].mask[i] and
-                         cv_results['param_degree'].mask[i])
-                        for i in range(n_candidates)
-                        if cv_results['param_kernel'][i] == 'rbf'))
-        check_cv_results_grid_scores_consistency(search)
+    for (search_multi, search_acc, search_rec), iid in zip(
+            ((grid_search_multi, grid_search_acc, grid_search_rec),
+             (grid_search_iid_multi, grid_search_iid_acc,
+              grid_search_iid_rec)), (False, True)):
+        compare_cv_results_multimetric_with_single_metric_accuracy_recall(
+            search_multi, search_acc, search_rec, iid)
 
 
 def test_random_search_cv_results_multimetric():
@@ -1037,72 +998,81 @@ def test_random_search_cv_results_multimetric():
     n_search_iter = 30
     scoring = ('accuracy', 'recall')
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                       cv=n_splits, iid=False,
-                                       param_distributions=params,
-                                       scoring=scoring, refit=False)
-    # TODO test for refit=True after review
-    random_search.fit(X, y)
+    random_search_multi = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                             cv=n_splits, iid=False,
+                                             param_distributions=params,
+                                             scoring=scoring, refit=False,
+                                             random_state=42)
+    random_search_acc = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                           cv=n_splits, iid=False,
+                                           param_distributions=params,
+                                           scoring='accuracy', refit=False,
+                                           random_state=42)
+    random_search_rec = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                           cv=n_splits, iid=False,
+                                           param_distributions=params,
+                                           scoring='recall', refit=False,
+                                           random_state=42)
+    random_search_multi.fit(X, y)
+    random_search_acc.fit(X, y)
+    random_search_rec.fit(X, y)
     scoring = {'accuracy': make_scorer(accuracy_score),
                'recall': make_scorer(recall_score)}
-    random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                           cv=n_splits, iid=True,
-                                           param_distributions=params,
-                                           scoring=scoring,
-                                           refit=False)
-    # TODO test for refit=True after review
-    random_search_iid.fit(X, y)
+    random_search_iid_multi = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                                 cv=n_splits, iid=True,
+                                                 param_distributions=params,
+                                                 scoring=scoring, refit=False,
+                                                 random_state=42)
+    random_search_iid_acc = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                               cv=n_splits, iid=True,
+                                               param_distributions=params,
+                                               scoring='accuracy', refit=False,
+                                               random_state=42)
+    random_search_iid_rec = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                               cv=n_splits, iid=True,
+                                               param_distributions=params,
+                                               scoring='recall', refit=False,
+                                               random_state=42)
+    random_search_iid_multi.fit(X, y)
+    random_search_iid_acc.fit(X, y)
+    random_search_iid_rec.fit(X, y)
 
-    param_keys = ('param_C', 'param_gamma')
-    score_keys = ('mean_test_accuracy', 'mean_train_accuracy',
-                  'rank_test_accuracy',
-                  'split0_test_accuracy', 'split1_test_accuracy',
-                  'split2_test_accuracy',
-                  'split0_train_accuracy', 'split1_train_accuracy',
-                  'split2_train_accuracy',
-                  'mean_test_recall', 'mean_train_recall',
-                  'rank_test_recall',
-                  'split0_test_recall', 'split1_test_recall',
-                  'split2_test_recall',
-                  'split0_train_recall', 'split1_train_recall',
-                  'split2_train_recall',
-                  'std_test_accuracy', 'std_train_accuracy',
-                  'std_test_recall', 'std_train_recall',
-                  'mean_fit_time', 'std_fit_time',
-                  'mean_score_time', 'std_score_time')
-    n_cand = n_search_iter
+    for (search_multi, search_acc, search_rec), iid in zip(
+            ((random_search_multi, random_search_acc, random_search_rec),
+             (random_search_iid_multi, random_search_iid_acc,
+              random_search_iid_rec)), (False, True)):
+        compare_cv_results_multimetric_with_single_metric_accuracy_recall(
+            search_multi, search_acc, search_rec, iid)
 
-    for search, iid in zip((random_search, random_search_iid), (False, True)):
-        assert_equal(iid, search.iid)
-        checked_scoring = {'accuracy': make_scorer(accuracy_score),
-                           'recall': make_scorer(recall_score)}
-        assert_equal(search.scorer_.keys(), checked_scoring.keys())
 
-        # search.predict will not work when multimetric_ is True
-        # (More than one best_estimator_ to predict using)
-        est = LinearSVC(random_state=0).fit(X, y)
-        assert_almost_equal(search.scorer_['accuracy'](est, X, y),
-                            checked_scoring['accuracy'](est, X, y))
-        assert_almost_equal(search.scorer_['recall'](est, X, y),
-                            checked_scoring['recall'](est, X, y))
-        assert_true(search.multimetric_)
-        cv_results = search.cv_results_
+def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
+        search_multi, search_acc, search_rec, iid):
+    """Compare multimetric cv_results with the ensemble of multiple
+    single metric cv_results from single metric grid/random search"""
 
-        # Check if score and timing are reasonable
-        assert_true(all(cv_results['rank_test_recall'] >= 1))
-        assert_true(all(cv_results['rank_test_accuracy'] >= 1))
-        assert_true(all(cv_results[k] >= 0) for k in score_keys
-                    if 'rank' not in k)
-        assert_true(all(cv_results[k] <= 1) for k in score_keys
-                    if ('time' not in k) and ('rank' not in k))
-        cv_results = search.cv_results_
-        # Check results structure
-        check_cv_results_array_types(search, param_keys, score_keys)
-        check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
-        # For random_search, all the param array vals should be unmasked
-        assert_false(any(cv_results['param_C'].mask) or
-                     any(cv_results['param_gamma'].mask))
-        check_cv_results_grid_scores_consistency(search)
+    assert_equal(search_multi.iid, iid)
+    assert_true(search_multi.multimetric_)
+    assert_array_equal(sorted(search_multi.scorer_),
+                       ('accuracy', 'recall'))
+
+    cv_results_multi = search_multi.cv_results_
+    cv_results_acc_rec = _replace_cv_results_keys_with_metric_name(
+            search_acc.cv_results_, 'accuracy').copy()
+    cv_results_acc_rec.update(_replace_cv_results_keys_with_metric_name(
+        search_rec.cv_results_, 'recall'))
+
+    # Check if score and timing are reasonable, also checks if the keys
+    # are present
+    assert_true(all(cv_results_multi[k] <= 1) for k in
+                ('mean_accuracy_time', 'std_accuracy_time',
+                 'mean_recall_time', 'std_recall_time',
+                 'mean_fit_time', 'std_fit_time'))
+
+    # Pop the time keys and compare the other keys among multimetric and
+    # single metric grid search results. np.testing.assert_equal performs a
+    # deep nested comparison of the two cv_results dicts
+    np.testing.assert_equal(_pop_cv_results_time_keys(cv_results_multi),
+                            _pop_cv_results_time_keys(cv_results_acc_rec))
 
 
 def test_search_delegated_methods_in_mulimetric_setting():
@@ -1454,20 +1424,14 @@ def test_grid_search_cv_splits_consistency():
                        cv=KFold(n_splits=n_splits))
     gs2.fit(X, y)
 
-    def _pop_time_keys(cv_results):
-        for key in ('mean_fit_time', 'std_fit_time',
-                    'mean_score_time', 'std_score_time'):
-            cv_results.pop(key)
-        return cv_results
-
     # OneTimeSplitter is a non-re-entrant cv where split can be called only
     # once if ``cv.split`` is called once per param setting in GridSearchCV.fit
     # the 2nd and 3rd parameter will not be evaluated as no train/test indices
     # will be generated for the 2nd and subsequent cv.split calls.
     # This is a check to make sure cv.split is not called once per param
     # setting.
-    np.testing.assert_equal(_pop_time_keys(gs.cv_results_),
-                            _pop_time_keys(gs2.cv_results_))
+    np.testing.assert_equal(_pop_cv_results_time_keys(gs.cv_results_),
+                            _pop_cv_results_time_keys(gs2.cv_results_))
 
     # Check consistency of folds across the parameters
     gs = GridSearchCV(LinearSVC(random_state=0),
@@ -1499,3 +1463,21 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
+
+
+def _pop_cv_results_time_keys(cv_results):
+    all_keys = list(cv_results)
+    for key in all_keys:
+        if 'time' in key:
+            cv_results.pop(key)
+    return cv_results
+
+
+def _replace_cv_results_keys_with_metric_name(cv_results, metric_name):
+    all_keys = list(cv_results)
+    for key in all_keys:
+        if 'score' in key:
+            val = cv_results[key]
+            cv_results.pop(key)
+            cv_results[key.replace('score', metric_name)] = val
+    return cv_results
