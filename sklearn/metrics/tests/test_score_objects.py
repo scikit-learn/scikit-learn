@@ -202,7 +202,9 @@ def test_check_scoring_and_check_multimetric_scoring():
 
     # Make sure it works for the valid cases
 
-    for scoring in (('accuracy', 'precision'), ['precision', 'accuracy'],
+    for scoring in (('accuracy',), ['precision'],
+                    {'acc': 'accuracy', 'precision': 'precision'},
+                    ('accuracy', 'precision'), ['precision', 'accuracy'],
                     {'accuracy': make_scorer(accuracy_score),
                      'precision': make_scorer(precision_score)}):
         estimator = EstimatorWithFitAndPredict()
@@ -211,12 +213,16 @@ def test_check_scoring_and_check_multimetric_scoring():
         scorers, is_multi = check_multimetric_scoring(estimator, scoring)
         assert_true(is_multi)
         assert_true(isinstance(scorers, dict))
-        assert_equal(sorted(scorers.keys()), ['accuracy', 'precision'])
+        assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
         assert_true(all([isinstance(scorer, _PredictScorer)
                          for scorer in list(scorers.values())]))
 
-        assert_almost_equal(scorers['accuracy'](estimator, [[1]], [1]), 1.0)
-        assert_almost_equal(scorers['precision'](estimator, [[1]], [0]), 0.0)
+        if 'acc' in scoring:
+            assert_almost_equal(scorers['acc'](estimator, [[1]], [1]), 1)
+        if 'accuracy' in scoring:
+            assert_almost_equal(scorers['accuracy'](estimator, [[1]], [1]), 1)
+        if 'precision' in scoring:
+            assert_almost_equal(scorers['precision'](estimator, [[1]], [0]), 0)
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
