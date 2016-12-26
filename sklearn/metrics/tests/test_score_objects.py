@@ -185,8 +185,9 @@ def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
     # For all single metric use cases, it should register as not multimetric
     assert_false(is_multi)
     if scorers is not None:
-        scorers = list(scorers.values())
+        names, scorers = zip(*scorers.items())
         assert_equal(len(scorers), 1)
+        assert_equal(names[0], 'score')
         scorers = scorers[0]
     return scorers
 
