@@ -214,7 +214,6 @@ class BaseAdditiveHomogenousKernelSampler(six.with_metaclass(ABCMeta,
 
     preset_sample_intervals = None
 
-    @abstractmethod
     def __init__(self, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -226,13 +225,13 @@ class BaseAdditiveHomogenousKernelSampler(six.with_metaclass(ABCMeta,
             if not isinstance(self.preset_sample_intervals, dict):
                 raise ValueError("Preset sample intervals not defined,"
                                  " base class method call?")
-            if self.sample_steps in self.preset_sample_intervals.keys():
+            if self.sample_steps in self.preset_sample_intervals:
                 self.sample_interval_ = \
                     self.preset_sample_intervals[self.sample_steps]
             else:
                 raise ValueError("If sample_steps is not in %s,"
                                  " you need to provide sample_interval" %
-                                 (self.preset_sample_intervals.keys()))
+                                (sorted(self.preset_sample_intervals.keys())))
         else:
             self.sample_interval_ = self.sample_interval
         return self
@@ -379,10 +378,6 @@ class AdditiveChi2Sampler(BaseAdditiveHomogenousKernelSampler):
     # See reference, figure 2 c)
     preset_sample_intervals = {1: 0.8, 2: 0.5, 3: 0.4}
 
-    def __init__(self, sample_steps=2, sample_interval=None):
-        super(AdditiveChi2Sampler, self).__init__(sample_steps,
-                                                  sample_interval)
-
     def _spectrum(self, omega):
         # Spectrum function for chi2 kernel
         return 1. / np.cosh(np.pi * omega)
@@ -431,10 +426,6 @@ class IntersectionSampler(BaseAdditiveHomogenousKernelSampler):
     # Empirically selected values
     preset_sample_intervals = {1: 1.2, 2: 0.8, 3: 0.7}
 
-    def __init__(self, sample_steps=2, sample_interval=None):
-        super(IntersectionSampler, self).__init__(sample_steps,
-                                                  sample_interval)
-
     def _spectrum(self, omega):
         # Spectrum function for intersection kernel
         return 2. / np.pi / (1 + 4 * omega ** 2)
@@ -481,10 +472,6 @@ class JensenShannonSampler(BaseAdditiveHomogenousKernelSampler):
 
     # Empirically selected values
     preset_sample_intervals = {1: 0.6, 2: 0.4, 3: 0.2}
-
-    def __init__(self, sample_steps=2, sample_interval=None):
-        super(JensenShannonSampler, self).__init__(sample_steps,
-                                                   sample_interval)
 
     def _spectrum(self, omega):
         # Spectrum function for Jensen-Shannon kernel
