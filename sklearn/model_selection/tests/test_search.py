@@ -711,7 +711,7 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     score_keys = search.scorer_.keys() if search.multimetric_ else ('score',)
 
     for key in score_keys:
-            assert_true(cv_results['rank_test_%s' % key].dtype == np.int32)
+        assert_true(cv_results['rank_test_%s' % key].dtype == np.int32)
 
 
 def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
