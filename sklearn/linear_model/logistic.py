@@ -1056,8 +1056,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *warm_start* to support *lbfgs*, *newton-cg*, *sag* solvers.
 
     n_jobs : int, default: 1
-        Number of CPU cores used during the cross-validation loop. If given
-        a value of -1, all cores are used.
+        Number of CPU cores used when parallelizing over classes
+        if multi_class='ovr'".
+        If given a value of -1, all cores are used.
 
     Attributes
     ----------
@@ -1368,10 +1369,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    scoring : callabale
-        Scoring function to use as cross-validation criteria. For a list of
-        scoring functions that can be used, look at :mod:`sklearn.metrics`.
-        The default scoring option used is accuracy_score.
+    scoring : string, callable, or None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``. For a list of scoring functions
+        that can be used, look at :mod:`sklearn.metrics`. The
+        default scoring option used is accuracy_score.
+
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}
         Algorithm to use in the optimization problem.
