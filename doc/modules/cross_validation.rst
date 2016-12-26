@@ -263,6 +263,29 @@ Thus, one can create the training/test sets using numpy indexing::
   >>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
 
 
+Repeated K-Fold
+---------------
+
+:class:`RepeatedKFold` repeats K-Fold n times. It can be used when one
+requires to run :class:`KFold` n times, producing different splits in
+each repetition.
+
+Example of 2-fold K-Fold repeated 2 times::
+
+  >>> import numpy as np
+  >>> from sklearn.model_selection import RepeatedKFold, KFold
+  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+  >>> random_states = [12883823, 28827347]
+  >>> rkf = RepeatedKFold(KFold(n_splits=2), n_repeats=2, random_states=random_states)
+  >>> for train, test in rkf.split(X):
+  ...     print("%s %s" % (train, test))
+  ...
+  [2 3] [0 1]
+  [0 1] [2 3]
+  [0 3] [1 2]
+  [1 2] [0 3]
+
+
 Leave One Out (LOO)
 -------------------
 
@@ -408,6 +431,31 @@ two slightly unbalanced classes::
   [2 3 6 7 8 9] [0 1 4 5]
   [0 1 3 4 5 8 9] [2 6 7]
   [0 1 2 4 5 6 7] [3 8 9]
+
+Repeated Stratified K-Fold
+--------------------------
+:class:`RepeatedStratifiedKFold` is very similar to :class:`RepeatedKFold` except
+that it repeats :class:`StratifiedKFold` n times.
+
+Example of 3-fold Stratified K-Fold repeated 2 times::
+
+  >>> import numpy as np
+  >>> from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedKFold
+  >>> X = np.ones(10)
+  >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+  >>> random_states = [12321432, 12331242]
+  >>> skf = StratifiedKFold(n_splits=3)
+  >>> rskf = RepeatedStratifiedKFold(skf, n_repeats=2, random_states=random_states)
+  >>> for train, test in rskf.split(X, y):
+  ...     print("%s %s" % (train, test))
+  ...
+  [0 2 4 6 8 9] [1 3 5 7]
+  [0 1 3 4 5 7 8] [2 6 9]
+  [1 2 3 5 6 7 9] [0 4 8]
+  [1 2 5 7 8 9] [0 3 4 6]
+  [0 2 3 4 5 6 8] [1 7 9]
+  [0 1 3 4 6 7 9] [2 5 8]
+
 
 Stratified Shuffle Split
 ------------------------
