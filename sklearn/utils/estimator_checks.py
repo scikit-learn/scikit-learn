@@ -184,11 +184,13 @@ def _yield_regressor_checks(name, Regressor):
 def _yield_transformer_checks(name, Transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
+    if name not in ['AdditiveChi2Sampler', 'IntersectionSampler',
+                    'JensenShannonSampler', 'Binarizer', 'Normalizer',
                     'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
-    if name not in ['AdditiveChi2Sampler', 'Binarizer',
+    if name not in ['AdditiveChi2Sampler', 'IntersectionSampler',
+                    'JensenShannonSampler', 'Binarizer',
                     'FunctionTransformer', 'Normalizer']:
         # basic tests
         yield check_transformer_general

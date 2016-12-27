@@ -31,6 +31,15 @@ Changelog
 New features
 ............
 
+   - Moved majority of the code from :class:`kernel_approximation.AdditiveChi2Sampler`
+     class to the new :class:`kernel_approximation.BaseAdditiveHomogenousKernelSampler`
+     class made for general additive homogenous kernel samplers. Added derived
+     classes :class:`kernel_approximation.AdditiveChi2Sampler`,
+     :class:`kernel_approximation.IntersectionSampler` and
+     :class:`kernel_approximation.JensenShannonSampler` for additive chi2,
+     intersection and Jensen-Shannon kernel samplers.
+     :issue:`8025` by `Valery Anisimovsky`.
+
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
