@@ -33,9 +33,9 @@ env:
       NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.23"
     # This environment tests the newest supported anaconda env
     # It also runs tests requiring Pandas.
-    - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" PANDAS_VERSION="0.18.0"
-      CYTHON_VERSION="0.23.4"
+    - DISTRIB="conda" PYTHON_VERSION="3.6" INSTALL_MKL="true"
+      NUMPY_VERSION="1.11.2" SCIPY_VERSION="0.18.1" PANDAS_VERSION="0.19.1"
+      CYTHON_VERSION="0.25.2"
     # flake8 linting on diff wrt common ancestor with upstream/master
     - RUN_FLAKE8="true" SKIP_TESTS="true"
       DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
