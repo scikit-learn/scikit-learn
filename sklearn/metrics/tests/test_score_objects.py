@@ -47,9 +47,18 @@ CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss',
-               'adjusted_rand_score'  # not really, but works
-               ]
+               'neg_log_loss', 'log_loss']
+
+# all scorers for unsupervised problems which compare labels (and hence
+# behave like classification scorers)
+CLUSTER_SCORERS = ["adjusted_mutual_info_score",
+                   "normalized_mutual_info_score", "adjusted_rand_score",
+                   "completeness_score", "expected_mutual_information",
+                   "homogeneity_completeness_v_measure", "homogeneity_score",
+                   "mutual_info_score", "v_measure_score",
+                   "fowlkes_mallows_score", "entropy", "silhouette_samples",
+                   "silhouette_score", "calinski_harabaz_score",
+                   "consensus_score"]
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
@@ -65,6 +74,7 @@ def _make_estimators(X_train, y_train, y_ml_train):
     return dict(
         [(name, sensible_regr) for name in REGRESSION_SCORERS] +
         [(name, sensible_clf) for name in CLF_SCORERS] +
+        [(name, sensible_clf) for name in CLUSTER_SCORERS] +
         [(name, sensible_ml_clf) for name in MULTILABEL_ONLY_SCORERS]
     )
 
