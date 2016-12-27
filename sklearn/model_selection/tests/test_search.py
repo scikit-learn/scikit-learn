@@ -594,10 +594,12 @@ def test_X_as_list():
     cv = KFold(n_splits=3)
 
     for scoring in (None, 'accuracy', ('accuracy', ),
-                    ('accuracy', 'precision')):
+                    ('accuracy', 'recall')):
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
-                                   scoring=scoring)
-        grid_search.fit(X.tolist(), y).score(X, y)
+                                   scoring=scoring,
+                                   refit='accuracy'
+                                   if scoring and len(scoring) > 0 else True)
+        grid_search.fit(X.tolist(), y).score(X.tolist(), y)
         assert_true(hasattr(grid_search, "cv_results_"))
 
 
@@ -610,10 +612,12 @@ def test_y_as_list():
     cv = KFold(n_splits=3)
 
     for scoring in (None, 'accuracy', ('accuracy', ),
-                    ('accuracy', 'precision')):
+                    ('accuracy', 'recall')):
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
-                                   scoring=scoring)
-        grid_search.fit(X, y.tolist()).score(X, y)
+                                   scoring=scoring,
+                                   refit='accuracy'
+                                   if scoring and len(scoring) > 0 else True)
+        grid_search.fit(X, y.tolist()).score(X, y.tolist())
         assert_true(hasattr(grid_search, "cv_results_"))
 
 
