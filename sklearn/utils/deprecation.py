@@ -1,3 +1,4 @@
+import inspect
 import warnings
 
 __all__ = ["deprecated", ]
@@ -62,12 +63,25 @@ class deprecated(object):
     def _decorate_fun(self, fun):
         """Decorate function fun"""
 
-        msg = "Function %s is deprecated" % fun.__name__
+        msg = " %s is deprecated" % fun.__name__
         if self.extra:
             msg += "; %s" % self.extra
 
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
+            def ismethod(f):
+                spec = inspect.getfullargspec(f)
+                return 'self' in spec.args
+
+            entity = "Function"
+            if ismethod(fun):
+                properties = inspect.getmembers(
+                    args[0].__class__, lambda x: isinstance(x, property))
+                properties_names = [x[0] for x in properties]
+
+                if fun.__name__ in properties_names:
+                    entity = "Attribute"
+
+            warnings.warn(entity + msg, category=DeprecationWarning)
             return fun(*args, **kwargs)
 
         wrapped.__name__ = fun.__name__
