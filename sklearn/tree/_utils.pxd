@@ -40,6 +40,8 @@ ctypedef fused realloc_ptr:
     (DOUBLE_t**)
     (Node*)
     (Node**)
+    (StackRecord*)
+    (PriorityHeapRecord*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
 
@@ -79,7 +81,7 @@ cdef class Stack:
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil
+                  SIZE_t n_constant_features) nogil except *
     cdef int pop(self, StackRecord* res) nogil
 
 

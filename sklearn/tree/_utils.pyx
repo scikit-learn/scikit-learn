@@ -13,7 +13,6 @@
 
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
-from libc.stdlib cimport calloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
@@ -122,7 +121,7 @@ cdef class Stack:
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil:
+                  SIZE_t n_constant_features) nogil except *:
         """Push a new element onto the stack.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -133,12 +132,8 @@ cdef class Stack:
         # Resize if capacity not sufficient
         if top >= self.capacity:
             self.capacity *= 2
-            stack = <StackRecord*> realloc(self.stack_,
-                                           self.capacity * sizeof(StackRecord))
-            if stack == NULL:
-                # no free; __dealloc__ handles that
-                return -1
-            self.stack_ = stack
+            # Since safe_realloc can raise MemoryError, use `except *`
+            safe_realloc(&self.stack_, self.capacity)
 
         stack = self.stack_
         stack[top].start = start
@@ -232,9 +227,7 @@ cdef class PriorityHeap:
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
         self.heap_ptr = 0
-        self.heap_ = <PriorityHeapRecord*> malloc(capacity * sizeof(PriorityHeapRecord))
-        if self.heap_ == NULL:
-            raise MemoryError()
+        safe_realloc(&self.heap_, capacity)
 
     def __dealloc__(self):
         free(self.heap_)
@@ -256,13 +249,8 @@ cdef class PriorityHeap:
         # Resize if capacity not sufficient
         if heap_ptr >= self.capacity:
             self.capacity *= 2
-            heap = <PriorityHeapRecord*> realloc(self.heap_,
-                                                 self.capacity *
-                                                 sizeof(PriorityHeapRecord))
-            if heap == NULL:
-                # no free; __dealloc__ handles that
-                return -1
-            self.heap_ = heap
+            # Since safe_realloc can raise MemoryError, use `except *`
+            safe_realloc(&self.heap_, self.capacity)
 
         # Put element as last element of heap
         heap = self.heap_
