@@ -49,8 +49,7 @@ CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss']
 
-# all scorers for unsupervised problems which compare labels (and hence
-# behave like classification scorers)
+# All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
                    "homogeneity_score",
                    "completeness_score",
