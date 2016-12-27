@@ -51,9 +51,9 @@ cdef class Criterion:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
 
         Parameters
@@ -79,7 +79,7 @@ cdef class Criterion:
 
         pass
 
-    cdef void reset(self) nogil:
+    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
 
         This method must be implemented by the subclass.
@@ -87,14 +87,14 @@ cdef class Criterion:
 
         pass
 
-    cdef void reverse_reset(self) nogil:
+    cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end.
 
         This method must be implemented by the subclass.
         """
         pass
 
-    cdef void update(self, SIZE_t new_pos) nogil:
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
         This updates the collected statistics by moving samples[pos:new_pos]
@@ -281,9 +281,9 @@ cdef class ClassificationCriterion(Criterion):
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
-                   DOUBLE_t* sample_weight, double weighted_n_samples,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except *:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride,
+                  DOUBLE_t* sample_weight, double weighted_n_samples,
+                  SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
         children samples[start:start] and samples[start:end].
 
@@ -347,8 +347,9 @@ cdef class ClassificationCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
+        return 0
 
-    cdef void reset(self) nogil:
+    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start."""
 
         self.pos = self.start
@@ -371,7 +372,7 @@ cdef class ClassificationCriterion(Criterion):
             sum_left += self.sum_stride
             sum_right += self.sum_stride
 
-    cdef void reverse_reset(self) nogil:
+    cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end."""
         self.pos = self.end
 
@@ -393,7 +394,7 @@ cdef class ClassificationCriterion(Criterion):
             sum_left += self.sum_stride
             sum_right += self.sum_stride
 
-    cdef void update(self, SIZE_t new_pos) nogil:
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
         Parameters
@@ -470,6 +471,7 @@ cdef class ClassificationCriterion(Criterion):
             sum_total += self.sum_stride
 
         self.pos = new_pos
+        return 0
 
     cdef double node_impurity(self) nogil:
         pass
@@ -736,9 +738,9 @@ cdef class RegressionCriterion(Criterion):
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -778,8 +780,9 @@ cdef class RegressionCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
+        return 0
 
-    cdef void reset(self) nogil:
+    cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
         memset(self.sum_left, 0, n_bytes)
@@ -788,8 +791,9 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
+        return 0
 
-    cdef void reverse_reset(self) nogil:
+    cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
         memset(self.sum_right, 0, n_bytes)
@@ -798,8 +802,9 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_right = 0.0
         self.weighted_n_left = self.weighted_n_node_samples
         self.pos = self.end
+        return 0
 
-    cdef void update(self, SIZE_t new_pos) nogil:
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
 
         cdef double* sum_left = self.sum_left
@@ -859,6 +864,7 @@ cdef class RegressionCriterion(Criterion):
             sum_right[k] = sum_total[k] - sum_left[k]
 
         self.pos = new_pos
+        return 0
 
     cdef double node_impurity(self) nogil:
         pass
@@ -1028,9 +1034,9 @@ cdef class MAE(RegressionCriterion):
             self.left_child[k] = WeightedMedianCalculator(n_samples)
             self.right_child[k] = WeightedMedianCalculator(n_samples)
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil except *:
+    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
 
@@ -1068,7 +1074,7 @@ cdef class MAE(RegressionCriterion):
             for k in range(self.n_outputs):
                 y_ik = y[i * y_stride + k]
 
-                # push method ends up calling safe_realloc, hence `except *`
+                # push method ends up calling safe_realloc, hence `except -1`
                 # push all values to the right side,
                 # since pos = start initially anyway
                 (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
@@ -1080,9 +1086,11 @@ cdef class MAE(RegressionCriterion):
 
         # Reset to pos=start
         self.reset()
+        return 0
 
-    cdef void reset(self) nogil except *:
-        """Reset the criterion at pos=start."""
+    cdef int reset(self) nogil except -1:
+        """Reset the criterion at pos=start. Returns -1 upon error and
+           0 when succeeded."""
 
         cdef SIZE_t i, k
         cdef DOUBLE_t value
@@ -1104,12 +1112,14 @@ cdef class MAE(RegressionCriterion):
                 # remove everything from left and put it into right
                 (<WeightedMedianCalculator> left_child[k]).pop(&value,
                                                                &weight)
-                # push method ends up calling safe_realloc, hence `except *`
+                # push method ends up calling safe_realloc, hence `except -1`
                 (<WeightedMedianCalculator> right_child[k]).push(value,
                                                                  weight)
+        return 0
 
-    cdef void reverse_reset(self) nogil except *:
-        """Reset the criterion at pos=end."""
+    cdef int reverse_reset(self) nogil except -1:
+        """Reset the criterion at pos=end. Returns -1 upon error and 0 when
+           succeeded."""
 
         self.weighted_n_right = 0.0
         self.weighted_n_left = self.weighted_n_node_samples
@@ -1128,11 +1138,12 @@ cdef class MAE(RegressionCriterion):
                 # remove everything from right and put it into left
                 (<WeightedMedianCalculator> right_child[k]).pop(&value,
                                                                 &weight)
-                # push method ends up calling safe_realloc, hence `except *`
+                # push method ends up calling safe_realloc, hence `except -1`
                 (<WeightedMedianCalculator> left_child[k]).push(value,
                                                                 weight)
+        return 0
 
-    cdef void update(self, SIZE_t new_pos) nogil except *:
+    cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
 
         cdef DOUBLE_t* sample_weight = self.sample_weight
@@ -1165,7 +1176,7 @@ cdef class MAE(RegressionCriterion):
                     y_ik = y[i * self.y_stride + k]
                     # remove y_ik and its weight w from right and add to left
                     (<WeightedMedianCalculator> right_child[k]).remove(y_ik, w)
-                    # push method ends up calling safe_realloc, hence except *
+                    # push method ends up calling safe_realloc, hence except -1
                     (<WeightedMedianCalculator> left_child[k]).push(y_ik, w)
 
                 self.weighted_n_left += w
@@ -1189,6 +1200,7 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         self.pos = new_pos
+        return 0
 
     cdef void node_value(self, double* dest) nogil:
         """Computes the node value of samples[start:end] into dest."""

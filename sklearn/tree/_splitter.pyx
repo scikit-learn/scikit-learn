@@ -116,14 +116,16 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self,
+    cdef int init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
+
+        Returns -1 if memory allocation failed.
 
         Parameters
         ----------
@@ -180,9 +182,10 @@ cdef class Splitter:
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
 
         self.sample_weight = sample_weight
+        return 0
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil except *:
+    cdef int node_reset(self, SIZE_t start, SIZE_t end,
+                        double* weighted_n_node_samples) nogil except -1:
         """Reset splitter on node samples[start:end].
 
         Parameters
@@ -207,13 +210,16 @@ cdef class Splitter:
                             end)
 
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
+        return 0
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil except *:
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end].
 
         This is a placeholder method. The majority of computation will be done
         here.
+
+        It should return -1 upon errors.
         """
 
         pass
@@ -257,12 +263,12 @@ cdef class BaseDenseSplitter(Splitter):
         if self.presort == 1:
             free(self.sample_mask)
 
-    cdef void init(self,
-                   object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
-        """Initialize the splitter."""
+    cdef int init(self,
+                  object X,
+                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                  DOUBLE_t* sample_weight,
+                  np.ndarray X_idx_sorted=None) except -1:
+        """Initialize the splitter. Return -1 if memory allocation failed."""
 
         # Call parent init
         Splitter.init(self, X, y, sample_weight)
@@ -284,6 +290,8 @@ cdef class BaseDenseSplitter(Splitter):
             safe_realloc(&self.sample_mask, self.n_total_samples)
             memset(self.sample_mask, 0, self.n_total_samples*sizeof(SIZE_t))
 
+        return 0
+
 
 cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
@@ -295,9 +303,10 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.random_state,
                                self.presort), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil except *:
-        """Find the best split on node samples[start:end]."""
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best split on node samples[start:end].
+           Returns -1 upon errors"""
         # Find the best split
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
@@ -509,6 +518,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0
 
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
@@ -633,9 +643,10 @@ cdef class RandomSplitter(BaseDenseSplitter):
                                  self.random_state,
                                  self.presort), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil except *:
-        """Find the best random split on node samples[start:end]."""
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best random split on node samples[start:end].
+           Returns -1 upon errors and 0 when succeeded"""
         # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
@@ -835,6 +846,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0
 
 
 cdef class BaseSparseSplitter(Splitter):
@@ -867,12 +879,13 @@ cdef class BaseSparseSplitter(Splitter):
         free(self.index_to_samples)
         free(self.sorted_samples)
 
-    cdef void init(self,
-                   object X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
-        """Initialize the splitter."""
+    cdef int init(self,
+                  object X,
+                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                  DOUBLE_t* sample_weight,
+                  np.ndarray X_idx_sorted=None) except -1:
+        """Initialize the splitter. Returns -1 upon errors and 0 when
+           succeeded"""
 
         # Call parent init
         Splitter.init(self, X, y, sample_weight)
@@ -905,6 +918,7 @@ cdef class BaseSparseSplitter(Splitter):
 
         for p in range(n_samples):
             index_to_samples[samples[p]] = p
+        return 0
 
     cdef inline SIZE_t _partition(self, double threshold,
                                   SIZE_t end_negative, SIZE_t start_positive,
@@ -1168,10 +1182,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                      self.random_state,
                                      self.presort), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil except *:
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end], using sparse
-           features.
+           features. Returns -1 upon memory errors.
         """
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1382,6 +1396,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0
 
 
 cdef class RandomSparseSplitter(BaseSparseSplitter):
@@ -1395,8 +1410,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                        self.random_state,
                                        self.presort), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil except *:
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
         """Find a random split on node samples[start:end], using sparse
            features.
         """
@@ -1610,3 +1625,4 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+        return 0

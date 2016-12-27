@@ -121,7 +121,7 @@ cdef class Stack:
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil except *:
+                  SIZE_t n_constant_features) nogil except -1:
         """Push a new element onto the stack.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -132,7 +132,7 @@ cdef class Stack:
         # Resize if capacity not sufficient
         if top >= self.capacity:
             self.capacity *= 2
-            # Since safe_realloc can raise MemoryError, use `except *`
+            # Since safe_realloc can raise MemoryError, use `except -1`
             safe_realloc(&self.stack_, self.capacity)
 
         stack = self.stack_
@@ -238,7 +238,7 @@ cdef class PriorityHeap:
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right) nogil except *:
+                  double impurity_right) nogil except -1:
         """Push record on the priority heap.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -249,7 +249,7 @@ cdef class PriorityHeap:
         # Resize if capacity not sufficient
         if heap_ptr >= self.capacity:
             self.capacity *= 2
-            # Since safe_realloc can raise MemoryError, use `except *`
+            # Since safe_realloc can raise MemoryError, use `except -1`
             safe_realloc(&self.heap_, self.capacity)
 
         # Put element as last element of heap
@@ -328,11 +328,13 @@ cdef class WeightedPQueue:
     def __dealloc__(self):
         free(self.array_)
 
-    cdef void reset(self) nogil except *:
-        """Reset the WeightedPQueue to its state at construction"""
+    cdef int reset(self) nogil except -1:
+        """Reset the WeightedPQueue to its state at construction returns 0
+        upon success and -1 upon memory error."""
         self.array_ptr = 0
         # Since safe_realloc can raise MemoryError, use `except *`
         safe_realloc(&self.array_, self.capacity)
+        return 0
 
     cdef bint is_empty(self) nogil:
         return self.array_ptr <= 0
@@ -340,7 +342,7 @@ cdef class WeightedPQueue:
     cdef SIZE_t size(self) nogil:
         return self.array_ptr
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except *:
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push record on the array.
         Returns 0 if successful; -1 on out of memory error.
         """
@@ -351,7 +353,7 @@ cdef class WeightedPQueue:
         # Resize if capacity not sufficient
         if array_ptr >= self.capacity:
             self.capacity *= 2
-            # Since safe_realloc can raise MemoryError, use `except *`
+            # Since safe_realloc can raise MemoryError, use `except -1`
             safe_realloc(&self.array_, self.capacity)
 
         # Put element as last element of array
@@ -496,15 +498,17 @@ cdef class WeightedMedianCalculator:
         WeightedMedianCalculator"""
         return self.samples.size()
 
-    cdef void reset(self) nogil except *:
+    cdef int reset(self) nogil except -1:
         """Reset the WeightedMedianCalculator to its state at construction"""
-        # samples.reset (WeightedPQueue.reset) uses safe_realloc, hence except*
+        # samples.reset (WeightedPQueue.reset) uses safe_realloc, hence
+        # except -1
         self.samples.reset()
         self.total_weight = 0
         self.k = 0
         self.sum_w_0_k = 0
+        return 0
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except *:
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push a value and its associated weight
         to the WeightedMedianCalculator to be considered
         in the median calculation.
@@ -514,7 +518,7 @@ cdef class WeightedMedianCalculator:
 
         if self.size() != 0:
             original_median = self.get_median()
-        # samples.push (WeightedPQueue.push) uses safe_realloc, hence except *
+        # samples.push (WeightedPQueue.push) uses safe_realloc, hence except -1
         return_value = self.samples.push(data, weight)
         self.update_median_parameters_post_push(data, weight,
                                                 original_median)

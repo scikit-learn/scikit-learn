@@ -271,7 +271,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 # Best first builder ----------------------------------------------------------
 
 cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
-                                 PriorityHeap frontier) nogil except *:
+                                 PriorityHeap frontier) nogil except -1:
     """Adds record ``rec`` to the priority queue ``frontier``; returns -1
     on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
@@ -416,7 +416,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
-                                    PriorityHeapRecord* res) nogil except *:
+                                    PriorityHeapRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
@@ -656,9 +656,10 @@ cdef class Tree:
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef void _resize(self, SIZE_t capacity) nogil except *:
+    cdef int _resize(self, SIZE_t capacity) nogil except -1:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
-           double the size of the inner arrays."""
+           double the size of the inner arrays.  Returns -1 if memory
+           allocation failed."""
         if self._resize_c(capacity) != 0:
             # Acquire gil only if we need to raise
             with gil:
@@ -666,7 +667,7 @@ cdef class Tree:
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
-    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except *:
+    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except -1:
         """Guts of _resize. Returns 0 for success, -1 for error."""
         if capacity == self.capacity and self.nodes != NULL:
             return 0
@@ -696,7 +697,7 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except *:
+                          double weighted_n_node_samples) nogil except -1:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
