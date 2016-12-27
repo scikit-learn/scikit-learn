@@ -60,7 +60,7 @@ Enhancements
 
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
      that matches the ``classes_`` attribute of ``best_estimator_``. :issue:`7661`
-     by :user:`Alyssa Batula <abatula>`_ and :user:`Dylan Werner-Meier <unautre>`.
+     by :user:`Alyssa Batula <abatula>` and :user:`Dylan Werner-Meier <unautre>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -123,7 +123,7 @@ Bug fixes
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
-     in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
+     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
@@ -200,16 +200,19 @@ Changelog
 ---------
 
 Enhancements
-.........
+............
+
    - Improved ``sample_without_replacement`` speed by utilizing
      numpy.random.permutation for most cases. As a result,
      samples may differ in this release for a fixed random state.
      Affected estimators:
-      - :class:`ensemble.BaggingClassifier`
-      - :class:`ensemble.BaggingRegressor`
-      - :class:`linear_model.RANSACRegressor`
-      - :class:`model_selection.RandomizedSearchCV`
-      - :class:`random_projection.SparseRandomProjection`
+
+     - :class:`ensemble.BaggingClassifier`
+     - :class:`ensemble.BaggingRegressor`
+     - :class:`linear_model.RANSACRegressor`
+     - :class:`model_selection.RandomizedSearchCV`
+     - :class:`random_projection.SparseRandomProjection`
+
      This also affects the :meth:`datasets.make_classification`
      method.
 
@@ -233,7 +236,7 @@ Bug fixes
 
    - Fixes issue in :ref:`univariate_feature_selection` where score
      functions were not accepting multi-label targets. :issue:`7676`
-     by `Mohammed Affan`_
+     by :user:`Mohammed Affan <affanv14>`
 
    - Fixed setting parameters when calling ``fit`` multiple times on
      :class:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
@@ -301,11 +304,11 @@ Trees and forests
    - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
      regressors now assumes uniform sample weights by default if the
      ``sample_weight`` argument is not passed to the ``fit`` function.
-     Previously, the parameter was silently ignored. :issue:`7301` by `Nelson
-     Liu`_.
+     Previously, the parameter was silently ignored. :issue:`7301` by :user:`Nelson
+     Liu <nelson-liu>`.
 
    - Tree splitting criterion classes' cloning/pickling is now memory safe.
-     :issue:`7680` by `Ibraim Ganiev`_.
+     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
 
 
 Linear, kernelized and related models
