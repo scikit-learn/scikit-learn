@@ -656,11 +656,13 @@ cdef class Tree:
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef void _resize(self, SIZE_t capacity) except *:
+    cdef void _resize(self, SIZE_t capacity) nogil except *:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays."""
         if self._resize_c(capacity) != 0:
-            raise MemoryError()
+            # Acquire gil only if we need to raise
+            with gil:
+                raise MemoryError()
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).

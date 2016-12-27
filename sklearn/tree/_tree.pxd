@@ -59,7 +59,7 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_samples) nogil except *
-    cdef void _resize(self, SIZE_t capacity) except *
+    cdef void _resize(self, SIZE_t capacity) nogil except *
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except *
 
     cdef np.ndarray _get_value_ndarray(self)
