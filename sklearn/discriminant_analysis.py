@@ -248,8 +248,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     """
 
     import warnings
+
     def __init__(self, solver='svd', shrinkage=None, priors=None,
-                 n_components=None, store_covariances=False, 
+                 n_components=None, store_covariances=False,
                  store_covariance=None, tol=1e-4):
         self.solver = solver
         self.shrinkage = shrinkage
@@ -259,7 +260,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.tol = tol  # used only in svd solver
         if store_covariance is not None:
             warnings.warn("'store_covariance' was renamed to store_covariances"
-                " in version 0.19 and will be removed in 0.20.", DeprecationWarning)
+                          " in version 0.19 and will be removed in 0.20.",
+                          DeprecationWarning)
             self.store_covariances = store_covariance
 
     def _solve_lsqr(self, X, y, shrinkage):
