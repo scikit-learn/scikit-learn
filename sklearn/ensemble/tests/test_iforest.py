@@ -203,6 +203,7 @@ def test_max_samples_consistency():
 
 
 def test_iforest_subsampled_features():
+    # It tests non-regression for #5732 which failed at predict.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
                                                         boston.target[:50],
