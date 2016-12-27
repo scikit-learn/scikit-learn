@@ -29,7 +29,7 @@ import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home, Bunch
-from .base import _fetch_and_verify_dataset, _validate_file_md5
+from .base import _fetch_and_verify_dataset
 from .base import _pkl_filepath
 from ..utils import check_random_state
 from ..externals import joblib
@@ -120,9 +120,6 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
         faces = mfile['faces'].T.copy()
         joblib.dump(faces, filepath, compress=6)
-        # check md5 of dumped data
-        expected_checksum = "29a24b6d8bc0c7c69e2adab7eb3e61f2"
-        _validate_file_md5(expected_checksum, filepath)
 
         del mfile
 

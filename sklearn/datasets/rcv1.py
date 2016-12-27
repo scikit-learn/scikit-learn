@@ -16,7 +16,7 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import Bunch
 from .base import _pkl_filepath
-from .base import _fetch_and_verify_dataset, _validate_file_md5
+from .base import _fetch_and_verify_dataset
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
@@ -166,13 +166,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(sample_id, sample_id_path, compress=9)
-
-        # check md5 of dumped files
-        expected_checksum = "90c20c9920439d87920f33467e36235d"
-        _validate_file_md5(expected_checksum, samples_path)
-
-        expected_checksum = "1152f2044de5e269a1bd197ab7875413"
-        _validate_file_md5(expected_checksum, sample_id_path)
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
@@ -228,14 +221,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
-
-        # check md5 of dumped files
-        expected_checksum = "ad7dc1459cc43d13769936115fd0d821"
-        _validate_file_md5(expected_checksum, sample_topics_path)
-
-        expected_checksum = "63a175f505a14e021b52dda970118f46"
-        _validate_file_md5(expected_checksum, topics_path)
-
     else:
         y = joblib.load(sample_topics_path)
         categories = joblib.load(topics_path)

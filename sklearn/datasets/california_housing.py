@@ -28,7 +28,7 @@ import tarfile
 import numpy as np
 
 from .base import get_data_home, Bunch
-from .base import _fetch_and_verify_dataset, _validate_file_md5
+from .base import _fetch_and_verify_dataset
 from .base import _pkl_filepath
 from ..externals import joblib
 
@@ -102,12 +102,6 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
         cal_housing = cal_housing[:, columns_index]
         joblib.dump(cal_housing, filepath, compress=6)
-        # assert that dumped file has correct md5 hash
-        expected_checksum = "39c2dc70c4aad72e44b741c37163e6cc"
-        _validate_file_md5(expected_checksum, filepath)
-
-    else:
-        cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]

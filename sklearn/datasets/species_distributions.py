@@ -44,7 +44,7 @@ import sys
 import numpy as np
 
 from .base import get_data_home, Bunch
-from .base import _fetch_and_verify_dataset, _validate_file_md5
+from .base import _fetch_and_verify_dataset
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
@@ -262,9 +262,6 @@ def fetch_species_distributions(data_home=None,
                       train=train,
                       **extra_params)
         joblib.dump(bunch, archive_path, compress=9)
-        # check hash of dumped joblib
-        expected_checksum = "06206a67fa54ea1cf0e963560bd15cf0"
-        _validate_file_md5(expected_checksum, archive_path)
     else:
         bunch = joblib.load(archive_path)
 
