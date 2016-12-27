@@ -925,13 +925,13 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
     cv : object, KFold or StratifiedKFold
         Instance of cross-validator.
 
-    n_repeats : int, default=3
+    n_repeats : int, default=5
         Number of times cross-validator needs to be repeated.
 
     random_states : array-like with shape (n_repeates, ), default=None
         Random states to be used for each repetition (must be int).
     """
-    def __init__(self, cv, n_repeats=3, random_states=None):
+    def __init__(self, cv, n_repeats=5, random_states=None):
         if not isinstance(cv, (KFold, StratifiedKFold)):
             raise ValueError(
                 "cv must be an instance of KFold or StratifiedKFold.")
@@ -1104,7 +1104,8 @@ class RepeatedStratifiedKFold(with_metaclass(ABCMeta)):
 
     Examples
     --------
-    >>> from sklearn.model_selection import RepeatedStratifiedKFold
+    >>> from sklearn.model_selection import RepeatedStratifiedKFold, \
+            StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> random_states = [1944695409,  258173307]
@@ -1128,7 +1129,7 @@ class RepeatedStratifiedKFold(with_metaclass(ABCMeta)):
     RepeatedKFold
         Repeats K-Fold n times.
     """
-    def __init__(self, cv, n_repeats=3, random_states=None):
+    def __init__(self, cv, n_repeats=5, random_states=None):
         if not isinstance(cv, StratifiedKFold):
             raise ValueError(
                 "Cross validator should be an instance of StratifiedKFold")
