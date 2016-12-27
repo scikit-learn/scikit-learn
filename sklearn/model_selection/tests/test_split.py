@@ -517,6 +517,7 @@ def test_shuffle_split():
         assert_array_equal(t2[1], t3[1])
         assert_array_equal(t3[1], t4[1])
 
+
 @ignore_warnings
 def test_stratified_shuffle_split_init():
     X = np.arange(7)
