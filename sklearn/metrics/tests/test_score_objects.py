@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score)
-from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -51,14 +51,14 @@ CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
 
 # all scorers for unsupervised problems which compare labels (and hence
 # behave like classification scorers)
-CLUSTER_SCORERS = ["adjusted_mutual_info_score",
-                   "normalized_mutual_info_score", "adjusted_rand_score",
-                   "completeness_score", "expected_mutual_information",
-                   "homogeneity_completeness_v_measure", "homogeneity_score",
-                   "mutual_info_score", "v_measure_score",
-                   "fowlkes_mallows_score", "entropy", "silhouette_samples",
-                   "silhouette_score", "calinski_harabaz_score",
-                   "consensus_score"]
+CLUSTER_SCORERS = ["adjusted_rand_score",
+                   "homogeneity_score",
+                   "completeness_score",
+                   "v_measure_score",
+                   "mutual_info_score",
+                   "adjusted_mutual_info_score",
+                   "normalized_mutual_info_score",
+                   "fowlkes_mallows_score"]
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
@@ -340,16 +340,16 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
 
-def test_unsupervised_scorers():
+def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
-    # We don't have any real unsupervised Scorers yet.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     km = KMeans(n_clusters=3)
     km.fit(X_train)
-    score1 = get_scorer('adjusted_rand_score')(km, X_test, y_test)
-    score2 = adjusted_rand_score(y_test, km.predict(X_test))
-    assert_almost_equal(score1, score2)
+    for name in CLUSTER_SCORERS:
+        score1 = get_scorer(name)(km, X_test, y_test)
+        score2 = getattr(cluster_module, name)(y_test, km.predict(X_test))
+        assert_almost_equal(score1, score2)
 
 
 @ignore_warnings
@@ -455,4 +455,4 @@ def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          Ridge(), r2_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         KMeans(), adjusted_rand_score)
+                         KMeans(), cluster_module.adjusted_rand_score)

@@ -26,9 +26,17 @@ import numpy as np
 from . import (r2_score, median_absolute_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss,
-               fowlkes_mallows_score, calinski_harabaz_score)
+               precision_score, recall_score, log_loss)
+
 from .cluster import adjusted_rand_score
+from .cluster import homogeneity_score
+from .cluster import completeness_score
+from .cluster import v_measure_score
+from .cluster import mutual_info_score
+from .cluster import adjusted_mutual_info_score
+from .cluster import normalized_mutual_info_score
+from .cluster import fowlkes_mallows_score
+
 from ..utils.multiclass import type_of_target
 from ..externals import six
 from ..base import is_regressor
@@ -394,8 +402,13 @@ log_loss_scorer._deprecation_msg = deprecation_msg
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
+homogeneity_scorer = make_scorer(homogeneity_score)
+completeness_scorer = make_scorer(completeness_score)
+v_measure_scorer = make_scorer(v_measure_score)
+mutual_info_scorer = make_scorer(mutual_info_score)
+adjusted_mutual_info_scorer = make_scorer(adjusted_mutual_info_score)
+normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
-calinski_harabaz_scorer = make_scorer(calinski_harabaz_score)
 
 
 SCORERS = dict(r2=r2_scorer,
@@ -410,9 +423,16 @@ SCORERS = dict(r2=r2_scorer,
                average_precision=average_precision_scorer,
                log_loss=log_loss_scorer,
                neg_log_loss=neg_log_loss_scorer,
+               # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
-               fowlkes_mallows_score=fowlkes_mallows_scorer,
-               calinski_harabaz_score=calinski_harabaz_scorer)
+               homogeneity_score=homogeneity_scorer,
+               completeness_score=completeness_scorer,
+               v_measure_score=v_measure_scorer,
+               mutual_info_score=mutual_info_scorer,
+               adjusted_mutual_info_score=adjusted_mutual_info_scorer,
+               normalized_mutual_info_score=normalized_mutual_info_scorer,
+               fowlkes_mallows_score=fowlkes_mallows_scorer)
+
 
 for name, metric in [('precision', precision_score),
                      ('recall', recall_score), ('f1', f1_score)]:
