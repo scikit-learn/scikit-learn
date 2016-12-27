@@ -34,12 +34,7 @@ cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *:
         with gil:
             raise MemoryError("could not allocate (%d * %d) bytes"
                               % (nelems, sizeof(p[0][0])))
-    cdef realloc_ptr tmp = NULL
-    if p[0] == NULL:
-        # First alloc
-        tmp = <realloc_ptr>malloc(nbytes)
-    else:
-        tmp = <realloc_ptr>realloc(p[0], nbytes)
+    cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
         with gil:
             raise MemoryError("could not allocate %d bytes" % nbytes)
