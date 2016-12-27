@@ -248,17 +248,28 @@ class IsolationForest(BaseBagging):
         """
         # code structure from ForestClassifier/predict_proba
         # Check data
-        X = self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         n_samples_leaf = np.zeros((n_samples, self.n_estimators), order="f")
         depths = np.zeros((n_samples, self.n_estimators), order="f")
 
-        for i, tree in enumerate(self.estimators_):
-            leaves_index = tree.apply(X)
-            node_indicator = tree.decision_path(X)
+        if self._max_features == X.shape[1]:
+            subsample_features = False
+        else:
+            subsample_features = True
+
+        for i, (tree, features) in enumerate(zip(self.estimators_,
+                                                 self.estimators_features_)):
+            if subsample_features:
+                X_subset = X[:, features]
+            else:
+                X_subset = X
+            leaves_index = tree.apply(X_subset)
+            node_indicator = tree.decision_path(X_subset)
             n_samples_leaf[:, i] = tree.tree_.n_node_samples[leaves_index]
-            depths[:, i] = np.asarray(node_indicator.sum(axis=1)).reshape(-1) - 1
+            depths[:, i] = np.ravel(node_indicator.sum(axis=1))
+            depths[:, i] -= 1
 
         depths += _average_path_length(n_samples_leaf)
 
