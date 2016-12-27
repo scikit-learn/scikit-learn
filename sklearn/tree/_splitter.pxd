@@ -93,6 +93,6 @@ cdef class Splitter:
                          SplitRecord* split,
                          SIZE_t* n_constant_features) nogil except *
 
-    cdef void node_value(self, double* dest) nogil except *
+    cdef void node_value(self, double* dest) nogil
 
-    cdef double node_impurity(self) nogil except *
+    cdef double node_impurity(self) nogil

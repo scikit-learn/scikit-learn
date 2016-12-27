@@ -48,14 +48,14 @@ cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
 
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
-                     UINT32_t* random_state) nogil except *
+                     UINT32_t* random_state) nogil
 
 
 cdef double rand_uniform(double low, double high,
-                         UINT32_t* random_state) nogil except *
+                         UINT32_t* random_state) nogil
 
 
-cdef double log(double x) nogil except *
+cdef double log(double x) nogil
 
 # =============================================================================
 # Stack data structure
@@ -76,11 +76,11 @@ cdef class Stack:
     cdef SIZE_t top
     cdef StackRecord* stack_
 
-    cdef bint is_empty(self) nogil except *
+    cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil except *
-    cdef int pop(self, StackRecord* res) nogil except *
+                  SIZE_t n_constant_features) nogil
+    cdef int pop(self, StackRecord* res) nogil
 
 
 # =============================================================================
@@ -105,12 +105,12 @@ cdef class PriorityHeap:
     cdef SIZE_t heap_ptr
     cdef PriorityHeapRecord* heap_
 
-    cdef bint is_empty(self) nogil except *
+    cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
                   double impurity_right) nogil except *
-    cdef int pop(self, PriorityHeapRecord* res) nogil except *
+    cdef int pop(self, PriorityHeapRecord* res) nogil
 
 # =============================================================================
 # WeightedPQueue data structure
@@ -126,15 +126,15 @@ cdef class WeightedPQueue:
     cdef SIZE_t array_ptr
     cdef WeightedPQueueRecord* array_
 
-    cdef bint is_empty(self) nogil except *
+    cdef bint is_empty(self) nogil
     cdef void reset(self) nogil except *
-    cdef SIZE_t size(self) nogil except *
+    cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except *
-    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil except *
-    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except *
-    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except *
-    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil except *
-    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil except *
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
+    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
+    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil
+    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil
 
 
 # =============================================================================
@@ -149,15 +149,15 @@ cdef class WeightedMedianCalculator:
     cdef DOUBLE_t sum_w_0_k            # represents sum(weights[0:k])
                                        # = w[0] + w[1] + ... + w[k-1]
 
-    cdef SIZE_t size(self) nogil except *
+    cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except *
     cdef void reset(self) nogil except *
     cdef int update_median_parameters_post_push(
         self, DOUBLE_t data, DOUBLE_t weight,
-        DOUBLE_t original_median) nogil except *
-    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil except *
-    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil except *
+        DOUBLE_t original_median) nogil
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
     cdef int update_median_parameters_post_remove(
         self, DOUBLE_t data, DOUBLE_t weight,
-        DOUBLE_t original_median) nogil except *
-    cdef DOUBLE_t get_median(self) nogil except *
+        DOUBLE_t original_median) nogil
+    cdef DOUBLE_t get_median(self) nogil
