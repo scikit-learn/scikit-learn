@@ -36,7 +36,6 @@ from ..externals.six import b
 
 logger = logging.getLogger(__name__)
 
-
 ARCHIVE_NAME = "lfw.tgz"
 ARCHIVE_URL = "https://ndownloader.figshare.com/files/5976018"
 FUNNELED_ARCHIVE_NAME = "lfw-funneled.tgz"
@@ -73,12 +72,12 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
     if funneled:
         data_folder_path = join(lfw_home, "lfw_funneled")
-        archive_path = join(data_folder_path, FUNNELED_ARCHIVE_NAME)
+        archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
         archive_url = FUNNELED_ARCHIVE_URL
         expected_archive_checksum = "1b42dfed7d15c9b2dd63d5e5840c86ad"
     else:
         data_folder_path = join(lfw_home, "lfw")
-        archive_path = join(data_folder_path, ARCHIVE_NAME)
+        archive_path = join(lfw_home, ARCHIVE_NAME)
         archive_url = ARCHIVE_URL
         expected_archive_checksum = "a17d05bd522c52d84eca14327a23d494"
 
