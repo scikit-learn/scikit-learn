@@ -592,9 +592,13 @@ def test_X_as_list():
 
     clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
     cv = KFold(n_splits=3)
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
-    grid_search.fit(X.tolist(), y).score(X, y)
-    assert_true(hasattr(grid_search, "cv_results_"))
+
+    for scoring in (None, 'accuracy', ('accuracy', ),
+                    ('accuracy', 'precision')):
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
+                                   scoring=scoring)
+        grid_search.fit(X.tolist(), y).score(X, y)
+        assert_true(hasattr(grid_search, "cv_results_"))
 
 
 def test_y_as_list():
@@ -604,9 +608,13 @@ def test_y_as_list():
 
     clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
     cv = KFold(n_splits=3)
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
-    grid_search.fit(X, y.tolist()).score(X, y)
-    assert_true(hasattr(grid_search, "cv_results_"))
+
+    for scoring in (None, 'accuracy', ('accuracy', ),
+                    ('accuracy', 'precision')):
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
+                                   scoring=scoring)
+        grid_search.fit(X, y.tolist()).score(X, y)
+        assert_true(hasattr(grid_search, "cv_results_"))
 
 
 @ignore_warnings
@@ -629,21 +637,28 @@ def test_pandas_input():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
 
-        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                                   scoring=scoring)
         grid_search.fit(X_df, y_ser).score(X_df, y_ser)
-        grid_search.predict(X_df)
         assert_true(hasattr(grid_search, "cv_results_"))
+
+        for scoring in (('accuracy', ), ('accuracy', 'precision')):
+            grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                                       scoring=scoring, refit='accuracy')
+            grid_search.fit(X_df, y_ser).score(X_df, y_ser)
+            assert_true(hasattr(grid_search, "cv_results_"))
 
 
 def test_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
-    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
-                               scoring='adjusted_rand_score')
-    grid_search.fit(X, y)
-    # ARI can find the right number :)
-    assert_equal(grid_search.best_params_["n_clusters"], 3)
+    for scoring in ('adjusted_rand_score', 'fowlkes_mallows_score'):
+        grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
+                                   scoring=scoring)
+        grid_search.fit(X, y)
+        # Both ARI and FMS can find the right number :)
+        assert_equal(grid_search.best_params_["n_clusters"], 3)
 
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
                                scoring='fowlkes_mallows_score')
