@@ -170,7 +170,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     n_components : int, optional
         Number of components (< n_classes - 1) for dimensionality reduction.
 
-    store_covariance : bool, optional
+    store_covariances : bool, optional
         Additionally compute class covariance matrix (default False).
 
         .. versionadded:: 0.17
@@ -242,18 +242,25 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> clf = LinearDiscriminantAnalysis()
     >>> clf.fit(X, y)
     LinearDiscriminantAnalysis(n_components=None, priors=None, shrinkage=None,
-                  solver='svd', store_covariance=False, tol=0.0001)
+                  solver='svd', store_covariances=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
+
+    import warnings
     def __init__(self, solver='svd', shrinkage=None, priors=None,
-                 n_components=None, store_covariance=False, tol=1e-4):
+                 n_components=None, store_covariances=False, 
+                 store_covariance=None, tol=1e-4):
         self.solver = solver
         self.shrinkage = shrinkage
         self.priors = priors
         self.n_components = n_components
-        self.store_covariance = store_covariance  # used only in svd solver
+        self.store_covariances = store_covariances  # used only in svd solver
         self.tol = tol  # used only in svd solver
+        if store_covariance is not None:
+            warnings.warn("'store_covariance' was renamed to store_covariances"
+                " in version 0.19 and will be removed in 0.20.", DeprecationWarning)
+            self.store_covariances = store_covariance
 
     def _solve_lsqr(self, X, y, shrinkage):
         """Least squares solver.
@@ -360,7 +367,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         n_classes = len(self.classes_)
 
         self.means_ = _class_means(X, y)
-        if self.store_covariance:
+        if self.store_covariances:
             self.covariance_ = _class_cov(X, y, self.priors_)
 
         Xc = []
@@ -413,7 +420,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
            training data and parameters.
 
            .. versionchanged:: 0.19
-              *store_covariance* has been moved to main constructor.
+              *store_covariances* has been moved to main constructor.
 
            .. versionchanged:: 0.19
               *tol* has been moved to main constructor.
@@ -621,7 +628,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         """Fit the model according to the given training data and parameters.
 
             .. versionchanged:: 0.19
-               *store_covariance* has been moved to main constructor.
+               *store_covariances* has been moved to main constructor.
 
             .. versionchanged:: 0.19
                *tol* has been moved to main constructor.
