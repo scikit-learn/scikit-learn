@@ -23,8 +23,8 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings,
-                                   assert_raise_message)
+                                   assert_false, ignore_warnings)
+from sklearn.utils.testing import assert_raise_message
 
 
 np.seterr(all='warn')
@@ -565,55 +565,26 @@ def test_adaptive_learning_rate():
 
 
 def test_warm_start():
-    X = X_iris[:150]
-    y = y_iris[:150]
+    X = X_iris
+    y = y_iris
 
     y_2classes = np.array([0] * 75 + [1] * 75)
-    y_3classes = np.array([0] * 50 + [1] * 50 + [2] * 50)
+    y_3classes = np.array([0] * 40 + [1] * 40 + [2] * 70)
     y_3classes_alt = np.array([0] * 50 + [1] * 50 + [3] * 50)
     y_4classes = np.array([0] * 37 + [1] * 37 + [2] * 38 + [3] * 38)
     y_5classes = np.array([0] * 30 + [1] * 30 + [2] * 30 + [3] * 30 + [4] * 30)
 
     with ignore_warnings(category=Warning):
-
-        # Test with 2 unique labels
+        # No error raised
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                            warm_start=True)
-        clf.fit(X, y)
-        message = ('warm_start can only be used where `y` has the same '
-                   'classes as in the previous call to fit.'
-                   ' Previously got [0 1 2], `y` has [0 1]')
-        assert_raise_message(ValueError, message, clf.fit, X, y_2classes)
-
-        # Test with 3 unique labels that are the same as original fit.
-        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                            warm_start=True)
+                            warm_start=True).fit(X, y)
         clf.fit(X, y)
         clf.fit(X, y_3classes)
 
-        # Test with 3 unique labels that are different from original fit.
-        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                            warm_start=True)
-        clf.fit(X, y)
-        message = ('warm_start can only be used where `y` has the same '
-                   'classes as in the previous call to fit.'
-                   ' Previously got [0 1 2], `y` has [0 1 3]')
-        assert_raise_message(ValueError, message, clf.fit, X, y_3classes_alt)
-
-        # Test with 4 unique labels
-        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                            warm_start=True)
-        clf.fit(X, y)
-        message = ('warm_start can only be used where `y` has the same '
-                   'classes as in the previous call to fit.'
-                   ' Previously got [0 1 2], `y` has [0 1 2 3]')
-        assert_raise_message(ValueError, message, clf.fit, X, y_4classes)
-
-        # Test with 5 unique labels. This is a non-regression error.
-        clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                            warm_start=True)
-        clf.fit(X, y)
-        message = ('warm_start can only be used where `y` has the '
-                   'same classes as in the previous call to fit.'
-                   ' Previously got [0 1 2], `y` has [0 1 2 3 4]')
-        assert_raise_message(ValueError, message, clf.fit, X, y_5classes)
+        for y_i in (y_2classes, y_3classes_alt, y_4classes, y_5classes):
+            clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
+                                warm_start=True).fit(X, y)
+            message = ('warm_start can only be used where `y` has the same '
+                       'classes as in the previous call to fit.'
+                       ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
+            assert_raise_message(ValueError, message, clf.fit, X, y_i)

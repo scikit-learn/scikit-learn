@@ -962,11 +962,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         self : returns a trained MLP model.
         """
-        if self.warm_start and hasattr(self, "classes_"):
-            incremental = True
-        else:
-            incremental = False
-        return self._fit(X, y, incremental=incremental)
+        return self._fit(X, y, incremental=(self.warm_start and
+                                            hasattr(self, "classes_")))
 
     @property
     def partial_fit(self):
