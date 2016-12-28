@@ -452,8 +452,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
               not np.issubdtype(self.features.dtype, np.integer)):
             raise ValueError("Features should be an array of integers")
 
-        if not (isinstance(self.sparse, (six.string_types, bool)) and
-                self.sparse == "auto"):
+        if not ((isinstance(self.sparse, six.string_types) and
+                self.sparse == "auto") or isinstance(self.sparse, bool)):
             raise ValueError("sparse can only use be boolean or 'auto'"
                              " got {0}".format(self.sparse))
 
@@ -504,13 +504,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         return imputer_mask
 
     def _get_missing_features_info(self, X):
+        print 'heredffdasf ' + str(type(X))
         if sparse.issparse(X) and self.missing_values != 0:
             #  sparse matrix and missing values is not zero
             imputer_mask = _get_mask(X.data, self.missing_values)
             imputer_mask = X.__class__((imputer_mask, X.indices.copy(),
                                         X.indptr.copy()), shape=X.shape,
                                        dtype=X.dtype)
-
+            print 'here' + str(type(X)) + str(type(imputer_mask))
             feat_with_missing = imputer_mask.sum(axis=0).nonzero()[1]
             feat_with_missing = np.ravel(feat_with_missing)
 
@@ -520,5 +521,13 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 X = X.toarray()
             imputer_mask = _get_mask(X, self.missing_values)
             feat_with_missing = np.where(np.any(imputer_mask, axis=0))[0]
+
+        if self.sparse is True:
+            if sparse.issparse(imputer_mask):
+                imputer_mask = imputer_mask.tocsc()
+            else:
+                imputer_mask = sparse.csc_matrix(imputer_mask)
+        elif self.sparse is False and sparse.issparse(imputer_mask):
+            imputer_mask = imputer_mask.toarray()
 
         return imputer_mask, feat_with_missing
