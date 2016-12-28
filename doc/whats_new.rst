@@ -44,6 +44,17 @@ New features
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
+   - The new solver ``mu`` implements a Multiplicate Update in
+     :class:`decomposition.NMF`, allowing the optimization of all
+     beta-divergences, including the Frobenius norm, the generalized
+     Kullback-Leibler divergence and the Itakura-Saito divergence.
+     By `Tom Dupre la Tour`_.
+
+   - Added :func:`metrics.mean_squared_log_error`, which computes 
+     the mean square error of the logarithmic transformation of targets, 
+     particularly useful for targets with an exponential trend.
+     :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
+
 Enhancements
 ............
 
@@ -94,9 +105,27 @@ Enhancements
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
-     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with norm 'max'
-     the norms returned will be the same as for dense matrices (:issue:`7771`).
-     By `Ang Lu <https://github.com/luang008>`_.
+     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
+     norm 'max' the norms returned will be the same as for dense matrices.
+     :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
+
+   - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
+     A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
+     by :user:`Alexander Booth <alexandercbooth>`.
+
+   - Added type checking to the ``accept_sparse`` parameter in
+     :mod:`sklearn.utils.validation` methods. This parameter now accepts only
+     boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
+     and should be replaced by ``accept_sparse=False``.
+     :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
+
+   - :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`
+     and :func:`model_selection.cross_val_score` now allow estimators with callable
+     kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
+
+
+   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
+     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
 Bug fixes
 .........
@@ -116,6 +145,56 @@ Bug fixes
    - Fix estimators to accept a ``sample_weight`` parameter of type
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
      `Kathleen Chen`_.
+
+   - Fix a bug where :class:`sklearn.ensemble.VotingClassifier` raises an error
+     when a numpy array is passed in for weights. :issue:`7983` by
+     :user:`Vincent Pham <vincentpham1991>`.
+
+   - Fix a bug in :class:`sklearn.decomposition.LatentDirichletAllocation`
+     where the ``perplexity`` method was returning incorrect results because
+     the ``transform`` method returns normalized document topic distributions
+     as of version 0.18. :issue:`7954` by :user:`Gary Foreman <garyForeman>`.
+
+   - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
+     :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
+     ``min_impurity_split`` parameter.
+     :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
+   - Fix a bug where
+     :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
+     negative errors for negative values of ``ytrue - ypred`` leading to
+     wrong values when calling ``__call__``.
+     :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
+
+   - Fix :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba` to
+     return a list of 2d arrays, rather than a 3d array. In the case where
+     different target columns had different numbers of classes, a `ValueError`
+     would be raised on trying to stack matrices with different dimensions.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
+
+API changes summary
+-------------------
+
+   - Ensure that estimators' attributes ending with ``_`` are not set
+     in the constructor but only in the ``fit`` method. Most notably,
+     ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
+     now only have ``self.estimators_`` available after ``fit``.
+     :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
+
+   - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
+     in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
+     user no longer has access to the unnormalized document topic distribution
+     needed for the perplexity calculation. :issue:`7954` by
+     :user:`Gary Foreman <garyForeman>`.
+
+   - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
+     function used to return a 3d array (``n_samples``, ``n_classes``,
+     ``n_outputs``). In the case where different target columns had different
+     numbers of classes, a `ValueError` would be raised on trying to stack
+     matrices with different dimensions. This function now returns a list of
+     arrays where the length of the list is ``n_outputs``, and each array is
+     (``n_samples``, ``n_classes``) for that particular output.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
 .. _changes_0_18_1:
 
@@ -157,7 +236,7 @@ Bug fixes
      with SVD and Eigen solver are now of the same length. :issue:`7632`
      by :user:`JPFrancoia <JPFrancoia>`
 
-   - Fixes issue in :ref:`univariate_feature_selection` where score 
+   - Fixes issue in :ref:`univariate_feature_selection` where score
      functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
@@ -387,7 +466,7 @@ Other estimators
 
    - New :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
      replace former mixture models, employing faster inference
-     for sounder results. :issue:`7295` by :user:`Wei Xue <xuewei4d>` and 
+     for sounder results. :issue:`7295` by :user:`Wei Xue <xuewei4d>` and
      :user:`Thierry Guillemot <tguillemot>`.
 
    - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
@@ -510,7 +589,7 @@ Decomposition, manifold learning and clustering
    - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
      with ``np.float32`` and ``np.float64`` input data without converting it.
      This allows to reduce the memory consumption by using ``np.float32``.
-     :issue:`6846` by :user:`Sebastian Säger <ssaeger>` and 
+     :issue:`6846` by :user:`Sebastian Säger <ssaeger>` and
      :user:`YenChen Lin <yenchenlin>`.
 
 Preprocessing and feature selection
@@ -519,7 +598,7 @@ Preprocessing and feature selection
      :issue:`5929` by :user:`Konstantin Podshumok <podshumok>`.
 
    - :class:`feature_extraction.FeatureHasher` now accepts string values.
-     :issue:`6173` by :user:`Ryad Zenine <ryadzenine>` and 
+     :issue:`6173` by :user:`Ryad Zenine <ryadzenine>` and
      :user:`Devashish Deshpande <dsquareindia>`.
 
    - Keyword arguments can now be supplied to ``func`` in
@@ -533,7 +612,7 @@ Preprocessing and feature selection
 Model evaluation and meta-estimators
 
    - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
-     now support ``partial_fit``. By :user:`Asish Panda <kaichogami>` and 
+     now support ``partial_fit``. By :user:`Asish Panda <kaichogami>` and
      :user:`Philipp Dowling <phdowling>`.
 
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
@@ -561,7 +640,7 @@ Metrics
 
    - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
-     :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from 
+     :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from
      :user:`Mads Jensen <indianajensen>` and :user:`Nelson Liu <nelson-liu>`.
 
    - Support sparse contingency matrices in cluster evaluation
@@ -681,7 +760,7 @@ Decomposition, manifold learning and clustering
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By 
+      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By
       :user:`Peter Fischer <yanlend>`.
 
     - Attribute ``explained_variance_ratio_`` calculated with the SVD solver
@@ -964,7 +1043,7 @@ New features
      :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
      respectively similar to :class:`cross_validation.KFold` and
      :class:`cross_validation.ShuffleSplit`, except that the folds are
-     conditioned on a label array. By `Brian McFee`_, :user:`Jean 
+     conditioned on a label array. By `Brian McFee`_, :user:`Jean
      Kossaifi <JeanKossaifi>` and `Gilles Louppe`_.
 
    - :class:`decomposition.LatentDirichletAllocation` implements the Latent
@@ -1054,7 +1133,7 @@ Enhancements
      By `Trevor Stephens`_.
 
    - Provide an option for sparse output from
-     :func:`sklearn.metrics.pairwise.cosine_similarity`. By 
+     :func:`sklearn.metrics.pairwise.cosine_similarity`. By
      :user:`Jaidev Deshpande <jaidevd>`.
 
    - Add :func:`minmax_scale` to provide a function interface for
@@ -1265,7 +1344,7 @@ Bug fixes
       By `Tom Dupre la Tour`_.
 
     - Fixed bug :issue:`5495` when
-      doing OVR(SVC(decision_function_shape="ovr")). Fixed by 
+      doing OVR(SVC(decision_function_shape="ovr")). Fixed by
       :user:`Elvis Dohmatob <dohmatob>`.
 
 
@@ -4839,3 +4918,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ron Weiss: http://www.ee.columbia.edu/~ronw
 
 .. _Kathleen Chen: https://github.com/kchen17
+
+.. _Vincent Pham: https://github.com/vincentpham1991

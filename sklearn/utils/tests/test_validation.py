@@ -122,9 +122,6 @@ def test_check_array():
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
     # ensure_2d
-    assert_warns(DeprecationWarning, check_array, [0, 1, 2])
-    X_array = check_array([0, 1, 2])
-    assert_equal(X_array.ndim, 2)
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
     # don't allow ndim > 3
@@ -324,6 +321,48 @@ def test_check_array_dtype_warning():
     assert_equal(X_checked.format, 'csr')
 
 
+def test_check_array_accept_sparse_type_exception():
+    X = [[1, 2], [3, 4]]
+    X_csr = sp.csr_matrix(X)
+    invalid_type = SVR()
+
+    msg = ("A sparse matrix was passed, but dense data is required. "
+           "Use X.toarray() to convert to a dense numpy array.")
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=False)
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=None)
+
+    msg = ("Parameter 'accept_sparse' should be a string, "
+           "boolean or list of strings. You provided 'accept_sparse={}'.")
+    assert_raise_message(ValueError, msg.format(invalid_type),
+                         check_array, X_csr, accept_sparse=invalid_type)
+
+    msg = ("When providing 'accept_sparse' as a tuple or list, "
+           "it must contain at least one string value.")
+    assert_raise_message(ValueError, msg.format([]),
+                         check_array, X_csr, accept_sparse=[])
+    assert_raise_message(ValueError, msg.format(()),
+                         check_array, X_csr, accept_sparse=())
+
+    msg = "'SVR' object"
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=[invalid_type])
+
+    # Test deprecation of 'None'
+    assert_warns(DeprecationWarning, check_array, X, accept_sparse=None)
+
+
+def test_check_array_accept_sparse_no_exception():
+    X = [[1, 2], [3, 4]]
+    X_csr = sp.csr_matrix(X)
+
+    check_array(X_csr, accept_sparse=True)
+    check_array(X_csr, accept_sparse='csr')
+    check_array(X_csr, accept_sparse=['csr'])
+    check_array(X_csr, accept_sparse=('csr',))
+
+
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
@@ -337,12 +376,6 @@ def test_check_array_min_samples_and_features_messages():
     # Invalid edge case when checking the default minimum sample of a scalar
     msg = "Singleton array array(42) cannot be considered a valid collection."
     assert_raise_message(TypeError, msg, check_array, 42, ensure_2d=False)
-
-    # But this works if the input data is forced to look like a 2 array with
-    # one sample and one feature:
-    X_checked = assert_warns(DeprecationWarning, check_array, [42],
-                             ensure_2d=True)
-    assert_array_equal(np.array([[42]]), X_checked)
 
     # Simulate a model that would need at least 2 samples to be well defined
     X = np.ones((1, 10))

@@ -13,17 +13,10 @@ from .validation import (as_float_array,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
-from .deprecation import deprecated
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
-from ..exceptions import ConvergenceWarning as _ConvergenceWarning
 from ..exceptions import DataConversionWarning
-
-
-@deprecated("ConvergenceWarning has been moved into the sklearn.exceptions "
-            "module. It will not be available here from version 0.19")
-class ConvergenceWarning(_ConvergenceWarning):
-    pass
+from .deprecation import deprecated
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -32,7 +25,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric", "indices_to_mask"]
+           "check_symmetric", "indices_to_mask", "deprecated"]
 
 
 def safe_mask(X, mask):

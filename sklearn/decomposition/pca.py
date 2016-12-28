@@ -283,6 +283,12 @@ class PCA(_BasePCA):
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
     [ 6.30061...]
 
+    Notes
+    -----
+    PCA uses the maximum likelihood estimate of the eigenvalues, which does not
+    include the Bessel correction, though in practice this should rarely make a
+    difference in a machine learning context.
+
     See also
     --------
     KernelPCA
