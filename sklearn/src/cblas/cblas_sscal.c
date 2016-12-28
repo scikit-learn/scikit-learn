@@ -3,14 +3,11 @@
  * -- Automatically Tuned Linear Algebra Software (ATLAS)
  *    (C) Copyright 2000 All Rights Reserved
  *
- * -- ATLAS routine -- Version 3.2 -- December 25, 2000
- *
- * -- Suggestions,  comments,  bugs reports should be sent to the follo-
- *    wing e-mail address: atlas@cs.utk.edu
+ * -- ATLAS routine -- Version 3.9.24 -- December 25, 2000
  *
  * Author         : Antoine P. Petitet
- * University of Tennessee - Innovative Computing Laboratory
- * Knoxville TN, 37996-1301, USA.
+ * Originally developed at the University of Tennessee,
+ * Innovative Computing Laboratory, Knoxville TN, 37996-1301, USA.
  *
  * ---------------------------------------------------------------------
  *
@@ -49,6 +46,11 @@
 /*
  * Include files
  */
+
+// For scikit-learn users : this file has been modified from the Atlas
+// library v3.10.3.
+// The original file is /ATLAS/src/blas/reference/level1/ATL_srefscal.c
+
 #include "atlas_refmisc.h"
 
 void cblas_sscal
