@@ -1,6 +1,7 @@
 import numpy as np
 from ..base import BaseEstimator, clone
 from ..utils import check_random_state
+from scipy.sparse import issparse
 
 
 class ClassifierChain(BaseEstimator):
@@ -52,10 +53,9 @@ class ClassifierChain(BaseEstimator):
         self.base_estimator = base_estimator
         self.random_state = random_state
         if chain_order is not None:
-            assert all([isinstance(i, int)
-                        for i in self.chain_order_]), \
-                "chain_order must be a list of integers"
-            self.chain_order_ = chain_order
+            if not all([isinstance(i, int) for i in self.chain_order]):
+                raise ValueError("chain_order must be a list of integers")
+        self.chain_order = chain_order
 
         self.shuffle = shuffle
 
@@ -74,21 +74,24 @@ class ClassifierChain(BaseEstimator):
         self.classifiers_ = [clone(self.base_estimator)
                              for _ in range(Y.shape[1])]
 
-        if self.chain_order_ is not None:
-            assert len(self.chain_order_) == Y.shape[1], "chain_order length must " \
-                                                   "equal n_labels"
-            assert all([isinstance(i, int) for i in self.chain_order_]), \
-                "chain_order must be a list of integers"
-            self.chain_order_ = chain_order
+        if self.chain_order is not None:
+            if not len(self.chain_order) == Y.shape[1]:
+                raise ValueError("chain_order length must equal n_labels")
         else:
-            self.chain_order_ = list(range(Y.shape[1]))
-        if shuffle:
-            random_state.shuffle(self.chain_order_)
+            self.chain_order = list(range(Y.shape[1]))
+            if self.shuffle:
+                random_state.shuffle(self.chain_order)
 
         for chain_idx, classifier in enumerate(self.classifiers_):
-            previous_labels = Y[:, self.chain_order_[:chain_idx]]
+            previous_labels = Y[:, self.chain_order[:chain_idx]]
+            if issparse(previous_labels):
+                previous_labels = previous_labels.toarray()
+
+            y = Y[:, self.chain_order[chain_idx]]
+            if issparse(y):
+                y = y.toarray()[:,0]
+
             X_aug = np.hstack((X, previous_labels))
-            y = np.squeeze(Y[:, self.chain_order_[chain_idx]])
             classifier.fit(X_aug, y)
 
     def predict(self, X):
@@ -97,8 +100,8 @@ class ClassifierChain(BaseEstimator):
             previous_predictions = Y_pred_chain[:, :chain_idx]
             X_aug = np.hstack((X, previous_predictions))
             Y_pred_chain[:, chain_idx] = classifier.predict(X_aug)
-        chain_key = [self.chain_order_.index(i) for i in range(len(
-            self.chain_order_))]
+        chain_key = [self.chain_order.index(i) for i in range(len(
+            self.chain_order))]
         Y_pred = Y_pred_chain[:, chain_key]
 
         return Y_pred
