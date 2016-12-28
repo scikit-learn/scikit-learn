@@ -424,23 +424,19 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                     "RANSAC skipped more iterations than `max_skips` without"
                     " finding a valid consensus set. Iterations were skipped"
                     " because each randomly chosen sub-sample failed the"
-                    " passing criteria. %d iterations found zero inliers due"
-                    " to a small `residual_threshold`, %d iterations returned"
-                    " `False` for `is_data_valid` and %d iterations returned "
-                    " `False` for `is_model_valid`" %
-                    (self.n_skips_no_inliers_, self.n_skips_invalid_data_,
-                     self.n_skips_invalid_model_))
+                    " passing criteria. The object attributes"
+                    " `n_skips_no_inliers_`, `n_skips_invalid_data_` and"
+                    " `n_skips_invalid_model_` indicate how many iterations"
+                    " failed each of the different passing criteria.")
             else:
                 raise ValueError(
                     "RANSAC could not find a valid consensus set. All"
                     " `max_trials` iterations were skipped because each"
                     " randomly chosen sub-sample failed the passing criteria."
-                    " %d iterations found zero inliers due to a small"
-                    " `residual_threshold`, %d iterations returned `False` for"
-                    " `is_data_valid` and %d iterations returned `False` for"
-                    " `is_model_valid`" % (self.n_skips_no_inliers_,
-                                           self.n_skips_invalid_data_,
-                                           self.n_skips_invalid_model_))
+                    " The object attributes `n_skips_no_inliers_`,"
+                    " `n_skips_invalid_data_` and `n_skips_invalid_model_`"
+                    " indicate how many iterations failed each of the"
+                    " different passing criteria.")
         else:
             if (self.n_skips_no_inliers_ + self.n_skips_invalid_data_ +
                     self.n_skips_invalid_model_) > self.max_skips:

@@ -154,9 +154,11 @@ def test_ransac_resid_thresh_no_inliers():
                                        residual_threshold=0.0, random_state=0,
                                        max_trials=5)
 
-    msg = ("RANSAC could not find a valid consensus set.*5 iterations found"
-           " zero inliers")
+    msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    assert_equal(ransac_estimator.n_skips_no_inliers_, 5)
+    assert_equal(ransac_estimator.n_skips_invalid_data_, 0)
+    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
 
 
 def test_ransac_no_valid_data():
@@ -168,9 +170,11 @@ def test_ransac_no_valid_data():
                                        is_data_valid=is_data_valid,
                                        max_trials=5)
 
-    msg = ("RANSAC could not find a valid consensus set.*5 iterations returned"
-           " `False` for `is_data_valid`")
+    msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
+    assert_equal(ransac_estimator.n_skips_invalid_data_, 5)
+    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
 
 
 def test_ransac_no_valid_model():
@@ -182,9 +186,11 @@ def test_ransac_no_valid_model():
                                        is_model_valid=is_model_valid,
                                        max_trials=5)
 
-    msg = ("RANSAC could not find a valid consensus set.*5 iterations returned"
-           " `False` for `is_model_valid`")
+    msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
+    assert_equal(ransac_estimator.n_skips_invalid_data_, 0)
+    assert_equal(ransac_estimator.n_skips_invalid_model_, 5)
 
 
 def test_ransac_exceed_max_skips():
@@ -197,9 +203,11 @@ def test_ransac_exceed_max_skips():
                                        max_trials=5,
                                        max_skips=3)
 
-    msg = ("RANSAC skipped more iterations than `max_skips`.*4 iterations"
-           " returned `False` for `is_data_valid`")
+    msg = ("RANSAC skipped more iterations than `max_skips`")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
+    assert_equal(ransac_estimator.n_skips_invalid_data_, 4)
+    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
 
 
 def test_ransac_warn_exceed_max_skips():
@@ -221,7 +229,7 @@ def test_ransac_warn_exceed_max_skips():
                                        max_trials=5)
 
     assert_warns(UserWarning, ransac_estimator.fit, X, y)
-    assert_equal(ransac_estimator.n_skips_no_inliers_,0)
+    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
     assert_equal(ransac_estimator.n_skips_invalid_data_, 4)
     assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
 
