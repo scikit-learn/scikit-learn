@@ -485,6 +485,10 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
         K-category correlation coefficient
         <http://www.sciencedirect.com/science/article/pii/S1476927104000799>`_
 
+    .. [4] `Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC and CEN
+        Error Measures in MultiClass Prediction
+        <http://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0041882>`_
+
     Examples
     --------
     >>> from sklearn.metrics import matthews_corrcoef
@@ -502,12 +506,14 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    class_covariances = (
-        np.cov(y_pred == k, y_true == k, bias=True, fweights=sample_weight)
-        for k in range(len(lb.classes_))
-    )
-    covariance = np.sum(class_covariances, axis=0)
-    cov_ypyp, cov_ytyp, _, cov_ytyt = covariance.ravel()
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    t_sum = C.sum(axis=1)
+    p_sum = C.sum(axis=0)
+    n_correct = np.diag(C).sum()
+    n_samples = p_sum.sum()
+    cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
+    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
     mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
     if np.isnan(mcc):
