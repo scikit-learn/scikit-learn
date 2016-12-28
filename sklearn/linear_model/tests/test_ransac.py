@@ -221,6 +221,9 @@ def test_ransac_warn_exceed_max_skips():
                                        max_trials=5)
 
     assert_warns(UserWarning, ransac_estimator.fit, X, y)
+    assert_equal(ransac_estimator.n_skips_no_inliers_,0)
+    assert_equal(ransac_estimator.n_skips_invalid_data_, 4)
+    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
 
 
 def test_ransac_sparse_coo():
