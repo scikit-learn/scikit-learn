@@ -1671,7 +1671,7 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_array_equal(
         oh.transform(y).toarray(),
-        np.array([[0.,  0.,  0., 0.,  0.,  1.,  0.,  0.]]))
+        np.array([[0., 0., 0., 0., 0., 1., 0., 0.]]))
 
     # Raise error if handle_unknown is neither ignore nor error.
     oh = OneHotEncoder(handle_unknown='42')
