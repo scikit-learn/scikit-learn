@@ -924,7 +924,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self, 'estimators_')
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
+    def fit(self, X, y, sample_weight=None, X_idx_sorted=None, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -944,6 +944,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             ignored while searching for a split in each node. In the case of
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
+
+        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+            The indexes of the sorted training input samples. If many tree
+            are grown on the same dataset, this allows the ordering to be
+            cached between trees. If None, the data will be sorted here.
 
         monitor : callable, optional
             The monitor is called after each iteration with the current
@@ -1001,7 +1006,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             y_pred = self._decision_function(X)
             self._resize_state()
 
-        X_idx_sorted = None
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
         # otherwise it will be False.
@@ -1010,10 +1014,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         elif presort == 'auto':
             presort = True
 
-        if presort == True:
+        if presort:
             if issparse(X):
                 raise ValueError("Presorting is not supported for sparse matrices.")
-            else:
+            elif X_idx_sorted is None:
                 X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
                                                  dtype=np.int32)
 
