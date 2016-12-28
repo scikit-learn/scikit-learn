@@ -1720,8 +1720,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     handle_unknown : str, 'error' or 'ignore'
 
         - 'ignore': Ignore all unknown feature values.
-        - 'error': Raise an error when the value of a feature is unseen during
-          `fit` and out of range of values seen during `fit`.
+        - 'error': Raise an error when the value of a feature is more than the
+          maximum value seen during fit.
         - 'error-strict': Raise an error when the value of a feature is unseen
           during`fit`.
 
@@ -1851,29 +1851,17 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self._n_features = n_features
         self._label_encoders = [LabelEncoder() for i in range(n_features)]
         # Maximum value for each featue
-        self._max_values = [None for i in range(n_features)]
+        self._max_values = [None] * n_features
 
         if self.n_values is not None:
-            warnings.warn('The parameter `n_values` is deprecated, use the'
+            warnings.warn('`n_values` has been renamed to `values`.'
+                          'The parameter `n_values` is deprecated, use the'
                           'parameter `values` instead and specify the '
                           'expected values for each feature')
 
-            if isinstance(self.n_values, numbers.Integral):
-                if (np.max(X, axis=0) >= self.n_values).any():
-                    raise ValueError("Feature out of bounds for n_values=%d"
-                                     % self.n_values)
-                self.values = self.n_values
-            else:
-                try:
-                    n_values = np.asarray(self.n_values, dtype=int)
-                except (ValueError, TypeError):
-                    raise TypeError("Wrong type for parameter `n_values`."
-                                    " Expected 'auto', int or array of ints,"
-                                    "got %r" % type(X))
-                if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
-                    raise ValueError("Shape mismatch: if n_values is an array,"
-                                     " it has to be of shape (n_features,).")
-                self.values = list(self.n_values)
+            self._values = self.n_values
+        else:
+            self._values = self.values
 
         error_msg = ("`values` should be 'auto', an integer, a list of"
                      " integers or a list of list")
@@ -1882,25 +1870,32 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             le = self._label_encoders[i]
 
             self._max_values[i] = np.max(X[:, i])
-            if self.values == 'auto':
+
+            if isinstance(self._values, numbers.Integral):
+                self._values = np.ones(n_features, dtype=np.int) * self._values
+
+            if self._values == 'auto':
                 le.fit(X[:, i])
-            elif isinstance(self.values, numbers.Integral):
-                if (np.max(X, axis=0) >= self.values).any():
-                    raise ValueError("Feature out of bounds for n_values=%d"
-                                     % self.values)
-                le.fit(np.arange(self.values, dtype=np.int))
-            elif isinstance(self.values, list):
-                if len(self.values) != X.shape[1]:
-                    raise ValueError("Shape mismatch: if n_values is a list,"
+
+            elif (isinstance(self._values, list) or
+                  isinstance(self._values, np.ndarray)):
+                if len(self._values) != X.shape[1]:
+                    raise ValueError("Shape mismatch: if values is a list,"
                                      " it has to be of length (n_features).")
-                if isinstance(self.values[i], list):
-                    le.fit(self.values[i])
-                elif isinstance(self.values[i], numbers.Integral):
-                    le.fit(np.arange(self.values[i], dtype=np.int))
+                if isinstance(self._values[i], list):
+                    le.fit(self._values[i])
+                elif np.isscalar(self._values[i]):
+                    le.fit(np.arange(self._values[i], dtype=np.int))
+                    X_feature_max = np.max(X, axis=0)
+                    mask = X_feature_max >= self._values
+                    if mask.any():
+                        msg = 'Value(s) %s out of bounds for feature(s) %s'
+                        raise ValueError(msg % (X_feature_max[mask],
+                                                np.where(mask)[0]))
                 else:
                     raise ValueError(error_msg)
             else:
-                raise ValueError(error_msg)
+                raise TypeError(error_msg)
 
     def transform(self, X, y=None):
         """Encode the selected categorical features using the one-hot scheme.
@@ -1943,7 +1938,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                         if np.all(diff <= self._max_values[i]):
                             msg = ('Values %s for feature %d are unknown but '
                                    'in range. This will raise an error in '
-                                   'future versions.' % (str(diff), i))
+                                   'future versions where "error-strict" will '
+                                   'be default for `handle_unknown` parameter'
+                                   % (str(diff), i))
                             warnings.warn(FutureWarning(msg))
                             X_mask[:, i] = valid_mask
                             le = self._label_encoders[i]

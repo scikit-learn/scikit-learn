@@ -1491,8 +1491,12 @@ def test_one_hot_encoder_sparse():
     assert_raises(ValueError, enc.transform, X_too_large)
     error_msg = re.escape("Unknown feature(s) [2] in column 1")
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
-    assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
-    assert_raises(ValueError, OneHotEncoder(values=2).fit_transform, X)
+
+    error_msg = re.escape("Value(s) [2] out of bounds for feature(s) [0]")
+    assert_raises_regex(ValueError, error_msg,
+                        OneHotEncoder(n_values=2).fit_transform, X)
+    assert_raises_regex(ValueError, error_msg,
+                        OneHotEncoder(values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
@@ -1657,7 +1661,8 @@ def test_one_hot_encoder_unknown_transform():
     oh = OneHotEncoder(handle_unknown='error')
     oh.fit(X)
     msg = ('Values [0] for feature 2 are unknown but in range. '
-           'This will raise an error in future versions.')
+           'This will raise an error in future versions where "error-strict"'
+           ' will be default for `handle_unknown` parameter')
     assert_warns_message(FutureWarning, msg, oh.transform,
                          np.array([['mouse', 0, 0]], dtype=np.object))
 
