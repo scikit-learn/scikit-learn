@@ -345,8 +345,7 @@ def test_check_array_accept_sparse_type_exception():
     assert_raise_message(ValueError, msg.format(()),
                          check_array, X_csr, accept_sparse=())
 
-    msg = "'SVR' object"
-    assert_raise_message(TypeError, msg,
+    assert_raise_message(TypeError, "SVR",
                          check_array, X_csr, accept_sparse=[invalid_type])
 
     # Test deprecation of 'None'
