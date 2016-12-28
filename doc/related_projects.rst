@@ -76,6 +76,11 @@ and tasks.
 - `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
   for Python, with an emphasis on hidden Markov models.
 
+- `sklearn-crfsuite <https://github.com/TeamHG-Memex/sklearn-crfsuite>`_
+  Linear-chain conditional random fields
+  (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
+  sklearn-like API).
+
 - `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate adaptive
   regression splines
 
