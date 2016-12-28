@@ -1642,8 +1642,9 @@ def test_one_hot_encoder_unknown_transform():
         oh.transform(y).toarray(),
         np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
 
-    X = np.array([['cat', 2, 1], ['dog', 0, 3], ['mouse', 0, 2]])
-    y = np.array([['ET', 1, 1]])
+    X = np.array([['cat', 2, 1], ['dog', 0, 3], ['mouse', 0, 2]],
+                 dtype=np.object)
+    y = np.array([['ET', 1, 1]], dtype=np.object)
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
@@ -1658,7 +1659,7 @@ def test_one_hot_encoder_unknown_transform():
     msg = ('Values [0] for feature 2 are unknown but in range. '
            'This will raise an error in future versions.')
     assert_warns_message(FutureWarning, msg, oh.transform,
-                         np.array([[0, 0, 0]]))
+                         np.array([['mouse', 0, 0]], dtype=np.object))
 
     # Test the ignore option, ignores unknown features.
     oh = OneHotEncoder(handle_unknown='ignore')
