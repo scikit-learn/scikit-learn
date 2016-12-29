@@ -228,7 +228,7 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def _info_gain(fc_count, c_count, f_count, total):
+def _info_gain(fc_count, c_count, f_count, total, gl_method):
 
     def _a_log_a_div_b(a, b):
         with np.errstate(invalid='ignore', divide='ignore'):
@@ -247,7 +247,11 @@ def _info_gain(fc_count, c_count, f_count, total):
     nc_f = _a_log_a_div_b((f_count - fc_count) / total, (1 - c_prob) * f_prob)
 
     # the feature score is averaged over classes
-    return (c_f + nc_nf + c_nf + nc_f).mean(axis=0)
+    if gl_method == "aver":
+        return (c_f + nc_nf + c_nf + nc_f).mean(axis=0)
+    if gl_method == "sum":
+        return (c_f + nc_nf + c_nf + nc_f).sum(axis=0)
+    return (c_f + nc_nf + c_nf + nc_f).max(axis=0)
 
 
 def _get_fc_counts(X, y):
@@ -276,7 +280,7 @@ def _get_fc_counts(X, y):
     return f_count, c_count, fc_count, total
 
 
-def info_gain(X, y):
+def info_gain(X, y, gl_method="max"):
     """Compute an Information Gain [1] score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -303,6 +307,8 @@ def info_gain(X, y):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
+    gl_method : string, globalization_method, one of "aver", "max", "sum"
+
     Returns
     -------
     scores : array, shape = (n_features,)
@@ -328,12 +334,12 @@ def info_gain(X, y):
 
     f_count, c_count, fc_count, total = _get_fc_counts(X, y)
 
-    scores = _info_gain(fc_count, c_count, f_count, total)
+    scores = _info_gain(fc_count, c_count, f_count, total, gl_method)
 
     return np.asarray(scores).reshape(-1), []
 
 
-def info_gain_ratio(X, y):
+def info_gain_ratio(X, y, gl_method="max"):
     """Compute an Information Gain Ratio score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -360,6 +366,8 @@ def info_gain_ratio(X, y):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
+    gl_method : string, globalization_method, one of "aver", "max", "sum"
+
     Returns
     -------
     scores : array, shape = (n_features,)
@@ -375,7 +383,7 @@ def info_gain_ratio(X, y):
         return np.multiply(-f_prob, t)
 
     f_count, c_count, fc_count, total = _get_fc_counts(X, y)
-    scores = _info_gain(fc_count, c_count, f_count, total)
+    scores = _info_gain(fc_count, c_count, f_count, total, gl_method)
 
     # normalize ig scores
     with np.errstate(invalid='ignore', divide='ignore'):
