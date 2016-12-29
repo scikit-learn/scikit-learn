@@ -912,9 +912,8 @@ positives and false negatives, the MCC is defined as
 
 In the multiclass case, the Matthews correlation coefficient can be `defined
 <http://rk.kvl.dk/introduction/index.html>` in terms of a
-:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
-:math:`C` for :math:`K` classes.  To simplify the definition consider the
-following intermediate variables:
+:func:`confusion_matrix` :math:`C` for :math:`K` classes.  To simplify the
+definition consider the following intermediate variables:
 
 * :math:`t_k=\sum_{i}^{K} C_{ik}` the number of times class :math:`k` truly occurred,
 * :math:`p_k=\sum_{i}^{K} C_{ki}` the number of times class :math:`k` was predicted,
@@ -930,6 +929,11 @@ Then the multiclass MCC is defined as:
         (s^2 - \sum_{k}^{K} p_k^2) \times
         (s^2 - \sum_{k}^{K} t_k^2)
     }}
+
+When there are more than two labels, the value of the MCC will no longer range
+between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
+depending on the number and distribution of ground true labels. The maximum
+value is always +1.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:

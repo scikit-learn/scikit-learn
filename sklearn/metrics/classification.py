@@ -510,7 +510,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
     t_sum = C.sum(axis=1)
     p_sum = C.sum(axis=0)
-    n_correct = np.diag(C).sum()
+    n_correct = np.trace(C)
     n_samples = p_sum.sum()
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
     cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)

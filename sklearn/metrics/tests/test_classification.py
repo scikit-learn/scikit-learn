@@ -454,10 +454,9 @@ def test_matthews_corrcoef_multiclass():
                                matthews_corrcoef, y_true, y_pred)
     assert_almost_equal(mcc, 0.0)
 
-    # These two weighted vectors have 0 correlation and hence mcc should be 0
+    # These two vectors have 0 correlation and hence mcc should be 0
     y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
     y_2 = [1, 1, 1, 2, 2, 2, 0, 0, 0]
-    np.cov(y_1, y_2)
     assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.)
 
     # We can test that binary assumptions hold using the multiclass computation
