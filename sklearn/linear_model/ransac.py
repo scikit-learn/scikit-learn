@@ -114,7 +114,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     max_skips : int, optional
         Maximum number of iterations that can be skipped due to finding zero
         inliers or invalid data defined by ``is_data_valid`` or invalid models
-        defined by ``is_data_valid``.
+        defined by ``is_model_valid``.
 
     stop_n_inliers : int, optional
         Stop iteration if at least this number of inliers are found.
@@ -424,29 +424,21 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                     "RANSAC skipped more iterations than `max_skips` without"
                     " finding a valid consensus set. Iterations were skipped"
                     " because each randomly chosen sub-sample failed the"
-                    " passing criteria. The object attributes"
-                    " `n_skips_no_inliers_`, `n_skips_invalid_data_` and"
-                    " `n_skips_invalid_model_` indicate how many iterations"
-                    " failed each of the different passing criteria.")
+                    " passing criteria. See estimator attributes for"
+                    " diagnostics (n_skips*).")
             else:
                 raise ValueError(
                     "RANSAC could not find a valid consensus set. All"
                     " `max_trials` iterations were skipped because each"
                     " randomly chosen sub-sample failed the passing criteria."
-                    " The object attributes `n_skips_no_inliers_`,"
-                    " `n_skips_invalid_data_` and `n_skips_invalid_model_`"
-                    " indicate how many iterations failed each of the"
-                    " different passing criteria.")
+                    " See estimator attributes for diagnostics (n_skips*).")
         else:
             if (self.n_skips_no_inliers_ + self.n_skips_invalid_data_ +
                     self.n_skips_invalid_model_) > self.max_skips:
                 warnings.warn("RANSAC found a valid consensus set but exited"
                               " early due to skipping more iterations than"
-                              " `max_skips`. The object attributes"
-                              " `n_skips_no_inliers_`, `n_skips_invalid_data_`"
-                              " and `n_skips_invalid_model_` indicate how many"
-                              " iterations failed each of the different"
-                              " passing criteria.",
+                              " `max_skips`. See estimator attributes for"
+                              " diagnostics (n_skips*).",
                               UserWarning)
 
         # estimate final model using all inliers
