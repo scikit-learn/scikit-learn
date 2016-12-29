@@ -285,6 +285,9 @@ Example of 2-fold K-Fold repeated 2 times::
   [1 2] [0 3]
   [0 3] [1 2]
 
+Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
+with different randomization in each repetition.
+
 
 Leave One Out (LOO)
 -------------------
@@ -432,28 +435,8 @@ two slightly unbalanced classes::
   [0 1 3 4 5 8 9] [2 6 7]
   [0 1 2 4 5 6 7] [3 8 9]
 
-Repeated Stratified K-Fold
---------------------------
-:class:`RepeatedStratifiedKFold` is very similar to :class:`RepeatedKFold` except
-that it repeats :class:`StratifiedKFold` n times.
-
-Example of 3-fold Stratified K-Fold repeated 2 times::
-
-  >>> import numpy as np
-  >>> from sklearn.model_selection import RepeatedStratifiedKFold
-  >>> X = np.ones(10)
-  >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
-  >>> random_state = 12331242
-  >>> rskf = RepeatedStratifiedKFold(n_splits=3, n_repeats=2, random_state=random_state)
-  >>> for train, test in rskf.split(X, y):
-  ...     print("%s %s" % (train, test))
-  ...
-  [2 3 6 7 8 9] [0 1 4 5]
-  [0 1 2 4 5 6 7] [3 8 9]
-  [0 1 3 4 5 8 9] [2 6 7]
-  [2 3 4 5 7 9] [0 1 6 8]
-  [0 1 3 4 5 6 8] [2 7 9]
-  [0 1 2 6 7 8 9] [3 4 5]
+:class:`RepeatedStratifiedKFold` can be used to repeat Stratified K-Fold n times
+with different randomization in each repetition.
 
 
 Stratified Shuffle Split
