@@ -52,6 +52,7 @@ class deprecated(object):
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning)
             return init(*args, **kwargs)
+
         cls.__init__ = wrapped
 
         wrapped.__name__ = '__init__'
@@ -63,25 +64,37 @@ class deprecated(object):
     def _decorate_fun(self, fun):
         """Decorate function fun"""
 
-        msg = " %s is deprecated" % fun.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
         def wrapped(*args, **kwargs):
+
             def ismethod(f):
-                spec = inspect.getfullargspec(f)
+                spec = inspect.getargspec(f)
                 return 'self' in spec.args
 
-            entity = "Function"
+            name = "Function %s" % fun.__name__
+            # if function is a method check if it is connected to an attribute
             if ismethod(fun):
-                properties = inspect.getmembers(
-                    args[0].__class__, lambda x: isinstance(x, property))
-                properties_names = [x[0] for x in properties]
+                m = {}
+                props = [x for x in inspect.getmembers(
+                    args[0].__class__, lambda x: isinstance(x, property))]
 
-                if fun.__name__ in properties_names:
-                    entity = "Attribute"
+                for prop_name, prop in props:
+                    m[prop_name] = []
+                    for (name, func) in inspect.getmembers(prop):
+                        if name in ['fget', 'fset', 'fdel']:
 
-            warnings.warn(entity + msg, category=DeprecationWarning)
+                            if func is not None:
+                                m[prop_name] += [func.__name__]
+
+                for k, v in m.items():
+                    if fun.__name__ in v:
+                        name = "Attribute %s" % k
+                        break
+
+            msg = " %s is deprecated" % name
+            if self.extra:
+                msg += "; %s" % self.extra
+
+            warnings.warn(msg, category=DeprecationWarning)
             return fun(*args, **kwargs)
 
         wrapped.__name__ = fun.__name__
