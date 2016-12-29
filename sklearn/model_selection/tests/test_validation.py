@@ -945,7 +945,7 @@ def test_cross_val_predict_with_method():
                                            cv=kfold)
         assert_array_equal(predictions, predictions_y2)
 
-        predictions_ystr = cross_val_predict(est, X, y.astype('U'),
+        predictions_ystr = cross_val_predict(est, X, y.astype('str'),
                                              method=method, cv=kfold)
         assert_array_equal(predictions, predictions_ystr)
 
