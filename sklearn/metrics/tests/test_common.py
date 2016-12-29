@@ -955,7 +955,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 "sample_weight=ones" % name)
 
     # check that the weighted and unweighted scores are unequal
-    weighted_score = metric(y1, y2, sample_weight=sample_weight)
+    weighted_score = metric(y1, y2, sample_weight=sample_weight.copy())
     assert_not_equal(
         unweighted_score, weighted_score,
         msg="Unweighted and weighted scores are unexpectedly "
@@ -980,7 +980,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that ignoring a fraction of the samples is equivalent to setting
     # the corresponding weights to zero
-    sample_weight_subset = sample_weight[1::2]
+    sample_weight_subset = sample_weight.copy()[1::2]
     sample_weight_zeroed = np.copy(sample_weight)
     sample_weight_zeroed[::2] = 0
     y1_subset = y1[1::2]
