@@ -937,11 +937,11 @@ def test_cross_val_predict_with_method():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Test alternative representations of y
-        predictions_y1 = cross_val_predict(est, X, y+1, method=method,
+        predictions_y1 = cross_val_predict(est, X, y + 1, method=method,
                                            cv=kfold)
         assert_array_equal(predictions, predictions_y1)
 
-        predictions_y2 = cross_val_predict(est, X, y-2, method=method,
+        predictions_y2 = cross_val_predict(est, X, y - 2, method=method,
                                            cv=kfold)
         assert_array_equal(predictions, predictions_y2)
 
