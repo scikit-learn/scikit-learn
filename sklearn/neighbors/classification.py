@@ -157,35 +157,37 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
 
-        if self._issparse:
-            y_pred_sparse = []
+        if self._issparsemultilabel:
+            y_pred_sparse_multilabel = []
 
-        for k, classes_k in enumerate(classes_):
+            for k, classes_k in enumerate(classes_):
 
-            if self._issparse and self.outputs_2d_:
                 if weights is None:
                     mode, _ = stats.mode(_y[neigh_ind, k].toarray(), axis=1)
                 else:
                     mode, _ = weighted_mode(_y[neigh_ind, k].toarray(),
                                             weights, axis=1)
-            else:
+
+                mode = np.asarray(mode.ravel(), dtype=np.intp)
+                y_pred[:, k] = classes_k.take(mode)
+                y_pred_sparse_multilabel.append(csc_matrix(y_pred[:, k]).T)
+
+        else:
+            for k, classes_k in enumerate(classes_):
+
                 if weights is None:
                     mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
                 else:
                     mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
-            mode = np.asarray(mode.ravel(), dtype=np.intp)
-            y_pred[:, k] = classes_k.take(mode)
-            if self._issparse:
-                y_pred_sparse.append(csc_matrix(y_pred[:, k]).T)
+                mode = np.asarray(mode.ravel(), dtype=np.intp)
+                y_pred[:, k] = classes_k.take(mode)
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
-        if self._issparse:
-            y_pred = csc_matrix(y_pred)
-            y_pred_sparse = hstack(y_pred_sparse)
-            y_pred = y_pred_sparse
+        if self._issparsemultilabel:
+            y_pred = hstack(y_pred_sparse_multilabel)
 
         return y_pred
 
