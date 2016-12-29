@@ -223,6 +223,26 @@ def test_lda_scaling():
                      'using covariance: %s' % solver)
 
 
+def test_lda_store_covariance():
+    # The default is to not set the covariances_ attribute
+    clf = LinearDiscriminantAnalysis().fit(X, y)
+    assert_true(not hasattr(clf, 'covariance_'))
+
+    # Test the actual attribute:
+    clf = LinearDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
+    assert_true(hasattr(clf, 'covariance_'))
+
+    assert_array_almost_equal(
+        clf.covariance_[0],
+        np.array([0.422222, 0.088889])
+    )
+
+    assert_array_almost_equal(
+        clf.covariance_[1],
+        np.array([0.088889, 0.533333])
+    )
+
+
 def test_qda():
     # QDA classification.
     # This checks that QDA implements fit and predict and returns
@@ -262,22 +282,22 @@ def test_qda_priors():
     assert_greater(n_pos2, n_pos)
 
 
-def test_qda_store_covariances():
+def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
-    assert_true(not hasattr(clf, 'covariances_'))
+    assert_true(not hasattr(clf, 'covariance_'))
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True).fit(X6, y6)
-    assert_true(hasattr(clf, 'covariances_'))
+    clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
+    assert_true(hasattr(clf, 'covariance_'))
 
     assert_array_almost_equal(
-        clf.covariances_[0],
+        clf.covariance_[0],
         np.array([[0.7, 0.45], [0.45, 0.7]])
     )
 
     assert_array_almost_equal(
-        clf.covariances_[1],
+        clf.covariance_[1],
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
     )
 
