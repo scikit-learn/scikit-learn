@@ -943,15 +943,9 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
         if n_repeats <= 1:
             raise ValueError("Number of repetitions must be greater than 1.")
 
-        rng = check_random_state(random_state)
-        random_states = []
-        for _ in range(n_repeats):
-            random_state = rng.randint(np.iinfo(np.int32).max)
-            random_states.extend([random_state])
-
         self.cv = cv
         self.n_repeats = n_repeats
-        self.random_states = random_states
+        self.random_state = random_state
 
         # make shuffle always true
         self.cv.shuffle = True
@@ -981,10 +975,11 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             The testing set indices for that split.
         """
         cv = self.cv
-        random_states = self.random_states
         n_repeats = self.n_repeats
+        rng = check_random_state(self.random_state)
+
         for idx in range(n_repeats):
-            cv.random_state = check_random_state(random_states[idx])
+            cv.random_state = rng.randint(np.iinfo(np.int32).max)
             for train_index, test_index in cv.split(X, y, groups):
                 yield train_index, test_index
 
