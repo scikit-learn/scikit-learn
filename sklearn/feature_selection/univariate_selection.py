@@ -228,39 +228,37 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total):
-    def get_c_f_cell(fc_prob, c_prob, f_prob):
-        t = np.log2(fc_prob/(c_prob * f_prob))
-        t[~np.isfinite(t)] = 0
-        return np.multiply(fc_prob, t)
+def _info_gain(fc_count, c_count, f_count, total):
 
-    def get_nc_nf_cell(fc_prob, c_prob, f_prob):
-        t = np.log2((1-f_prob-c_prob+fc_prob)/((1-c_prob)*(1-f_prob)))
+    def _a_log_a_div_b(a, b):
+        with np.errstate(invalid='ignore', divide='ignore'):
+            t = np.log2(a / b)
         t[~np.isfinite(t)] = 0
-        return np.multiply((1-f_prob-c_prob+fc_prob), t)
+        return np.multiply(a, t)
 
-    def get_c_nf_cell(c_prob, f_prob, c_count, fc_count, total):
-        nfc = (c_count - fc_count)/total
-        t = np.log2(nfc/(c_prob*(1-f_prob)))
-        t[~np.isfinite(t)] = 0
-        return np.multiply(nfc, t)
+    f_prob = f_count / f_count.sum()
+    c_prob = c_count / c_count.sum()
+    fc_prob = fc_count / total
 
-    def get_nc_f_cell(c_prob, f_prob, f_count, fc_count, total):
-        fnc = (f_count - fc_count)/total
-        t = np.log2(fnc/((1-c_prob)*f_prob))
-        t[~np.isfinite(t)] = 0
-        return np.multiply(fnc, t)
+    c_f = _a_log_a_div_b(fc_prob, c_prob * f_prob)
+    nc_nf = _a_log_a_div_b(1 - f_prob - c_prob + fc_prob,
+                           (1 - c_prob) * (1 - f_prob))
+    c_nf = _a_log_a_div_b((c_count - fc_count) / total, c_prob * (1 - f_prob))
+    nc_f = _a_log_a_div_b((f_count - fc_count) / total, (1 - c_prob) * f_prob)
 
     # the feature score is averaged over classes
-    return (get_c_f_cell(fc_prob, c_prob, f_prob) +
-            get_nc_nf_cell(fc_prob, c_prob, f_prob) +
-            get_c_nf_cell(c_prob, f_prob, c_count, fc_count, total) +
-            get_nc_f_cell(c_prob, f_prob, f_count, fc_count, total)).mean(
-            axis=0)
+    return (c_f + nc_nf + c_nf + nc_f).mean(axis=0)
 
 
-def get_feature_class_counts(X, y):
+def _get_fc_counts(X, y):
     """Count feature, class, joint and total frequencies
+
+    Returns
+    -------
+    f_count : array, shape = (n_features,)
+    c_count : array, shape = (n_classes,)
+    fc_count : array, shape = (n_features, n_classes)
+    total: int
     """
     X = check_array(X, accept_sparse=['csr', 'coo'])
     if np.any((X.data if issparse(X) else X) < 0):
@@ -270,26 +268,12 @@ def get_feature_class_counts(X, y):
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
 
-    # counts
-
     fc_count = safe_sparse_dot(Y.T, X)          # n_classes * n_features
     total = fc_count.sum(axis=0).reshape(1, -1).sum()
     f_count = X.sum(axis=0).reshape(1, -1)
-    if issparse(X):
-        c_count = (X.sum(axis=1).reshape(1, -1) * Y).T
-    else:
-        c_count = (X.sum(axis=1) * Y.T).sum(axis=1).reshape(-1, 1)
+    c_count = safe_sparse_dot(Y.T, X.sum(axis=1)).reshape(-1, 1)
 
     return f_count, c_count, fc_count, total
-
-
-def get_feature_class_probs(f_count, c_count, fc_count, total):
-    """Get feature, class, joint probabilities
-    """
-    f_prob = f_count / f_count.sum()
-    c_prob = c_count / c_count.sum()
-    fc_prob = fc_count / total
-    return f_prob, c_prob, fc_prob
 
 
 def info_gain(X, y):
@@ -325,7 +309,7 @@ def info_gain(X, y):
 
     See also:
     ---------
-    * info_gain_ratio : Information Gain Ratio
+    info_gain_ratio : Information Gain Ratio
 
     References:
     -----------
@@ -342,15 +326,9 @@ def info_gain(X, y):
 
     """
 
-    f_count, c_count, fc_count, total = get_feature_class_counts(X, y)
+    f_count, c_count, fc_count, total = _get_fc_counts(X, y)
 
-    f_prob, c_prob, fc_prob = get_feature_class_probs(f_count, c_count,
-                                                      fc_count, total)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob,
-                            f_prob, total)
+    scores = _info_gain(fc_count, c_count, f_count, total)
 
     return np.asarray(scores).reshape(-1), []
 
@@ -388,7 +366,7 @@ def info_gain_ratio(X, y):
 
     See also:
     ---------
-    * info_gain : Information Gain
+    info_gain : Information Gain
     """
 
     def get_entropy(f_prob):
@@ -396,15 +374,12 @@ def info_gain_ratio(X, y):
         t[~np.isfinite(t)] = 0
         return np.multiply(-f_prob, t)
 
-    f_count, c_count, fc_count, total = get_feature_class_counts(X, y)
+    f_count, c_count, fc_count, total = _get_fc_counts(X, y)
+    scores = _info_gain(fc_count, c_count, f_count, total)
 
-    f_prob, c_prob, fc_prob = get_feature_class_probs(f_count, c_count,
-                                                      fc_count, total)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob,
-                            f_prob, total)
+    # normalize ig scores
+    with np.errstate(invalid='ignore', divide='ignore'):
+        f_prob = f_count / f_count.sum()
         scores = scores / (get_entropy(f_prob) + get_entropy(1 - f_prob))
 
     return np.asarray(scores).reshape(-1), []
