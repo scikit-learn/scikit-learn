@@ -1022,7 +1022,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 sample_weight2 = {sample_weight2}
                 """
             ).format(
-                metric=metric
+                metric=repr(metric),
                 name=repr(name),
                 metric1_sanity=repr(metric1_sanity),
                 metric2_sanity=repr(metric2_sanity),
