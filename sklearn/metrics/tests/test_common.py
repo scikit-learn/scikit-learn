@@ -999,11 +999,41 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
+            import textwrap
+            sample_weight2 = sample_weight * scaling
+            metric1_sanity = metric(y1, y2, sample_weight=sample_weight)
+            metric2_sanity = metric(y1, y2, sample_weight=sample_weight2)
+            err_msg2 = textwrap.dedent(
+                """
+                {name} sample_weight is not invariant under scaling.
+                This is weird, so here is a longer form debug message
+                metric1_sanity = {metric1_sanity}
+                metric2_sanity = {metric2_sanity}
+                weighted_score = {weighted_score}
+                scaling = {scaling}
+                y1 = {y1}
+                y2 = {y2}
+                sample_weight = {sample_weight}
+                sample_weight2 = {sample_weight2}
+                """
+            ).format(
+                name=repr(name),
+                metric1_sanity=repr(metric1_sanity),
+                metric2_sanity=repr(metric2_sanity),
+                weighted_score=repr(weighted_score),
+                scaling=repr(scaling),
+                y1=repr(y1),
+                y2=repr(y2),
+                sample_weight=repr(sample_weight),
+                sample_weight2=repr(sample_weight2),
+            )
             assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
-                err_msg="%s sample_weight is not invariant "
-                        "under scaling" % name)
+                err_msg=err_msg2,
+                # err_msg="%s sample_weight is not invariant "
+                #         "under scaling" % name)
+            )
 
     # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
     # error
