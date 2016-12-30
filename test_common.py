@@ -19,7 +19,7 @@ from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.cluster import entropy
 from sklearn.metrics.cluster import expected_mutual_information
-#from sklearn.metrics.cluster import fowlkes_mallows_score
+from sklearn.metrics.cluster import fowlkes_mallows_score
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
@@ -36,7 +36,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
-#from sklearn.metrics.cluster import calinski_harabaz_score
+from sklearn.metrics.cluster import calinski_harabaz_score
 
 # Dictionaries of metrics
 # ------------------------
@@ -114,7 +114,8 @@ METRICS_NORMALIZED_OUTPUT = ["adjusted_rand_score","homogeneity_score",
                                 
 #when information is zero these metrics output zero
 METRICS_ZERO_INFO = ["normalized_mutual_info_score","v-measure_score",
-                     "adjusted_mutual_info_score"]
+                     "adjusted_mutual_info_score"
+                    ]
                       
 #METRICS where permutations oflabels dont change score
 METRICS_PERMUTE_LABELS = ["homogeneity_score","v-measure_score",
@@ -205,7 +206,7 @@ def test_exactly_zero_info_score():
         assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
     
-#test function for mtericshaving the property of not changing the score when 
+#Function to test for mtericshaving the property of not changing the score when 
 #the labels are permuted.
                        
 def permute_labels():
@@ -224,6 +225,4 @@ def class_based_clusters():
         metric=ALL_METRICS[name]
         assert_equal(metric([0, 0, 0, 0], [0, 1, 2, 3]), 0.0)
         assert_equal(metric([0, 0, 1, 1], [0, 0, 1, 1]),1.0)
-        assert_equal(metric([0, 0, 1, 1], [0, 0, 1, 1]),1.0)
-
-    
+        assert_equal(metric([0, 0, 1, 1], [0, 0, 1, 1]),1.0)  
