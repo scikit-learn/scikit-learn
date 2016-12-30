@@ -1005,8 +1005,31 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         for scaling in [2, 0.3]:
             import textwrap
             sample_weight2 = sample_weight * scaling
+            print('y1 = %r' % (y1,))
+            print('y2 = %r' % (y2,))
+            print('sample_weight = %r' % (sample_weight,))
+            print('sample_weight2 = %r' % (sample_weight2,))
+
             metric1_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
+            print('metric1_sanity = %r' % (metric1_sanity,))
+            print('y1 = %r' % (y1,))
+            print('y2 = %r' % (y2,))
+            print('sample_weight = %r' % (sample_weight,))
+            print('sample_weight2 = %r' % (sample_weight2,))
+
             metric2_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
+            print('metric2_sanity = %r' % (metric2_sanity,))
+            print('y1 = %r' % (y1,))
+            print('y2 = %r' % (y2,))
+            print('sample_weight = %r' % (sample_weight,))
+            print('sample_weight2 = %r' % (sample_weight2,))
+
+            metric3_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
+            print('metric3_sanity = %r' % (metric3_sanity,))
+
+            metric4_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
+            print('metric4_sanity = %r' % (metric4_sanity,))
+
             err_msg2 = textwrap.dedent(
                 """
                 {name} sample_weight is not invariant under scaling.
