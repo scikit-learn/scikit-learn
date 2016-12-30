@@ -10,6 +10,8 @@ from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
 
+import warnings
+
 
 class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
@@ -148,7 +150,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
         ridge_alpha: float, default: 0.01
             Amount of ridge shrinkage to apply in order to improve
-            conditioning.
+            conditioning. Note that as of 0.19 this parameter is deprecated and
+            should be specified in the constructor.
 
         Returns
         -------
@@ -158,7 +161,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'components_')
 
         X = check_array(X)
-        ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
+        if ridge_alpha is not None:
+            warnings.warn("The ridge_alpha parameter on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. "
+                          "Specify ridge_alpha in the SparsePCA constructor.",
+                          DeprecationWarning)
+        else:
+            ridge_alpha = self.ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='cholesky')
         s = np.sqrt((U ** 2).sum(axis=0))
