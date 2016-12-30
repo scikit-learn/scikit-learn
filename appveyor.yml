@@ -75,7 +75,7 @@ test_script:
   - "cd empty_folder"
 
   #- "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
-  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn/metrics/tests"
+  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn.metrics"
 
   # Move back to the project folder
   - "cd .."
