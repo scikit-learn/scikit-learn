@@ -943,10 +943,6 @@ def test_averaging_multilabel_all_ones():
 
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
-
-    y1 = y1.copy()
-    y2 = y2.copy()
-
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
 
@@ -959,7 +955,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 "sample_weight=ones" % name)
 
     # check that the weighted and unweighted scores are unequal
-    weighted_score = metric(y1, y2, sample_weight=sample_weight.copy())
+    weighted_score = metric(y1, y2, sample_weight=sample_weight)
     assert_not_equal(
         unweighted_score, weighted_score,
         msg="Unweighted and weighted scores are unexpectedly "
@@ -984,11 +980,11 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that ignoring a fraction of the samples is equivalent to setting
     # the corresponding weights to zero
-    sample_weight_subset = sample_weight.copy()[1::2]
+    sample_weight_subset = sample_weight[1::2]
     sample_weight_zeroed = np.copy(sample_weight)
     sample_weight_zeroed[::2] = 0
-    y1_subset = y1.copy()[1::2]
-    y2_subset = y2.copy()[1::2]
+    y1_subset = y1[1::2]
+    y2_subset = y2[1::2]
     weighted_score_subset = metric(y1_subset, y2_subset,
                                    sample_weight=sample_weight_subset)
     weighted_score_zeroed = metric(y1, y2,
@@ -1003,113 +999,11 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
-
-            from sklearn.metrics.classification import _check_targets
-            import textwrap
-            sample_weight2 = sample_weight * scaling
-
-            extra_lines = []
-            printdbg = extra_lines.append
-
-            if 'matthew' in name:
-                y_type, y_true, y_pred = _check_targets(y1, y2)
-                printdbg('y_pred = %r' % (y_pred,))
-                printdbg('y_true = %r' % (y_true,))
-                C1 = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-                C2 = confusion_matrix(y_true, y_pred, sample_weight=sample_weight2)
-                printdbg('y_type = %r' % (y_type,))
-                printdbg('C1 = %r' % (C1,))
-                printdbg('C2 = %r' % (C2,))
-
-                C = C1
-                t_sum = C.sum(axis=1)
-                printdbg('t_sum = %r' % (t_sum,))
-                p_sum = C.sum(axis=0)
-                printdbg('p_sum = %r' % (p_sum,))
-                n_correct = np.trace(C)
-                printdbg('n_correct = %r' % (n_correct,))
-                n_samples = p_sum.sum()
-                printdbg('n_samples = %r' % (n_samples,))
-                cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-                printdbg('cov_ytyp = %r' % (cov_ytyp,))
-                cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
-                printdbg('cov_ypyp = %r' % (cov_ypyp,))
-                cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
-                printdbg('cov_ytyt = %r' % (cov_ytyt,))
-                mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-                printdbg('mcc = %r' % (mcc,))
-
-                C = C2
-                t_sum = C.sum(axis=1)
-                printdbg('t_sum = %r' % (t_sum,))
-                p_sum = C.sum(axis=0)
-                printdbg('p_sum = %r' % (p_sum,))
-                n_correct = np.trace(C)
-                printdbg('n_correct = %r' % (n_correct,))
-                n_samples = p_sum.sum()
-                printdbg('n_samples = %r' % (n_samples,))
-                cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-                printdbg('cov_ytyp = %r' % (cov_ytyp,))
-                cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
-                printdbg('cov_ypyp = %r' % (cov_ypyp,))
-                cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
-                printdbg('cov_ytyt = %r' % (cov_ytyt,))
-                mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
-                printdbg('mcc = %r' % (mcc,))
-
-            printdbg('name = %r' % (name,))
-            printdbg('metric = %r' % (metric,))
-            printdbg('y1.dtype = %r' % (y1.dtype,))
-            printdbg('y2.dtype = %r' % (y2.dtype,))
-            printdbg('sample_weight.dtype = %r' % (sample_weight.dtype,))
-            printdbg('sample_weight2.dtype = %r' % (sample_weight2.dtype,))
-
-            metric1_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
-            printdbg('metric1_sanity = %r' % (metric1_sanity,))
-
-            metric2_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
-            printdbg('metric2_sanity = %r' % (metric2_sanity,))
-
-            metric3_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
-            printdbg('metric3_sanity = %r' % (metric3_sanity,))
-
-            metric4_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
-            printdbg('metric4_sanity = %r' % (metric4_sanity,))
-
-            err_msg2 = textwrap.dedent(
-                """
-                {name} sample_weight is not invariant under scaling.
-                This is weird, so here is a longer form debug message
-                metric = {metric}
-                metric1_sanity = {metric1_sanity}
-                metric2_sanity = {metric2_sanity}
-                weighted_score = {weighted_score}
-                scaling = {scaling}
-                y1 = {y1}
-                y2 = {y2}
-                sample_weight = {sample_weight}
-                sample_weight2 = {sample_weight2}
-                """
-            ).format(
-                metric=repr(metric),
-                name=repr(name),
-                metric1_sanity=repr(metric1_sanity),
-                metric2_sanity=repr(metric2_sanity),
-                weighted_score=repr(weighted_score),
-                scaling=repr(scaling),
-                y1=repr(y1),
-                y2=repr(y2),
-                sample_weight=repr(sample_weight),
-                sample_weight2=repr(sample_weight2),
-            ) + '\n' + '\n'.join(extra_lines)
-
             assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
-                err_msg=err_msg2,
-                # err_msg="%s sample_weight is not invariant "
-                #         "under scaling" % name)
-            )
+                err_msg="%s sample_weight is not invariant "
+                        "under scaling" % name)
 
     # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
     # error
