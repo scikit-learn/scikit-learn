@@ -943,6 +943,10 @@ def test_averaging_multilabel_all_ones():
 
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
+
+    y1 = y1.copy()
+    y2 = y2.copy()
+
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
 
@@ -983,8 +987,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     sample_weight_subset = sample_weight.copy()[1::2]
     sample_weight_zeroed = np.copy(sample_weight)
     sample_weight_zeroed[::2] = 0
-    y1_subset = y1[1::2]
-    y2_subset = y2[1::2]
+    y1_subset = y1.copy()[1::2]
+    y2_subset = y2.copy()[1::2]
     weighted_score_subset = metric(y1_subset, y2_subset,
                                    sample_weight=sample_weight_subset)
     weighted_score_zeroed = metric(y1, y2,
@@ -1001,12 +1005,13 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         for scaling in [2, 0.3]:
             import textwrap
             sample_weight2 = sample_weight * scaling
-            metric1_sanity = metric(y1, y2, sample_weight=sample_weight)
-            metric2_sanity = metric(y1, y2, sample_weight=sample_weight2)
+            metric1_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
+            metric2_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
             err_msg2 = textwrap.dedent(
                 """
                 {name} sample_weight is not invariant under scaling.
                 This is weird, so here is a longer form debug message
+                metric = {metric}
                 metric1_sanity = {metric1_sanity}
                 metric2_sanity = {metric2_sanity}
                 weighted_score = {weighted_score}
@@ -1017,6 +1022,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 sample_weight2 = {sample_weight2}
                 """
             ).format(
+                metric=metric
                 name=repr(name),
                 metric1_sanity=repr(metric1_sanity),
                 metric2_sanity=repr(metric2_sanity),
