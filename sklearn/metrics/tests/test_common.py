@@ -1013,8 +1013,12 @@ def check_sample_weight_invariance(name, metric, y1, y2):
             printdbg('metric = %r' % (metric,))
             printdbg('y1 = %r' % (y1,))
             printdbg('y2 = %r' % (y2,))
+            printdbg('y1.dtype = %r' % (y1.dtype,))
+            printdbg('y2.dtype = %r' % (y2.dtype,))
             printdbg('sample_weight = %r' % (sample_weight,))
             printdbg('sample_weight2 = %r' % (sample_weight2,))
+            printdbg('sample_weight.dtype = %r' % (sample_weight.dtype,))
+            printdbg('sample_weight2.dtype = %r' % (sample_weight2.dtype,))
 
             metric1_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
             printdbg('metric1_sanity = %r' % (metric1_sanity,))
