@@ -1003,48 +1003,78 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
+
+            from sklearn.metrics.classification import _check_targets
             import textwrap
             sample_weight2 = sample_weight * scaling
 
             extra_lines = []
             printdbg = extra_lines.append
 
+            if 'matthew' in name:
+                y_type, y_true, y_pred = _check_targets(y1, y2)
+                printdbg('y_pred = %r' % (y_pred,))
+                printdbg('y_true = %r' % (y_true,))
+                C1 = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+                C2 = confusion_matrix(y_true, y_pred, sample_weight=sample_weight2)
+                printdbg('y_type = %r' % (y_type,))
+                printdbg('C1 = %r' % (C1,))
+                printdbg('C2 = %r' % (C2,))
+
+                C = C1
+                t_sum = C.sum(axis=1)
+                printdbg('t_sum = %r' % (t_sum,))
+                p_sum = C.sum(axis=0)
+                printdbg('p_sum = %r' % (p_sum,))
+                n_correct = np.trace(C)
+                printdbg('n_correct = %r' % (n_correct,))
+                n_samples = p_sum.sum()
+                printdbg('n_samples = %r' % (n_samples,))
+                cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
+                printdbg('cov_ytyp = %r' % (cov_ytyp,))
+                cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
+                printdbg('cov_ypyp = %r' % (cov_ypyp,))
+                cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
+                printdbg('cov_ytyt = %r' % (cov_ytyt,))
+                mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+                printdbg('mcc = %r' % (mcc,))
+
+                C = C2
+                t_sum = C.sum(axis=1)
+                printdbg('t_sum = %r' % (t_sum,))
+                p_sum = C.sum(axis=0)
+                printdbg('p_sum = %r' % (p_sum,))
+                n_correct = np.trace(C)
+                printdbg('n_correct = %r' % (n_correct,))
+                n_samples = p_sum.sum()
+                printdbg('n_samples = %r' % (n_samples,))
+                cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
+                printdbg('cov_ytyp = %r' % (cov_ytyp,))
+                cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
+                printdbg('cov_ypyp = %r' % (cov_ypyp,))
+                cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
+                printdbg('cov_ytyt = %r' % (cov_ytyt,))
+                mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+                printdbg('mcc = %r' % (mcc,))
+
             printdbg('name = %r' % (name,))
             printdbg('metric = %r' % (metric,))
-            printdbg('y1 = %r' % (y1,))
-            printdbg('y2 = %r' % (y2,))
             printdbg('y1.dtype = %r' % (y1.dtype,))
             printdbg('y2.dtype = %r' % (y2.dtype,))
-            printdbg('sample_weight = %r' % (sample_weight,))
-            printdbg('sample_weight2 = %r' % (sample_weight2,))
             printdbg('sample_weight.dtype = %r' % (sample_weight.dtype,))
             printdbg('sample_weight2.dtype = %r' % (sample_weight2.dtype,))
 
             metric1_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
             printdbg('metric1_sanity = %r' % (metric1_sanity,))
-            printdbg('y1 = %r' % (y1,))
-            printdbg('y2 = %r' % (y2,))
-            printdbg('sample_weight = %r' % (sample_weight,))
-            printdbg('sample_weight2 = %r' % (sample_weight2,))
 
             metric2_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
             printdbg('metric2_sanity = %r' % (metric2_sanity,))
-            printdbg('y1 = %r' % (y1,))
-            printdbg('y2 = %r' % (y2,))
-            printdbg('sample_weight = %r' % (sample_weight,))
-            printdbg('sample_weight2 = %r' % (sample_weight2,))
 
             metric3_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
             printdbg('metric3_sanity = %r' % (metric3_sanity,))
 
             metric4_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
             printdbg('metric4_sanity = %r' % (metric4_sanity,))
-
-            metric5_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
-            printdbg('metric5_sanity = %r' % (metric5_sanity,))
-
-            metric6_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
-            printdbg('metric6_sanity = %r' % (metric6_sanity,))
 
             err_msg2 = textwrap.dedent(
                 """
@@ -1072,6 +1102,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 sample_weight=repr(sample_weight),
                 sample_weight2=repr(sample_weight2),
             ) + '\n' + '\n'.join(extra_lines)
+
             assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
