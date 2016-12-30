@@ -1005,30 +1005,42 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         for scaling in [2, 0.3]:
             import textwrap
             sample_weight2 = sample_weight * scaling
-            print('y1 = %r' % (y1,))
-            print('y2 = %r' % (y2,))
-            print('sample_weight = %r' % (sample_weight,))
-            print('sample_weight2 = %r' % (sample_weight2,))
+
+            extra_lines = []
+            printdbg = extra_lines.append
+
+            printdbg('name = %r' % (name,))
+            printdbg('metric = %r' % (metric,))
+            printdbg('y1 = %r' % (y1,))
+            printdbg('y2 = %r' % (y2,))
+            printdbg('sample_weight = %r' % (sample_weight,))
+            printdbg('sample_weight2 = %r' % (sample_weight2,))
 
             metric1_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
-            print('metric1_sanity = %r' % (metric1_sanity,))
-            print('y1 = %r' % (y1,))
-            print('y2 = %r' % (y2,))
-            print('sample_weight = %r' % (sample_weight,))
-            print('sample_weight2 = %r' % (sample_weight2,))
+            printdbg('metric1_sanity = %r' % (metric1_sanity,))
+            printdbg('y1 = %r' % (y1,))
+            printdbg('y2 = %r' % (y2,))
+            printdbg('sample_weight = %r' % (sample_weight,))
+            printdbg('sample_weight2 = %r' % (sample_weight2,))
 
             metric2_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
-            print('metric2_sanity = %r' % (metric2_sanity,))
-            print('y1 = %r' % (y1,))
-            print('y2 = %r' % (y2,))
-            print('sample_weight = %r' % (sample_weight,))
-            print('sample_weight2 = %r' % (sample_weight2,))
+            printdbg('metric2_sanity = %r' % (metric2_sanity,))
+            printdbg('y1 = %r' % (y1,))
+            printdbg('y2 = %r' % (y2,))
+            printdbg('sample_weight = %r' % (sample_weight,))
+            printdbg('sample_weight2 = %r' % (sample_weight2,))
 
             metric3_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
-            print('metric3_sanity = %r' % (metric3_sanity,))
+            printdbg('metric3_sanity = %r' % (metric3_sanity,))
 
             metric4_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
-            print('metric4_sanity = %r' % (metric4_sanity,))
+            printdbg('metric4_sanity = %r' % (metric4_sanity,))
+
+            metric5_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight.copy())
+            printdbg('metric5_sanity = %r' % (metric5_sanity,))
+
+            metric6_sanity = metric(y1.copy(), y2.copy(), sample_weight=sample_weight2.copy())
+            printdbg('metric6_sanity = %r' % (metric6_sanity,))
 
             err_msg2 = textwrap.dedent(
                 """
@@ -1055,7 +1067,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 y2=repr(y2),
                 sample_weight=repr(sample_weight),
                 sample_weight2=repr(sample_weight2),
-            )
+            ) + '\n' + '\n'.join(extra_lines)
             assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
