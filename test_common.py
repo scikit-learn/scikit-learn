@@ -6,6 +6,7 @@ Created on Tue Dec 27 12:58:49 2016
 """
 
 import numpy as np
+import nose
 from sklearn.utils.testing import assert_equal, assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
@@ -19,7 +20,6 @@ from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.cluster import entropy
 from sklearn.metrics.cluster import expected_mutual_information
-from sklearn.metrics.cluster import fowlkes_mallows_score
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
@@ -36,7 +36,6 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
-from sklearn.metrics.cluster import calinski_harabaz_score
 
 # Dictionaries of metrics
 # ------------------------
@@ -49,8 +48,8 @@ from sklearn.metrics.cluster import calinski_harabaz_score
 # Those dictionaries will be used to test systematically some invariance
 # properties, e.g. invariance toward several input layout.
 #
-#metrics used to test similarity between bicluster
 
+#metrics used to test similarity between bicluster
 BICLUSTER_METRICS = {
         "jaccard":_jaccard ,
         "consensus_score":consensus_score
@@ -65,7 +64,6 @@ SUPERVISED_METRICS = {
         "homogeneity_score":homogeneity_score,
         "entropy":entropy,
         "expected_mutual_information":expected_mutual_information,
-        "fowlkes_mallows_score":fowlkes_mallows_score,
         "homogeneity_completeness_v_measure":homogeneity_completeness_v_measure,
         "mutual_info_score":mutual_info_score,
         "normalized_mutual_info_score":normalized_mutual_info_score,
@@ -74,8 +72,7 @@ SUPERVISED_METRICS = {
         
 UNSUPERVISED_METRICS={
         "silhouette_score":silhouette_score,
-        "silhouette_samples":silhouette_samples,
-        "calinski_harabaz_score":calinski_harabaz_score
+        "silhouette_samples":silhouette_samples
         }
 
 
@@ -94,44 +91,39 @@ ALL_METRICS.update(UNSUPERVISED_METRICS)
 
 # Symmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) == metric(y_pred, y_true).
-SYMMETRIC_METRICS = [ "adjusted_rand_score" , "v-measure_score" ,
-                      "mutual_info_score","adjusted_mutual_info_score","normalized_mutual_score",
+SYMMETRIC_METRICS = [ "adjusted_rand_score" , "v_measure_score" ,
+                      "mutual_info_score","adjusted_mutual_info_score","normalized_mutual_info_score",
                     ]
                     
-NON_SYMMETRIC_METRICS = ["homogeneity_score","completeness_score"]
-
 #METIRICS with output between 0 and 1 and belong to BICLUSTER METRICS
 METRICS_NORMALIZED_OUTPUT_BICLUSTER = [ "consensus_score","jaccard"
                                       ]
  
 #metrics with output between 0 and 1                                      
 METRICS_NORMALIZED_OUTPUT = ["adjusted_rand_score","homogeneity_score",
-                            "completeness_score","v-measure_score",
-                            "adjusted_mutual_info_score","normalized_mutual_info_score",
-                            "fowlkes_mallows_score"
+                            "completeness_score","v_measure_score",
+                            "adjusted_mutual_info_score","normalized_mutual_info_score"
                             ]
                       
                                 
 #when information is zero these metrics output zero
-METRICS_ZERO_INFO = ["normalized_mutual_info_score","v-measure_score",
-                     "adjusted_mutual_info_score"
-                    ]
+METRICS_ZERO_INFO = ["normalized_mutual_info_score","v_measure_score",
+                     "adjusted_mutual_info_score"]
                       
 #METRICS where permutations oflabels dont change score
-METRICS_PERMUTE_LABELS = ["homogeneity_score","v-measure_score",
+METRICS_PERMUTE_LABELS = ["homogeneity_score","v_measure_score",
                          "completeness_score","mutual_info_score","adjusted_mutual_info_score",
                          "normalized_mutual_info_score"
                          ]
                         
 #metrics which result in 0 when a class is split across different clusters
 ClASS_BASED_METRICS = ["adjusted_mutual_info","normalized_mutual_info",
-                      "fowlkes_mallows_score","v-measure_score"
+                      "v_measure_score"
                       ]
                         
 
-#@ignore_warnings
+
 def test_symmetry():
-    random_state = check_random_state(0)
     y_true=[0, 1, 0]
     y_pred=[42,7,42]
     
@@ -142,11 +134,7 @@ def test_symmetry():
                             metric(y_pred, y_true),
                             err_msg="%s is not symmetric" % name)
                             
-    # Not symmetric metrics
-    for name in NON_SYMMETRIC_METRICS:
-        metric = ALL_METRICS[name]
-        assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
-                    msg="%s seems to be symmetric" % name)   
+      
                     
 #test function for metrics whose output in range 0 to 1
 #bicluster metrics have different input format so they are handled differently                  
@@ -178,9 +166,9 @@ def test_normalized_output_bicluster():
     assert_equal(consensus_score((b, b), (a, b)), 0)
     assert_equal(consensus_score((b, b), (b, a)), 0)
     
-    b=a[:,2]
+    b=a[: 2]
     assert_greater(consensus_score((a , a), (b , b)), 0)
-    assert_less(consensus_score((a , a), (b , b)), 1)
+    assert_equal(consensus_score((a , a), (b , b)), 1)
     
     
 #test function for metrics whose output in range 0 to 1
@@ -189,7 +177,6 @@ def test_normalized_output():
         metric=ALL_METRICS[name]
         assert_greater(metric([0, 0, 0, 1, 1, 1],[0, 0, 0, 1, 2, 2]), 0.0)
         assert_less(metric([0, 0, 0, 1, 1, 1],[0, 1, 0, 1, 2, 2]), 1.0)
-        assert_less(metric([0, 0, 1, 1, 2, 2],[0, 0, 1, 1, 1, 1]), 1.0)
         assert_greater(metric([0, 0, 1, 1, 2, 2],[0, 0, 1, 1, 1, 1]), 0.0)
         assert_less(metric([0, 0, 0, 2, 2, 2],[0, 1, 0, 1, 2, 2]),1.0)
         assert_greater(metric([0, 0, 0, 2, 2, 2],[0, 1, 0, 1, 2, 2]), 0.0)
@@ -206,7 +193,7 @@ def test_exactly_zero_info_score():
         assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
     
-#Function to test for mtericshaving the property of not changing the score when 
+#test function for mtericshaving the property of not changing the score when 
 #the labels are permuted.
                        
 def permute_labels():
@@ -225,4 +212,4 @@ def class_based_clusters():
         metric=ALL_METRICS[name]
         assert_equal(metric([0, 0, 0, 0], [0, 1, 2, 3]), 0.0)
         assert_equal(metric([0, 0, 1, 1], [0, 0, 1, 1]),1.0)
-        assert_equal(metric([0, 0, 1, 1], [0, 0, 1, 1]),1.0)  
+        assert_equal(metric([0, 0, 1, 1], [0, 0, 1, 1]),1.0)   
