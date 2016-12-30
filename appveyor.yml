@@ -25,13 +25,13 @@ environment:
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.0"
-      PYTHON_ARCH: "32"
+    #- PYTHON: "C:\\Python35"
+    #  PYTHON_VERSION: "3.5.0"
+    #  PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5.0"
-      PYTHON_ARCH: "64"
+    #- PYTHON: "C:\\Python35-x64"
+    #  PYTHON_VERSION: "3.5.0"
+    #  PYTHON_ARCH: "64"
 
 
 
@@ -74,7 +74,8 @@ test_script:
   - "mkdir empty_folder"
   - "cd empty_folder"
 
-  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
+  #- "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
+  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn/metrics/tests"
 
   # Move back to the project folder
   - "cd .."
