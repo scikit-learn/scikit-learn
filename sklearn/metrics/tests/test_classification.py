@@ -660,6 +660,19 @@ def test_confusion_matrix_multiclass_subset_labels():
                   labels=[extra_label, extra_label + 1])
 
 
+def test_confusion_matrix_dtype():
+    y = [0, 1]
+    weight = np.ones(len(y))
+    # confusion_matrix returns int64 by default
+    cm = confusion_matrix(y, y)
+    assert_equal(cm.dtype, np.int64)
+    # otherwise confusion_matrix returns the type of sample weight
+    cm = confusion_matrix(y, y, sample_weight=weight.astype(np.int32))
+    assert_equal(cm.dtype, np.int32)
+    cm = confusion_matrix(y, y, sample_weight=weight.astype(np.float64))
+    assert_equal(cm.dtype, np.float64)
+
+
 def test_classification_report_multiclass():
     # Test performance report
     iris = datasets.load_iris()
