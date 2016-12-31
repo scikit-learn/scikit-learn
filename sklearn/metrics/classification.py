@@ -249,7 +249,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int)
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
         sample_weight = np.asarray(sample_weight)
 
@@ -508,7 +508,6 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_pred = lb.transform(y_pred)
 
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    C = C.astype(np.float64)
     t_sum = C.sum(axis=1)
     p_sum = C.sum(axis=0)
     n_correct = np.trace(C)
