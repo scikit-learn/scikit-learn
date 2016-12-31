@@ -2,6 +2,8 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..utils import check_random_state, check_array
@@ -9,8 +11,6 @@ from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
-
-import warnings
 
 
 class SparsePCA(BaseEstimator, TransformerMixin):
@@ -150,8 +150,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
         ridge_alpha: float, default: 0.01
             Amount of ridge shrinkage to apply in order to improve
-            conditioning. Note that as of 0.19 this parameter is deprecated and
-            should be specified in the constructor.
+            conditioning.
+
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
+               Specify `ridge_alpha` in the `SparsePCA` constructor.
 
         Returns
         -------
