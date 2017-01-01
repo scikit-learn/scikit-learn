@@ -821,39 +821,27 @@ def test_repeated_kfold_determinstic_split():
         n_repeats=2,
         random_state=random_state)
 
-    splits = rkf.split(X)
-    train, test = next(splits)
-    assert_array_equal(train, [0, 3])
-    assert_array_equal(test, [1, 2, 4])
+    # split should produce same and deterministic splits on
+    # each call
+    for _ in range(3):
+        splits = rkf.split(X)
+        train, test = next(splits)
+        assert_array_equal(train, [0, 3])
+        assert_array_equal(test, [1, 2, 4])
 
-    train, test = next(splits)
-    assert_array_equal(train, [1, 2, 4])
-    assert_array_equal(test, [0, 3])
+        train, test = next(splits)
+        assert_array_equal(train, [1, 2, 4])
+        assert_array_equal(test, [0, 3])
 
-    train, test = next(splits)
-    assert_array_equal(train, [3, 4])
-    assert_array_equal(test, [0, 1, 2])
+        train, test = next(splits)
+        assert_array_equal(train, [3, 4])
+        assert_array_equal(test, [0, 1, 2])
 
-    train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2])
-    assert_array_equal(test, [3, 4])
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 2])
+        assert_array_equal(test, [3, 4])
 
-    splits = rkf.split(X)
-    train, test = next(splits)
-    assert_array_equal(train, [0, 3])
-    assert_array_equal(test, [1, 2, 4])
-
-    train, test = next(splits)
-    assert_array_equal(train, [1, 2, 4])
-    assert_array_equal(test, [0, 3])
-
-    train, test = next(splits)
-    assert_array_equal(train, [3, 4])
-    assert_array_equal(test, [0, 1, 2])
-
-    train, test = next(splits)
-    assert_array_equal(train, [0, 1, 2])
-    assert_array_equal(test, [3, 4])
+        assert_raises(StopIteration, next, splits)
 
 
 def test_repeated_stratified_kfold_determinstic_split():
@@ -865,39 +853,27 @@ def test_repeated_stratified_kfold_determinstic_split():
         n_repeats=2,
         random_state=random_state)
 
-    splits = rskf.split(X, y)
-    train, test = next(splits)
-    assert_array_equal(train, [0, 3])
-    assert_array_equal(test, [1, 2, 4])
+    # split should produce same and deterministic splits on
+    # each call
+    for _ in range(3):
+        splits = rskf.split(X, y)
+        train, test = next(splits)
+        assert_array_equal(train, [0, 3])
+        assert_array_equal(test, [1, 2, 4])
 
-    train, test = next(splits)
-    assert_array_equal(train, [1, 2, 4])
-    assert_array_equal(test, [0, 3])
+        train, test = next(splits)
+        assert_array_equal(train, [1, 2, 4])
+        assert_array_equal(test, [0, 3])
 
-    train, test = next(splits)
-    assert_array_equal(train, [2, 4])
-    assert_array_equal(test, [0, 1, 3])
+        train, test = next(splits)
+        assert_array_equal(train, [2, 4])
+        assert_array_equal(test, [0, 1, 3])
 
-    train, test = next(splits)
-    assert_array_equal(train, [0, 1, 3])
-    assert_array_equal(test, [2, 4])
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 3])
+        assert_array_equal(test, [2, 4])
 
-    splits = rskf.split(X, y)
-    train, test = next(splits)
-    assert_array_equal(train, [0, 3])
-    assert_array_equal(test, [1, 2, 4])
-
-    train, test = next(splits)
-    assert_array_equal(train, [1, 2, 4])
-    assert_array_equal(test, [0, 3])
-
-    train, test = next(splits)
-    assert_array_equal(train, [2, 4])
-    assert_array_equal(test, [0, 1, 3])
-
-    train, test = next(splits)
-    assert_array_equal(train, [0, 1, 3])
-    assert_array_equal(test, [2, 4])
+        assert_raises(StopIteration, next, splits)
 
 
 def test_train_test_split_errors():

@@ -560,7 +560,6 @@ class StratifiedKFold(_BaseKFold):
     See also
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
-
     """
 
     def __init__(self, n_splits=3, shuffle=False, random_state=None):
