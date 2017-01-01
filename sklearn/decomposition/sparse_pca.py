@@ -169,6 +169,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                           "deprecated since 0.19 and will be removed in 0.21. "
                           "Specify ridge_alpha in the SparsePCA constructor.",
                           DeprecationWarning)
+            if ridge_alpha is None:
+                ridge_alpha = self.ridge_alpha
         else:
             ridge_alpha = self.ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,

@@ -71,9 +71,9 @@ def test_fit_transform():
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
-    # Test calling tranform with deprecated ridge_alpha parameter
-    ridge_alpha = 0.01
-    assert_warns(DeprecationWarning, spca_lars.transform, Y, ridge_alpha)
+    # Test that deprecated ridge_alpha parameter throws warning
+    assert_warns(DeprecationWarning, spca_lars.transform, Y, ridge_alpha=0.01)
+    assert_warns(DeprecationWarning, spca_lars.transform, Y, ridge_alpha=None)
 
 
 @if_safe_multiprocessing_with_blas
