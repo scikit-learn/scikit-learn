@@ -133,6 +133,40 @@ def test_dbscan_callable():
     assert_equal(n_clusters_2, n_clusters)
 
 
+def test_dbscan_metric_params():
+    # Tests that DBSCAN works with the metrics_params argument.
+    # Parameters chosen specifically for this task.
+    # Different eps to other test, because distance is not normalised.
+    eps = 0.8
+    min_samples = 10
+    p = 2
+    # Compute DBSCAN
+    # parameters chosen for task
+    core_samples, labels = dbscan(X, metric='minkowski',
+                                  metric_params={'p': p}, eps=eps,
+                                  min_samples=min_samples,
+                                  algorithm='ball_tree')
+
+    # number of clusters, ignoring noise if present
+    n_clusters_1 = len(set(labels)) - int(-1 in labels)
+    assert_equal(n_clusters_1, n_clusters)
+
+    db = DBSCAN(metric='minkowski', eps=eps, min_samples=min_samples,
+                algorithm='ball_tree', p=p)
+    labels = db.fit(X).labels_
+
+    n_clusters_2 = len(set(labels)) - int(-1 in labels)
+    assert_equal(n_clusters_2, n_clusters)
+
+    # Minkowski with p=2 should use Euclidean
+    db = DBSCAN(metric='euclidean', eps=eps, min_samples=min_samples,
+                algorithm='ball_tree')
+    labels = db.fit(X).labels_
+
+    n_clusters_3 = len(set(labels)) - int(-1 in labels)
+    assert_equal(n_clusters_3, n_clusters)
+
+
 def test_dbscan_balltree():
     # Tests the DBSCAN algorithm with balltree for neighbor calculation.
     eps = 0.8
