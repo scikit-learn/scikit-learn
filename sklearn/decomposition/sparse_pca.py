@@ -132,7 +132,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.error_ = E
         return self
 
-    def transform(self, X, ridge_alpha=None):
+    def transform(self, X, ridge_alpha='deprecated'):
         """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
@@ -154,7 +154,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
-               Specify `ridge_alpha` in the `SparsePCA` constructor.
+               Specify ``ridge_alpha`` in the ``SparsePCA`` constructor.
 
         Returns
         -------
@@ -164,7 +164,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'components_')
 
         X = check_array(X)
-        if ridge_alpha is not None:
+        if ridge_alpha != 'deprecated':
             warnings.warn("The ridge_alpha parameter on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21. "
                           "Specify ridge_alpha in the SparsePCA constructor.",
