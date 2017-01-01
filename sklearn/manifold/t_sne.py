@@ -673,7 +673,6 @@ class TSNE(BaseEstimator):
             self.degrees_of_freedom = max(self.n_components - 1.0, 1)
         else:
             self.degrees_of_freedom = degrees_of_freedom
-        self.embedding_ = None
         self.min_error_diff = min_error_diff
 
     def _fit(self, X, skip_num_points=0):
