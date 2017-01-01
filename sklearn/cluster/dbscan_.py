@@ -50,7 +50,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
 
-    metric_params : dict, optional (default = None)
+    metric_params : dict, optional
         Additional keyword arguments for the metric function.
 
         .. versionadded:: 0.19
@@ -190,10 +190,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         .. versionadded:: 0.17
            metric *precomputed* to accept precomputed sparse matrix.
 
-   metric_params : dict, optional (default = None)
-       Additional keyword arguments for the metric function.
+    metric_params : dict, optional
+        Additional keyword arguments for the metric function.
 
-       .. versionadded:: 0.19
+        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
