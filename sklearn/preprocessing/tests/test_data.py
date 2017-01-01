@@ -1679,3 +1679,34 @@ def test_count_featurizer_ft_standard_inclusion():
     assert_array_equal(
         cf_inclusion_4.fit_transform(X2),
         np.array([[0, 2, 1, 2], [0, 2, 3, 2], [1, 0, 5, 1], [1, 1, 5, 1]]))
+
+
+def test_count_featurizer_ft_y_standard():
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    y = np.array([0, 0, 1, 0])
+    cf_1 = CountFeaturizer().fit(X, y=y)
+    assert_array_equal(
+        cf_1.transform(X, y=y),
+        np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 1], [1, 0, 2, 1]]))
+
+
+def test_count_featurizer_ft_y_standard_inclusion():
+    # test count featurizer fit-transform on a very standard data
+    # with different inclusion parameters
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    y = np.array([0, 0, 1, 0])
+    cf_inclusion_1 = CountFeaturizer(inclusion=[0]).fit(X, y=y)
+    cf_inclusion_2 = CountFeaturizer(inclusion=[]).fit(X, y=y)
+    cf_inclusion_3 = CountFeaturizer(inclusion=[0, 1, 2]).fit(X, y=y)
+    assert_array_equal(
+        cf_inclusion_1.transform(X, y=y),
+        np.array([[0, 2, 1, 1], [1, 0, 3, 2], [1, 0, 2, 1], [1, 0, 2, 2]]))
+
+    assert_array_equal(
+        cf_inclusion_2.transform(X, y=y),
+        np.array([[0, 2, 1, 3], [1, 0, 3, 3], [1, 0, 2, 1], [1, 0, 2, 3]]))
+
+    assert_array_equal(
+        cf_inclusion_3.transform(X, y=y),
+        np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 1], [1, 0, 2, 1]]))

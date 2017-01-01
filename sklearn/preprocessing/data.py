@@ -2070,14 +2070,10 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         if self.col_num_X_ == 0:
             raise ValueError("Transformer must be fit() before transform()")
-
         if y is not None:
             X, y = check_X_y(X, y)
             num_dim_y = len(y.take([0]))
-            if len_data != len(y):
-                raise ValueError("There must be a y for every X; " +
-                                 "len(y) != len(X)")
-            elif self.col_num_Y_ != num_dim_y:
+            if self.col_num_Y_ != num_dim_y:
                 raise ValueError("Dimension mismatch in y during transform")
         else:
             X = check_array(X)
