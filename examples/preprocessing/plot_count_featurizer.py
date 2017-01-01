@@ -47,7 +47,7 @@ time_start = time.time()
 
 # X_count is X with an additional feature column 'count'
 cf = CountFeaturizer(inclusion=discretized_features)
-X_count = cf.fit_transform(X, y.reshape(-1, 1))
+X_count = cf.fit_transform(X, y)
 
 cf_time_preprocessing = time.time() - time_start
 time_start = time.time()
