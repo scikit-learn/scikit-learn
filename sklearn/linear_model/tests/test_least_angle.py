@@ -107,6 +107,7 @@ def test_collinearity():
                   [2., 2., 0.],
                   [1., 1., 0]])
     y = np.array([1., 0., 0])
+    rng = np.random.RandomState(0)
 
     f = ignore_warnings
     _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
@@ -115,7 +116,7 @@ def test_collinearity():
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
 
     n_samples = 10
-    X = np.random.rand(n_samples, 5)
+    X = rng.rand(n_samples, 5)
     y = np.zeros(n_samples)
     _, _, coef_path_ = linear_model.lars_path(X, y, Gram='auto', copy_X=False,
                                               copy_Gram=False, alpha_min=0.,
@@ -369,8 +370,6 @@ def test_multitarget():
     for estimator in (linear_model.LassoLars(), linear_model.Lars()):
         estimator.fit(X, Y)
         Y_pred = estimator.predict(X)
-        Y_dec = assert_warns(DeprecationWarning, estimator.decision_function, X)
-        assert_array_almost_equal(Y_pred, Y_dec)
         alphas, active, coef, path = (estimator.alphas_, estimator.active_,
                                       estimator.coef_, estimator.coef_path_)
         for k in range(n_targets):
@@ -541,3 +540,100 @@ def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
         lasso_cd.fit(X, y)
         error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
+
+
+def test_lasso_lars_vs_R_implementation():
+    # Test that sklearn LassoLars implementation agrees with the LassoLars
+    # implementation available in R (lars library) under the following
+    # scenarios:
+    # 1) fit_intercept=False and normalize=False
+    # 2) fit_intercept=True and normalize=True
+
+    # Let's generate the data used in the bug report 7778
+    y = np.array([-6.45006793, -3.51251449, -8.52445396, 6.12277822,
+                  -19.42109366])
+    x = np.array([[0.47299829, 0, 0, 0, 0],
+                  [0.08239882, 0.85784863, 0, 0, 0],
+                  [0.30114139, -0.07501577, 0.80895216, 0, 0],
+                  [-0.01460346, -0.1015233, 0.0407278, 0.80338378, 0],
+                  [-0.69363927, 0.06754067, 0.18064514, -0.0803561,
+                   0.40427291]])
+
+    X = x.T
+
+    ###########################################################################
+    # Scenario 1: Let's compare R vs sklearn when fit_intercept=False and
+    # normalize=False
+    ###########################################################################
+    #
+    # The R result was obtained using the following code:
+    #
+    # library(lars)
+    # model_lasso_lars = lars(X, t(y), type="lasso", intercept=FALSE,
+    #                         trace=TRUE, normalize=FALSE)
+    # r = t(model_lasso_lars$beta)
+    #
+
+    r = np.array([[0, 0, 0, 0, 0, -79.810362809499026, -83.528788732782829,
+                   -83.777653739190711, -83.784156932888934,
+                   -84.033390591756657],
+                  [0, 0, 0, 0, -0.476624256777266, 0, 0, 0, 0,
+                   0.025219751009936],
+                  [0, -3.577397088285891, -4.702795355871871,
+                   -7.016748621359461, -7.614898471899412, -0.336938391359179,
+                   0, 0, 0.001213370600853,  0.048162321585148],
+                  [0, 0, 0, 2.231558436628169, 2.723267514525966,
+                   2.811549786389614, 2.813766976061531, 2.817462468949557,
+                   2.817368178703816, 2.816221090636795],
+                  [0, 0, -1.218422599914637, -3.457726183014808,
+                   -4.021304522060710, -45.827461592423745,
+                   -47.776608869312305,
+                   -47.911561610746404, -47.914845922736234,
+                   -48.039562334265717]])
+
+    model_lasso_lars = linear_model.LassoLars(alpha=0, fit_intercept=False,
+                                              normalize=False)
+    model_lasso_lars.fit(X, y)
+    skl_betas = model_lasso_lars.coef_path_
+
+    assert_array_almost_equal(r, skl_betas, decimal=12)
+    ###########################################################################
+
+    ###########################################################################
+    # Scenario 2: Let's compare R vs sklearn when fit_intercept=True and
+    # normalize=True
+    #
+    # Note: When normalize is equal to True, R returns the coefficients in
+    # their original units, that is, they are rescaled back, whereas sklearn
+    # does not do that, therefore, we need to do this step before comparing
+    # their results.
+    ###########################################################################
+    #
+    # The R result was obtained using the following code:
+    #
+    # library(lars)
+    # model_lasso_lars2 = lars(X, t(y), type="lasso", intercept=TRUE,
+    #                           trace=TRUE, normalize=TRUE)
+    # r2 = t(model_lasso_lars2$beta)
+
+    r2 = np.array([[0, 0, 0, 0, 0],
+                   [0, 0, 0, 8.371887668009453, 19.463768371044026],
+                   [0, 0, 0, 0, 9.901611055290553],
+                   [0, 7.495923132833733, 9.245133544334507,
+                    17.389369207545062, 26.971656815643499],
+                   [0, 0, -1.569380717440311, -5.924804108067312,
+                    -7.996385265061972]])
+
+    model_lasso_lars2 = linear_model.LassoLars(alpha=0, fit_intercept=True,
+                                               normalize=True)
+    model_lasso_lars2.fit(X, y)
+    skl_betas2 = model_lasso_lars2.coef_path_
+
+    # Let's rescale back the coefficients returned by sklearn before comparing
+    # against the R result (read the note above)
+    temp = X - np.mean(X, axis=0)
+    normx = np.sqrt(np.sum(temp ** 2, axis=0))
+    skl_betas2 /= normx[:, np.newaxis]
+
+    assert_array_almost_equal(r2, skl_betas2, decimal=12)
+    ###########################################################################

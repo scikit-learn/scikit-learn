@@ -50,7 +50,7 @@ from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
-from .utils.metaestimators import _safe_split
+from .utils.metaestimators import _safe_split, if_delegate_has_method
 
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -244,26 +244,31 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         if _check_partial_fit_first_call(self, classes):
-            if (not hasattr(self.estimator, "partial_fit")):
-                raise ValueError("Base estimator {0}, doesn't have partial_fit"
-                                 "method".format(self.estimator))
+            if not hasattr(self.estimator, "partial_fit"):
+                raise ValueError(("Base estimator {0}, doesn't have "
+                                 "partial_fit method").format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
 
-        # A sparse LabelBinarizer, with sparse_output=True, has been shown to
-        # outperform or match a dense label binarizer in all cases and has also
-        # resulted in less or equal memory consumption in the fit_ovr function
-        # overall.
-        self.label_binarizer_ = LabelBinarizer(sparse_output=True)
-        Y = self.label_binarizer_.fit_transform(y)
+            # A sparse LabelBinarizer, with sparse_output=True, has been
+            # shown to outperform or match a dense label binarizer in all
+            # cases and has also resulted in less or equal memory consumption
+            # in the fit_ovr function overall.
+            self.label_binarizer_ = LabelBinarizer(sparse_output=True)
+            self.label_binarizer_.fit(self.classes_)
+
+        if np.setdiff1d(y, self.classes_):
+            raise ValueError(("Mini-batch contains {0} while classes " +
+                             "must be subset of {1}").format(np.unique(y),
+                                                             self.classes_))
+
+        Y = self.label_binarizer_.transform(y)
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(
-            _partial_fit_binary)(self.estimators_[i],
-                                 X, next(columns) if self.classes_[i] in
-                                 self.label_binarizer_.classes_ else
-                                 np.zeros((1, len(y))))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_binary)(self.estimators_[i], X,
+                                         next(columns))
             for i in range(self.n_classes_))
 
         return self
@@ -309,6 +314,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                       shape=(n_samples, len(self.estimators_)))
             return self.label_binarizer_.inverse_transform(indicator)
 
+    @if_delegate_has_method(['_first_estimator', 'estimator'])
     def predict_proba(self, X):
         """Probability estimates.
 
@@ -347,6 +353,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
+    @if_delegate_has_method(['_first_estimator', 'estimator'])
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
         each class. This can only be used with estimators which implement the
@@ -361,9 +368,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         T : array-like, shape = [n_samples, n_classes]
         """
         check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimators_[0], "decision_function"):
-            raise AttributeError(
-                "Base estimator doesn't have a decision_function attribute.")
         return np.array([est.decision_function(X).ravel()
                          for est in self.estimators_]).T
 
@@ -399,6 +403,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
+
+    @property
+    def _first_estimator(self):
+        return self.estimators_[0]
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):

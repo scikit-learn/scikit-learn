@@ -10,7 +10,6 @@ estimator, as a chain of transforms and estimators.
 # License: BSD
 
 from collections import defaultdict
-from warnings import warn
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -136,13 +135,13 @@ class Pipeline(_BasePipeline):
     Pipeline(steps=[...])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
-    0.77...
+    0.829...
     >>> # getting the selected features chosen by anova_filter
     >>> anova_svm.named_steps['anova'].get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True, False, False,  True, False,  True,  True, True,
-           False, False,  True, False,  True, False, False, False, False,
-           True], dtype=bool)
+    array([False, False,  True,  True, False, False, True,  True, False,
+           True,  False,  True,  True, False, True,  False, True, True,
+           False, False], dtype=bool)
     """
 
     # BaseEstimator interface
@@ -157,7 +156,7 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -470,10 +469,6 @@ class Pipeline(_BasePipeline):
         return self._inverse_transform
 
     def _inverse_transform(self, X):
-        if hasattr(X, 'ndim') and X.ndim == 1:
-            warn("From version 0.19, a 1d X will not be reshaped in"
-                 " pipeline.inverse_transform any more.", FutureWarning)
-            X = X[None, :]
         Xt = X
         for name, transform in self.steps[::-1]:
             if transform is not None:
@@ -481,7 +476,7 @@ class Pipeline(_BasePipeline):
         return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score(self, X, y=None):
+    def score(self, X, y=None, sample_weight=None):
         """Apply transforms, and score with the final estimator
 
         Parameters
@@ -494,6 +489,10 @@ class Pipeline(_BasePipeline):
             Targets used for scoring. Must fulfill label requirements for all
             steps of the pipeline.
 
+        sample_weight : array-like, default=None
+            If not None, this argument is passed as ``sample_weight`` keyword
+            argument to the ``score`` method of the final estimator.
+
         Returns
         -------
         score : float
@@ -502,7 +501,10 @@ class Pipeline(_BasePipeline):
         for name, transform in self.steps[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].score(Xt, y)
+        score_params = {}
+        if sample_weight is not None:
+            score_params['sample_weight'] = sample_weight
+        return self.steps[-1][-1].score(Xt, y, **score_params)
 
     @property
     def classes_(self):
@@ -599,14 +601,14 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
     Parameters
     ----------
-    transformer_list: list of (string, transformer) tuples
+    transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
-    transformer_weights: dict, optional
+    transformer_weights : dict, optional
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
@@ -622,7 +624,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -778,18 +780,28 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         ]
 
 
-# XXX it would be nice to have a keyword-only n_jobs argument to this function,
-# but that's not allowed in Python 2.x.
-def make_union(*transformers):
+def make_union(*transformers, **kwargs):
     """Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
     names automatically based on their types. It also does not allow weighting.
 
+    Parameters
+    ----------
+    *transformers : list of estimators
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1).
+
+    Returns
+    -------
+    f : FeatureUnion
+
     Examples
     --------
     >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> from sklearn.pipeline import make_union
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1,
            transformer_list=[('pca',
@@ -801,10 +813,11 @@ def make_union(*transformers):
                               n_components=2, n_iter=5,
                               random_state=None, tol=0.0))],
            transformer_weights=None)
-
-
-    Returns
-    -------
-    f : FeatureUnion
     """
-    return FeatureUnion(_name_estimators(transformers))
+    n_jobs = kwargs.pop('n_jobs', 1)
+    if kwargs:
+        # We do not currently support `transformer_weights` as we may want to
+        # change its type spec in make_union
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
+    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs)

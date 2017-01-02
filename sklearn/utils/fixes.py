@@ -204,30 +204,6 @@ except ImportError:
         return np.sort(a, axis=axis, order=order)
 
 
-try:
-    from itertools import combinations_with_replacement
-except ImportError:
-    # Backport of itertools.combinations_with_replacement for Python 2.6,
-    # from Python 3.4 documentation (http://tinyurl.com/comb-w-r), copyright
-    # Python Software Foundation (https://docs.python.org/3/license.html)
-    def combinations_with_replacement(iterable, r):
-        # combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
-        pool = tuple(iterable)
-        n = len(pool)
-        if not n and r:
-            return
-        indices = [0] * r
-        yield tuple(pool[i] for i in indices)
-        while True:
-            for i in reversed(range(r)):
-                if indices[i] != n - 1:
-                    break
-            else:
-                return
-            indices[i:] = [indices[i] + 1] * (r - i)
-            yield tuple(pool[i] for i in indices)
-
-
 if np_version < (1, 7):
     # Prior to 1.7.0, np.frombuffer wouldn't work for empty first arg.
     def frombuffer_empty(buf, dtype):
@@ -289,25 +265,6 @@ if sp_version < (0, 15):
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
 else:
     from scipy.sparse.linalg import lsqr as sparse_lsqr
-
-
-if sys.version_info < (2, 7, 0):
-    # partial cannot be pickled in Python 2.6
-    # http://bugs.python.org/issue1398
-    class partial(object):
-        def __init__(self, func, *args, **keywords):
-            functools.update_wrapper(self, func)
-            self.func = func
-            self.args = args
-            self.keywords = keywords
-
-        def __call__(self, *args, **keywords):
-            args = self.args + args
-            kwargs = self.keywords.copy()
-            kwargs.update(keywords)
-            return self.func(*args, **kwargs)
-else:
-    from functools import partial
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
@@ -403,7 +360,7 @@ else:
     from scipy.stats import rankdata
 
 
-if np_version < (1, 12, 0):
+if np_version < (1, 12):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
         # This fix is needed to make our model_selection.GridSearchCV
