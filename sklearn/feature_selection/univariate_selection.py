@@ -207,6 +207,8 @@ def chi2(X, y):
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    info_gain : Information Gain
+    info_gain_ratio : Information Gain Ratio
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -281,20 +283,23 @@ def _get_fc_counts(X, y):
 
 
 def info_gain(X, y, gl_method="max"):
-    """Compute an Information Gain [1] score for each feature in the data.
+    """Compute an Information Gain score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
     most informative features for training and evaluating a classifier.
 
-    IG measures the number of bits of information obtained about the presence
-    or absence of a class by knowing the presence or absence of the feature. IG
-    of a feature is thus local to each class. This implementation outputs a
-    global IG score, by averaging the feature's scores over all classes.
+    IG [1] measures the number of bits of information obtained about the
+    presence or absence of a class by knowing the presence or absence of the
+    feature. IG of a feature is thus local to each class. This implementation
+    outputs a global IG score, by averaging, summing or taking the max values
+    of the feature's scores over all classes.
 
-    \begin{equation}
-    IG(f,c) = \sum_{d \in \{c, \overline{c} \}} \sum_{g \in
-        \{f, \overline{f} \}} p(g,d) log\frac{p(g,d)}{p(g)p(d)}
-    \end{equation}
+    .. math::
+
+        \\begin{equation}
+        IG(f,c) = \\sum_{d \\in \\{c, \\overline{c} \\}} \\sum_{g \\in \\
+            \\{f, \\overline{f} \\}} p(g,d) log\\frac{p(g,d)}{p(g)p(d)}
+        \\end{equation}
 
     The IG-based feature selection is commonly used for text classification (
     e.g. [2] and [3]).
@@ -307,29 +312,29 @@ def info_gain(X, y, gl_method="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    gl_method : string, globalization_method, one of "aver", "max", "sum"
+    gl_method : string
+        Globalization_method, one of "aver" (default), "max", "sum".
 
     Returns
     -------
     scores : array, shape = (n_features,)
 
-    See also:
-    ---------
+    See also
+    --------
     info_gain_ratio : Information Gain Ratio
 
-    References:
-    -----------
+    References
+    ----------
     .. [1] J.R. Quinlan. 1993. C4.5: Programs for Machine Learning. San Mateo,
     CA: Morgan Kaufmann.
 
-    .. [2] Y. Yang and J.O. Pedersen. 1997. A comparative study on feature
+    .. [2] `Y. Yang and J.O. Pedersen. 1997. A comparative study on feature
     selection in text categorization. Proceedings of ICML'97, pp. 412-420.
-    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9956
+    <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9956>`_
 
-    .. [3] F. Sebastiani. 2002. Machine Learning in Automatic Text
+    .. [3] `F. Sebastiani. 2002. Machine Learning in Automatic Text
     Categorization. ACM Computing Surveys (CSUR).
-    http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf
-
+    <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
     """
 
     f_count, c_count, fc_count, total = _get_fc_counts(X, y)
@@ -354,9 +359,14 @@ def info_gain_ratio(X, y, gl_method="max"):
     may be strongly correlated with a class. IGR removes this factor by
     normalizing IG by the entropy of the feature:
 
-    \begin{equation}
-    GR(f,c) = \frac{IG(f,c)}{-\sum_{g \in \{f, \overline{f} \}}p(g) log p(g)}
-    \end{equation}
+    .. math::
+
+        \\begin{equation}
+        GR(f,c) = \\frac{IG(f,c)}{-\\sum_{g \\in \\{f,\\overline{f}\\}} \\
+            p(g) log p(g)}
+        \\end{equation}
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -366,14 +376,15 @@ def info_gain_ratio(X, y, gl_method="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    gl_method : string, globalization_method, one of "aver", "max", "sum"
+    gl_method : string
+        Globalization_method, one of "aver" (default), "max", "sum".
 
     Returns
     -------
     scores : array, shape = (n_features,)
 
-    See also:
-    ---------
+    See also
+    --------
     info_gain : Information Gain
     """
 

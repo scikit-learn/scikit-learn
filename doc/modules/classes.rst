@@ -535,6 +535,8 @@ From text
    :template: function.rst
 
    feature_selection.chi2
+   feature_selection.info_gain
+   feature_selection.info_gain_ratio
    feature_selection.f_classif
    feature_selection.f_regression
    feature_selection.mutual_info_classif
@@ -1051,7 +1053,7 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.DistanceMetric
    neighbors.KernelDensity
    neighbors.LocalOutlierFactor
-	      
+
 .. autosummary::
    :toctree: generated/
    :template: function.rst
