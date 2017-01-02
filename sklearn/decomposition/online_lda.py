@@ -773,8 +773,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Perplexity score.
         """
         if doc_topic_distr != 'deprecated':
-            warnings.warn("Argument 'doc_topic_distr' is deprecated and will "
-                          "be ignored as of 0.19. Support for this argument "
+            warnings.warn("Argument 'doc_topic_distr' is deprecated and is "
+                          "being ignored as of 0.19. Support for this argument "
                           "will be removed in 0.21.", DeprecationWarning)
 
         return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)
