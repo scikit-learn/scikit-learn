@@ -19,7 +19,7 @@ Data Set Characteristics:
 		- 10)Color intensity
  		- 11)Hue
  		- 12)OD280/OD315 of diluted wines
- 		- 13)Proline 
+ 		- 13)Proline
         	- class:
                 - class_0
                 - class_1
@@ -27,7 +27,7 @@ Data Set Characteristics:
     :Summary Statistics:
 
     ============== ==== ==== ======= ===== ====================
-                    Min  Max   Mean    SD  
+                    Min  Max   Mean    SD
     ============== ==== ==== ======= ===== ====================
     Alcohol:   		11.0  14.8   13.0   0.811
     Malic Acid:     0.74  5.80   2.34   1.12
@@ -36,7 +36,7 @@ Data Set Characteristics:
     Magnesium:		70.0  162.0  99.7  14.28
     Total Phenols:	0.980  3.88  2.29   0.626
     Flavanoids:		0.340  5.08  2.03  .999
-    Nonflavanoid Phenols: 0.130  0.66  0.362  0.124  
+    Nonflavanoid Phenols: 0.130  0.66  0.362  0.124
     Proanthocyanins:  0.410  3.580  1.590  0.572
     Colour Intensity:  1.28  13.0  5.06  2.318
     Hue:				0.480  1.71  0.957  0.226
