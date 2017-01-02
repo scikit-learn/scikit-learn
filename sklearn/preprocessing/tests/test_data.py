@@ -3,6 +3,11 @@
 #
 #          Giorgio Patrini
 #
+# Li
+# Authors:
+#
+#          Giorgio Patrini
+#
 # License: BSD 3 clause
 
 import warnings
@@ -123,7 +128,7 @@ def test_polynomial_features():
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
     assert_equal(interact.powers_.shape, (interact.n_output_features_,
-                                          interact.n_input_features_))
+                 interact.n_input_features_))
 
 
 def test_polynomial_feature_names():
@@ -142,8 +147,7 @@ def test_polynomial_feature_names():
                         'b c^2', 'c^3'], feature_names)
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names(
-        [u"\u0001F40D", u"\u262E", u"\u05D0"])
+    feature_names = poly.get_feature_names([u"\u0001F40D", u"\u262E", u"\u05D0"])
     assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
                        feature_names)
 
