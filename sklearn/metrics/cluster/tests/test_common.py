@@ -6,6 +6,8 @@ Created on Tue Dec 27 12:58:49 2016
 """
 
 import numpy as np
+from sklearn import datasets
+from sklearn.cluster import KMeans
 
 from sklearn.metrics.cluster.bicluster import _jaccard
 from sklearn.metrics.cluster import consensus_score
@@ -22,6 +24,7 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
+from sklearn.metrics import pairwise_distances
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
@@ -168,6 +171,13 @@ def test_normalized_output():
         assert_between(metric([0, 0, 0, 1, 1, 1],[0, 0, 0, 1, 2, 2]), 0.0, 1.0)
         assert_between(metric([0, 0, 1, 1, 2, 2],[0, 0, 1, 1, 1, 1]), 0.0, 1.0)
         assert_equal(metric(upper_bound_1,upper_bound_2), 1.0)
+        
+    #For symmetric metrics the lower bound is defined
+    lower_bound_1 = [0, 0, 0, 0, 0, 0]
+    lower_bound_2 = [0, 1, 2, 3, 4, 5]
+    for name in SYMMETRIC_METRICS:
+        metric=ALL_METRICS[name]
+        assert_equal(metric(lower_bound_1,lower_bound_2), 0.0)
 
                          
 def test_permute_labels():
@@ -178,6 +188,14 @@ def test_permute_labels():
         assert_almost_equal(metric(y_pred, y_label),metric(y_pred, 1-y_label))
         assert_almost_equal(metric(y_pred, y_label),metric(1-y_pred, y_label))
         assert_almost_equal(metric(y_pred, y_label),metric(1-y_pred, 1-y_label))
+        #Test for Silhouette_score
+        dataset = datasets.load_iris()
+        X = dataset.data
+        y_pred = dataset.target
+        D = pairwise_distances(X, metric='euclidean')
+        score_1 = silhouette_score(D, y_pred, metric='precomputed')
+        score_2 = silhouette_score(D, 1-y_pred, metric='precomputed')
+        assert_almost_equal(score_1, score_2)
 
         
 def test_class_based_clusters():
