@@ -56,15 +56,26 @@ stairstep area of the plot - at the edges of these steps a small change
 in the threshold considerably reduces precision, with only a minor gain in
 recall.
 
-A second way to compute an average precision is to average the precisions that
-correspond to the first operating points with recall values greater than or
-equal to some fixed set of desired recall values. The most common choice is
-'eleven point' interpolated precision, where the desired recall values are
-[0, 0.1, 0.2, ..., 1.0]. This is the metric used in `The PASCAL Visual Object
-Classes (VOC) Challenge <http://citeseerx.ist.psu.edu/viewdoc/
-download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_. In the example below,
-the eleven precision values are circled. Note that it's possible that the same
-operating point might correspond to multiple desired recall values.
+**Average precision** summarizes such a plot as the weighted mean of precisions
+achieved at each threshold, with the increase in recall from the previous
+threshold used as the weight:
+
+:math:`\\text{AP} = \\sum_n (R_n - R_{n-1}) P_n`
+
+where :math:`P_n` and :math:`R_n` are the precision and recall at the
+:math:`n`th threshold. A pair :math:`(R_k, P_k)` is referred to as an
+*operating point*.
+
+In *interpolated* average precision, a set of desired recall values is
+specified and for each desired value, we select the first operating point
+that corresponds to a recall greater than or equal to it. The interpolated
+average precision is the mean of the precisions of these operating points.
+The most common choice is 'eleven point' interpolated precision, where the
+desired recall values are [0, 0.1, 0.2, ..., 1.0]. This is the metric used in
+`The PASCAL Visual Object Classes (VOC) Challenge <http://citeseerx.ist.psu.edu
+/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_. In the example
+below, the eleven precision values are circled. Note that it's possible that
+the same operating point might correspond to multiple desired recall values.
 
 Precision-recall curves are typically used in binary classification to study
 the output of a classifier. In order to extend the Precision-recall curve and
