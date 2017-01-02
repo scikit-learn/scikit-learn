@@ -328,11 +328,11 @@ def info_gain(X, y, gl_method="max"):
     .. [1] J.R. Quinlan. 1993. C4.5: Programs for Machine Learning. San Mateo,
     CA: Morgan Kaufmann.
 
-    .. [2] `Y. Yang and J.O. Pedersen. 1997. A comparative study on feature
+    .. [2] Y. Yang and J.O. Pedersen. 1997. `A comparative study on feature
     selection in text categorization. Proceedings of ICML'97, pp. 412-420.
     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9956>`_
 
-    .. [3] `F. Sebastiani. 2002. Machine Learning in Automatic Text
+    .. [3] F. Sebastiani. 2002. `Machine Learning in Automatic Text
     Categorization. ACM Computing Surveys (CSUR).
     <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
     """

@@ -91,7 +91,7 @@ and p-values (or only scores for :class:`SelectKBest` and
  * For regression: :func:`f_regression`, :func:`mutual_info_regression`
 
  * For classification: :func:`chi2`, :func:`info_gain`, :func:`info_gain_ratio`,
-:func:`f_classif`, :func:`mutual_info_classif`
+   :func:`f_classif`, :func:`mutual_info_classif`
 
 The methods based on F-test estimate the degree of linear dependency between
 two random variables. On the other hand, mutual information methods can capture
