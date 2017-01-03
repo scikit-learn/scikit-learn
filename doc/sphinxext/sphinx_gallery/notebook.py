@@ -170,7 +170,8 @@ def fill_notebook(work_notebook, script_blocks):
         if blabel == 'code':
             add_code_cell(work_notebook, bcontent)
         else:
-            add_markdown_cell(work_notebook, text2string(bcontent))
+            # add_markdown_cell(work_notebook, text2string(bcontent))
+            add_markdown_cell(work_notebook, bcontent + '\n')
 
 
 def save_notebook(work_notebook, write_file):
