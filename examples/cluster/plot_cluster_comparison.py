@@ -17,7 +17,7 @@ each clustering strategy, for instance setting the number of
 clusters for the methods that needs this parameter
 specified. Note that affinity propagation has a tendency to
 create many clusters. Thus in this example its two parameters
-(damping and per-point preference) were set to to mitigate this
+(damping and per-point preference) were set to mitigate this
 behavior.
 """
 print(__doc__)

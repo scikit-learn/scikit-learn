@@ -1,6 +1,8 @@
 Maintainer / core-developer information
 ========================================
 
+For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
+
 Making a release
 ------------------
 
@@ -46,3 +48,5 @@ Making a release
     $ python setup.py bdist_wininst upload
 
    And upload them also to sourceforge
+
+7. FOR FINAL RELEASE: Update the release date in What's New

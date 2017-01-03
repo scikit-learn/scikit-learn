@@ -1,7 +1,7 @@
 """Testing for Gaussian process classification """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from scipy.optimize import approx_fprime
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-from sklearn.utils.testing import (assert_true, assert_greater, assert_equal,
+from sklearn.utils.testing import (assert_true, assert_greater,
                                    assert_almost_equal, assert_array_equal)
 
 
@@ -29,13 +29,12 @@ y_mc[fX > 0.35] = 2
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
 kernels = [RBF(length_scale=0.1), fixed_kernel,
            RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2))
-           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))]
+           C(1.0, (1e-2, 1e2)) *
+           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))]
 
 
 def test_predict_consistent():
-    """ Check binary predict decision has also predicted probability above 0.5.
-    """
+    # Check binary predict decision has also predicted probability above 0.5.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_array_equal(gpc.predict(X),
@@ -43,16 +42,17 @@ def test_predict_consistent():
 
 
 def test_lml_improving():
-    """ Test that hyperparameter-tuning improves log-marginal likelihood. """
+    # Test that hyperparameter-tuning improves log-marginal likelihood.
     for kernel in kernels:
-        if kernel == fixed_kernel: continue
+        if kernel == fixed_kernel:
+            continue
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
                        gpc.log_marginal_likelihood(kernel.theta))
 
 
 def test_lml_precomputed():
-    """ Test that lml of optimized kernel is stored correctly. """
+    # Test that lml of optimized kernel is stored correctly.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_almost_equal(gpc.log_marginal_likelihood(gpc.kernel_.theta),
@@ -60,21 +60,22 @@ def test_lml_precomputed():
 
 
 def test_converged_to_local_maximum():
-    """ Test that we are in local maximum after hyperparameter-optimization."""
+    # Test that we are in local maximum after hyperparameter-optimization.
     for kernel in kernels:
-        if kernel == fixed_kernel: continue
+        if kernel == fixed_kernel:
+            continue
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = \
             gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
-        assert_true(np.all((np.abs(lml_gradient) < 1e-4)
-                           | (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0])
-                           | (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1])))
+        assert_true(np.all((np.abs(lml_gradient) < 1e-4) |
+                           (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
+                           (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1])))
 
 
 def test_lml_gradient():
-    """ Compare analytic and numeric gradient of log marginal likelihood. """
+    # Compare analytic and numeric gradient of log marginal likelihood.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
@@ -89,11 +90,9 @@ def test_lml_gradient():
 
 
 def test_random_starts():
-    """
-    Test that an increasing number of random-starts of GP fitting only
-    increases the log marginal likelihood of the chosen theta.
-    """
-    n_samples, n_features = 25, 3
+    # Test that an increasing number of random-starts of GP fitting only
+    # increases the log marginal likelihood of the chosen theta.
+    n_samples, n_features = 25, 2
     np.random.seed(0)
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features) * 2 - 1
@@ -103,7 +102,7 @@ def test_random_starts():
         * RBF(length_scale=[1e-3] * n_features,
               length_scale_bounds=[(1e-4, 1e+2)] * n_features)
     last_lml = -np.inf
-    for n_restarts_optimizer in range(9):
+    for n_restarts_optimizer in range(5):
         gp = GaussianProcessClassifier(
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0).fit(X, y)
@@ -113,13 +112,13 @@ def test_random_starts():
 
 
 def test_custom_optimizer():
-    """ Test that GPC can use externally defined optimizers. """
-    # Define a dummy optimizer that simply tests 1000 random hyperparameters
+    # Test that GPC can use externally defined optimizers.
+    # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
-        for _ in range(1000):
+        for _ in range(50):
             theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
                                               np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)
@@ -128,7 +127,8 @@ def test_custom_optimizer():
         return theta_opt, func_min
 
     for kernel in kernels:
-        if kernel == fixed_kernel: continue
+        if kernel == fixed_kernel:
+            continue
         gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
         gpc.fit(X, y_mc)
         # Checks that optimizer improved marginal likelihood
@@ -137,7 +137,7 @@ def test_custom_optimizer():
 
 
 def test_multi_class():
-    """ Test GPC for multi-class classification problems. """
+    # Test GPC for multi-class classification problems.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel)
         gpc.fit(X, y_mc)
@@ -150,7 +150,7 @@ def test_multi_class():
 
 
 def test_multi_class_n_jobs():
-    """ Test that multi-class GPC produces identical results with n_jobs>1. """
+    # Test that multi-class GPC produces identical results with n_jobs>1.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel)
         gpc.fit(X, y_mc)

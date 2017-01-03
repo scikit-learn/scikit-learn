@@ -3,10 +3,10 @@
 # cython: wraparound=False
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck <larsmans@gmail.com>
+#         Lars Buitinck
 #         Danny Sullivan <dsullivan7@hotmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 cimport cython
 from libc.limits cimport INT_MAX
@@ -137,7 +137,7 @@ cdef class WeightVector(object):
             val = x_data_ptr[j]
             aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
 
-        # Once the the sample has been processed
+        # Once the sample has been processed
         # update the average_a and average_b
         if num_iter > 1:
             self.average_b /= (1.0 - mu)

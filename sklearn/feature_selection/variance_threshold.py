@@ -1,4 +1,4 @@
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 # License: 3-clause BSD
 
 import numpy as np

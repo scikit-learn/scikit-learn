@@ -54,6 +54,7 @@ def test_neighbors_accuracy_with_n_candidates():
 
         accuracies[i] = accuracies[i] / float(n_iter)
     # Sorted accuracies should be equal to original accuracies
+    print('accuracies:', accuracies)
     assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
     # Highest accuracy should be strictly greater than the lowest
@@ -229,7 +230,8 @@ def test_radius_neighbors_boundary_handling():
 
     # Build a LSHForest model with hyperparameter values that always guarantee
     # exact results on this toy dataset.
-    lsfh = LSHForest(min_hash_match=0, n_candidates=n_points).fit(X)
+    lsfh = LSHForest(min_hash_match=0, n_candidates=n_points,
+                     random_state=42).fit(X)
 
     # define a query aligned with the first axis
     query = [[1., 0.]]
@@ -265,7 +267,7 @@ def test_radius_neighbors_boundary_handling():
     assert_array_almost_equal(np.sort(exact_dists[0]), dists[:-1])
     assert_array_almost_equal(np.sort(approx_dists[0]), dists[:-1])
 
-    # If we perform the same query with a slighltly lower radius, the third
+    # If we perform the same query with a slightly lower radius, the third
     # point of the dataset that lay on the boundary of the previous query
     # is now rejected:
     eps = np.finfo(np.float64).eps
@@ -332,7 +334,7 @@ def test_fit():
 
 
 def test_partial_fit():
-    # Checks whether inserting array is consitent with fitted data.
+    # Checks whether inserting array is consistent with fitted data.
     # `partial_fit` method should set all attribute values correctly.
     n_samples = 12
     n_samples_partial_fit = 3

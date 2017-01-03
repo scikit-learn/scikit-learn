@@ -61,7 +61,7 @@ This example shows an example usage of the ``split`` method.
 
     >>> from sklearn.model_selection import KFold, cross_val_score
     >>> X = ["a", "a", "b", "c", "c", "c"]
-    >>> k_fold = KFold(n_folds=3)
+    >>> k_fold = KFold(n_splits=3)
     >>> for train_indices, test_indices in k_fold.split(X):
     ...      print('Train: %s | test: %s' % (train_indices, test_indices))
     Train: [2 3 4 5] | test: [0 1]
@@ -70,7 +70,7 @@ This example shows an example usage of the ``split`` method.
 
 The cross-validation can then be performed easily::
 
-    >>> kfold = KFold(n_folds=3)
+    >>> kfold = KFold(n_splits=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in k_fold.split(X_digits)]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
@@ -106,11 +106,11 @@ scoring method.
 
    *
 
-    - :class:`KFold` **(n_folds, shuffle, random_state)**
+    - :class:`KFold` **(n_splits, shuffle, random_state)**
 
     - :class:`StratifiedKFold` **(n_iter, test_size, train_size, random_state)**
 
-    - :class:`LabelKFold` **(n_folds, shuffle, random_state)**
+    - :class:`GroupKFold` **(n_splits, shuffle, random_state)**
 
 
    *
@@ -119,7 +119,7 @@ scoring method.
 
     - Same as K-Fold but preserves the class distribution within each fold.
 
-    - Ensures that the same label is not in both testing and training sets.
+    - Ensures that the same group is not in both testing and training sets.
 
 
 .. list-table::
@@ -130,7 +130,7 @@ scoring method.
 
     - :class:`StratifiedShuffleSplit`
 
-    - :class:`LabelShuffleSplit`
+    - :class:`GroupShuffleSplit`
 
    *
 
@@ -138,16 +138,16 @@ scoring method.
 
     - Same as shuffle split but preserves the class distribution within each iteration.
 
-    - Ensures that the same label is not in both testing and training sets.
+    - Ensures that the same group is not in both testing and training sets.
 
 
 .. list-table::
 
    *
 
-    - :class:`LeaveOneLabelOut` **()**
+    - :class:`LeaveOneGroupOut` **()**
 
-    - :class:`LeavePLabelOut`  **(p)**
+    - :class:`LeavePGroupsOut`  **(p)**
 
     - :class:`LeaveOneOut` **()**
 
@@ -155,9 +155,9 @@ scoring method.
 
    *
 
-    - Takes a label array to group observations.
+    - Takes a group array to group observations.
 
-    - Leave P labels out.
+    - Leave P groups out.
 
     - Leave one observation out.
 
@@ -183,7 +183,7 @@ scoring method.
 .. topic:: **Exercise**
    :class: green
 
-   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_001.png
+   .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
         :align: right
         :scale: 90
@@ -195,7 +195,7 @@ scoring method.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
 
-   **Solution:** :ref:`example_exercises_plot_cv_digits.py`
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
 
 
 
@@ -207,7 +207,7 @@ Grid-search
 
 .. currentmodule:: sklearn.model_selection
 
-The sklearn provides an object that, given data, computes the score
+scikit-learn provides an object that, given data, computes the score
 during the fit of an estimator on a parameter grid and chooses the
 parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
@@ -257,9 +257,9 @@ Cross-validated estimators
 ----------------------------
 
 Cross-validation to set a parameter can be done more efficiently on an
-algorithm-by-algorithm basis. This is why for certain estimators the
-sklearn exposes :ref:`cross_validation` estimators that set their parameter
-automatically by cross-validation::
+algorithm-by-algorithm basis. This is why, for certain estimators,
+scikit-learn exposes :ref:`cross_validation` estimators that set their
+parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
     >>> lasso = linear_model.LassoCV()
@@ -289,6 +289,4 @@ appended to their name.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
        :lines: 17-24
 
-   **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
-
-
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_diabetes.py`

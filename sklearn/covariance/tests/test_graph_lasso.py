@@ -61,8 +61,8 @@ def test_graph_lasso(random_state=0):
 
 def test_graph_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
-    # The iris datasets in R and sklearn do not match in a few places, these
-    # values are for the sklearn version
+    # The iris datasets in R and scikit-learn do not match in a few places,
+    # these values are for the scikit-learn version.
     cov_R = np.array([
         [0.68112222, 0.0, 0.2651911, 0.02467558],
         [0.00, 0.1867507, 0.0, 0.00],

@@ -40,7 +40,7 @@ this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
 model. It's generally a good idea to consider NumPy and SciPy performance tips:
-http://wiki.scipy.org/PerformanceTips
+http://scipy.github.io/old-wiki/pages/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -127,7 +127,7 @@ for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_classification_plot_digits_classification.py` example::
+dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -143,7 +143,7 @@ overhead and save it somewhere for later reference::
   In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
   1 loops, best of 3: 1.7 s per loop
 
-To have have a look at the overall performance profile using the ``%prun``
+To have a look at the overall performance profile using the ``%prun``
 magic command::
 
   In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
@@ -209,7 +209,7 @@ trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
-Python code: it takes around 100% of the cumulated time of the module. In
+Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
@@ -304,7 +304,7 @@ Memory usage profiling
 ======================
 
 You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <http://pypi.python.org/pypi/memory_profiler>`_. First,
+`memory_profiler <https://pypi.python.org/pypi/memory_profiler>`_. First,
 install the latest version::
 
     $ pip install -U memory_profiler
@@ -401,7 +401,7 @@ project.
 TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignment, direct blas calls...
 
-- http://www.euroscipy.org/file/3696?vid=download
+- https://www.youtube.com/watch?v=gMvkiQ-gOW8
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
@@ -421,8 +421,8 @@ Using yep and google-perftools
 
 Easy profiling without special compilation options use yep:
 
-- http://pypi.python.org/pypi/yep
-- http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
+- https://pypi.python.org/pypi/yep
+- http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
 .. note::
 
@@ -430,7 +430,7 @@ Easy profiling without special compilation options use yep:
   can be triggered with the ``--lines`` option. However this
   does not seem to work correctly at the time of writing. This
   issue can be tracked on the `project issue tracker
-  <https://code.google.com/p/google-perftools/issues/detail?id=326>`_.
+  <https://github.com/gperftools/gperftools>`_.
 
 
 
@@ -460,7 +460,7 @@ TODO: give a simple teaser example here.
 
 Checkout the official joblib documentation:
 
-- http://packages.python.org/joblib/
+- https://pythonhosted.org/joblib
 
 
 .. _warm-restarts:

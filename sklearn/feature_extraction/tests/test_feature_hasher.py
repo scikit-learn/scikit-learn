@@ -1,18 +1,18 @@
 from __future__ import unicode_literals
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-
-from nose.tools import assert_raises, assert_true
-from numpy.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_raises, assert_true, assert_equal
 
 
 def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
     assert_equal("dict", h.input_type)
 
-    raw_X = [{"dada": 42, "tzara": 37}, {"gaga": 17}]
+    raw_X = [{"foo": "bar", "dada": 42, "tzara": 37},
+             {"foo": "baz", "gaga": u"string1"}]
     X1 = FeatureHasher(n_features=16).transform(raw_X)
     gen = (iter(d.items()) for d in raw_X)
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
@@ -51,6 +51,26 @@ def test_feature_hasher_pairs():
     x2_nz = sorted(np.abs(x2[x2 != 0]))
     assert_equal([1, 2], x1_nz)
     assert_equal([1, 3, 4], x2_nz)
+
+
+def test_feature_hasher_pairs_with_string_values():
+    raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": "a"},
+                                       {"baz": u"abc", "quux": 4, "foo": -1}])
+    h = FeatureHasher(n_features=16, input_type="pair")
+    x1, x2 = h.transform(raw_X).toarray()
+    x1_nz = sorted(np.abs(x1[x1 != 0]))
+    x2_nz = sorted(np.abs(x2[x2 != 0]))
+    assert_equal([1, 1], x1_nz)
+    assert_equal([1, 1, 4], x2_nz)
+
+    raw_X = (iter(d.items()) for d in [{"bax": "abc"},
+                                       {"bax": "abc"}])
+    x1, x2 = h.transform(raw_X).toarray()
+    x1_nz = np.abs(x1[x1 != 0])
+    x2_nz = np.abs(x2[x2 != 0])
+    assert_equal([1], x1_nz)
+    assert_equal([1], x2_nz)
+    assert_array_equal(x1, x2)
 
 
 def test_hash_empty_input():

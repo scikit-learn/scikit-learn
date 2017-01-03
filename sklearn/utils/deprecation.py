@@ -28,7 +28,7 @@ class deprecated(object):
         """
         Parameters
         ----------
-        extra: string
+        extra : string
           to be added to the deprecation messages
 
         """

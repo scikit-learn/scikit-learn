@@ -8,7 +8,7 @@ PCA example with Iris Data-set
 
 Principal Component Analysis applied to the Iris dataset.
 
-See `here <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
+See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
 information on this dataset.
 
 """

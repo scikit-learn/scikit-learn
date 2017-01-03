@@ -12,9 +12,18 @@ Each color represents a different feature of the
 coefficient vector, and this is displayed as a function of the
 regularization parameter.
 
+This example also shows the usefulness of applying Ridge regression
+to highly ill-conditioned matrices. For such matrices, a slight
+change in the target variable can cause huge variances in the
+calculated weights. In such cases, it is useful to set a certain
+regularization (alpha) to reduce this variation (noise).
+
+When alpha is very large, the regularization effect dominates the
+squared loss function and the coefficients tend to zero.
 At the end of the path, as alpha tends toward zero
 and the solution tends towards the ordinary least squares, coefficients
-exhibit big oscillations.
+exhibit big oscillations. In practise it is necessary to tune alpha
+in such a way that a balance is maintained between both.
 """
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>

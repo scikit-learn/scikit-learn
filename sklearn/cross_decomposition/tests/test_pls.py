@@ -1,10 +1,9 @@
 import numpy as np
-from sklearn.utils.testing import (assert_array_almost_equal,
+from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
                                    assert_array_equal, assert_true,
                                    assert_raise_message)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
-from nose.tools import assert_equal
 
 
 def test_pls():
@@ -109,7 +108,7 @@ def test_pls():
     # x_weights = X.dot(x_rotation)
     # Hence R/python sign flip should be the same in x_weight and x_rotation
     assert_array_almost_equal(x_rotations_sign_flip, x_weights_sign_flip)
-    # This test that R / python give the same result up to colunm
+    # This test that R / python give the same result up to column
     # sign indeterminacy
     assert_array_almost_equal(np.abs(x_rotations_sign_flip), 1, 4)
     assert_array_almost_equal(np.abs(x_weights_sign_flip), 1, 4)
@@ -259,7 +258,7 @@ def test_pls():
 
 def test_PLSSVD():
     # Let's check the PLSSVD doesn't return all possible component but just
-    # the specificied number
+    # the specified number
     d = load_linnerud()
     X = d.data
     Y = d.target

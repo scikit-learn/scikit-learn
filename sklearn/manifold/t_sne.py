@@ -18,11 +18,12 @@ from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.extmath import _ravel
-from ..decomposition import RandomizedPCA
+from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
 from ..utils.fixes import astype
+from ..externals.six import string_types
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -236,7 +237,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    neighbors: int64 array, shape (n_samples, K)
+    neighbors : int64 array, shape (n_samples, K)
         Array with element [i, j] giving the index for the jth
         closest neighbor to point i.
 
@@ -520,7 +521,7 @@ class TSNE(BaseEstimator):
     perplexity : float, optional (default: 30)
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
-        usually require a larger perplexity. Consider selcting a value
+        usually require a larger perplexity. Consider selecting a value
         between 5 and 50. The choice is not extremely critical since t-SNE
         is quite insensitive to this parameter.
 
@@ -545,15 +546,19 @@ class TSNE(BaseEstimator):
         least 200.
 
     n_iter_without_progress : int, optional (default: 30)
+        Only used if method='exact'
         Maximum number of iterations without progress before we abort the
-        optimization.
+        optimization. If method='barnes_hut' this parameter is fixed to
+        a value of 30 and cannot be changed.
 
         .. versionadded:: 0.17
            parameter *n_iter_without_progress* to control stopping criteria.
 
-    min_grad_norm : float, optional (default: 1E-7)
+    min_grad_norm : float, optional (default: 1e-7)
+        Only used if method='exact'
         If the gradient norm is below this threshold, the optimization will
-        be aborted.
+        be aborted. If method='barnes_hut' this parameter is fixed to a value
+        of 1e-3 and cannot be changed.
 
     metric : string or callable, optional
         The metric to use when calculating distance between instances in a
@@ -567,8 +572,9 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string, optional (default: "random")
-        Initialization of embedding. Possible options are 'random' and 'pca'.
+    init : string or numpy array, optional (default: "random")
+        Initialization of embedding. Possible options are 'random', 'pca',
+        and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
         usually more globally stable than random initialization.
 
@@ -607,6 +613,9 @@ class TSNE(BaseEstimator):
     embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
+    kl_divergence_ : float
+        Kullback-Leibler divergence after optimization.
+
     Examples
     --------
 
@@ -640,8 +649,10 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
-        if init not in ["pca", "random"] or isinstance(init, np.ndarray):
-            msg = "'init' must be 'pca', 'random' or a NumPy array"
+        if not ((isinstance(init, string_types) and
+                init in ["pca", "random"]) or
+                isinstance(init, np.ndarray)):
+            msg = "'init' must be 'pca', 'random', or a numpy array"
             raise ValueError(msg)
         self.n_components = n_components
         self.perplexity = perplexity
@@ -656,7 +667,6 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
-        self.embedding_ = None
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -664,7 +674,7 @@ class TSNE(BaseEstimator):
         Note that sparse arrays can only be handled by method='exact'.
         It is recommended that you convert your sparse array to dense
         (e.g. `X.toarray()`) if it fits in memory, or otherwise using a
-        dimensionality reduction technique (e.g. TrucnatedSVD).
+        dimensionality reduction technique (e.g. TruncatedSVD).
 
         Parameters
         ----------
@@ -691,9 +701,9 @@ class TSNE(BaseEstimator):
                             'the array is small enough for it to fit in '
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
-            X = check_array(X, dtype=np.float32)
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            dtype=np.float64)
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
@@ -704,7 +714,7 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 200")
 
         if self.metric == "precomputed":
-            if self.init == 'pca':
+            if isinstance(self.init, string_types) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be used "
                                  "with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -713,6 +723,7 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise distances...")
+
             if self.metric == "euclidean":
                 distances = pairwise_distances(X, metric=self.metric,
                                                squared=True)
@@ -759,12 +770,12 @@ class TSNE(BaseEstimator):
         assert np.all(P <= 1), ("All probabilities should be less "
                                 "or then equal to one")
 
-        if self.init == 'pca':
-            pca = RandomizedPCA(n_components=self.n_components,
-                                random_state=random_state)
-            X_embedded = pca.fit_transform(X)
-        elif isinstance(self.init, np.ndarray):
+        if isinstance(self.init, np.ndarray):
             X_embedded = self.init
+        elif self.init == 'pca':
+            pca = PCA(n_components=self.n_components, svd_solver='randomized',
+                      random_state=random_state)
+            X_embedded = pca.fit_transform(X)
         elif self.init == 'random':
             X_embedded = None
         else:
@@ -794,9 +805,9 @@ class TSNE(BaseEstimator):
                                                    self.n_components)
         params = X_embedded.ravel()
 
-        opt_args = {}
         opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
                     "learning_rate": self.learning_rate,
+                    "n_iter_without_progress": self.n_iter_without_progress,
                     "verbose": self.verbose, "n_iter_check": 25,
                     "kwargs": dict(skip_num_points=skip_num_points)}
         if self.method == 'barnes_hut':
@@ -821,18 +832,21 @@ class TSNE(BaseEstimator):
             opt_args['args'] = [P, degrees_of_freedom, n_samples,
                                 self.n_components]
             opt_args['min_error_diff'] = 0.0
-            opt_args['min_grad_norm'] = 0.0
+            opt_args['min_grad_norm'] = self.min_grad_norm
 
         # Early exaggeration
         P *= self.early_exaggeration
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
         opt_args['n_iter'] = 100
         opt_args['momentum'] = 0.8
         opt_args['it'] = it + 1
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
         if self.verbose:
-            print("[t-SNE] Error after %d iterations with early "
-                  "exaggeration: %f" % (it + 1, error))
+            print("[t-SNE] KL divergence after %d iterations with early "
+                  "exaggeration: %f" % (it + 1, kl_divergence))
         # Save the final number of iterations
         self.n_iter_final = it
 
@@ -841,10 +855,13 @@ class TSNE(BaseEstimator):
         opt_args['n_iter'] = self.n_iter
         opt_args['it'] = it + 1
         params, error, it = _gradient_descent(obj_func, params, **opt_args)
+
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
+            print("[t-SNE] Error after %d iterations: %f"
+                  % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)
+        self.kl_divergence_ = kl_divergence
 
         return X_embedded
 

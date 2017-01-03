@@ -100,8 +100,9 @@ print("KRR prediction for %d inputs in %.3f s"
 #############################################################################
 # look at the results
 sv_ind = svr.best_estimator_.support_
-plt.scatter(X[sv_ind], y[sv_ind], c='r', s=50, label='SVR support vectors')
-plt.scatter(X[:100], y[:100], c='k', label='data')
+plt.scatter(X[sv_ind], y[sv_ind], c='r', s=50, label='SVR support vectors',
+            zorder=2)
+plt.scatter(X[:100], y[:100], c='k', label='data', zorder=1)
 plt.hold('on')
 plt.plot(X_plot, y_svr, c='r',
          label='SVR (fit: %.3fs, predict: %.3fs)' % (svr_fit, svr_predict))
@@ -153,14 +154,14 @@ svr = SVR(kernel='rbf', C=1e1, gamma=0.1)
 kr = KernelRidge(kernel='rbf', alpha=0.1, gamma=0.1)
 train_sizes, train_scores_svr, test_scores_svr = \
     learning_curve(svr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
-                   scoring="mean_squared_error", cv=10)
+                   scoring="neg_mean_squared_error", cv=10)
 train_sizes_abs, train_scores_kr, test_scores_kr = \
     learning_curve(kr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
-                   scoring="mean_squared_error", cv=10)
+                   scoring="neg_mean_squared_error", cv=10)
 
-plt.plot(train_sizes, test_scores_svr.mean(1), 'o-', color="r",
+plt.plot(train_sizes, -test_scores_svr.mean(1), 'o-', color="r",
          label="SVR")
-plt.plot(train_sizes, test_scores_kr.mean(1), 'o-', color="g",
+plt.plot(train_sizes, -test_scores_kr.mean(1), 'o-', color="g",
          label="KRR")
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")

@@ -22,11 +22,11 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
         cblas_libs.append('m')
 
-    config.add_extension('sparsefuncs_fast', sources=['sparsefuncs_fast.c'],
+    config.add_extension('sparsefuncs_fast', sources=['sparsefuncs_fast.pyx'],
                          libraries=libraries)
 
     config.add_extension('arrayfuncs',
-                         sources=['arrayfuncs.c'],
+                         sources=['arrayfuncs.pyx'],
                          depends=[join('src', 'cholesky_delete.h')],
                          libraries=cblas_libs,
                          include_dirs=cblas_includes,
@@ -34,45 +34,47 @@ def configuration(parent_package='', top_path=None):
                          **blas_info
                          )
 
-    config.add_extension(
-        'murmurhash',
-        sources=['murmurhash.c', join('src', 'MurmurHash3.cpp')],
-        include_dirs=['src'])
+    config.add_extension('murmurhash',
+                         sources=['murmurhash.pyx', join(
+                             'src', 'MurmurHash3.cpp')],
+                         include_dirs=['src'])
 
     config.add_extension('lgamma',
-                         sources=['lgamma.c', join('src', 'gamma.c')],
+                         sources=['lgamma.pyx', join('src', 'gamma.c')],
                          include_dirs=['src'],
                          libraries=libraries)
 
     config.add_extension('graph_shortest_path',
-                         sources=['graph_shortest_path.c'],
+                         sources=['graph_shortest_path.pyx'],
                          include_dirs=[numpy.get_include()])
 
     config.add_extension('fast_dict',
-                         sources=['fast_dict.cpp'],
+                         sources=['fast_dict.pyx'],
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
     config.add_extension('seq_dataset',
-                         sources=['seq_dataset.c'],
+                         sources=['seq_dataset.pyx'],
                          include_dirs=[numpy.get_include()])
 
     config.add_extension('weight_vector',
-                         sources=['weight_vector.c'],
+                         sources=['weight_vector.pyx'],
                          include_dirs=cblas_includes,
                          libraries=cblas_libs,
                          **blas_info)
 
     config.add_extension("_random",
-                         sources=["_random.c"],
+                         sources=["_random.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
     config.add_extension("_logistic_sigmoid",
-                         sources=["_logistic_sigmoid.c"],
+                         sources=["_logistic_sigmoid.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
+
+    config.add_subpackage('tests')
 
     return config
 

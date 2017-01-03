@@ -17,7 +17,7 @@ import warnings
 
 import numpy as np
 from scipy import linalg
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 
 from . import check_random_state
 from .fixes import np_version
@@ -59,12 +59,14 @@ def squared_norm(x):
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports CSR sparse
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports sparse
     matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
     if issparse(X):
+        if not isinstance(X, csr_matrix):
+            X = csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum('ij,ij->i', X, X)
@@ -187,23 +189,23 @@ def safe_sparse_dot(a, b, dense_output=False):
         return fast_dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iter=2,
+def randomized_range_finder(A, size, n_iter,
                             power_iteration_normalizer='auto',
                             random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
     ----------
-    A: 2D array
-        The input data matrix.
+    A : 2D array
+        The input data matrix
 
-    size: integer
+    size : integer
         Size of the return array
 
-    n_iter: integer
+    n_iter : integer
         Number of power iterations used to stabilize the result
 
-    power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
+    power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
         (the fastest but numerically unstable when `n_iter` is large, e.g.
@@ -213,12 +215,12 @@ def randomized_range_finder(A, size, n_iter=2,
 
         .. versionadded:: 0.18
 
-    random_state: RandomState or an int seed (0 by default)
+    random_state : RandomState or an int seed (0 by default)
         A random number generator instance
 
     Returns
     -------
-    Q: 2D array
+    Q : 2D array
         A (size x size) projection matrix, the range of which
         approximates well the range of the input matrix A.
 
@@ -256,42 +258,44 @@ def randomized_range_finder(A, size, n_iter=2,
             Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
             Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
         elif power_iteration_normalizer == 'QR':
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q),  mode='economic')
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q),  mode='economic')
+            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
+            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q),  mode='economic')
+    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
+def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
     ----------
-    M: ndarray or sparse matrix
+    M : ndarray or sparse matrix
         Matrix to decompose
 
-    n_components: int
+    n_components : int
         Number of singular values and vectors to extract.
 
-    n_oversamples: int (default is 10)
+    n_oversamples : int (default is 10)
         Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values.
 
-    n_iter: int (default is 2)
-        Number of power iterations (can be used to deal with very noisy
-        problems).
+    n_iter : int or 'auto' (default is 'auto')
+        Number of power iterations. It can be used to deal with very noisy
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        This improves precision with few components.
 
         .. versionchanged:: 0.18
 
-    power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
+    power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
         (the fastest but numerically unstable when `n_iter` is large, e.g.
@@ -301,7 +305,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
 
         .. versionadded:: 0.18
 
-    transpose: True, False or 'auto' (default)
+    transpose : True, False or 'auto' (default)
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
@@ -310,13 +314,13 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
 
         .. versionchanged:: 0.18
 
-    flip_sign: boolean, (True by default)
+    flip_sign : boolean, (True by default)
         The output of a singular value decomposition is only unique up to a
         permutation of the signs of the singular vectors. If `flip_sign` is
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state: RandomState or an int seed (0 by default)
+    random_state : RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
 
     Notes
@@ -324,7 +328,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
     This algorithm finds a (usually very good) approximate truncated
     singular value decomposition using randomization to speed up the
     computations. It is particularly fast on large matrices on which
-    you wish to extract only a small number of components.
+    you wish to extract only a small number of components. In order to
+    obtain further speed up, `n_iter` can be set <=2 (at the cost of
+    loss of precision).
 
     References
     ----------
@@ -342,6 +348,11 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
+
+    if n_iter == 'auto':
+        # Checks if the number of iterations is explicitely specified
+        # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
+        n_iter = 7 if n_components < .1 * min(M.shape) else 4
 
     if transpose == 'auto':
         transpose = n_samples < n_features
@@ -361,7 +372,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
     U = np.dot(Q, Uhat)
 
     if flip_sign:
-        U, V = svd_flip(U, V)
+        if not transpose:
+            U, V = svd_flip(U, V)
+        else:
+            # In case of transpose u_based_decision=false
+            # to actually flip based on u and not v.
+            U, V = svd_flip(U, V, u_based_decision=False)
 
     if transpose:
         # transpose back the results according to the input convention
@@ -639,15 +655,15 @@ def log_logistic(X, out=None):
 
     Parameters
     ----------
-    X: array-like, shape (M, N) or (M, )
+    X : array-like, shape (M, N) or (M, )
         Argument to the logistic function
 
-    out: array-like, shape: (M, N) or (M, ), optional:
+    out : array-like, shape: (M, N) or (M, ), optional:
         Preallocated output array.
 
     Returns
     -------
-    out: array, shape (M, N) or (M, )
+    out : array, shape (M, N) or (M, )
         Log of the logistic function evaluated at every point in x
 
     Notes
@@ -684,15 +700,15 @@ def softmax(X, copy=True):
 
     Parameters
     ----------
-    X: array-like, shape (M, N)
+    X : array-like, shape (M, N)
         Argument to the logistic function
 
-    copy: bool, optional
+    copy : bool, optional
         Copy X or not.
 
     Returns
     -------
-    out: array, shape (M, N)
+    out : array, shape (M, N)
         Softmax function evaluated at every point in x
     """
     if copy:
@@ -826,3 +842,32 @@ def _deterministic_vector_sign_flip(u):
     signs = np.sign(u[range(u.shape[0]), max_abs_rows])
     u *= signs[:, np.newaxis]
     return u
+
+
+def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
+    """Use high precision for cumsum and check that final value matches sum
+
+    Parameters
+    ----------
+    arr : array-like
+        To be cumulatively summed as flat
+    axis : int, optional
+        Axis along which the cumulative sum is computed.
+        The default (None) is to compute the cumsum over the flattened array.
+    rtol : float
+        Relative tolerance, see ``np.allclose``
+    atol : float
+        Absolute tolerance, see ``np.allclose``
+    """
+    # sum is as unstable as cumsum for numpy < 1.9
+    if np_version < (1, 9):
+        return np.cumsum(arr, axis=axis, dtype=np.float64)
+
+    out = np.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = np.sum(arr, axis=axis, dtype=np.float64)
+    if not np.all(np.isclose(out.take(-1, axis=axis), expected, rtol=rtol,
+                             atol=atol, equal_nan=True)):
+        warnings.warn('cumsum was found to be unstable: '
+                      'its last element does not correspond to sum',
+                      RuntimeWarning)
+    return out

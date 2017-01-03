@@ -24,7 +24,7 @@ import numpy as np
 
 from .base import get_data_home
 from .base import Bunch
-from ..externals import joblib
+from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
@@ -40,24 +40,24 @@ logger = logging.getLogger()
 
 
 def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
-                   percent10=False):
-    """Load and return the kddcup 99 dataset (regression).
+                   percent10=True, download_if_missing=True):
+    """Load and return the kddcup 99 dataset (classification).
 
     The KDD Cup '99 dataset was created by processing the tcpdump portions
     of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
-    created by MIT Lincoln Lab [1] . The artificial data was generated using
+    created by MIT Lincoln Lab [1]. The artificial data was generated using
     a closed network and hand-injected attacks to produce a large number of
     different types of attack with normal activity in the background.
     As the initial goal was to produce a large training set for supervised
     learning algorithms, there is a large proportion (80.1%) of abnormal
-    data which is unrealistic in real world, and inapropriate for unsupervised
+    data which is unrealistic in real world, and inappropriate for unsupervised
     anomaly detection which aims at detecting 'abnormal' data, ie
 
     1) qualitatively different from normal data.
 
     2) in large minority among the observations.
 
-    We thus transform the KDD Data set into two differents data set: SA and SF.
+    We thus transform the KDD Data set into two different data sets: SA and SF.
 
     - SA is obtained by simply selecting all the normal data, and a small
       proportion of abnormal data to gives an anomaly proportion of 1%.
@@ -93,7 +93,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
 
     ================      ==========================================
     Samples total         699691
-    Dimensionality        40
+    Dimensionality        4
     Features              discrete (int) or continuous (float)
     Targets               str, 'normal.' or name of the anomaly type
     ================      ==========================================
@@ -102,7 +102,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
 
     ================      ==========================================
     Samples total         619052
-    Dimensionality        39
+    Dimensionality        3
     Features              discrete (int) or continuous (float)
     Targets               str, 'normal.' or name of the anomaly type
     ================      ==========================================
@@ -111,10 +111,12 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
 
     ================      ==========================================
     Samples total         95373
-    Dimensionality        39
+    Dimensionality        3
     Features              discrete (int) or continuous (float)
     Targets               str, 'normal.' or name of the anomaly type
     ================      ==========================================
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -132,8 +134,12 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
+
+    download_if_missing : bool, default=True
+        If False, raise a IOError if the data is not locally available
+        instead of trying to download the data from the source site.
 
     Returns
     -------
@@ -149,17 +155,21 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            Detection Evaluation Richard Lippmann, Joshua W. Haines,
            David J. Fried, Jonathan Korba, Kumar Das
 
-    .. [2] A Geometric Framework for Unsupervised Anomaly Detection: Detecting
-           Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
-           Michael Prerau, Leonid Portnoy, Sal Stolfo
+    .. [2] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
+           unsupervised outlier detection using finite mixtures with
+           discounting learning algorithms. In Proceedings of the sixth
+           ACM SIGKDD international conference on Knowledge discovery
+           and data mining, pages 320-324. ACM Press, 2000.
+
     """
-    kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10)
+    kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
+                                     download_if_missing=download_if_missing)
 
     data = kddcup99.data
     target = kddcup99.target
 
     if subset == 'SA':
-        s = target == 'normal.'
+        s = target == b'normal.'
         t = np.logical_not(s)
         normal_samples = data[s, :]
         normal_targets = target[s]
@@ -187,13 +197,13 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
         data[:, 5] = np.log((data[:, 5] + 0.1).astype(float))
 
         if subset == 'http':
-            s = data[:, 2] == 'http'
+            s = data[:, 2] == b'http'
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
 
         if subset == 'smtp':
-            s = data[:, 2] == 'smtp'
+            s = data[:, 2] == b'smtp'
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
@@ -206,7 +216,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
 
 def _fetch_brute_kddcup99(subset=None, data_home=None,
                           download_if_missing=True, random_state=None,
-                          shuffle=False, percent10=False):
+                          shuffle=False, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -234,7 +244,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
     Returns
@@ -320,6 +330,8 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
         file_ = GzipFile(fileobj=f, mode='r')
         Xy = []
         for line in file_.readlines():
+            if six.PY3:
+                line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
         print('extraction done')
@@ -335,6 +347,9 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
+    elif not available:
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
 
     try:
         X, y

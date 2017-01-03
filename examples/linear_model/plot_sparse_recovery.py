@@ -15,7 +15,7 @@ relevant variables depends on the sparsity of the ground truth, the
 number of samples, the number of features, the conditioning of the
 design matrix on the signal subspace, the amount of noise, and the
 absolute value of the smallest non-zero coefficient [Wainwright2006]
-(http://statistics.berkeley.edu/tech-reports/709.pdf).
+(http://statistics.berkeley.edu/sites/default/files/tech-reports/709.pdf).
 
 Here we keep all parameters constant and vary the conditioning of the
 design matrix. For a well-conditioned design matrix (small mutual

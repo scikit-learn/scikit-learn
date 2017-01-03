@@ -2,12 +2,16 @@ import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
+
 from sklearn.neighbors import BallTree
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_in
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
 from sklearn.manifold.t_sne import _joint_probabilities_nn
@@ -18,6 +22,7 @@ from sklearn.manifold.t_sne import trustworthiness
 from sklearn.manifold.t_sne import TSNE
 from sklearn.manifold import _barnes_hut_tsne
 from sklearn.manifold._utils import _binary_search_perplexity
+from sklearn.datasets import make_blobs
 from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
@@ -193,10 +198,13 @@ def test_gradient():
 
     P = _joint_probabilities(distances, desired_perplexity=25.0,
                              verbose=0)
-    fun = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                        n_components)[0]
-    grad = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                         n_components)[1]
+
+    def fun(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[0]
+
+    def grad(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
+
     assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0,
                         decimal=5)
 
@@ -225,7 +233,7 @@ def test_preserve_trustworthiness_approximately():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     # The Barnes-Hut approximation uses a different method to estimate
-    # P_ij using only a a number of nearest neighbors instead of all
+    # P_ij using only a number of nearest neighbors instead of all
     # points (so that k = 3 * perplexity). As a result we set the
     # perplexity=5, so that the number of neighbors is 5%.
     n_components = 2
@@ -239,6 +247,20 @@ def test_preserve_trustworthiness_approximately():
             X_embedded = tsne.fit_transform(X)
             T = trustworthiness(X, X_embedded, n_neighbors=1)
             assert_almost_equal(T, 1.0, decimal=1)
+
+
+def test_optimization_minimizes_kl_divergence():
+    """t-SNE should give a lower KL divergence with more iterations."""
+    random_state = check_random_state(0)
+    X, _ = make_blobs(n_features=3, random_state=random_state)
+    kl_divergences = []
+    for n_iter in [200, 250, 300]:
+        tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
+                    n_iter=n_iter, random_state=0)
+        tsne.fit_transform(X)
+        kl_divergences.append(tsne.kl_divergence_)
+    assert_less_equal(kl_divergences[1], kl_divergences[0])
+    assert_less_equal(kl_divergences[2], kl_divergences[1])
 
 
 def test_fit_csr_matrix():
@@ -288,9 +310,23 @@ def test_non_square_precomputed_distances():
 
 
 def test_init_not_available():
-    # 'init' must be 'pca' or 'random'.
-    m = "'init' must be 'pca', 'random' or a NumPy array"
+    # 'init' must be 'pca', 'random', or numpy array.
+    m = "'init' must be 'pca', 'random', or a numpy array"
     assert_raises_regexp(ValueError, m, TSNE, init="not available")
+
+
+def test_init_ndarray():
+    # Initialize TSNE with ndarray and test fit
+    tsne = TSNE(init=np.zeros((100, 2)))
+    X_embedded = tsne.fit_transform(np.ones((100, 5)))
+    assert_array_equal(np.zeros((100, 2)), X_embedded)
+
+
+def test_init_ndarray_precomputed():
+    # Initialize TSNE with ndarray and metric 'precomputed'
+    # Make sure no FutureWarning is thrown from _fit
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne.fit(np.zeros((100, 100)))
 
 
 def test_distance_not_available():
@@ -498,16 +534,16 @@ def test_quadtree_similar_point():
     Xs.append(np.array([[1.0, 2.0], [3.0, 2.0]], dtype=np.float32))
     # check the case where points are arbitrarily close on Y axis
     Xs.append(np.array([[1.0, 2.00001], [3.0, 2.00002]], dtype=np.float32))
-    # check the case where points are arbitraryily close on both axes
+    # check the case where points are arbitrarily close on both axes
     Xs.append(np.array([[1.00001, 2.00001], [1.00002, 2.00002]],
               dtype=np.float32))
 
-    # check the case where points are arbitraryily close on both axes
+    # check the case where points are arbitrarily close on both axes
     # close to machine epsilon - x axis
     Xs.append(np.array([[1, 0.0003817754041], [2, 0.0003817753750]],
               dtype=np.float32))
 
-    # check the case where points are arbitraryily close on both axes
+    # check the case where points are arbitrarily close on both axes
     # close to machine epsilon - y axis
     Xs.append(np.array([[0.0003817754041, 1.0], [0.0003817753750, 2.0]],
               dtype=np.float32))
@@ -525,3 +561,67 @@ def test_index_offset():
     # Make sure translating between 1D and N-D indices are preserved
     assert_equal(_barnes_hut_tsne.test_index2offset(), 1)
     assert_equal(_barnes_hut_tsne.test_index_offset(), 1)
+
+
+def test_n_iter_without_progress():
+    # Make sure that the parameter n_iter_without_progress is used correctly
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    tsne = TSNE(n_iter_without_progress=2, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # The output needs to contain the value of n_iter_without_progress
+    assert_in("did not make any progress during the "
+              "last 2 episodes. Finished.", out)
+
+
+def test_min_grad_norm():
+    # Make sure that the parameter min_grad_norm is used correctly
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    min_grad_norm = 0.002
+    tsne = TSNE(min_grad_norm=min_grad_norm, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    lines_out = out.split('\n')
+
+    # extract the gradient norm from the verbose output
+    gradient_norm_values = []
+    for line in lines_out:
+        # When the computation is Finished just an old gradient norm value
+        # is repeated that we do not need to store
+        if 'Finished' in line:
+            break
+
+        start_grad_norm = line.find('gradient norm')
+        if start_grad_norm >= 0:
+            line = line[start_grad_norm:]
+            line = line.replace('gradient norm = ', '')
+            gradient_norm_values.append(float(line))
+
+    # Compute how often the gradient norm is smaller than min_grad_norm
+    gradient_norm_values = np.array(gradient_norm_values)
+    n_smaller_gradient_norms = \
+        len(gradient_norm_values[gradient_norm_values <= min_grad_norm])
+
+    # The gradient norm can be smaller than min_grad_norm at most once,
+    # because in the moment it becomes smaller the optimization stops
+    assert_less_equal(n_smaller_gradient_norms, 1)

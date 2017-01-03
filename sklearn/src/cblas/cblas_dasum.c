@@ -10,7 +10,7 @@
  *   2. Redistributions in binary form must reproduce the above copyright
  *      notice, this list of conditions, and the following disclaimer in the
  *      documentation and/or other materials provided with the distribution.
- *   3. The name of the ATLAS group or the names of its contributers may
+ *   3. The name of the ATLAS group or the names of its contributors may
  *      not be used to endorse or promote products derived from this
  *      software without specific written permission.
  *

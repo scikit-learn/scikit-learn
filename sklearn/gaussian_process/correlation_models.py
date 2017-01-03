@@ -2,7 +2,7 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 """
 The built-in correlation models submodule for the gaussian_process module.

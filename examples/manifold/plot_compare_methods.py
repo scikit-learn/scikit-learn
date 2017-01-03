@@ -10,7 +10,7 @@ For a discussion and comparison of these algorithms, see the
 :ref:`manifold module page <manifold>`
 
 For a similar example, where the methods are applied to a
-sphere dataset, see :ref:`example_manifold_plot_manifold_sphere.py`
+sphere dataset, see :ref:`sphx_glr_auto_examples_manifold_plot_manifold_sphere.py`
 
 Note that the purpose of the MDS is to find a low-dimensional
 representation of the data (here 2D) in which the distances respect well
@@ -113,7 +113,7 @@ tsne = manifold.TSNE(n_components=n_components, init='pca', random_state=0)
 Y = tsne.fit_transform(X)
 t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
-ax = fig.add_subplot(250)
+ax = fig.add_subplot(2, 5, 10)
 plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
 plt.title("t-SNE (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())

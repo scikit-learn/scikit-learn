@@ -52,9 +52,22 @@ def test_kernel_pca():
                 assert_equal(X_pred2.shape, X_pred.shape)
 
 
-def test_invalid_parameters():
+def test_kernel_pca_invalid_parameters():
     assert_raises(ValueError, KernelPCA, 10, fit_inverse_transform=True,
                   kernel='precomputed')
+
+
+def test_kernel_pca_consistent_transform():
+    # X_fit_ needs to retain the old, unmodified copy of X
+    state = np.random.RandomState(0)
+    X = state.rand(10, 10)
+    kpca = KernelPCA(random_state=state).fit(X)
+    transformed1 = kpca.transform(X)
+
+    X_copy = X.copy()
+    X[:, 0] = 666
+    transformed2 = kpca.transform(X_copy)
+    assert_array_almost_equal(transformed1, transformed2)
 
 
 def test_kernel_pca_sparse():

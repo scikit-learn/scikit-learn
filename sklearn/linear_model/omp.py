@@ -145,7 +145,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
               copy_Gram=True, copy_Xy=True, return_path=False):
     """Orthogonal Matching Pursuit step on a precomputed Gram matrix.
 
-    This function uses the the Cholesky decomposition method.
+    This function uses the Cholesky decomposition method.
 
     Parameters
     ----------
@@ -336,7 +336,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
 
     Notes
     -----
-    Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
+    Orthogonal matching pursuit was introduced in S. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
     (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
@@ -557,8 +557,15 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If False, the regressors X are assumed to be already normalized.
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
@@ -570,7 +577,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the formula)
 
     intercept_ : float or array, shape (n_targets,)
@@ -629,7 +636,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
-        X, y, X_mean, y_mean, X_std, Gram, Xy = \
+        X, y, X_offset, y_offset, X_scale, Gram, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True)
 
@@ -657,7 +664,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                 copy_Gram=True, copy_Xy=True,
                 return_n_iter=True)
         self.coef_ = coef_.T
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
 
@@ -690,6 +697,13 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -697,7 +711,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
     Returns
     -------
-    residues: array, shape (n_samples, max_features)
+    residues : array, shape (n_samples, max_features)
         Residues of the prediction on the test data
     """
 
@@ -748,8 +762,15 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If False, the regressors X are assumed to be already normalized.
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -783,7 +804,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     intercept_ : float or array, shape (n_targets,)
         Independent term in decision function.
 
-    coef_ : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the problem formulation).
 
     n_nonzero_coefs_ : int

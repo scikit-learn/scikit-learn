@@ -27,7 +27,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
 
@@ -50,6 +49,10 @@ from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.exceptions import DataConversionWarning
+
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_predict
+from sklearn.svm import SVR
 
 from sklearn import datasets
 
@@ -118,6 +121,30 @@ def test_polynomial_features():
     X_poly = interact.fit_transform(X)
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
+    assert_equal(interact.powers_.shape, (interact.n_output_features_,
+                 interact.n_input_features_))
+
+
+def test_polynomial_feature_names():
+    X = np.arange(30).reshape(10, 3)
+    poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)
+    feature_names = poly.get_feature_names()
+    assert_array_equal(['1', 'x0', 'x1', 'x2', 'x0^2', 'x0 x1',
+                        'x0 x2', 'x1^2', 'x1 x2', 'x2^2'],
+                       feature_names)
+
+    poly = PolynomialFeatures(degree=3, include_bias=False).fit(X)
+    feature_names = poly.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c', 'a^2', 'a b', 'a c', 'b^2',
+                        'b c', 'c^2', 'a^3', 'a^2 b', 'a^2 c',
+                        'a b^2', 'a b c', 'a c^2', 'b^3', 'b^2 c',
+                        'b c^2', 'c^3'], feature_names)
+    # test some unicode
+    poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
+    feature_names = poly.get_feature_names([u"\u0001F40D", u"\u262E", u"\u05D0"])
+    assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
+                       feature_names)
+
 
 def test_standard_scaler_1d():
     # Test scaling of dataset along single axis
@@ -174,7 +201,7 @@ def test_scale_1d():
 
 @skip_if_32bit
 def test_standard_scaler_numerical_stability():
-    """Test numerical stability of scaling"""
+    # Test numerical stability of scaling
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
 
@@ -395,7 +422,7 @@ def test_standard_scaler_partial_fit_numerical_stability():
     # Sparse input
     size = (100, 3)
     scale = 1e20
-    X = rng.random_integers(0, 1, size).astype(np.float64) * scale
+    X = rng.randint(0, 2, size).astype(np.float64) * scale
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
 
@@ -762,19 +789,19 @@ def test_scale_sparse_with_mean_raise_exception():
 
 def test_scale_input_finiteness_validation():
     # Check if non finite inputs raise ValueError
-    X = [np.nan, 5, 6, 7, 8]
+    X = [[np.nan, 5, 6, 7, 8]]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
                         scale, X)
 
-    X = [np.inf, 5, 6, 7, 8]
+    X = [[np.inf, 5, 6, 7, 8]]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
                         scale, X)
 
 
 def test_robust_scaler_2d_arrays():
-    """Test robust scaling of 2d array along first axis"""
+    # Test robust scaling of 2d array along first axis
     rng = np.random.RandomState(0)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
@@ -810,6 +837,32 @@ def test_robust_scaler_iris():
     q = np.percentile(X_trans, q=(25, 75), axis=0)
     iqr = q[1] - q[0]
     assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scaler_iris_quantiles():
+    X = iris.data
+    scaler = RobustScaler(quantile_range=(10, 90))
+    X_trans = scaler.fit_transform(X)
+    assert_array_almost_equal(np.median(X_trans, axis=0), 0)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    q = np.percentile(X_trans, q=(10, 90), axis=0)
+    q_range = q[1] - q[0]
+    assert_array_almost_equal(q_range, 1)
+
+
+def test_robust_scaler_invalid_range():
+    for range_ in [
+        (-1, 90),
+        (-2, -3),
+        (10, 101),
+        (100.5, 101),
+        (90, 50),
+    ]:
+        scaler = RobustScaler(quantile_range=range_)
+
+        assert_raises_regex(ValueError, 'Invalid quantile range: \(',
+                            scaler.fit, iris.data)
 
 
 def test_scale_function_without_centering():
@@ -856,7 +909,7 @@ def test_robust_scale_axis1():
 
 
 def test_robust_scaler_zero_variance_features():
-    """Check RobustScaler on toy data with zero variance features"""
+    # Check RobustScaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.1],
          [0., 1., +1.1]]
@@ -889,7 +942,7 @@ def test_robust_scaler_zero_variance_features():
 
 
 def test_maxabs_scaler_zero_variance_features():
-    """Check MaxAbsScaler on toy data with zero variance features"""
+    # Check MaxAbsScaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.3],
          [0., 1., +1.5],
@@ -963,25 +1016,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
     X_scaled_back = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
-
-
-@ignore_warnings
-def test_deprecation_minmax_scaler():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    scaler = MinMaxScaler().fit(X)
-
-    depr_message = ("Attribute data_range will be removed in "
-                    "0.19. Use ``data_range_`` instead")
-    data_range = assert_warns_message(DeprecationWarning, depr_message,
-                                      getattr, scaler, "data_range")
-    assert_array_equal(data_range, scaler.data_range)
-
-    depr_message = ("Attribute data_min will be removed in "
-                    "0.19. Use ``data_min_`` instead")
-    data_min = assert_warns_message(DeprecationWarning, depr_message,
-                                    getattr, scaler, "data_min")
-    assert_array_equal(data_min, scaler.data_min)
 
 
 def test_warning_scaling_integers():
@@ -1244,6 +1278,44 @@ def test_normalize():
     assert_raises(ValueError, normalize, [[0]], axis=2)
     assert_raises(ValueError, normalize, [[0]], norm='l3')
 
+    rs = np.random.RandomState(0)
+    X_dense = rs.randn(10, 5)
+    X_sparse = sparse.csr_matrix(X_dense)
+    ones = np.ones((10))
+    for X in (X_dense, X_sparse):
+        for dtype in (np.float32, np.float64):
+            for norm in ('l1', 'l2'):
+                X = X.astype(dtype)
+                X_norm = normalize(X, norm=norm)
+                assert_equal(X_norm.dtype, dtype)
+
+                X_norm = toarray(X_norm)
+                if norm == 'l1':
+                    row_sums = np.abs(X_norm).sum(axis=1)
+                else:
+                    X_norm_squared = X_norm**2
+                    row_sums = X_norm_squared.sum(axis=1)
+
+                assert_array_almost_equal(row_sums, ones)
+
+    # Test return_norm
+    X_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
+    for norm in ('l1', 'l2', 'max'):
+        _, norms = normalize(X_dense, norm=norm, return_norm=True)
+        if norm == 'l1':
+            assert_array_almost_equal(norms, np.array([7.0, 1.0, 5.0]))
+        elif norm == 'l2':
+            assert_array_almost_equal(norms, np.array([5.0, 1.0, 3.60555127]))
+        else:
+            assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
+
+    X_sparse = sparse.csr_matrix(X_dense)
+    for norm in ('l1', 'l2'):
+        assert_raises(NotImplementedError, normalize, X_sparse,
+                      norm=norm, return_norm=True)
+    _, norms = normalize(X_sparse, norm='max', return_norm=True)
+    assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
+
 
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
@@ -1325,6 +1397,26 @@ def test_center_kernel():
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
 
 
+def test_cv_pipeline_precomputed():
+    # Cross-validate a regression on four coplanar points with the same
+    # value. Use precomputed kernel to ensure Pipeline with KernelCenterer
+    # is treated as a _pairwise operation.
+    X = np.array([[3, 0, 0], [0, 3, 0], [0, 0, 3], [1, 1, 1]])
+    y_true = np.ones((4,))
+    K = X.dot(X.T)
+    kcent = KernelCenterer()
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
+
+    # did the pipeline set the _pairwise attribute?
+    assert_true(pipeline._pairwise)
+
+    # test cross-validation, score should be almost perfect
+    # NB: this test is pretty vacuous -- it's mainly to test integration
+    #     of Pipeline and KernelCenterer
+    y_pred = cross_val_predict(pipeline, K, y_true, cv=2)
+    assert_array_almost_equal(y_true, y_pred)
+
+
 def test_fit_transform():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -1332,17 +1424,6 @@ def test_fit_transform():
         X_transformed = obj.fit(X).transform(X)
         X_transformed2 = obj.fit_transform(X)
         assert_array_equal(X_transformed, X_transformed2)
-
-
-def test_deprecation_standard_scaler():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    scaler = StandardScaler().fit(X)
-    depr_message = ("Function std_ is deprecated; Attribute ``std_`` will be "
-                    "removed in 0.19. Use ``scale_`` instead")
-    std_ = assert_warns_message(DeprecationWarning, depr_message, getattr,
-                                scaler, "std_")
-    assert_array_equal(std_, scaler.scale_)
 
 
 def test_add_dummy_feature():
@@ -1465,6 +1546,23 @@ def test_transform_selected():
 
     _check_transform_selected(X, X, [])
     _check_transform_selected(X, X, [False, False, False])
+
+
+def test_transform_selected_copy_arg():
+    # transformer that alters X
+    def _mutating_transformer(X):
+        X[0, 0] = X[0, 0] + 1
+        return X
+
+    original_X = np.asarray([[1, 2], [3, 4]])
+    expected_Xtr = [[2, 2], [3, 4]]
+
+    X = original_X.copy()
+    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
+                              selected='all')
+
+    assert_array_equal(toarray(X), toarray(original_X))
+    assert_array_equal(toarray(Xtr), expected_Xtr)
 
 
 def _run_one_hot(X, X2, cat):

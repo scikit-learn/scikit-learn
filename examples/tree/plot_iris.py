@@ -34,18 +34,6 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     X = iris.data[:, pair]
     y = iris.target
 
-    # Shuffle
-    idx = np.arange(X.shape[0])
-    np.random.seed(13)
-    np.random.shuffle(idx)
-    X = X[idx]
-    y = y[idx]
-
-    # Standardize
-    mean = X.mean(axis=0)
-    std = X.std(axis=0)
-    X = (X - mean) / std
-
     # Train
     clf = DecisionTreeClassifier().fit(X, y)
 

@@ -14,7 +14,7 @@ from sklearn.linear_model.randomized_l1 import (lasso_stability_path,
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model.base import center_data
+from sklearn.linear_model.base import _preprocess_data
 
 diabetes = load_diabetes()
 X = diabetes.data
@@ -111,7 +111,7 @@ def test_randomized_logistic_sparse():
 
     # center here because sparse matrices are usually not centered
     # labels should not be centered
-    X, _, _, _, _ = center_data(X, y, True, True)
+    X, _, _, _, _ = _preprocess_data(X, y, True, True)
 
     X_sp = sparse.csr_matrix(X)
 

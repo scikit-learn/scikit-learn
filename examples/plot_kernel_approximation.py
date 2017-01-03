@@ -169,7 +169,7 @@ pca = PCA(n_components=8).fit(data_train)
 
 X = pca.transform(data_train)
 
-# Gemerate grid along first two principal components
+# Generate grid along first two principal components
 multiples = np.arange(-2, 2, 0.1)
 # steps along first component
 first = multiples[:, np.newaxis] * pca.components_[0, :]
@@ -193,7 +193,7 @@ plt.figure(figsize=(12, 5))
 for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
                          fourier_approx_svm)):
     # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
     plt.subplot(1, 3, i + 1)
     Z = clf.predict(flat_grid)
 
