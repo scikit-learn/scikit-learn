@@ -44,14 +44,12 @@ plt.clf()
 
 plt.suptitle("Plugging different distance functions to K-Medoids", fontsize=14)
 
-all_distance_metrics = PAIRWISE_DISTANCE_FUNCTIONS.keys()
-valid_distance_metrics = [d for d in all_distance_metrics if d
-                          is not 'precomputed']
+selected_distance_metrics = ['manhattan', 'euclidean', 'cosine']
 
-plot_rows = int(np.ceil(len(valid_distance_metrics) / 2.0))
+plot_rows = int(np.ceil(len(selected_distance_metrics) / 2.0))
 plot_cols = 2
 
-for i, distance_metric in enumerate(valid_distance_metrics):
+for i, distance_metric in enumerate(selected_distance_metrics):
 
     # Obtain labels for each point in mesh. Use last trained model.
     model = KMedoids(n_clusters=n_digits, distance_metric=distance_metric)

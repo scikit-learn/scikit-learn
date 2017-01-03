@@ -59,7 +59,7 @@ Overview of clustering methods
      - Large ``n_samples``, medium ``n_clusters``
      - General-purpose, uneven cluster size, flat geometry, 
        not too many clusters
-     - Distances between points (arbitrary metric)
+     - Any pairwise distance
 
    * - :ref:`Affinity propagation <affinity_propagation>`
      - damping, sample preference
@@ -293,10 +293,11 @@ K-Medoids
 
 :class:`KMedoids` is related to the :class:`KMeans` algorithm. While
 :class:`KMeans` tries to minimize the within cluster sum-of-squares,
-:class:`KMedoids` tries to minimize the sum-of-distances between points labeled
-as the medoids of the cluster an all points assigned to that cluster.
-Furthermore, the distance metric used by :class:`KMedoids` can be freely chosen
-while :class:`KMeans` uses a fixed Euclidean distance.
+:class:`KMedoids` tries to minimize the sum of distances between each point and
+the medoid of its cluster. The medoid is a data point (unlike the centroid)
+which has least total distance to the other members of its cluster. The use of
+a data point to represent each cluster's center allows the use of any distance
+metric for clustering.
 
 :class:`KMedoids` can be more robust to noise and outliers than :class:`KMeans`
 as e.g. it will choose one of the cluster members as the medoid while
@@ -315,24 +316,19 @@ which does not exist in the original data, and thus cannot be a medoid.
  with various distance metrics.
 
 **Algorithm description:**
-:class:`KMedoids` fitting algorithms have different variants, one of them being
-Partitioning Around Medoids (PAM). Currently Scikit-Learn only supports PAM.
-The PAM algorithm uses a greedy search, which may fail to find the global
-optimum. It consists of two alternating steps commonly called the Assignment
-and Update steps (BUILD and SWAP in Kaufmann, Rousseeuw).
+There are several algorithms to compute K-Medoids, though :class:`KMedoids`
+currently only supports Partitioning Around Medoids (PAM). The PAM algorithm
+uses a greedy search, which may fail to find the global optimum. It consists of
+two alternating steps commonly called the
+Assignment and Update steps (BUILD and SWAP in Kaufmann and Rousseeuw, 1987).
 
 PAM works as follows:
 * Initialize: Select ``n_clusters`` from the dataset as the medoids using either
   a heuristic or random approach (configurable using the ``init`` parameter).
 * Assignment step: assign each element from the dataset to the closest medoid.
-* Update step: For each medoid :math:`m_i` and each data point :math:`x_j`
-  associated to :math:`m_i` swap :math:`m_i` and :math:`o_i` and compute the
-  total cost. Select the medoid :math:`o_i` with the lowest cost.
-* Repease the assignment and update step while the medoids keep changing or
+* Update step: Identify the new medoid of each cluster.
+* Repeat the assignment and update step while the medoids keep changing or
   maximum number of iterations ``max_iter`` is reached
-
-Total cost is defined as the sum-of-distances from the cluster medoids to the
-medoid.
 
 The complexity of K-Medoids is :math:`O(N^2 k T)` where :math:`N` is the number
 of samples, :math:`T` is the number of iterations and :math:`k` is the number of
