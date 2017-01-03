@@ -256,9 +256,9 @@ def test_fowlkes_mallows_score_properties():
     assert_almost_equal(score_symetric, expected)
 
     # permutation property
-    score_permuted = fowlkes_mallows_score((labels_a+1) % 3, labels_b)
+    score_permuted = fowlkes_mallows_score((labels_a + 1) % 3, labels_b)
     assert_almost_equal(score_permuted, expected)
 
     # symetric and permutation(both together)
-    score_both = fowlkes_mallows_score(labels_b, (labels_a+2) % 3)
+    score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
     assert_almost_equal(score_both, expected)
