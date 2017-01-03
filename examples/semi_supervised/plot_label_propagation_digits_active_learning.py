@@ -70,7 +70,9 @@ for i in range(5):
         lp_model.label_distributions_.T)
 
     # select five digit examples that the classifier is most uncertain about
-    uncertainty_index = uncertainty_index = np.argsort(pred_entropies)[-5:]
+    uncertainty_index = np.argsort(pred_entropies)[::-1]
+    uncertainty_index = uncertainty_index[
+        np.in1d(uncertainty_index, unlabeled_indices)][:5]
 
     # keep track of indices that we get labels for
     delete_indices = np.array([])
