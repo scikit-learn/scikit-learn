@@ -292,8 +292,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         self.means_ = _class_means(X, y)
         if not self.store_covariance:
-            warnings.warn("'covariance_' will be stored only if "
-                          "'store_covariance' is True", DeprecationWarning)
+            warnings.warn("from version 0.21 'covariance_' will be stored only"
+                          " if 'store_covariance' is True", DeprecationWarning)
         self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
         self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T)) +
@@ -333,8 +333,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         self.means_ = _class_means(X, y)
         if not self.store_covariance:
-            warnings.warn("'covariance_' will be stored only if "
-                          "'store_covariance' is True", DeprecationWarning)
+            warnings.warn("from version 0.21 'covariance_' will be stored only"
+                          " if 'store_covariance' is True", DeprecationWarning)
         self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
 
         Sw = self.covariance_  # within scatter
@@ -668,9 +668,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         cov = None
         if self.store_covariances is not None:
             warnings.warn("'store_covariances' was renamed to store_covariance"
-                          " in version 0.19 and will be removed in 0.20.",
+                          " in version 0.19 and will be removed in 0.21.",
                           DeprecationWarning)
-            self.store_covariance = self.store_covariances
+            store_covariance = self.store_covariances
         if self.store_covariance:
             cov = []
         means = []

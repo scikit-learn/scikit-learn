@@ -5,6 +5,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
@@ -224,12 +225,36 @@ def test_lda_scaling():
 
 
 def test_lda_store_covariance():
-    # The default is to not set the covariances_ attribute
-    clf = LinearDiscriminantAnalysis().fit(X, y)
+    # Test for slover 'lsqr' and 'eigen'
+    for solver in ('lsqr', 'eigen'):
+        clf = LinearDiscriminantAnalysis(solver=solver)
+        assert_false(not hasattr(clf.fit(X, y), 'covariance_'))
+
+        # Test the deprecation
+        assert_warns(DeprecationWarning, clf.fit, X, y)
+
+        # Test the actual attribute:
+        clf = LinearDiscriminantAnalysis(solver=solver,
+                                         store_covariance=True).fit(X6, y6)
+        assert_true(hasattr(clf, 'covariance_'))
+
+        assert_array_almost_equal(
+            clf.covariance_[0],
+            np.array([0.422222, 0.088889])
+        )
+
+        assert_array_almost_equal(
+            clf.covariance_[1],
+            np.array([0.088889, 0.533333])
+        )
+
+    # Test for slover svd, the default is to not set the covariances_ attribute
+    clf = LinearDiscriminantAnalysis(solver='svd').fit(X, y)
     assert_true(not hasattr(clf, 'covariance_'))
 
     # Test the actual attribute:
-    clf = LinearDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
+    clf = LinearDiscriminantAnalysis(solver=solver,
+                                     store_covariance=True).fit(X6, y6)
     assert_true(hasattr(clf, 'covariance_'))
 
     assert_array_almost_equal(
@@ -300,6 +325,10 @@ def test_qda_store_covariance():
         clf.covariance_[1],
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
     )
+
+    # Test the deprecation
+    clf = QuadraticDiscriminantAnalysis(store_covariances=True)
+    assert_warns(DeprecationWarning, clf.fit, X, y)
 
 
 def test_qda_regularization():
