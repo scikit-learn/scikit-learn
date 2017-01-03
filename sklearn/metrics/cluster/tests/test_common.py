@@ -15,7 +15,7 @@ from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.cluster import completeness_score
 from sklearn.metrics.cluster import contingency_matrix
-from sklearn.metrics.cluster import entropy
+from sklearn.metrics.cluster import fowlkes_mallows_score
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import homogeneity_completeness_v_measure
 from sklearn.metrics.cluster import homogeneity_score
@@ -25,6 +25,7 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
+from sklearn.metrics.cluster import calinski_harabaz_score
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
@@ -49,32 +50,27 @@ from sklearn.utils.testing import assert_almost_equal
 # properties, e.g. invariance toward several input layout.
 #
 
-#metrics used to test similarity between bicluster
-BICLUSTER_METRICS = {
-    "consensus_score":consensus_score    
-    }
-      
+# Metrics used to test similarity between bicluster      
 SUPERVISED_METRICS = {
     "adjusted_mutual_info_score":adjusted_mutual_info_score ,
     "adjusted_rand_score":adjusted_rand_score,
     "completeness_score":completeness_score,
-    "contingency_matrix":contingency_matrix,
     "homogeneity_score":homogeneity_score,
-    "expected_mutual_information":expected_mutual_information,
-    "homogeneity_completeness_v_measure":homogeneity_completeness_v_measure,
     "mutual_info_score":mutual_info_score,
     "normalized_mutual_info_score":normalized_mutual_info_score,
-    "v_measure_score":v_measure_score
+    "v_measure_score":v_measure_score,
+    "fowlkes_mallows_score":fowlkes_mallows_score
     }
         
 UNSUPERVISED_METRICS = {
-    "silhouette_score":silhouette_score
+    "silhouette_score":silhouette_score,
+    "calinski_harabaz_score":calinski_harabaz_score
     }
         
-ALL_METRICS = dict()
-ALL_METRICS.update(BICLUSTER_METRICS)
-ALL_METRICS.update(SUPERVISED_METRICS)
-ALL_METRICS.update(UNSUPERVISED_METRICS)
+SUPERVISED_METRICS_DICT = dict()
+UNSUPERVISED_METRICS_DICT = dict()
+SUPERVISED_METRICS_DICT.update(SUPERVISED_METRICS)
+UNSUPERVISED_METRICS_DICT.update(UNSUPERVISED_METRICS)
 
 # Lists of metrics with common properties
 # ---------------------------------------
@@ -88,7 +84,7 @@ ALL_METRICS.update(UNSUPERVISED_METRICS)
 SYMMETRIC_METRICS = [
     "adjusted_rand_score","v_measure_score",
     "mutual_info_score","adjusted_mutual_info_score",
-    "normalized_mutual_info_score",
+    "normalized_mutual_info_score","fowlkes_mallows_score"
     ]
                     
 NON_SYMMETRIC_METRICS = ["homogeneity_score" , "completeness_score"]
@@ -102,31 +98,10 @@ METRICS_ZERO_INFO = [
 # Metrics with output between 0 and 1                                      
 METRICS_NORMALIZED_OUTPUT = [
     "adjusted_rand_score","homogeneity_score","completeness_score",
-    "v_measure_score","adjusted_mutual_info_score",
+    "v_measure_score","adjusted_mutual_info_score","fowlkes_mallows_score",
     "normalized_mutual_info_score"
-    ]                  
-                      
-# Metrics where permutations of labels dont change score( 0 and 1 exchchanged)
-METRICS_PERMUTE_LABELS = ["homogeneity_score","v_measure_score",
-    "completeness_score","mutual_info_score","adjusted_mutual_info_score",
-    "normalized_mutual_info_score","adjusted_rand_score"
     ]
-
-# Input parameters can be both in the form of arrays and lists
-METRICS_WITH_FORMAT_INVARIANCE = ["homogeneity_score","v_measure_score",
-    "completeness_score","mutual_info_score","adjusted_mutual_info_score",
-    "normalized_mutual_info_score","adjusted_rand_score"
-    ] 
     
-# If classes members are completely split across different clusters,
-# the assignment is totally in-complete, hence the score of these metrics is 0
-# they are perfect when the clusters are both homoneneous and complete.
-#
-CLASS_BASED_METRICS = [
-    "adjusted_mutual_info_score","normalized_mutual_info_score",
-    "v_measure_score"
-    ]
-
                                                 
 def assert_between(var,score_1,score_2):
     """ Returns a boolean value
@@ -143,12 +118,12 @@ def test_symmetry():
     y1 = rng.randint(3, size=30)
     y2 = rng.randint(3, size=30)
     for name in SYMMETRIC_METRICS:
-        metric = ALL_METRICS[name]
+        metric = SUPERVISED_METRICS_DICT[name]
         assert_almost_equal(metric(y1,y2),
                             metric(y2,y1))
             
     for name in NON_SYMMETRIC_METRICS:
-        metric = ALL_METRICS[name]
+        metric = SUPERVISED_METRICS_DICT[name]
         assert_almost_equal(metric([0, 1, 2, 5, 4, 9],[0, 1, 9, 4, 3, 5]),
                             metric([0, 1, 9, 4, 3, 5],[0, 1, 2, 5, 4, 9]))
 
@@ -159,7 +134,7 @@ def test_exactly_zero_info_score():
         labels_a, labels_b=(np.ones(i, dtype=np.int),
                               np.arange(i, dtype=np.int))
         for name in METRICS_ZERO_INFO:
-            metric=ALL_METRICS[name]
+            metric=SUPERVISED_METRICS_DICT[name]
             assert_almost_equal(metric(labels_a,labels_b), 0.0)
 
                                     
@@ -167,7 +142,7 @@ def test_normalized_output():
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
     upper_bound_2 = [0, 0, 0, 1, 1, 1]
     for name in METRICS_NORMALIZED_OUTPUT:
-        metric=ALL_METRICS[name]
+        metric=SUPERVISED_METRICS_DICT[name]
         assert_between(metric([0, 0, 0, 1, 1, 1],[0, 0, 0, 1, 2, 2]), 0.0, 1.0)
         assert_between(metric([0, 0, 1, 1, 2, 2],[0, 0, 1, 1, 1, 1]), 0.0, 1.0)
         assert_equal(metric(upper_bound_1,upper_bound_2), 1.0)
@@ -176,39 +151,48 @@ def test_normalized_output():
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
     for name in SYMMETRIC_METRICS:
-        metric=ALL_METRICS[name]
+        metric=SUPERVISED_METRICS_DICT[name]
         assert_equal(metric(lower_bound_1,lower_bound_2), 0.0)
 
-                         
+# All clustering metrocs do not change score due to permutations of labels
+# that is when 0 and 1 exchchanged.                         
 def test_permute_labels():
-    for name in METRICS_PERMUTE_LABELS:
-        metric = ALL_METRICS[name]
+    for name in SUPERVISED_METRICS_DICT:
+        metric = SUPERVISED_METRICS_DICT[name]
         y_label = np.array([0, 0, 0, 1, 1, 0, 1])
-        y_pred=np.array([1, 0, 1, 0, 1, 1, 0])
+        y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
         assert_almost_equal(metric(y_pred, y_label),metric(y_pred, 1-y_label))
         assert_almost_equal(metric(y_pred, y_label),metric(1-y_pred, y_label))
         assert_almost_equal(metric(y_pred, y_label),metric(1-y_pred, 1-y_label))
-        #Test for Silhouette_score
-        dataset = datasets.load_iris()
-        X = dataset.data
-        y_pred = dataset.target
-        D = pairwise_distances(X, metric='euclidean')
-        score_1 = silhouette_score(D, y_pred, metric='precomputed')
-        score_2 = silhouette_score(D, 1-y_pred, metric='precomputed')
-        assert_almost_equal(score_1, score_2)
-
         
-def test_class_based_clusters():
-    for name in CLASS_BASED_METRICS:
-        metric = ALL_METRICS[name]
-        assert_equal(metric([0, 0, 0, 0],[0, 1, 2, 3]),0.0)
-        assert_equal(metric([0, 0, 1, 1],[0, 0, 1, 1]),1.0)
-        assert_equal(metric([0, 0, 1, 1],[0, 0, 1, 1]),1.0)   
+    #Test for Silhouette_score
+    dataset = datasets.load_iris()
+    X = dataset.data
+    y_pred = dataset.target
+    D = pairwise_distances(X, metric='euclidean')
+    score_1 = silhouette_score(D, y_pred, metric='precomputed')
+    score_2 = silhouette_score(D, 1-y_pred, metric='precomputed')
+    assert_almost_equal(score_1, score_2)
+    
+    #Test for calinski_harabaz_score
+    dataset = datasets.load_iris()
+    X = dataset.data
+    y_pred = dataset.target
+    D = pairwise_distances(X, metric='euclidean')
+    score_1 = calinski_harabaz_score(D, y_pred)
+    score_2 = calinski_harabaz_score(D, 1-y_pred)
+    score_3 = calinski_harabaz_score(1-D, y_pred)
+    score_4 = calinski_harabaz_score(1-D, 1-y_pred)
+    assert_almost_equal(score_1, score_2)
+    assert_almost_equal(score_1, score_3)
+    assert_almost_equal(score_1, score_4)
         
-
+        
+# For ALL clustering metrics Input parameters can be both 
+# in the form of arrays and lists
 def test_format_invariance():
-    for name in METRICS_WITH_FORMAT_INVARIANCE:
-        metric = ALL_METRICS[name]
+    for name in SUPERVISED_METRICS_DICT:
+        metric = SUPERVISED_METRICS_DICT[name]
         list_a = [0, 0, 0, 1, 1, 1]
         list_b = [0, 1, 2, 3, 4, 5]
         arr_a = np.array([0, 0, 0, 1, 1, 1])
@@ -216,4 +200,3 @@ def test_format_invariance():
         score_list = metric(list_a,list_b)
         score_array = metric(arr_a,arr_b)
         assert_equal(score_list,score_array)
-          
