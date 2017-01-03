@@ -80,9 +80,9 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Multi-output targets.
 
         classes : list of numpy arrays, shape (n_outputs)
-            each array is unique classes for one output in str/int
+            Each array is unique classes for one output in str/int
             Can be obtained by via
-            `[np.unique(y[:, i]) for i in range(y.shape[1])]`, where y is the
+            ``[np.unique(y[:, i]) for i in range(y.shape[1])]``, where y is the
             target matrix of the entire dataset.
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
@@ -98,7 +98,6 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
         self : object
             Returns self.
         """
-
         X, y = check_X_y(X, y,
                          multi_output=True,
                          accept_sparse=True)

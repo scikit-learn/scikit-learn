@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 from sklearn.utils import shuffle
@@ -8,12 +9,15 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
-from sklearn.linear_model import Lasso, SGDClassifier, SGDRegressor,\
-    LogisticRegression
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
@@ -148,7 +152,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
-    mor = MultiOutputClassifier(sgd_linear_clf)
+    mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=-1)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
@@ -165,23 +169,33 @@ def test_multi_output_classification_partial_fit():
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
 
     # train the multi_target_linear and also get the predictions.
-    half_index = int(X.shape[0] / 2)
+    half_index = X.shape[0] // 2
     multi_target_linear.partial_fit(
         X[:half_index], y[:half_index], classes=classes)
-    multi_target_linear.partial_fit(X[half_index:], y[half_index:])
 
     predictions = multi_target_linear.predict(X)
     assert_equal((n_samples, n_outputs), predictions.shape)
 
     # train the linear classification with each column and assert that
-    # predictions are equal
+    # predictions are equal after first partial_fit
+    for i in range(3):
+        # create a clone with the same state
+        sgd_linear_clf = clone(sgd_linear_clf)
+        sgd_linear_clf.partial_fit(
+            X[:half_index], y[:half_index, i], classes=classes[i])
+        assert_array_equal(sgd_linear_clf.predict(X), predictions[:, i])
+
+    multi_target_linear.partial_fit(X[half_index:], y[half_index:])
+    predictions = multi_target_linear.predict(X)
+    # train the linear classification with each column and assert that
+    # predictions are equal after two partial_fit
     for i in range(3):
         # create a clone with the same state
         sgd_linear_clf = clone(sgd_linear_clf)
         sgd_linear_clf.partial_fit(
             X[:half_index], y[:half_index, i], classes=classes[i])
         sgd_linear_clf.partial_fit(X[half_index:], y[half_index:, i])
-        assert_equal(list(sgd_linear_clf.predict(X)), list(predictions[:, i]))
+        assert_array_equal(sgd_linear_clf.predict(X), predictions[:, i])
 
 
 def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
@@ -313,7 +327,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
-    assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
+    assert_array_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
 
 
 def test_multi_output_exceptions():

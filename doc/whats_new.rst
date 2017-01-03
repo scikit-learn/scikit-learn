@@ -45,7 +45,7 @@ Enhancements
 ............
 
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
-     now support incremental fit using `partial_fit`.
+     now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
 
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
