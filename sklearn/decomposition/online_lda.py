@@ -753,7 +753,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Perplexity is defined as exp(-1. * log-likelihood per word)
 
         .. versionchanged:: 0.19
-           *doc_topic_distr* argument has been depricated and is ignored
+           *doc_topic_distr* argument has been deprecated and is ignored
            because user no longer has access to unnormalized distribution
 
         Parameters
@@ -763,7 +763,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr : None or array, shape=(n_samples, n_topics)
             Document topic distribution.
-            This argument is deprecated and is currenly being ignored.
+            This argument is deprecated and is currently being ignored.
 
             .. deprecated:: 0.19
 
