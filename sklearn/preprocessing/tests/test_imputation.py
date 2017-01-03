@@ -397,33 +397,55 @@ def test_missing_indicator():
              [11,  -1,   1,  1]
     ])
 
+    def assert_type(actual, expect, sp, missing_values):
+        if sp is True and missing_values != 0:
+            assert_equal(actual, sparse.csc_matrix)
+        elif (sp is True and missing_values == 0) or \
+            sp is False:
+            assert_equal(actual, np.ndarray)
+        else:
+            print type(retype(X2)), sp, missing_values, type(X2_tr)
+            assert_equal(actual, expect)
+    
+    def assert_mask(actual, expected, features):
+        if hasattr(actual, 'toarray'):
+            assert_array_equal(actual.toarray(), expected[:, features])
+        else:
+            assert_array_equal(actual, expected[:, features])
+
     for X1, X2, missing_values in [(X1_orig, X2_orig, -1),
                                    (X1_orig + 1, X2_orig + 1, 0)]:
         mask = X2 == missing_values
         expect_feat_missing = np.where(np.any(X1 == missing_values, axis=0))[0]
         for retype in [np.array, sparse.csr_matrix,
                        sparse.csc_matrix, sparse.lil_matrix]:
-            # features = "train":
-            MI = MissingIndicator(missing_values=missing_values)
-            MI.fit(retype(X1))
-            X2_tr = MI.transform(X2)
-            features = MI.feat_with_missing_
-            assert_array_equal(expect_feat_missing, features)
-            assert_array_equal(np.asarray(X2_tr), mask[:, features])
+            for sp in [True, False, 'auto']:
+                X1_ft = retype(X1)
+                X2_t = retype(X2)
+                # features = "train":
+                MI = MissingIndicator(missing_values=missing_values,
+                                      sparse = sp)
 
-            # features = "all"
-            MI = clone(MI).set_params(features="all")
-            MI.fit(retype(X1))
-            X2_tr = MI.transform(X2)
-            features = np.arange(X2.shape[1])
-            assert_array_equal(np.asarray(X2_tr), mask[:, features])
+                MI.fit(X1_ft)
+                X2_tr = MI.transform(X2_t)
+                features = MI.feat_with_missing_
+                assert_array_equal(expect_feat_missing, features)
+                assert_type(type(X2_tr), type(X2_t), sp, missing_values)
+                assert_mask(X2_tr, mask, features)
 
-            # features = [1, 2]
-            features = [1, 2]
-            MI = clone(MI).set_params(features=features)
-            MI.fit(retype(X1))
-            X2_tr = MI.transform(X2)
-            assert_array_equal(np.asarray(X2_tr), mask[:, features])
+                # features = "all"
+                MI = clone(MI).set_params(features="all")
+                MI.fit(X1_ft)
+                X2_tr = MI.transform(retype(X2))
+                features = np.arange(X2.shape[1])
+                assert_mask(X2_tr, mask, features)
+
+                # features = [1, 2]
+                features = [1, 2]
+                MI = clone(MI).set_params(features=features)
+                MI.fit(X1_ft)
+                X2_tr = MI.transform(X2_t)
+                assert_mask(X2_tr, mask, features)
 
 
 def test_missing_indicator_warning():
