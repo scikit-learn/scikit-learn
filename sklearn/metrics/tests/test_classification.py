@@ -661,16 +661,30 @@ def test_confusion_matrix_multiclass_subset_labels():
 
 
 def test_confusion_matrix_dtype():
-    y = [0, 1]
+    y = [0, 1, 1]
     weight = np.ones(len(y))
     # confusion_matrix returns int64 by default
     cm = confusion_matrix(y, y)
     assert_equal(cm.dtype, np.int64)
-    # otherwise confusion_matrix returns the type of sample weight
-    cm = confusion_matrix(y, y, sample_weight=weight.astype(np.int32))
-    assert_equal(cm.dtype, np.int32)
-    cm = confusion_matrix(y, y, sample_weight=weight.astype(np.float64))
-    assert_equal(cm.dtype, np.float64)
+    # The dtype of confusion_matrix is always 64 bit
+    for dtype in [np.bool_, np.int32, np.uint64]:
+        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        assert_equal(cm.dtype, np.int64)
+    for dtype in [np.float32, np.float64, None, object]:
+        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        assert_equal(cm.dtype, np.float64)
+
+    # np.iinfo(np.uint32).max should be accumulated correctly
+    weight = np.ones(len(y), dtype=np.uint32) * 4294967295
+    cm = confusion_matrix(y, y, sample_weight=weight)
+    assert_equal(cm[0, 0], 4294967295)
+    assert_equal(cm[1, 1], 8589934590)
+
+    # np.iinfo(np.int64).max should cause an overflow
+    weight = np.ones(len(y), dtype=np.int64) * 9223372036854775807
+    cm = confusion_matrix(y, y, sample_weight=weight)
+    assert_equal(cm[0, 0], 9223372036854775807)
+    assert_equal(cm[1, 1], -2)
 
 
 def test_classification_report_multiclass():

@@ -268,8 +268,14 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     # also eliminate weights of eliminated items
     sample_weight = sample_weight[ind]
 
+    # Choose the accumulator dtype to always have high precision
+    if sample_weight.dtype.kind in {'i', 'u', 'b'}:
+        dtype = np.int64
+    else:
+        dtype = np.float64
+
     CM = coo_matrix((sample_weight, (y_true, y_pred)),
-                    shape=(n_labels, n_labels)
+                    shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
     return CM
