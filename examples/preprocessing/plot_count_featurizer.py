@@ -11,12 +11,14 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-import scipy.sparse as ssp
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing.data import CountFeaturizer
 from sklearn.preprocessing.data import OneHotEncoder
 from collections import OrderedDict
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import FeatureUnion
 
 RANDOM_STATE = 30
 
@@ -34,42 +36,60 @@ X, y = make_classification(n_samples=n_datapoints, n_features=n_features,
 discretized_features = [0, 1]
 non_discretized_features = \
     list(set(range(n_features)) - set(discretized_features))
+non_discretized_features_count = \
+    list(set(range(n_features + 1)) - set(discretized_features))
 
-X_non_discretized = X[:, non_discretized_features]
 
-for feature in discretized_features:
-    X_transform_col = (X[:, feature]).astype(int)
-    # to make all categorical variables non-negative
-    col_min = min(np.amin(X_transform_col), 0)
-    X[:, feature] = X_transform_col - col_min
+def select_non_discrete(X, count=False):
+    """Selects the non-discrete features."""
+    if count:
+        return X[:, non_discretized_features_count]
+    return X[:, non_discretized_features]
+
+
+def select_discrete(X):
+    """Selects the discrete features."""
+    return X[:, discretized_features]
+
+
+def process_discrete(X):
+    """Processes discrete features to make them categorical."""
+    for feature in discretized_features:
+        X_transform_col = (X[:, feature]).astype(int)
+        col_min = min(np.amin(X_transform_col), 0)
+        X[:, feature] = X_transform_col - col_min
+    return X
+
 
 time_start = time.time()
-
-# X_count is X with an additional feature column 'count'
-cf = CountFeaturizer(inclusion=discretized_features)
-X_count = cf.fit_transform(X, y)
-
+pipeline_cf = make_pipeline(
+    FunctionTransformer(func=process_discrete),
+    CountFeaturizer(inclusion=discretized_features),
+    FunctionTransformer(func=lambda X: select_non_discrete(X, count=True)))
+X_count = pipeline_cf.fit_transform(X, y=y)
 cf_time_preprocessing = time.time() - time_start
+
 time_start = time.time()
-
-ohe = OneHotEncoder()
-X_one_hot_part = ohe.fit_transform(X[:, discretized_features])
-
-# build the original matrix back, including the one-hot features
-X_one_hot = ssp.hstack([X_one_hot_part, X_non_discretized]).toarray()
-
+pipeline_ohe_nd = make_pipeline(FunctionTransformer(func=select_non_discrete))
+pipeline_ohe_d = make_pipeline(
+    FunctionTransformer(func=select_discrete),
+    FunctionTransformer(func=process_discrete),
+    OneHotEncoder())
+pipeline_ohe = FeatureUnion(
+    [("discrete", pipeline_ohe_d), ("nondiscrete", pipeline_ohe_nd)])
+X_one_hot = pipeline_ohe.fit_transform(X, y=y).todense()
 ohe_time_preprocessing = time.time() - time_start
 
 
 def get_classifier():
-    return RandomForestClassifier(warm_start=True, max_features='log2',
+    return RandomForestClassifier(warm_start=True, max_features="log2",
                                   oob_score=True, random_state=RANDOM_STATE)
 
 
 clf = get_classifier()
-labels = ['CountFeaturizer + RandomForestClassifier',
-          'OneHotEncoder + RandomForestClassifier',
-          'Only RandomForestClassifier']
+labels = ["CountFeaturizer + RandomForestClassifier",
+          "OneHotEncoder + RandomForestClassifier",
+          "Only RandomForestClassifier"]
 error_rate = OrderedDict((label, []) for label in labels)
 
 min_estimators = (15 * n_datapoints // 500)
@@ -100,7 +120,7 @@ time_start = time.time()
 
 for i in range(min_estimators, max_estimators + 1):
     clf.set_params(n_estimators=i)
-    clf.fit(X_non_discretized, y)
+    clf.fit(X, y)
     oob_error = 1 - clf.oob_score_
     error_rate[labels[2]].append((i, oob_error))
 
