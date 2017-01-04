@@ -385,28 +385,60 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):
-            pred_labels = np.array([_y[ind, k] for ind in neigh_ind],
-                                   dtype=object)
-            if weights is None:
-                mode = np.array([stats.mode(pl)[0]
-                                 for pl in pred_labels[inliers]], dtype=np.int)
-            else:
-                mode = np.array([weighted_mode(pl, w)[0]
-                                 for (pl, w)
-                                 in zip(pred_labels[inliers],
-                                        weights[inliers])],
-                                dtype=np.int)
+        if self.outputs_2d_ == 'sparse':
+            y_pred_sparse_multilabel = []
 
-            mode = mode.ravel()
+            for k, classes_k in enumerate(classes_):
+                pred_labels = np.array([_y[ind, k].toarray()
+                                        for ind in neigh_ind],
+                                       dtype=object)
+                y_pred_k = np.zeros(n_samples)
 
-            y_pred[inliers, k] = classes_k.take(mode)
+                if weights is None:
+                    mode = np.array([stats.mode(pl)[0]
+                                     for pl in pred_labels[inliers]],
+                                    dtype=np.int)
+                else:
+                    mode = np.array([weighted_mode(pl, w)[0]
+                                     for (pl, w)
+                                     in zip(pred_labels[inliers],
+                                            weights[inliers])],
+                                    dtype=np.int)
 
-        if outliers:
-            y_pred[outliers, :] = self.outlier_label
+                mode = mode.ravel()
 
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
+                y_pred_k[inliers] = classes_k.take(mode)
+
+                if outliers:
+                    y_pred_k[outliers] = self.outlier_label
+
+                y_pred_sparse_multilabel.append(csc_matrix(y_pred_k).T)
+
+            y_pred = hstack(y_pred_sparse_multilabel)
+
+        else:
+            y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+            for k, classes_k in enumerate(classes_):
+                pred_labels = np.array([_y[ind, k] for ind in neigh_ind],
+                                       dtype=object)
+                if weights is None:
+                    mode = np.array([stats.mode(pl)[0]
+                                     for pl in pred_labels[inliers]],
+                                    dtype=np.int)
+                else:
+                    mode = np.array([weighted_mode(pl, w)[0]
+                                     for (pl, w)
+                                     in zip(pred_labels[inliers],
+                                            weights[inliers])],
+                                    dtype=np.int)
+
+                mode = mode.ravel()
+                y_pred[inliers, k] = classes_k.take(mode)
+
+            if outliers:
+                y_pred[outliers, :] = self.outlier_label
+
+            if not self.outputs_2d_:
+                y_pred = y_pred.ravel()
 
         return y_pred

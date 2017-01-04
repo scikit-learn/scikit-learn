@@ -503,12 +503,24 @@ def test_kneighbors_classifier_sparse(n_samples=40,
             y_pred = knn.predict(X_eps)
             assert_array_equal(y_pred, y[:n_test_pts])
 
+CLASSIFIERS = {
+    'KNeighborsClassifier': neighbors.KNeighborsClassifier(n_neighbors=3),
+    'RadiusNeighborsClassifier': neighbors.RadiusNeighborsClassifier(
+        radius=0.1, outlier_label=-1),
+}
 
-def test_kneighbors_classifier_sparse_multilabel_y():
-    X, y = make_multilabel_classification(random_state=0, n_samples=100)
+
+def check_classifier_sparse_multilabel_y(name):
+    rng = check_random_state(0)
+    n_features = 2
+    n_samples = 100
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 2, (n_samples, n_output))
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = neighbors.KNeighborsClassifier(n_neighbors=3)
+    clf = CLASSIFIERS[name]
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
@@ -518,6 +530,11 @@ def test_kneighbors_classifier_sparse_multilabel_y():
     clf.fit(X_train, y_train)
     y_sparse_pred = clf.predict(X_test)
     assert_array_almost_equal(y_pred, y_sparse_pred.toarray())
+
+
+def test_classifiers_sparse_multilabel_y():
+    for name in CLASSIFIERS:
+        yield check_classifier_sparse_multilabel_y, name
 
 
 def test_KNeighborsClassifier_multioutput():
