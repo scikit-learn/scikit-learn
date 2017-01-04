@@ -30,9 +30,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         What distance metric to use.
 
     init : {'random', 'heuristic'}, optional, default: 'heuristic'
-        Specify medoid initialization method. Random selects n_clusters elements
-        from the dataset, while heuristic picks the n_clusters points with the
-        smallest sum distance to every other point.
+        Specify medoid initialization method. Random selects n_clusters
+        elements from the dataset, while heuristic picks the n_clusters points
+        with the smallest sum distance to every other point.
 
     max_iter : int, optional, default : 300
         Specify the maximum number of iterations when fitting.
@@ -133,7 +133,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         distances = pairwise_distances(X, metric=self.distance_metric)
 
         medoid_idxs = self._get_initial_medoid_indices(distances,
-                                                      self.n_clusters)
+                                                       self.n_clusters)
         labels = np.argmin(distances[medoid_idxs, :], axis=0)
 
         # Old medoids will be stored here for reference
@@ -175,7 +175,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Extract the distance matrix between the data points
             # inside the cluster k
             cluster_k_idxs = cluster_idxs == k
-            in_cluster_distances = distances[np.ix_(cluster_k_idxs , cluster_k_idxs )]
+            in_cluster_distances = distances[np.ix_(cluster_k_idxs,
+                                                    cluster_k_idxs)]
 
             # Calculate all costs from each point to all others in the cluster
             in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)

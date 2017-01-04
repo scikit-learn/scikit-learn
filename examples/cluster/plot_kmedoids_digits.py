@@ -14,7 +14,6 @@ from sklearn.cluster import KMedoids
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
-from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 
 print(__doc__)
 
