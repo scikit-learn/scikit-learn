@@ -660,7 +660,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
-                 memory=Memory(cachedir=None, verbose=0),
+                 memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
         self.n_clusters = n_clusters
@@ -685,7 +685,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
-        if isinstance(memory, six.string_types):
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
 
         if self.n_clusters <= 0:
