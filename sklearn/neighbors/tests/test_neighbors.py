@@ -18,7 +18,6 @@ from sklearn.utils.validation import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
-from sklearn.datasets import make_multilabel_classification
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
