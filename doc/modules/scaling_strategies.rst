@@ -75,8 +75,9 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.decomposition.IncrementalPCA`
       + :class:`sklearn.decomposition.LatentDirichletAllocation`
   - Preprocessing
-      + :class:`sklearn.preprocessing.MinMaxScaler`
       + :class:`sklearn.preprocessing.StandardScaler`
+      + :class:`sklearn.preprocessing.MinMaxScaler`
+      + :class:`sklearn.preprocessing.MaxAbsScaler`
 
 For classification, a somewhat important thing to note is that although a
 stateless feature extraction routine may be able to cope with new/unseen
