@@ -773,10 +773,10 @@ class SupervisedIntegerMixin(object):
 
         check_classification_targets(y)
 
-        self._issparsemultilabel = issparse(y) and self.outputs_2d_
-
         self.classes_ = []
-        if self._issparsemultilabel:
+
+        if issparse(y) and self.outputs_2d_:
+            self.outputs_2d_ = 'sparse'
             self._y = y
             self.classes_ = [np.array([0, 1], dtype=np.int)] * y.shape[1]
 
@@ -787,9 +787,9 @@ class SupervisedIntegerMixin(object):
                                                    return_inverse=True)
                 self.classes_.append(classes)
 
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
+            if not self.outputs_2d_:
+                self.classes_ = self.classes_[0]
+                self._y = self._y.ravel()
 
         return self._fit(X)
 

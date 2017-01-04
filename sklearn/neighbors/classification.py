@@ -155,9 +155,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
-
-        if self._issparsemultilabel:
+        if self.outputs_2d_ == 'sparse':
             y_pred_sparse_multilabel = []
 
             for k, classes_k in enumerate(classes_):
@@ -169,10 +167,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                                             weights, axis=1)
 
                 mode = np.asarray(mode.ravel(), dtype=np.intp)
-                y_pred[:, k] = classes_k.take(mode)
-                y_pred_sparse_multilabel.append(csc_matrix(y_pred[:, k]).T)
+                y_pred_sparse_multilabel.append(
+                    csc_matrix(classes_k.take(mode)).T)
+
+            y_pred = hstack(y_pred_sparse_multilabel)
 
         else:
+            y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+
             for k, classes_k in enumerate(classes_):
 
                 if weights is None:
@@ -183,11 +185,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                 mode = np.asarray(mode.ravel(), dtype=np.intp)
                 y_pred[:, k] = classes_k.take(mode)
 
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
-
-        if self._issparsemultilabel:
-            y_pred = hstack(y_pred_sparse_multilabel)
+            if not self.outputs_2d_:
+                y_pred = y_pred.ravel()
 
         return y_pred
 
