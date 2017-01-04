@@ -315,6 +315,7 @@ which does not exist in the original data, and thus cannot be a medoid.
  * :ref:`example_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits
  with various distance metrics.
 
+
 **Algorithm description:**
 There are several algorithms to compute K-Medoids, though :class:`KMedoids`
 currently only supports Partitioning Around Medoids (PAM). The PAM algorithm
@@ -323,6 +324,7 @@ two alternating steps commonly called the
 Assignment and Update steps (BUILD and SWAP in Kaufmann and Rousseeuw, 1987).
 
 PAM works as follows:
+
 * Initialize: Select ``n_clusters`` from the dataset as the medoids using either
   a heuristic or random approach (configurable using the ``init`` parameter).
 * Assignment step: assign each element from the dataset to the closest medoid.
