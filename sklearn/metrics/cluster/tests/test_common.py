@@ -39,7 +39,7 @@ from sklearn.utils.testing import assert_almost_equal
 # properties, e.g. invariance toward several input layout.
 #
 
-# Metrics used to test similarity between bicluster  
+# Metrics used to test similarity between bicluster
 SUPERVISED_METRICS = {
     "adjusted_mutual_info_score": adjusted_mutual_info_score,
     "adjusted_rand_score": adjusted_rand_score,
@@ -50,12 +50,12 @@ SUPERVISED_METRICS = {
     "v_measure_score": v_measure_score,
     "fowlkes_mallows_score": fowlkes_mallows_score
     }
-    
+
 UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
     "calinski_harabaz_score": calinski_harabaz_score
     }
-    
+
 SUPERVISED_METRICS_DICT = dict()
 UNSUPERVISED_METRICS_DICT = dict()
 SUPERVISED_METRICS_DICT.update(SUPERVISED_METRICS)
@@ -64,7 +64,7 @@ UNSUPERVISED_METRICS_DICT.update(UNSUPERVISED_METRICS)
 # Lists of metrics with common properties
 # ---------------------------------------
 # Lists of metrics with common properties are used to test systematically some
-# functionalities and invariance, e.g. SYMMETRIC_METRICS lists all metrics 
+# functionalities and invariance, e.g. SYMMETRIC_METRICS lists all metrics
 # that are symmetric with respect to their input argument y_true and y_pred.
 #
 # --------------------------------------------------------------------
@@ -75,7 +75,7 @@ SYMMETRIC_METRICS = [
     "mutual_info_score", "adjusted_mutual_info_score",
     "normalized_mutual_info_score", "fowlkes_mallows_score"
     ]
-               
+
 NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
 # When the information is zero these metrics output zero.
@@ -84,14 +84,14 @@ METRICS_ZERO_INFO = [
     "adjusted_mutual_info_score"
     ]
 
-# Metrics with output between 0 and 1                                      
+# Metrics with output between 0 and 1
 METRICS_NORMALIZED_OUTPUT = [
     "adjusted_rand_score", "homogeneity_score", "completeness_score",
     "v_measure_score", "adjusted_mutual_info_score", "fowlkes_mallows_score",
     "normalized_mutual_info_score"
     ]
- 
-                                           
+
+
 def assert_between(var, score_1, score_2):
     """ Returns a boolean value
     Helper function to check if score lies in between two values
@@ -101,7 +101,7 @@ def assert_between(var, score_1, score_2):
     else:
         return False
 
-  
+
 def test_symmetry():
     rng = np.random.RandomState(0)
     y1 = rng.randint(3, size=30)
@@ -121,7 +121,7 @@ def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = (np.ones(i, dtype=np.int),
-                            np.arange(i, dtype=np.int))
+                              np.arange(i, dtype=np.int))
         for name in METRICS_ZERO_INFO:
             metric = SUPERVISED_METRICS_DICT[name]
             assert_almost_equal(metric(labels_a, labels_b), 0.0)
@@ -132,20 +132,20 @@ def test_normalized_output():
     upper_bound_2 = [0, 0, 0, 1, 1, 1]
     for name in METRICS_NORMALIZED_OUTPUT:
         metric = SUPERVISED_METRICS_DICT[name]
-        assert_between(metric([0, 0, 0, 1, 1, 1],[0, 0, 0, 1, 2, 2]), 0.0, 1.0)
-        assert_between(metric([0, 0, 1, 1, 2, 2],[0, 0, 1, 1, 1, 1]), 0.0, 1.0)
+        assert_between(metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]), 0.0, 1.0)
+        assert_between(metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]), 0.0, 1.0)
         assert_equal(metric(upper_bound_1, upper_bound_2), 1.0)
-        
-    #For symmetric metrics the lower bound is defined
+
+    # For symmetric metrics the lower bound is defined
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
     for name in SYMMETRIC_METRICS:
-        metric=SUPERVISED_METRICS_DICT[name]
-        assert_equal(metric(lower_bound_1,lower_bound_2), 0.0)
+        metric = SUPERVISED_METRICS_DICT[name]
+        assert_equal(metric(lower_bound_1, lower_bound_2), 0.0)
 
 
 # All clustering metrocs do not change score due to permutations of labels
-# that is when 0 and 1 exchchanged.       
+# that is when 0 and 1 exchchanged.
 def test_permute_labels():
     for name in SUPERVISED_METRICS_DICT:
         metric = SUPERVISED_METRICS_DICT[name]
@@ -176,8 +176,8 @@ def test_permute_labels():
     assert_almost_equal(score_1, score_2)
     assert_almost_equal(score_1, score_3)
     assert_almost_equal(score_1, score_4)
-        
-        
+
+
 # For ALL clustering metrics Input parameters can be both
 # in the form of arrays and lists
 def test_format_invariance():
