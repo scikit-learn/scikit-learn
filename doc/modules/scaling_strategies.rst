@@ -62,16 +62,22 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.linear_model.Perceptron`
       + :class:`sklearn.linear_model.SGDClassifier`
       + :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+      + :class:`sklearn.neural_network.MLPClassifier`
   - Regression
       + :class:`sklearn.linear_model.SGDRegressor`
       + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
+      + :class:`sklearn.neural_network.MLPRegressor`
   - Clustering
       + :class:`sklearn.cluster.MiniBatchKMeans`
+      + :class:`sklearn.cluster.Birch`
   - Decomposition / feature Extraction
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.decomposition.IncrementalPCA`
       + :class:`sklearn.decomposition.LatentDirichletAllocation`
-      + :class:`sklearn.cluster.MiniBatchKMeans`
+  - Preprocessing
+      + :class:`sklearn.preprocessing.StandardScaler`
+      + :class:`sklearn.preprocessing.MinMaxScaler`
+      + :class:`sklearn.preprocessing.MaxAbsScaler`
 
 For classification, a somewhat important thing to note is that although a
 stateless feature extraction routine may be able to cope with new/unseen
