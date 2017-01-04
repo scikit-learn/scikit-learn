@@ -689,6 +689,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             memory = Memory(cachedir=None, verbose=0)
         elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError('`memory` has to be a `str` or a `joblib.Memory`'
+                             ' instance')
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
