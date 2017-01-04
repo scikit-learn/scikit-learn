@@ -121,7 +121,8 @@ Enhancements
 Bug fixes
 .........
 
-   - Fixed a bug where :class:`sklearn.manifold.t_sne` behaved incorrectly with degrees of freedom other than 1 (default). by :user:`Arthur Goldberg <artcg>`.
+   - Fixed a bug where :class:`sklearn.manifold.t_sne` behaved incorrectly when running
+     with n_components > 2. by :user:`Arthur Goldberg <artcg>`.
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
