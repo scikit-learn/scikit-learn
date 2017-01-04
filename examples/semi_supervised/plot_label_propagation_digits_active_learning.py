@@ -79,24 +79,28 @@ for i in range(5):
 
     # keep track of indices that we get labels for
     delete_indices = np.array([])
-
-    f.text(.05, (1 - (i + 1) * .183),
-           "model %d\n\nfit with\n%d labels" % ((i + 1), i * 5 + 10), size=10)
+    
+    # if running for more than 5 iterations visualiaze the gain only on the first 5.
+    if i < 5:
+        f.text(.05, (1 - (i + 1) * .183),
+               "model %d\n\nfit with\n%d labels" % ((i + 1), i * 5 + 10), size=10)
     for index, image_index in enumerate(uncertainty_index):
         image = images[image_index]
 
-        sub = f.add_subplot(5, 5, index + 1 + (5 * i))
-        sub.imshow(image, cmap=plt.cm.gray_r)
-        sub.set_title("predict: %i\ntrue: %i" % (
-            lp_model.transduction_[image_index], y[image_index]), size=10)
-        sub.axis('off')
+        # if running for more than 5 iterations visualiaze the gain only on the first 5.
+        if i < 5:
+            sub = f.add_subplot(5, 5, index + 1 + (5 * i))
+            sub.imshow(image, cmap=plt.cm.gray_r)
+            sub.set_title("predict: %i\ntrue: %i" % (
+                lp_model.transduction_[image_index], y[image_index]), size=10)
+            sub.axis('off')
 
         # labeling 5 points, remote from labeled set
         delete_index, = np.where(unlabeled_indices == image_index)
         delete_indices = np.concatenate((delete_indices, delete_index))
 
     unlabeled_indices = np.delete(unlabeled_indices, delete_indices)
-    n_labeled_points += len(unlabeled_indices)
+    n_labeled_points += len(uncertainty_index)
 
 f.suptitle("Active learning with Label Propagation.\nRows show 5 most "
            "uncertain labels to learn with the next model.")
