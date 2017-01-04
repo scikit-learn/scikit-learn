@@ -262,9 +262,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return inertia
 
     def _get_initial_medoid_indices(self, distances, n_clusters):
-        """Initialize medoid indices using either a random or
-        heuristic approach.
-        """
+        """Select initial mediods randomly or heuristically"""
 
         if self.init == 'random':  # Random initialization
             # Pick random k medoids as the initial ones.
