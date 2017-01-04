@@ -173,29 +173,23 @@ def test_multi_output_classification_partial_fit():
     multi_target_linear.partial_fit(
         X[:half_index], y[:half_index], classes=classes)
 
-    predictions = multi_target_linear.predict(X)
-    assert_equal((n_samples, n_outputs), predictions.shape)
-
-    # train the linear classification with each column and assert that
-    # predictions are equal after first partial_fit
-    for i in range(3):
-        # create a clone with the same state
-        sgd_linear_clf = clone(sgd_linear_clf)
-        sgd_linear_clf.partial_fit(
-            X[:half_index], y[:half_index, i], classes=classes[i])
-        assert_array_equal(sgd_linear_clf.predict(X), predictions[:, i])
+    first_predictions = multi_target_linear.predict(X)
+    assert_equal((n_samples, n_outputs), first_predictions.shape)
 
     multi_target_linear.partial_fit(X[half_index:], y[half_index:])
-    predictions = multi_target_linear.predict(X)
+    second_predictions = multi_target_linear.predict(X)
+    assert_equal((n_samples, n_outputs), second_predictions.shape)
+
     # train the linear classification with each column and assert that
-    # predictions are equal after two partial_fit
+    # predictions are equal after first partial_fit and second partial_fit
     for i in range(3):
         # create a clone with the same state
         sgd_linear_clf = clone(sgd_linear_clf)
         sgd_linear_clf.partial_fit(
             X[:half_index], y[:half_index, i], classes=classes[i])
+        assert_array_equal(sgd_linear_clf.predict(X), first_predictions[:, i])
         sgd_linear_clf.partial_fit(X[half_index:], y[half_index:, i])
-        assert_array_equal(sgd_linear_clf.predict(X), predictions[:, i])
+        assert_array_equal(sgd_linear_clf.predict(X), second_predictions[:, i])
 
 
 def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
