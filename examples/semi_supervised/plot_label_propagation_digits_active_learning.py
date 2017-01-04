@@ -44,6 +44,9 @@ unlabeled_indices = np.arange(n_total_samples)[n_labeled_points:]
 f = plt.figure()
 
 for i in range(5):
+    if len(unlabeled_indices) == 0:
+        print("No unlabeled items left to label.")
+        break
     y_train = np.copy(y)
     y_train[unlabeled_indices] = -1
 
@@ -56,7 +59,7 @@ for i in range(5):
     cm = confusion_matrix(true_labels, predicted_labels,
                           labels=lp_model.classes_)
 
-    print('Iteration %i %s' % (i, 70 * '_'))
+    print("Iteration %i %s" % (i, 70 * "_"))
     print("Label Spreading model: %d labeled & %d unlabeled (%d total)"
           % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
 
@@ -69,7 +72,7 @@ for i in range(5):
     pred_entropies = stats.distributions.entropy(
         lp_model.label_distributions_.T)
 
-    # select five digit examples that the classifier is most uncertain about
+    # select up to five digit examples that the classifier is most uncertain about
     uncertainty_index = np.argsort(pred_entropies)[::-1]
     uncertainty_index = uncertainty_index[
         np.in1d(uncertainty_index, unlabeled_indices)][:5]
@@ -84,7 +87,7 @@ for i in range(5):
 
         sub = f.add_subplot(5, 5, index + 1 + (5 * i))
         sub.imshow(image, cmap=plt.cm.gray_r)
-        sub.set_title('predict: %i\ntrue: %i' % (
+        sub.set_title("predict: %i\ntrue: %i" % (
             lp_model.transduction_[image_index], y[image_index]), size=10)
         sub.axis('off')
 
@@ -93,7 +96,7 @@ for i in range(5):
         delete_indices = np.concatenate((delete_indices, delete_index))
 
     unlabeled_indices = np.delete(unlabeled_indices, delete_indices)
-    n_labeled_points += 5
+    n_labeled_points += len(unlabeled_indices)
 
 f.suptitle("Active learning with Label Propagation.\nRows show 5 most "
            "uncertain labels to learn with the next model.")
