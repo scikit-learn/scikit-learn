@@ -116,6 +116,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         inliers or invalid data defined by ``is_data_valid`` or invalid models
         defined by ``is_model_valid``.
 
+        .. versionadded:: 0.19
+
     stop_n_inliers : int, optional
         Stop iteration if at least this number of inliers are found.
 
@@ -176,13 +178,19 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     n_skips_no_inliers_ : int
         Number of iterations skipped due to finding zero inliers.
 
+        .. versionadded:: 0.19
+
     n_skips_invalid_data_ : int
         Number of iterations skipped due to invalid data defined by
         ``is_data_valid``.
 
+        .. versionadded:: 0.19
+
     n_skips_invalid_model_ : int
         Number of iterations skipped due to an invalid model defined by
         ``is_model_valid``.
+
+        .. versionadded:: 0.19
 
     References
     ----------
