@@ -174,15 +174,15 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Extract the distance matrix between the data points
             # inside the cluster k
-            cluster_k_idx =  np.where(cluster_idxs == k)[0][0]
-            in_cluster_distances = distances[cluster_k_idx, cluster_k_idx]
+            cluster_k_idxs = cluster_idxs == k
+            in_cluster_distances = distances[np.ix_(cluster_k_idxs , cluster_k_idxs )]
 
             # Calculate all costs from each point to all others in the cluster
-            all_costs = np.sum(in_cluster_distances, axis=1)
+            in_cluster_all_costs = np.sum(in_cluster_distances, axis=1)
 
-            min_cost_idx = np.argmin(all_costs)
-            min_cost = all_costs[min_cost_idx]
-            curr_cost = all_costs[k]
+            min_cost_idx = np.argmin(in_cluster_all_costs)
+            min_cost = in_cluster_all_costs[min_cost_idx]
+            curr_cost = np.sum(distances[medoid_idxs[k], cluster_idxs == k])
 
             # If the minimum cost is smaller than that
             # exhibited by the currently used medoid,
