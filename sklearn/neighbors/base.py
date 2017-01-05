@@ -15,7 +15,7 @@ from scipy.sparse import csr_matrix, issparse
 from .ball_tree import BallTree
 from .kd_tree import KDTree
 from ..base import BaseEstimator
-from ..metrics import pairwise_distances
+from ..metrics import pairwise_distances, pairwise_distances_reduce
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.fixes import argpartition
@@ -325,10 +325,8 @@ class KNeighborsMixin(object):
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-        if X is not None:
-            query_is_train = False
-            X = check_array(X, accept_sparse='csr')
-        else:
+            query_is_train = True
+            X = self._fit_X
             query_is_train = True
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
@@ -349,26 +347,18 @@ class KNeighborsMixin(object):
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=n_jobs, squared=True)
+                result = pairwise_distances_reduce(
+                    X, self._fit_X, 'euclidean', n_jobs=n_jobs,
+                    reduce_func=self._reduce_func, block_size=1, squared=True,
+                    n_neighbors=n_neighbors, return_distance=return_distance)
             else:
-                dist = pairwise_distances(
+                result = pairwise_distances_reduce(
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
+                    reduce_func=self._reduce_func, block_size=1,
+                    n_neighbors=n_neighbors, return_distance=return_distance,
                     **self.effective_metric_params_)
 
-            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
-            neigh_ind = neigh_ind[:, :n_neighbors]
-            # argpartition doesn't guarantee sorted order, so we sort again
-            neigh_ind = neigh_ind[
-                sample_range, np.argsort(dist[sample_range, neigh_ind])]
-
-            if return_distance:
-                if self.effective_metric_ == 'euclidean':
-                    result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
-                else:
-                    result = dist[sample_range, neigh_ind], neigh_ind
-            else:
-                result = neigh_ind
+            result = np.vstack(list(result))
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -416,6 +406,26 @@ class KNeighborsMixin(object):
                     dist[sample_mask], (n_samples, n_neighbors - 1))
                 return dist, neigh_ind
             return neigh_ind
+
+    def _reduce_func(self, dist, n_samples, **kwds):
+        sample_range = np.arange(n_samples)[:, None]
+        n_neighbors = kwds['n_neighbors']
+        return_distance = kwds['return_distance']
+        neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
+        neigh_ind = neigh_ind[:, :n_neighbors]
+        # argpartition doesn't guarantee sorted order, so we sort again
+        neigh_ind = neigh_ind[
+            sample_range, np.argsort(dist[sample_range, neigh_ind])]
+
+        if return_distance:
+            if self.effective_metric_ == 'euclidean':
+                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+            else:
+                result = dist[sample_range, neigh_ind], neigh_ind
+        else:
+            result = neigh_ind
+
+        return result
 
     def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
