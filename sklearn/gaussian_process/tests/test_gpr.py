@@ -15,8 +15,6 @@ from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
             assert_almost_equal, assert_equal, assert_array_almost_equal)
 
-import timeit
-
 
 def f(x):
     return x * np.sin(x)
@@ -358,29 +356,3 @@ def test_n_jobs_parallel():
 
         assert_equal(gpr1.kernel_, gpr2.kernel_)
         assert_equal(gpr1.kernel_, gpr3.kernel_)
-
-
-def benchmark_test_n_jobs():
-    # Benchmark test for different n_jobs parameter values.
-    for kernel in kernels:
-        def stmt1():
-            GaussianProcessRegressor(kernel=kernel, n_jobs=1,
-                                     n_restarts_optimizer=5,
-                                     random_state=42).fit(X, y)
-
-        def stmt2():
-            GaussianProcessRegressor(kernel=kernel, n_jobs=2,
-                                     n_restarts_optimizer=5,
-                                     random_state=42).fit(X, y)
-
-        def stmt3():
-            GaussianProcessRegressor(kernel=kernel, n_jobs=-1,
-                                     n_restarts_optimizer=5,
-                                     random_state=42).fit(X, y)
-
-        t1 = min(timeit.repeat(stmt1, repeat=10, number=10))
-        t2 = min(timeit.repeat(stmt2, repeat=10, number=10))
-        t3 = min(timeit.repeat(stmt3, repeat=10, number=10))
-
-        assert_greater(t1, t2)
-        assert_greater(t1, t3)

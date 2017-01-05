@@ -106,8 +106,9 @@ Enhancements
 
    - Used Embarrassingly Parallel helper in the :func:`fit` in
      :class:`gaussian_process.GaussianProcessRegressor` and tested the same for
-     different ``n_jobs`` parameter values.
-     :issue:`7997` by :user:`Aman Pratik <amanp10>`
+     different ``n_jobs`` parameter values. Also added Timing Benchmark for
+     differnet n_jobs values. :issue:`7987` by :user:`Aman Pratik <amanp10>`
+
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
      boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
