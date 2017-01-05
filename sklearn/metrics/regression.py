@@ -29,7 +29,6 @@ from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
 from ..externals.six import string_types
 
-import warnings
 
 __ALL__ = [
     "mean_absolute_error",
@@ -88,9 +87,15 @@ def _check_reg_targets(y_true, y_pred, multioutput):
                          "({0}!={1})".format(y_true.shape[1], y_pred.shape[1]))
 
     n_outputs = y_true.shape[1]
-    multioutput_options = (None, 'raw_values', 'uniform_average',
-                           'variance_weighted')
-    if multioutput not in multioutput_options:
+    allowed_multioutput_str = ('raw_values', 'uniform_average',
+                               'variance_weighted')
+    if isinstance(multioutput, string_types):
+        if multioutput not in allowed_multioutput_str:
+            raise ValueError("Allowed 'multioutput' string values are {}. "
+                             "You provided multioutput={!r}".format(
+                                 allowed_multioutput_str,
+                                 multioutput))
+    elif multioutput is not None:
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in "
@@ -436,9 +441,8 @@ def explained_variance_score(y_true, y_pred,
     return np.average(output_scores, weights=avg_weights)
 
 
-def r2_score(y_true, y_pred,
-             sample_weight=None,
-             multioutput=None):
+def r2_score(y_true, y_pred, sample_weight=None,
+             multioutput="uniform_average"):
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
@@ -464,9 +468,7 @@ def r2_score(y_true, y_pred,
 
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
-        Default value corresponds to 'variance_weighted', this behaviour is
-        deprecated since version 0.17 and will be changed to 'uniform_average'
-        starting from 0.19.
+        Default is "uniform_average".
 
         'raw_values' :
             Returns a full set of scores in case of multioutput input.
@@ -477,6 +479,9 @@ def r2_score(y_true, y_pred,
         'variance_weighted' :
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
+
+        .. versionchanged:: 0.19
+            Default value of multioutput is 'uniform_average'.
 
     Returns
     -------
@@ -505,7 +510,8 @@ def r2_score(y_true, y_pred,
     0.948...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> r2_score(y_true, y_pred, multioutput='variance_weighted')  # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
+    ... # doctest: +ELLIPSIS
     0.938...
     >>> y_true = [1,2,3]
     >>> y_pred = [1,2,3]
@@ -543,13 +549,6 @@ def r2_score(y_true, y_pred,
     # arbitrary set to zero to avoid -inf scores, having a constant
     # y_true is not interesting for scoring a regression anyway
     output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
-    if multioutput is None and y_true.shape[1] != 1:
-        warnings.warn("Default 'multioutput' behavior now corresponds to "
-                      "'variance_weighted' value which is deprecated since "
-                      "0.17, it will be changed to 'uniform_average' "
-                      "starting from 0.19.",
-                      DeprecationWarning)
-        multioutput = 'variance_weighted'
     if isinstance(multioutput, string_types):
         if multioutput == 'raw_values':
             # return scores individually

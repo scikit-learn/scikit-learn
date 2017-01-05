@@ -76,6 +76,11 @@ and tasks.
 - `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
   for Python, with an emphasis on hidden Markov models.
 
+- `sklearn-crfsuite <https://github.com/TeamHG-Memex/sklearn-crfsuite>`_
+  Linear-chain conditional random fields
+  (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
+  sklearn-like API).
+
 - `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate adaptive
   regression splines
 
@@ -84,8 +89,14 @@ and tasks.
   ensembles) trained by sklearn. Useful for latency-sensitive production
   environments.
 
-- `lda <https://github.com/ariddell/lda/>`_: Fast implementation of Latent
-  Dirichlet Allocation in Cython.
+- `lda <https://github.com/ariddell/lda/>`_: Fast implementation of latent
+  Dirichlet allocation in Cython which uses `Gibbs sampling
+  <https://en.wikipedia.org/wiki/Gibbs_sampling>`_ to sample from the true
+  posterior distribution. (scikit-learn's
+  :class:`sklearn.decomposition.LatentDirichletAllocation` implementation uses
+  `variational inference
+  <https://en.wikipedia.org/wiki/Variational_Bayesian_methods>`_ to sample from
+  a tractable approximation of a topic model's posterior distribution.)
 
 - `Sparse Filtering <https://github.com/jmetzen/sparse-filtering>`_
   Unsupervised feature learning based on sparse-filtering
