@@ -530,7 +530,8 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit,
+                      X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -805,12 +806,12 @@ def test_min_impurity_split():
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
         assert_less_equal(est.min_impurity_split, 1e-7,
-                     "Failed, min_impurity_split = {0} > 1e-7".format(
-                         est.min_impurity_split))
+                          "Failed, min_impurity_split = {0} > 1e-7".format(
+                              est.min_impurity_split))
         est.fit(X, y)
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
-                est.tree_.children_right[node] == TREE_LEAF):
+                    est.tree_.children_right[node] == TREE_LEAF):
                 assert_equal(est.tree_.impurity[node], 0.,
                              "Failed with {0} "
                              "min_impurity_split={1}".format(
@@ -825,7 +826,7 @@ def test_min_impurity_split():
         est.fit(X, y)
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
-                est.tree_.children_right[node] == TREE_LEAF):
+                    est.tree_.children_right[node] == TREE_LEAF):
                 assert_greater_equal(est.tree_.impurity[node], 0,
                                      "Failed with {0}, "
                                      "min_impurity_split={1}".format(
@@ -1594,7 +1595,9 @@ def check_no_sparse_y_support(name):
     X, y = X_multilabel, csr_matrix(y_multilabel)
     TreeEstimator = ALL_TREES[name]
     if name in CLF_TREES:
-        assert_raise_message(ValueError, "Unknown label type: 'unknown'",
+        assert_raise_message(TypeError, 'A sparse matrix was passed, but '
+                             'dense data is required. Use X.toarray() to '
+                             'convert to a dense numpy array.',
                              TreeEstimator(random_state=0).fit, X, y)
     else:
         assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)

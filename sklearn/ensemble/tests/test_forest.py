@@ -247,7 +247,8 @@ def test_importances():
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
         yield check_importances, name, criterion, X, y
 
-    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
+    for name, criterion in product(FOREST_REGRESSORS,
+                                   ["mse", "friedman_mse", "mae"]):
         yield check_importances, name, criterion, X, y
 
 
@@ -842,7 +843,9 @@ def check_no_sparse_y_support_classifier(name):
                                                    n_samples=50)
     y_sparse = csr_matrix(y)
     ForestClassifier = FOREST_CLASSIFIERS[name]
-    assert_raise_message(ValueError, "Unknown label type: 'unknown'",
+    assert_raise_message(TypeError, 'A sparse matrix was passed, but '
+                         'dense data is required. Use X.toarray() to '
+                         'convert to a dense numpy array.',
                          ForestClassifier(random_state=0).fit, X, y_sparse)
 
 

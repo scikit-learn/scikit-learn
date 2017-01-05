@@ -118,16 +118,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             X_idx_sorted=None):
 
         random_state = check_random_state(self.random_state)
-        accept_sparse = None
-        sparse_formats = ['bsr', 'csr', 'csc', 'coo', 'dia', 'dok', 'lil']
-        is_classification = isinstance(self, ClassifierMixin)
-        if is_classification:
-            accept_sparse = sparse_formats
 
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
-            y = check_array(y, ensure_2d=False, dtype=None,
-                            accept_sparse=accept_sparse)
+            y = check_array(y, ensure_2d=False, dtype=None)
             if issparse(X):
                 X.sort_indices()
 
@@ -137,6 +131,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
+        is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
         expanded_class_weight = None
@@ -580,7 +575,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    class_weight : dict, list of dicts, "balanced" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced" or None, optional
+        (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
