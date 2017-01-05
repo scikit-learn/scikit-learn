@@ -9,6 +9,7 @@ from scipy import interpolate, sparse
 from copy import deepcopy
 
 from sklearn.datasets import load_boston
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -29,12 +30,6 @@ from sklearn.linear_model.coordinate_descent import Lasso, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 from sklearn.utils import check_array
-
-
-def check_warnings():
-    if version_info < (2, 6):
-        raise SkipTest("Testing for warnings is not supported in versions \
-        older than Python 2.6")
 
 
 def test_lasso_zero():
@@ -392,6 +387,9 @@ def test_multi_task_lasso_and_enet():
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
+    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
+    assert_warns_message(ConvergenceWarning, 'did not converge', clf.fit, X, Y)
+
 
 def test_lasso_readonly_data():
     X = np.array([[-1], [0], [1]])
@@ -433,8 +431,9 @@ def test_enet_multitarget():
 
 
 def test_multioutput_enetcv_error():
-    X = np.random.randn(10, 2)
-    y = np.random.randn(10, 2)
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    y = rng.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
 
@@ -692,8 +691,8 @@ def test_enet_float_precision():
                 y = dtype(y)
                 ignore_warnings(clf.fit)(X, y)
 
-                coef[dtype] = clf.coef_
-                intercept[dtype] = clf.intercept_
+                coef[('simple', dtype)] = clf.coef_
+                intercept[('simple', dtype)] = clf.intercept_
 
                 assert_equal(clf.coef_.dtype, dtype)
 
@@ -708,11 +707,23 @@ def test_enet_float_precision():
                 assert_array_almost_equal(clf.intercept_,
                                           clf_precompute.intercept_)
 
-            assert_array_almost_equal(coef[np.float32], coef[np.float64],
-                                      decimal=4)
-            assert_array_almost_equal(intercept[np.float32],
-                                      intercept[np.float64],
-                                      decimal=4)
+                # test multi task enet
+                multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
+                clf_multioutput = MultiTaskElasticNet(
+                    alpha=0.5, max_iter=100, fit_intercept=fit_intercept,
+                    normalize=normalize)
+                clf_multioutput.fit(X, multi_y)
+                coef[('multi', dtype)] = clf_multioutput.coef_
+                intercept[('multi', dtype)] = clf_multioutput.intercept_
+                assert_equal(clf.coef_.dtype, dtype)
+
+            for v in ['simple', 'multi']:
+                assert_array_almost_equal(coef[(v, np.float32)],
+                                          coef[(v, np.float64)],
+                                          decimal=4)
+                assert_array_almost_equal(intercept[(v, np.float32)],
+                                          intercept[(v, np.float64)],
+                                          decimal=4)
 
 
 def test_enet_l1_ratio():

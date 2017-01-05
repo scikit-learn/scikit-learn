@@ -34,11 +34,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
     Parameters
     ===========
-    n_x: integer
+    n_x : integer
         The size of the grid in the x direction.
-    n_y: integer
+    n_y : integer
         The size of the grid in the y direction.
-    n_z: integer, optional
+    n_z : integer, optional
         The size of the grid in the z direction, defaults to 1
     """
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
@@ -480,7 +480,7 @@ class PatchExtractor(BaseEstimator):
 
         Returns
         -------
-        patches: array, shape = (n_patches, patch_height, patch_width) or
+        patches : array, shape = (n_patches, patch_height, patch_width) or
              (n_patches, patch_height, patch_width, n_channels)
              The collection of patches extracted from the images, where
              `n_patches` is either `n_samples * max_patches` or the total

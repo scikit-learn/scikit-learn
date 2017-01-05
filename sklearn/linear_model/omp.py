@@ -577,7 +577,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the formula)
 
     intercept_ : float or array, shape (n_targets,)
@@ -711,7 +711,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
     Returns
     -------
-    residues: array, shape (n_samples, max_features)
+    residues : array, shape (n_samples, max_features)
         Residues of the prediction on the test data
     """
 
@@ -804,7 +804,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     intercept_ : float or array, shape (n_targets,)
         Independent term in decision function.
 
-    coef_ : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the problem formulation).
 
     n_nonzero_coefs_ : int

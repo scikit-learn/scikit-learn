@@ -56,7 +56,6 @@ benchmarks/bench_covertype_data/
 .idea
 *.iml
 
-cythonize.dat
 *.c
 *.cpp
 

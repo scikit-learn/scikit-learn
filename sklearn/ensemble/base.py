@@ -88,8 +88,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
 
         # Don't instantiate estimators now! Parameters of base_estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
-        # This needs to be filled by the derived classes.
-        self.estimators_ = []
+        # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute, set the

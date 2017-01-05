@@ -73,8 +73,6 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
 
         .. versionadded:: 0.18
 
-        .. versionadded:: 0.18
-
     Returns
     -------
     contingency : {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
@@ -391,7 +389,7 @@ def completeness_score(labels_true, labels_pred):
 
     Returns
     -------
-    completeness: float
+    completeness : float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
     References
