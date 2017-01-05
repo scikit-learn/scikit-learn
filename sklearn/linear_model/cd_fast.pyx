@@ -175,7 +175,6 @@ cdef inline floating enet_duality_gap( # Data
 
     cdef floating R_norm2
     cdef floating w_norm2
-    cdef floating y_norm2
     cdef floating l1_norm
     cdef floating const
     cdef floating gap
@@ -791,6 +790,71 @@ def sparse_enet_coordinate_descent(floating[:] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+cdef inline floating enet_gram_duality_gap(unsigned int n_samples,
+                                           unsigned int n_features,
+                                           floating * H_data,
+                                           floating * q_data,
+                                           floating * w_data,
+                                           floating y_norm2,
+                                           # Variables intended to be modified
+                                           floating * XtA_data,
+                                           # Parameters
+                                           floating alpha,
+                                           floating beta,
+                                           bint positive
+                                           ) nogil:
+    cdef floating R_norm2
+    cdef floating w_norm2
+    cdef floating q_dot_w
+    cdef floating const
+    cdef floating gap
+    cdef floating dual_norm_XtA
+
+    # fused types version of BLAS functions
+    cdef DOT dot
+    cdef ASUM asum
+
+    if floating is float:
+        dot = sdot
+        asum = sasum
+    else:
+        dot = ddot
+        asum = dasum
+
+    # q_dot_w = np.dot(w, q)
+    q_dot_w = dot(n_features, w_data, 1, q_data, 1)
+
+    for ii in range(n_features):
+        XtA_data[ii] = q_data[ii] - H_data[ii] - beta * w_data[ii]
+    if positive:
+        dual_norm_XtA = max(n_features, XtA_data)
+    else:
+        dual_norm_XtA = abs_max(n_features, XtA_data)
+
+    # np.sum(w * H)
+    R_norm2 = dot(n_features, w_data, 1, H_data, 1)
+    R_norm2 += y_norm2 + tmp - 2.0 * q_dot_w
+
+    # w_norm2 = np.dot(w, w)
+    w_norm2 = dot(n_features, w_data, 1, w_data, 1)
+
+    if (dual_norm_XtA > alpha):
+        const = alpha / dual_norm_XtA
+        gap = 0.5 * (1 + const ** 2) * R_norm2
+    else:
+        const = 1.0
+        gap = R_norm2
+
+    # The call to dasum is equivalent to the L1 norm of w
+    gap += (alpha * asum(n_features, w_data, 1) -
+            const * y_norm2 +  const * q_dot_w +
+            0.5 * beta * (1 + const ** 2) * w_norm2)
+
+    return gap
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
@@ -832,17 +896,17 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     # initial value "Q w" which will be kept of up to date in the iterations
     cdef floating[:] H = np.dot(Q, w)
 
-    cdef floating[:] XtA = np.zeros(n_features, dtype=dtype)
+    cdef floating[:] XtA = np.zeros(n_features, dtype=dtype)  #
     cdef floating tmp
     cdef floating w_ii
     cdef floating d_w_max
     cdef floating w_max
     cdef floating d_w_ii
-    cdef floating q_dot_w
+    cdef floating q_dot_w  #
     cdef floating w_norm2
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
-    cdef floating dual_norm_XtA
+    cdef floating dual_norm_XtA  #
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
@@ -855,6 +919,7 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     cdef floating* q_ptr = <floating*>q.data
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
+
     tol = tol * y_norm2
 
     if alpha == 0:
@@ -902,42 +967,16 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            if (w_max == 0.0 or
+                d_w_max / w_max < d_w_tol or
+                n_iter == max_iter - 1):
+
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
-
-                # q_dot_w = np.dot(w, q)
-                q_dot_w = dot(n_features, w_ptr, 1, q_ptr, 1)
-
-                for ii in range(n_features):
-                    XtA[ii] = q[ii] - H[ii] - beta * w[ii]
-                if positive:
-                    dual_norm_XtA = max(n_features, XtA_ptr)
-                else:
-                    dual_norm_XtA = abs_max(n_features, XtA_ptr)
-
-                # temp = np.sum(w * H)
-                tmp = 0.0
-                for ii in range(n_features):
-                    tmp += w[ii] * H[ii]
-                R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
-
-                # w_norm2 = np.dot(w, w)
-                w_norm2 = dot(n_features, &w[0], 1, &w[0], 1)
-
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const ** 2)
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const = 1.0
-                    gap = R_norm2
-
-                # The call to dasum is equivalent to the L1 norm of w
-                gap += (alpha * asum(n_features, &w[0], 1) -
-                        const * y_norm2 +  const * q_dot_w +
-                        0.5 * beta * (1 + const ** 2) * w_norm2)
+                gap = enet_gram_duality_gap(n_samples, n_features,
+                                            H_ptr, q_ptr, w_ptr, y_norm2,
+                                            XtA_ptr, alpha, beta, positive)
 
                 if gap < tol:
                     # return if we reached desired tolerance
