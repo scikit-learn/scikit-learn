@@ -798,17 +798,23 @@ cdef inline floating enet_gram_duality_gap(unsigned int n_samples,
                                            floating y_norm2,
                                            # Variables intended to be modified
                                            floating * XtA_data,
+                                           floating * dual_scaling,
                                            # Parameters
                                            floating alpha,
                                            floating beta,
-                                           bint positive
+                                           bint positive,
+                                           # active set for improved performance
+                                           np.int32_t* disabled_data = NULL,
+                                           unsigned int n_disabled = 0
                                            ) nogil:
     cdef floating R_norm2
     cdef floating w_norm2
     cdef floating q_dot_w
     cdef floating const
     cdef floating gap
+    cdef floating yTA
     cdef floating dual_norm_XtA
+    cdef unsigned int i
 
     # fused types version of BLAS functions
     cdef DOT dot
@@ -824,28 +830,51 @@ cdef inline floating enet_gram_duality_gap(unsigned int n_samples,
     # q_dot_w = np.dot(w, q)
     q_dot_w = dot(n_features, w_data, 1, q_data, 1)
 
-    for ii in range(n_features):
-        XtA_data[ii] = q_data[ii] - H_data[ii] - beta * w_data[ii]
-    if positive:
-        dual_norm_XtA = max(n_features, XtA_data)
-    else:
-        dual_norm_XtA = abs_max(n_features, XtA_data)
+    for i in range(n_features):
+        if (n_disabled == 0 or disabled_data[i] == 0):
+            XtA_data[i] = q_data[i] - H_data[i] - beta * w_data[i]
+        else :
+            # We only need the infinity norm of XtA and by KKT, we know that
+            # in the present case, XtA[i] will not reach the maximum
+            XtA_data[i] = 0
+
+    yTA = y_norm2 - q_dot_w
 
     # np.sum(w * H)
     R_norm2 = dot(n_features, w_data, 1, H_data, 1)
-    R_norm2 += y_norm2 + tmp - 2.0 * q_dot_w
+    R_norm2 += y_norm2 - 2.0 * q_dot_w
+
+
+    if alpha == 0:
+        dual_scaling[0] = 1
+    else:
+        if positive:
+            dual_norm_XtA = max(n_features, XtA_data)
+        else:
+            dual_norm_XtA = abs_max(n_features, XtA_data)
+
+        if dual_norm_XtA <= 0:
+            if R_norm2 == 0:
+                dual_scaling[0] = 1. / alpha
+            else:
+                dual_scaling[0] = yTA / R_norm2 / alpha
+        elif positive:
+            dual_scaling[0] = fmin(yTA / (alpha * R_norm2),
+                                   1. / dual_norm_XtA)
+        else:
+            dual_scaling[0] = fmin(fmax(yTA / (alpha * R_norm2),
+                                        -1. / dual_norm_XtA),
+                                   1. / dual_norm_XtA)
+
+    dual_scaling[0] = 1. / dual_scaling[0]
 
     # w_norm2 = np.dot(w, w)
     w_norm2 = dot(n_features, w_data, 1, w_data, 1)
 
-    if (dual_norm_XtA > alpha):
-        const = alpha / dual_norm_XtA
-        gap = 0.5 * (1 + const ** 2) * R_norm2
-    else:
-        const = 1.0
-        gap = R_norm2
+    const = alpha / dual_scaling[0]
+    gap = 0.5 * (1 + const ** 2) * R_norm2
 
-    # The call to dasum is equivalent to the L1 norm of w
+    # The call to asum is equivalent to the L1 norm of w
     gap += (alpha * asum(n_features, w_data, 1) -
             const * y_norm2 +  const * q_dot_w +
             0.5 * beta * (1 + const ** 2) * w_norm2)
@@ -860,7 +889,8 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
                                  int max_iter, floating tol, object rng,
-                                 bint random=0, bint positive=0):
+                                 bint random=0, bint positive=0,
+                                 int screening=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -910,8 +940,16 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     cdef unsigned int ii
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
+    cdef unsigned int n_active = 0
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+
+    # compute the active set
+    cdef np.ndarray[np.int32_t, ndim=1] active_set = np.empty(n_features,
+                                                              dtype=np.intc)
+    cdef np.ndarray[np.int32_t, ndim=1] disabled = np.zeros(n_features,
+                                                            dtype=np.intc)
+    cdef np.ndarray[floating, ndim=1] dual_scaling = np.empty(1, dtype=dtype)
 
     cdef floating y_norm2 = np.dot(y, y)
     cdef floating* w_ptr = <floating*>&w[0]
@@ -919,6 +957,7 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     cdef floating* q_ptr = <floating*>q.data
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
+    cdef floating *dual_scaling_data = <floating*> dual_scaling.data
 
     tol = tol * y_norm2
 
@@ -927,14 +966,22 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
             " results and is discouraged.")
 
     with nogil:
+        # Activate variable
+        for ii in range(n_features):
+            if Q[ii, ii] != 0.0:
+                active_set[n_active] = ii
+                n_active += 1
+            else:
+                disabled[ii] = 1
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    ii = active_set[rand_int(n_active, rand_r_state)]
                 else:
-                    ii = f_iter
+                    ii = active_set[f_iter]
 
                 if Q[ii, ii] == 0.0:
                     continue
@@ -951,8 +998,8 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                        / (Q[ii, ii] + beta)
+                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0) /
+                             (Q[ii, ii] + beta))
 
                 if w[ii] != 0.0:
                     # H +=  w[ii] * Q[ii] # Update H = X.T X w
@@ -967,20 +1014,46 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
+            # Variable screening
             if (w_max == 0.0 or
                 d_w_max / w_max < d_w_tol or
-                n_iter == max_iter - 1):
+                n_iter == max_iter - 1 or
+                screening > 0 and n_iter % screening == 0) and n_iter != 0:
+                # the biggest coordinate update of this iteration was smaller
+                # than the tolerance: check the duality gap as ultimate
+                # stopping criterion
 
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
-                # criterion
                 gap = enet_gram_duality_gap(n_samples, n_features,
                                             H_ptr, q_ptr, w_ptr, y_norm2,
-                                            XtA_ptr, alpha, beta, positive)
+                                            XtA_ptr, dual_scaling_data,
+                                            alpha, beta, positive)
 
+                # Break if we reached desired tolerance
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+
+                # Remove inactive variables (screening)
+                if screening > 0:
+                    n_active = 0
+                    r_screening = sqrt(2. * gap) / alpha
+
+                    # Loop over coordinates
+                    for ii in range(n_features):
+                        if disabled[ii] == 1:
+                             continue
+
+                        tmp = XtA[ii] / dual_scaling[0]
+                        if not positive:
+                            tmp = fabs(tmp)
+
+                        if (tmp >= (1. - r_screening * sqrt(Q[ii, ii])) or
+                            w[ii] != 0):
+
+                            active_set[n_active] = ii
+                            n_active += 1
+                        else:
+                            disabled[ii] = 1
 
     return np.asarray(w), gap, tol, n_iter + 1
 
