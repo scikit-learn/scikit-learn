@@ -689,6 +689,8 @@ class Lars(LinearModel, RegressorMixin):
                     a[0] for a in (self.alphas_, self.active_, self.coef_path_,
                                    self.coef_)]
                 self.n_iter_ = self.n_iter_[0]
+            else:
+                self.coef_ = np.array(self.coef_)
         else:
             self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
