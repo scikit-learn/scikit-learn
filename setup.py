@@ -11,7 +11,6 @@ import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
 import traceback
-import subprocess
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -200,7 +199,6 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 2',
-                                 'Programming Language :: Python :: 2.6',
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.4',

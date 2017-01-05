@@ -152,7 +152,7 @@ class _GMMBase(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    random_state: RandomState or an int seed (None by default)
+    random_state : RandomState or an int seed (None by default)
         A random number generator instance
 
     min_covar : float, optional
@@ -275,12 +275,6 @@ class _GMMBase(BaseEstimator):
         if n_init < 1:
             raise ValueError('GMM estimation requires at least one run')
 
-        self.weights_ = np.ones(self.n_components) / self.n_components
-
-        # flag to indicate exit status of fit() method: converged (True) or
-        # n_iter reached (False)
-        self.converged_ = False
-
     def _get_covars(self):
         """Covariance parameters for each mixture component.
 
@@ -316,7 +310,7 @@ class _GMMBase(BaseEstimator):
 
         Parameters
         ----------
-        X: array_like, shape (n_samples, n_features)
+        X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -647,7 +641,7 @@ class _GMMBase(BaseEstimator):
 
         Returns
         -------
-        bic: float (the lower the better)
+        bic : float (the lower the better)
         """
         return (-2 * self.score(X).sum() +
                 self._n_parameters() * np.log(X.shape[0]))
@@ -662,7 +656,7 @@ class _GMMBase(BaseEstimator):
 
         Returns
         -------
-        aic: float (the lower the better)
+        aic : float (the lower the better)
         """
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
 

@@ -87,7 +87,7 @@ funded one year for a developer to work on the project full-time
    :target: http://www.datascience-paris-saclay.fr
 
 `NYU Moore-Sloan Data Science Environment <http://cds.nyu.edu/mooresloan/>`_
-funds Andreas Mueller (2014-2015) to work on this project. The Moore-Sloan Data Science
+funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan Data Science
 Environment also funds several students to work on the project part-time.
 
 .. image:: images/nyu_short_color.png
@@ -95,14 +95,23 @@ Environment also funds several students to work on the project part-time.
    :align: center
    :target: http://cds.nyu.edu/mooresloan/
 
+
 `Télécom Paristech <http://www.telecom-paristech.com>`_ funds Manoj Kumar (2014),
-Tom Dupré la Tour (2015), Raghav R V (2015-2016) and Thierry Guillemot (2016) to
+Tom Dupré la Tour (2015), Raghav RV (2015-2016) and Thierry Guillemot (2016) to
 work on scikit-learn.
 
 .. image:: themes/scikit-learn/static/img/telecom.png
    :width: 100pt
    :align: center
    :target: http://www.telecom-paristech.fr/
+
+
+`Columbia University <http://columbia.edu>`_ funds Andreas Mueller since 2016.
+
+.. image:: themes/scikit-learn/static/img/columbia.png
+   :width: 100pt
+   :align: center
+   :target: http://www.columbia.edu/
 
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
@@ -114,7 +123,7 @@ program.
 - 2012 - `Vlad Niculae`_, Immanuel Bayer.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
-- 2015 - `Raghav R V <https://github.com/raghavrv>`_, Wei Xue
+- 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
 - 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <http://yclin.me>`_
 
 It also provided funding for sprints and events around scikit-learn. If

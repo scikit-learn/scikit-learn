@@ -216,7 +216,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     n_resampling : int, optional
         Number of randomized models.
 
-    selection_threshold: float, optional
+    selection_threshold : float, optional
         The score above which features should be selected.
 
     fit_intercept : boolean, optional

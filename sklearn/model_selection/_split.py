@@ -6,7 +6,7 @@ functions to split the data based on a preset strategy.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav R V <rvraghav93@gmail.com>
+#         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 
@@ -33,7 +33,6 @@ from ..utils.fixes import bincount
 from ..utils.fixes import signature
 from ..utils.random import choice
 from ..base import _pprint
-from ..gaussian_process.kernels import Kernel as GPKernel
 
 __all__ = ['BaseCrossValidator',
            'KFold',

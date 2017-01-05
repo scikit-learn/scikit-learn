@@ -12,12 +12,11 @@ from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
-from ..utils import compute_class_weight, deprecated
+from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
-from ..exceptions import ChangedBehaviorWarning
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -105,8 +104,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @property
     def _pairwise(self):
         # Used by cross_val_score.
-        kernel = self.kernel
-        return kernel == "precomputed" or callable(kernel)
+        return self.kernel == "precomputed"
 
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -368,24 +366,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             X = np.asarray(kernel, dtype=np.float64, order='C')
         return X
 
-    @deprecated(" and will be removed in 0.19")
-    def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            For kernel="precomputed", the expected shape of X is
-            [n_samples_test, n_samples_train].
-
-        Returns
-        -------
-        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
-            Returns the decision function of the sample for each class
-            in the model.
-        """
-        return self._decision_function(X)
-
     def _decision_function(self, X):
         """Distance of the samples X to the separating hyperplane.
 
@@ -482,8 +462,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @property
     def coef_(self):
         if self.kernel != 'linear':
-            raise ValueError('coef_ is only available when using a '
-                             'linear kernel')
+            raise AttributeError('coef_ is only available when using a '
+                                 'linear kernel')
 
         coef = self._get_coef()
 
@@ -545,11 +525,6 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             n_classes)
         """
         dec = self._decision_function(X)
-        if self.decision_function_shape is None and len(self.classes_) > 2:
-            warnings.warn("The decision_function_shape default value will "
-                          "change from 'ovo' to 'ovr' in 0.19. This will change "
-                          "the shape of the decision function returned by "
-                          "SVC.", ChangedBehaviorWarning)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
             return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
         return dec
@@ -851,7 +826,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    sample_weight: array-like, optional
+    sample_weight : array-like, optional
         Weights assigned to each sample.
 
     Returns

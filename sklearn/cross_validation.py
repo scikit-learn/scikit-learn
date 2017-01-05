@@ -1756,8 +1756,10 @@ def _permutation_test_score(estimator, X, y, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
-        estimator.fit(X[train], y[train])
-        avg_score.append(scorer(estimator, X[test], y[test]))
+        X_train, y_train = _safe_split(estimator, X, y, train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train)
+        estimator.fit(X_train, y_train)
+        avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
 
 
@@ -1770,7 +1772,7 @@ def _shuffle(y, labels, random_state):
         for label in np.unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
-    return y[ind]
+    return safe_indexing(y, ind)
 
 
 def check_cv(cv, X=None, y=None, classifier=False):
@@ -1810,7 +1812,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
     Returns
     -------
-    checked_cv: a cross-validation generator instance.
+    checked_cv : a cross-validation generator instance.
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """

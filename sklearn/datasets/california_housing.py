@@ -59,7 +59,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         Specify another download and cache folder for the datasets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -87,8 +87,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
+
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
+
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
         archive_fileobj = BytesIO(urlopen(DATA_URL).read())
         fileobj = tarfile.open(

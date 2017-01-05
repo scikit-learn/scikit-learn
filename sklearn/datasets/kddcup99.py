@@ -45,7 +45,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
 
     The KDD Cup '99 dataset was created by processing the tcpdump portions
     of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
-    created by MIT Lincoln Lab [1] . The artificial data was generated using
+    created by MIT Lincoln Lab [1]. The artificial data was generated using
     a closed network and hand-injected attacks to produce a large number of
     different types of attack with normal activity in the background.
     As the initial goal was to produce a large training set for supervised
@@ -134,7 +134,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
     download_if_missing : bool, default=True
@@ -155,9 +155,11 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            Detection Evaluation Richard Lippmann, Joshua W. Haines,
            David J. Fried, Jonathan Korba, Kumar Das
 
-    .. [2] A Geometric Framework for Unsupervised Anomaly Detection: Detecting
-           Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
-           Michael Prerau, Leonid Portnoy, Sal Stolfo
+    .. [2] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
+           unsupervised outlier detection using finite mixtures with
+           discounting learning algorithms. In Proceedings of the sixth
+           ACM SIGKDD international conference on Knowledge discovery
+           and data mining, pages 320-324. ACM Press, 2000.
 
     """
     kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
@@ -214,7 +216,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
 
 def _fetch_brute_kddcup99(subset=None, data_home=None,
                           download_if_missing=True, random_state=None,
-                          shuffle=False, percent10=False):
+                          shuffle=False, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -242,7 +244,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    percent10 : bool, default=False
+    percent10 : bool, default=True
         Whether to load only 10 percent of the data.
 
     Returns
@@ -345,6 +347,9 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
         joblib.dump(X, samples_path, compress=0)
         joblib.dump(y, targets_path, compress=0)
+    elif not available:
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
 
     try:
         X, y

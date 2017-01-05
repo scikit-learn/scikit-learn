@@ -40,6 +40,7 @@ It is currently maintained by a team of volunteers.
 
 Website: http://scikit-learn.org
 
+
 Installation
 ------------
 
@@ -48,7 +49,7 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 2.6 or >= 3.3)
+- Python (>= 2.7 or >= 3.3)
 - NumPy (>= 1.6.1)
 - SciPy (>= 0.9)
 
@@ -117,7 +118,7 @@ interact with tests that use ``multiprocessing``::
 
     C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
-See the web page http://scikit-learn.org/stable/install.html#testing
+See the web page http://scikit-learn.org/stable/developers/advanced_installation.html#testing
 for more information.
 
     Random number generation can be controlled during testing by setting
@@ -136,7 +137,7 @@ Project History
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the AUTHORS.rst file for a complete list of contributors.
+the  `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
 
 The project is currently maintained by a team of volunteers.
 

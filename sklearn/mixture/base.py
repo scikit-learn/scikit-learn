@@ -137,7 +137,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         ----------
         X : array-like, shape  (n_samples, n_features)
 
-        random_state: RandomState
+        random_state : RandomState
             A random number generator instance.
         """
         n_samples, _ = X.shape
