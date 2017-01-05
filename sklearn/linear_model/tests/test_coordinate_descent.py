@@ -485,6 +485,7 @@ def test_multioutput_enetcv_error():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@ignore_warnings(category=ConvergenceWarning)
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV().fit(X, y)
@@ -676,6 +677,7 @@ def test_sparse_dense_descent_paths():
         assert_array_almost_equal(coefs, sparse_coefs)
 
 
+@ignore_warnings(category=ConvergenceWarning)
 def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order='F', dtype='float64')
