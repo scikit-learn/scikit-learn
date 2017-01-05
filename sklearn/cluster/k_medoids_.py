@@ -206,7 +206,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         Returns
         -------
         X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
-            X transformed in the new space of distances to cluster_centers_.
+            X transformed in the new space of distances to cluster centers.
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
         check_is_fitted(self, "cluster_centers_")
