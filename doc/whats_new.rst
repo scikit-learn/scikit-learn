@@ -100,6 +100,17 @@ Enhancements
      norm 'max' the norms returned will be the same as for dense matrices.
      :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
 
+   - :class:`sklearn.linear_model.RANSACRegressor` no longer throws an error
+     when calling ``fit`` if no inliers are found in its first iteration.
+     Furthermore, causes of skipped iterations are tracked in newly added
+     attributes, ``n_skips_*``.
+     :issue:`7914` by :user:`Michael Horrell <mthorrell>`.
+
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
