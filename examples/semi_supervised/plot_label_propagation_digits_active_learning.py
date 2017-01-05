@@ -80,14 +80,14 @@ for i in range(5):
     # keep track of indices that we get labels for
     delete_indices = np.array([])
     
-    # if running for more than 5 iterations,  visualize the gain on only the first 5
+    # if running for more than 5 iterations, visualize the gain on only the first 5
     if i < 5:
         f.text(.05, (1 - (i + 1) * .183),
                "model %d\n\nfit with\n%d labels" % ((i + 1), i * 5 + 10), size=10)
     for index, image_index in enumerate(uncertainty_index):
         image = images[image_index]
 
-        # if running for more than 5 iterations,  visualize the gain on only the first 5
+        # if running for more than 5 iterations, visualize the gain on only the first 5
         if i < 5:
             sub = f.add_subplot(5, 5, index + 1 + (5 * i))
             sub.imshow(image, cmap=plt.cm.gray_r)
