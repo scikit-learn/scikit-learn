@@ -40,8 +40,7 @@ from sklearn.utils.testing import assert_almost_equal
 #
 
 # Metrics used to test similarity between bicluster
-SUPERVISED_METRICS = 
-    {
+SUPERVISED_METRICS = {
     "adjusted_mutual_info_score": adjusted_mutual_info_score,
     "adjusted_rand_score": adjusted_rand_score,
     "completeness_score": completeness_score,
@@ -52,8 +51,7 @@ SUPERVISED_METRICS =
     "fowlkes_mallows_score": fowlkes_mallows_score
     }
 
-UNSUPERVISED_METRICS = 
-    {
+UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
     "calinski_harabaz_score": calinski_harabaz_score
     }
@@ -72,8 +70,7 @@ UNSUPERVISED_METRICS_DICT.update(UNSUPERVISED_METRICS)
 # --------------------------------------------------------------------
 # Symmetric with respect to their input arguments y_true and y_pred.
 # Symmetric metrics only imply to supervised clusters.
-SYMMETRIC_METRICS = 
-    [
+SYMMETRIC_METRICS = [
     "adjusted_rand_score", "v_measure_score",
     "mutual_info_score", "adjusted_mutual_info_score",
     "normalized_mutual_info_score", "fowlkes_mallows_score"
@@ -85,11 +82,10 @@ NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 METRICS_ZERO_INFO = [
     "normalized_mutual_info_score", "v_measure_score",
     "adjusted_mutual_info_score"
-                    ]
+    ]
 
 # Metrics with output between 0 and 1
-METRICS_NORMALIZED_OUTPUT = 
-    [
+METRICS_NORMALIZED_OUTPUT = [
     "adjusted_rand_score", "homogeneity_score", "completeness_score",
     "v_measure_score", "adjusted_mutual_info_score", "fowlkes_mallows_score",
     "normalized_mutual_info_score"
