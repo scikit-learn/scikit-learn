@@ -74,8 +74,8 @@ class ClassifierChain(BaseEstimator):
             A list of copies of base_estimator. Once fit the classifiers in
             this list will be ordered as specified by the order attribute.
             The original order of labels (as specified by Y) is recovered in
-            the predict method by indexing into the predictions with the order
-            attribute.
+            the predict method by indexing into the predictions with the
+            list of indices in the order attribute.
 
         Returns
         -------
