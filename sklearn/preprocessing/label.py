@@ -73,7 +73,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> le.classes_
     array([1, 2, 6])
-    >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
+    >>> le.transform([1, 1, 2, 6])
     array([0, 0, 1, 2]...)
     >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
@@ -112,7 +112,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
+        self.classes_lookup = defaultdict(int)
+        #self.classes_lookup = dict(zip(self.classes_, range(self.classes_.shape[0])))
+        for i,v in enumerate(self.classes_):
+            self.classes_lookup[v] = i
         return self
+        
 
     def fit_transform(self, y):
         """Fit label encoder and return encoded labels
@@ -127,9 +132,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        return y
+        self.classes_lookup = defaultdict(int)
+        self.classes_ = np.unique(y)
+        for i,v in enumerate(self.classes_):
+            self.classes_lookup[v] = i
+        transformer = np.vectorize(self.classes_lookup.get)
+        return transformer(y)
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -145,13 +153,14 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
         y = column_or_1d(y, warn=True)
-
         classes = np.unique(y)
-        _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError("y contains new labels: %s" % str(diff))
-        return np.searchsorted(self.classes_, y)
+            for item in diff:
+                self.expand_classes(item)
+            #raise ValueError("y contains new labels: %s" % str(diff))
+        transformer = np.vectorize(self.classes_lookup.get)
+        return  transformer(y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -165,14 +174,34 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : numpy array of shape [n_samples]
         """
-        check_is_fitted(self, 'classes_')
-
-        diff = np.setdiff1d(y, np.arange(len(self.classes_)))
+        y = column_or_1d(y, warn=True)
+        diff = np.setdiff1d(y, self.classes_lookup.values())
         if diff:
             raise ValueError("y contains new labels: %s" % str(diff))
-        y = np.asarray(y)
-        return self.classes_[y]
 
+        transformer = np.vectorize(lambda x:(k for k,v in self.classes_lookup.items() if v== x).next())
+        return  transformer(y)
+
+    def expand_classes(self, y):
+        """Index new labels, and return their new normalized encoding 
+        
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        y : numpy array of shape [n_samples]
+
+        """
+    
+        for item in y:
+            if item not in self.classes_lookup:
+                self.classes_ = np.append(self.classes_, [item])
+                self.classes_lookup[item] = self.classes_.shape[0] - 1 
+        
+        return self.classes_lookup[item]
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion
