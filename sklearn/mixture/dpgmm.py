@@ -24,7 +24,7 @@ from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp, pinvh, squared_norm
+from ..utils.extmath import logsumexp, pinvh, squared_norm, stable_cumsum
 from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import _GMMBase
@@ -146,14 +146,14 @@ class _DPGMMBase(_GMMBase):
 
     Parameters
     ----------
-    n_components: int, default 1
+    n_components : int, default 1
         Number of mixture components.
 
-    covariance_type: string, default 'diag'
+    covariance_type : string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    alpha: float, default 1
+    alpha : float, default 1
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
@@ -462,7 +462,7 @@ class _DPGMMBase(_GMMBase):
         dg1 = digamma(self.gamma_.T[1]) - dg12
         dg2 = digamma(self.gamma_.T[2]) - dg12
 
-        cz = np.cumsum(z[:, ::-1], axis=-1)[:, -2::-1]
+        cz = stable_cumsum(z[:, ::-1], axis=-1)[:, -2::-1]
         logprior = np.sum(cz * dg2[:-1]) + np.sum(z * dg1)
         del cz  # Save memory
         z_non_zeros = z[z > np.finfo(np.float32).eps]
@@ -629,6 +629,16 @@ class _DPGMMBase(_GMMBase):
             "instead. DPGMM is deprecated in 0.18 and will be "
             "removed in 0.20.")
 class DPGMM(_DPGMMBase):
+    """Dirichlet Process Gaussian Mixture Models
+
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use :class:`sklearn.mixture.BayesianGaussianMixture` with
+        parameter ``weight_concentration_prior_type='dirichlet_process'``
+        instead.
+
+    """
+
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, tol=1e-3, verbose=0, min_covar=None,
                  n_iter=10, params='wmc', init_params='wmc'):
@@ -647,6 +657,11 @@ class DPGMM(_DPGMMBase):
 class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use :class:`sklearn.mixture.BayesianGaussianMixture` with parameter
+        ``weight_concentration_prior_type='dirichlet_distribution'`` instead.
+
     Variational inference for a Gaussian mixture model probability
     distribution. This class allows for easy and efficient inference
     of an approximate posterior distribution over the parameters of a
@@ -659,14 +674,14 @@ class VBGMM(_DPGMMBase):
 
     Parameters
     ----------
-    n_components: int, default 1
+    n_components : int, default 1
         Number of mixture components.
 
-    covariance_type: string, default 'diag'
+    covariance_type : string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    alpha: float, default 1
+    alpha : float, default 1
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of

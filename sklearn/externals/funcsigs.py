@@ -2,7 +2,7 @@
 """Function signature objects for callables
 
 Back port of Python 3.3's function signature tools from the inspect module,
-modified to be compatible with Python 2.6, 2.7 and 3.2+.
+modified to be compatible with Python 2.7 and 3.2+.
 """
 from __future__ import absolute_import, division, print_function
 import itertools
@@ -10,10 +10,7 @@ import functools
 import re
 import types
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from .odict import OrderedDict
+from collections import OrderedDict
 
 __version__ = "0.4"
 

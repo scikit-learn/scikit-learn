@@ -14,6 +14,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import map, range, zip
 from ..utils import check_array
+from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 
 from ._gradient_boosting import _partial_dependence_tree
@@ -121,9 +122,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    if gbrt.estimators_.shape[0] == 0:
-        raise ValueError('Call %s.fit before partial_dependence' %
-                         gbrt.__class__.__name__)
+    check_is_fitted(gbrt, 'estimators_')
     if (grid is None and X is None) or (grid is not None and X is not None):
         raise ValueError('Either grid or X must be specified')
 
@@ -183,10 +182,14 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         A fitted gradient boosting model.
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained.
-    features : seq of tuples or ints
+    features : seq of ints, strings, or tuples of ints or strings
         If seq[i] is an int or a tuple with one int value, a one-way
         PDP is created; if seq[i] is a tuple of two ints, a two-way
         PDP is created.
+        If feature_names is specified and seq[i] is an int, seq[i]
+        must be < len(feature_names).
+        If seq[i] is a string, feature_names must be specified, and
+        seq[i] must be in feature_names.
     feature_names : seq of str
         Name of each feature; feature_names[i] holds
         the name of the feature with index i.
@@ -241,9 +244,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    if gbrt.estimators_.shape[0] == 0:
-        raise ValueError('Call %s.fit before partial_dependence' %
-                         gbrt.__class__.__name__)
+    check_is_fitted(gbrt, 'estimators_')
 
     # set label_idx for multi-class GBRT
     if hasattr(gbrt, 'classes_') and np.size(gbrt.classes_) > 2:
@@ -306,8 +307,9 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                 l.append(feature_names[i])
             names.append(l)
     except IndexError:
-        raise ValueError('features[i] must be in [0, n_features) '
-                         'but was %d' % i)
+        raise ValueError('All entries of features must be less than '
+                         'len(feature_names) = {0}, got {1}.'
+                         .format(len(feature_names), i))
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
