@@ -113,7 +113,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
         self.classes_lookup = defaultdict(int)
-        #self.classes_lookup = dict(zip(self.classes_, range(self.classes_.shape[0])))
         for i, v in enumerate(self.classes_):
             self.classes_lookup[v] = i
         return self
@@ -882,5 +881,4 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             if len(unexpected) > 0:
                 raise ValueError('Expected only 0s and 1s in label indicator. '
                                  'Also got {0}'.format(unexpected))
-            return [tuple(self.classes_.compress(indicators)) for indicators
-                    in yt]
+            return [tuple(self.classes_.compress(indicators)) for indicators in yt]

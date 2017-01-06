@@ -177,7 +177,8 @@ def test_label_encoder():
                        [1, 2, 3, 3, 4, 0, 0])
     assert_array_equal(le.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
                        [0, 1, 4, 4, 5, -1, -1])
-    #assert_raises(ValueError, le.transform, [0, 6])
+    
+    # assert_raises(ValueError, le.transform, [0, 6])
 
     le.fit(["apple", "orange"])
     msg = "bad input shape"
@@ -194,6 +195,7 @@ def test_label_encoder_fit_transform():
     ret = le.fit_transform(["paris", "paris", "tokyo", "amsterdam"])
     assert_array_equal(ret, [1, 1, 2, 0])
 
+
 def test_label_encoder_expand_classes():
     # Test expand_classes
     le = LabelEncoder()
@@ -208,8 +210,8 @@ def test_label_encoder_expand_classes():
     c_ny = le.expand_classes(["new york"])
     c_sy = le.expand_classes(["sydney"])
 
-    # ret = le.inverse_transform([1, 1, 2, 0, c_ny, c_sy])
-    # assert_array_equal(ret, ["paris", "paris", "tokyo", "berlin", "new york", "sydney"] )
+    ret = le.inverse_transform([1, 2, c_ny, c_sy])
+    assert_array_equal(ret, ["paris", "tokyo", "new york", "sydney"] )
 
 
 def test_label_encoder_errors():
