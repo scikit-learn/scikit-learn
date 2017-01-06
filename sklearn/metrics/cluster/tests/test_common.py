@@ -49,12 +49,12 @@ SUPERVISED_METRICS = {
     "normalized_mutual_info_score": normalized_mutual_info_score,
     "v_measure_score": v_measure_score,
     "fowlkes_mallows_score": fowlkes_mallows_score
-    }
+                     }
 
 UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
     "calinski_harabaz_score": calinski_harabaz_score
-    }
+                       }
 
 SUPERVISED_METRICS_DICT = dict()
 UNSUPERVISED_METRICS_DICT = dict()
@@ -74,7 +74,7 @@ SYMMETRIC_METRICS = [
     "adjusted_rand_score", "v_measure_score",
     "mutual_info_score", "adjusted_mutual_info_score",
     "normalized_mutual_info_score", "fowlkes_mallows_score"
-    ]
+                    ]
 
 NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
@@ -82,7 +82,7 @@ NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 METRICS_ZERO_INFO = [
     "normalized_mutual_info_score", "v_measure_score",
     "adjusted_mutual_info_score"
-    ]
+                    ]
 
 # Metrics with output between 0 and 1
 METRICS_NORMALIZED_OUTPUT = [
@@ -151,9 +151,10 @@ def test_permute_labels():
         metric = SUPERVISED_METRICS_DICT[name]
         y_label = np.array([0, 0, 0, 1, 1, 0, 1])
         y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
-        assert_equal(metric(y_pred, y_label), metric(1-y_pred, y_label))
-        assert_equal(metric(y_pred, y_label), metric(1-y_pred, 1-y_label))
-        assert_almost_equal(metric(y_pred, y_label), metric(y_pred, 1-y_label))
+        score_1 = metric(y_pred, y_label)
+        assert_equal(score_1, metric(1 - y_pred, y_label))
+        assert_equal(score_1, metric(1 - y_pred, 1 - y_label))
+        assert_almost_equal(score_1, metric(y_pred, 1 - y_label))
 
     # Test for Silhouette_score
     dataset = datasets.load_iris()
@@ -161,7 +162,7 @@ def test_permute_labels():
     y_pred = dataset.target
     D = pairwise_distances(X, metric='euclidean')
     score_1 = silhouette_score(D, y_pred, metric='precomputed')
-    score_2 = silhouette_score(D, 1-y_pred, metric='precomputed')
+    score_2 = silhouette_score(D, 1 - y_pred, metric='precomputed')
     assert_almost_equal(score_1, score_2)
 
     # Test for calinski_harabaz_score
@@ -170,9 +171,9 @@ def test_permute_labels():
     y_pred = dataset.target
     D = pairwise_distances(X, metric='euclidean')
     score_1 = calinski_harabaz_score(D, y_pred)
-    score_2 = calinski_harabaz_score(D, 1-y_pred)
-    score_3 = calinski_harabaz_score(1-D, y_pred)
-    score_4 = calinski_harabaz_score(1-D, 1-y_pred)
+    score_2 = calinski_harabaz_score(D, 1 - y_pred)
+    score_3 = calinski_harabaz_score(1 - D, y_pred)
+    score_4 = calinski_harabaz_score(1 - D, 1 - y_pred)
     assert_almost_equal(score_1, score_2)
     assert_almost_equal(score_1, score_3)
     assert_almost_equal(score_1, score_4)
