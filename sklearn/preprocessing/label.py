@@ -162,7 +162,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
             for item in diff:
-                self.expand_classes(item)
+                self.expand_classes([item])
             #raise ValueError("y contains new labels: %s" % str(diff))
         transformer = np.vectorize(lambda x:self.classes_lookup.get(x))
         return  transformer(y)
