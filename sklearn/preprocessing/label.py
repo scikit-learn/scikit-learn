@@ -73,7 +73,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> le.classes_
     array([1, 2, 6])
-    >>> le.transform([1, 1, 2, 6])
+    >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
     array([0, 0, 1, 2]...)
     >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
@@ -136,7 +136,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self.classes_ = np.unique(y)
         for i,v in enumerate(self.classes_):
             self.classes_lookup[v] = i
-        transformer = np.vectorize(self.classes_lookup.get)
+        transformer = np.vectorize(lambda x:self.classes_lookup.get(x))
         return transformer(y)
 
     def transform(self, y):
@@ -159,7 +159,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             for item in diff:
                 self.expand_classes(item)
             #raise ValueError("y contains new labels: %s" % str(diff))
-        transformer = np.vectorize(self.classes_lookup.get)
+        transformer = np.vectorize(lambda x:self.classes_lookup.get(x))
         return  transformer(y)
 
     def inverse_transform(self, y):
