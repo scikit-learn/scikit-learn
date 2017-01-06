@@ -73,6 +73,10 @@ Enhancements
 Bug fixes
 .........
 
+   - :func:`model_selection.cross_val_predict` now returns output of the
+     correct shape for all values of the argument ``method``.
+     :issue:`7863` by :user:`Aman Dalmia <dalmia>`.
+
    - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
      exactly implement Benjamini-Hochberg procedure. It formerly may have
      selected fewer features than it should.
