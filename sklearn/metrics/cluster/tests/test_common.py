@@ -49,12 +49,12 @@ SUPERVISED_METRICS = {
     "normalized_mutual_info_score": normalized_mutual_info_score,
     "v_measure_score": v_measure_score,
     "fowlkes_mallows_score": fowlkes_mallows_score
-    }
+}
 
 UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
     "calinski_harabaz_score": calinski_harabaz_score
-    }
+}
 
 SUPERVISED_METRICS_DICT = dict()
 UNSUPERVISED_METRICS_DICT = dict()
@@ -74,7 +74,7 @@ SYMMETRIC_METRICS = [
     "adjusted_rand_score", "v_measure_score",
     "mutual_info_score", "adjusted_mutual_info_score",
     "normalized_mutual_info_score", "fowlkes_mallows_score"
-    ]
+]
 
 NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
@@ -82,14 +82,14 @@ NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 METRICS_ZERO_INFO = [
     "normalized_mutual_info_score", "v_measure_score",
     "adjusted_mutual_info_score"
-    ]
+]
 
 # Metrics with output between 0 and 1
 METRICS_NORMALIZED_OUTPUT = [
     "adjusted_rand_score", "homogeneity_score", "completeness_score",
     "v_measure_score", "adjusted_mutual_info_score", "fowlkes_mallows_score",
     "normalized_mutual_info_score"
-    ]
+]
 
 
 def assert_between(var, score_1, score_2):
