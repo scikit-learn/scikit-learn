@@ -53,9 +53,3 @@ def test_classifiers_coef_size():
 
     assert_equal([c.coef_.size for c in classifier_chain.classifiers_],
                  range(X.shape[1], X.shape[1] + Y.shape[1]))
-
-if __name__ == "__main__":
-    test_fit_and_predict()
-    test_fit_and_predict_with_sparse_labels()
-    test_order_shuffle()
-    test_classifiers_coef_size()
