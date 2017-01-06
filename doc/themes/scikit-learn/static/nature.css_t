@@ -40,9 +40,7 @@ ul.horizontal, ul.horizontal li {
 
 
 div.header {
-    /* for the logo to correctly expand when showing results
-       but remain cut when not */
-       height: 60px;
+    /* Don't leave a fixed height. It won't allow the header to expand when search results appear. */
 }
 
 
@@ -107,6 +105,9 @@ div.navbar div.nav-icon {
 }
 /* Nav bar collapses for mobile phones and shows the hamburger */
 @media screen and (max-width: 680px) {
+    div.header {
+      height: 60px;
+    }
     div.navbar div.nav-icon {
         position: absolute;
         display: inline-block;
@@ -550,6 +551,30 @@ div.highlight a {
     text-decoration: underline;
 }
 
+div.highlight:hover span.copybutton {
+    background-color: #3F556B;
+}
+
+div.highlight:hover span.copybutton:hover {
+    background-color: #20252B;
+}
+
+@media (min-width: 1060px) {
+    div.highlight:hover span.copybutton:after{
+	background: #3F556B;
+	border-radius: 5px;
+	color: white;
+	content: attr(title);
+	left: 110%;
+	padding: 5px 15px;
+	position: absolute;
+	z-index: 98;
+	width: 140px;
+	top: -10px;
+    }
+}
+
+
 div.note {
     background-color: #eee;
     border: 1px solid #ccc;
@@ -578,7 +603,7 @@ div.admonition {
     -moz-border-radius: 4px;
 }
 
-div.warning {
+div.warning, div.deprecated {
     color: #b94a48;
     background-color: #F3E5E5;
     border: 1px solid #eed3d7;

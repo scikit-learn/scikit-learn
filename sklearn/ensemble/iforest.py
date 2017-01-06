@@ -36,13 +36,15 @@ class IsolationForest(BaseBagging):
     length from the root node to the terminating node.
 
     This path length, averaged over a forest of such random trees, is a
-    measure of abnormality and our decision function.
+    measure of normality and our decision function.
 
     Random partitioning produces noticeably shorter paths for anomalies.
     Hence, when a forest of random trees collectively produce shorter path
     lengths for particular samples, they are highly likely to be anomalies.
 
     Read more in the :ref:`User Guide <isolation_forest>`.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -64,6 +66,7 @@ class IsolationForest(BaseBagging):
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
+
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
@@ -105,6 +108,7 @@ class IsolationForest(BaseBagging):
     .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
+
     """
 
     def __init__(self,
@@ -150,9 +154,7 @@ class IsolationForest(BaseBagging):
         self : object
             Returns self.
         """
-        # ensure_2d=False because there are actually unit test checking we fail
-        # for 1d.
-        X = check_array(X, accept_sparse=['csc'], ensure_2d=False)
+        X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -246,17 +248,28 @@ class IsolationForest(BaseBagging):
         """
         # code structure from ForestClassifier/predict_proba
         # Check data
-        X = self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         n_samples_leaf = np.zeros((n_samples, self.n_estimators), order="f")
         depths = np.zeros((n_samples, self.n_estimators), order="f")
 
-        for i, tree in enumerate(self.estimators_):
-            leaves_index = tree.apply(X)
-            node_indicator = tree.decision_path(X)
+        if self._max_features == X.shape[1]:
+            subsample_features = False
+        else:
+            subsample_features = True
+
+        for i, (tree, features) in enumerate(zip(self.estimators_,
+                                                 self.estimators_features_)):
+            if subsample_features:
+                X_subset = X[:, features]
+            else:
+                X_subset = X
+            leaves_index = tree.apply(X_subset)
+            node_indicator = tree.decision_path(X_subset)
             n_samples_leaf[:, i] = tree.tree_.n_node_samples[leaves_index]
-            depths[:, i] = np.asarray(node_indicator.sum(axis=1)).reshape(-1) - 1
+            depths[:, i] = np.ravel(node_indicator.sum(axis=1))
+            depths[:, i] -= 1
 
         depths += _average_path_length(n_samples_leaf)
 

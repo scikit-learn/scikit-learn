@@ -11,6 +11,13 @@ set -e
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "\
+try:
+    import pandas
+    print('pandas %s' % pandas.__version__)
+except ImportError:
+    pass
+"
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
@@ -32,11 +39,8 @@ run_tests() {
         nosetests -s --with-timer --timer-top-n 20 sklearn
     fi
 
-    # Is directory still empty ?
-    ls -ltra
-
     # Test doc
-    cd $CACHED_BUILD_DIR/scikit-learn
+    cd $OLDPWD
     make test-doc test-sphinxext
 }
 

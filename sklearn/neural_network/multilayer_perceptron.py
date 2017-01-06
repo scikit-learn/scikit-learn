@@ -41,6 +41,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     Warning: This class should not be used directly.
     Use derived classes instead.
+
+    .. versionadded:: 0.18
     """
 
     @abstractmethod
@@ -87,7 +89,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        activations: list, length = n_layers - 1
+        activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
 
         with_output_activation : bool, default True
@@ -134,7 +136,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         with respect to the different parameters given in the initialization.
 
         Returned gradients are packed in a single vector so it can be used
-        in lbgfs
+        in lbfgs
 
         Parameters
         ----------
@@ -147,7 +149,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         y : array-like, shape (n_samples,)
             The target values.
 
-        activations: list, length = n_layers - 1
+        activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
 
         deltas : list, length = n_layers - 1
@@ -191,7 +193,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         y : array-like, shape (n_samples,)
             The target values.
 
-        activations: list, length = n_layers - 1
+        activations : list, length = n_layers - 1
              The ith element of the list holds the values of the ith layer.
 
         deltas : list, length = n_layers - 1
@@ -345,8 +347,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             # First time training the model
             self._initialize(y, layer_units)
 
-        # lbgfs does not support mini-batches
-        if self.solver == 'lbgfs':
+        # lbfgs does not support mini-batches
+        if self.solver == 'lbfgs':
             batch_size = n_samples
         elif self.batch_size == 'auto':
             batch_size = min(200, n_samples)
@@ -375,7 +377,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  intercept_grads, layer_units, incremental)
 
         # Run the LBFGS solver
-        elif self.solver == 'lbgfs':
+        elif self.solver == 'lbfgs':
             self._fit_lbfgs(X, y, activations, deltas, coef_grads,
                             intercept_grads, layer_units)
         return self
@@ -422,7 +424,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
-        supported_solvers = _STOCHASTIC_SOLVERS + ["lbgfs"]
+        supported_solvers = _STOCHASTIC_SOLVERS + ["lbfgs"]
         if self.solver not in supported_solvers:
             raise ValueError("The solver %s is not supported. "
                              " Expected one of: %s" %
@@ -560,7 +562,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                   'converged yet.'
                                   % (), ConvergenceWarning)
         except KeyboardInterrupt:
-            pass
+            warnings.warn("Training interrupted by user.")
 
         if early_stopping:
             # restore best weights
@@ -599,15 +601,16 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self.best_loss_ = self.loss_curve_[-1]
 
     def fit(self, X, y):
-        """Fit the model to data matrix X and target y.
+        """Fit the model to data matrix X and target(s) y.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
-            The target values.
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
 
         Returns
         -------
@@ -683,6 +686,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     This model optimizes the log-loss function using LBFGS or stochastic
     gradient descent.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     hidden_layer_sizes : tuple, length = n_layers - 2, default (100,)
@@ -704,10 +709,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    solver : {'lbgfs', 'sgd', 'adam'}, default 'adam'
+    solver : {'lbfgs', 'sgd', 'adam'}, default 'adam'
         The solver for weight optimization.
 
-        - 'lbgfs' is an optimizer in the family of quasi-Newton methods.
+        - 'lbfgs' is an optimizer in the family of quasi-Newton methods.
 
         - 'sgd' refers to stochastic gradient descent.
 
@@ -717,7 +722,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
-        For small datasets, however, 'lbgfs' can converge faster and perform
+        For small datasets, however, 'lbfgs' can converge faster and perform
         better.
 
     alpha : float, optional, default 0.0001
@@ -725,7 +730,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
-        If the solver is 'lbgfs', the classifier will not use minibatch.
+        If the solver is 'lbfgs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
@@ -814,17 +819,17 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     Attributes
     ----------
-    `classes_` : array or list of array of shape (n_classes,)
+    classes_ : array or list of array of shape (n_classes,)
         Class labels for each output.
 
-    `loss_` : float
+    loss_ : float
         The current loss computed with the loss function.
 
-    `coefs_` : list, length n_layers - 1
+    coefs_ : list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    `intercepts_` : list, length n_layers - 1
+    intercepts_ : list, length n_layers - 1
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
@@ -834,10 +839,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     n_layers_ : int
         Number of layers.
 
-    `n_outputs_` : int
+    n_outputs_ : int
         Number of outputs.
 
-    `out_activation_` : string
+    out_activation_ : string
         Name of the output activation function.
 
     Notes
@@ -868,6 +873,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
+
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
@@ -902,6 +908,13 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
+        elif self.warm_start:
+            classes = unique_labels(y)
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used where `y` has "
+                                 "the same classes as in the previous "
+                                 "call to fit. Previously got %s, `y` has %s" %
+                                 (self.classes_, classes))
         else:
             classes = unique_labels(y)
             if np.setdiff1d(classes, self.classes_, assume_unique=True):
@@ -932,6 +945,25 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             y_pred = y_pred.ravel()
 
         return self._label_binarizer.inverse_transform(y_pred)
+
+    def fit(self, X, y):
+        """Fit the model to data matrix X and target(s) y.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : returns a trained MLP model.
+        """
+        return self._fit(X, y, incremental=(self.warm_start and
+                                            hasattr(self, "classes_")))
 
     @property
     def partial_fit(self):
@@ -1025,6 +1057,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     This model optimizes the squared-loss using LBFGS or stochastic gradient
     descent.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     hidden_layer_sizes : tuple, length = n_layers - 2, default (100,)
@@ -1046,10 +1080,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    solver : {'lbgfs', 'sgd', 'adam'}, default 'adam'
+    solver : {'lbfgs', 'sgd', 'adam'}, default 'adam'
         The solver for weight optimization.
 
-        - 'lbgfs' is an optimizer in the family of quasi-Newton methods.
+        - 'lbfgs' is an optimizer in the family of quasi-Newton methods.
 
         - 'sgd' refers to stochastic gradient descent.
 
@@ -1059,7 +1093,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
-        For small datasets, however, 'lbgfs' can converge faster and perform
+        For small datasets, however, 'lbfgs' can converge faster and perform
         better.
 
     alpha : float, optional, default 0.0001
@@ -1067,7 +1101,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
-        If the solver is 'lbgfs', the classifier will not use minibatch.
+        If the solver is 'lbfgs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
@@ -1156,14 +1190,14 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     Attributes
     ----------
-    `loss_` : float
+    loss_ : float
         The current loss computed with the loss function.
 
-    `coefs_` : list, length n_layers - 1
+    coefs_ : list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    `intercepts_` : list, length n_layers - 1
+    intercepts_ : list, length n_layers - 1
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
@@ -1173,10 +1207,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     n_layers_ : int
         Number of layers.
 
-    `n_outputs_` : int
+    n_outputs_ : int
         Number of outputs.
 
-    `out_activation_` : string
+    out_activation_ : string
         Name of the output activation function.
 
     Notes
@@ -1207,6 +1241,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
+
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,

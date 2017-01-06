@@ -146,7 +146,7 @@ full formula is::
 
     X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 
-    X_scaled = X_std / (max - min) + min
+    X_scaled = X_std * (max - min) + min
 
 :class:`MaxAbsScaler` works in a very similar fashion, but scales in a way
 that the training data lies within the range ``[-1, 1]`` by dividing through
@@ -415,8 +415,8 @@ Note that, if there is a possibilty that the training data might have missing ca
 features, one has to explicitly set ``n_values``. For example,
 
     >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
-    >>> # Note that for there are missing categorical values for the 2nd and 3rd
-    >>> # feature
+    >>> # Note that there are missing categorical values for the 2nd and 3rd
+    >>> # features
     >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
            handle_unknown='error', n_values=[2, 3, 4], sparse=True)
