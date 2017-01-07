@@ -143,7 +143,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
-        print(neigh_ind.dtype)
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
