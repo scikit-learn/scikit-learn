@@ -383,8 +383,6 @@ def test_pairwise_distances_blockwise_invalid_block_size():
 
 def check_pairwise_distances_blockwise(X, Y, block_size, metric,
                                        true_distances):
-    if Y is None:
-        Y = X
     gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
                                        metric=metric)
     blockwise_distances = np.vstack(list(gen))

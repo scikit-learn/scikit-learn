@@ -1194,7 +1194,7 @@ def _generate_pairwise_distances_reduce(X, Y=None, metric='euclidean',
             # get distances from block to every other sample
             stop = min(start + block_n_rows, X.shape[0])
             dist = pairwise_distances(X[start:stop], Y, metric, n_jobs, **kwds)
-            yield reduce_func(dist, stop-start, *kwds)
+            yield reduce_func(dist=dist)
 
 
 def pairwise_distances_reduce(X, Y=None, metric='euclidean', n_jobs=1,

@@ -6,6 +6,8 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+from functools import partial
+
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -346,19 +348,21 @@ class KNeighborsMixin(object):
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
+            reduce_func = partial(self._reduce_func, n_neighbors=n_neighbors,
+                                  return_distance=return_distance)
             if self.effective_metric_ == 'euclidean':
                 result = pairwise_distances_reduce(
                     X, self._fit_X, 'euclidean', n_jobs=n_jobs,
-                    reduce_func=self._reduce_func, block_size=1, squared=True,
-                    n_neighbors=n_neighbors, return_distance=return_distance)
+                    reduce_func=reduce_func, block_size=1, squared=True)
             else:
                 result = pairwise_distances_reduce(
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
-                    reduce_func=self._reduce_func, block_size=1,
-                    n_neighbors=n_neighbors, return_distance=return_distance,
+                    reduce_func=reduce_func, block_size=1,
                     **self.effective_metric_params_)
 
-            result = np.vstack(list(result))
+            result = np.hstack(list(result))
+            if return_distance:
+                result = result[0], result[1]
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -407,10 +411,8 @@ class KNeighborsMixin(object):
                 return dist, neigh_ind
             return neigh_ind
 
-    def _reduce_func(self, dist, n_samples, **kwds):
-        sample_range = np.arange(n_samples)[:, None]
-        n_neighbors = kwds['n_neighbors']
-        return_distance = kwds['return_distance']
+    def _reduce_func(self, n_neighbors, return_distance, dist):
+        sample_range = np.arange(dist.shape[0])[:, None]
         neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
         neigh_ind = neigh_ind[:, :n_neighbors]
         # argpartition doesn't guarantee sorted order, so we sort again
