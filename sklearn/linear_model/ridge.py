@@ -885,7 +885,7 @@ class _RidgeGCV(LinearModel):
         constant_column = np.var(Q, 0) < 1.e-12
         # detect constant columns
         w[constant_column] = 0  # cancel the regularization for the intercept
-        w[v == 0] = 0
+
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
