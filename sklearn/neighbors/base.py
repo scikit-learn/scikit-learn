@@ -327,8 +327,10 @@ class KNeighborsMixin(object):
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-            query_is_train = True
-            X = self._fit_X
+        if X is not None:
+            query_is_train = False
+            X = check_array(X, accept_sparse='csr')
+        else:
             query_is_train = True
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
