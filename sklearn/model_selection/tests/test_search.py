@@ -443,15 +443,6 @@ def test_grid_search_precomputed_kernel_error_nonsquare():
     assert_raises(ValueError, cv.fit, K_train, y_train)
 
 
-def test_grid_search_precomputed_kernel_error_kernel_function():
-    # Test that grid search returns an error when using a kernel_function
-    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
-    kernel_function = lambda x1, x2: np.dot(x1, x2.T)
-    clf = SVC(kernel=kernel_function)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, X_, y_)
-
-
 class BrokenClassifier(BaseEstimator):
     """Broken classifier that cannot be fit twice"""
 
@@ -549,6 +540,12 @@ def test_unsupervised_grid_search():
                                scoring='adjusted_rand_score')
     grid_search.fit(X, y)
     # ARI can find the right number :)
+    assert_equal(grid_search.best_params_["n_clusters"], 3)
+
+    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
+                               scoring='fowlkes_mallows_score')
+    grid_search.fit(X, y)
+    # So can FMS ;)
     assert_equal(grid_search.best_params_["n_clusters"], 3)
 
     # Now without a score, and without y

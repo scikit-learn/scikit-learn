@@ -418,10 +418,10 @@ class QuantileLossFunction(RegressionLossFunction):
 
         mask = y > pred
         if sample_weight is None:
-            loss = (alpha * diff[mask].sum() +
+            loss = (alpha * diff[mask].sum() -
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
-            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) +
+            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
                     (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
                     sample_weight.sum())
         return loss
@@ -742,8 +742,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.warm_start = warm_start
         self.presort = presort
 
-        self.estimators_ = np.empty((0, 0), dtype=np.object)
-
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
@@ -767,6 +765,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+                min_impurity_split=self.min_impurity_split,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
@@ -923,9 +922,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, call `fit`"
-                                 " before making predictions`.")
+        check_is_fitted(self, 'estimators_')
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.

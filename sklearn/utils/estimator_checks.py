@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -29,7 +30,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_dict_equal
 
 
@@ -222,6 +222,7 @@ def _yield_all_checks(name, Estimator):
     yield check_fit1d_1sample
     yield check_get_params_invariance
     yield check_dict_unchanged
+    yield check_no_fit_attributes_set_in_init
 
 
 def check_estimator(Estimator):
@@ -486,11 +487,8 @@ def check_fit2d_predict1d(name, Estimator):
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
         if hasattr(estimator, method):
-            try:
-                assert_warns(DeprecationWarning,
-                             getattr(estimator, method), X[0])
-            except ValueError:
-                pass
+            assert_raise_message(ValueError, "Reshape your data",
+                                 getattr(estimator, method), X[0])
 
 
 @ignore_warnings
@@ -1399,6 +1397,23 @@ def check_estimators_overwrite_params(name, Estimator):
                      "Estimator %s should not change or mutate "
                      " the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
+
+
+def check_no_fit_attributes_set_in_init(name, Estimator):
+    """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
+    estimator = Estimator()
+    for attr in dir(estimator):
+        if attr.endswith("_") and not attr.startswith("__"):
+            # This check is for properties, they can be listed in dir
+            # while at the same time have hasattr return False as long
+            # as the property getter raises an AttributeError
+            assert_false(
+                hasattr(estimator, attr),
+                "By convention, attributes ending with '_' are "
+                'estimated from data in scikit-learn. Consequently they '
+                'should not be initialized in the constructor of an '
+                'estimator but in the fit method. Attribute {!r} '
+                'was found in estimator {}'.format(attr, name))
 
 
 def check_sparsify_coefficients(name, Estimator):
