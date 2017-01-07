@@ -51,6 +51,7 @@ from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
 from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -938,6 +939,79 @@ def test_cross_val_predict_with_method():
 
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+        # Test alternative representations of y
+        predictions_y1 = cross_val_predict(est, X, y + 1, method=method,
+                                           cv=kfold)
+        assert_array_equal(predictions, predictions_y1)
+
+        predictions_y2 = cross_val_predict(est, X, y - 2, method=method,
+                                           cv=kfold)
+        assert_array_equal(predictions, predictions_y2)
+
+        predictions_ystr = cross_val_predict(est, X, y.astype('str'),
+                                             method=method, cv=kfold)
+        assert_array_equal(predictions, predictions_ystr)
+
+
+def get_expected_predictions(X, y, cv, classes, est, method):
+
+    expected_predictions = np.zeros([len(y), classes])
+    func = getattr(est, method)
+
+    for train, test in cv.split(X, y):
+        est.fit(X[train], y[train])
+        expected_predictions_ = func(X[test])
+        # To avoid 2 dimensional indexing
+        exp_pred_test = np.zeros((len(test), classes))
+        if method is 'decision_function' and len(est.classes_) == 2:
+            exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+        else:
+            exp_pred_test[:, est.classes_] = expected_predictions_
+        expected_predictions[test] = exp_pred_test
+
+    return expected_predictions
+
+
+def test_cross_val_predict_class_subset():
+
+    X = np.arange(8).reshape(4, 2)
+    y = np.array([0, 0, 1, 2])
+    classes = 3
+
+    kfold3 = KFold(n_splits=3)
+    kfold4 = KFold(n_splits=4)
+
+    le = LabelEncoder()
+
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    for method in methods:
+        est = LogisticRegression()
+
+        # Test with n_splits=3
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold3)
+
+        # Runs a naive loop (should be same as cross_val_predict):
+        expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+                                                        est, method)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+        # Test with n_splits=4
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold4)
+        expected_predictions = get_expected_predictions(X, y, kfold4, classes,
+                                                        est, method)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+        # Testing unordered labels
+        y = [1, 1, -4, 6]
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold3)
+        y = le.fit_transform(y)
+        expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+                                                        est, method)
         assert_array_almost_equal(expected_predictions, predictions)
 
 
