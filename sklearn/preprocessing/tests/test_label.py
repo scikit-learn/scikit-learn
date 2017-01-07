@@ -167,7 +167,6 @@ def test_label_binarizer_errors():
     assert_raises(ValueError, label_binarize, np.array([[1, 3], [2, 1]]),
                   [1, 2, 3])
 
-
 def test_label_encoder():
     # Test LabelEncoder's transform and inverse_transform methods
     le = LabelEncoder()
@@ -177,12 +176,12 @@ def test_label_encoder():
                        [1, 2, 3, 3, 4, 0, 0])
     assert_array_equal(le.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
                        [0, 1, 4, 4, 5, -1, -1])
-    
-    # assert_raises(ValueError, le.transform, [0, 6])
+    assert_raises(ValueError, le.transform, [0, 6])
 
     le.fit(["apple", "orange"])
     msg = "bad input shape"
     assert_raise_message(ValueError, msg, le.transform, "apple")
+
 
 
 def test_label_encoder_fit_transform():

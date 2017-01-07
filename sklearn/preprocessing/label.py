@@ -179,8 +179,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        diff = np.setdiff1d(y, self.classes_lookup.values())
-        if len(diff) > 0:
+        diff = np.setdiff1d(y, np.arange(len(self.classes_)))
+        if diff:
             raise ValueError("y contains new labels: %s" % str(diff))
 
         transformer = np.vectorize(lambda x: (
