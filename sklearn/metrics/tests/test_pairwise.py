@@ -381,12 +381,12 @@ def test_pairwise_distances_blockwise_invalid_block_size():
                          metric='euclidean')
 
 
-def check_pairwise_distances_blockwise(X, Y, block_size, metric,
-                                       true_distances):
+def check_pairwise_distances_blockwise(X, Y, block_size, metric):
     gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
                                        metric=metric)
     blockwise_distances = np.vstack(list(gen))
-    assert_array_almost_equal(blockwise_distances, true_distances)
+    S = pairwise_distances(X, Y, metric=metric)
+    assert_array_almost_equal(blockwise_distances, S)
 
 
 def test_pairwise_distances_blockwise():
@@ -394,45 +394,19 @@ def test_pairwise_distances_blockwise():
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((400, 4))
-    S = euclidean_distances(X)
     check_pairwise_distances_blockwise(X, None, block_size=1,
-                                       metric='euclidean', true_distances=S)
+                                       metric='euclidean')
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((200, 4))
-    S = euclidean_distances(X, Y)
     check_pairwise_distances_blockwise(X, Y, block_size=1,
-                                       metric='euclidean', true_distances=S)
+                                       metric='euclidean')
     # absurdly large block_size
     check_pairwise_distances_blockwise(X, Y, block_size=10000,
-                                       metric='euclidean', true_distances=S)
+                                       metric='euclidean')
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
-    S = pairwise_distances(X, Y, metric=cityblock)
     check_pairwise_distances_blockwise(X, Y, block_size=1,
-                                       metric='cityblock', true_distances=S)
-    # The manhattan metric should be equivalent to cityblock.
-    check_pairwise_distances_blockwise(X, Y, block_size=1,
-                                       metric='manhattan', true_distances=S)
-    # Test cosine as a string metric versus cosine callable
-    # The string "cosine" uses sklearn.metric,
-    # while the function cosine is scipy.spatial
-    S = pairwise_distances(X, Y, metric=cosine)
-    check_pairwise_distances_blockwise(X, Y, block_size=1,
-                                       metric='cosine', true_distances=S)
-    # Test with sparse X and Y,
-    # currently only supported for Euclidean, L1 and cosine.
-    X_sparse = csr_matrix(X)
-    Y_sparse = csr_matrix(Y)
-    S = euclidean_distances(X_sparse, Y_sparse)
-    check_pairwise_distances_blockwise(X_sparse, Y_sparse, block_size=1,
-                                       metric='euclidean', true_distances=S)
-    S = cosine_distances(X_sparse, Y_sparse)
-    check_pairwise_distances_blockwise(X_sparse, Y_sparse, block_size=1,
-                                       metric='cosine', true_distances=S)
-    S = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
-    check_pairwise_distances_blockwise(X_sparse, Y_sparse.tocsc(),
-                                       block_size=1, metric='manhattan',
-                                       true_distances=S)
+                                       metric='cityblock')
     # Test that a value error is raised if the metric is unknown
     assert_raises(ValueError, pairwise_distances_blockwise, X, Y,
                   metric="blah")
