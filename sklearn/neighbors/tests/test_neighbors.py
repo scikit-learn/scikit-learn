@@ -523,7 +523,7 @@ def check_classifier_sparse_multilabel_y(name):
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
 
-    y_sparse = csr_matrix(y)
+    y_sparse = csc_matrix(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y_sparse,
                                                         random_state=0)
     clf.fit(X_train, y_train)
