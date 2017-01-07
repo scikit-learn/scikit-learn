@@ -5,7 +5,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
@@ -265,14 +264,16 @@ def test_lda_store_covariance():
         np.array([0.088889, 0.533333])
     )
 
+
 def test_lda_deprecation():
     for solver in ('lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver)
 
         # Test the deprecation
         assert_warns_message(DeprecationWarning, "from version 0.21 "
-            "'_covariance_' will be stored only if 'store_covariance'"
-            " is True", clf.fit, X, y)
+                             "'_covariance_' will be stored only if "
+                             "'store_covariance' is True",
+                             clf.fit, X, y)
 
 def test_qda():
     # QDA classification.
@@ -332,13 +333,14 @@ def test_qda_store_covariance():
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
     )
 
+
 def test_qda_deprecation():
     # Test the deprecation
     clf = QuadraticDiscriminantAnalysis(store_covariances=True)
     # assert_warns(DeprecationWarning, clf.fit, X, y)
     assert_warns_message(DeprecationWarning, "'store_covariances' was renamed"
-        " to store_covariance in version 0.19 and will be removed in 0.21.",
-         clf.fit, X, y)
+                         " to store_covariance in version 0.19 and will be "
+                         "removed in 0.21.", clf.fit, X, y)
 
 
 def test_qda_regularization():
