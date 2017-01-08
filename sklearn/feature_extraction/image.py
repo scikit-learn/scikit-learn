@@ -475,6 +475,13 @@ def reconstruct_from_patches_3d(patches, image_size):
     >>> int(np.sum(np.abs(out_img - raw_img_color))*1000)
     0
     >>> reconstruct_from_patches_3d(np.zeros((32, 4, 4)), (8, 8))
+    Traceback (most recent call last):
+     ...
+    AssertionError: Image size must be a 3- or 4-dimensional: Image Size:(8, 8)
+    >>> reconstruct_from_patches_3d(np.zeros((32, 4, 4, 4)), (8, 8, 8, 3))
+    Traceback (most recent call last):
+      ...
+    AssertionError: Patch dimensions should be one larger than image, Patch:(32, 4, 4, 4) and Image:(8, 8, 8, 3)
     """
     assert len(image_size) == 3 or len(
         image_size) == 4, "Image size must be a 3- or 4-dimensional: Image Size:{}".format(image_size)
