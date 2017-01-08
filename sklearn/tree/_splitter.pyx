@@ -33,6 +33,8 @@ from ._utils cimport rand_int
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
+from ._utils cimport setup_cat_cache
+from ._utils cimport goes_left
 
 cdef double INFINITY = np.inf
 
@@ -96,6 +98,7 @@ cdef class Splitter:
         self.y_stride = 0
         self.sample_weight = NULL
         self.n_categories = NULL
+        self.cat_cache = NULL
 
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
@@ -111,6 +114,7 @@ cdef class Splitter:
         free(self.constant_features)
         free(self.feature_values)
         free(self.n_categories)
+        free(self.cat_cache)
 
     def __getstate__(self):
         return {}
@@ -197,6 +201,12 @@ cdef class Splitter:
         for i in range(n_features):
             self.n_categories[i] = (-1 if n_categories == NULL
                                     else n_categories[i])
+
+        # If needed, allocate cache space for categorical splits
+        cdef INT32_t max_n_categories = max(
+            [self.n_categories[i] for i in range(n_features)])
+        if max_n_categories > 0:
+            safe_realloc(&self.cat_cache, (max_n_categories + 31) // 32, sizeof(UINT32_t))
 
         return 0
 
@@ -361,7 +371,6 @@ cdef class BestSplitter(BaseDenseSplitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
-        cdef SIZE_t tmp
         cdef SIZE_t p
         cdef SIZE_t feature_idx_offset
         cdef SIZE_t feature_offset
@@ -378,6 +387,10 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
+        cdef bint is_categorical
+        cdef UINT64_t cat_idx, cat_split
+        cdef SIZE_t ncat_present
+        cdef INT32_t cat_offs[64]
 
         _init_split(&best, end)
 
@@ -419,9 +432,8 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = (
+                    features[n_drawn_constants], features[f_j])
 
                 n_drawn_constants += 1
 
@@ -463,63 +475,113 @@ cdef class BestSplitter(BaseDenseSplitter):
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
+                    # Identify the number of categories present in this node
+                    is_categorical = self.n_categories[current.feature] > 0
+                    if is_categorical:
+                        cat_split = 0
+                        ncat_present = 0
+                        for i in range(start, end):
+                            # Xf[i] < 64 already verified in tree.py
+                            cat_split |= (<UINT64_t> 1) << (<SIZE_t> Xf[i])
+                        for i in range(self.n_categories[current.feature]):
+                            if (cat_split >> i) & 1:
+                                cat_offs[ncat_present] = i - ncat_present
+                                ncat_present += 1
+
                     # Evaluate all splits
                     self.criterion.reset()
                     p = start
+                    cat_idx = 0
 
-                    while p < end:
-                        while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                    while True:
+                        if is_categorical:
+                            cat_idx += 1
+                            if cat_idx >= (<UINT64_t> 1) << (ncat_present - 1):
+                                break
+
+                            # Expand the bits of (2 * cat_idx) out into cat_split
+                            # We double cat_idx to avoid double-counting equivalent splits
+                            # This also ensures that cat_split & 1 == 0 as required
+                            cat_split = 0
+                            for i in range(ncat_present):
+                                cat_split |= ((cat_idx << 1) & ((<UINT64_t> 1) << i)) << cat_offs[i]
+
+                            # Partition
+                            j = start
+                            partition_end = end
+                            while j < partition_end:
+                                if (cat_split >> (<SIZE_t> Xf[j])) & 1:
+                                    j += 1
+                                else:
+                                    partition_end -= 1
+                                    Xf[j], Xf[partition_end] = Xf[partition_end], Xf[j]
+                                    samples[j], samples[partition_end] = (
+                                        samples[partition_end], samples[j])
+                            current.pos = j
+
+                            # Must reset criterion since we've reordered the samples
+                            self.criterion.reset()
+                        else:
+                            # Non-categorical feature
+                            while (p + 1 < end and
+                                   Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                                p += 1
+
+                            # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
+                            #                    X[samples[p], current.feature])
                             p += 1
+                            # (p >= end) or (X[samples[p], current.feature] >
+                            #                X[samples[p - 1], current.feature])
 
-                        # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
-                        #                    X[samples[p], current.feature])
-                        p += 1
-                        # (p >= end) or (X[samples[p], current.feature] >
-                        #                X[samples[p - 1], current.feature])
+                            if p >= end:
+                                break
 
-                        if p < end:
                             current.pos = p
 
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
+                        # Reject if min_samples_leaf is not guaranteed
+                        if (((current.pos - start) < min_samples_leaf) or
+                                ((end - current.pos) < min_samples_leaf)):
+                            continue
 
-                            self.criterion.update(current.pos)
+                        self.criterion.update(current.pos)
 
-                            # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                                continue
+                        # Reject if min_weight_leaf is not satisfied
+                        if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                (self.criterion.weighted_n_right < min_weight_leaf)):
+                            continue
 
-                            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+                        current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                            if current_proxy_improvement > best_proxy_improvement:
-                                best_proxy_improvement = current_proxy_improvement
+                        if current_proxy_improvement > best_proxy_improvement:
+                            best_proxy_improvement = current_proxy_improvement
+                            if is_categorical:
+                                current.split_value.cat_split = cat_split
+                            else:
                                 current.split_value.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                            if current.split_value.threshold == Xf[p]:
+                                current.split_value.threshold = Xf[p - 1]
 
-                                if current.split_value.threshold == Xf[p]:
-                                    current.split_value.threshold = Xf[p - 1]
-
-                                best = current  # copy
+                            best = current  # copy
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
+            setup_cat_cache(self.cat_cache, best.split_value.cat_split,
+                            self.n_categories[best.feature])
             feature_offset = X_feature_stride * best.feature
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + feature_offset] <= best.split_value.threshold:
+                if goes_left(X[X_sample_stride * samples[p] + feature_offset],
+                             best.split_value, self.n_categories[best.feature],
+                             self.cat_cache):
                     p += 1
 
                 else:
                     partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                    samples[partition_end], samples[p] = (
+                        samples[p], samples[partition_end])
 
             self.criterion.reset()
             self.criterion.update(best.pos)
@@ -702,7 +764,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
         cdef SIZE_t p
-        cdef SIZE_t tmp
         cdef SIZE_t feature_stride
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -752,9 +813,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = (
+                    features[n_drawn_constants], features[f_j])
 
                 n_drawn_constants += 1
 
@@ -811,9 +871,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             Xf[p] = Xf[partition_end]
                             Xf[partition_end] = current_feature_value
 
-                            tmp = samples[partition_end]
-                            samples[partition_end] = samples[p]
-                            samples[p] = tmp
+                            samples[partition_end], samples[p] = (
+                                samples[p], samples[partition_end])
 
                     current.pos = partition_end
 
@@ -851,9 +910,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     else:
                         partition_end -= 1
 
-                        tmp = samples[partition_end]
-                        samples[partition_end] = samples[p]
-                        samples[p] = tmp
+                        samples[partition_end], samples[p] = (
+                            samples[p], samples[partition_end])
 
 
             self.criterion.reset()
@@ -1248,7 +1306,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef double best_proxy_improvement = - INFINITY
 
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t f_j, p
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -1303,9 +1361,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = (
+                    features[n_drawn_constants], features[f_j])
 
                 n_drawn_constants += 1
 
@@ -1480,7 +1537,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef DTYPE_t current_feature_value
 
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t f_j, p
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -1536,9 +1593,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-                tmp = features[f_j]
-                features[f_j] = features[n_drawn_constants]
-                features[n_drawn_constants] = tmp
+                features[f_j], features[n_drawn_constants] = (
+                    features[n_drawn_constants], features[f_j])
 
                 n_drawn_constants += 1
 

@@ -21,6 +21,7 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -68,6 +69,7 @@ cdef class Splitter:
     cdef DOUBLE_t* sample_weight
     cdef INT32_t *n_categories           # (n_features,) array giving number of
                                          # categories (<0 for non-categorical)
+    cdef UINT32_t* cat_cache             # Cache buffer for fast categorical split evaluation
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
