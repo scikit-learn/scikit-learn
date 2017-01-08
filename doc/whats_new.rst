@@ -41,11 +41,20 @@ New features
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      By `Tom Dupre la Tour`_.
 
+   - Added :func:`metrics.mean_squared_log_error`, which computes 
+     the mean square error of the logarithmic transformation of targets, 
+     particularly useful for targets with an exponential trend.
+     :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
+
 Enhancements
 ............
 
    - :func:`metrics.matthews_corrcoef` now support multiclass classification.
      :issue:`8094` by :user:`Jon Crall <Erotemic>`.
+
+   - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
+     now support online learning using `partial_fit`.
+     :issue:`8053` by :user:`Peng Yu <yupbank>`
 
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
      :class:`decomposition.TruncatedSVD` now expose the singular values
@@ -58,7 +67,7 @@ Enhancements
 
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
      that matches the ``classes_`` attribute of ``best_estimator_``. :issue:`7661`
-     by :user:`Alyssa Batula <abatula>`_ and :user:`Dylan Werner-Meier <unautre>`.
+     by :user:`Alyssa Batula <abatula>` and :user:`Dylan Werner-Meier <unautre>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -98,10 +107,25 @@ Enhancements
      norm 'max' the norms returned will be the same as for dense matrices.
      :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
 
+   - :class:`sklearn.linear_model.RANSACRegressor` no longer throws an error
+     when calling ``fit`` if no inliers are found in its first iteration.
+     Furthermore, causes of skipped iterations are tracked in newly added
+     attributes, ``n_skips_*``.
+     :issue:`7914` by :user:`Michael Horrell <mthorrell>`.
+
+   - :func:`model_selection.cross_val_predict` now returns output of the
+     correct shape for all values of the argument ``method``.
+     :issue:`7863` by :user:`Aman Dalmia <dalmia>`.
+
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
-     
+
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
      boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
@@ -121,7 +145,7 @@ Bug fixes
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
-     in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
+     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
@@ -134,6 +158,10 @@ Bug fixes
    - Fix estimators to accept a ``sample_weight`` parameter of type
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
      `Kathleen Chen`_.
+  
+   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` fails when 
+     ``max_features`` is less than 1.
+     :issue:`5732` by :user:`Ishank Gulati <IshankGulati>`.
 
    - Fix a bug where :class:`sklearn.ensemble.VotingClassifier` raises an error
      when a numpy array is passed in for weights. :issue:`7983` by
@@ -143,11 +171,23 @@ Bug fixes
      where the ``perplexity`` method was returning incorrect results because
      the ``transform`` method returns normalized document topic distributions
      as of version 0.18. :issue:`7954` by :user:`Gary Foreman <garyForeman>`.
-     
+
    - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
+   - Fix a bug where
+     :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
+     negative errors for negative values of ``ytrue - ypred`` leading to
+     wrong values when calling ``__call__``.
+     :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
+
+   - Fix :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba` to
+     return a list of 2d arrays, rather than a 3d array. In the case where
+     different target columns had different numbers of classes, a `ValueError`
+     would be raised on trying to stack matrices with different dimensions.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
 API changes summary
 -------------------
@@ -157,12 +197,21 @@ API changes summary
      ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
-     
+
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
      user no longer has access to the unnormalized document topic distribution
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
+
+   - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
+     function used to return a 3d array (``n_samples``, ``n_classes``,
+     ``n_outputs``). In the case where different target columns had different
+     numbers of classes, a `ValueError` would be raised on trying to stack
+     matrices with different dimensions. This function now returns a list of
+     arrays where the length of the list is ``n_outputs``, and each array is
+     (``n_samples``, ``n_classes``) for that particular output.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
 .. _changes_0_18_1:
 
@@ -173,16 +222,19 @@ Changelog
 ---------
 
 Enhancements
-.........
+............
+
    - Improved ``sample_without_replacement`` speed by utilizing
      numpy.random.permutation for most cases. As a result,
      samples may differ in this release for a fixed random state.
      Affected estimators:
-      - :class:`ensemble.BaggingClassifier`
-      - :class:`ensemble.BaggingRegressor`
-      - :class:`linear_model.RANSACRegressor`
-      - :class:`model_selection.RandomizedSearchCV`
-      - :class:`random_projection.SparseRandomProjection`
+
+     - :class:`ensemble.BaggingClassifier`
+     - :class:`ensemble.BaggingRegressor`
+     - :class:`linear_model.RANSACRegressor`
+     - :class:`model_selection.RandomizedSearchCV`
+     - :class:`random_projection.SparseRandomProjection`
+
      This also affects the :meth:`datasets.make_classification`
      method.
 
@@ -206,7 +258,7 @@ Bug fixes
 
    - Fixes issue in :ref:`univariate_feature_selection` where score
      functions were not accepting multi-label targets. :issue:`7676`
-     by `Mohammed Affan`_
+     by :user:`Mohammed Affan <affanv14>`
 
    - Fixed setting parameters when calling ``fit`` multiple times on
      :class:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
@@ -274,11 +326,11 @@ Trees and forests
    - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
      regressors now assumes uniform sample weights by default if the
      ``sample_weight`` argument is not passed to the ``fit`` function.
-     Previously, the parameter was silently ignored. :issue:`7301` by `Nelson
-     Liu`_.
+     Previously, the parameter was silently ignored. :issue:`7301` by :user:`Nelson
+     Liu <nelson-liu>`.
 
    - Tree splitting criterion classes' cloning/pickling is now memory safe.
-     :issue:`7680` by `Ibraim Ganiev`_.
+     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
 
 
 Linear, kernelized and related models
