@@ -390,19 +390,17 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
             for k, classes_k in enumerate(classes_):
                 pred_labels = np.array([_y[ind, k].toarray()
-                                        for ind in inliers],
+                                        for ind in neigh_ind[inliers]],
                                        dtype=object)
                 y_pred_k = np.zeros(n_samples)
 
                 if weights is None:
                     mode = np.array([stats.mode(pl)[0]
-                                     for pl in pred_labels[inliers]],
-                                    dtype=np.int)
+                                     for pl in pred_labels], dtype=np.int)
                 else:
                     mode = np.array([weighted_mode(pl, w)[0]
                                      for (pl, w)
-                                     in zip(pred_labels[inliers],
-                                            weights[inliers])],
+                                     in zip(pred_labels, weights[inliers])],
                                     dtype=np.int)
 
                 mode = mode.ravel()
