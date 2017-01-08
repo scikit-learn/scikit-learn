@@ -272,11 +272,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.n_outputs_ = y.shape[1]
         if self.n_outputs_ > 1:
             y = check_array(y, accept_sparse=False, ensure_2d=False,
-                            dtype=None,
-                            placeholder='A sparse matrix was passed, but '
-                                        'dense data is required. Use '
-                                        'y.toarray() to convert to a dense '
-                                        'numpy array.')
+                            dtype=None, variable_name='y')
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
 

@@ -190,7 +190,7 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
-                          force_all_finite, placeholder=None):
+                          force_all_finite, variable_name='X'):
     """Convert a sparse matrix to a given format.
 
     Checks the sparse format of spmatrix and converts if necessary.
@@ -217,8 +217,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     force_all_finite : boolean
         Whether to raise an error on np.inf and np.nan in X.
 
-    placeholder : str (default=None)
-        If passed, use this as the error message.
+    variable_name : str (default=X)
+        placeholder for the variable name in error messages.
 
     Returns
     -------
@@ -234,12 +234,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         accept_sparse = [accept_sparse]
 
     if accept_sparse is False:
-        if placeholder:
-            raise TypeError(placeholder)
-        else:
-            raise TypeError('A sparse matrix was passed, but dense '
-                            'data is required. Use X.toarray() to '
-                            'convert to a dense numpy array.')
+        raise TypeError('A sparse matrix was passed, but dense '
+                        'data is required. Use %s.toarray() to '
+                        'convert to a dense numpy array.'  % variable_name)
     elif isinstance(accept_sparse, (list, tuple)):
         if len(accept_sparse) == 0:
             raise ValueError("When providing 'accept_sparse' "
@@ -275,7 +272,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
-                warn_on_dtype=False, estimator=None, placeholder=None):
+                warn_on_dtype=False, estimator=None, variable_name='X'):
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2D numpy array.
@@ -338,8 +335,8 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
-    placeholder : str (default=None)
-        If passed, use this as the error message.
+    variable_name : str (default='X')
+        placeholder for the variable name in error messages.
 
     Returns
     -------
@@ -390,7 +387,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
 
     if sp.issparse(array):
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
-                                      force_all_finite, placeholder)
+                                      force_all_finite, variable_name)
     else:
         array = np.array(array, dtype=dtype, order=order, copy=copy)
 

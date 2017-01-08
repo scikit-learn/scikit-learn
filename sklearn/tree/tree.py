@@ -112,11 +112,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
-            y = check_array(y, ensure_2d=False, dtype=None,
-                            placeholder='A sparse matrix was passed, but '
-                                        'dense data is required. Use '
-                                        'y.toarray() to convert to a dense '
-                                        'numpy array.')
+            y = check_array(y, ensure_2d=False, dtype=None, variable_name='y')
             if issparse(X):
                 X.sort_indices()
 
