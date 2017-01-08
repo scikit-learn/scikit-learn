@@ -63,6 +63,8 @@ cdef class Splitter:
 
     cdef bint presort                    # Whether to use presorting, only
                                          # allowed on dense data
+    cdef bint breiman_shortcut           # Whether decision trees are allowed to use the
+                                         # Breiman shortcut for categorical features
 
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride

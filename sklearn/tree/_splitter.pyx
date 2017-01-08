@@ -62,7 +62,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint breiman_shortcut):
         """
         Parameters
         ----------
@@ -105,6 +105,7 @@ cdef class Splitter:
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
         self.presort = presort
+        self.breiman_shortcut = breiman_shortcut
 
     def __dealloc__(self):
         """Destructor."""
@@ -277,7 +278,7 @@ cdef class BaseDenseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint breiman_shortcut):
 
         self.X = NULL
         self.X_sample_stride = 0
@@ -337,6 +338,49 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.random_state,
                                self.presort), self.__getstate__())
 
+
+    cdef void _breiman_sort_categories(self, SIZE_t start, SIZE_t end, INT32_t ncat,
+                                       SIZE_t ncat_present, const INT32_t *cat_offs,
+                                       SIZE_t *sorted_cat) nogil:
+        """The Breiman shortcut for finding the best split involves a
+        preprocessing step wherein we sort the categories by
+        increasing (weighted) mean of the outcome y (whether 0/1
+        binary for classification or quantitative for
+        regression). This function implements this preprocessing step
+        and produces a sorted list of category values.
+        """
+        cdef:
+            SIZE_t *samples = self.samples
+            DTYPE_t *Xf = self.feature_values
+            DOUBLE_t *y = self.y
+            SIZE_t y_stride = self.y_stride
+            DOUBLE_t *sample_weight = self.sample_weight
+            DOUBLE_t w
+            SIZE_t cat, localcat
+            SIZE_t q, partition_end
+            DTYPE_t sort_value[64]
+            DTYPE_t sort_den[64]
+
+        for cat in range(ncat):
+            sort_value[cat] = 0
+            sort_den[cat] = 0
+
+        for q in range(start, end):
+            cat = <SIZE_t> Xf[q]
+            w = sample_weight[samples[q]] if sample_weight else 1.0
+            sort_value[cat] += w * (y[y_stride * samples[q]])
+            sort_den[cat] += w
+
+        for localcat in range(ncat_present):
+            cat = localcat + cat_offs[localcat]
+            if sort_den[cat] == 0:  # Avoid dividing zero by zero
+                sort_den[cat] = 1
+            sort_value[localcat] = sort_value[cat] / sort_den[cat]
+            sorted_cat[localcat] = cat
+
+        sort(&sort_value[0], sorted_cat, ncat_present)
+
+
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end]
@@ -391,6 +435,8 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef UINT64_t cat_idx, cat_split
         cdef SIZE_t ncat_present
         cdef INT32_t cat_offs[64]
+        cdef bint breiman_shortcut = self.breiman_shortcut
+        cdef SIZE_t sorted_cat[64]
 
         _init_split(&best, end)
 
@@ -487,6 +533,12 @@ cdef class BestSplitter(BaseDenseSplitter):
                             if (cat_split >> i) & 1:
                                 cat_offs[ncat_present] = i - ncat_present
                                 ncat_present += 1
+                        if ncat_present <= 3:
+                            breiman_shortcut = False  # No benefit for small N
+                        if breiman_shortcut:
+                            self._breiman_sort_categories(
+                                start, end, self.n_categories[current.feature],
+                                ncat_present, cat_offs, &sorted_cat[0])
 
                     # Evaluate all splits
                     self.criterion.reset()
@@ -496,15 +548,26 @@ cdef class BestSplitter(BaseDenseSplitter):
                     while True:
                         if is_categorical:
                             cat_idx += 1
-                            if cat_idx >= (<UINT64_t> 1) << (ncat_present - 1):
-                                break
+                            if breiman_shortcut:
+                                if cat_idx >= ncat_present:
+                                    break
 
-                            # Expand the bits of (2 * cat_idx) out into cat_split
-                            # We double cat_idx to avoid double-counting equivalent splits
-                            # This also ensures that cat_split & 1 == 0 as required
-                            cat_split = 0
-                            for i in range(ncat_present):
-                                cat_split |= ((cat_idx << 1) & ((<UINT64_t> 1) << i)) << cat_offs[i]
+                                cat_split = 0
+                                for i in range(cat_idx):
+                                    cat_split |= (<UINT64_t> 1) << sorted_cat[i]
+                                if cat_split & 1:
+                                    cat_split = (~cat_split) & (
+                                        (~(<UINT64_t> 0)) >> (64 - self.n_categories[current.feature]))
+                            else:
+                                if cat_idx >= (<UINT64_t> 1) << (ncat_present - 1):
+                                    break
+
+                                # Expand the bits of (2 * cat_idx) out into cat_split
+                                # We double cat_idx to avoid double-counting equivalent splits
+                                # This also ensures that cat_split & 1 == 0 as required
+                                cat_split = 0
+                                for i in range(ncat_present):
+                                    cat_split |= ((cat_idx << 1) & ((<UINT64_t> 1) << i)) << cat_offs[i]
 
                             # Partition
                             j = start
@@ -970,7 +1033,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint breiman_shortcut):
         # Parent __cinit__ is automatically called
 
         self.X_data = NULL
