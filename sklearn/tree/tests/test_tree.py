@@ -1591,7 +1591,7 @@ def check_no_sparse_y_support(name):
     TreeEstimator = ALL_TREES[name]
     if name in CLF_TREES:
         assert_raise_message(TypeError, 'A sparse matrix was passed, but '
-                             'dense data is required. Use X.toarray() to '
+                             'dense data is required. Use y.toarray() to '
                              'convert to a dense numpy array.',
                              TreeEstimator(random_state=0).fit, X, y)
     else:

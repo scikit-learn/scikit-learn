@@ -272,7 +272,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.n_outputs_ = y.shape[1]
         if self.n_outputs_ > 1:
             y = check_array(y, accept_sparse=False, ensure_2d=False,
-                            dtype=None)
+                            dtype=None,
+                            placeholder='A sparse matrix was passed, but '
+                                        'dense data is required. Use '
+                                        'y.toarray() to convert to a dense '
+                                        'numpy array.')
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
 
@@ -482,8 +486,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample". Given "%s".'
-                                     % self.class_weight)
+                                     '"balanced" and "balanced_subsample". '
+                                     'Given "%s".' % self.class_weight)
                 if self.warm_start:
                     warn('class_weight presets "balanced" or '
                          '"balanced_subsample" are not recommended for '

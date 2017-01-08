@@ -838,7 +838,7 @@ def check_no_sparse_y_support_classifier(name):
     y_sparse = csr_matrix(y)
     ForestClassifier = FOREST_CLASSIFIERS[name]
     assert_raise_message(TypeError, 'A sparse matrix was passed, but '
-                         'dense data is required. Use X.toarray() to '
+                         'dense data is required. Use y.toarray() to '
                          'convert to a dense numpy array.',
                          ForestClassifier(random_state=0).fit, X, y_sparse)
 
