@@ -88,6 +88,7 @@ def _split_node(node, threshold, branching_factor):
 
 
 class _CFNode(object):
+
     """Each node in a CFTree is called a CFNode.
 
     The CFNode can have a maximum of branching_factor
@@ -134,6 +135,7 @@ class _CFNode(object):
         view of ``init_sq_norm_``.
 
     """
+
     def __init__(self, threshold, branching_factor, is_leaf, n_features):
         self.threshold = threshold
         self.branching_factor = branching_factor
@@ -241,6 +243,7 @@ class _CFNode(object):
 
 
 class _CFSubcluster(object):
+
     """Each subcluster in a CFNode is called a CFSubcluster.
 
     A CFSubcluster can have a CFNode has its child.
@@ -275,6 +278,7 @@ class _CFSubcluster(object):
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
     """
+
     def __init__(self, linear_sum=None):
         if linear_sum is None:
             self.n_samples_ = 0
@@ -322,6 +326,7 @@ class _CFSubcluster(object):
 
 
 class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
+
     """Implements the Birch clustering algorithm.
 
     Every new sample is inserted into the root of the Clustering Feature
@@ -565,6 +570,11 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'subcluster_centers_')
         return euclidean_distances(X, self.subcluster_centers_)
 

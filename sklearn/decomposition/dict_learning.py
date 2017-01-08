@@ -4,6 +4,8 @@ from __future__ import print_function
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+import warnings
+
 import time
 import sys
 import itertools
@@ -145,7 +147,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'threshold':
         new_code = ((np.sign(cov) *
-                    np.maximum(np.abs(cov) - regularization, 0)).T)
+                     np.maximum(np.abs(cov) - regularization, 0)).T)
 
     elif algorithm == 'omp':
         # TODO: Should verbose argument be passed to this?
@@ -722,8 +724,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             sys.stdout.flush()
         elif verbose:
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                       % (ii, dt, dt / 60))
+                print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                      % (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
@@ -777,6 +779,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
 
 class SparseCodingMixin(TransformerMixin):
+
     """Sparse coding mixin"""
 
     def _set_sparse_coding_params(self, n_components,
@@ -809,6 +812,11 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'components_')
 
         # XXX : kwargs is not documented
@@ -832,6 +840,7 @@ class SparseCodingMixin(TransformerMixin):
 
 
 class SparseCoder(BaseEstimator, SparseCodingMixin):
+
     """Sparse coding
 
     Finds a sparse representation of data against a fixed, precomputed
@@ -917,6 +926,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
 
 class DictionaryLearning(BaseEstimator, SparseCodingMixin):
+
     """Dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1028,6 +1038,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     SparsePCA
     MiniBatchSparsePCA
     """
+
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1083,6 +1094,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
 
 class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
+
     """Mini-batch dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1194,6 +1206,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
 
     """
+
     def __init__(self, n_components=None, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',

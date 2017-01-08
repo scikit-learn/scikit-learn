@@ -293,7 +293,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         n_components = min(n, p)
     if (n_components > min(n, p)):
         n_components = min(n, p)
-        warnings.warn('n_components is too large: it will be set to %s' % n_components)
+        warnings.warn(
+            'n_components is too large: it will be set to %s' % n_components)
 
     if whiten:
         # Centering the columns (ie the variables)
@@ -317,7 +318,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if w_init is None:
         w_init = np.asarray(random_state.normal(size=(n_components,
-                            n_components)), dtype=X1.dtype)
+                                                      n_components)), dtype=X1.dtype)
 
     else:
         w_init = np.asarray(w_init)
@@ -374,6 +375,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
 
 class FastICA(BaseEstimator, TransformerMixin):
+
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.
@@ -439,6 +441,7 @@ class FastICA(BaseEstimator, TransformerMixin):
     pp. 411-430`
 
     """
+
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
@@ -539,6 +542,11 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)

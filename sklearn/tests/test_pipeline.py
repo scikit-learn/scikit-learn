@@ -39,6 +39,7 @@ JUNK_FOOD_DOCS = (
 
 
 class NoFit(object):
+
     """Small class to test parameter dispatching.
     """
 
@@ -61,11 +62,13 @@ class NoTrans(NoFit):
 
 
 class NoInvTransf(NoTrans):
+
     def transform(self, X, y=None):
         return X
 
 
 class Transf(NoInvTransf):
+
     def transform(self, X, y=None):
         return X
 
@@ -81,6 +84,7 @@ class TransfFitParams(Transf):
 
 
 class Mult(BaseEstimator):
+
     def __init__(self, mult=1):
         self.mult = mult
 
@@ -103,6 +107,7 @@ class Mult(BaseEstimator):
 
 
 class FitParamT(BaseEstimator):
+
     """Mock classifier
     """
 

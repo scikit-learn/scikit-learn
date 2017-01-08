@@ -1,6 +1,7 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
+import warnings
 import numbers
 
 import numpy as np
@@ -16,6 +17,7 @@ def _iteritems(d):
 
 
 class FeatureHasher(BaseEstimator, TransformerMixin):
+
     """Implements feature hashing, aka the hashing trick.
 
     This class turns sequences of symbolic feature names (strings) into
@@ -133,6 +135,11 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             Feature matrix, for use with estimators or further transformers.
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
