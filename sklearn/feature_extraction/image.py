@@ -461,18 +461,19 @@ def reconstruct_from_patches_3d(patches, image_size):
 
     >>> import numpy as np
     >>> raw_img = np.arange(64).reshape((4,4,4))
-    >>> patches = extract_patches(raw_img, patch_shape=(2, 2, 2), extraction_step=1).reshape((-1, 2, 2, 2))
+    >>> patches = extract_patches(raw_img, (2, 2, 2), 1).reshape((-1, 2, 2, 2))
     >>> out_img = reconstruct_from_patches_3d(patches, (4,4,4))
     >>> out_img.shape
     (4, 4, 4)
     >>> int(np.sum(np.abs(out_img - raw_img))*1000)
     0
-    >>> raw_img_color = np.arange(192).reshape((4,4,4,3))
-    >>> patches = extract_patches(raw_img_color, patch_shape=(2, 2, 2, 3), extraction_step=1).reshape((-1, 2, 2, 2, 3))
+    >>> ri_col = np.arange(192).reshape((4,4,4,3))
+    >>> patches = extract_patches(ri_col, (2, 2, 2, 3), 1)
+    >>> patches = patches.reshape((-1, 2, 2, 2, 3))
     >>> out_img = reconstruct_from_patches_3d(patches, (4, 4, 4, 3))
     >>> out_img.shape
     (4, 4, 4, 3)
-    >>> int(np.sum(np.abs(out_img - raw_img_color))*1000)
+    >>> int(np.sum(np.abs(out_img - ri_col))*1000)
     0
     >>> reconstruct_from_patches_3d(np.zeros((32, 4, 4)), (8, 8))
     Traceback (most recent call last):
@@ -484,10 +485,13 @@ def reconstruct_from_patches_3d(patches, image_size):
     AssertionError: Patch dimensions should be one larger than image, Patch:(32, 4, 4, 4) and Image:(8, 8, 8, 3)
     """
     assert len(image_size) == 3 or len(
-        image_size) == 4, "Image size must be a 3- or 4-dimensional: Image Size:{}".format(image_size)
+        image_size) == 4, "Image size must be a 3- or 4-dimensional: Image Size:{}".format(
+        image_size)
     assert len(patches.shape) == len(
-        image_size) + 1, "Patch dimensions should be one larger than image, Patch:{} and Image:{}".format(patches.shape,
-                                                                                                          image_size)
+        image_size) + 1, "Patch dimensions should be one larger than image, " \
+                         "Patch:{} and Image:{}".format(
+        patches.shape,
+        image_size)
     i_h, i_w, i_d = image_size[:3]
     p_h, p_w, p_d = patches.shape[1:4]
     img = np.zeros(image_size)
@@ -495,7 +499,8 @@ def reconstruct_from_patches_3d(patches, image_size):
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
     n_d = i_d - p_d + 1
-    for p, (i, j, k) in zip(patches, product(range(n_h), range(n_w), range(n_d))):
+    for p, (i, j, k) in zip(patches,
+                            product(range(n_h), range(n_w), range(n_d))):
         img[i:i + p_h, j:j + p_w, k:k + p_d] += p
 
     for i in range(i_h):
