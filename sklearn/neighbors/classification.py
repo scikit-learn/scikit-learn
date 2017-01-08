@@ -390,7 +390,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
             for k, classes_k in enumerate(classes_):
                 pred_labels = np.array([_y[ind, k].toarray()
-                                        for ind in neigh_ind],
+                                        for ind in inliers],
                                        dtype=object)
                 y_pred_k = np.zeros(n_samples)
 
