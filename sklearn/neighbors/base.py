@@ -17,7 +17,7 @@ from scipy.sparse import csr_matrix, issparse
 from .ball_tree import BallTree
 from .kd_tree import KDTree
 from ..base import BaseEstimator
-from ..metrics import pairwise_distances, pairwise_distances_reduce
+from ..metrics import pairwise_distances_reduce
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.fixes import argpartition
@@ -592,40 +592,25 @@ class RadiusNeighborsMixin(object):
         if radius is None:
             radius = self.radius
 
-        n_samples = X.shape[0]
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=self.n_jobs, squared=True)
                 radius *= radius
+                reduce_func = partial(self.reduce_func, radius=radius,
+                                      return_distance=return_distance)
+
+                results = pairwise_distances_reduce(
+                    X, self._fit_X, 'euclidean', n_jobs=self.n_jobs,
+                    reduce_func=reduce_func, block_size=1, squared=True)
             else:
-                dist = pairwise_distances(X, self._fit_X,
-                                          self.effective_metric_,
-                                          n_jobs=self.n_jobs,
-                                          **self.effective_metric_params_)
+                reduce_func = partial(self.reduce_func, radius=radius,
+                                      return_distance=return_distance)
 
-            neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
-
-            # See https://github.com/numpy/numpy/issues/5456
-            # if you want to understand why this is initialized this way.
-            neigh_ind = np.empty(n_samples, dtype='object')
-            neigh_ind[:] = neigh_ind_list
-
-            if return_distance:
-                dist_array = np.empty(n_samples, dtype='object')
-                if self.effective_metric_ == 'euclidean':
-                    dist_list = [np.sqrt(d[neigh_ind[i]])
-                                 for i, d in enumerate(dist)]
-                else:
-                    dist_list = [d[neigh_ind[i]]
-                                 for i, d in enumerate(dist)]
-                dist_array[:] = dist_list
-
-                results = dist_array, neigh_ind
-            else:
-                results = neigh_ind
-
+                results = pairwise_distances_reduce(
+                    X, self._fit_X, self.effective_metric_, n_jobs=self.n_jobs,
+                    reduce_func=reduce_func, block_size=1,
+                    **self.effective_metric_params_)
+            results = np.hstack(list(results))
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -659,6 +644,29 @@ class RadiusNeighborsMixin(object):
             if return_distance:
                 return dist, neigh_ind
             return neigh_ind
+
+    def reduce_func(self, radius, return_distance, dist):
+        neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
+
+        # See https://github.com/numpy/numpy/issues/5456
+        # if you want to understand why this is initialized this way.
+        neigh_ind = np.empty(dist.shape[0], dtype='object')
+        neigh_ind[:] = neigh_ind_list
+
+        if return_distance:
+            dist_array = np.empty(dist.shape[0], dtype='object')
+            if self.effective_metric_ == 'euclidean':
+                dist_list = [np.sqrt(d[neigh_ind[i]])
+                             for i, d in enumerate(dist)]
+            else:
+                dist_list = [d[neigh_ind[i]]
+                             for i, d in enumerate(dist)]
+            dist_array[:] = dist_list
+
+            results = dist_array, neigh_ind
+        else:
+            results = neigh_ind
+        return results
 
     def radius_neighbors_graph(self, X=None, radius=None, mode='connectivity'):
         """Computes the (weighted) graph of Neighbors for points in X
