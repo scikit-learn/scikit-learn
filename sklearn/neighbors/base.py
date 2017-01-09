@@ -6,10 +6,12 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+from distutils.version import StrictVersion
 import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import scipy
 from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
@@ -776,6 +778,9 @@ class SupervisedIntegerMixin(object):
         self.classes_ = []
 
         if issparse(y) and self.outputs_2d_:
+            if StrictVersion(scipy.__version__) < StrictVersion('0.13.0'):
+                raise EnvironmentError('Sparse multilabel y not supported for'
+                                       'scipy < 0.13')
             self.outputs_2d_ = 'sparse'
             self._y = y
             self.classes_ = [np.array([0, 1], dtype=np.int)] * y.shape[1]

@@ -11,9 +11,7 @@
 import numpy as np
 from scipy.sparse import csc_matrix, hstack
 from scipy import stats
-from scipy import version
 from ..utils.extmath import weighted_mode
-from distutils.version import StrictVersion
 
 from .base import \
     _check_weights, _get_weights, \
@@ -158,10 +156,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
 
         if self.outputs_2d_ == 'sparse':
-            if StrictVersion(version.version) < StrictVersion('0.13.0'):
-                raise EnvironmentError('Sparse multilabel y passed in fit. '
-                                       'Not supported for scipy < 0.13')
-
             y_pred_sparse_multilabel = []
 
             for k, classes_k in enumerate(classes_):
