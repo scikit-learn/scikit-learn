@@ -159,14 +159,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             y_pred_sparse_multilabel = []
 
             for k, classes_k in enumerate(classes_):
-
-                if weights is None:
-                    mode, _ = stats.mode(_y[neigh_ind, k].toarray(), axis=1)
-                else:
-                    mode, _ = weighted_mode(_y[neigh_ind, k].toarray(),
-                                            weights, axis=1)
-
-                mode = np.asarray(mode.ravel(), dtype=np.intp)
+                mode = self._mode(_y[neigh_ind, k].toarray(), weights)
                 y_pred_sparse_multilabel.append(
                     csc_matrix(classes_k.take(mode)).T)
 
@@ -176,19 +169,22 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
 
             for k, classes_k in enumerate(classes_):
-
-                if weights is None:
-                    mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
-                else:
-                    mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
-
-                mode = np.asarray(mode.ravel(), dtype=np.intp)
+                mode = self._mode(_y[neigh_ind, k], weights)
                 y_pred[:, k] = classes_k.take(mode)
 
             if not self.outputs_2d_:
                 y_pred = y_pred.ravel()
 
         return y_pred
+
+    def _mode(self, neigh, weights):
+        if weights is None:
+            mode, _ = stats.mode(neigh, axis=1)
+        else:
+            mode, _ = weighted_mode(neigh, weights, axis=1)
+
+        mode = np.asarray(mode.ravel(), dtype=np.intp)
+        return mode
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -393,18 +389,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                         for ind in neigh_ind[inliers]],
                                        dtype=object)
                 y_pred_k = np.zeros(n_samples)
-
-                if weights is None:
-                    mode = np.array([stats.mode(pl)[0]
-                                     for pl in pred_labels], dtype=np.int)
-                else:
-                    mode = np.array([weighted_mode(pl, w)[0]
-                                     for (pl, w)
-                                     in zip(pred_labels, weights[inliers])],
-                                    dtype=np.int)
-
-                mode = mode.ravel()
-
+                mode = self._mode(pred_labels, weights, inliers)
                 y_pred_k[inliers] = classes_k.take(mode)
 
                 if outliers:
@@ -419,18 +404,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             for k, classes_k in enumerate(classes_):
                 pred_labels = np.array([_y[ind, k] for ind in neigh_ind],
                                        dtype=object)
-                if weights is None:
-                    mode = np.array([stats.mode(pl)[0]
-                                     for pl in pred_labels[inliers]],
-                                    dtype=np.int)
-                else:
-                    mode = np.array([weighted_mode(pl, w)[0]
-                                     for (pl, w)
-                                     in zip(pred_labels[inliers],
-                                            weights[inliers])],
-                                    dtype=np.int)
-
-                mode = mode.ravel()
+                mode = self._mode(pred_labels[inliers], weights, inliers)
                 y_pred[inliers, k] = classes_k.take(mode)
 
             if outliers:
@@ -440,3 +414,16 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 y_pred = y_pred.ravel()
 
         return y_pred
+
+    def _mode(self, pred_labels, weights, inliers):
+        if weights is None:
+            mode = np.array([stats.mode(pl)[0]
+                             for pl in pred_labels], dtype=np.int)
+        else:
+            mode = np.array([weighted_mode(pl, w)[0]
+                             for (pl, w)
+                             in zip(pred_labels, weights[inliers])],
+                            dtype=np.int)
+
+        mode = mode.ravel()
+        return mode
