@@ -52,8 +52,12 @@ class ClassifierChain(BaseEstimator):
         self.base_estimator = base_estimator
         self.random_state = random_state
         if order is not None:
+            if not isinstance(order, list):
+                order = list(order)
             if not all([isinstance(i, int) for i in order]):
-                raise ValueError("chain_order must be a list of integers")
+                raise ValueError("all elements of order parameter must be "
+                                 "integers")
+
         self.order = order
 
         self.shuffle = shuffle
