@@ -1,5 +1,7 @@
+from distutils.version import StrictVersion
 from itertools import product
 import numpy as np
+from scipy import version
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
@@ -527,8 +529,13 @@ def check_classifier_sparse_multilabel_y(name):
     X_train, X_test, y_train, y_test = train_test_split(X, y_sparse,
                                                         random_state=0)
     clf.fit(X_train, y_train)
-    y_sparse_pred = clf.predict(X_test)
-    assert_array_equal(y_pred, y_sparse_pred.toarray())
+
+    if (name == 'KNeighborsClassifier' and
+        StrictVersion(version.version) < StrictVersion('0.13.0')):
+        assert_raises(EnvironmentError, clf.predict, X_test)
+    else:
+        y_sparse_pred = clf.predict(X_test)
+        assert_array_equal(y_pred, y_sparse_pred.toarray())
 
 
 def test_classifiers_sparse_multilabel_y():
