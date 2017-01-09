@@ -38,7 +38,7 @@ def test_order_shuffle():
                                        order=range(10),
                                        shuffle=True)
     classifier_chain.fit(X, Y)
-    assert (classifier_chain.order != range(10))
+    assert (classifier_chain.order != list(range(10)))
     assert (len(classifier_chain.order) == 10)
     assert (len(set(classifier_chain.order)) == 10)
 
@@ -52,4 +52,4 @@ def test_classifiers_coef_size():
     classifier_chain.fit(X, Y)
 
     assert_equal([c.coef_.size for c in classifier_chain.classifiers_],
-                 range(X.shape[1], X.shape[1] + Y.shape[1]))
+                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
