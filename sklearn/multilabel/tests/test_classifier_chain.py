@@ -5,9 +5,6 @@ from sklearn.utils.testing import assert_equal
 from scipy import sparse
 
 def test_fit_and_predict():
-    """fit a model and assert that the label predictions
-    have the same shape as the label targets"""
-
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
@@ -17,9 +14,6 @@ def test_fit_and_predict():
     assert_equal(Y_pred.shape, Y.shape)
 
 def test_fit_and_predict_with_sparse_labels():
-    """fit a model and assert that the label predictions
-    have the same shape as the label targets"""
-
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
