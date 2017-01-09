@@ -133,6 +133,34 @@ def test_dbscan_callable():
     assert_equal(n_clusters_2, n_clusters)
 
 
+def test_dbscan_metric_params():
+    # Tests that DBSCAN works with the metrics_params argument.
+    eps = 0.8
+    min_samples = 10
+    p = 1
+
+    # Compute DBSCAN with metric_params arg
+    db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps,
+                min_samples=min_samples, algorithm='ball_tree').fit(X)
+    core_sample_1, labels_1 = db.core_sample_indices_, db.labels_
+
+    # Test that sample labels are the same as passing Minkowski 'p' directly
+    db = DBSCAN(metric='minkowski', eps=eps, min_samples=min_samples,
+                algorithm='ball_tree', p=p).fit(X)
+    core_sample_2, labels_2 = db.core_sample_indices_, db.labels_
+
+    assert_array_equal(core_sample_1, core_sample_2)
+    assert_array_equal(labels_1, labels_2)
+
+    # Minkowski with p=1 should be equivalent to Manhattan distance
+    db = DBSCAN(metric='manhattan', eps=eps, min_samples=min_samples,
+                algorithm='ball_tree').fit(X)
+    core_sample_3, labels_3 = db.core_sample_indices_, db.labels_
+
+    assert_array_equal(core_sample_1, core_sample_3)
+    assert_array_equal(labels_1, labels_3)
+
+
 def test_dbscan_balltree():
     # Tests the DBSCAN algorithm with balltree for neighbor calculation.
     eps = 0.8
