@@ -1168,8 +1168,8 @@ class LarsCV(Lars):
         return self.alpha_
 
     @property
-    @deprecated("Attribute mse_path_ is deprecated in 0.18 and "
-                "will be removed in 0.20. Use 'cv_mse_path_' instead")
+    @deprecated("Attribute cv_mse_path_ is deprecated in 0.18 and "
+                "will be removed in 0.20. Use 'mse_path_' instead")
     def cv_mse_path_(self):
         return self.mse_path_
 
