@@ -231,7 +231,8 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
     """
 
-    dissimilarities = check_array(dissimilarities)
+    dissimilarities = check_array(dissimilarities,
+                                  variable_name='dissimilarities')
     random_state = check_random_state(random_state)
 
     if hasattr(init, '__array__'):

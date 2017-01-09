@@ -128,7 +128,7 @@ class EmpiricalCovariance(BaseEstimator):
             is computed.
 
         """
-        covariance = check_array(covariance)
+        covariance = check_array(covariance, variable_name='covariance')
         # set covariance
         self.covariance_ = covariance
         # set precision

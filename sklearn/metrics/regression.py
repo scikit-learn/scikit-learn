@@ -96,7 +96,8 @@ def _check_reg_targets(y_true, y_pred, multioutput):
                                  allowed_multioutput_str,
                                  multioutput))
     elif multioutput is not None:
-        multioutput = check_array(multioutput, ensure_2d=False)
+        multioutput = check_array(multioutput, ensure_2d=False,
+                                  variable_name='multioutput')
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in "
                              "multi-output cases.")

@@ -388,7 +388,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if Xy is not None:
             # Xy should be a 1d contiguous array or a 2D C ordered array
             Xy = check_array(Xy, dtype=X.dtype.type, order='C', copy=False,
-                             ensure_2d=False)
+                             ensure_2d=False, variable_name='Xy')
 
     n_samples, n_features = X.shape
 
@@ -461,7 +461,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # checks
             if check_input:
                 precompute = check_array(precompute, dtype=X.dtype.type,
-                                         order='C')
+                                         order='C', variable_name='precompute')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)

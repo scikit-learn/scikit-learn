@@ -41,7 +41,7 @@ def barycenter_weights(X, Z, reg=1e-3):
     See developers note for more information.
     """
     X = check_array(X, dtype=FLOAT_DTYPES)
-    Z = check_array(Z, dtype=FLOAT_DTYPES, allow_nd=True)
+    Z = check_array(Z, dtype=FLOAT_DTYPES, allow_nd=True, variable_name='Z')
 
     n_samples, n_neighbors = X.shape[0], Z.shape[1]
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)

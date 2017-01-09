@@ -486,7 +486,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    Gram = check_array(Gram, order='F', copy=copy_Gram)
+    Gram = check_array(Gram, order='F', copy=copy_Gram, variable_name='Gram')
     Xy = np.asarray(Xy)
     if Xy.ndim > 1 and Xy.shape[1] > 1:
         # or subsequent target will be affected

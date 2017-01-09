@@ -44,7 +44,7 @@ def trace_dot(X, Y):
 
 
 def _check_init(A, shape, whom):
-    A = check_array(A)
+    A = check_array(A, variable_name='A')
     if np.shape(A) != shape:
         raise ValueError('Array with wrong shape passed to %s. Expected %s, '
                          'but got %s ' % (whom, shape, np.shape(A)))
@@ -467,7 +467,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     computer sciences 92.3: 708-721, 2009.
     """
     # so W and Ht are both in C order in memory
-    Ht = check_array(H.T, order='C')
+    Ht = check_array(H.T, order='C', variable_name='H')
     X = check_array(X, accept_sparse='csr')
 
     rng = check_random_state(random_state)

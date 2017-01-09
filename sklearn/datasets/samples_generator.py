@@ -739,7 +739,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:
-        centers = check_array(centers)
+        centers = check_array(centers, variable_name='centers')
         n_features = centers.shape[1]
 
     if isinstance(cluster_std, numbers.Real):

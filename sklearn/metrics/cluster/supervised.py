@@ -585,7 +585,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     else:
         contingency = check_array(contingency,
                                   accept_sparse=['csr', 'csc', 'coo'],
-                                  dtype=[int, np.int32, np.int64])
+                                  dtype=[int, np.int32, np.int64],
+                                  variable_name='contingency')
 
     if isinstance(contingency, np.ndarray):
         # For an array

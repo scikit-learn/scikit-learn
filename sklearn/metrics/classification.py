@@ -1650,7 +1650,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
         y_pred = np.append(1 - y_pred, y_pred, axis=1)
 
     # Check if dimensions are consistent.
-    transformed_labels = check_array(transformed_labels)
+    transformed_labels = check_array(transformed_labels,
+                                     variable_name='transformed_labels')
     if len(lb.classes_) != y_pred.shape[1]:
         if labels is None:
             raise ValueError("y_true and y_pred contain different number of "

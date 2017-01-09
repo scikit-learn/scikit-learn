@@ -115,7 +115,8 @@ def graph_laplacian(csgraph, normed=False, return_diag=False):
 
     if normed and (np.issubdtype(csgraph.dtype, np.int)
                    or np.issubdtype(csgraph.dtype, np.uint)):
-        csgraph = check_array(csgraph, dtype=np.float64, accept_sparse=True)
+        csgraph = check_array(csgraph, dtype=np.float64, accept_sparse=True,
+                              variable_name='csgraph')
 
     if sparse.isspmatrix(csgraph):
         return _laplacian_sparse(csgraph, normed=normed,

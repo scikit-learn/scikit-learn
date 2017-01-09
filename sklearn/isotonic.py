@@ -285,7 +285,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # If sample_weights is passed, removed zero-weight values and clean
         # order
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = check_array(sample_weight, ensure_2d=False,
+                                        variable_name='sample_weight')
             mask = sample_weight > 0
             X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
         else:

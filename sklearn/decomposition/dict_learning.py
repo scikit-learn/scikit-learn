@@ -247,10 +247,11 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     """
     if check_input:
         if algorithm == 'lasso_cd':
-            dictionary = check_array(dictionary, order='C', dtype='float64')
+            dictionary = check_array(dictionary, order='C', dtype='float64',
+                                     variable_name='dictionary')
             X = check_array(X, order='C', dtype='float64')
         else:
-            dictionary = check_array(dictionary)
+            dictionary = check_array(dictionary, variable_name='dictionary')
             X = check_array(X)
 
     n_samples, n_features = X.shape
@@ -696,7 +697,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         X_train = X
 
     dictionary = check_array(dictionary.T, order='F', dtype=np.float64,
-                             copy=False)
+                             copy=False, variable_name='dictionary')
     X_train = check_array(X_train, order='C', dtype=np.float64, copy=False)
 
     batches = gen_batches(n_samples, batch_size)
