@@ -230,13 +230,21 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def _info_gain(fc_count, c_count, f_count, total, gl_method):
+def get_entropy(prob):
+    t = np.log2(prob)
+    t[~np.isfinite(t)] = 0
+    return np.multiply(-prob, t)
+
+
+def _info_gain(X, y, globalization, ratio=False):
 
     def _a_log_a_div_b(a, b):
         with np.errstate(invalid='ignore', divide='ignore'):
             t = np.log2(a / b)
         t[~np.isfinite(t)] = 0
         return np.multiply(a, t)
+
+    f_count, c_count, fc_count, total = _get_fc_counts(X, y)
 
     f_prob = f_count / f_count.sum()
     c_prob = c_count / c_count.sum()
@@ -248,12 +256,22 @@ def _info_gain(fc_count, c_count, f_count, total, gl_method):
     c_nf = _a_log_a_div_b((c_count - fc_count) / total, c_prob * (1 - f_prob))
     nc_f = _a_log_a_div_b((f_count - fc_count) / total, (1 - c_prob) * f_prob)
 
+    scores = c_f + nc_nf + c_nf + nc_f
+
+    if ratio:
+        # normalize IG scores to obtain GR
+        with np.errstate(invalid='ignore', divide='ignore'):
+            scores = scores / (get_entropy(c_prob) + get_entropy(1 - c_prob))
+
     # the feature score is averaged over classes
-    if gl_method == "aver":
-        return (c_f + nc_nf + c_nf + nc_f).mean(axis=0)
-    if gl_method == "sum":
-        return (c_f + nc_nf + c_nf + nc_f).sum(axis=0)
-    return (c_f + nc_nf + c_nf + nc_f).max(axis=0)
+    if globalization == "aver":
+        scores = scores.mean(axis=0)
+    elif globalization == "sum":
+        scores = scores.sum(axis=0)
+    else:
+        scores = scores.max(axis=0)
+
+    return np.asarray(scores).reshape(-1), []
 
 
 def _get_fc_counts(X, y):
@@ -282,7 +300,7 @@ def _get_fc_counts(X, y):
     return f_count, c_count, fc_count, total
 
 
-def info_gain(X, y, gl_method="max"):
+def info_gain(X, y, globalization="max"):
     """Compute an Information Gain score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -312,8 +330,8 @@ def info_gain(X, y, gl_method="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    gl_method : string
-        Globalization_method, one of "aver" (default), "max", "sum".
+    globalization : string
+        Globalization method, one of "aver" (default), "max", "sum".
 
     Returns
     -------
@@ -337,14 +355,10 @@ def info_gain(X, y, gl_method="max"):
     <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
     """
 
-    f_count, c_count, fc_count, total = _get_fc_counts(X, y)
-
-    scores = _info_gain(fc_count, c_count, f_count, total, gl_method)
-
-    return np.asarray(scores).reshape(-1), []
+    return _info_gain(X, y, globalization)
 
 
-def info_gain_ratio(X, y, gl_method="max"):
+def info_gain_ratio(X, y, globalization="max"):
     """Compute an Information Gain Ratio score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -352,18 +366,16 @@ def info_gain_ratio(X, y, gl_method="max"):
 
     Information Gain measures the number of bits of information obtained about
     the presence or absence of a class by knowing the presence or absence of
-    the feature. Information Gain Ratio aims to overcome one disadvantage of IG
-    which is the fact that IG grows not only with the increase of dependence
-    between `f` and `c`, but also with the increase of the entropy of `f`. That
-    is why features with low entropy receive smaller IG weights although they
-    may be strongly correlated with a class. IGR removes this factor by
-    normalizing IG by the entropy of the feature:
+    the feature. Information Gain Ratio [1] aims to overcome one disadvantage of
+    IG which is the fact that IG grows not only with the increase of dependence
+    between `f` and `c`, but also with the increase of their entropy. IGR
+    removes this factor by normalizing IG by the entropy of the class:
 
     .. math::
 
         \\begin{equation}
-        GR(f,c) = \\frac{IG(f,c)}{-\\sum_{g \\in \\{f,\\overline{f}\\}} \\
-            p(g) log p(g)}
+        GR(f,c) = \\frac{IG(f,c)}{-\\sum_{d \\in \\{c,\\overline{c}\\}} \\
+            p(d) log p(d)}
         \\end{equation}
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
@@ -376,8 +388,8 @@ def info_gain_ratio(X, y, gl_method="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    gl_method : string
-        Globalization_method, one of "aver" (default), "max", "sum".
+    globalization : string
+        Globalization method, one of "aver" (default), "max", "sum".
 
     Returns
     -------
@@ -386,22 +398,15 @@ def info_gain_ratio(X, y, gl_method="max"):
     See also
     --------
     info_gain : Information Gain
+
+    References
+    ----------
+    .. [1] F. Debole and F. Sebastiani. 2003. `Supervised Term Weighting
+    for Automated Text Categorization. Proceedings of the 2003 ACM Symposium on
+    Applied Computing. <http://dl.acm.org/citation.cfm?id=952688>`_
     """
 
-    def get_entropy(f_prob):
-        t = np.log2(f_prob)
-        t[~np.isfinite(t)] = 0
-        return np.multiply(-f_prob, t)
-
-    f_count, c_count, fc_count, total = _get_fc_counts(X, y)
-    scores = _info_gain(fc_count, c_count, f_count, total, gl_method)
-
-    # normalize ig scores
-    with np.errstate(invalid='ignore', divide='ignore'):
-        f_prob = f_count / f_count.sum()
-        scores = scores / (get_entropy(f_prob) + get_entropy(1 - f_prob))
-
-    return np.asarray(scores).reshape(-1), []
+    return _info_gain(X, y, globalization, ratio=True)
 
 
 def f_regression(X, y, center=True):

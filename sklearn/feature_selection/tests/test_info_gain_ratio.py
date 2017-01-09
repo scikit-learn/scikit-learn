@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 
 from sklearn.feature_selection import SelectKBest, info_gain_ratio
 
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from numpy.testing import assert_equal
 
 # Feature 0 is highly informative for class 1;
@@ -17,7 +17,7 @@ X = [[2, 1, 2],
      [9, 1, 1],
      [6, 1, 2],
      [0, 1, 2]]
-y = [0, 1, 2, 2]
+y = [0, 1, 1, 0]
 
 
 def mk_info_gain_ratio(k):
@@ -65,4 +65,5 @@ def test_info_gain_ratio_dense():
 def test_info_gain_ratio_negative():
     # Check for proper error on negative numbers in the input X.
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
-    assert_raises(ValueError, info_gain_ratio, csr_matrix(X), y)
+    assert_raises_regex(ValueError, "Input X must be non-negative.",
+                        info_gain_ratio, csr_matrix(X), y)
