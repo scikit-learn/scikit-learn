@@ -1982,10 +1982,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         return type(type_check) == np.ndarray or type(type_check) == list \
             or type(type_check) == set
 
-    @staticmethod
-    def _get_cache_dict():
-        return defaultdict(int)
-
     def fit(self, X, y=None):
         """Fits the CountFeaturizer to X, y
 
@@ -2018,7 +2014,10 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         len_data = len(X)
 
-        self.count_cache_ = defaultdict(CountFeaturizer._get_cache_dict)
+        def _get_cache_dict():
+            return defaultdict(int)
+
+        self.count_cache_ = defaultdict(_get_cache_dict)
         self.col_num_X_ = len(X[0])
         self.y_set_ = set()
 
