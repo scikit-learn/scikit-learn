@@ -303,7 +303,11 @@ class LabelPropagation(BaseLabelPropagation):
         Parameter for knn kernel
 
     alpha : float
-        DEPRECATED: Deprecated in 0.19 and it's going to be removed in 0.21.
+        Clamping factor.
+
+        .. deprecated:: 0.19
+        This parameter will be removed in 0.21.
+        'alpha' is fixed to zero in 'LabelPropagation'.
 
     max_iter : float
         Change maximum number of iterations allowed
