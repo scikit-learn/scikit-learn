@@ -351,7 +351,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     copy_X = False
     if y.ndim == 1:
         y = y.reshape(-1, 1)
-    y = check_array(y)
+    y = check_array(y, variable_name='y')
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
     if n_nonzero_coefs is None and tol is None:

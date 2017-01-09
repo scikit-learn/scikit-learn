@@ -586,7 +586,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # Preprocessing.
     if check_input:
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None, variable_name='y')
         check_consistent_length(X, y)
     _, n_features = X.shape
     classes = np.unique(y)

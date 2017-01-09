@@ -317,11 +317,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if solver == 'sag':
         X = check_array(X, accept_sparse=['csr'],
                         dtype=np.float64, order='C')
-        y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
+        y = check_array(y, dtype=np.float64, ensure_2d=False, order='F',
+                        variable_name='y')
     else:
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64)
-        y = check_array(y, dtype='numeric', ensure_2d=False)
+        y = check_array(y, dtype='numeric', ensure_2d=False, variable_name='y')
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
