@@ -1,5 +1,6 @@
 """Testing for K-Medoids"""
 import numpy as np
+from scipy.sparse import csc_matrix
 
 from sklearn.cluster import KMedoids, KMeans
 from sklearn.datasets import load_iris
@@ -10,7 +11,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal, assert_raises, \
     assert_raise_message
 from sklearn.utils.testing import assert_greater
-from scipy.sparse import random
 
 rng = np.random.RandomState(0)
 X = rng.rand(100, 5)
@@ -129,7 +129,10 @@ def test_outlier_robustness():
 
 def test_kmedoids_on_sparse_input():
     model = KMedoids(n_clusters=2, random_state=rng)
-    X = random(100, 100, density=0.1, random_state=rng)
+    row = np.array([1, 0])
+    col = np.array([0, 4])
+    data = np.array([1, 1])
+    X = csc_matrix((data, (row, col)), shape=(2, 5))
     labels = model.fit_predict(X)
-    assert_equal(len(labels), 100)
+    assert_equal(len(labels), 2)
     assert_array_equal(labels, model.labels_)
