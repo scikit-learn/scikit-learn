@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Dec 27 12:58:49 2016
-
-@author: anki08
-"""
+from functools import partial
 
 import numpy as np
-from sklearn import datasets
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -17,10 +11,10 @@ from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabaz_score
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_almost_equal
@@ -30,7 +24,6 @@ from sklearn.utils.testing import assert_almost_equal
 # ------------------------
 # The goal of having those dictionaries is to have an easy way to call a
 # particular metric and associate a name to each function:
-#   - BICLUSTER_METRICS: all biclusters - (clusters formed from matrices)
 #   - SUPERVISED_METRICS: all supervised cluster metrics - (when given a
 # ground truth value)
 #   - UNSUPERVISED_METRICS: all unsupervised cluster metrics
@@ -53,13 +46,9 @@ SUPERVISED_METRICS = {
 
 UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
+    "silhouette_manhattan": partial(silhouette_score, metric='manhattan'),
     "calinski_harabaz_score": calinski_harabaz_score
 }
-
-SUPERVISED_METRICS_DICT = dict()
-UNSUPERVISED_METRICS_DICT = dict()
-SUPERVISED_METRICS_DICT.update(SUPERVISED_METRICS)
-UNSUPERVISED_METRICS_DICT.update(UNSUPERVISED_METRICS)
 
 # Lists of metrics with common properties
 # ---------------------------------------
@@ -69,22 +58,17 @@ UNSUPERVISED_METRICS_DICT.update(UNSUPERVISED_METRICS)
 #
 # --------------------------------------------------------------------
 # Symmetric with respect to their input arguments y_true and y_pred.
-# Symmetric metrics only imply to supervised clusters.
+# Symmetric metrics only apply to supervised clusters.
 SYMMETRIC_METRICS = [
     "adjusted_rand_score", "v_measure_score",
     "mutual_info_score", "adjusted_mutual_info_score",
     "normalized_mutual_info_score", "fowlkes_mallows_score"
 ]
 
-NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
+ASYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
-# When the information is zero these metrics output zero.
-METRICS_ZERO_INFO = [
-    "normalized_mutual_info_score", "v_measure_score",
-    "adjusted_mutual_info_score"
-]
 
-# Metrics with output between 0 and 1
+# Metrics whose upper bound is 1
 METRICS_NORMALIZED_OUTPUT = [
     "adjusted_rand_score", "homogeneity_score", "completeness_score",
     "v_measure_score", "adjusted_mutual_info_score", "fowlkes_mallows_score",
@@ -93,13 +77,9 @@ METRICS_NORMALIZED_OUTPUT = [
 
 
 def assert_between(var, score_1, score_2):
-    """ Returns a boolean value
-    Helper function to check if score lies in between two values
-    """
+    """Helper function to check if score lies in between two values"""
     if assert_greater(var, score_1) and assert_less(var, score_2):
-        return True
-    else:
-        return False
+        raise AssertionError("score does not lie between 0 and 1")
 
 
 def test_symmetry():
@@ -107,48 +87,36 @@ def test_symmetry():
     y1 = rng.randint(3, size=30)
     y2 = rng.randint(3, size=30)
     for name in SYMMETRIC_METRICS:
-        metric = SUPERVISED_METRICS_DICT[name]
-        assert_almost_equal(metric(y1, y2),
-                            metric(y2, y1))
+        metric = SUPERVISED_METRICS[name]
+        assert_almost_equal(metric(y1, y2), metric(y2, y1))
 
-    for name in NON_SYMMETRIC_METRICS:
-        metric = SUPERVISED_METRICS_DICT[name]
-        assert_almost_equal(metric([0, 1, 2, 5, 4, 9], [0, 1, 9, 4, 3, 5]),
-                            metric([0, 1, 9, 4, 3, 5], [0, 1, 2, 5, 4, 9]))
-
-
-def test_exactly_zero_info_score():
-    # Check numerical stability when information is exactly zero
-    for i in np.logspace(1, 4, 4).astype(np.int):
-        labels_a, labels_b = (np.ones(i, dtype=np.int),
-                              np.arange(i, dtype=np.int))
-        for name in METRICS_ZERO_INFO:
-            metric = SUPERVISED_METRICS_DICT[name]
-            assert_almost_equal(metric(labels_a, labels_b), 0.0)
+    for name in ASYMMETRIC_METRICS:
+        metric = SUPERVISED_METRICS[name]
+        assert_not_equal(metric(y1, y2), metric(y2, y1))
 
 
 def test_normalized_output():
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
     upper_bound_2 = [0, 0, 0, 1, 1, 1]
     for name in METRICS_NORMALIZED_OUTPUT:
-        metric = SUPERVISED_METRICS_DICT[name]
+        metric = SUPERVISED_METRICS[name]
         assert_between(metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]), 0.0, 1.0)
         assert_between(metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]), 0.0, 1.0)
         assert_equal(metric(upper_bound_1, upper_bound_2), 1.0)
 
-    # For symmetric metrics the lower bound is defined
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
-    for name in SYMMETRIC_METRICS:
-        metric = SUPERVISED_METRICS_DICT[name]
-        assert_equal(metric(lower_bound_1, lower_bound_2), 0.0)
+    for name in SUPERVISED_METRICS:
+        metric = SUPERVISED_METRICS[name]
+        assert_equal((metric(lower_bound_1, lower_bound_2) and
+                      metric(lower_bound_2, lower_bound_1)), 0.0)
 
 
 # All clustering metrocs do not change score due to permutations of labels
 # that is when 0 and 1 exchchanged.
 def test_permute_labels():
-    for name in SUPERVISED_METRICS_DICT:
-        metric = SUPERVISED_METRICS_DICT[name]
+    for name in SUPERVISED_METRICS:
+        metric = SUPERVISED_METRICS[name]
         y_label = np.array([0, 0, 0, 1, 1, 0, 1])
         y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
         score_1 = metric(y_pred, y_label)
@@ -156,38 +124,48 @@ def test_permute_labels():
         assert_equal(score_1, metric(1 - y_pred, 1 - y_label))
         assert_almost_equal(score_1, metric(y_pred, 1 - y_label))
 
-    # Test for Silhouette_score
-    dataset = datasets.load_iris()
-    X = dataset.data
-    y_pred = dataset.target
-    D = pairwise_distances(X, metric='euclidean')
-    score_1 = silhouette_score(D, y_pred, metric='precomputed')
-    score_2 = silhouette_score(D, 1 - y_pred, metric='precomputed')
-    assert_almost_equal(score_1, score_2)
-
-    # Test for calinski_harabaz_score
-    dataset = datasets.load_iris()
-    X = dataset.data
-    y_pred = dataset.target
-    D = pairwise_distances(X, metric='euclidean')
-    score_1 = calinski_harabaz_score(D, y_pred)
-    score_2 = calinski_harabaz_score(D, 1 - y_pred)
-    score_3 = calinski_harabaz_score(1 - D, y_pred)
-    score_4 = calinski_harabaz_score(1 - D, 1 - y_pred)
-    assert_almost_equal(score_1, score_2)
-    assert_almost_equal(score_1, score_3)
-    assert_almost_equal(score_1, score_4)
+    for name in UNSUPERVISED_METRICS:
+        metric = UNSUPERVISED_METRICS[name]
+        X = np.random.randint(10, size=(100, 10))
+        y = np.random.randint(2, size=100)
+        score_1 = metric(X, y)
+        assert_almost_equal(score_1, metric(X, 1-y))
 
 
 # For ALL clustering metrics Input parameters can be both
-# in the form of arrays and lists
+# in the form of arrays lists , positive , negetive or string
 def test_format_invariance():
-    for name in SUPERVISED_METRICS_DICT:
-        metric = SUPERVISED_METRICS_DICT[name]
+    for name in SUPERVISED_METRICS:
+        metric = SUPERVISED_METRICS[name]
         list_a = [0, 0, 0, 1, 1, 1]
         list_b = [0, 1, 2, 3, 4, 5]
-        arr_a = np.array([0, 0, 0, 1, 1, 1])
-        arr_b = np.array([0, 1, 2, 3, 4, 5])
+        arr_a = np.array(list_a)
+        arr_b = np.array(list_b)
+        str_a = [str(x) for x in arr_a]
+        str_b = [str(x) for x in arr_b]
         score_list = metric(list_a, list_b)
+        score_neg = metric(arr_a - 1, arr_b)
+        score_pos = metric(arr_a + 1, arr_b)
         score_array = metric(arr_a, arr_b)
+        score_str = metric(str_a, str_b)
         assert_equal(score_list, score_array)
+        assert_equal(score_array, score_neg)
+        assert_equal(score_array, score_pos)
+        assert_equal(score_list, score_str)
+
+    for name in UNSUPERVISED_METRICS:
+        metric = UNSUPERVISED_METRICS[name]
+        X = np.random.randint(10, size=(100, 10))
+        X_array = np.array(X)
+        label = np.random.randint(2, size=100)
+        label_array = np.array(label)
+        X_float = X_array.astype(float)
+        score_1 = metric(X, label)
+        score_2 = metric(X_array, label_array)
+        score_3 = metric(X_float, label_array)
+        score_4 = metric(X_array + 1, label_array)
+        score_5 = metric(X_array - 1, label_array)
+        assert_equal(score_1, score_2)
+        assert_equal(score_1, score_3)
+        assert_almost_equal(score_1, score_4)
+        assert_almost_equal(score_1, score_5)
