@@ -82,7 +82,7 @@ for func, name in [(chi2, "CHI2"), (info_gain, "IG"), (info_gain_ratio, "IGR"),
 
         # keep selected feature names
         feature_names2 = [feature_names[i] for i
-                         in selector.get_support(indices=True)]
+                          in selector.get_support(indices=True)]
         feature_names2 = np.asarray(feature_names2)
 
         # train and evaluate a classifier

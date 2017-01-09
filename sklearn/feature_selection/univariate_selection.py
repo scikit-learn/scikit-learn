@@ -366,10 +366,11 @@ def info_gain_ratio(X, y, globalization="max"):
 
     Information Gain measures the number of bits of information obtained about
     the presence or absence of a class by knowing the presence or absence of
-    the feature. Information Gain Ratio [1] aims to overcome one disadvantage of
-    IG which is the fact that IG grows not only with the increase of dependence
-    between `f` and `c`, but also with the increase of their entropy. IGR
-    removes this factor by normalizing IG by the entropy of the class:
+    the feature. Information Gain Ratio [1] aims to overcome one disadvantage
+    of IG which is the fact that IG grows not only with the increase of
+    dependence between `f` and `c`, but also with the increase of their
+    entropy. IGR removes this factor by normalizing IG by the entropy of the
+    class:
 
     .. math::
 
