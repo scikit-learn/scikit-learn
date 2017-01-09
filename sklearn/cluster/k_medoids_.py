@@ -17,7 +17,7 @@ from ..utils.validation import check_is_fitted
 
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
-    """k-medoids class.
+    """k-medoids clustering.
 
     Read more in the :ref:`User Guide <k_medoids>`.
 
@@ -103,7 +103,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Check n_clusters
         if (self.n_clusters is None or self.n_clusters <= 0 or
-                not isinstance(self.n_clusters, int)):
+                not isinstance(self.n_clusters, (int, np.integer))):
             raise ValueError("n_clusters should be a nonnegative integer. "
                              "%s was given" % self.n_clusters)
 
@@ -133,7 +133,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_init_args()
         X = check_array(X, accept_sparse=['csr', 'csc'])
         if self.n_clusters > X.shape[0]:
-            raise ValueError("The number of medoids %d must be larger "
+            raise ValueError("The number of medoids %d must be less "
                              "than the number of samples %d."
                              % (self.n_clusters, X.shape[0]))
 
@@ -181,7 +181,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             # Extract the distance matrix between the data points
             # inside the cluster k
-            cluster_k_idxs = cluster_idxs == k
+            cluster_k_idxs = np.where(cluster_idxs == k)[0]
             in_cluster_distances = distances[np.ix_(cluster_k_idxs,
                                                     cluster_k_idxs)]
 
@@ -190,7 +190,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
             min_cost_idx = np.argmin(in_cluster_all_costs)
             min_cost = in_cluster_all_costs[min_cost_idx]
-            curr_cost = np.sum(distances[medoid_idxs[k], cluster_idxs == k])
+            curr_cost = np.sum(distances[medoid_idxs[k], cluster_k_idxs])
 
             # If the minimum cost is smaller than that
             # exhibited by the currently used medoid,
@@ -199,8 +199,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
                 # Find data points that belong to cluster k,
                 # and assign the newly found medoid as the medoid
                 # for cluster k
-                medoid_idxs[k] = np.where(
-                    cluster_idxs == k)[0][min_cost_idx]
+                medoid_idxs[k] = cluster_k_idxs[min_cost_idx]
 
     def transform(self, X):
         """Transforms X to cluster-distance space.
@@ -240,9 +239,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         distances = pairwise_distances(X, Y=self.cluster_centers_,
                                        metric=self.distance_metric)
 
-        # Assign data points to clusters based on
-        # which cluster assignment yields
-        # the smallest distance
+        # Assign data points to clusters based on which cluster assignment
+        # yields the smallest distance
         labels = np.argmin(distances, axis=1)
 
         return labels

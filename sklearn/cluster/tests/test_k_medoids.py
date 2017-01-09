@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal, assert_raises, \
     assert_raise_message
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_allclose
 
 rng = np.random.RandomState(0)
 X = rng.rand(100, 5)
@@ -33,7 +34,9 @@ def test_kmedoids_input_validation_and_fit_check():
     # Trying to fit 3 samples to 8 clusters
     model = KMedoids(n_clusters=8)
     Xsmall = rng.rand(5, 2)
-    assert_raises(ValueError, model.fit, Xsmall)
+    assert_raise_message(ValueError, "The number of medoids 8 must be less "
+                                     "than the number of samples 5.",
+                         model.fit, Xsmall)
 
     # Test if NotFittedError is raised appropriately
     assert_raises(NotFittedError, KMedoids().transform, X)
@@ -58,15 +61,15 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
 
 
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
-    Xiris = load_iris()['data']
+    X_iris = load_iris()['data']
 
     ref_model = KMeans(n_clusters=3)
 
-    ref_model.fit(Xiris)
+    ref_model.fit(X_iris)
 
     avg_dist_to_closest_centroid = np.sum(np.min(
-        euclidean_distances(Xiris, Y=ref_model.cluster_centers_), axis=1)
-    ) / Xiris.shape[0]
+        euclidean_distances(X_iris, Y=ref_model.cluster_centers_), axis=1)
+    ) / X_iris.shape[0]
 
     for init in ['random', 'heuristic']:
         for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
@@ -77,11 +80,11 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
                              distance_metric=distance_metric,
                              init=init,
                              random_state=rng)
-            model.fit(Xiris)
+            model.fit(X_iris)
 
-            distances = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](Xiris)
+            distances = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](X_iris)
             avg_dist_to_random_medoid = np.mean(distances.ravel())
-            avg_dist_to_closest_medoid = model.inertia_ / Xiris.shape[0]
+            avg_dist_to_closest_medoid = model.inertia_ / X_iris.shape[0]
             # We want distance-to-closest-medoid to be reduced from average
             # distance by more than 50%
             assert_greater(0.5 * avg_dist_to_random_medoid,
@@ -91,9 +94,8 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
             # K-Means. We want to average distance to cluster centers
             # be similar between K-Means and K-Medoids
             if distance_metric == "euclidean":
-                assert_greater(0.1,
-                               np.abs(avg_dist_to_closest_medoid -
-                                      avg_dist_to_closest_centroid))
+                assert_allclose(avg_dist_to_closest_medoid,
+                                avg_dist_to_closest_centroid, rtol=0.1)
 
 
 def test_kmedoids_fit_predict_transform():

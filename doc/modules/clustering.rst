@@ -56,7 +56,7 @@ Overview of clustering methods
 
    * - :ref:`K-Medoids <k_medoids>`
      - number of clusters
-     - Large ``n_samples``, medium ``n_clusters``
+     - Moderate ``n_samples``, medium ``n_clusters``
      - General-purpose, uneven cluster size, flat geometry, 
        not too many clusters
      - Any pairwise distance
@@ -313,7 +313,7 @@ which does not exist in the original data, and thus cannot be a medoid.
 .. topic:: Examples:
 
  * :ref:`example_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits
- with various distance metrics.
+   with various distance metrics.
 
 
 **Algorithm description:**
@@ -330,16 +330,16 @@ PAM works as follows:
 * Assignment step: assign each element from the dataset to the closest medoid.
 * Update step: Identify the new medoid of each cluster.
 * Repeat the assignment and update step while the medoids keep changing or
-  maximum number of iterations ``max_iter`` is reached
+  maximum number of iterations ``max_iter`` is reached.
 
 The complexity of K-Medoids is :math:`O(N^2 k T)` where :math:`N` is the number
 of samples, :math:`T` is the number of iterations and :math:`k` is the number of
 clusters. This makes it more suitable for smaller datasets in comparison to
-:class:`KMeans` which is log-times faster: :math:`O(N k T)`.
+:class:`KMeans` which is :math:`O(N k T)`.
 
 .. topic:: References:
 
- * "Clustering by means of Medoids'"
+ * "Clustering by Means of Medoids'"
    Kaufman, L. and Rousseeuw, P.J.,
    Statistical Data Analysis Based on the L1–Norm and Related Methods, edited
    by Y. Dodge, North-Holland, 405–416. 1987
