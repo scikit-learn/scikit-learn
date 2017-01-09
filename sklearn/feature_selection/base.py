@@ -122,7 +122,7 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         return Xt
 
 
-def wrapper_scorer(score_func, X, y=None):
+def wrapper_scorer(score_func):
     """ A wrapper function around score functions.
 
     Parameters
@@ -131,50 +131,57 @@ def wrapper_scorer(score_func, X, y=None):
         Function taking array(s) X and/or y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
 
-    X : array-like, shape = [n_samples, n_features]
-        The training input samples/Feature matrix.
-
-    y : array-like or None, shape = [n_samples]
-        The target values (class labels in classification, real numbers in
-        regression).
+    Returns
+    -------
+    scores : array, shape = [n_features,]
+        Score values returned by the scoring function.
+    p_vals : array, shape = [n_features,]
+        The set of p-values returned by the scoring function.
 
     Notes
     -----
-    This function takes as input the feature matrix X and/or the target vector
-    y and sends it as parameter to the score function.
-    The negative score values returned by a score function are changed to
-    zero as both negative and zero score values signify the same thing.
-    E.g. Mutual information between two random variables is a non-negative
-    value, which measures the dependency between the variables. It is equal
-    to zero if and only if two random variables are independent, and higher
-    values mean higher dependency.
+    This wrapper function wraps around scoring functions like `spearmanr`,
+    `pearsonr` etc. from the scipy.stats module and makes it usable for
+    feature selection algorithms like `SelectKBest`.
+
+    Example
+    -------
+    >>> from sklearn.feature_selection import SelectKBest, wrapper_scorer
+    >>> from scipy.stats import kendalltau, pearsonr, spearmanr
+    >>> from sklearn.datasets import make_classification
+    >>> 
+    >>> X, y = make_classification(random_state=0)
+    >>> skb1 = SelectKBest(wrapper_scorer(spearmanr), k=10)
+    >>> skb2 = SelectKBest(wrapper_scorer(pearsonr), k=10)
+    >>> skb3 = SelectKBest(wrapper_scorer(kendalltau), k=10)
+    >>> skb1.fit(X, y)    # Calculates spearmanr for each feature in `X`
+    >>> skb2.fit(X, y)
+    >>> skb3.fit(X, y)
+    >>> new_X1 = skb1.transform(X)
+    >>> new_X2 = skb2.transform(X)
+    >>> new_X3 = skb3.transform(X)
     """
+    def call_scorer(*args, **kwargs):
+        X = args[0]
+        y = args[1]
+        scores = []
+        p_vals = []
 
-    if not callable(score_func):
-        raise ValueError("The score function should be a callable, %s (%s) "
-                        "was passed."
-                        % (score_func, type(score_func)))
+        for i in range(0, X.shape[1]):
+            score_func_ret = score_func(X[:, i], y, **kwargs)
+            if isinstance(score_func_ret, (list, tuple)):
+                score, p_val = score_func_ret
+                p_vals.append(p_val)
+            else:
+                score = score_func_ret
+                p_vals = None
+            scores.append(abs(score))
 
-    if y is None:
-        X = check_array(X, ('csr', 'csc'))
-    else:
-        X, y = check_X_y(X, y, ('csr', 'csc'), multi_output=True)
+        scores = np.asarray(scores)
+        if p_vals is not None:
+            p_vals = np.asarray(p_vals)
+            return (scores, p_vals)
+        else:
+            return scores
 
-    if y is None:
-        score_func_ret = score_func(X)
-    else:
-        score_func_ret = score_func(X, y)
-
-    if isinstance(score_func_ret, (list, tuple)):
-        scores, pvalues = score_func_ret
-        pvalues = np.asarray(pvalues)
-    else:
-        scores = score_func_ret
-        pvalues = None
-    scores = np.asarray(scores)
-    scores[scores < 0.0] = 0.0
-
-    if pvalues is None:
-        return scores
-    else:
-        return scores, pvalues
+    return call_scorer
