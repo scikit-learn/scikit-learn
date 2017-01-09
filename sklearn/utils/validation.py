@@ -527,7 +527,7 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
                     ensure_min_features, warn_on_dtype, estimator)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
-                        dtype=None)
+                        dtype=None, variable_name='y')
     else:
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)

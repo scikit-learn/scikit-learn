@@ -638,7 +638,7 @@ class StratifiedKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None, variable_name='y')
         return super(StratifiedKFold, self).split(X, y, groups)
 
 
@@ -1247,7 +1247,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None, variable_name='y')
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         classes, y_indices = np.unique(y, return_inverse=True)
@@ -1320,7 +1320,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         test : ndarray
             The testing set indices for that split.
         """
-        y = check_array(y, ensure_2d=False, dtype=None)
+        y = check_array(y, ensure_2d=False, dtype=None, variable_name='y')
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 
