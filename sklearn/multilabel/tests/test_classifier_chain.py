@@ -1,4 +1,4 @@
-from sklearn.multi_label import ClassifierChain
+from sklearn.multilabel import ClassifierChain
 from sklearn.datasets import make_multilabel_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils.testing import assert_equal
