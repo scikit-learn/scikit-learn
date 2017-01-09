@@ -14,7 +14,7 @@ from sklearn.utils import check_random_state
 
 
 n_samples, n_features, random_state = 1000, 2, 1
-parameters = {'n_clusters': np.arange(1, 7)}
+parameters = {'n_clusters': np.arange(1, 8)}
 
 rng = check_random_state(random_state)
 datasets = [
@@ -24,29 +24,35 @@ datasets = [
                               random_state=random_state, centers=5)),
     ('random', (rng.rand(n_samples, n_features),
                 np.zeros(n_samples, dtype=int))),
-    ('circle', make_circles(n_samples=n_samples, factor=.5, noise=.05, shuffle=True, random_state=0)),
-    ('moon', make_moons(n_samples=n_samples, noise=.05, shuffle=True, random_state=0)),
+    ('circle', make_circles(n_samples=n_samples, factor=.5, noise=.05,
+                            shuffle=True, random_state=random_state)),
+    ('moon', make_moons(n_samples=n_samples, noise=.05,
+                        shuffle=True, random_state=random_state)),
 ]
 
-estimator = SpectralClustering(n_init=10, random_state=0)
+estimator = SpectralClustering(eigen_solver='arpack',
+                               affinity="nearest_neighbors",
+                               n_init=10, random_state=0)
+# estimator = KMeans(n_init=10, random_state=0)
 searchers = [
-    ('Silhouette', OptimalNClusterSearch(
-        estimator=estimator, parameters=parameters,
-        fitting_process='unsupervised', metric=silhouette_score)),
-    ('Calinski', OptimalNClusterSearch(
-        estimator=estimator, parameters=parameters,
-        fitting_process='unsupervised', metric=calinski_harabaz_score)),
-    ('Stability', OptimalNClusterSearch(
-        estimator=estimator, parameters=parameters, random_state=0,
-        fitting_process='stability', metric=fowlkes_mallows_score)),
+    # ('Silhouette', OptimalNClusterSearch(
+    #     estimator=estimator, parameters=parameters,
+    #     fitting_process='unsupervised', metric=silhouette_score)),
+    # ('Calinski', OptimalNClusterSearch(
+    #     estimator=estimator, parameters=parameters,
+    #     fitting_process='unsupervised', metric=calinski_harabaz_score)),
+    # ('Stability', OptimalNClusterSearch(
+    #     estimator=estimator, parameters=parameters, random_state=0,
+    #     fitting_process='stability', metric=fowlkes_mallows_score)),
     # ('Distortion jump', OptimalNClusterSearch(
     #     estimator=estimator, parameters=parameters,
     #     fitting_process='distortion_jump')),
     # ('Gap', OptimalNClusterSearch(
     #     estimator=estimator, parameters=parameters, random_state=0,
-    #     fitting_process='gap')),
-    # ('Pham', OptimalNClusterSearch(
-    #     estimator=estimator, parameters=parameters, fitting_process='pham')),
+    #     fitting_process='gap', metric=silhouette_score)),
+    ('Pham', OptimalNClusterSearch(
+        estimator=estimator, parameters=parameters, fitting_process='pham',
+        metric=silhouette_score)),
 ]
 
 color = 'bgrcmyk'
