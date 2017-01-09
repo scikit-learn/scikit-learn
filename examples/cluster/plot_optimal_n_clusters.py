@@ -6,8 +6,8 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.cluster import KMeans, OptimalNClusterSearch
-from sklearn.datasets import make_blobs
+from sklearn.cluster import KMeans, SpectralClustering, OptimalNClusterSearch
+from sklearn.datasets import make_blobs, make_circles, make_moons
 from sklearn.metrics import calinski_harabaz_score, fowlkes_mallows_score
 from sklearn.metrics import silhouette_score
 from sklearn.utils import check_random_state
@@ -24,9 +24,11 @@ datasets = [
                               random_state=random_state, centers=5)),
     ('random', (rng.rand(n_samples, n_features),
                 np.zeros(n_samples, dtype=int))),
+    ('circle', make_circles(n_samples=n_samples, factor=.5, noise=.05, shuffle=True, random_state=0)),
+    ('moon', make_moons(n_samples=n_samples, noise=.05, shuffle=True, random_state=0)),
 ]
 
-estimator = KMeans(n_init=10, random_state=0)
+estimator = SpectralClustering(n_init=10, random_state=0)
 searchers = [
     ('Silhouette', OptimalNClusterSearch(
         estimator=estimator, parameters=parameters,
@@ -37,14 +39,14 @@ searchers = [
     ('Stability', OptimalNClusterSearch(
         estimator=estimator, parameters=parameters, random_state=0,
         fitting_process='stability', metric=fowlkes_mallows_score)),
-    ('Distortion jump', OptimalNClusterSearch(
-        estimator=estimator, parameters=parameters,
-        fitting_process='distortion_jump')),
-    ('Gap', OptimalNClusterSearch(
-        estimator=estimator, parameters=parameters, random_state=0,
-        fitting_process='gap')),
-    ('Pham', OptimalNClusterSearch(
-        estimator=estimator, parameters=parameters, fitting_process='pham')),
+    # ('Distortion jump', OptimalNClusterSearch(
+    #     estimator=estimator, parameters=parameters,
+    #     fitting_process='distortion_jump')),
+    # ('Gap', OptimalNClusterSearch(
+    #     estimator=estimator, parameters=parameters, random_state=0,
+    #     fitting_process='gap')),
+    # ('Pham', OptimalNClusterSearch(
+    #     estimator=estimator, parameters=parameters, fitting_process='pham')),
 ]
 
 color = 'bgrcmyk'
@@ -55,7 +57,7 @@ for k, (data_name, data) in enumerate(datasets):
     X, _ = data
     for l, (search_name, search) in enumerate(searchers):
         t0 = time.time()
-        y = search.fit(X).predict(X)
+        y = search.fit(X).best_estimator_.labels_
         t1 = time.time()
 
         colors = np.array([color[k] for k in y])
