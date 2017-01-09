@@ -300,7 +300,7 @@ a data point to represent each cluster's center allows the use of any distance
 metric for clustering.
 
 :class:`KMedoids` can be more robust to noise and outliers than :class:`KMeans`
-as e.g. it will choose one of the cluster members as the medoid while
+as it will choose one of the cluster members as the medoid while
 :class:`KMeans` will move the center of the cluster towards the outlier which
 might in turn move other points away from the cluster centre.
 

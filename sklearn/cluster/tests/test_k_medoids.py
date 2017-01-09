@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal, assert_raises, \
     assert_raise_message
 from sklearn.utils.testing import assert_greater
+from scipy.sparse import random
 
 rng = np.random.RandomState(0)
 X = rng.rand(100, 5)
@@ -31,20 +32,12 @@ def test_kmedoids_input_validation_and_fit_check():
 
     # Trying to fit 3 samples to 8 clusters
     model = KMedoids(n_clusters=8)
-
     Xsmall = rng.rand(5, 2)
-
     assert_raises(ValueError, model.fit, Xsmall)
 
-    # Trying to transform without fiting
-    model = KMedoids()
-
-    assert_raises(NotFittedError, model.transform, X)
-
-    # Trygin to predict without fitting
-    model = KMedoids()
-
-    assert_raises(NotFittedError, model.predict, X)
+    # Test if NotFittedError is raised appropriately
+    assert_raises(NotFittedError, KMedoids().transform, X)
+    assert_raises(NotFittedError, KMedoids().predict, X)
 
 
 def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
@@ -103,8 +96,8 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
                                       avg_dist_to_closest_centroid))
 
 
-def test_kmedoids_fit_predict():
-    model = KMedoids()
+def test_kmedoids_fit_predict_transform():
+    model = KMedoids(random_state=rng)
 
     labels1 = model.fit_predict(X)
     assert_equal(len(labels1), 100)
@@ -112,10 +105,6 @@ def test_kmedoids_fit_predict():
 
     labels2 = model.predict(X)
     assert_array_equal(labels1, labels2)
-
-
-def test_kmedoids_fit_transform():
-    model = KMedoids()
 
     Xt1 = model.fit_transform(X)
     assert_array_equal(Xt1.shape, (100, model.n_clusters))
@@ -136,3 +125,11 @@ def test_outlier_robustness():
 
     assert_array_equal(kmeans.labels_, [0, 0, 0, 0, 0, 0, 1])
     assert_array_equal(kmedoids.labels_, [0, 0, 0, 1, 1, 1, 1])
+
+
+def test_kmedoids_on_sparse_input():
+    model = KMedoids(n_clusters=2, random_state=rng)
+    X = random(100, 100, density=0.1, random_state=rng)
+    labels = model.fit_predict(X)
+    assert_equal(len(labels), 100)
+    assert_array_equal(labels, model.labels_)

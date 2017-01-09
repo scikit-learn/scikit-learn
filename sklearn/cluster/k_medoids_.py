@@ -24,7 +24,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     Parameters
     ----------
     n_clusters : int, optional, default: 8
-        How many medoids. Must be positive.
+        The number of clusters to form as well as the number of medoids to
+        generate.
 
     distance_metric : string, optional, default: 'euclidean'
         What distance metric to use.
@@ -81,6 +82,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
            [4, 2]])
     >>> kmedoids.inertia_
     8.0
+
+    References
+    ----------
+    Kaufman, L. and Rousseeuw, P.J., Statistical Data Analysis Based on
+    the L1–Norm and Related Methods, edited by Y. Dodge, North-Holland,
+    405–416. 1987
     """
 
     def __init__(self, n_clusters=8, distance_metric='euclidean',
