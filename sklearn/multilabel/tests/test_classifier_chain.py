@@ -4,6 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.utils.testing import assert_equal
 from scipy import sparse
 
+
 def test_fit_and_predict():
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
@@ -12,6 +13,7 @@ def test_fit_and_predict():
     classifier_chain.fit(X, Y)
     Y_pred = classifier_chain.predict(X)
     assert_equal(Y_pred.shape, Y.shape)
+
 
 def test_fit_and_predict_with_sparse_labels():
     X, Y = make_multilabel_classification(n_samples=10000,
@@ -24,6 +26,7 @@ def test_fit_and_predict_with_sparse_labels():
     Y_pred = classifier_chain.predict(X)
     assert_equal(Y_pred.shape, Y.shape)
 
+
 def test_order_shuffle():
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
@@ -35,7 +38,6 @@ def test_order_shuffle():
     assert (classifier_chain.order != list(range(10)))
     assert (len(classifier_chain.order) == 10)
     assert (len(set(classifier_chain.order)) == 10)
-
 
 
 def test_classifiers_coef_size():

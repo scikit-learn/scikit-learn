@@ -87,6 +87,9 @@ class ClassifierChain(BaseEstimator):
             Returns self.
         """
 
+        if issparse(Y):
+            Y = Y.toarray()
+
         random_state = check_random_state(self.random_state)
         self.classifiers_ = [clone(self.base_estimator)
                              for _ in range(Y.shape[1])]
@@ -102,12 +105,9 @@ class ClassifierChain(BaseEstimator):
 
         for chain_idx, classifier in enumerate(self.classifiers_):
             previous_labels = Y[:, self.order[:chain_idx]]
-            if issparse(previous_labels):
-                previous_labels = previous_labels.toarray()
-
+            previous_labels = previous_labels.toarray()
             y = Y[:, self.order[chain_idx]]
-            if issparse(y):
-                y = y.toarray()[:, 0]
+            y = y.toarray()[:, 0]
 
             X_aug = np.hstack((X, previous_labels))
             classifier.fit(X_aug, y)
@@ -131,8 +131,7 @@ class ClassifierChain(BaseEstimator):
             previous_predictions = Y_pred_chain[:, :chain_idx]
             X_aug = np.hstack((X, previous_predictions))
             Y_pred_chain[:, chain_idx] = classifier.predict(X_aug)
-        chain_key = [self.order.index(i) for i in range(len(
-            self.order))]
+        chain_key = [self.order.index(i) for i in range(len(self.order))]
         Y_pred = Y_pred_chain[:, chain_key]
 
         return Y_pred
