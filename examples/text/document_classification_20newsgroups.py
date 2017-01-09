@@ -20,7 +20,6 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
-#         Viktor Pekar <v.pekar@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -35,7 +34,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_selection import SelectKBest, chi2, info_gain
+from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -63,10 +62,6 @@ op.add_option("--report",
 op.add_option("--chi2_select",
               action="store", type="int", dest="select_chi2",
               help="Select some number of features using a chi-squared test")
-op.add_option("--info_gain_select",
-              action="store", type="int", dest="select_info_gain",
-              help="Select some number of features using information gain"
-                   " score")
 op.add_option("--confusion_matrix",
               action="store_true", dest="print_cm",
               help="Print the confusion matrix.")
@@ -88,13 +83,7 @@ op.add_option("--filtered",
               help="Remove newsgroup information that is easily overfit: "
                    "headers, signatures, and quoting.")
 
-
-def is_interactive():
-    return not hasattr(sys.modules['__main__ '], '__file__')
-
-# work-around for Jupyter notebook and IPython console
-argv = [] if is_interactive() else sys.argv[1:]
-(opts, args) = op.parse_args(argv)
+(opts, args) = op.parse_args()
 if len(args) > 0:
     op.error("this script takes no arguments.")
     sys.exit(1)
@@ -192,20 +181,6 @@ if opts.select_chi2:
         # keep selected feature names
         feature_names = [feature_names[i] for i
                          in ch2.get_support(indices=True)]
-    print("done in %fs" % (time() - t0))
-    print()
-
-if opts.select_info_gain:
-    print("Extracting %d best features by information gain score" %
-          opts.select_info_gain)
-    t0 = time()
-    ig = SelectKBest(info_gain, k=opts.select_info_gain)
-    X_train = ig.fit_transform(X_train, y_train)
-    X_test = ig.transform(X_test)
-    if feature_names:
-        # keep selected feature names
-        feature_names = [feature_names[i] for i
-                         in ig.get_support(indices=True)]
     print("done in %fs" % (time() - t0))
     print()
 
