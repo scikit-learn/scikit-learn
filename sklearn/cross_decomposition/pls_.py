@@ -252,7 +252,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float64, copy=self.copy)
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False,
+                        variable_name='Y')
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -404,7 +405,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
+            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES,
+                            variable_name='Y')
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Y -= self.y_mean_
@@ -791,7 +793,8 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float64, copy=self.copy)
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False,
+                        variable_name='Y')
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 

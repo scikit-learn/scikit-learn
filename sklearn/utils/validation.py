@@ -190,7 +190,7 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
-                          force_all_finite):
+                          force_all_finite, variable_name='X'):
     """Convert a sparse matrix to a given format.
 
     Checks the sparse format of spmatrix and converts if necessary.
@@ -217,6 +217,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     force_all_finite : boolean
         Whether to raise an error on np.inf and np.nan in X.
 
+    variable_name : str (default='X')
+        placeholder for the variable name in error messages.
+
     Returns
     -------
     spmatrix_converted : scipy sparse matrix.
@@ -232,8 +235,8 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     if accept_sparse is False:
         raise TypeError('A sparse matrix was passed, but dense '
-                        'data is required. Use X.toarray() to '
-                        'convert to a dense numpy array.')
+                        'data is required. Use %s.toarray() to '
+                        'convert to a dense numpy array.' % variable_name)
     elif isinstance(accept_sparse, (list, tuple)):
         if len(accept_sparse) == 0:
             raise ValueError("When providing 'accept_sparse' "
@@ -269,7 +272,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
-                warn_on_dtype=False, estimator=None):
+                warn_on_dtype=False, estimator=None, variable_name='X'):
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2D numpy array.
@@ -332,6 +335,9 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
+    variable_name : str (default='X')
+        placeholder for the variable name in error messages.
+
     Returns
     -------
     X_converted : object
@@ -381,16 +387,17 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
 
     if sp.issparse(array):
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
-                                      force_all_finite)
+                                      force_all_finite, variable_name)
     else:
         array = np.array(array, dtype=dtype, order=order, copy=copy)
 
         if ensure_2d:
             if array.ndim == 1:
                 raise ValueError(
-                    "Got X with X.ndim=1. Reshape your data either using "
-                    "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.")
+                    "Got %(v) with X.ndim=1. Reshape your data either using "
+                    "%(v).reshape(-1, 1) if your data has a single feature or "
+                    "%(v).reshape(1, -1) if it contains a single sample."
+                    % {'v': variable_name})
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
