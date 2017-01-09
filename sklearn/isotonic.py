@@ -270,7 +270,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
         check_consistent_length(X, y, sample_weight)
-        X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
+        X, y = [check_array(x, ensure_2d=False, variable_name=variable_name)
+                for x, variable_name in zip([X, y], ['X', 'y'])]
 
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
