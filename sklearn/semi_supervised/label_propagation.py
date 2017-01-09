@@ -379,7 +379,8 @@ class LabelPropagation(BaseLabelPropagation):
         # theoretical meaning (from the reference paper). Look at PR 6727.
         if self.alpha is not None:
             warnings.warn(
-                "Deprecated in 0.19 and it's going to be removed in 0.21.",
+                "alpha's value will be ignored."
+                "alpha is deprecated since 0.19 and will be removed in 0.21.",
                 DeprecationWarning
             )
         # Extra property to set the correct value of the deprecated "alpha".
