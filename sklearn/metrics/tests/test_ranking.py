@@ -758,8 +758,8 @@ def check_lrap_without_tie_and_increasing_score(lrap_score):
 def _my_lrap(y_true, y_score):
     """Simple implementation of label ranking average precision"""
     check_consistent_length(y_true, y_score)
-    y_true = check_array(y_true)
-    y_score = check_array(y_score)
+    y_true = check_array(y_true, variable_name='y_true')
+    y_score = check_array(y_score, variable_name='y_score')
     n_samples, n_labels = y_true.shape
     score = np.empty((n_samples, ))
     for i in range(n_samples):

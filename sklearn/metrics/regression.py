@@ -73,8 +73,8 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     """
     check_consistent_length(y_true, y_pred)
-    y_true = check_array(y_true, ensure_2d=False)
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, variable_name='y_true')
+    y_pred = check_array(y_pred, ensure_2d=False, variable_name='y_pred')
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))

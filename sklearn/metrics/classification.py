@@ -1568,7 +1568,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_pred : array-like of float, shape = (n_samples, n_classes) or
+        (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
@@ -1612,7 +1613,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_pred = check_array(y_pred, ensure_2d=False, variable_name='y_pred')
     check_consistent_length(y_pred, y_true)
 
     lb = LabelBinarizer()

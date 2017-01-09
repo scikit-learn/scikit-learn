@@ -108,7 +108,8 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
         X = check_array(X, accept_sparse='csr', dtype=dtype,
                         warn_on_dtype=warn_on_dtype, estimator=estimator)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        warn_on_dtype=warn_on_dtype, estimator=estimator,
+                        variable_name='Y')
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
