@@ -129,7 +129,7 @@ def test_permute_labels():
         X = np.random.randint(10, size=(100, 10))
         y = np.random.randint(2, size=100)
         score_1 = metric(X, y)
-        assert_almost_equal(score_1, metric(X, 1-y))
+        assert_almost_equal(score_1, metric(X, 1 - y))
 
 
 # For ALL clustering metrics Input parameters can be both
