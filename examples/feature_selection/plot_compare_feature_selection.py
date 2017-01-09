@@ -18,7 +18,6 @@ selection method.
 from __future__ import print_function
 
 import numpy as np
-import sys
 import matplotlib.pyplot as plt
 from logging import basicConfig, INFO
 
