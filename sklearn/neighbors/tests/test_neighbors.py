@@ -531,7 +531,7 @@ def check_classifier_sparse_multilabel_y(name):
     clf.fit(X_train, y_train)
 
     if (name == 'KNeighborsClassifier' and
-        StrictVersion(version.version) < StrictVersion('0.13.0')):
+            StrictVersion(version.version) < StrictVersion('0.13.0')):
         assert_raises(EnvironmentError, clf.predict, X_test)
     else:
         y_sparse_pred = clf.predict(X_test)
