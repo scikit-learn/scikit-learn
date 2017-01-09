@@ -488,8 +488,8 @@ class OAS(EmpiricalCovariance):
     authors' webpage (http://tbayes.eecs.umich.edu/yilun/covestimation).
     In the original article, formula (23) states that 2/p is multiplied by
     Trace(cov*cov) in both the numerator and denominator, this operation is omitted
-    in the author's MATLAB program because for a large p, the value of 2/p is so
-    small that it doesn't affect the value of the estimator.
+    in the author's MATLAB program because for a large p, the value of 2/p is
+    so small that it doesn't affect the value of the estimator.
 
     Parameters
     ----------

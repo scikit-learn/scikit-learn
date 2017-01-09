@@ -394,10 +394,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         if ensure_2d:
             if array.ndim == 1:
                 raise ValueError(
-                    "Got %(v)s with %(v)s.ndim=1. Reshape your data either using "
-                    "%(v)s.reshape(-1, 1) if your data has a single feature or "
-                    "%(v)s.reshape(1, -1) if it contains a single sample."
-                    % {'v': variable_name})
+                    "Got %(v)s with %(v)s.ndim=1. Reshape your data either "
+                    "using %(v)s.reshape(-1, 1) if your data has a single "
+                    "feature or %(v)s.reshape(1, -1) if it contains a single "
+                    "sample." % {'v': variable_name})
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
