@@ -24,7 +24,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA, NMF
-from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.feature_selection import SelectKBest, chi2, info_gain
+
 
 print(__doc__)
 
@@ -42,14 +43,14 @@ param_grid = [
         'classify__C': C_OPTIONS
     },
     {
-        'reduce_dim': [SelectKBest(chi2)],
+        'reduce_dim': [SelectKBest(chi2), SelectKBest(info_gain)],
         'reduce_dim__k': N_FEATURES_OPTIONS,
         'classify__C': C_OPTIONS
     },
 ]
-reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
+reducer_labels = ['PCA', 'NMF', 'KBest(chi2)', 'KBest(info_gain)']
 
-grid = GridSearchCV(pipe, cv=3, n_jobs=2, param_grid=param_grid)
+grid = GridSearchCV(pipe, cv=3, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 

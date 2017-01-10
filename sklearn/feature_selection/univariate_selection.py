@@ -1,9 +1,10 @@
 """Univariate features selection."""
 
 # Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
-#          L. Buitinck, A. Joly
+#          L. Buitinck, A. Joly, V. Pekar
 # License: BSD 3 clause
 
+from __future__ import division
 
 import numpy as np
 import warnings
@@ -206,6 +207,8 @@ def chi2(X, y):
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    info_gain : Information Gain
+    info_gain_ratio : Information Gain Ratio
     """
 
     # XXX: we might want to do some of the following in logspace instead for
@@ -227,6 +230,188 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
+def get_entropy(prob):
+    t = np.log2(prob)
+    t[~np.isfinite(t)] = 0
+    return np.multiply(-prob, t)
+
+
+def _info_gain(X, y, aggregate, ratio=False):
+
+    def _a_log_a_div_b(a, b):
+        with np.errstate(invalid='ignore', divide='ignore'):
+            t = np.log2(a / b)
+        t[~np.isfinite(t)] = 0
+        return np.multiply(a, t)
+
+    f_count, c_count, fc_count, total = _get_fc_counts(X, y)
+
+    f_prob = f_count / f_count.sum()
+    c_prob = c_count / c_count.sum()
+    fc_prob = fc_count / total
+
+    c_f = _a_log_a_div_b(fc_prob, c_prob * f_prob)
+    nc_nf = _a_log_a_div_b(1 - f_prob - c_prob + fc_prob,
+                           (1 - c_prob) * (1 - f_prob))
+    c_nf = _a_log_a_div_b((c_count - fc_count) / total, c_prob * (1 - f_prob))
+    nc_f = _a_log_a_div_b((f_count - fc_count) / total, (1 - c_prob) * f_prob)
+
+    scores = c_f + nc_nf + c_nf + nc_f
+
+    if ratio:
+        # normalize IG scores to obtain GR
+        with np.errstate(invalid='ignore', divide='ignore'):
+            scores = scores / (get_entropy(c_prob) + get_entropy(1 - c_prob))
+
+    # the feature score is averaged over classes
+    if aggregate == "mean":
+        scores = scores.mean(axis=0)
+    elif aggregate == "sum":
+        scores = scores.sum(axis=0)
+    else:
+        scores = scores.max(axis=0)
+
+    return np.asarray(scores).reshape(-1), []
+
+
+def _get_fc_counts(X, y):
+    """Count feature, class, joint and total frequencies
+
+    Returns
+    -------
+    f_count : array, shape = (n_features,)
+    c_count : array, shape = (n_classes,)
+    fc_count : array, shape = (n_features, n_classes)
+    total: int
+    """
+    X = check_array(X, accept_sparse=['csr', 'coo'])
+    if np.any((X.data if issparse(X) else X) < 0):
+        raise ValueError("Input X must be non-negative.")
+
+    Y = LabelBinarizer().fit_transform(y)
+    if Y.shape[1] == 1:
+        Y = np.append(1 - Y, Y, axis=1)
+
+    fc_count = safe_sparse_dot(Y.T, X)          # n_classes * n_features
+    total = fc_count.sum(axis=0).reshape(1, -1).sum()
+    f_count = X.sum(axis=0).reshape(1, -1)
+    c_count = safe_sparse_dot(Y.T, X.sum(axis=1)).reshape(-1, 1)
+
+    return f_count, c_count, fc_count, total
+
+
+def info_gain(X, y, aggregate="max"):
+    """Compute an Information Gain score for each feature in the data.
+
+    The score can be used to weight features by informativeness or select the
+    most informative features for training and evaluating a classifier.
+
+    IG [1] measures the number of bits of information obtained about the
+    presence or absence of a class by knowing the presence or absence of the
+    feature. IG of a feature is thus local to each class. This implementation
+    outputs a global IG score, by averaging, summing or taking the max values
+    of the feature's scores over all classes.
+
+    .. math::
+
+        \\begin{equation}
+        IG(f,c) = \\sum_{d \\in \\{c, \\overline{c} \\}} \\sum_{g \\in \\
+            \\{f, \\overline{f} \\}} p(g,d) log\\frac{p(g,d)}{p(g)p(d)}
+        \\end{equation}
+
+    The IG-based feature selection is commonly used for text classification (
+    e.g. [2] and [3]).
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
+        Sample vectors.
+
+    y : array-like, shape = (n_samples,)
+        Target vector (class labels).
+
+    aggregate : string
+        Method to aggregate class-specific scores to a global score, one of
+        "mean" (default), "max", "sum".
+
+    Returns
+    -------
+    scores : array, shape = (n_features,)
+
+    See also
+    --------
+    info_gain_ratio : Information Gain Ratio
+
+    References
+    ----------
+    .. [1] J.R. Quinlan. 1993. C4.5: Programs for Machine Learning. San Mateo,
+    CA: Morgan Kaufmann.
+
+    .. [2] Y. Yang and J.O. Pedersen. 1997. `A comparative study on feature
+    selection in text categorization. Proceedings of ICML'97, pp. 412-420.
+    <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9956>`_
+
+    .. [3] F. Sebastiani. 2002. `Machine Learning in Automatic Text
+    Categorization. ACM Computing Surveys (CSUR).
+    <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
+    """
+
+    return _info_gain(X, y, aggregate)
+
+
+def info_gain_ratio(X, y, aggregate="max"):
+    """Compute an Information Gain Ratio score for each feature in the data.
+
+    The score can be used to weight features by informativeness or select the
+    most informative features for training and evaluating a classifier.
+
+    Information Gain measures the number of bits of information obtained about
+    the presence or absence of a class by knowing the presence or absence of
+    the feature. Information Gain Ratio [1] aims to overcome one disadvantage
+    of IG which is the fact that IG grows not only with the increase of
+    dependence between `f` and `c`, but also with the increase of their
+    entropy. IGR removes this factor by normalizing IG by the entropy of the
+    class:
+
+    .. math::
+
+        \\begin{equation}
+        GR(f,c) = \\frac{IG(f,c)}{-\\sum_{d \\in \\{c,\\overline{c}\\}} \\
+            p(d) log p(d)}
+        \\end{equation}
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
+        Sample vectors.
+
+    y : array-like, shape = (n_samples,)
+        Target vector (class labels).
+
+    aggregate : string
+        Method to aggregate class-specific scores to a global score, one of
+        "mean" (default), "max", "sum".
+
+    Returns
+    -------
+    scores : array, shape = (n_features,)
+
+    See also
+    --------
+    info_gain : Information Gain
+
+    References
+    ----------
+    .. [1] F. Debole and F. Sebastiani. 2003. `Supervised Term Weighting
+    for Automated Text Categorization. Proceedings of the 2003 ACM Symposium on
+    Applied Computing. <http://dl.acm.org/citation.cfm?id=952688>`_
+    """
+
+    return _info_gain(X, y, aggregate, ratio=True)
+
+
 def f_regression(X, y, center=True):
     """Univariate linear regression tests.
 
@@ -236,8 +421,8 @@ def f_regression(X, y, center=True):
     This is done in 2 steps:
 
     1. The cross correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)).
+        that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
+        std(y)).
     2. It is converted to an F score then to a p-value.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
@@ -337,6 +522,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
                             % (self.score_func, type(self.score_func)))
 
         self._check_params(X, y)
+
         score_func_ret = self.score_func(X, y)
         if isinstance(score_func_ret, (list, tuple)):
             self.scores_, self.pvalues_ = score_func_ret
@@ -390,13 +576,17 @@ class SelectPercentile(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
@@ -464,13 +654,17 @@ class SelectKBest(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continious target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, k=10):
@@ -530,15 +724,20 @@ class SelectFpr(_BaseFilter):
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    mutual_info_classif:
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information between features and the target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    mutual_info_regression: Mutual information for a continuous target.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -588,13 +787,18 @@ class SelectFdr(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a contnuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -635,18 +839,20 @@ class SelectFwe(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores.
+        p-values of feature scores, None if `score_func` returned scores only.
 
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -696,9 +902,13 @@ class GenericUnivariateSelect(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
