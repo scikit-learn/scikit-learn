@@ -630,7 +630,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> clf.fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariance=False, 
+                                  store_covariance=False,
                                   store_covariances=None, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
