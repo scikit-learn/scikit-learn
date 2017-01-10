@@ -105,10 +105,7 @@ class ClassifierChain(BaseEstimator):
 
         for chain_idx, classifier in enumerate(self.classifiers_):
             previous_labels = Y[:, self.order[:chain_idx]]
-            previous_labels = previous_labels.toarray()
-            y = Y[:, self.order[chain_idx]]
-            y = y.toarray()[:, 0]
-
+            y = Y[:, self.order[chain_idx]][:, 0]
             X_aug = np.hstack((X, previous_labels))
             classifier.fit(X_aug, y)
 
