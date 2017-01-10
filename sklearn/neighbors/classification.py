@@ -10,7 +10,7 @@
 
 import numpy as np
 from scipy import sparse
-from scipy.sparse import csc_matrix, csr_matrix
+from scipy.sparse import csr_matrix
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
@@ -397,7 +397,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
                 y_pred_sparse_multilabel.append(csr_matrix(y_pred_k).T)
 
-            y_pred = hstack(y_pred_sparse_multilabel)
+            y_pred = sparse.hstack(y_pred_sparse_multilabel)
 
         else:
             y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
