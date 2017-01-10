@@ -188,7 +188,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     intercept_ : array, shape (n_features,)
         Intercept term.
 
-    _covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Covariance matrix (shared by all classes).
 
     explained_variance_ratio_ : array, shape (n_components,)
@@ -256,10 +256,24 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.store_covariance = store_covariance  # used only in svd solver
         self.tol = tol  # used only in svd solver
 
+    def __get__(self, obj, objtype):
+        if not self.store_covariance:
+            warnings.warn("from version 0.21 'covariance_' will be stored "
+                          "only if 'store_covariance' is True",
+                          DeprecationWarning)
+        return self._covariance_
+
+    def __set__(self, obj, val):
+        if not self.store_covariance:
+            warnings.warn("from version 0.21 'covariance_' will be stored "
+                          "only if 'store_covariance' is True",
+                          DeprecationWarning)
+        self._covariance_ = val
+
     @property
     def covariance_(self):
         if hasattr(self, '_covariance_') and not self.store_covariance:
-            warnings.warn("from version 0.21 '_covariance_' will be stored "
+            warnings.warn("from version 0.21 'covariance_' will be stored "
                           "only if 'store_covariance' is True",
                           DeprecationWarning)
         return self._covariance_
@@ -267,7 +281,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     @covariance_.setter
     def covariance_(self, value):
         if hasattr(self, '_covariance_') and not self.store_covariance:
-            warnings.warn("from version 0.21 '_covariance_' will be stored "
+            warnings.warn("from version 0.21 'covariance_' will be stored "
                           "only if 'store_covariance' is True",
                           DeprecationWarning)
         self._covariance_ = value
@@ -616,7 +630,8 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> clf.fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                   store_covariance=False, store_covariances=None, tol=0.0001)
+                                  store_covariance=False, 
+                                  store_covariances=None, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -637,7 +652,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     @property
     @deprecated("Attribute covariances_ was deprecated in version"
                 " 0.19 and will be removed in 0.21. Use "
-                "covariance_' instead")
+                "covariance_ instead")
     def covariances_(self):
         return self.covariance_
 
@@ -699,12 +714,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            if self.store_covariance:
+            if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-        if self.store_covariance:
+        if self.store_covariance or store_covariance:
             self.covariance_ = cov
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
