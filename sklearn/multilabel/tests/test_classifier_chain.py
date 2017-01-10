@@ -1,21 +1,27 @@
 from sklearn.multilabel import ClassifierChain
 from sklearn.datasets import make_multilabel_classification
 from sklearn.linear_model import LogisticRegression
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, assert_greater
+from sklearn.metrics import jaccard_similarity_score
+
 from scipy import sparse
 
 
 def test_fit_and_predict():
+    """Fit classifier chain and verify performance"""
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X, Y)
     Y_pred = classifier_chain.predict(X)
+    Y_pred_binary = (Y_pred >= .5)
     assert_equal(Y_pred.shape, Y.shape)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
 
 
 def test_fit_and_predict_with_sparse_labels():
+    """Fit classifier chain with sparse labels"""
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
@@ -28,6 +34,7 @@ def test_fit_and_predict_with_sparse_labels():
 
 
 def test_order_shuffle():
+    """Fit classifier chain with shuffled order"""
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
@@ -41,6 +48,7 @@ def test_order_shuffle():
 
 
 def test_classifiers_coef_size():
+    """Fit classifier chain and verify the shape of coefficients"""
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
