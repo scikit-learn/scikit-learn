@@ -128,7 +128,7 @@ def test_permute_labels():
         metric = UNSUPERVISED_METRICS[name]
         X = np.random.randint(10, size=(7, 10))
         score_1 = metric(X, y_pred)
-        assert_almost_equal(score_1, metric(X, 1-y_pred))
+        assert_almost_equal(score_1, metric(X, 1 - y_pred))
 
 
 # For ALL clustering metrics Input parameters can be both
