@@ -79,7 +79,7 @@ METRICS_NORMALIZED_OUTPUT = [
 def assert_between(var, score_1, score_2):
     """Helper function to check if score lies in between two values"""
     if assert_greater(var, score_1) and assert_less(var, score_2):
-        raise AssertionError("score does not lie between 0 and 1")
+        raise AssertionError("score", var, "does not lie between 0 and 1")
 
 
 def test_symmetry():
