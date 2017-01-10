@@ -236,7 +236,7 @@ def get_entropy(prob):
     return np.multiply(-prob, t)
 
 
-def _info_gain(X, y, globalization, ratio=False):
+def _info_gain(X, y, aggregate, ratio=False):
 
     def _a_log_a_div_b(a, b):
         with np.errstate(invalid='ignore', divide='ignore'):
@@ -264,9 +264,9 @@ def _info_gain(X, y, globalization, ratio=False):
             scores = scores / (get_entropy(c_prob) + get_entropy(1 - c_prob))
 
     # the feature score is averaged over classes
-    if globalization == "aver":
+    if aggregate == "mean":
         scores = scores.mean(axis=0)
-    elif globalization == "sum":
+    elif aggregate == "sum":
         scores = scores.sum(axis=0)
     else:
         scores = scores.max(axis=0)
@@ -300,7 +300,7 @@ def _get_fc_counts(X, y):
     return f_count, c_count, fc_count, total
 
 
-def info_gain(X, y, globalization="max"):
+def info_gain(X, y, aggregate="max"):
     """Compute an Information Gain score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -330,8 +330,9 @@ def info_gain(X, y, globalization="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    globalization : string
-        Globalization method, one of "aver" (default), "max", "sum".
+    aggregate : string
+        Method to aggregate class-specific scores to a global score, one of
+        "mean" (default), "max", "sum".
 
     Returns
     -------
@@ -355,10 +356,10 @@ def info_gain(X, y, globalization="max"):
     <http://nmis.isti.cnr.it/sebastiani/Publications/ACMCS02.pdf>`_
     """
 
-    return _info_gain(X, y, globalization)
+    return _info_gain(X, y, aggregate)
 
 
-def info_gain_ratio(X, y, globalization="max"):
+def info_gain_ratio(X, y, aggregate="max"):
     """Compute an Information Gain Ratio score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -389,8 +390,9 @@ def info_gain_ratio(X, y, globalization="max"):
     y : array-like, shape = (n_samples,)
         Target vector (class labels).
 
-    globalization : string
-        Globalization method, one of "aver" (default), "max", "sum".
+    aggregate : string
+        Method to aggregate class-specific scores to a global score, one of
+        "mean" (default), "max", "sum".
 
     Returns
     -------
@@ -407,7 +409,7 @@ def info_gain_ratio(X, y, globalization="max"):
     Applied Computing. <http://dl.acm.org/citation.cfm?id=952688>`_
     """
 
-    return _info_gain(X, y, globalization, ratio=True)
+    return _info_gain(X, y, aggregate, ratio=True)
 
 
 def f_regression(X, y, center=True):

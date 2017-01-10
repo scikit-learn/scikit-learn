@@ -3,13 +3,13 @@
 Comparison of feature selection functions
 =========================================
 
-This example illustrates performance of different feature selection functions
-on the text classification task (the 20 newsgroups dataset).
+This example illustrates performance of different univariate feature selection
+functions on the text classification task (the 20 newsgroups dataset).
 
 The plot shows the accuracy of a multinomial Naive Bayes classifier as a
 function of the amount of the best features selected for training it using five
-methods: chi-square (CHI2), information gain (IG), information gain ratio
-(IGR), mutual information (MI) and F-test (F).
+methods: chi-square, information gain, information gain ratio, F-test and
+Kraskov et al's mutual information based on k-nearest neighbor distances.
 
 The script prints to stdout the best 10 features selected using each feature
 selection method.
@@ -17,12 +17,13 @@ selection method.
 
 from __future__ import print_function
 
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from logging import basicConfig, INFO
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.feature_selection import info_gain, info_gain_ratio
 from sklearn.feature_selection import mutual_info_classif, f_classif
@@ -51,33 +52,33 @@ print('data loaded')
 y_train, y_test = data_train.target, data_test.target
 categories = data_train.target_names    # for case categories == None
 
-vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                             stop_words='english')
+vectorizer = CountVectorizer(max_df=0.5, stop_words='english')
 X_train = vectorizer.fit_transform(data_train.data)
 X_test = vectorizer.transform(data_test.data)
 feature_names = vectorizer.get_feature_names()
-k_cutoffs = [int(x) for x in np.logspace(np.log10(1000.0),
-             np.log10(X_train.shape[1]), num=10)]
+cutoffs = [int(x) for x in np.logspace(np.log10(1000.0),
+           np.log10(X_train.shape[1]), num=10)]
 
 results = {}
 
 clf = MultinomialNB(alpha=.01)
 
-for func, name in [(chi2, "CHI2"), (info_gain, "IG"), (info_gain_ratio, "IGR"),
-                   (mutual_info_classif, "MI"), (f_classif, "F")]:
+for func in [chi2, info_gain, info_gain_ratio, f_classif, mutual_info_classif]:
 
-    results[name] = []
+    results[func.__name__] = []
 
-    for k in k_cutoffs:
+    for k in cutoffs:
 
         print('_' * 80)
-        print("%s, %s, %s features" % (clf, name, k))
+        print("%s, %s, %s features" % (clf, func.__name__, k))
 
         # apply feature selection
 
+        t0 = time.time()
         selector = SelectKBest(func, k)
         X_train2 = selector.fit_transform(X_train, y_train)
         X_test2 = selector.transform(X_test)
+        duration = time.time() - t0
 
         # keep selected feature names
         feature_names2 = [feature_names[i] for i
@@ -97,21 +98,27 @@ for func, name in [(chi2, "CHI2"), (info_gain, "IG"), (info_gain_ratio, "IGR"),
                 top10 = np.argsort(clf.coef_[i])[-10:]
                 print("%s: %s" % (category, " ".join(feature_names2[top10])))
 
-        results[name].append(score)
+        results[func.__name__].append((score, duration))
 
 # Plot results
 
-plt.figure(figsize=(12, 8))
-plt.title("20 newsgroups dataset")
-plt.xlabel('#Features')
-plt.ylabel('Accuracy')
+f, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(12, 8))
+ax1.set_title('20 newsgroups dataset')
+
+ax1.set_xlabel('#Features')
+ax1.set_ylabel('Accuracy')
+ax2.set_ylabel('Time, secs')
 colors = "bgrcmyk"
 plt.ticklabel_format(useOffset=False)
 
-for i, (name, scores) in enumerate(results.items()):
-    plt.plot(k_cutoffs, scores, color=colors[i], label=name)
+for i, (name, results) in enumerate(results.items()):
+    scores, durations = zip(*results)
+    ax1.plot(cutoffs, scores, color=colors[i], label=name)
+    ax2.plot(cutoffs, durations, color=colors[i], label=name)
 
-plt.grid(True)
-plt.legend(loc='best')
+ax1.grid(True)
+ax2.grid(True)
+ax1.legend(loc='best')
+ax2.legend(loc='best')
 
 plt.show()
