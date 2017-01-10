@@ -9,7 +9,8 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
-from scipy.sparse import csc_matrix, hstack
+from scipy import sparse
+from scipy.sparse import csc_matrix, csr_matrix
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
@@ -160,10 +161,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
             for k, classes_k in enumerate(classes_):
                 mode = self._mode(_y[neigh_ind, k].toarray(), weights)
-                y_pred_sparse_multilabel.append(
-                    csc_matrix(classes_k.take(mode)).T)
+                y_pred_sparse_multilabel.append(csr_matrix(mode).T)
 
-            y_pred = hstack(y_pred_sparse_multilabel)
+            y_pred = sparse.hstack(y_pred_sparse_multilabel)
 
         else:
             y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
@@ -388,14 +388,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 pred_labels = np.array([_y[ind, k].toarray()
                                         for ind in neigh_ind[inliers]],
                                        dtype=object)
-                y_pred_k = np.zeros(n_samples)
+                y_pred_k = np.zeros(n_samples, dtype=np.int)
                 mode = self._mode(pred_labels, weights, inliers)
-                y_pred_k[inliers] = classes_k.take(mode)
+                y_pred_k[inliers] = mode
 
-                if outliers:
+                if outliers and self.outlier_label != 0:
                     y_pred_k[outliers] = self.outlier_label
 
-                y_pred_sparse_multilabel.append(csc_matrix(y_pred_k).T)
+                y_pred_sparse_multilabel.append(csr_matrix(y_pred_k).T)
 
             y_pred = hstack(y_pred_sparse_multilabel)
 
