@@ -65,7 +65,7 @@ SYMMETRIC_METRICS = [
     "normalized_mutual_info_score", "fowlkes_mallows_score"
 ]
 
-ASYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
+NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
 
 # Metrics whose upper bound is 1
@@ -90,7 +90,7 @@ def test_symmetry():
         metric = SUPERVISED_METRICS[name]
         assert_almost_equal(metric(y1, y2), metric(y2, y1))
 
-    for name in ASYMMETRIC_METRICS:
+    for name in NON_SYMMETRIC_METRICS:
         metric = SUPERVISED_METRICS[name]
         assert_not_equal(metric(y1, y2), metric(y2, y1))
 
@@ -115,10 +115,10 @@ def test_normalized_output():
 # All clustering metrocs do not change score due to permutations of labels
 # that is when 0 and 1 exchchanged.
 def test_permute_labels():
+    y_label = np.array([0, 0, 0, 1, 1, 0, 1])
+    y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        y_label = np.array([0, 0, 0, 1, 1, 0, 1])
-        y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
         score_1 = metric(y_pred, y_label)
         assert_equal(score_1, metric(1 - y_pred, y_label))
         assert_equal(score_1, metric(1 - y_pred, 1 - y_label))
@@ -126,46 +126,38 @@ def test_permute_labels():
 
     for name in UNSUPERVISED_METRICS:
         metric = UNSUPERVISED_METRICS[name]
-        X = np.random.randint(10, size=(100, 10))
-        y = np.random.randint(2, size=100)
-        score_1 = metric(X, y)
-        assert_almost_equal(score_1, metric(X, 1 - y))
+        X = np.random.randint(10, size=(7, 10))
+        score_1 = metric(X, y_pred)
+        assert_almost_equal(score_1, metric(X, 1-y_pred))
 
 
 # For ALL clustering metrics Input parameters can be both
 # in the form of arrays lists , positive , negetive or string
 def test_format_invariance():
+    labels = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 1, 2, 3, 4, 5, 6, 7]
+
+    def generate_formats(y):
+        y = np.array(y)
+        yield y
+        yield y - 1
+        yield y + 1
+        yield y.tolist()
+        yield [str(x) for x in y.tolist()]
+
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        list_a = [0, 0, 0, 1, 1, 1]
-        list_b = [0, 1, 2, 3, 4, 5]
-        arr_a = np.array(list_a)
-        arr_b = np.array(list_b)
-        str_a = [str(x) for x in arr_a]
-        str_b = [str(x) for x in arr_b]
-        score_list = metric(list_a, list_b)
-        score_neg = metric(arr_a - 1, arr_b)
-        score_pos = metric(arr_a + 1, arr_b)
-        score_array = metric(arr_a, arr_b)
-        score_str = metric(str_a, str_b)
-        assert_equal(score_list, score_array)
-        assert_equal(score_array, score_neg)
-        assert_equal(score_array, score_pos)
-        assert_equal(score_list, score_str)
+        score_1 = metric(labels, y_pred)
+        mygenerator_1 = generate_formats(labels)
+        mygenerator_2 = generate_formats(y_pred)
+        for i, j in zip(mygenerator_1, mygenerator_2):
+            assert_equal(score_1, metric(i, j))
 
     for name in UNSUPERVISED_METRICS:
         metric = UNSUPERVISED_METRICS[name]
-        X = np.random.randint(10, size=(100, 10))
-        X_array = np.array(X)
-        label = np.random.randint(2, size=100)
-        label_array = np.array(label)
-        X_float = X_array.astype(float)
-        score_1 = metric(X, label)
-        score_2 = metric(X_array, label_array)
-        score_3 = metric(X_float, label_array)
-        score_4 = metric(X_array + 1, label_array)
-        score_5 = metric(X_array - 1, label_array)
-        assert_equal(score_1, score_2)
-        assert_equal(score_1, score_3)
-        assert_almost_equal(score_1, score_4)
-        assert_almost_equal(score_1, score_5)
+        X = np.random.randint(10, size=(8, 10))
+        score_1 = metric(X, labels)
+        assert_equal(score_1, metric(X.astype(float), labels))
+        mygenerator_1 = generate_formats(labels)
+        for j in mygenerator_1:
+            assert_equal(score_1, metric(X, j))
