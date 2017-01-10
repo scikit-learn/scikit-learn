@@ -256,20 +256,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.store_covariance = store_covariance  # used only in svd solver
         self.tol = tol  # used only in svd solver
 
-    def __get__(self, obj, objtype):
-        if not self.store_covariance:
-            warnings.warn("from version 0.21 'covariance_' will be stored "
-                          "only if 'store_covariance' is True",
-                          DeprecationWarning)
-        return self._covariance_
-
-    def __set__(self, obj, val):
-        if not self.store_covariance:
-            warnings.warn("from version 0.21 'covariance_' will be stored "
-                          "only if 'store_covariance' is True",
-                          DeprecationWarning)
-        self._covariance_ = val
-
     @property
     def covariance_(self):
         if hasattr(self, '_covariance_') and not self.store_covariance:
