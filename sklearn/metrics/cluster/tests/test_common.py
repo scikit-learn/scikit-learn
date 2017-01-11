@@ -91,6 +91,9 @@ def test_symmetry():
         assert_not_equal(metric(y1, y2), metric(y2, y1),
                          msg="%s is symmetric" % name)
 
+    assert_equal(sorted(SYMMETRIC_METRICS + NON_SYMMETRIC_METRICS),
+                 sorted(SUPERVISED_METRICS))
+
 
 def test_normalized_output():
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
@@ -108,7 +111,7 @@ def test_normalized_output():
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
     for name in NORMALIZED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_contains(0, [metric(lower_bound_1, lower_bound_2), 
+        assert_contains(0, [metric(lower_bound_1, lower_bound_2),
                             metric(lower_bound_2, lower_bound_2)])
 
 
@@ -138,11 +141,10 @@ def test_permute_labels():
 # For ALL clustering metrics Input parameters can be both
 # in the form of arrays lists , positive , negetive or string
 def test_format_invariance():
-    labels = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_true = [0, 0, 0, 0, 1, 1, 1, 1]
     y_pred = [0, 1, 2, 3, 4, 5, 6, 7]
 
     def generate_formats(y):
-        y = np.array(y)
         y = np.array(y)
         yield y, 'array of ints'
         yield y.tolist(), 'list of ints'
@@ -152,19 +154,23 @@ def test_format_invariance():
 
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        score_1 = metric(labels, y_pred)
-        mygenerator_1 = generate_formats(labels)
-        mygenerator_2 = generate_formats(y_pred)
-        for i, j in zip(mygenerator_1, mygenerator_2):
-            assert_equal(score_1, metric(i[0], j[0]),
-                         msg="%s failed %s format invariance" % (name, j[1]))
+        score_1 = metric(y_true, y_pred)
+        y_true_gen = generate_formats(y_true)
+        y_pred_gen = generate_formats(y_pred)
+        for (y_true_fmt, fmt_name), (y_pred_fmt, _) in zip(y_true_gen,
+                                                           y_pred_gen):
+            assert_equal(score_1, metric(y_true_fmt, y_pred_fmt),
+                         msg="%s failed %s format invariance" % (name,
+                                                                 fmt_name))
 
     for name in UNSUPERVISED_METRICS:
         metric = UNSUPERVISED_METRICS[name]
         X = np.random.randint(10, size=(8, 10))
-        score_1 = metric(X, labels)
-        assert_equal(score_1, metric(X.astype(float), labels))
-        mygenerator_1 = generate_formats(labels)
-        for j in mygenerator_1:
-            assert_equal(score_1, metric(X, j[0]),
-                         msg="%s failed %s format invariance" % (name, j[1]))
+        score_1 = metric(X, y_true)
+        assert_equal(score_1, metric(X.astype(float), y_true),
+                     msg="%s failed format invariance" % name)
+        y_true_gen = generate_formats(y_true)
+        for (y_true_fmt, fmt_name) in y_true_gen:
+            assert_equal(score_1, metric(X, y_true_fmt),
+                         msg="%s failed %s format invariance" % (name,
+                                                                 fmt_name))
