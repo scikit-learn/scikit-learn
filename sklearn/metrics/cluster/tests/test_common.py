@@ -76,7 +76,7 @@ NORMALIZED_METRICS = [
     "normalized_mutual_info_score"
 ]
 
-def assert_contains(value, score)
+
 def test_symmetry():
     rng = np.random.RandomState(0)
     y1 = rng.randint(3, size=30)
