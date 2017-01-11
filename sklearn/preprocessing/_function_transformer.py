@@ -1,6 +1,6 @@
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-import warnings
+
 
 
 def _identity(X):
