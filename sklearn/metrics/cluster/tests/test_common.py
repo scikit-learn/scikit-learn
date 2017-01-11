@@ -69,17 +69,11 @@ NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
 
 # Metrics whose upper bound is 1
-METRICS_NORMALIZED_OUTPUT = [
+NORMALIZED_METRICS = [
     "adjusted_rand_score", "homogeneity_score", "completeness_score",
     "v_measure_score", "adjusted_mutual_info_score", "fowlkes_mallows_score",
     "normalized_mutual_info_score"
 ]
-
-
-def assert_between(var, score_1, score_2):
-    """Helper function to check if score lies in between two values"""
-    if assert_greater(var, score_1) and assert_less(var, score_2):
-        raise AssertionError("score", var, "does not lie between 0 and 1")
 
 
 def test_symmetry():
@@ -88,31 +82,37 @@ def test_symmetry():
     y2 = rng.randint(3, size=30)
     for name in SYMMETRIC_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_almost_equal(metric(y1, y2), metric(y2, y1))
+        assert_almost_equal(metric(y1, y2), metric(y2, y1),
+                            err_msg="%s is not symmetric" % name)
 
     for name in NON_SYMMETRIC_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_not_equal(metric(y1, y2), metric(y2, y1))
+        assert_not_equal(metric(y1, y2), metric(y2, y1),
+                         msg="%s is symmetric" % name)
 
 
 def test_normalized_output():
     upper_bound_1 = [0, 0, 0, 1, 1, 1]
     upper_bound_2 = [0, 0, 0, 1, 1, 1]
-    for name in METRICS_NORMALIZED_OUTPUT:
+    for name in NORMALIZED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_between(metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]), 0.0, 1.0)
-        assert_between(metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]), 0.0, 1.0)
-        assert_equal(metric(upper_bound_1, upper_bound_2), 1.0)
+        assert_greater(metric([0, 0, 0, 1, 1], [0, 0, 0, 1, 2]), 0.0)
+        assert_greater(metric([0, 0, 1, 1, 2], [0, 0, 1, 1, 1]), 0.0)
+        assert_less(metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]), 1.0)
+        assert_less(metric([0, 0, 0, 1, 2], [0, 1, 1, 1, 1]), 1.0)
+        assert_equal(metric(upper_bound_1, upper_bound_2), 1.0,
+                     msg="%s has upper_bound greater than 1" % name)
 
     lower_bound_1 = [0, 0, 0, 0, 0, 0]
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
-    for name in SUPERVISED_METRICS:
+    for name in NORMALIZED_METRICS:
         metric = SUPERVISED_METRICS[name]
         assert_equal((metric(lower_bound_1, lower_bound_2) and
-                      metric(lower_bound_2, lower_bound_1)), 0.0)
+                      metric(lower_bound_2, lower_bound_1)), 0.0,
+                     msg="%s has lower_bound less than 0.0" % name)
 
 
-# All clustering metrocs do not change score due to permutations of labels
+# All clustering metrics do not change score due to permutations of labels
 # that is when 0 and 1 exchchanged.
 def test_permute_labels():
     y_label = np.array([0, 0, 0, 1, 1, 0, 1])
@@ -120,15 +120,19 @@ def test_permute_labels():
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
         score_1 = metric(y_pred, y_label)
-        assert_equal(score_1, metric(1 - y_pred, y_label))
-        assert_equal(score_1, metric(1 - y_pred, 1 - y_label))
-        assert_almost_equal(score_1, metric(y_pred, 1 - y_label))
+        assert_equal(score_1, metric(1 - y_pred, y_label),
+                     msg="%s failed labels permutation" % name)
+        assert_equal(score_1, metric(1 - y_pred, 1 - y_label),
+                     msg="%s failed labels permutation" % name)
+        assert_almost_equal(score_1, metric(y_pred, 1 - y_label),
+                            err_msg="%s failed labels permutation" % name)
 
     for name in UNSUPERVISED_METRICS:
         metric = UNSUPERVISED_METRICS[name]
         X = np.random.randint(10, size=(7, 10))
         score_1 = metric(X, y_pred)
-        assert_almost_equal(score_1, metric(X, 1 - y_pred))
+        assert_almost_equal(score_1, metric(X, 1 - y_pred),
+                            err_msg="%s failed labels permutation" % name)
 
 
 # For ALL clustering metrics Input parameters can be both
@@ -139,11 +143,12 @@ def test_format_invariance():
 
     def generate_formats(y):
         y = np.array(y)
-        yield y
-        yield y - 1
-        yield y + 1
-        yield y.tolist()
-        yield [str(x) for x in y.tolist()]
+        y = np.array(y)
+        yield y, 'array of ints'
+        yield y.tolist(), 'list of ints'
+        yield [str(x) for x in y.tolist()], 'list of strs'
+        yield y - 1, 'including negative ints'
+        yield y + 1, 'strictly positive ints'
 
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
@@ -151,7 +156,8 @@ def test_format_invariance():
         mygenerator_1 = generate_formats(labels)
         mygenerator_2 = generate_formats(y_pred)
         for i, j in zip(mygenerator_1, mygenerator_2):
-            assert_equal(score_1, metric(i, j))
+            assert_equal(score_1, metric(i[0], j[0]),
+                         msg="%s failed %s format invariance" % (name, j[1]))
 
     for name in UNSUPERVISED_METRICS:
         metric = UNSUPERVISED_METRICS[name]
@@ -160,4 +166,5 @@ def test_format_invariance():
         assert_equal(score_1, metric(X.astype(float), labels))
         mygenerator_1 = generate_formats(labels)
         for j in mygenerator_1:
-            assert_equal(score_1, metric(X, j))
+            assert_equal(score_1, metric(X, j[0]),
+                         msg="%s failed %s format invariance" % (name, j[1]))
