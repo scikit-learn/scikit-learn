@@ -137,7 +137,7 @@ def test_feature_wise_scorer():
     new_X3 = skb1.transform(X)
     new_X4 = skb2.transform(X)
 
-    assert_equal(new_X1.shape[1], 0.5*X.shape[1])
-    assert_equal(new_X2.shape[1], 0.5*X.shape[1])
+    assert_equal(new_X1.shape[1], 0.5 * X.shape[1])
+    assert_equal(new_X2.shape[1], 0.5 * X.shape[1])
     assert_equal(new_X3.shape[1], 10)
     assert_equal(new_X4.shape[1], 10)
