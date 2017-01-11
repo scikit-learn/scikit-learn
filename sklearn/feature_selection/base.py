@@ -122,7 +122,7 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         return Xt
 
 
-def wrapper_scorer(score_func):
+def feature_wise_scorer(score_func):
     """ A wrapper function around score functions.
 
     Parameters
@@ -146,14 +146,13 @@ def wrapper_scorer(score_func):
 
     Example
     -------
-    >>> from sklearn.feature_selection import SelectKBest, wrapper_scorer
+    >>> from sklearn.feature_selection import feature_wise_scorer, SelectKBest
     >>> from scipy.stats import kendalltau, pearsonr, spearmanr
     >>> from sklearn.datasets import make_classification
-    >>> 
     >>> X, y = make_classification(random_state=0)
-    >>> skb1 = SelectKBest(wrapper_scorer(spearmanr), k=10)
-    >>> skb2 = SelectKBest(wrapper_scorer(pearsonr), k=10)
-    >>> skb3 = SelectKBest(wrapper_scorer(kendalltau), k=10)
+    >>> skb1 = SelectKBest(feature_wise_scorer(spearmanr), k=10)
+    >>> skb2 = SelectKBest(feature_wise_scorer(pearsonr), k=10)
+    >>> skb3 = SelectKBest(feature_wise_scorer(kendalltau), k=10)
     >>> skb1.fit(X, y)    # Calculates spearmanr for each feature in `X`
     >>> skb2.fit(X, y)
     >>> skb3.fit(X, y)

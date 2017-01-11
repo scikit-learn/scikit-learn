@@ -1,12 +1,15 @@
 import numpy as np
 from scipy import sparse as sp
+from scipy.stats import pearsonr, spearmanr
 
 from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
-from sklearn.feature_selection.base import SelectorMixin
+from sklearn.feature_selection.base import SelectorMixin, feature_wise_scorer
+from sklearn.feature_selection import SelectKBest, SelectPercentile
 from sklearn.utils import check_array
 from sklearn.utils.testing import assert_raises, assert_equal
+from sklearn.datasets import make_classification
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
@@ -113,3 +116,28 @@ def test_get_support():
     sel.fit(X, y)
     assert_array_equal(support, sel.get_support())
     assert_array_equal(support_inds, sel.get_support(indices=True))
+
+
+def test_feature_wise_scorer():
+    X, y = make_classification(random_state=0)
+    # spearmanr from scipy.stats
+    sp1 = SelectPercentile(feature_wise_scorer(spearmanr), percentile=50)
+    skb1 = SelectKBest(feature_wise_scorer(spearmanr), k=10)
+    # pearsonr from scipy.stats
+    sp2 = SelectPercentile(feature_wise_scorer(pearsonr), percentile=50)
+    skb2 = SelectKBest(feature_wise_scorer(pearsonr), k=10)
+
+    sp1.fit(X, y)
+    sp2.fit(X, y)
+    skb1.fit(X, y)
+    skb2.fit(X, y)
+
+    new_X1 = sp1.transform(X)
+    new_X2 = sp2.transform(X)
+    new_X3 = skb1.transform(X)
+    new_X4 = skb2.transform(X)
+
+    assert_equal(new_X1.shape[1], 0.5*X.shape[1])
+    assert_equal(new_X2.shape[1], 0.5*X.shape[1])
+    assert_equal(new_X3.shape[1], 10)
+    assert_equal(new_X4.shape[1], 10)

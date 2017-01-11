@@ -24,7 +24,7 @@ from .from_model import SelectFromModel
 
 from .mutual_info_ import mutual_info_regression, mutual_info_classif
 
-from .base import wrapper_scorer
+from .base import feature_wise_scorer
 
 
 __all__ = ['GenericUnivariateSelect',
@@ -43,4 +43,4 @@ __all__ = ['GenericUnivariateSelect',
            'f_regression',
            'mutual_info_classif',
            'mutual_info_regression',
-           'wrapper_scorer']
+           'feature_wise_scorer']
