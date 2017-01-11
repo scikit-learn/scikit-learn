@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_contains
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
 
 
@@ -111,8 +111,10 @@ def test_normalized_output():
     lower_bound_2 = [0, 1, 2, 3, 4, 5]
     for name in NORMALIZED_METRICS:
         metric = SUPERVISED_METRICS[name]
-        assert_contains(0, [metric(lower_bound_1, lower_bound_2),
-                            metric(lower_bound_2, lower_bound_2)])
+        score = [metric(lower_bound_1, lower_bound_2),
+                 metric(lower_bound_2, lower_bound_1)]
+        assert_true(0.0 in score,
+                    msg="%s has lower bound less than 0.0" % name)
 
 
 # All clustering metrics do not change score due to permutations of labels
