@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array, check_X_y, safe_mask
+from ..utils import check_array, safe_mask
 from ..externals import six
 
 
@@ -153,9 +153,12 @@ def feature_wise_scorer(score_func):
     >>> skb1 = SelectKBest(feature_wise_scorer(spearmanr), k=10)
     >>> skb2 = SelectKBest(feature_wise_scorer(pearsonr), k=10)
     >>> skb3 = SelectKBest(feature_wise_scorer(kendalltau), k=10)
-    >>> skb1.fit(X, y)    # Calculates spearmanr for each feature in `X`
-    >>> skb2.fit(X, y)
-    >>> skb3.fit(X, y)
+    >>> skb1.fit(X, y) #doctest: +ELLIPSIS
+    SelectKBest(k=10, score_func=...)
+    >>> skb2.fit(X, y) #doctest: +ELLIPSIS
+    SelectKBest(k=10, score_func=...)
+    >>> skb3.fit(X, y) #doctest: +ELLIPSIS
+    SelectKBest(k=10, score_func=...)
     >>> new_X1 = skb1.transform(X)
     >>> new_X2 = skb2.transform(X)
     >>> new_X3 = skb3.transform(X)
