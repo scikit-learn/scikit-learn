@@ -76,7 +76,7 @@ NORMALIZED_METRICS = [
     "normalized_mutual_info_score"
 ]
 
-
+def assert_contains(value, score)
 def test_symmetry():
     rng = np.random.RandomState(0)
     y1 = rng.randint(3, size=30)
@@ -109,7 +109,7 @@ def test_normalized_output():
     for name in NORMALIZED_METRICS:
         metric = SUPERVISED_METRICS[name]
         assert_contains(0, [metric(lower_bound_1, lower_bound_2), 
-                            metric(lower_bound_2, lower_bound_2))
+                            metric(lower_bound_2, lower_bound_2)])
 
 
 # All clustering metrics do not change score due to permutations of labels
