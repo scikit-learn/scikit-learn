@@ -28,7 +28,7 @@ It can be seen from the plots that the results of :ref:`DictionaryLearning`
 without homeostasis leads to the emergence of edge-like filters but that a 
 number of filters are not learned: They still are closer to noise and are 
 unlikely to be selected by the sparse coding algorithm without homeostasy.
-The heuristics used here follows the assumption that during learning,
+The heuristic used here follow the assumption that during learning,
 some elements that learn first are more responsive to input patches
 as may be recorded by estimating their mean variance. If we were to
 keep their norm fixed, these would be more likely to be selected again,
