@@ -32,8 +32,6 @@ from sklearn.utils.testing import assert_almost_equal
 # Those dictionaries will be used to test systematically some invariance
 # properties, e.g. invariance toward several input layout.
 #
-
-# Metrics used to test similarity between bicluster
 SUPERVISED_METRICS = {
     "adjusted_mutual_info_score": adjusted_mutual_info_score,
     "adjusted_rand_score": adjusted_rand_score,
