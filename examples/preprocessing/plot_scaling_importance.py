@@ -5,7 +5,7 @@
 Importance of Feature Scaling
 =========================================================
 
-Features scaling though standardization (or Z-score normalization)
+Feature scaling though standardization (or Z-score normalization)
 can be an important preprocessing step for many machine learning
 algorithms. Standardization involves rescaling the features such
 that they have the properties of a standard normal distribution
@@ -23,12 +23,10 @@ direction of maximal variance more closely corresponds with the
 height of one meter can be considered much more important than the
 change in weight of one kilogram, this is clearly incorrect.
 
-:class:`StandardScaler <sklearn.preprocessing.StandardScaler>`
-
 To illustrate this, PCA is performed comparing the use of data with
 :class:`StandardScaler <sklearn.preprocessing.StandardScaler>` applied,
 to unscaled data. The results are visualized and a clear difference noted.
-The 1st principal component in the unscaled set can be seen.It can be seen
+The 1st principal component in the unscaled set can be seen. It can be seen
 that feature #13 dominates the direction, being a whole two orders of
 magnitude above the other features. This is contrasted when observing
 the principal component for the scaled version of the data. In the scaled
@@ -38,19 +36,20 @@ The dataset used is the Wine Dataset available at UCI. This dataset
 has continuous features that are heterogeneous in scale due to differing
 properties that they measure (i.e alcohol content, and malic acid).
 
-The results are then used to train a naive Bayes classifier, and a clear
-difference in prediction accuracies will be observed wherein the dataset
+The transformed data is then used to train a naive Bayes classifier, and a
+clear difference in prediction accuracies is observed wherein the dataset
 which is scaled before PCA vastly outperforms the unscaled version.
 
 """
 from __future__ import print_function
 from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.naive_bayes import GaussianNB
 from sklearn import metrics
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_wine
+from sklearn.pipeline import make_pipeline
 print(__doc__)
 
 # Code source: Tyler Lanigan <tylerlanigan@gmail.com>
@@ -69,41 +68,34 @@ X_train, X_test, y_train, y_test = train_test_split(features, target,
                                                     test_size=0.30,
                                                     random_state=RANDOM_STATE)
 
-# Apply Scaling to X_train and X_test
-std_scale = preprocessing.StandardScaler().fit(X_train)
-X_train_std = std_scale.transform(X_train)
-X_test_std = std_scale.transform(X_test)
+# Fit to data and predict using pipelined GNB and PCA.
+unscaled_clf = make_pipeline(PCA(n_components=2), GaussianNB())
+unscaled_clf.fit(X_train, y_train)
+pred_test = unscaled_clf.predict(X_test)
 
-# Perform PCA on non-standardized data
-pca = PCA(n_components=2).fit(X_train)
-X_train = pca.transform(X_train)
-X_test = pca.transform(X_test)
+# Fit to data and predict using pipelined scaling, GNB and PCA.
+std_clf = make_pipeline(StandardScaler(), PCA(n_components=2), GaussianNB())
+std_clf.fit(X_train, y_train)
+pred_test_std = std_clf.predict(X_test)
 
-# Perform PCA on standardized data
-pca_std = PCA(n_components=2).fit(X_train_std)
-X_train_std = pca_std.transform(X_train_std)
-X_test_std = pca_std.transform(X_test_std)
-
-# Fit GaussianNB on standard and non-standardized data
-clf = GaussianNB()
-fit = clf.fit(X_train, y_train)
-clf_std = GaussianNB()
-fit_std = clf_std.fit(X_train_std, y_train)
-
-# Make predictions for standard and non standardized data.
-pred_train = clf.predict(X_train)
-pred_test = clf.predict(X_test)
-pred_train_std = clf_std.predict(X_train_std)
-pred_test_std = clf_std.predict(X_test_std)
-
+# Show prediction accuracies in scaled and unscaled data.
 print('\nPrediction accuracy for the normal test dataset with PCA')
 print('{:.2%}\n'.format(metrics.accuracy_score(y_test, pred_test)))
 
 print('\nPrediction accuracy for the standardized test dataset with PCA')
 print('{:.2%}\n'.format(metrics.accuracy_score(y_test, pred_test_std)))
 
+# Extract PCA from pipeline
+pca = unscaled_clf.named_steps['pca']
+pca_std = std_clf.named_steps['pca']
+
+# Show first principal componenets
 print('\nPC 1 without scaling:\n', pca.components_[0])
 print('\nPC 1 with scaling:\n', pca_std.components_[0])
+
+# Scale and use PCA on X_train data for visualization.
+scaler = std_clf.named_steps['standardscaler']
+X_train_std = pca_std.transform(scaler.transform(X_train))
 
 # visualize standardized vs. untouched dataset with PCA performed
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=FIG_SIZE)
