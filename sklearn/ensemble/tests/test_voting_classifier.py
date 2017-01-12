@@ -5,7 +5,7 @@ from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import Lasso, LogisticRegression, Ridge
+from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
@@ -21,6 +21,12 @@ from sklearn.neighbors import KNeighborsClassifier
 # Load the iris dataset and randomly permute it
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
+
+
+# A custom classifier based on SVC to return 'float' type class labels
+class FaultySVC(SVC):
+    def predict(self, X):
+        return super(FaultySVC, self).predict(X).astype(float)
 
 
 def test_estimator_init():
@@ -279,11 +285,11 @@ def test_estimator_weights_format():
 
 def test_predict_for_hard_voting():
     # Test predictions array data type error
-    clf1 = Ridge(random_state=123)
-    clf2 = Lasso(random_state=123)
+    clf1 = FaultySVC(random_state=123)
+    clf2 = GaussianNB()
     clf3 = SVC(probability=True, random_state=123)
     eclf1 = VotingClassifier(estimators=[
-        ('rd', clf1), ('la', clf2), ('svc', clf3)], weights=[1, 2, 3],
+        ('fsvc', clf1), ('gnb', clf2), ('svc', clf3)], weights=[1, 2, 3],
         voting='hard')
 
     eclf1.fit(X, y)
