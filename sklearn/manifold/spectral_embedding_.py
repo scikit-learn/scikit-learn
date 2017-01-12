@@ -528,4 +528,3 @@ class SpectralEmbedding(BaseEstimator):
         """
         self.fit(X)
         return self.embedding_
-    
