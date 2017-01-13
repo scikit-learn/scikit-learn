@@ -323,7 +323,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         n_samples : int, default: 1
             The number of samples drawn from the Gaussian process
 
-        random_state: RandomState or an int seed (0 by default)
+        random_state : RandomState or an int seed (0 by default)
             A random number generator instance
 
         Returns

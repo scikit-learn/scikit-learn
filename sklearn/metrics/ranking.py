@@ -633,6 +633,10 @@ def coverage_error(y_true, y_score, sample_weight=None):
     Ties in ``y_scores`` are broken by giving maximal rank that would have
     been assigned to all tied values.
 
+    Note: Our implementation's score is 1 greater than the one given in
+    Tsoumakas et al., 2010. This extends it to handle the degenerate case
+    in which an instance has 0 true labels.
+
     Read more in the :ref:`User Guide <coverage_error>`.
 
     Parameters

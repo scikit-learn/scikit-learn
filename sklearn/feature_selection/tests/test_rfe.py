@@ -203,6 +203,25 @@ def test_rfecv_mockclassifier():
     assert_equal(len(rfecv.ranking_), X.shape[1])
 
 
+def test_rfecv_verbose_output():
+    # Check verbose=1 is producing an output.
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    sys.stdout = StringIO()
+
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = list(iris.target)
+
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5, verbose=1)
+    rfecv.fit(X, y)
+
+    verbose_output = sys.stdout
+    verbose_output.seek(0)
+    assert_greater(len(verbose_output.readline()), 0)
+
+
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert_equal(rfe._estimator_type, "classifier")

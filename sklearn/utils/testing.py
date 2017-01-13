@@ -15,8 +15,6 @@ import inspect
 import pkgutil
 import warnings
 import sys
-import re
-import platform
 import struct
 
 import scipy as sp
@@ -77,83 +75,25 @@ assert_not_equal = _dummy.assertNotEqual
 assert_true = _dummy.assertTrue
 assert_false = _dummy.assertFalse
 assert_raises = _dummy.assertRaises
+SkipTest = unittest.case.SkipTest
+assert_dict_equal = _dummy.assertDictEqual
+assert_in = _dummy.assertIn
+assert_not_in = _dummy.assertNotIn
+assert_less = _dummy.assertLess
+assert_greater = _dummy.assertGreater
+assert_less_equal = _dummy.assertLessEqual
+assert_greater_equal = _dummy.assertGreaterEqual
 
-try:
-    SkipTest = unittest.case.SkipTest
-except AttributeError:
-    # Python <= 2.6, we stil need nose here
-    from nose import SkipTest
-
-
-try:
-    assert_dict_equal = _dummy.assertDictEqual
-    assert_in = _dummy.assertIn
-    assert_not_in = _dummy.assertNotIn
-except AttributeError:
-    # Python <= 2.6
-
-    assert_dict_equal = assert_equal
-
-    def assert_in(x, container):
-        assert_true(x in container, msg="%r in %r" % (x, container))
-
-    def assert_not_in(x, container):
-        assert_false(x in container, msg="%r in %r" % (x, container))
 
 try:
     assert_raises_regex = _dummy.assertRaisesRegex
 except AttributeError:
-    # for Python 2.6
-    def assert_raises_regex(expected_exception, expected_regexp,
-                            callable_obj=None, *args, **kwargs):
-        """Helper function to check for message patterns in exceptions."""
-        not_raised = False
-        try:
-            callable_obj(*args, **kwargs)
-            not_raised = True
-        except expected_exception as e:
-            error_message = str(e)
-            if not re.compile(expected_regexp).search(error_message):
-                raise AssertionError("Error message should match pattern "
-                                     "%r. %r does not." %
-                                     (expected_regexp, error_message))
-        if not_raised:
-            raise AssertionError("%s not raised by %s" %
-                                 (expected_exception.__name__,
-                                  callable_obj.__name__))
-
+    # Python 2.7
+    assert_raises_regex = _dummy.assertRaisesRegexp
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-def _assert_less(a, b, msg=None):
-    message = "%r is not lower than %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a < b, message
-
-
-def _assert_greater(a, b, msg=None):
-    message = "%r is not greater than %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a > b, message
-
-
-def assert_less_equal(a, b, msg=None):
-    message = "%r is not lower than or equal to %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a <= b, message
-
-
-def assert_greater_equal(a, b, msg=None):
-    message = "%r is not greater than or equal to %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a >= b, message
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -273,9 +213,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-
-    # warnings module context manager.
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -384,12 +321,8 @@ class _IgnoreWarnings(object):
         clean_warning_registry()  # be safe and not propagate state + chaos
 
 
-try:
-    assert_less = _dummy.assertLess
-    assert_greater = _dummy.assertGreater
-except AttributeError:
-    assert_less = _assert_less
-    assert_greater = _assert_greater
+assert_less = _dummy.assertLess
+assert_greater = _dummy.assertGreater
 
 
 def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
@@ -699,28 +632,6 @@ def skip_if_32bit(func):
         else:
             return func(*args, **kwargs)
     return run_test
-
-
-def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
-                  message='Multi-process bug in Mac OS X >= 10.7 '
-                          '(see issue #636)'):
-    """Test decorator that skips test if OS is Mac OS X and its
-    major version is one of ``versions``.
-    """
-    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
-                  " in 0.19: use the safer and more generic"
-                  " if_safe_multiprocessing_with_blas instead",
-                  DeprecationWarning)
-    mac_version, _, _ = platform.mac_ver()
-    skip = '.'.join(mac_version.split('.')[:2]) in versions
-
-    def decorator(func):
-        if skip:
-            @wraps(func)
-            def func(*args, **kwargs):
-                raise SkipTest(message)
-        return func
-    return decorator
 
 
 def if_safe_multiprocessing_with_blas(func):

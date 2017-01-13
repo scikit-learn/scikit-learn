@@ -28,7 +28,6 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 
@@ -382,11 +381,6 @@ def test_importances():
         assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
         assert_equal(n_important, 3, "Failed with {0}".format(name))
 
-        X_new = assert_warns(
-            DeprecationWarning, clf.transform, X, threshold="mean")
-        assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
-        assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
-
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
     clf.fit(iris.data, iris.target)
@@ -529,7 +523,8 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit,
+                      X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -600,7 +595,6 @@ def test_min_samples_split():
 
         assert_greater(np.min(node_samples), 9,
                        "Failed with {0}".format(name))
-
 
 
 def test_min_samples_leaf():
@@ -865,7 +859,6 @@ def test_pickle():
                          fitted_attribute[attribute],
                          "Failed to generate same attribute {0} after "
                          "pickling with {1}".format(attribute, name))
-
 
 
 def test_multioutput():
@@ -1287,18 +1280,19 @@ def check_sparse_input(tree, dataset, max_depth=None):
 
 
 def test_sparse_input():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ("clf_small", "toy", "digits", "multilabel",
-                                  "sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros")):
+    for tree_type, dataset in product(SPARSE_TREES, ("clf_small", "toy",
+                                                     "digits", "multilabel",
+                                                     "sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros")):
         max_depth = 3 if dataset == "digits" else None
-        yield (check_sparse_input, tree, dataset, max_depth)
+        yield (check_sparse_input, tree_type, dataset, max_depth)
 
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    for tree, dataset in product(REG_TREES, ["boston", "reg_small"]):
-        if tree in SPARSE_TREES:
-            yield (check_sparse_input, tree, dataset, 2)
+    for tree_type, dataset in product(SPARSE_TREES, ["boston", "reg_small"]):
+        if tree_type in REG_TREES:
+            yield (check_sparse_input, tree_type, dataset, 2)
 
 
 def check_sparse_parameters(tree, dataset):
@@ -1346,10 +1340,10 @@ def check_sparse_parameters(tree, dataset):
 
 
 def test_sparse_parameters():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ["sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros"]):
-        yield (check_sparse_parameters, tree, dataset)
+    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros"]):
+        yield (check_sparse_parameters, tree_type, dataset)
 
 
 def check_sparse_criterion(tree, dataset):
@@ -1373,10 +1367,10 @@ def check_sparse_criterion(tree, dataset):
 
 
 def test_sparse_criterion():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ["sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros"]):
-        yield (check_sparse_criterion, tree, dataset)
+    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros"]):
+        yield (check_sparse_criterion, tree_type, dataset)
 
 
 def check_explicit_sparse_zeros(tree, max_depth=3,
@@ -1449,8 +1443,8 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
 
 
 def test_explicit_sparse_zeros():
-    for tree in SPARSE_TREES:
-        yield (check_explicit_sparse_zeros, tree)
+    for tree_type in SPARSE_TREES:
+        yield (check_explicit_sparse_zeros, tree_type)
 
 
 @ignore_warnings
