@@ -14,6 +14,7 @@ from __future__ import division, absolute_import, print_function
 from functools import partial
 import argparse
 import json
+import ast
 import re
 import sys
 from .py_source_parser import split_code_and_text_blocks
