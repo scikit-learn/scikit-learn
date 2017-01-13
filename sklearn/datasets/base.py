@@ -241,6 +241,7 @@ def load_files(container_path, description=None, categories=None,
                  target=target,
                  DESCR=description)
 
+
 def load_data(module_path, data_file_name):
     """
     Loads data module_path/data/data_file_name.
@@ -262,7 +263,7 @@ def load_data(module_path, data_file_name):
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
     """
-    
+
     with open(join(module_path, 'data', data_file_name)) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
