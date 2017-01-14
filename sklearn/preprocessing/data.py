@@ -2072,7 +2072,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         if self.col_num_X_ == 0:
             raise ValueError("Transformer must be fit() before transform()")
-        self.count_cache_.default_factory = None
+        self.count_cache_.default_factory = lambda: defaultdict(int)
         X = check_array(X)
         len_data = len(X)
         len_y_set = len(self.y_set_)
@@ -2097,4 +2097,5 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                 transformed[i, num_features + j] = \
                     self.count_cache_[X_key][y_key]
 
+        self.count_cache_.default_factory = None
         return transformed
