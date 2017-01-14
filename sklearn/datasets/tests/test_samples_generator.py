@@ -365,7 +365,7 @@ def test_make_checkerboard():
 def test_make_moons():
     X, y = make_moons(3, shuffle=False)
     for x, label in zip(X, y):
-        if label == 0:
-            assert_almost_equal((x ** 2).sum(), 1.0, err_msg="Point is labeled outside but isn't on unit circle centered at (0,0)")
-        else:
-            assert_almost_equal(((x - [1, 0.5]) ** 2).sum(), 1.0, err_msg="Point is labeled inside but isn't on unit circle centered at (1,0.5)")
+        center = [0.0, 0.0] if label == 0 else [1.0, 0.5]
+        dist_sqr = ((x - center) ** 2).sum()
+        assert_almost_equal(dist_sqr, 1.0, 
+		    err_msg="Point is not on expected unit circle")
