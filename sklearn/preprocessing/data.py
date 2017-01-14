@@ -1904,11 +1904,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
 
-def _get_cache_dict():
-    # a trick to get multi-layered dicts to pickle correctly in CountFeaturizer
-    return defaultdict(int)
-
-
 class CountFeaturizer(BaseEstimator, TransformerMixin):
     """Adds a feature representing each feature value's count in training
 
@@ -2019,7 +2014,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         len_data = len(X)
 
-        self.count_cache_ = defaultdict(_get_cache_dict)
+        self.count_cache_ = defaultdict(lambda: defaultdict(int))
         self.col_num_X_ = len(X[0])
         self.y_set_ = set()
 
@@ -2045,6 +2040,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                               if j in inclusion_used)
                 self.count_cache_[X_key][0] += 1
         self.y_set_ = list(enumerate(sorted(self.y_set_)))
+        self.count_cache_.default_factory = None
         return self
 
     def transform(self, X, y=None):
@@ -2076,6 +2072,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         if self.col_num_X_ == 0:
             raise ValueError("Transformer must be fit() before transform()")
+        self.count_cache_.default_factory = None
         X = check_array(X)
         len_data = len(X)
         len_y_set = len(self.y_set_)
