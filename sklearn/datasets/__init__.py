@@ -18,8 +18,6 @@ from .base import load_sample_image
 from .covtype import fetch_covtype
 from .kddcup99 import fetch_kddcup99
 from .mlcomp import load_mlcomp
-from .lfw import load_lfw_pairs
-from .lfw import load_lfw_people
 from .lfw import fetch_lfw_pairs
 from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
@@ -74,8 +72,6 @@ __all__ = ['clear_data_home',
            'load_files',
            'load_iris',
            'load_breast_cancer',
-           'load_lfw_pairs',
-           'load_lfw_people',
            'load_linnerud',
            'load_mlcomp',
            'load_sample_image',

@@ -266,17 +266,27 @@ def f_regression(X, y, center=True):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
-    if issparse(X) and center:
-        raise ValueError("center=True only allowed for dense data")
     X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
+    n_samples = X.shape[0]
+
+    # compute centered values
+    # note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we
+    # need not center X
     if center:
         y = y - np.mean(y)
-        X = X.copy('F')  # faster in fortran
-        X -= X.mean(axis=0)
+        if issparse(X):
+            X_means = X.mean(axis=0).getA1()
+        else:
+            X_means = X.mean(axis=0)
+        # compute the scaled standard deviations via moments
+        X_norms = np.sqrt(row_norms(X.T, squared=True) -
+                          n_samples * X_means ** 2)
+    else:
+        X_norms = row_norms(X.T)
 
     # compute the correlation
     corr = safe_sparse_dot(y, X)
-    corr /= row_norms(X.T)
+    corr /= X_norms
     corr /= norm(y)
 
     # convert to p-value
@@ -319,7 +329,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -596,8 +606,8 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features
-                      * np.arange(n_features)]
+        selected = sv[sv <= float(self.alpha) / n_features *
+                      np.arange(1, n_features + 1)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()

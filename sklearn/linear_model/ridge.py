@@ -885,7 +885,7 @@ class _RidgeGCV(LinearModel):
         constant_column = np.var(Q, 0) < 1.e-12
         # detect constant columns
         w[constant_column] = 0  # cancel the regularization for the intercept
-        w[v == 0] = 0
+
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
@@ -957,6 +957,8 @@ class _RidgeGCV(LinearModel):
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
+        if sample_weight is not None and not isinstance(sample_weight, float):
+            sample_weight = check_array(sample_weight, ensure_2d=False)
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(

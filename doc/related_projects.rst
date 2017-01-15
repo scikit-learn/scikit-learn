@@ -44,6 +44,9 @@ enhance the functionality of scikit-learn's estimators.
   into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
   library.
 
+- `sklearn-porter <https://github.com/nok/sklearn-porter>`_
+  Transpile trained scikit-learn models to C, Java, Javascript and others.
+
 Other estimators and tasks
 --------------------------
 
@@ -73,6 +76,11 @@ and tasks.
 - `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
   for Python, with an emphasis on hidden Markov models.
 
+- `sklearn-crfsuite <https://github.com/TeamHG-Memex/sklearn-crfsuite>`_
+  Linear-chain conditional random fields
+  (`CRFsuite <http://www.chokkan.org/software/crfsuite/>`_ wrapper with
+  sklearn-like API).
+
 - `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate adaptive
   regression splines
 
@@ -81,8 +89,14 @@ and tasks.
   ensembles) trained by sklearn. Useful for latency-sensitive production
   environments.
 
-- `lda <https://github.com/ariddell/lda/>`_: Fast implementation of Latent
-  Dirichlet Allocation in Cython.
+- `lda <https://github.com/ariddell/lda/>`_: Fast implementation of latent
+  Dirichlet allocation in Cython which uses `Gibbs sampling
+  <https://en.wikipedia.org/wiki/Gibbs_sampling>`_ to sample from the true
+  posterior distribution. (scikit-learn's
+  :class:`sklearn.decomposition.LatentDirichletAllocation` implementation uses
+  `variational inference
+  <https://en.wikipedia.org/wiki/Variational_Bayesian_methods>`_ to sample from
+  a tractable approximation of a topic model's posterior distribution.)
 
 - `Sparse Filtering <https://github.com/jmetzen/sparse-filtering>`_
   Unsupervised feature learning based on sparse-filtering
@@ -99,16 +113,17 @@ and tasks.
 
 - `sparkit-learn <https://github.com/lensacom/sparkit-learn>`_ Scikit-learn functionality and API on PySpark.
 
-- `keras <https://github.com/fchollet/keras>`_ Theano-based Deep Learning library.
+- `keras <https://github.com/fchollet/keras>`_ Deep Learning library capable of
+  running on top of either TensorFlow or Theano.
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
 
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
   several of its variations.
-  
-- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms 
-  for robust variable density clustering. 
+
+- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms
+  for robust variable density clustering.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to build and train neural networks in Theano.
 
@@ -142,7 +157,7 @@ Other packages useful for data analysis and machine learning.
 - `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
   document indexing and similarity retrieval
 
-- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on 
+- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning

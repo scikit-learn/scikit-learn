@@ -255,7 +255,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
     X : array-like, shape (n_samples, n_features)
         The input data array.
 
-    resp : array-like, shape (n_samples, n_features)
+    resp : array-like, shape (n_samples, n_components)
         The responsibilities for each data sample in X.
 
     reg_covar : float
@@ -485,11 +485,11 @@ class GaussianMixture(BaseMixture):
         The user-provided initial weights, defaults to None.
         If it None, weights are initialized using the `init_params` method.
 
-    means_init: array-like, shape (n_components, n_features), optional
+    means_init : array-like, shape (n_components, n_features), optional
         The user-provided initial means, defaults to None,
         If it None, means are initialized using the `init_params` method.
 
-    precisions_init: array-like, optional.
+    precisions_init : array-like, optional.
         The user-provided initial precisions (inverse of the covariance
         matrices), defaults to None.
         If it None, precisions are initialized using the 'init_params' method.
@@ -726,8 +726,8 @@ class GaussianMixture(BaseMixture):
 
         Returns
         -------
-        bic: float
-            The greater the better.
+        bic : float
+            The lower the better.
         """
         return (-2 * self.score(X) * X.shape[0] +
                 self._n_parameters() * np.log(X.shape[0]))
@@ -737,11 +737,11 @@ class GaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array of shape(n_samples, n_dimensions)
+        X : array of shape (n_samples, n_dimensions)
 
         Returns
         -------
-        aic: float
-            The greater the better.
+        aic : float
+            The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()

@@ -46,6 +46,10 @@ warnings.warn("This module was deprecated in version 0.18 in favor of the "
 class ParameterGrid(object):
     """Grid of parameters with a discrete number of values for each.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.ParameterGrid` instead.
+
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
 
@@ -165,6 +169,10 @@ class ParameterGrid(object):
 class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.ParameterSampler` instead.
+
     Non-deterministic iterable over random candidate combinations for hyper-
     parameter search. If all parameters are presented as a list,
     sampling without replacement is performed. If at least one parameter
@@ -264,6 +272,10 @@ class ParameterSampler(object):
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score='raise', **fit_params):
     """Run fit on one set of parameters.
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.fit_grid_point` instead.
 
     Parameters
     ----------
@@ -386,6 +398,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
+
+    @property
+    def classes_(self):
+        return self.best_estimator_.classes_
 
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
@@ -614,6 +630,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 class GridSearchCV(BaseSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.GridSearchCV` instead.
+
     Important members are fit, predict.
 
     GridSearchCV implements a "fit" and a "score" method.
@@ -650,8 +670,16 @@ class GridSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default=1
-        Number of jobs to run in parallel.
+    n_jobs: int, default: 1 :
+        The maximum number of estimators fit in parallel.
+
+            - If -1 all CPUs are used.
+
+            - If 1 is given, no parallel computing code is used at all,
+              which is useful for debugging.
+
+            - For ``n_jobs`` below -1, ``(n_cpus + n_jobs + 1)`` are used.
+              For example, with ``n_jobs = -2`` all CPUs but one are used.
 
         .. versionchanged:: 0.17
            Upgraded to joblib 0.9.3.
@@ -688,7 +716,7 @@ class GridSearchCV(BaseSearchCV):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, 
+        either binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. In all
         other cases, :class:`sklearn.model_selection.KFold` is used.
 
@@ -721,7 +749,7 @@ class GridSearchCV(BaseSearchCV):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
-                         decision_function_shape=None, degree=..., gamma=...,
+                         decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
@@ -816,6 +844,9 @@ class GridSearchCV(BaseSearchCV):
 class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.RandomizedSearchCV` instead.
 
     RandomizedSearchCV implements a "fit" and a "score" method.
     It also implements "predict", "predict_proba", "decision_function",
@@ -865,8 +896,16 @@ class RandomizedSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default=1
-        Number of jobs to run in parallel.
+    n_jobs: int, default: 1 :
+        The maximum number of estimators fit in parallel.
+
+            - If -1 all CPUs are used.
+
+            - If 1 is given, no parallel computing code is used at all,
+              which is useful for debugging.
+
+            - For ``n_jobs`` below -1, ``(n_cpus + n_jobs + 1)`` are used.
+              For example, with ``n_jobs = -2`` all CPUs but one are used.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -900,7 +939,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, 
+        either binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. In all
         other cases, :class:`sklearn.model_selection.KFold` is used.
 

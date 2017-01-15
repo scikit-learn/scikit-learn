@@ -10,6 +10,7 @@
 
 import numpy as np
 cimport numpy as np
+from _tree cimport Node 
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -36,6 +37,9 @@ ctypedef fused realloc_ptr:
     (unsigned char*)
     (WeightedPQueueRecord*)
     (DOUBLE_t*)
+    (DOUBLE_t**)
+    (Node*)
+    (Node**)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 
@@ -102,6 +106,8 @@ cdef class PriorityHeap:
     cdef PriorityHeapRecord* heap_
 
     cdef bint is_empty(self) nogil
+    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil
+    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos, SIZE_t heap_length) nogil
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,

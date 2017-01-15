@@ -331,3 +331,20 @@ def test_set_estimator_none():
     assert_array_equal(eclf1.transform(X1), np.array([[[0.7, 0.3], [0.3, 0.7]],
                                                       [[1., 0.], [0., 1.]]]))
     assert_array_equal(eclf2.transform(X1), np.array([[[1., 0.], [0., 1.]]]))
+
+
+def test_estimator_weights_format():
+    # Test estimator weights inputs as list and array
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    eclf1 = VotingClassifier(estimators=[
+                ('lr', clf1), ('rf', clf2)],
+                weights=[1, 2],
+                voting='soft')
+    eclf2 = VotingClassifier(estimators=[
+                ('lr', clf1), ('rf', clf2)],
+                weights=np.array((1, 2)),
+                voting='soft')
+    eclf1.fit(X, y)
+    eclf2.fit(X, y)
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))

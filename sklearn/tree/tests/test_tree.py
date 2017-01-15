@@ -1,6 +1,7 @@
 """
 Testing for the tree module (sklearn.tree).
 """
+import copy
 import pickle
 from functools import partial
 from itertools import product
@@ -27,7 +28,6 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 
@@ -42,12 +42,14 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF
+from sklearn.tree.tree import CRITERIA_CLF
+from sklearn.tree.tree import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", "mae")
+REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -379,11 +381,6 @@ def test_importances():
         assert_equal(importances.shape[0], 10, "Failed with {0}".format(name))
         assert_equal(n_important, 3, "Failed with {0}".format(name))
 
-        X_new = assert_warns(
-            DeprecationWarning, clf.transform, X, threshold="mean")
-        assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
-        assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
-
     # Check on iris that importances are the same for all builders
     clf = DecisionTreeClassifier(random_state=0)
     clf.fit(iris.data, iris.target)
@@ -526,7 +523,8 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit,
+                      X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -597,7 +595,6 @@ def test_min_samples_split():
 
         assert_greater(np.min(node_samples), 9,
                        "Failed with {0}".format(name))
-
 
 
 def test_min_samples_leaf():
@@ -862,7 +859,6 @@ def test_pickle():
                          fitted_attribute[attribute],
                          "Failed to generate same attribute {0} after "
                          "pickling with {1}".format(attribute, name))
-
 
 
 def test_multioutput():
@@ -1284,18 +1280,19 @@ def check_sparse_input(tree, dataset, max_depth=None):
 
 
 def test_sparse_input():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ("clf_small", "toy", "digits", "multilabel",
-                                  "sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros")):
+    for tree_type, dataset in product(SPARSE_TREES, ("clf_small", "toy",
+                                                     "digits", "multilabel",
+                                                     "sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros")):
         max_depth = 3 if dataset == "digits" else None
-        yield (check_sparse_input, tree, dataset, max_depth)
+        yield (check_sparse_input, tree_type, dataset, max_depth)
 
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    for tree, dataset in product(REG_TREES, ["boston", "reg_small"]):
-        if tree in SPARSE_TREES:
-            yield (check_sparse_input, tree, dataset, 2)
+    for tree_type, dataset in product(SPARSE_TREES, ["boston", "reg_small"]):
+        if tree_type in REG_TREES:
+            yield (check_sparse_input, tree_type, dataset, 2)
 
 
 def check_sparse_parameters(tree, dataset):
@@ -1343,10 +1340,10 @@ def check_sparse_parameters(tree, dataset):
 
 
 def test_sparse_parameters():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ["sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros"]):
-        yield (check_sparse_parameters, tree, dataset)
+    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros"]):
+        yield (check_sparse_parameters, tree_type, dataset)
 
 
 def check_sparse_criterion(tree, dataset):
@@ -1370,10 +1367,10 @@ def check_sparse_criterion(tree, dataset):
 
 
 def test_sparse_criterion():
-    for tree, dataset in product(SPARSE_TREES,
-                                 ["sparse-pos", "sparse-neg", "sparse-mix",
-                                  "zeros"]):
-        yield (check_sparse_criterion, tree, dataset)
+    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
+                                                     "sparse-neg",
+                                                     "sparse-mix", "zeros"]):
+        yield (check_sparse_criterion, tree_type, dataset)
 
 
 def check_explicit_sparse_zeros(tree, max_depth=3,
@@ -1446,8 +1443,8 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
 
 
 def test_explicit_sparse_zeros():
-    for tree in SPARSE_TREES:
-        yield (check_explicit_sparse_zeros, tree)
+    for tree_type in SPARSE_TREES:
+        yield (check_explicit_sparse_zeros, tree_type)
 
 
 @ignore_warnings
@@ -1597,6 +1594,7 @@ def test_no_sparse_y_support():
     for name in ALL_TREES:
         yield (check_no_sparse_y_support, name)
 
+
 def test_mae():
     # check MAE criterion produces correct results
     # on small toy dataset
@@ -1609,3 +1607,30 @@ def test_mae():
     dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3], [0.6,0.3,0.1,1.0,0.3])
     assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
     assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
+
+
+def test_criterion_copy():
+    # Let's check whether copy of our criterion has the same type
+    # and properties as original
+    n_outputs = 3
+    n_classes = np.arange(3, dtype=np.intp)
+    n_samples = 100
+
+    def _pickle_copy(obj):
+        return pickle.loads(pickle.dumps(obj))
+    for copy_func in [copy.copy, copy.deepcopy, _pickle_copy]:
+        for _, typename in CRITERIA_CLF.items():
+            criteria = typename(n_outputs, n_classes)
+            result = copy_func(criteria).__reduce__()
+            typename_, (n_outputs_, n_classes_), _ = result
+            assert_equal(typename, typename_)
+            assert_equal(n_outputs, n_outputs_)
+            assert_array_equal(n_classes, n_classes_)
+
+        for _, typename in CRITERIA_REG.items():
+            criteria = typename(n_outputs, n_samples)
+            result = copy_func(criteria).__reduce__()
+            typename_, (n_outputs_, n_samples_), _ = result
+            assert_equal(typename, typename_)
+            assert_equal(n_outputs, n_outputs_)
+            assert_equal(n_samples, n_samples_)

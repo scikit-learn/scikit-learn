@@ -145,7 +145,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
                                  ' should be a list of (string, estimator)'
                                  ' tuples')
 
-        if self.weights and len(self.weights) != len(self.estimators):
+        if (self.weights is not None and
+                len(self.weights) != len(self.estimators)):
             raise ValueError('Number of classifiers and weights must be equal'
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))

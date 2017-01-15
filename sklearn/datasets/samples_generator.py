@@ -584,7 +584,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     n_samples : int, optional (default=100)
         The total number of points generated.
 
-    shuffle: bool, optional (default=True)
+    shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
 
     noise : double or None (default=None)
@@ -1050,7 +1050,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_samples : int
         number of samples to generate
 
-    n_components:  int,
+    n_components :  int,
         number of components in the dictionary
 
     n_features : int
@@ -1194,7 +1194,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         The size of the random matrix to generate.
 
     alpha : float between 0 and 1, optional (default=0.95)
-        The probability that a coefficient is zero (see notes). Larger values 
+        The probability that a coefficient is zero (see notes). Larger values
         enforce more sparsity.
 
     random_state : int, RandomState instance or None, optional (default=None)
