@@ -34,6 +34,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.pipeline import Pipeline
@@ -259,8 +260,8 @@ for penalty in ["l2", "l1"]:
     print('=' * 80)
     print("%s penalty" % penalty.upper())
     # Train Liblinear model
-    results.append(benchmark(LinearSVC(loss='l2', penalty=penalty,
-                                            dual=False, tol=1e-3)))
+    results.append(benchmark(LinearSVC(penalty=penalty, dual=False,
+                                       tol=1e-3)))
 
     # Train SGD model
     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
@@ -288,9 +289,9 @@ print("LinearSVC with L1-based feature selection")
 # The smaller C, the stronger the regularization.
 # The more regularization, the more sparsity.
 results.append(benchmark(Pipeline([
-  ('feature_selection', LinearSVC(penalty="l1", dual=False, tol=1e-3)),
-  ('classification', LinearSVC())
-])))
+  ('feature_selection', SelectFromModel(LinearSVC(penalty="l1", dual=False,
+                                                  tol=1e-3))),
+  ('classification', LinearSVC(penalty="l2"))])))
 
 # make some plots
 
