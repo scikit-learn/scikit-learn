@@ -3,7 +3,6 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import pinv2
-from scipy.linalg import eigh
 from itertools import chain
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
@@ -132,7 +131,7 @@ def test_pinvh_simple_complex():
 
 
 def test_arpack_eigsh_initialization():
-    # Non-regression test that shows null-space computation is better with 
+    # Non-regression test that shows null-space computation is better with
     # initialization of eigsh from [-1,1] instead of [0,1]
     random_state = check_random_state(42)
 

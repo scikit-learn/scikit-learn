@@ -24,7 +24,7 @@ Note that there exist a lot of different clustering criteria and associated
 algorithms. The simplest clustering algorithm is
 :ref:`k_means`.
 
-.. image:: ../../auto_examples/cluster/images/plot_cluster_iris_002.png
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
     :target: ../../auto_examples/cluster/plot_cluster_iris.html
     :scale: 70
     :align: right
@@ -45,15 +45,15 @@ algorithms. The simplest clustering algorithm is
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
-.. |k_means_iris_bad_init| image:: ../../auto_examples/cluster/images/plot_cluster_iris_003.png
+.. |k_means_iris_bad_init| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |k_means_iris_8| image:: ../../auto_examples/cluster/images/plot_cluster_iris_001.png
+.. |k_means_iris_8| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |cluster_iris_truth| image:: ../../auto_examples/cluster/images/plot_cluster_iris_004.png
+.. |cluster_iris_truth| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_004.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
@@ -85,19 +85,19 @@ algorithms. The simplest clustering algorithm is
 
     **Don't over-interpret clustering results**
 
-.. |face| image:: ../../auto_examples/cluster/images/plot_face_compress_001.png
+.. |face| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |face_regular| image:: ../../auto_examples/cluster/images/plot_face_compress_002.png
+.. |face_regular| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |face_compressed| image:: ../../auto_examples/cluster/images/plot_face_compress_003.png
+.. |face_compressed| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_003.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |face_histogram| image:: ../../auto_examples/cluster/images/plot_face_compress_004.png
+.. |face_histogram| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
@@ -105,7 +105,7 @@ algorithms. The simplest clustering algorithm is
 
     Clustering in general and KMeans, in particular, can be seen as a way
     of choosing a small number of exemplars to compress the information.
-    The problem is sometimes known as 
+    The problem is sometimes known as
     `vector quantization <https://en.wikipedia.org/wiki/Vector_quantization>`_.
     For instance, this can be used to posterize an image::
 
@@ -177,7 +177,7 @@ This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
 clustering an image:
 
-.. image:: ../../auto_examples/cluster/images/plot_face_ward_segmentation_001.png
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_face_ward_segmentation_001.png
     :target: ../../auto_examples/cluster/plot_face_ward_segmentation.html
     :scale: 40
     :align: right
@@ -200,7 +200,7 @@ features: **feature agglomeration**. This approach can be implemented by
 clustering in the feature direction, in other words clustering the
 transposed data.
 
-.. image:: ../../auto_examples/cluster/images/plot_digits_agglomeration_001.png
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_digits_agglomeration_001.png
     :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
     :align: right
     :scale: 57
@@ -242,11 +242,11 @@ Principal component analysis: PCA
 :ref:`PCA` selects the successive components that
 explain the maximum variance in the signal.
 
-.. |pca_3d_axis| image:: ../../auto_examples/decomposition/images/plot_pca_3d_001.png
+.. |pca_3d_axis| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_001.png
    :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
-.. |pca_3d_aligned| image:: ../../auto_examples/decomposition/images/plot_pca_3d_002.png
+.. |pca_3d_aligned| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_002.png
    :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
@@ -275,7 +275,7 @@ data by projecting on a principal subspace.
     >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
     >>> pca.fit(X)
-    PCA(copy=True, iterated_power=4, n_components=None, random_state=None,
+    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_)  # doctest: +SKIP
     [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
@@ -295,7 +295,7 @@ Independent Component Analysis: ICA
 a maximum amount of independent information. It is able to recover
 **non-Gaussian** independent signals:
 
-.. image:: ../../auto_examples/decomposition/images/plot_ica_blind_source_separation_001.png
+.. image:: /auto_examples/decomposition/images/sphx_glr_plot_ica_blind_source_separation_001.png
    :target: ../../auto_examples/decomposition/plot_ica_blind_source_separation.html
    :scale: 70
    :align: center

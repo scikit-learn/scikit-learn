@@ -46,7 +46,7 @@ The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
 penalties for classification.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_separating_hyperplane_001.png
    :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 75
@@ -137,7 +137,7 @@ below illustrates the OVA approach on the iris dataset.  The dashed
 lines represent the three OVA classifiers; the background colors show
 the decision surface induced by the three classifiers.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_iris_001.png
    :target: ../auto_examples/linear_model/plot_sgd_iris.html
    :align: center
    :scale: 75
@@ -158,11 +158,11 @@ further information.
 
 .. topic:: Examples:
 
- - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
- - :ref:`example_linear_model_plot_sgd_iris.py`
- - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
- - :ref:`example_linear_model_plot_sgd_comparison.py`
- - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`,
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
 by setting ```average=True```. ASGD works by averaging the coefficients
@@ -218,7 +218,7 @@ matrix format as defined in `scipy.sparse.csr_matrix
 
 .. topic:: Examples:
 
- - :ref:`example_text_document_classification_20newsgroups.py`
+ - :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
 Complexity
 ==========
@@ -304,7 +304,7 @@ Different choices for :math:`L` entail different classifiers such as
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_loss_functions_001.png
     :target: ../auto_examples/linear_model/plot_sgd_loss_functions.html
     :align: center
     :scale: 75
@@ -319,7 +319,7 @@ Popular choices for the regularization term :math:`R` include:
 The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties_001.png
+.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sgd_penalties_001.png
     :target: ../auto_examples/linear_model/plot_sgd_penalties.html
     :align: center
     :scale: 75

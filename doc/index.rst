@@ -207,6 +207,8 @@
                     <li><em>On-going development:</em>
                     <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
+                    <li><em>September 2016.</em> scikit-learn 0.18.0 is available for download (<a href="whats_new.html#version-0-18">Changelog</a>).
+                    </li>
                     <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new.html#version-0-17">Changelog</a>).
                     </li>
                     <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html#version-0-16">Changelog</a>).
@@ -234,7 +236,7 @@
                 <div class="span4">
                     <h4>Community</h4>
                     <ul>
-                    <li><em>About us</em> See <a href="about.html#people">authors</a></li>
+                    <li><em>About us</em> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
                     <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
                     <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
                     <li><em>Mailing list:</em> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>
@@ -328,6 +330,7 @@
                    <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
                    <img id="index-funding-logo-small" src="_static/img/nyu_short_color.png" title="NYU CDS">
+                   <img id="index-funding-logo-small" src="_static/img/columbia.png" title="Columbia University" style="max-height: 36px;">
                  </a>
              </div>
              <div class="span3">

@@ -51,7 +51,7 @@ class ItemSelector(BaseEstimator, TransformerMixin):
 
     >> len(data[key]) == n_samples
 
-    Please note that this is the opposite convention to sklearn feature
+    Please note that this is the opposite convention to scikit-learn feature
     matrixes (where the first index corresponds to sample).
 
     ItemSelector only requires that the collection implement getitem

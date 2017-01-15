@@ -2,7 +2,6 @@ import os
 import shutil
 import tempfile
 import warnings
-import nose
 import numpy
 from pickle import loads
 from pickle import dumps
@@ -26,6 +25,8 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import with_setup
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -83,7 +84,7 @@ def test_default_empty_load_files():
     assert_equal(res.DESCR, None)
 
 
-@nose.tools.with_setup(setup_load_files, teardown_load_files)
+@with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
     res = load_files(LOAD_FILES_ROOT)
     assert_equal(len(res.filenames), 1)
@@ -92,7 +93,7 @@ def test_default_load_files():
     assert_equal(res.data, [b("Hello World!\n")])
 
 
-@nose.tools.with_setup(setup_load_files, teardown_load_files)
+@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_w_categories_desc_and_encoding():
     category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
     res = load_files(LOAD_FILES_ROOT, description="test",
@@ -103,7 +104,7 @@ def test_load_files_w_categories_desc_and_encoding():
     assert_equal(res.data, [u("Hello World!\n")])
 
 
-@nose.tools.with_setup(setup_load_files, teardown_load_files)
+@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_wo_load_content():
     res = load_files(LOAD_FILES_ROOT, load_content=False)
     assert_equal(len(res.filenames), 1)
@@ -126,6 +127,13 @@ def test_load_digits():
     digits = load_digits()
     assert_equal(digits.data.shape, (1797, 64))
     assert_equal(numpy.unique(digits.target).size, 10)
+
+    # test return_X_y option
+    X_y_tuple = load_digits(return_X_y=True)
+    bunch = load_digits()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_digits_n_class_lt_10():
@@ -163,6 +171,14 @@ def test_load_diabetes():
     res = load_diabetes()
     assert_equal(res.data.shape, (442, 10))
     assert_true(res.target.size, 442)
+    assert_equal(len(res.feature_names), 10)
+
+    # test return_X_y option
+    X_y_tuple = load_diabetes(return_X_y=True)
+    bunch = load_diabetes()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_linnerud():
@@ -172,6 +188,12 @@ def test_load_linnerud():
     assert_equal(len(res.target_names), 3)
     assert_true(res.DESCR)
 
+    # test return_X_y option
+    X_y_tuple = load_linnerud(return_X_y=True)
+    bunch = load_linnerud()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 def test_load_iris():
     res = load_iris()
@@ -179,6 +201,13 @@ def test_load_iris():
     assert_equal(res.target.size, 150)
     assert_equal(res.target_names.size, 3)
     assert_true(res.DESCR)
+
+    # test return_X_y option
+    X_y_tuple = load_iris(return_X_y=True)
+    bunch = load_iris()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_breast_cancer():
@@ -188,6 +217,13 @@ def test_load_breast_cancer():
     assert_equal(res.target_names.size, 2)
     assert_true(res.DESCR)
 
+    # test return_X_y option
+    X_y_tuple = load_breast_cancer(return_X_y=True)
+    bunch = load_breast_cancer()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
+
 
 def test_load_boston():
     res = load_boston()
@@ -196,6 +232,12 @@ def test_load_boston():
     assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
 
+    # test return_X_y option
+    X_y_tuple = load_boston(return_X_y=True)
+    bunch = load_boston()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 def test_loads_dumps_bunch():
     bunch = Bunch(x="x")
@@ -223,3 +265,9 @@ def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
     bunch_from_pkl.key = 'changed'
     assert_equal(bunch_from_pkl.key, 'changed')
     assert_equal(bunch_from_pkl['key'], 'changed')
+
+
+def test_bunch_dir():
+    # check that dir (important for autocomplete) shows attributes
+    data = load_iris()
+    assert_true("data" in dir(data))

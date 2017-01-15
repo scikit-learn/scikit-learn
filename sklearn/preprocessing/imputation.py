@@ -10,7 +10,6 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils import safe_mask
 from ..utils.fixes import astype
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -103,20 +102,10 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If `axis=0` and X is encoded as a CSR matrix;
         - If `axis=1` and X is encoded as a CSC matrix.
 
-    add_indicator_features : boolean, optional (default=False)
-        If True, the transformed ``X`` will have binary indicator features
-        appended. These correspond to input features with at least one
-        missing value marking which elements have been imputed.
-
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature if axis == 0.
-
-    imputed_features_ : array of shape (n_features_with_missing, )
-        The input features which have been imputed during transform.
-        The size of this attribute will be the number of features with
-        at least one missing value (and fewer than all in the axis=0 case).
 
     Notes
     -----
@@ -127,13 +116,12 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True, add_indicator_features=False):
+                 axis=0, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
         self.verbose = verbose
         self.copy = copy
-        self.add_indicator_features = add_indicator_features
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -311,82 +299,27 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             return most_frequent
 
-    def _sparse_transform(self, X, valid_stats, valid_idx):
-        """transformer on sparse data."""
-        mask = _get_mask(X.data, self.missing_values)
-        indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
-                            np.diff(X.indptr))[mask]
-
-        X.data[mask] = astype(valid_stats[indexes], X.dtype,
-                              copy=False)
-
-        mask_matrix = X.__class__((mask, X.indices.copy(),
-                                  X.indptr.copy()), shape=X.shape,
-                                  dtype=X.dtype)
-        mask_matrix.eliminate_zeros()  # removes explicit False entries
-        features_with_missing_values = mask_matrix.sum(axis=0).A.nonzero()[1]
-        features_mask = safe_mask(mask_matrix, features_with_missing_values)
-        imputed_mask = mask_matrix[:, features_mask]
-        if self.axis == 0:
-            self.imputed_features_ = valid_idx[features_with_missing_values]
-        else:
-            self.imputed_features_ = features_with_missing_values
-
-        if self.add_indicator_features:
-            X = sparse.hstack((X, imputed_mask))
-
-        return X
-
-    def _dense_transform(self, X, valid_stats, valid_idx):
-        """transformer on dense data."""
-        mask = _get_mask(X, self.missing_values)
-        n_missing = np.sum(mask, axis=self.axis)
-        values = np.repeat(valid_stats, n_missing)
-
-        if self.axis == 0:
-            coordinates = np.where(mask.transpose())[::-1]
-        else:
-            coordinates = mask
-
-        X[coordinates] = values
-
-        features_with_missing_values = np.where(np.any
-                                                (mask, axis=0))[0]
-        imputed_mask = mask[:, features_with_missing_values]
-        if self.axis == 0:
-            self.imputed_features_ = valid_idx[features_with_missing_values]
-        else:
-            self.imputed_features_ = features_with_missing_values
-
-        if self.add_indicator_features:
-            X = np.hstack((X, imputed_mask))
-
-        return X
-
     def transform(self, X):
         """Impute all missing values in X.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
-
-        Return
-        ------
-        X_new : {array-like, sparse matrix},
-                Transformed array.
-                shape (n_samples, n_features_new) when
-                ``add_indicator_features`` is False,
-                shape (n_samples, n_features_new + len(imputed_features_)
-                when ``add_indicator_features`` is True.
         """
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
+            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
+                            force_all_finite=False, copy=self.copy)
+            statistics = self.statistics_
+            if X.shape[1] != statistics.shape[0]:
+                raise ValueError("X has %d features per sample, expected %d"
+                                 % (X.shape[1], self.statistics_.shape[0]))
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
-        if self.axis == 1:
+        else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
                             force_all_finite=False, copy=self.copy)
 
@@ -401,36 +334,44 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.strategy,
                                              self.missing_values,
                                              self.axis)
-        else:
-            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
-            statistics = self.statistics_
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
-        valid_idx = np.where(valid_mask)[0]
+        valid_statistics_indexes = np.where(valid_mask)[0]
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
-            X = X[:, valid_idx]
+            X = X[:, valid_statistics_indexes]
         elif self.axis == 1 and invalid_mask.any():
             raise ValueError("Some rows only contain "
                              "missing values: %s" % missing)
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
-            # sparse matrix and missing values is not zero
-            X = self._sparse_transform(X, valid_statistics, valid_idx)
+            mask = _get_mask(X.data, self.missing_values)
+            indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+                                np.diff(X.indptr))[mask]
+
+            X.data[mask] = astype(valid_statistics[indexes], X.dtype,
+                                  copy=False)
         else:
-            # sparse with zero as missing value and dense matrix
             if sparse.issparse(X):
                 X = X.toarray()
 
-            X = self._dense_transform(X, valid_statistics, valid_idx)
+            mask = _get_mask(X, self.missing_values)
+            n_missing = np.sum(mask, axis=self.axis)
+            values = np.repeat(valid_statistics, n_missing)
+
+            if self.axis == 0:
+                coordinates = np.where(mask.transpose())[::-1]
+            else:
+                coordinates = mask
+
+            X[coordinates] = values
 
         return X

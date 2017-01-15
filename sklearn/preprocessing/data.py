@@ -9,6 +9,7 @@
 from itertools import chain, combinations
 import numbers
 import warnings
+from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
@@ -16,10 +17,8 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
-from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
@@ -50,13 +49,6 @@ __all__ = [
     'maxabs_scale',
     'minmax_scale',
 ]
-
-DEPRECATION_MSG_1D = (
-    "Passing 1d arrays as data is deprecated in 0.17 and will "
-    "raise ValueError in 0.19. Reshape your data either using "
-    "X.reshape(-1, 1) if your data has a single feature or "
-    "X.reshape(1, -1) if it contains a single sample."
-)
 
 
 def _handle_zeros_in_scale(scale, copy=True):
@@ -123,7 +115,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-    """
+    """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
                     dtype=FLOAT_DTYPES)
@@ -204,7 +196,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     copy : boolean, optional, default True
@@ -226,19 +218,19 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Per feature minimum seen in the data
 
         .. versionadded:: 0.17
-           *data_min_* instead of deprecated *data_min*.
+           *data_min_*
 
     data_max_ : ndarray, shape (n_features,)
         Per feature maximum seen in the data
 
         .. versionadded:: 0.17
-           *data_max_* instead of deprecated *data_max*.
+           *data_max_*
 
     data_range_ : ndarray, shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
 
         .. versionadded:: 0.17
-           *data_range_* instead of deprecated *data_range*.
+           *data_range_*
 
     See also
     --------
@@ -248,18 +240,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     def __init__(self, feature_range=(0, 1), copy=True):
         self.feature_range = feature_range
         self.copy = copy
-
-    @property
-    @deprecated("Attribute data_range will be removed in "
-                "0.19. Use ``data_range_`` instead")
-    def data_range(self):
-        return self.data_range_
-
-    @property
-    @deprecated("Attribute data_min will be removed in "
-                "0.19. Use ``data_min_`` instead")
-    def data_min(self):
-        return self.data_min_
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -314,11 +294,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, copy=self.copy, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         data_min = np.min(X, axis=0)
         data_max = np.max(X, axis=0)
@@ -351,9 +328,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
         X *= self.scale_
         X += self.min_
@@ -369,9 +344,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
         X -= self.min_
         X /= self.scale_
@@ -398,11 +371,12 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     .. versionadded:: 0.17
-       *minmax_scale* function interface to :class:`sklearn.preprocessing.MinMaxScaler`.
+       *minmax_scale* function interface
+       to :class:`sklearn.preprocessing.MinMaxScaler`.
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     axis : int (0 by default)
@@ -417,14 +391,8 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-    """
-    # To allow retro-compatibility, we handle here the case of 1D-input
-    # From 0.17, 1D-input are deprecated in scaler objects
-    # Although, we want to allow the users to keep calling this function
-    # with 1D-input.
-
-    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
-    # done inside the scaler object fit_transform.
+    """  # noqa
+    # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
                     dtype=FLOAT_DTYPES)
@@ -496,7 +464,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         Per feature relative scaling of the data.
 
         .. versionadded:: 0.17
-           *scale_* is recommended instead of deprecated *std_*.
+           *scale_*
 
     mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
@@ -515,17 +483,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     :class:`sklearn.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
-    """
+    """  # noqa
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
         self.copy = copy
-
-    @property
-    @deprecated("Attribute ``std_`` will be removed in 0.19. Use ``scale_`` instead")
-    def std_(self):
-        return self.scale_
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -550,7 +513,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
 
         # Reset internal state before fitting
@@ -574,14 +537,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -639,12 +598,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy,
-                        ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -774,13 +729,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             mins, maxs = min_max_axis(X, axis=0)
@@ -810,10 +762,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
@@ -831,9 +780,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             inplace_column_scale(X, self.scale_)
@@ -865,14 +812,9 @@ def maxabs_scale(X, axis=0, copy=True):
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-    """
-    # To allow retro-compatibility, we handle here the case of 1D-input
-    # From 0.17, 1D-input are deprecated in scaler objects
-    # Although, we want to allow the users to keep calling this function
-    # with 1D-input.
+    """  # noqa
+    # Unlike the scaler object, this function allows 1d input.
 
-    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
-    # done inside the scaler object fit_transform.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                     ensure_2d=False, dtype=FLOAT_DTYPES)
@@ -897,8 +839,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
-    the Interquartile Range (IQR). The IQR is the range between the 1st
-    quartile (25th quantile) and the 3rd quartile (75th quantile).
+    the quantile range (defaults to IQR: Interquartile Range).
+    The IQR is the range between the 1st quartile (25th quantile)
+    and the 3rd quartile (75th quantile).
 
     Centering and scaling happen independently on each feature (or each
     sample, depending on the `axis` argument) by computing the relevant
@@ -928,6 +871,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     with_scaling : boolean, True by default
         If True, scale the data to interquartile range.
 
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
+        Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
+        Quantile range used to calculate ``scale_``.
+
+        .. versionadded:: 0.18
+
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
@@ -950,7 +899,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     robust_scale: Equivalent function without the object oriented API.
 
     :class:`sklearn.decomposition.PCA`
-        Further removes the linear correlation across features with 'whiten=True'.
+        Further removes the linear correlation across features with
+        'whiten=True'.
 
     Notes
     -----
@@ -960,18 +910,17 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     https://en.wikipedia.org/wiki/Interquartile_range
     """
 
-    def __init__(self, with_centering=True, with_scaling=True, copy=True):
+    def __init__(self, with_centering=True, with_scaling=True,
+                 quantile_range=(25.0, 75.0), copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
+        self.quantile_range = quantile_range
         self.copy = copy
 
     def _check_array(self, X, copy):
         """Makes sure centering is not enabled for sparse matrices."""
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             if self.with_centering:
@@ -992,13 +941,16 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             raise TypeError("RobustScaler cannot be fitted on sparse inputs")
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
         if self.with_centering:
             self.center_ = np.median(X, axis=0)
 
         if self.with_scaling:
-            q = np.percentile(X, (25, 75), axis=0)
+            q_min, q_max = self.quantile_range
+            if not 0 <= q_min <= q_max <= 100:
+                raise ValueError("Invalid quantile range: %s" %
+                                 str(self.quantile_range))
+
+            q = np.percentile(X, self.quantile_range, axis=0)
             self.scale_ = (q[1] - q[0])
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         return self
@@ -1016,8 +968,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1042,8 +992,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1056,7 +1004,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
+def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
+                 quantile_range=(25.0, 75.0), copy=True):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -1080,6 +1029,12 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
     with_scaling : boolean, True by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
+
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
+        Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
+        Quantile range used to calculate ``scale_``.
+
+        .. versionadded:: 0.18
 
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
@@ -1105,7 +1060,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
-                     copy=copy)
+                     quantile_range=quantile_range, copy=copy)
     if axis == 0:
         return s.fit_transform(X)
     else:
@@ -1173,7 +1128,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     exponentially in the degree. High degrees can cause overfitting.
 
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
-    <example_linear_model_plot_polynomial_interpolation.py>`
+    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
@@ -1301,6 +1256,16 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     return_norm : boolean, default False
         whether to return the computed norms
 
+    Returns
+    -------
+    X : {array-like, sparse matrix}, shape [n_samples, n_features]
+        Normalized input X.
+
+    norms : array, shape [n_samples] if axis=1 else [n_features]
+        An array of norms along given axis for X.
+        When X is sparse, a NotImplementedError will be raised
+        for norm 'l1' or 'l2'.
+
     See also
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
@@ -1322,15 +1287,19 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         X = X.T
 
     if sparse.issparse(X):
+        if return_norm and norm in ('l1', 'l2'):
+            raise NotImplementedError("return_norm=True is not implemented "
+                                      "for sparse matrices with norm 'l1' "
+                                      "or norm 'l2'")
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
             _, norms = min_max_axis(X, 1)
-            norms = norms.repeat(np.diff(X.indptr))
-            mask = norms != 0
-            X.data[mask] /= norms[mask]
+            norms_elementwise = norms.repeat(np.diff(X.indptr))
+            mask = norms_elementwise != 0
+            X.data[mask] /= norms_elementwise[mask]
     else:
         if norm == 'l1':
             norms = np.abs(X).sum(axis=1)
@@ -1670,10 +1639,10 @@ def _transform_selected(X, transform, selected="all", copy=True):
     -------
     X : array or sparse matrix, shape=(n_samples, n_features_new)
     """
+    X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
+
     if isinstance(selected, six.string_types) and selected == "all":
         return transform(X)
-
-    X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
 
     if len(selected) == 0:
         return X
@@ -1713,6 +1682,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
 
+    Note: a one-hot encoding of y labels should use a LabelBinarizer
+    instead.
+
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
     Parameters
@@ -1724,9 +1696,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         - int : number of categorical values per feature.
                 Each feature value should be in ``range(n_values)``
         - array : ``n_values[i]`` is the number of categorical values in
-                  ``X[:, i]``. Each feature value should be in ``range(n_values[i])``
+                  ``X[:, i]``. Each feature value should be
+                  in ``range(n_values[i])``
 
-    categorical_features: "all" or array of indices or mask
+    categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
 
         - 'all' (default): All features are treated as categorical.
@@ -1785,6 +1758,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
+    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
+      fashion.
+    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
+      iterables and a multilabel format, e.g. a (samples x classes) binary
+      matrix indicating the presence of a class label.
+    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
+      and n_classes-1.
     """
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
@@ -1816,7 +1796,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
         if (isinstance(self.n_values, six.string_types) and
-            self.n_values == 'auto'):
+                self.n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
             if (np.max(X, axis=0) >= self.n_values).any():
@@ -1849,7 +1829,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
 
         if (isinstance(self.n_values, six.string_types) and
-            self.n_values == 'auto'):
+                self.n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -1901,7 +1881,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
         if (isinstance(self.n_values, six.string_types) and
-            self.n_values == 'auto'):
+                self.n_values == 'auto'):
             out = out[:, self.active_features_]
 
         return out if self.sparse else out.toarray()

@@ -349,14 +349,15 @@ def test_radius_neighbors_classifier_outlier_labeling():
     # Test radius-based classifier when no neighbors found and outliers
     # are labeled.
 
-    X = np.array([[1.0, 1.0], [2.0, 2.0]])
-    y = np.array([1, 2])
+    X = np.array([[1.0, 1.0], [2.0, 2.0], [0.99, 0.99],
+                  [0.98, 0.98], [2.01, 2.01]])
+    y = np.array([1, 2, 1, 1, 2])
     radius = 0.1
 
     z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
-    z2 = np.array([[1.01, 1.01], [1.4, 1.4]])    # one outlier
+    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]])    # one outlier
     correct_labels1 = np.array([1, 2])
-    correct_labels2 = np.array([1, -1])
+    correct_labels2 = np.array([-1, 1, 2])
 
     weight_func = _weight_func
 
@@ -941,7 +942,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
-        results = []
+        results = {}
         p = metric_params.pop('p', 2)
         for algorithm in algorithms:
             # KD tree doesn't support all metrics
@@ -952,16 +953,19 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                               algorithm=algorithm,
                               metric=metric, metric_params=metric_params)
                 continue
-
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
             neigh.fit(X)
-            results.append(neigh.kneighbors(test, return_distance=True))
-
-        assert_array_almost_equal(results[0][0], results[1][0])
-        assert_array_almost_equal(results[0][1], results[1][1])
+            results[algorithm] = neigh.kneighbors(test, return_distance=True)
+        assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
+        assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
+        if 'kd_tree' in results:
+            assert_array_almost_equal(results['brute'][0],
+                                      results['kd_tree'][0])
+            assert_array_almost_equal(results['brute'][1],
+                                      results['kd_tree'][1])
 
 
 def test_callable_metric():

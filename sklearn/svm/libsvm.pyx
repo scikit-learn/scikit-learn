@@ -287,7 +287,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     Parameters
     ----------
-    X: array-like, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float, size=[n_samples, n_features]
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
@@ -363,7 +363,7 @@ def predict_proba(
 
     Parameters
     ----------
-    X: array-like, dtype=float
+    X : array-like, dtype=float
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
 
     Returns
@@ -477,9 +477,9 @@ def cross_validation(
     Parameters
     ----------
 
-    X: array-like, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float, size=[n_samples, n_features]
 
-    Y: array, dtype=float, size=[n_samples]
+    Y : array, dtype=float, size=[n_samples]
         target vector
 
     svm_type : {0, 1, 2, 3, 4}

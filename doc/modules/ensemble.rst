@@ -79,7 +79,7 @@ snippet below illustrates how to instantiate a bagging ensemble of
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_bias_variance.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
 
 .. topic:: References
 
@@ -183,7 +183,7 @@ in bias::
     >>> scores.mean() > 0.999
     True
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_iris_001.png
     :target: ../auto_examples/ensemble/plot_forest_iris.html
     :align: center
     :scale: 75%
@@ -204,7 +204,7 @@ classification tasks (where ``n_features`` is the number of features
 in the data). Good results are often achieved when setting ``max_depth=None``
 in combination with ``min_samples_split=1`` (i.e., when fully developing the
 trees). Bear in mind though that these values are usually not optimal, and
-might result in models that consume a lot of ram. The best parameter values
+might result in models that consume a lot of RAM. The best parameter values
 should always be cross-validated. In addition, note that in random forests,
 bootstrap samples are used by default (``bootstrap=True``)
 while the default strategy for extra-trees is to use the whole dataset
@@ -229,9 +229,9 @@ amount of time (e.g., on large datasets).
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_forest_iris.py`
- * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+ * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -263,7 +263,7 @@ The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_importances_faces_001.png
    :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
    :align: center
    :scale: 75
@@ -276,8 +276,8 @@ to the prediction function.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_ensemble_plot_forest_importances.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
 .. _random_trees_embedding:
 
@@ -301,12 +301,12 @@ the transformation performs an implicit, non-parametric density estimation.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_random_forest_embedding.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`
 
- * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+ * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` compares non-linear
    dimensionality reduction techniques on handwritten digits.
 
- * :ref:`example_ensemble_plot_feature_transformation.py` compares
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_feature_transformation.py` compares
    supervised and unsupervised tree based feature transformations.
 
 .. seealso::
@@ -342,7 +342,7 @@ ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
 [HTF]_.
 
-.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_hastie_10_2_001.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
    :align: center
    :scale: 75
@@ -381,18 +381,18 @@ decision trees).
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py` compares the
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_hastie_10_2.py` compares the
    classification error of a decision stump, decision tree, and a boosted
    decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
 
- * :ref:`example_ensemble_plot_adaboost_multiclass.py` shows the performance
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
    of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
 
- * :ref:`example_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
    and decision function values for a non-linearly separable two-class problem
    using AdaBoost-SAMME.
 
- * :ref:`example_ensemble_plot_adaboost_regression.py` demonstrates regression
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
    with the AdaBoost.R2 algorithm.
 
 .. topic:: References
@@ -464,7 +464,7 @@ The number of weak learners (i.e. regression trees) is controlled by the paramet
 .. note::
 
    Classification with more than 2 classes requires the induction
-   of ``n_classes`` regression trees at each at each iteration,
+   of ``n_classes`` regression trees at each iteration,
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
@@ -506,15 +506,15 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
 The plot on the right shows the feature importances which can be obtained via
 the ``feature_importances_`` property.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
 
 .. _gradient_boosting_warm_start:
 
@@ -643,7 +643,7 @@ the parameter ``loss``:
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
       can be used to create prediction intervals
-      (see :ref:`example_ensemble_plot_gradient_boosting_quantile.py`).
+      (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
   * Classification
 
@@ -707,7 +707,7 @@ outperforms no-shrinkage. Subsampling with shrinkage can further increase
 the accuracy of the model. Subsampling without shrinkage, on the other hand,
 does poorly.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regularization_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
    :align: center
    :scale: 75
@@ -733,9 +733,9 @@ is too time consuming.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
- * :ref:`example_ensemble_plot_ensemble_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
 
 Interpretation
 --------------
@@ -779,7 +779,7 @@ accessed via the ``feature_importances_`` property::
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
 .. currentmodule:: sklearn.ensemble.partial_dependence
 
@@ -801,7 +801,7 @@ usually chosen among the most important features.
 The Figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset:
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_partial_dependence_001.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -891,7 +891,7 @@ averaged.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py`
 
 
 .. topic:: References
@@ -1030,7 +1030,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
    >>> clf3 = clf3.fit(X,y)
    >>> eclf = eclf.fit(X,y)
 
-.. figure:: ../auto_examples/ensemble/images/plot_voting_decision_regions_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_001.png
     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
     :align: center
     :scale: 75%

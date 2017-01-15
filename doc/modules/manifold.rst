@@ -20,7 +20,7 @@ Manifold learning
 
 
 
-.. figure:: ../auto_examples/manifold/images/plot_compare_methods_001.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_001.png
    :target: ../auto_examples/manifold/plot_compare_methods.html
    :align: center
    :scale: 60
@@ -46,11 +46,11 @@ to be desired.  In a random projection, it is likely that the more
 interesting structure within the data will be lost.
 
 
-.. |digits_img| image:: ../auto_examples/manifold/images/plot_lle_digits_001.png
+.. |digits_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_001.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |projected_img| image::  ../auto_examples/manifold/images/plot_lle_digits_002.png
+.. |projected_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_002.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
@@ -59,18 +59,18 @@ interesting structure within the data will be lost.
 
 To address this concern, a number of supervised and unsupervised linear
 dimensionality reduction frameworks have been designed, such as Principal
-Component Analysis (PCA), Independent Component Analysis, Linear 
-Discriminant Analysis, and others.  These algorithms define specific 
+Component Analysis (PCA), Independent Component Analysis, Linear
+Discriminant Analysis, and others.  These algorithms define specific
 rubrics to choose an "interesting" linear projection of the data.
-These methods can be powerful, but often miss important non-linear 
+These methods can be powerful, but often miss important non-linear
 structure in the data.
 
 
-.. |PCA_img| image:: ../auto_examples/manifold/images/plot_lle_digits_003.png
+.. |PCA_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_003.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |LDA_img| image::  ../auto_examples/manifold/images/plot_lle_digits_004.png
+.. |LDA_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_004.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
@@ -85,13 +85,13 @@ from the data itself, without the use of predetermined classifications.
 
 .. topic:: Examples:
 
-    * See :ref:`example_manifold_plot_lle_digits.py` for an example of
+    * See :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` for an example of
       dimensionality reduction on handwritten digits.
 
-    * See :ref:`example_manifold_plot_compare_methods.py` for an example of
+    * See :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py` for an example of
       dimensionality reduction on a toy "S-curve" dataset.
 
-The manifold learning implementations available in sklearn are
+The manifold learning implementations available in scikit-learn are
 summarized below
 
 .. _isomap:
@@ -106,7 +106,7 @@ Isomap seeks a lower-dimensional embedding which maintains geodesic
 distances between all points.  Isomap can be performed with the object
 :class:`Isomap`.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_005.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_005.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -121,13 +121,13 @@ The Isomap algorithm comprises three stages:
    nearest neighbors of :math:`N` points in :math:`D` dimensions.
 
 2. **Shortest-path graph search.**  The most efficient known algorithms
-   for this are *Dijkstra's Algorithm*, which is approximately 
+   for this are *Dijkstra's Algorithm*, which is approximately
    :math:`O[N^2(k + \log(N))]`, or the *Floyd-Warshall algorithm*, which
    is :math:`O[N^3]`.  The algorithm can be selected by the user with
    the ``path_method`` keyword of ``Isomap``.  If unspecified, the code
    attempts to choose the best algorithm for the input data.
 
-3. **Partial eigenvalue decomposition.**  The embedding is encoded in the 
+3. **Partial eigenvalue decomposition.**  The embedding is encoded in the
    eigenvectors corresponding to the :math:`d` largest eigenvalues of the
    :math:`N \times N` isomap kernel.  For a dense solver, the cost is
    approximately :math:`O[d N^2]`.  This cost can often be improved using
@@ -146,7 +146,7 @@ The overall complexity of Isomap is
 .. topic:: References:
 
    * `"A global geometric framework for nonlinear dimensionality reduction"
-     <http://www.sciencemag.org/content/290/5500/2319.full>`_
+     <http://science.sciencemag.org/content/290/5500/2319.full>`_
      Tenenbaum, J.B.; De Silva, V.; & Langford, J.C.  Science 290 (5500)
 
 .. _locally_linear_embedding:
@@ -163,7 +163,7 @@ Locally linear embedding can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_006.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_006.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -191,7 +191,7 @@ The overall complexity of standard LLE is
 * :math:`d` : output dimension
 
 .. topic:: References:
-   
+
    * `"Nonlinear dimensionality reduction by locally linear embedding"
      <http://www.sciencemag.org/content/290/5500/2323.full>`_
      Roweis, S. & Saul, L.  Science 290:2323 (2000)
@@ -217,11 +217,11 @@ linear embedding* (MLLE).  MLLE can be  performed with function
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'modified'``.
 It requires ``n_neighbors > n_components``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_007.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_007.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
-   
+
 Complexity
 ----------
 
@@ -232,7 +232,7 @@ The MLLE algorithm comprises three stages:
 2. **Weight Matrix Construction**. Approximately
    :math:`O[D N k^3] + O[N (k-D) k^2]`.  The first term is exactly equivalent
    to that of standard LLE.  The second term has to do with constructing the
-   weight matrix from multiple weights.  In practice, the added cost of 
+   weight matrix from multiple weights.  In practice, the added cost of
    constructing the MLLE weight matrix is relatively small compared to the
    cost of steps 1 and 3.
 
@@ -247,7 +247,7 @@ The overall complexity of MLLE is
 * :math:`d` : output dimension
 
 .. topic:: References:
-     
+
    * `"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382>`_
      Zhang, Z. & Wang, J.
@@ -267,11 +267,11 @@ for small output dimension.  HLLE can be  performed with function
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'hessian'``.
 It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_008.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_008.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
-   
+
 Complexity
 ----------
 
@@ -308,10 +308,10 @@ Spectral Embedding
 Spectral Embedding (also known as Laplacian Eigenmaps) is one method
 to calculate non-linear embedding. It finds a low dimensional representation
 of the data using a spectral decomposition of the graph Laplacian.
-The graph generated can be considered as a discrete approximation of the 
-low dimensional manifold in the high dimensional space. Minimization of a 
-cost function based on the graph ensures that points close to each other on 
-the manifold are mapped close to each other in the low dimensional space, 
+The graph generated can be considered as a discrete approximation of the
+low dimensional manifold in the high dimensional space. Minimization of a
+cost function based on the graph ensures that points close to each other on
+the manifold are mapped close to each other in the low dimensional space,
 preserving local distances. Spectral embedding can be  performed with the
 function :func:`spectral_embedding` or its object-oriented counterpart
 :class:`SpectralEmbedding`.
@@ -326,9 +326,9 @@ The Spectral Embedding algorithm comprises three stages:
 
 2. **Graph Laplacian Construction**. unnormalized Graph Laplacian
    is constructed as :math:`L = D - A` for and normalized one as
-   :math:`L = D^{-\frac{1}{2}} (D - A) D^{-\frac{1}{2}}`.  
+   :math:`L = D^{-\frac{1}{2}} (D - A) D^{-\frac{1}{2}}`.
 
-3. **Partial Eigenvalue Decomposition**. Eigenvalue decomposition is 
+3. **Partial Eigenvalue Decomposition**. Eigenvalue decomposition is
    done on graph Laplacian
 
 The overall complexity of spectral embedding is
@@ -342,7 +342,7 @@ The overall complexity of spectral embedding is
 .. topic:: References:
 
    * `"Laplacian Eigenmaps for Dimensionality Reduction
-     and Data Representation" 
+     and Data Representation"
      <http://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
      M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
@@ -354,12 +354,12 @@ Though not technically a variant of LLE, Local tangent space alignment (LTSA)
 is algorithmically similar enough to LLE that it can be put in this category.
 Rather than focusing on preserving neighborhood distances as in LLE, LTSA
 seeks to characterize the local geometry at each neighborhood via its
-tangent space, and performs a global optimization to align these local 
+tangent space, and performs a global optimization to align these local
 tangent spaces to learn the embedding.  LTSA can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'ltsa'``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_009.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_009.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -417,11 +417,11 @@ version, the algorithms will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
 space and the similarities/dissimilarities.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_010.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
- 
+
 
 Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
 :math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
@@ -452,11 +452,11 @@ A trivial solution to this problem is to set all the points on the origin. In
 order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 
 
-.. figure:: ../auto_examples/manifold/images/plot_mds_001.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
    :target: ../auto_examples/manifold/plot_mds.html
    :align: center
    :scale: 60
-  
+
 
 .. topic:: References:
 
@@ -499,7 +499,7 @@ probabilities in the original space and the embedded space will be minimized
 by gradient descent. Note that the KL divergence is not convex, i.e.
 multiple restarts with different initializations will end up in local minima
 of the KL divergence. Hence, it is sometimes useful to try different seeds
-and select the embedding with the lowest KL divergence. 
+and select the embedding with the lowest KL divergence.
 
 The disadvantages to using t-SNE are roughly:
 
@@ -507,13 +507,13 @@ The disadvantages to using t-SNE are roughly:
   datasets where PCA will finish in seconds or minutes
 * The Barnes-Hut t-SNE method is limited to two or three dimensional embeddings.
 * The algorithm is stochastic and multiple restarts with different seeds can
-  yield different embeddings. However, it is perfectly legitimate to pick the the
+  yield different embeddings. However, it is perfectly legitimate to pick the
   embedding with the least error.
 * Global structure is not explicitly preserved. This is problem is mitigated by
   initializing points with PCA (using `init='pca'`).
 
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_013.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_013.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -552,7 +552,7 @@ divergence will increase during optimization. More tips can be found in
 Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
 can approximate larger regions by a single point,leading to better speed
-but less accurate results. 
+but less accurate results.
 
 Barnes-Hut t-SNE
 ----------------
@@ -560,8 +560,8 @@ Barnes-Hut t-SNE
 The Barnes-Hut t-SNE that has been implemented here is usually much slower than
 other manifold learning algorithms. The optimization is quite difficult
 and the computation of the gradient is :math:`O[d N log(N)]`, where :math:`d`
-is the number of output dimensions and :math:`N` is the number of samples. The 
-Barnes-Hut method improves on the exact method where t-SNE complexity is 
+is the number of output dimensions and :math:`N` is the number of samples. The
+Barnes-Hut method improves on the exact method where t-SNE complexity is
 :math:`O[d N^2]`, but has several other notable differences:
 
 * The Barnes-Hut implementation only works when the target dimensionality is 3
