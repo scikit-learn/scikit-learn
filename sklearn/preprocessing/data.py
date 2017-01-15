@@ -1908,19 +1908,21 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     """Adds a feature representing each feature value's count in training
 
     Specifically, for each data point X_i in the dataset X, it will add in
-    a new feature vector count_X_i to the end of X_i where count_X_i is the
+    a new set of columns count_X_i to the end of X_i where count_X_i is the
     number of occurences of X_i in the dataset X given the equality indicator
     'inclusion'.
 
     If a y argument is given during the fit step, then the
     count in the transform step will be conditional on the y.
+    The number of columns added will be the number of different values y can
+    take on.
 
     This preprocessing step is useful when the number of occurences
     of a particular piece of data is helpful in computing the prediction.
 
     Parameters
     ----------
-    inclusion : 'all', set, list, or numpy.ndarray
+    inclusion : 'all', list, or numpy.ndarray
         The inclusion criteria for counting
 
         - 'all' (default) : Every feature given is counted
@@ -1931,8 +1933,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     ----------
     count_cache_ : defaultdict(int)
         The counts of each example learned during 'fit'
-        For example (X_i, y_i), the count can be accessed with 
-        count_cache_[X_i][y_i]
 
     y_set_ : list of (index, y) tuples
         An enumerated set of all unique values y can have
@@ -1948,6 +1948,9 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     --------
     Given a dataset with two features and four samples, we let the transformer
     find the number of occurences of each data point in the dataset
+    Note how the first column duplicates the input data, the second column
+    corresponds to the count of ``y=0`` and the third column corresponds to
+    the count of ``y=1``.
 
     >>> from sklearn.preprocessing.data import CountFeaturizer
     >>> X = [[0], [0], [0], [0], [1], [1], [1], [1]]
@@ -1979,8 +1982,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def _valid_data_type(type_check):
-        return type(type_check) == np.ndarray or type(type_check) == list \
-            or type(type_check) == set
+        return type(type_check) == np.ndarray or type(type_check) == list
 
     def fit(self, X, y=None):
         """Fits the CountFeaturizer to X, y
@@ -1993,10 +1995,9 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         X : array
             The data set to learn the counts from, conditional to 'y'
 
-        y : None, array
-            The 'y' that the counts are conditional to
-            - None (default) : The counts learned are not conditional on 'y'
-            - array : The counts learned are conditional on the given 'y'
+        y : array-like, optional
+            If provided, a separate column is output for each value of 'y',
+            counting the occurences of 'X' conditioned on that 'y' value
 
         Returns
         -------
@@ -2024,26 +2025,25 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             inclusion_used = np.array([])
         elif CountFeaturizer._valid_data_type(self.inclusion):
             inclusion_used = np.array(self.inclusion)
+
         if y is not None:
             for i in range(len_data):
-                X_key = tuple(X[i][j]
-                              for j in range(self.col_num_X_)
-                              if j in inclusion_used)
+                X_key = tuple(X.take(i, axis=0).take(inclusion_used).flatten())
                 y_key = tuple(y.take([i]))
+                print(X_key, y_key)
                 self.count_cache_[X_key][y_key] += 1
                 self.y_set_.add(y_key)
         else:
             self.y_set_.add(0)
             for i in range(len_data):
-                X_key = tuple(X[i][j]
-                              for j in range(self.col_num_X_)
-                              if j in inclusion_used)
+                X_key = tuple(X.take(i, axis=0).take(inclusion_used).flatten())
                 self.count_cache_[X_key][0] += 1
         self.y_set_ = list(enumerate(sorted(self.y_set_)))
+        print(self.count_cache_)
         self.count_cache_.default_factory = None
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transforms X to include the counts learned during 'fit'
 
         Augments 'X' with a new column containing the counts of each example,
@@ -2053,11 +2053,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         ----------
         X : array
             The X to transform
-
-        y : None, array
-            The 'y' that the counts are conditional to
-            - None (default) : The counts learned are not conditional on 'y'
-            - array : The counts learned are conditional on the given 'y'
 
         Returns
         -------
@@ -2070,8 +2065,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         numpy.ndarray
         """
 
-        if self.col_num_X_ == 0:
-            raise ValueError("Transformer must be fit() before transform()")
+        check_is_fitted(self, ['count_cache_', 'col_num_X_'])
         self.count_cache_.default_factory = lambda: defaultdict(int)
         X = check_array(X)
         len_data = len(X)
@@ -2083,17 +2077,16 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         transformed[:, :-len_y_set] = X
 
         if type(self.inclusion) == str and self.inclusion == 'all':
-            inclusion_used = np.array(range(self.col_num_X_))
+            inclusion_used = np.array(np.arange(self.col_num_X_))
         elif self.inclusion is None:
-            inclusion_used = np.array([])
+            raise ValueError("The inclusion list must not be None")
         elif CountFeaturizer._valid_data_type(self.inclusion):
             inclusion_used = np.array(self.inclusion)
 
         for i in range(len_data):
             for j, y_key in self.y_set_:
-                X_key = tuple(X[i][k]
-                              for k in range(self.col_num_X_)
-                              if k in inclusion_used)
+                X_key = tuple(X.take(i, axis=0).take(inclusion_used).flatten())
+                print(X_key)
                 transformed[i, num_features + j] = \
                     self.count_cache_[X_key][y_key]
 
