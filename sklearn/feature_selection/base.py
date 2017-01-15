@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array, safe_mask
+from ..utils import check_array, check_X_y, safe_mask
 from ..externals import six
 
 
@@ -122,52 +122,62 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         return Xt
 
 
-def feature_wise_scorer(score_func):
+def featurewise_scorer(score_func, **kwargs):
     """ A wrapper function around score functions.
 
     Parameters
     ----------
     score_func : callable
         Function taking array(s) X and/or y, and returning a pair of arrays
-        (scores, pvalues) or a single array with scores.
+        (scores, pvalues) or a single array with scores. This function is also
+        allowed to take other parameters as input.
 
     Returns
     -------
-    scores : array, shape = [n_features,]
+    scores : array-like, shape (n_features,)
         Score values returned by the scoring function.
-    p_vals : array, shape = [n_features,]
+    p_vals : array-like, shape (n_features,)
         The set of p-values returned by the scoring function.
 
     Notes
     -----
     This wrapper function wraps around scoring functions like `spearmanr`,
     `pearsonr` etc. from the scipy.stats module and makes it usable for
-    feature selection algorithms like `SelectKBest`.
+    feature selection algorithms like `SelectKBest`. Also, this wrapper
+    function takes the absolute value of the scores returned i.e. a score of
+    +1 is same as -1.
 
     Example
     -------
-    >>> from sklearn.feature_selection import feature_wise_scorer, SelectKBest
-    >>> from scipy.stats import kendalltau, pearsonr, spearmanr
+    >>> from sklearn.feature_selection import featurewise_scorer, SelectKBest
+    >>> from scipy.stats import spearmanr
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(random_state=0)
-    >>> skb1 = SelectKBest(feature_wise_scorer(spearmanr), k=10)
-    >>> skb2 = SelectKBest(feature_wise_scorer(pearsonr), k=10)
-    >>> skb3 = SelectKBest(feature_wise_scorer(kendalltau), k=10)
-    >>> skb1.fit(X, y) #doctest: +SKIP
-    >>> skb2.fit(X, y) #doctest: +SKIP
-    >>> skb3.fit(X, y) #doctest: +SKIP
-    >>> new_X1 = skb1.transform(X) #doctest: +SKIP
-    >>> new_X2 = skb2.transform(X) #doctest: +SKIP
-    >>> new_X3 = skb3.transform(X) #doctest: +SKIP
+    >>> skb = SelectKBest(featurewise_scorer(spearmanr), k=10)
+    >>> skb.fit(X, y) #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    SelectKBest(k=10, score_func=...)
+    >>> new_X1 = skb.transform(X)
+
     """
-    def call_scorer(*args, **kwargs):
-        X = args[0]
-        y = args[1]
+    def call_scorer(*args):
+        if len(args) == 2:
+            X = args[0]
+            y = args[1]
+            X, y = check_X_y(X, y, ('csr', 'csc'), multi_output=True)
+        else:
+            X = args[0]
+            y = None
+            X = check_array(X, ('csr', 'csc'))
+
         scores = []
         p_vals = []
 
-        for i in range(0, X.shape[1]):
-            score_func_ret = score_func(X[:, i], y, **kwargs)
+        for i in six.moves.range(X.shape[1]):
+            if y is None:
+                score_func_ret = score_func(X[:, i], **kwargs)
+            else:
+                score_func_ret = score_func(X[:, i], y, **kwargs)
+
             if isinstance(score_func_ret, (list, tuple)):
                 score, p_val = score_func_ret
                 p_vals.append(p_val)

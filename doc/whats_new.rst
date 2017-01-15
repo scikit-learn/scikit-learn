@@ -137,7 +137,7 @@ Enhancements
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
-   - Added :func:`feature_selection.feature_wise_scorer` in :mod:`feature_selection`.
+   - Added :func:`feature_selection.featurewise_scorer` in :mod:`feature_selection`.
      It is a wrapper function that enables the use of `scipy.stats` scoring functions
      with scikit-learn algorithms. :issue:`6673` by :user:`Aman Pratik <amanp10>`
 

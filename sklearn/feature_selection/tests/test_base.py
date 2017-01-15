@@ -4,12 +4,12 @@ from scipy.stats import pearsonr, spearmanr
 
 from numpy.testing import assert_array_equal
 
+from sklearn.datasets import make_classification
 from sklearn.base import BaseEstimator
-from sklearn.feature_selection.base import SelectorMixin, feature_wise_scorer
+from sklearn.feature_selection.base import featurewise_scorer, SelectorMixin
 from sklearn.feature_selection import SelectKBest, SelectPercentile
 from sklearn.utils import check_array
 from sklearn.utils.testing import assert_raises, assert_equal
-from sklearn.datasets import make_classification
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
@@ -118,14 +118,16 @@ def test_get_support():
     assert_array_equal(support_inds, sel.get_support(indices=True))
 
 
-def test_feature_wise_scorer():
+def test_featurewise_scorer():
     X, y = make_classification(random_state=0)
+
     # spearmanr from scipy.stats
-    sp1 = SelectPercentile(feature_wise_scorer(spearmanr), percentile=50)
-    skb1 = SelectKBest(feature_wise_scorer(spearmanr), k=10)
+    sp1 = SelectPercentile(featurewise_scorer(spearmanr), percentile=50)
+    skb1 = SelectKBest(featurewise_scorer(spearmanr), k=10)
+
     # pearsonr from scipy.stats
-    sp2 = SelectPercentile(feature_wise_scorer(pearsonr), percentile=50)
-    skb2 = SelectKBest(feature_wise_scorer(pearsonr), k=10)
+    sp2 = SelectPercentile(featurewise_scorer(pearsonr), percentile=50)
+    skb2 = SelectKBest(featurewise_scorer(pearsonr), k=10)
 
     sp1.fit(X, y)
     sp2.fit(X, y)
@@ -134,10 +136,30 @@ def test_feature_wise_scorer():
 
     new_X1 = sp1.transform(X)
     new_X2 = sp2.transform(X)
-    new_X3 = skb1.transform(X)
-    new_X4 = skb2.transform(X)
+    new_X4 = skb1.transform(X)
+    new_X5 = skb2.transform(X)
 
+    # Check if the feature selectors behave as expected
     assert_equal(new_X1.shape[1], 0.5 * X.shape[1])
     assert_equal(new_X2.shape[1], 0.5 * X.shape[1])
-    assert_equal(new_X3.shape[1], 10)
     assert_equal(new_X4.shape[1], 10)
+    assert_equal(new_X5.shape[1], 10)
+
+
+def test_featurewise_scorer_list_input():
+    # Test featurewise_scorer for input X and y as lists.
+    X, y = make_classification(random_state=0)
+    X = X.tolist()  # convert X from array to list
+    y = y.tolist()  # convert y from array to list
+    skb = SelectKBest(featurewise_scorer(spearmanr), k=10)
+    sp = SelectPercentile(featurewise_scorer(spearmanr), percentile=50)
+
+    skb.fit(X, y)
+    sp.fit(X, y)
+
+    new_X1 = skb.transform(X)
+    new_X2 = sp.transform(X)
+
+    # Check if the feature selectors behave as expected
+    assert_equal(new_X1.shape[1], 10)
+    assert_equal(new_X2.shape[1], 10)
