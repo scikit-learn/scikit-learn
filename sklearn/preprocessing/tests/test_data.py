@@ -1685,7 +1685,7 @@ def test_count_featurizer_ft_y_standard():
     y = np.array([0, 0, 1, 0])
     cf_1 = CountFeaturizer()
     assert_array_equal(
-        cf_1.fit_transform(X),
+        cf_1.fit_transform(X, y=y),
         np.array([[0, 2, 1, 1, 0], [1, 0, 3, 1, 0],
                  [1, 0, 2, 1, 1], [1, 0, 2, 1, 1]]))
 
@@ -1699,11 +1699,11 @@ def test_count_featurizer_ft_y_standard_inclusion():
     cf_inclusion_1 = CountFeaturizer(inclusion=[0])
     cf_inclusion_2 = CountFeaturizer(inclusion=[0, 1, 2])
     assert_array_equal(
-        cf_inclusion_1.fit_transform(X),
+        cf_inclusion_1.fit_transform(X, y=y),
         np.array([[0, 2, 1, 1, 0], [1, 0, 3, 2, 1],
                  [1, 0, 2, 2, 1], [1, 0, 2, 2, 1]]))
 
     assert_array_equal(
-        cf_inclusion_2.fit_transform(X),
+        cf_inclusion_2.fit_transform(X, y=y),
         np.array([[0, 2, 1, 1, 0], [1, 0, 3, 1, 0],
                  [1, 0, 2, 1, 1], [1, 0, 2, 1, 1]]))
