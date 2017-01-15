@@ -2030,7 +2030,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             for i in range(len_data):
                 X_key = tuple(X.take(i, axis=0).take(inclusion_used).flatten())
                 y_key = tuple(y.take([i]))
-                print(X_key, y_key)
                 self.count_cache_[X_key][y_key] += 1
                 self.y_set_.add(y_key)
         else:
@@ -2039,7 +2038,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                 X_key = tuple(X.take(i, axis=0).take(inclusion_used).flatten())
                 self.count_cache_[X_key][0] += 1
         self.y_set_ = list(enumerate(sorted(self.y_set_)))
-        print(self.count_cache_)
         self.count_cache_.default_factory = None
         return self
 
@@ -2086,7 +2084,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         for i in range(len_data):
             for j, y_key in self.y_set_:
                 X_key = tuple(X.take(i, axis=0).take(inclusion_used).flatten())
-                print(X_key)
+
                 transformed[i, num_features + j] = \
                     self.count_cache_[X_key][y_key]
 
