@@ -31,50 +31,52 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import precision_score
 from sklearn.metrics.scorer import make_scorer
 
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 
 from matplotlib import pyplot as plt
 
 print(__doc__)
 
 
-X, y = make_classification(n_samples=1000, random_state=42)
+X, y = make_classification(n_samples=1000, n_features=4, random_state=42)
 
 # The scorers can either be a std scorer referenced by its name or one wrapped
 # by sklearn.metrics.scorer.make_scorer
-scoring = {'Precision': make_scorer(precision_score), 'AUC Score': 'roc_auc'}
+scoring = {'AUC Score': 'roc_auc', 'Precision': make_scorer(precision_score), 'recall': 'recall'}
 
 # Multiple metric GridSearchCV, best_* attributes are exposed for the scorer
-# with key 'auc' ('roc_auc')
-gs = GridSearchCV(RandomForestClassifier(random_state=42),
-                  param_grid={'n_estimators': np.arange(1, 11)},
-                  scoring=scoring, cv=3, refit='AUC Score')
+# with key 'AUC Score' ('roc_auc')
+gs = GridSearchCV(SVC(kernel='linear', random_state=42),
+                  param_grid={'C': np.logspace(-20, 0, 50)},
+                  scoring=scoring, cv=5, refit='AUC Score')
 gs.fit(X, y)
 
 results = gs.cv_results_
 
-plt.figure()
+plt.figure().set_size_inches(10, 10)
 plt.title("GridSearchCV evaluating using multiple scorers simultaneously")
 
-plt.xlabel("Values for number of estimators")
+plt.xlabel("C")
 plt.ylabel("Score")
 plt.grid()
 
 ax = plt.axes()
+ax.set_xscale('log')
+ax.set_ylim(0.4, 1.01)
 
 # Get the regular numpy array from the MaskedArray
-X_axis = np.array(results['param_n_estimators'].data, dtype=float)
+X_axis = np.array(results['param_C'].data, dtype=float)
 
-for scorer, color in (('Precision', 'g'), ('AUC Score', 'r')):
+for scorer, color in (('Precision', 'g'), ('recall', 'blue'), ('AUC Score', 'r')):
     for sample, style in (('train', '--'), ('test', '-')):
         sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
         ax.fill_between(X_axis, sample_score_mean - sample_score_std,
                         sample_score_mean + sample_score_std,
-                        alpha=0.1 if sample == 'test' else 0.05, color=color)
+                        alpha=0.1 if sample == 'test' else 0, color=color)
         ax.plot(X_axis, sample_score_mean, style, color=color,
                 alpha=1 if sample == 'test' else 0.7,
                 label="Mean %s on the %sing set" % (scorer, sample))
 
-plt.legend(loc="lower right")
+plt.legend(loc="best")
 plt.show()
