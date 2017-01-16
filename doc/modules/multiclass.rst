@@ -283,8 +283,6 @@ Below is an example of multiclass learning using Output-Codes::
 Classifier Chain
 ================
 
-.. currentmodule:: sklearn.classifier_chain
-
 Classifier chains (see :class:`ClassifierChain`) are a way of combining a
 number of binary classifiers into a single multi-label model that is capable
 of exploiting correlations among targets.
