@@ -80,7 +80,8 @@ except ImportError:
 from . import glr_path_static
 from .backreferences import write_backreferences, _thumbnail_div
 from .downloads import CODE_DOWNLOAD
-from .py_source_parser import get_docstring_and_rest, split_code_and_text_blocks
+from .py_source_parser import (get_docstring_and_rest,
+                               split_code_and_text_blocks)
 
 from .notebook import jupyter_notebook, text2string, save_notebook
 
@@ -170,7 +171,8 @@ def extract_thumbnail_number(text):
 
     # check whether the user has specified a specific thumbnail image
     pattr = re.compile(
-        r"^\s*#\s*sphinx_gallery_thumbnail_number\s*=\s*([0-9]+)\s*$", flags=re.MULTILINE)
+        r"^\s*#\s*sphinx_gallery_thumbnail_number\s*=\s*([0-9]+)\s*$",
+        flags=re.MULTILINE)
     match = pattr.search(text)
 
     if match is None:

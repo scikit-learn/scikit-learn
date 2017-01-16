@@ -232,22 +232,34 @@ class SphinxDocLinkResolver(object):
                 fname_idx = value[cobj['name']][0]
 
         if fname_idx is not None:
-            fname = self._searchindex['filenames'][fname_idx] + '.html'
+            fname = self._searchindex['filenames'][fname_idx]
+            # In 1.5+ Sphinx seems to have changed from .rst.html to only
+            # .html extension in converted files. But URLs could be
+            # built with < 1.5 or >= 1.5 regardless of what we're currently
+            # building with, so let's just check both :(
+            fnames = [fname + '.html', os.path.splitext(fname)[0] + '.html']
+            for fname in fnames:
+                try:
+                    if self._is_windows:
+                        fname = fname.replace('/', '\\')
+                        link = os.path.join(self.doc_url, fname)
+                    else:
+                        link = posixpath.join(self.doc_url, fname)
 
-            if self._is_windows:
-                fname = fname.replace('/', '\\')
-                link = os.path.join(self.doc_url, fname)
+                    if hasattr(link, 'decode'):
+                        link = link.decode('utf-8', 'replace')
+
+                    if link in self._page_cache:
+                        html = self._page_cache[link]
+                    else:
+                        html = get_data(link, self.gallery_dir)
+                        self._page_cache[link] = html
+                except (HTTPError, URLError, IOError):
+                    pass
+                else:
+                    break
             else:
-                link = posixpath.join(self.doc_url, fname)
-
-            if hasattr(link, 'decode'):
-                link = link.decode('utf-8', 'replace')
-
-            if link in self._page_cache:
-                html = self._page_cache[link]
-            else:
-                html = get_data(link, self.gallery_dir)
-                self._page_cache[link] = html
+                raise
 
             # test if cobj appears in page
             comb_names = [cobj['module_short'] + '.' + cobj['name']]
@@ -375,8 +387,12 @@ def _embed_code_links(app, gallery_conf, gallery_dir):
                         link = doc_resolvers[this_module].resolve(cobj,
                                                                   full_fname)
                     except (HTTPError, URLError) as e:
-                        print("The following error has occurred:\n")
-                        print(repr(e))
+                        if isinstance(e, HTTPError):
+                            extra = e.code
+                        else:
+                            extra = e.reason
+                        print("\t\tError resolving %s.%s: %r (%s)"
+                              % (cobj['module'], cobj['name'], e, extra))
                         continue
 
                     if link is not None:

@@ -188,8 +188,10 @@ def sumarize_failing_examples(app, exception):
         return
 
     gallery_conf = app.config.sphinx_gallery_conf
-    failing_examples = set(gallery_conf['failing_examples'])
-    expected_failing_examples = set(gallery_conf['expected_failing_examples'])
+    failing_examples = set([os.path.normpath(path) for path in
+                            gallery_conf['failing_examples']])
+    expected_failing_examples = set([os.path.normpath(path) for path in
+                                     gallery_conf['expected_failing_examples']])
 
     examples_expected_to_fail = failing_examples.intersection(
         expected_failing_examples)
@@ -214,7 +216,7 @@ def sumarize_failing_examples(app, exception):
         failing_examples)
     if examples_not_expected_to_pass:
         fail_msgs.append("Examples expected to fail, but not failling:\n" +
-                         "Please remove this examples from\n" +
+                         "Please remove these examples from\n" +
                          "sphinx_gallery_conf['expected_failing_examples']\n" +
                          "in your conf.py file"
                          "\n".join(examples_not_expected_to_pass))

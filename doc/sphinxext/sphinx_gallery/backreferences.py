@@ -133,6 +133,8 @@ def scan_used_functions(example_file, gallery_conf):
     return backrefs
 
 
+# XXX This figure:: uses a forward slash even on Windows, but the op.join's
+# elsewhere will use backslashes...
 THUMBNAIL_TEMPLATE = """
 .. raw:: html
 
