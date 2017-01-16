@@ -9,7 +9,7 @@ of independently trained logistic regression models.
 """
 
 import numpy as np
-from sklearn.multilabel import ClassifierChain
+from sklearn.multioutput import ClassifierChain
 from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import jaccard_similarity_score
