@@ -42,7 +42,8 @@ X, y = make_classification(n_samples=1000, n_features=4, random_state=42)
 
 # The scorers can either be a std scorer referenced by its name or one wrapped
 # by sklearn.metrics.scorer.make_scorer
-scoring = {'AUC Score': 'roc_auc', 'Precision': make_scorer(precision_score), 'recall': 'recall'}
+scoring = {'AUC Score': 'roc_auc', 'Precision': make_scorer(precision_score),
+           'recall': 'recall'}
 
 # Multiple metric GridSearchCV, best_* attributes are exposed for the scorer
 # with key 'AUC Score' ('roc_auc')
@@ -67,7 +68,8 @@ ax.set_ylim(0.4, 1.01)
 # Get the regular numpy array from the MaskedArray
 X_axis = np.array(results['param_C'].data, dtype=float)
 
-for scorer, color in (('Precision', 'g'), ('recall', 'blue'), ('AUC Score', 'r')):
+for scorer, color in (('Precision', 'g'), ('recall', 'blue'),
+                      ('AUC Score', 'r')):
     for sample, style in (('train', '--'), ('test', '-')):
         sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
