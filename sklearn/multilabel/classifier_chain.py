@@ -50,9 +50,7 @@ class ClassifierChain(BaseEstimator):
 
     """
 
-
-    def __init__(self, base_estimator, random_state=None,
-                 order=None, shuffle=True):
+    def __init__(self, base_estimator, random_state=None, order=None):
         self.base_estimator = base_estimator
         self.random_state = random_state
         self.order = order

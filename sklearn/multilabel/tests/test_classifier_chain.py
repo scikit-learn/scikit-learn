@@ -1,7 +1,9 @@
 from sklearn.multilabel import ClassifierChain
 from sklearn.datasets import make_multilabel_classification
 from sklearn.linear_model import LogisticRegression
-from sklearn.utils.testing import assert_equal, assert_greater, assert_not_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_not_equal
 from sklearn.metrics import jaccard_similarity_score
 from scipy import sparse
 
@@ -55,9 +57,3 @@ def test_classifiers_coef_size():
 
     assert_equal([c.coef_.size for c in classifier_chain.estimators_],
                  list(range(X.shape[1], X.shape[1] + Y.shape[1])))
-
-if __name__=='__main__':
-    test_classifiers_coef_size()
-    test_order_shuffle()
-    test_fit_and_predict()
-    test_fit_and_predict_with_data_and_labels()
