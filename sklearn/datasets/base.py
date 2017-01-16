@@ -243,9 +243,7 @@ def load_files(container_path, description=None, categories=None,
 
 
 def load_data(module_path, data_file_name):
-    """
-    Loads data from module_path/data/data_file_name and returns
-    the data, targets, and target names as numpy arrays.
+    """Loads data from module_path/data/data_file_name.
 
     Parameters
     ----------
