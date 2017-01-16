@@ -641,11 +641,12 @@ def test_pandas_input():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
 
-        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                                   scoring=scoring)
+        # Default scoring
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
         grid_search.fit(X_df, y_ser).score(X_df, y_ser)
         assert_true(hasattr(grid_search, "cv_results_"))
 
+        # Multimetric scoring
         for scoring in (('accuracy', ), ('accuracy', 'precision')):
             grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
                                        scoring=scoring, refit='accuracy')
