@@ -244,7 +244,8 @@ def load_files(container_path, description=None, categories=None,
 
 def load_data(module_path, data_file_name):
     """
-    Loads data module_path/data/data_file_name.
+    Loads data from module_path/data/data_file_name and returns
+    the data, targets, and target names as numpy arrays.
 
     Parameters
     ----------
@@ -256,14 +257,15 @@ def load_data(module_path, data_file_name):
     data : Numpy Array
         A 2D array with each row representing one sample and each column
         representing the features of a given sample.
+
     target : Numpy Array
         A 1D array holding target variables for all the samples in `data.
-        For example target[0] is the target varible for data[0]).
+        For example target[0] is the target varible for data[0].
+
     target_names : Numpy Array
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
     """
-
     with open(join(module_path, 'data', data_file_name)) as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
