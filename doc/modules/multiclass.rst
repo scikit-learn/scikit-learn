@@ -353,7 +353,7 @@ Classifier Chain
 
 Classifier chains (see :class:`ClassifierChain`) are a way of combining a
 number of binary classifiers into a single multi-label model that is capable
-of exploiting correlations among targets.
+ of exploiting correlations among targets.
 
 For a multi-label classification problem with N classes, N binary
 classifiers are assigned an integer between 0 and N-1. These integers

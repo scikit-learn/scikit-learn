@@ -70,6 +70,7 @@ else:
                # Non-modules:
                'clone']
 
+
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""
     import os
