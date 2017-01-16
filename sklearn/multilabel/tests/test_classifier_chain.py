@@ -34,8 +34,8 @@ def test_fit_and_predict_with_data_and_labels():
     assert_equal(Y_pred.shape, Y.shape)
 
 
-def test_order_shuffle():
-    """Fit classifier chain with shuffled order"""
+def test_order_random():
+    """Fit classifier chain with random order"""
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
@@ -52,7 +52,7 @@ def test_classifiers_coef_size():
     X, Y = make_multilabel_classification(n_samples=10000,
                                           n_features=100,
                                           n_classes=10)
-    classifier_chain = ClassifierChain(LogisticRegression(), shuffle=True)
+    classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X, Y)
 
     assert_equal([c.coef_.size for c in classifier_chain.estimators_],
