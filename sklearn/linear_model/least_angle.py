@@ -665,9 +665,9 @@ class Lars(LinearModel, RegressorMixin):
 
         self.alphas_ = []
         self.n_iter_ = []
+        self.coef_ = np.empty((n_targets, n_features))
 
         if self.fit_path:
-            self.coef_ = []
             self.active_ = []
             self.coef_path_ = []
             for k in xrange(n_targets):
@@ -682,17 +682,14 @@ class Lars(LinearModel, RegressorMixin):
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
                 self.coef_path_.append(coef_path)
-                self.coef_.append(coef_path[:, -1])
+                self.coef_[k] = coef_path[:, -1]
 
             if n_targets == 1:
                 self.alphas_, self.active_, self.coef_path_, self.coef_ = [
                     a[0] for a in (self.alphas_, self.active_, self.coef_path_,
                                    self.coef_)]
                 self.n_iter_ = self.n_iter_[0]
-            else:
-                self.coef_ = np.array(self.coef_)
         else:
-            self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, _, self.coef_[k], n_iter_ = lars_path(
