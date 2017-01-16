@@ -125,10 +125,13 @@ MODIFIED_FILES="$(git diff --name-only $COMMIT_RANGE | grep -v 'sklearn/external
 
 check_files() {
     files="$1"
-    options="$2"
-    # Conservative approach: diff without context (--unified=0) so that code
-    # that was not changed does not create failures
-    git diff --unified=0 $COMMIT_RANGE -- $files | flake8 --diff --show-source $options
+    shift
+    options="$*"
+    if [ -n "$files" ]; then
+        # Conservative approach: diff without context (--unified=0) so that code
+        # that was not changed does not create failures
+        git diff --unified=0 $COMMIT_RANGE -- $files | flake8 --diff --show-source $options
+    fi
 }
 
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
