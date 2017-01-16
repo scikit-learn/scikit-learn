@@ -10,14 +10,17 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_not_equal
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.multiclass import ClassifierChain
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics import jaccard_similarity_score
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
@@ -676,3 +679,55 @@ def test_pairwise_cross_val_score():
         score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
         score_linear = cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
+
+
+def test_classifier_chain_fit_and_predict():
+    """Fit classifier chain and verify performance"""
+    X, Y = datasets.make_multilabel_classification(n_samples=10000,
+                                                   n_features=100,
+                                                   n_classes=10)
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X, Y)
+    Y_pred = classifier_chain.predict(X)
+    Y_pred_binary = (Y_pred >= .5)
+    assert_equal(Y_pred.shape, Y.shape)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
+
+
+def test_classifier_chain_fit_and_predict_with_data_and_labels():
+    """Fit classifier chain with sparse data and labels"""
+    X, Y = datasets.make_multilabel_classification(n_samples=10000,
+                                                   n_features=100,
+                                                   n_classes=10)
+
+    Y_sparse = sp.csr_matrix(Y)
+    X_sparse = sp.csr_matrix(X)
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X_sparse, Y_sparse)
+    Y_pred = classifier_chain.predict(X_sparse)
+    assert_equal(Y_pred.shape, Y.shape)
+
+
+def test_classifier_chain_random_order():
+    """Fit classifier chain with random order"""
+    X, Y = datasets.make_multilabel_classification(n_samples=10000,
+                                                   n_features=100,
+                                                   n_classes=10)
+    classifier_chain = ClassifierChain(LogisticRegression(),
+                                       order='random')
+    classifier_chain.fit(X, Y)
+    assert_not_equal(classifier_chain.order, list(range(10)))
+    assert (len(classifier_chain.order) == 10)
+    assert (len(set(classifier_chain.order)) == 10)
+
+
+def test_classifier_chain_coef_size():
+    """Fit classifier chain and verify the shape of coefficients"""
+    X, Y = datasets.make_multilabel_classification(n_samples=10000,
+                                                   n_features=100,
+                                                   n_classes=10)
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X, Y)
+
+    assert_equal([c.coef_.size for c in classifier_chain.estimators_],
+                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
