@@ -124,10 +124,10 @@ def test_permute_labels():
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
         score_1 = metric(y_pred, y_label)
-        assert_almost_equal(score_1, metric(1 - y_pred, y_label),
-                            err_msg="%s failed labels permutation" % name)
-        assert_almost_equal(score_1, metric(1 - y_pred, 1 - y_label),
-                            err_msg="%s failed labels permutation" % name)
+        assert_equal(score_1, metric(1 - y_pred, y_label),
+                     msg="%s failed labels permutation" % name)
+        assert_equal(score_1, metric(1 - y_pred, 1 - y_label),
+                     msg="%s failed labels permutation" % name)
         assert_almost_equal(score_1, metric(y_pred, 1 - y_label),
                             err_msg="%s failed labels permutation" % name)
 
