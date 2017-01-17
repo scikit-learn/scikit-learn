@@ -140,6 +140,10 @@ Enhancements
 Bug fixes
 .........
 
+   - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
+     incorrect result when ``n_samples`` is odd.
+     :issue:`8198` by :user:`Josh Levy <levy5674>`.
+
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
      in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
