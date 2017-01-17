@@ -24,7 +24,8 @@ from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.scorer import check_multimetric_scoring
+from sklearn.metrics.scorer import (
+    _check_multimetric_scoring as check_multimetric_scoring)
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline

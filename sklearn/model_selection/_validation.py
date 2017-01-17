@@ -28,7 +28,7 @@ from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
-from ..metrics.scorer import check_scoring, check_multimetric_scoring
+from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -173,8 +173,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers, is_multimetric = check_multimetric_scoring(estimator,
-                                                        scoring=scoring)
+    scorers, is_multimetric = _check_multimetric_scoring(estimator,
+                                                         scoring=scoring)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -851,8 +851,8 @@ def learning_curve(estimator, X, y, groups=None,
     # Store it as list as we will be iterating over the list multiple times
     cv_iter = list(cv.split(X, y, groups))
     n_splits = len(cv_iter)
-    scorers, is_multimetric = check_multimetric_scoring(estimator,
-                                                        scoring=scoring)
+    scorers, is_multimetric = _check_multimetric_scoring(estimator,
+                                                         scoring=scoring)
 
     n_max_training_samples = len(cv_iter[0][0])
     # Because the lengths of folds can be significantly different, it is
@@ -1086,8 +1086,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     n_splits = cv.get_n_splits(X, y, groups)
     n_params = len(param_range)
 
-    scorers, is_multimetric = check_multimetric_scoring(estimator,
-                                                        scoring=scoring)
+    scorers, is_multimetric = _check_multimetric_scoring(estimator,
+                                                         scoring=scoring)
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(

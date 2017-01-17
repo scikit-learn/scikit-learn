@@ -282,7 +282,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
             "have a 'score' method. The estimator %r does not." % estimator)
 
 
-def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
+def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
     """Check the scoring parameter in cases when multiple metrics are allowed
 
     Parameters

@@ -36,7 +36,7 @@ from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
-from ..metrics.scorer import check_multimetric_scoring
+from ..metrics.scorer import _check_multimetric_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -586,7 +586,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
-        self.scorer_, self.multimetric_ = check_multimetric_scoring(
+        self.scorer_, self.multimetric_ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
 
         if self.multimetric_:
