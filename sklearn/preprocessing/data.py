@@ -1994,6 +1994,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         ----------
         X : array
             The data set to learn the counts from, conditional to 'y'
+            X must not be 1 dimensional
 
         y : array-like, optional
             If provided, a separate column is output for each value of 'y',
@@ -2007,17 +2008,21 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         CountFeaturizer._check_params(inclusion=self.inclusion)
 
         if y is not None:
-            X, y = check_X_y(X, y)
-            self.col_num_Y_ = len(y.take([0]))
+            X, y = check_X_y(X, y, multi_output=True)
+            if len(y.shape) == 1:
+                self.col_num_Y_ = 1
+            else:
+                self.col_num_Y_ = len(y[0])
         else:
             X = check_array(X)
-            self.col_num_Y_ = 0
+            self.col_num_Y_ = 1
 
         len_data = len(X)
-
-        self.count_cache_ = defaultdict(lambda: defaultdict(int))
         self.col_num_X_ = len(X[0])
-        self.y_set_ = set()
+
+        self.count_cache_ = [defaultdict(lambda: defaultdict(int))
+                             for i in range(self.col_num_Y_)]
+        self.y_set_ = [set() for i in range(self.col_num_Y_)]
 
         if type(self.inclusion) == str and self.inclusion == 'all':
             inclusion_used = np.array(range(self.col_num_X_))
@@ -2028,17 +2033,24 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         if y is not None:
             for i in range(len_data):
-                X_key = tuple(X[i].take(inclusion_used))
-                y_key = tuple(y.take([i]))
-                self.count_cache_[X_key][y_key] += 1
-                self.y_set_.add(y_key)
+                for j in range(self.col_num_Y_):
+                    X_key = tuple(X[i].take(inclusion_used))
+                    if len(y.shape) == 1:
+                        # if y is 1D, y[i] is a scalar, which is not iterable
+                        y_key = tuple([y[i]])
+                    else:
+                        y_key = tuple(y[i].take([j]))
+                    self.count_cache_[j][X_key][y_key] += 1
+                    self.y_set_[j].add(y_key)
         else:
-            self.y_set_.add(0)
+            self.y_set_[0].add(0)
             for i in range(len_data):
                 X_key = tuple(X[i].take(inclusion_used))
-                self.count_cache_[X_key][0] += 1
-        self.y_set_ = list(enumerate(sorted(self.y_set_)))
-        self.count_cache_.default_factory = None
+                self.count_cache_[0][X_key][0] += 1
+        self.y_set_ = [list(enumerate(sorted(ys))) for ys in self.y_set_]
+        # freeze the dicts for pickling
+        for cc in self.count_cache_:
+            cc.default_factory = None
         return self
 
     def transform(self, X):
@@ -2050,7 +2062,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array
-            The X to transform
+            The X that we augment with count columns
+            X must not be 1 dimensional
 
         Returns
         -------
@@ -2064,10 +2077,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, ['count_cache_', 'col_num_X_'])
-        self.count_cache_.default_factory = lambda: defaultdict(int)
+        for cc in self.count_cache_:
+            cc.default_factory = lambda: defaultdict(int)
         X = check_array(X)
         len_data = len(X)
-        len_y_set = len(self.y_set_)
+        len_y_set = 0
+        for ys in self.y_set_:
+            len_y_set += len(ys)
         num_features = len(X[0])
         if self.col_num_X_ != num_features:
             raise ValueError("Dimensions mismatch in X during transform")
@@ -2081,11 +2097,15 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         elif CountFeaturizer._valid_data_type(self.inclusion):
             inclusion_used = np.array(self.inclusion)
 
-        for i in range(len_data):
-            for j, y_key in self.y_set_:
-                X_key = tuple(X[i].take(inclusion_used))
-                transformed[i, num_features + j] = \
-                    self.count_cache_[X_key][y_key]
+        col_offset = 0
+        for j in range(self.col_num_Y_):
+            for y_ind, y_key in self.y_set_[j]:
+                for i in range(len_data):
+                    X_key = tuple(X[i].take(inclusion_used))
+                    transformed[i, num_features + y_ind + col_offset] = \
+                        self.count_cache_[j][X_key][y_key]
+            col_offset += len(self.y_set_[j])
 
-        self.count_cache_.default_factory = None
+        for cc in self.count_cache_:
+            cc.default_factory = None
         return transformed
