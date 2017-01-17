@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 17 20:10:02 2017
-
-@author: user
-"""
-
 from functools import partial
 
 import numpy as np
