@@ -32,6 +32,8 @@ from sklearn.utils.testing import assert_almost_equal
 # Those dictionaries will be used to test systematically some invariance
 # properties, e.g. invariance toward several input layout.
 #
+
+# Metrics used to test similarity between bicluster
 SUPERVISED_METRICS = {
     "adjusted_mutual_info_score": adjusted_mutual_info_score,
     "adjusted_rand_score": adjusted_rand_score,
@@ -116,16 +118,16 @@ def test_normalized_output():
 
 
 # All clustering metrics do not change score due to permutations of labels
-# that is when 0 and 1 exchchanged.
+# that is when 0 and 1 exchanged.
 def test_permute_labels():
     y_label = np.array([0, 0, 0, 1, 1, 0, 1])
     y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
     for name in SUPERVISED_METRICS:
         metric = SUPERVISED_METRICS[name]
         score_1 = metric(y_pred, y_label)
-        assert_equal(score_1, metric(1 - y_pred, y_label),
+        assert_almost_equal(score_1, metric(1 - y_pred, y_label),
                      msg="%s failed labels permutation" % name)
-        assert_equal(score_1, metric(1 - y_pred, 1 - y_label),
+        assert_almost_equal(score_1, metric(1 - y_pred, 1 - y_label),
                      msg="%s failed labels permutation" % name)
         assert_almost_equal(score_1, metric(y_pred, 1 - y_label),
                             err_msg="%s failed labels permutation" % name)
@@ -138,8 +140,8 @@ def test_permute_labels():
                             err_msg="%s failed labels permutation" % name)
 
 
-# For ALL clustering metrics Input parameters can be both
-# in the form of arrays lists , positive , negetive or string
+# For all clustering metrics Input parameters can be both
+# in the form of arrays lists, positive, negetive or string
 def test_format_invariance():
     y_true = [0, 0, 0, 0, 1, 1, 1, 1]
     y_pred = [0, 1, 2, 3, 4, 5, 6, 7]
