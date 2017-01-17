@@ -68,7 +68,6 @@ SYMMETRIC_METRICS = [
 
 NON_SYMMETRIC_METRICS = ["homogeneity_score", "completeness_score"]
 
-
 # Metrics whose upper bound is 1
 NORMALIZED_METRICS = [
     "adjusted_rand_score", "homogeneity_score", "completeness_score",
