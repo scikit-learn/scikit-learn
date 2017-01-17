@@ -2050,7 +2050,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         self.y_set_ = [list(enumerate(sorted(ys))) for ys in self.y_set_]
         # freeze the dicts for pickling
         self.count_cache_.default_factory = None
-        for cc_inner_dict in self.count_cache_.itervalues():
+        for cc_inner_dict in self.count_cache_.values():
             cc_inner_dict.default_factory = None
         return self
 
@@ -2082,7 +2082,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         # unfreeze dictionary for pickling
         self.count_cache_.default_factory = \
             lambda: defaultdict(lambda: defaultdict(int))
-        for cc_inner_dict in self.count_cache_.itervalues():
+        for cc_inner_dict in self.count_cache_.values():
             cc_inner_dict.default_factory = lambda: defaultdict(int)
 
         X = check_array(X)
@@ -2114,6 +2114,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         # freeze dictionary for pickling
         self.count_cache_.default_factory = None
-        for cc_inner_dict in self.count_cache_.itervalues():
+        for cc_inner_dict in self.count_cache_.values():
             cc_inner_dict.default_factory = None
         return transformed
