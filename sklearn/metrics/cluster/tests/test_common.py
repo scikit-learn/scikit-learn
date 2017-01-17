@@ -126,9 +126,9 @@ def test_permute_labels():
         metric = SUPERVISED_METRICS[name]
         score_1 = metric(y_pred, y_label)
         assert_almost_equal(score_1, metric(1 - y_pred, y_label),
-                     err_msg="%s failed labels permutation" % name)
+                            err_msg="%s failed labels permutation" % name)
         assert_almost_equal(score_1, metric(1 - y_pred, 1 - y_label),
-                     err_msg="%s failed labels permutation" % name)
+                            err_msg="%s failed labels permutation" % name)
         assert_almost_equal(score_1, metric(y_pred, 1 - y_label),
                             err_msg="%s failed labels permutation" % name)
 
