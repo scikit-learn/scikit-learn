@@ -125,7 +125,8 @@ cdef class Splitter:
 
         Take in the input data X, the target Y, and optional sample weights.
 
-        Returns -1 if memory allocation failed.
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
 
         Parameters
         ----------
@@ -187,6 +188,9 @@ cdef class Splitter:
     cdef int node_reset(self, SIZE_t start, SIZE_t end,
                         double* weighted_n_node_samples) nogil except -1:
         """Reset splitter on node samples[start:end].
+
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
 
         Parameters
         ----------
@@ -268,7 +272,11 @@ cdef class BaseDenseSplitter(Splitter):
                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                   DOUBLE_t* sample_weight,
                   np.ndarray X_idx_sorted=None) except -1:
-        """Initialize the splitter. Return -1 if memory allocation failed."""
+        """Initialize the splitter
+
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
 
         # Call parent init
         Splitter.init(self, X, y, sample_weight)
@@ -305,8 +313,11 @@ cdef class BestSplitter(BaseDenseSplitter):
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
-        """Find the best split on node samples[start:end].
-           Returns -1 upon errors"""
+        """Find the best split on node samples[start:end]
+
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         # Find the best split
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
@@ -645,8 +656,11 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
-        """Find the best random split on node samples[start:end].
-           Returns -1 upon errors and 0 when succeeded"""
+        """Find the best random split on node samples[start:end]
+
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
@@ -884,9 +898,11 @@ cdef class BaseSparseSplitter(Splitter):
                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                   DOUBLE_t* sample_weight,
                   np.ndarray X_idx_sorted=None) except -1:
-        """Initialize the splitter. Returns -1 upon errors and 0 when
-           succeeded"""
+        """Initialize the splitter
 
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         # Call parent init
         Splitter.init(self, X, y, sample_weight)
 
@@ -1184,8 +1200,10 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
-        """Find the best split on node samples[start:end], using sparse
-           features. Returns -1 upon memory errors.
+        """Find the best split on node samples[start:end], using sparse features
+
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1412,8 +1430,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
-        """Find a random split on node samples[start:end], using sparse
-           features.
+        """Find a random split on node samples[start:end], using sparse features
+
+        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         # Find the best split
         cdef SIZE_t* samples = self.samples

@@ -124,7 +124,8 @@ cdef class Stack:
                   SIZE_t n_constant_features) nogil except -1:
         """Push a new element onto the stack.
 
-        Returns 0 if successful; -1 on out of memory error.
+        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef SIZE_t top = self.top
         cdef StackRecord* stack = NULL
@@ -241,7 +242,8 @@ cdef class PriorityHeap:
                   double impurity_right) nogil except -1:
         """Push record on the priority heap.
 
-        Returns 0 if successful; -1 on out of memory error.
+        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef SIZE_t heap_ptr = self.heap_ptr
         cdef PriorityHeapRecord* heap = NULL
@@ -329,8 +331,11 @@ cdef class WeightedPQueue:
         free(self.array_)
 
     cdef int reset(self) nogil except -1:
-        """Reset the WeightedPQueue to its state at construction returns 0
-        upon success and -1 upon memory error."""
+        """Reset the WeightedPQueue to its state at construction
+
+        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         self.array_ptr = 0
         # Since safe_realloc can raise MemoryError, use `except *`
         safe_realloc(&self.array_, self.capacity)
@@ -344,7 +349,9 @@ cdef class WeightedPQueue:
 
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push record on the array.
-        Returns 0 if successful; -1 on out of memory error.
+
+        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = NULL
@@ -499,7 +506,11 @@ cdef class WeightedMedianCalculator:
         return self.samples.size()
 
     cdef int reset(self) nogil except -1:
-        """Reset the WeightedMedianCalculator to its state at construction"""
+        """Reset the WeightedMedianCalculator to its state at construction
+
+        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         # samples.reset (WeightedPQueue.reset) uses safe_realloc, hence
         # except -1
         self.samples.reset()
@@ -509,9 +520,10 @@ cdef class WeightedMedianCalculator:
         return 0
 
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
-        """Push a value and its associated weight
-        to the WeightedMedianCalculator to be considered
-        in the median calculation.
+        """Push a value and its associated weight to the WeightedMedianCalculator
+
+        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef int return_value
         cdef DOUBLE_t original_median
