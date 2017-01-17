@@ -24,52 +24,49 @@ predefined scorers or a dict mapping the scorer names to the scorer callables.
 # License: BSD
 
 import numpy as np
+from matplotlib import pyplot as plt
 
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_hastie_10_2
 from sklearn.model_selection import GridSearchCV
-
 from sklearn.metrics import precision_score
 from sklearn.metrics.scorer import make_scorer
-
-from sklearn.svm import SVC
-
-from matplotlib import pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
 
 print(__doc__)
 
 
-X, y = make_classification(n_samples=1000, n_features=4, random_state=42)
+X, y = make_hastie_10_2()
 
-# The scorers can either be a std scorer referenced by its name or one wrapped
+# The scorers can be a std scorer referenced by its name or one wrapped
 # by sklearn.metrics.scorer.make_scorer
 scoring = {'AUC Score': 'roc_auc', 'Precision': make_scorer(precision_score),
-           'recall': 'recall'}
+           'recall': 'recall', 'F1 Score': 'f1'}
 
 # Multiple metric GridSearchCV, best_* attributes are exposed for the scorer
 # with key 'AUC Score' ('roc_auc')
-gs = GridSearchCV(SVC(kernel='linear', random_state=42),
-                  param_grid={'C': np.logspace(-20, 0, 50)},
+gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
+                  param_grid={'min_samples_split': range(2, 403, 10)},
                   scoring=scoring, cv=5, refit='AUC Score')
 gs.fit(X, y)
 
 results = gs.cv_results_
 
-plt.figure().set_size_inches(10, 10)
-plt.title("GridSearchCV evaluating using multiple scorers simultaneously")
+plt.figure().set_size_inches(15, 15)
+plt.title("GridSearchCV evaluating using multiple scorers simultaneously",
+          fontsize=16)
 
-plt.xlabel("C")
-plt.ylabel("Score")
+plt.xlabel("min_samples_split", fontsize=14)
+plt.ylabel("Score", fontsize=14)
 plt.grid()
 
 ax = plt.axes()
-ax.set_xscale('log')
-ax.set_ylim(0.4, 1.01)
+ax.set_xlim(0, 402)
 
 # Get the regular numpy array from the MaskedArray
-X_axis = np.array(results['param_C'].data, dtype=float)
+X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
 
-for scorer, color in (('Precision', 'g'), ('recall', 'blue'),
-                      ('AUC Score', 'r')):
+for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'grey'),
+                      ('Precision', 'r'), ('recall', 'blue')):
     for sample, style in (('train', '--'), ('test', '-')):
         sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
@@ -80,5 +77,5 @@ for scorer, color in (('Precision', 'g'), ('recall', 'blue'),
                 alpha=1 if sample == 'test' else 0.7,
                 label="Mean %s on the %sing set" % (scorer, sample))
 
-plt.legend(loc="best")
+plt.legend(loc="best", fontsize=12)
 plt.show()
