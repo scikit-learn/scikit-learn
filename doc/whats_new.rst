@@ -41,13 +41,17 @@ New features
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      By `Tom Dupre la Tour`_.
 
-   - Added :func:`metrics.mean_squared_log_error`, which computes 
-     the mean square error of the logarithmic transformation of targets, 
+   - Added :func:`metrics.mean_squared_log_error`, which computes
+     the mean square error of the logarithmic transformation of targets,
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
 
 Enhancements
 ............
+
+   - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
+     documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986`
+     :user:`Oscar Najera <Titan-C>`
 
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
@@ -159,8 +163,8 @@ Bug fixes
    - Fix estimators to accept a ``sample_weight`` parameter of type
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
      `Kathleen Chen`_.
-  
-   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` fails when 
+
+   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` fails when
      ``max_features`` is less than 1.
      :issue:`5732` by :user:`Ishank Gulati <IshankGulati>`.
 
