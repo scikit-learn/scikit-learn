@@ -1969,6 +1969,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     See also
     --------
     https://blogs.technet.microsoft.com/machinelearning/2015/02/17/big-learning-made-easy-with-counts/      # noqa
+    https://msdn.microsoft.com/en-us/library/azure/dn913056.aspx
     """
 
     def __init__(self, inclusion='all'):
@@ -2049,6 +2050,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         self.y_set_ = [list(enumerate(sorted(ys))) for ys in self.y_set_]
         # freeze the dicts for pickling
         self.count_cache_.default_factory = None
+        for cc_inner_dict in self.count_cache_.itervalues():
+            cc_inner_dict.default_factory = None
         return self
 
     def transform(self, X):
@@ -2075,8 +2078,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, ['count_cache_', 'col_num_X_'])
+
+        # unfreeze dictionary for pickling
         self.count_cache_.default_factory = \
             lambda: defaultdict(lambda: defaultdict(int))
+        for cc_inner_dict in self.count_cache_.itervalues():
+            cc_inner_dict.default_factory = lambda: defaultdict(int)
+
         X = check_array(X)
         len_data = len(X)
         len_y_set = 0
@@ -2104,5 +2112,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                         self.count_cache_[X_key][j][y_key]
             col_offset += len(self.y_set_[j])
 
+        # freeze dictionary for pickling
         self.count_cache_.default_factory = None
+        for cc_inner_dict in self.count_cache_.itervalues():
+            cc_inner_dict.default_factory = None
         return transformed
