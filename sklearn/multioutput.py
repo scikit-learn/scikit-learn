@@ -364,8 +364,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
 
 class ClassifierChain(BaseEstimator):
-    """
-    A multi-label model that arranges binary classifiers into a chain. Each
+    """A multi-label model that arranges binary classifiers into a chain. Each
     model makes a prediction in the order specified by the chain using all
     of the available features provided to the model plus the predictions of
     models that are earlier in the chain.
@@ -462,7 +461,7 @@ class ClassifierChain(BaseEstimator):
 
         Returns
         -------
-        Y_pred-like : array-like, shape (n_samples, n_classes)
+        Y_pred : array-like, shape (n_samples, n_classes)
         """
 
         if sp.issparse(X):
@@ -477,3 +476,63 @@ class ClassifierChain(BaseEstimator):
         Y_pred = Y_pred_chain[:, chain_key]
 
         return Y_pred
+
+    @if_delegate_has_method('base_estimator')
+    def predict_proba(self, X):
+        """Predict probability estimates.
+
+        Probability estimates will be used as features by subsequent models
+        in the chain.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+
+        Returns
+        -------
+        Y_prob : array-like, shape (n_samples, n_classes)
+        """
+
+        if sp.issparse(X):
+            X = X.toarray()
+
+        Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
+        for chain_idx, estimator in enumerate(self.estimators_):
+            previous_predictions = Y_prob_chain[:, :chain_idx]
+            X_aug = np.hstack((X, previous_predictions))
+            Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
+        chain_key = [self.order.index(i) for i in range(len(self.order))]
+        Y_prob = Y_prob_chain[:, chain_key]
+
+        return Y_prob
+
+    @if_delegate_has_method('base_estimator')
+    def decision_function(self, X):
+        """Distance of the samples X to the separating hyperplane.
+
+        Decision function values will be used as features by subsequent
+        models in the chain.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        Y_decision : array-like, shape (n_samples, n_classes )
+            Returns the decision function of the sample for each model
+            in the chain.
+        """
+
+        if sp.issparse(X):
+            X = X.toarray()
+
+        Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
+        for chain_idx, estimator in enumerate(self.estimators_):
+            previous_predictions = Y_decision_chain[:, :chain_idx]
+            X_aug = np.hstack((X, previous_predictions))
+            Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
+        chain_key = [self.order.index(i) for i in range(len(self.order))]
+        Y_decision = Y_decision_chain[:, chain_key]
+
+        return Y_decision

@@ -344,7 +344,7 @@ def test_multi_output_exceptions():
 
 
 def test_classifier_chain_fit_and_predict():
-    """Fit classifier chain and verify performance"""
+    """Fit classifier chain and verify predict performance"""
     X, Y = datasets.make_multilabel_classification(n_samples=10000,
                                                    n_features=100,
                                                    n_classes=10)
@@ -353,6 +353,35 @@ def test_classifier_chain_fit_and_predict():
     Y_pred = classifier_chain.predict(X)
     Y_pred_binary = (Y_pred >= .5)
     assert_equal(Y_pred.shape, Y.shape)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
+
+
+def test_classifier_chain_fit_and_predict_proba():
+    """Fit classifier chain and verify predict_proba performance"""
+    X, Y = datasets.make_multilabel_classification(n_samples=10000,
+                                                   n_features=100,
+                                                   n_classes=10)
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X, Y)
+
+    Y_prob = classifier_chain.predict_proba(X)
+    assert_equal(Y_prob.shape, Y.shape)
+
+    Y_pred_binary = (Y_prob >= .5)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
+
+
+def test_classifier_chain_fit_and_decision_function():
+    """Fit classifier chain and verify decision_function performance"""
+    X, Y = datasets.make_multilabel_classification(n_samples=10000,
+                                                   n_features=100,
+                                                   n_classes=10)
+    classifier_chain = ClassifierChain(LinearSVC())
+    classifier_chain.fit(X, Y)
+    Y_decision = classifier_chain.decision_function(X)
+    assert_equal(Y_decision.shape, Y.shape)
+
+    Y_pred_binary = (Y_decision >= 0)
     assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
 
 
@@ -393,3 +422,9 @@ def test_classifier_chain_coef_size():
 
     assert_equal([c.coef_.size for c in classifier_chain.estimators_],
                  list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+
+
+if __name__ == "__main__":
+    # test_classifier_chain_fit_and_predict()
+    # test_classifier_chain_fit_and_predict_proba()
+    test_classifier_chain_fit_and_decision_function()
