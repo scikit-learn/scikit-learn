@@ -79,7 +79,7 @@ for i in range(5):
 
     # keep track of indices that we get labels for
     delete_indices = np.array([])
-    
+
     # if running for more than 5 iterations, visualize the gain on only the first 5
     if i < 5:
         f.text(.05, (1 - (i + 1) * .183),
