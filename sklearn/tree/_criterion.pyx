@@ -56,7 +56,7 @@ cdef class Criterion:
                   SIZE_t end) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Parameters
@@ -290,7 +290,7 @@ cdef class ClassificationCriterion(Criterion):
         """Initialize the criterion at node samples[start:end] and
         children samples[start:start] and samples[start:end].
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Parameters
@@ -358,7 +358,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         self.pos = self.start
@@ -385,7 +385,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         self.pos = self.end
@@ -412,7 +412,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left child.
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Parameters
@@ -1109,7 +1109,7 @@ cdef class MAE(RegressionCriterion):
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
 
@@ -1141,7 +1141,7 @@ cdef class MAE(RegressionCriterion):
     cdef int reverse_reset(self) nogil except -1:
         """Reset the criterion at pos=end
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
 
@@ -1170,7 +1170,7 @@ cdef class MAE(RegressionCriterion):
     cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
 

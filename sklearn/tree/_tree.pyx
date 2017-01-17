@@ -272,8 +272,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
                                  PriorityHeap frontier) nogil except -1:
-    """Adds record ``rec`` to the priority queue ``frontier``; returns -1
-    on memory-error. """
+    """Adds record ``rec`` to the priority queue ``frontier``
+
+    Returns -1 in case of failure to allocate memory (and raise MemoryError)
+    or 0 otherwise.
+    """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
                          rec.is_leaf, rec.improvement, rec.impurity,
                          rec.impurity_left, rec.impurity_right)
@@ -658,8 +661,11 @@ cdef class Tree:
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
-           double the size of the inner arrays.  Returns -1 if memory
-           allocation failed."""
+           double the size of the inner arrays.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         if self._resize_c(capacity) != 0:
             # Acquire gil only if we need to raise
             with gil:
@@ -668,7 +674,11 @@ cdef class Tree:
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
     cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except -1:
-        """Guts of _resize. Returns 0 for success, -1 for error."""
+        """Guts of _resize
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         if capacity == self.capacity and self.nodes != NULL:
             return 0
 

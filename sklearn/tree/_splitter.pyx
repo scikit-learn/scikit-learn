@@ -125,7 +125,7 @@ cdef class Splitter:
 
         Take in the input data X, the target Y, and optional sample weights.
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Parameters
@@ -189,7 +189,7 @@ cdef class Splitter:
                         double* weighted_n_node_samples) nogil except -1:
         """Reset splitter on node samples[start:end].
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
         Parameters
@@ -274,7 +274,7 @@ cdef class BaseDenseSplitter(Splitter):
                   np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
 
@@ -315,7 +315,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end]
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         # Find the best split
@@ -658,7 +658,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best random split on node samples[start:end]
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         # Draw random splits and pick the best
@@ -900,7 +900,7 @@ cdef class BaseSparseSplitter(Splitter):
                   np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         # Call parent init
@@ -1202,7 +1202,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end], using sparse features
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         # Find the best split
@@ -1432,7 +1432,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                         SIZE_t* n_constant_features) nogil except -1:
         """Find a random split on node samples[start:end], using sparse features
 
-        Returns -1 in case of failure to alocate memory (and raise MemoryError)
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         # Find the best split

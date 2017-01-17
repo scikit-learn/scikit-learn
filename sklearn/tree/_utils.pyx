@@ -124,7 +124,7 @@ cdef class Stack:
                   SIZE_t n_constant_features) nogil except -1:
         """Push a new element onto the stack.
 
-        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         cdef SIZE_t top = self.top
@@ -242,7 +242,7 @@ cdef class PriorityHeap:
                   double impurity_right) nogil except -1:
         """Push record on the priority heap.
 
-        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         cdef SIZE_t heap_ptr = self.heap_ptr
@@ -333,7 +333,7 @@ cdef class WeightedPQueue:
     cdef int reset(self) nogil except -1:
         """Reset the WeightedPQueue to its state at construction
 
-        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         self.array_ptr = 0
@@ -350,7 +350,7 @@ cdef class WeightedPQueue:
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push record on the array.
 
-        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         cdef SIZE_t array_ptr = self.array_ptr
@@ -508,7 +508,7 @@ cdef class WeightedMedianCalculator:
     cdef int reset(self) nogil except -1:
         """Reset the WeightedMedianCalculator to its state at construction
 
-        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         # samples.reset (WeightedPQueue.reset) uses safe_realloc, hence
@@ -522,7 +522,7 @@ cdef class WeightedMedianCalculator:
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push a value and its associated weight to the WeightedMedianCalculator
 
-        Return -1 in case of failure to alocate memory (and raise MemoryError)
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         cdef int return_value
