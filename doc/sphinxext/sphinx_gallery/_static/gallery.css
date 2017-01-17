@@ -103,13 +103,72 @@ thumbnail with its default link Background color */
 blockquote.sphx-glr-script-out {
   margin-left: 0pt;
 }
+<<<<<<< HEAD
 .sphx-glr-download {
+=======
+
+div.sphx-glr-footer {
+    text-align: center;
+}
+
+div.sphx-glr-download {
+  display: inline-block;
+  margin: 1em auto 1ex 2ex;
+  vertical-align: middle;
+}
+
+div.sphx-glr-download a {
+>>>>>>> bddda7bc6... [MRG + 2] [MAINT] Update to Sphinx-Gallery 0.1.7 (#7986)
   background-color: #ffc;
   border: 1px solid #c2c22d;
+<<<<<<< HEAD
   border-radius: 4px;
   margin: 1em auto 1ex auto;
   max-width: 45ex;
   padding: 1ex;
+=======
+  color: #000;
+  display: inline-block;
+  /* Not valid in old browser, hence we keep the line above to override */
+  display: table-caption;
+  font-weight: bold;
+  padding: 1ex;
+  text-align: center;
+}
+
+/* The last child of a download button is the file name */
+div.sphx-glr-download a span:last-child {
+    font-size: smaller;
+}
+
+@media (min-width: 20em) {
+    div.sphx-glr-download a {
+	min-width: 10em;
+    }
+}
+
+@media (min-width: 30em) {
+    div.sphx-glr-download a {
+	min-width: 13em;
+    }
+}
+
+@media (min-width: 40em) {
+    div.sphx-glr-download a {
+	min-width: 16em;
+    }
+}
+
+
+div.sphx-glr-download code.download {
+  display: inline-block;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  /* border and background are given by the enclosing 'a' */
+  border: none;
+  background: none;
+>>>>>>> bddda7bc6... [MRG + 2] [MAINT] Update to Sphinx-Gallery 0.1.7 (#7986)
 }
 .sphx-glr-download a {
   color: #4b4600;
@@ -125,3 +184,39 @@ ul.sphx-glr-horizontal li {
 ul.sphx-glr-horizontal img {
   height: auto !important;
 }
+<<<<<<< HEAD
+=======
+
+p.sphx-glr-signature a.reference.external {
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  padding: 3px;
+  font-size: 75%;
+  text-align: right;
+  margin-left: auto;
+  display: table;
+}
+
+a.sphx-glr-code-links:hover{
+    text-decoration: none;
+}
+
+a.sphx-glr-code-links[tooltip]:hover:before{
+    background: rgba(0,0,0,.8);
+    border-radius: 5px;
+    color: white;
+    content: attr(tooltip);
+    padding: 5px 15px;
+    position: absolute;
+    z-index: 98;
+    width: 16em;
+    word-break: normal;
+    white-space: normal;
+    display: inline-block;
+    text-align: center;
+    text-indent: 0;
+    margin-left: 0; /* Use zero to avoid overlapping with sidebar */
+    margin-top: 1.2em;
+}
+>>>>>>> bddda7bc6... [MRG + 2] [MAINT] Update to Sphinx-Gallery 0.1.7 (#7986)

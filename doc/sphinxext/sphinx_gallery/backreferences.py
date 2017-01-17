@@ -103,7 +103,13 @@ def identify_names(code):
     for name, full_name in finder.get_mapping():
         # name is as written in file (e.g. np.asarray)
         # full_name includes resolved import path (e.g. numpy.asarray)
-        module, attribute = full_name.rsplit('.', 1)
+        splitted = full_name.rsplit('.', 1)
+        if len(splitted) == 1:
+            # module without attribute. This is not useful for
+            # backreferences
+            continue
+
+        module, attribute = splitted
         # get shortened module name
         module_short = get_short_module_name(module, attribute)
         cobj = {'name': attribute, 'module': module,
@@ -127,6 +133,8 @@ def scan_used_functions(example_file, gallery_conf):
     return backrefs
 
 
+# XXX This figure:: uses a forward slash even on Windows, but the op.join's
+# elsewhere will use backslashes...
 THUMBNAIL_TEMPLATE = """
 .. raw:: html
 

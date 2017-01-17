@@ -14,7 +14,7 @@ Files that generate images should start with 'plot'
 """
 from __future__ import division, print_function, absolute_import
 from time import time
-import ast
+import codecs
 import hashlib
 import os
 import re
@@ -26,7 +26,6 @@ import warnings
 
 
 # Try Python 2 first, otherwise load from Python 3
-from textwrap import dedent
 try:
     # textwrap indent only exists in python 3
     from textwrap import indent
@@ -57,7 +56,22 @@ try:
     # make sure that the Agg backend is set before importing any
     # matplotlib
     import matplotlib
-    matplotlib.use('Agg')
+    matplotlib.use('agg')
+    matplotlib_backend = matplotlib.get_backend()
+
+    if matplotlib_backend != 'agg':
+        mpl_backend_msg = (
+            "Sphinx-Gallery relies on the matplotlib 'agg' backend to "
+            "render figures and write them to files. You are "
+            "currently using the {} backend. Sphinx-Gallery will "
+            "terminate the build now, because changing backends is "
+            "not well supported by matplotlib. We advise you to move "
+            "sphinx_gallery imports before any matplotlib-dependent "
+            "import. Moving sphinx_gallery imports at the top of "
+            "your conf.py file should fix this issue")
+
+        raise ValueError(mpl_backend_msg.format(matplotlib_backend))
+
     import matplotlib.pyplot as plt
 except ImportError:
     # this script can be imported by nosetest to find tests to run: we should
@@ -66,7 +80,11 @@ except ImportError:
 
 from . import glr_path_static
 from .backreferences import write_backreferences, _thumbnail_div
-from .notebook import Notebook
+from .downloads import CODE_DOWNLOAD
+from .py_source_parser import (get_docstring_and_rest,
+                               split_code_and_text_blocks)
+
+from .notebook import jupyter_notebook, text2string, save_notebook
 
 try:
     basestring
@@ -131,76 +149,6 @@ CODE_OUTPUT = """.. rst-class:: sphx-glr-script-out
   {0}\n"""
 
 
-def get_docstring_and_rest(filename):
-    """Separate `filename` content between docstring and the rest
-
-    Strongly inspired from ast.get_docstring.
-
-    Returns
-    -------
-    docstring: str
-        docstring of `filename`
-    rest: str
-        `filename` content without the docstring
-    """
-    with open(filename) as f:
-        content = f.read()
-
-    node = ast.parse(content)
-    if not isinstance(node, ast.Module):
-        raise TypeError("This function only supports modules. "
-                        "You provided {0}".format(node.__class__.__name__))
-    if node.body and isinstance(node.body[0], ast.Expr) and \
-       isinstance(node.body[0].value, ast.Str):
-        docstring_node = node.body[0]
-        docstring = docstring_node.value.s
-        # This get the content of the file after the docstring last line
-        # Note: 'maxsplit' argument is not a keyword argument in python2
-        rest = content.split('\n', docstring_node.lineno)[-1]
-        return docstring, rest
-    else:
-        raise ValueError(('Could not find docstring in file "{0}". '
-                          'A docstring is required by sphinx-gallery')
-                         .format(filename))
-
-
-def split_code_and_text_blocks(source_file):
-    """Return list with source file separated into code and text blocks.
-
-    Returns
-    -------
-    blocks : list of (label, content)
-        List where each element is a tuple with the label ('text' or 'code'),
-        and content string of block.
-    """
-    docstring, rest_of_content = get_docstring_and_rest(source_file)
-
-    blocks = [('text', docstring)]
-
-    pattern = re.compile(
-        r'(?P<header_line>^#{20,}.*)\s(?P<text_content>(?:^#.*\s)*)',
-        flags=re.M)
-
-    pos_so_far = 0
-    for match in re.finditer(pattern, rest_of_content):
-        match_start_pos, match_end_pos = match.span()
-        code_block_content = rest_of_content[pos_so_far:match_start_pos]
-        text_content = match.group('text_content')
-        sub_pat = re.compile('^#', flags=re.M)
-        text_block_content = dedent(re.sub(sub_pat, '', text_content))
-        if code_block_content.strip():
-            blocks.append(('code', code_block_content))
-        if text_block_content.strip():
-            blocks.append(('text', text_block_content))
-        pos_so_far = match_end_pos
-
-    remaining_content = rest_of_content[pos_so_far:]
-    if remaining_content.strip():
-        blocks.append(('code', remaining_content))
-
-    return blocks
-
-
 def codestr2rst(codestr, lang='python'):
     """Return reStructuredText code block from code string"""
     code_directive = "\n.. code-block:: {0}\n\n".format(lang)
@@ -208,12 +156,22 @@ def codestr2rst(codestr, lang='python'):
     return code_directive + indented_block
 
 
-def text2string(content):
-    """Returns a string without the extra triple quotes"""
-    try:
-        return ast.literal_eval(content) + '\n'
-    except Exception:
-        return content
+def extract_thumbnail_number(text):
+    """ Pull out the thumbnail image number specified in the docstring. """
+
+    # check whether the user has specified a specific thumbnail image
+    pattr = re.compile(
+        r"^\s*#\s*sphinx_gallery_thumbnail_number\s*=\s*([0-9]+)\s*$",
+        flags=re.MULTILINE)
+    match = pattr.search(text)
+
+    if match is None:
+        # by default, use the first figure created
+        thumbnail_number = 1
+    else:
+        thumbnail_number = int(match.groups()[0])
+
+    return thumbnail_number
 
 
 def extract_intro(filename):
@@ -239,19 +197,15 @@ def extract_intro(filename):
 def get_md5sum(src_file):
     """Returns md5sum of file"""
 
-    with open(src_file, 'r') as src_data:
+    with open(src_file, 'rb') as src_data:
         src_content = src_data.read()
-
-        # data needs to be encoded in python3 before hashing
-        if sys.version_info[0] == 3:
-            src_content = src_content.encode('utf-8')
 
         src_md5 = hashlib.md5(src_content).hexdigest()
     return src_md5
 
 
-def check_md5sum_change(src_file):
-    """Returns True if src_file has a different md5sum"""
+def md5sum_is_current(src_file):
+    """Checks whether src_file has the same md5 hash as the one on disk"""
 
     src_md5 = get_md5sum(src_file)
 
@@ -297,11 +251,11 @@ def save_figures(image_path, fig_count, gallery_conf):
     """
     figure_list = []
 
-    fig_managers = matplotlib._pylab_helpers.Gcf.get_all_fig_managers()
-    for fig_mngr in fig_managers:
+    fig_numbers = plt.get_fignums()
+    for fig_num in fig_numbers:
         # Set the fig_num figure as the current figure as we can't
         # save a figure that's not the current figure.
-        fig = plt.figure(fig_mngr.num)
+        fig = plt.figure(fig_num)
         kwargs = {}
         to_rgba = matplotlib.colors.colorConverter.to_rgba
         for attr in ['facecolor', 'edgecolor']:
@@ -310,7 +264,7 @@ def save_figures(image_path, fig_count, gallery_conf):
             if to_rgba(fig_attr) != to_rgba(default_attr):
                 kwargs[attr] = fig_attr
 
-        current_fig = image_path.format(fig_count + fig_mngr.num)
+        current_fig = image_path.format(fig_count + fig_num)
         fig.savefig(current_fig, **kwargs)
         figure_list.append(current_fig)
 
@@ -408,6 +362,9 @@ def generate_dir_rst(src_dir, target_dir, gallery_conf, seen_backrefs):
         return ""  # because string is an expected return type
 
     fhindex = open(os.path.join(src_dir, 'README.txt')).read()
+    # Add empty lines to avoid bug in issue #165
+    fhindex += "\n\n"
+
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
     sorted_listdir = [fname for fname in sorted(os.listdir(src_dir))
@@ -549,48 +506,42 @@ def generate_file_rst(fname, target_dir, src_dir, gallery_conf):
 
     ref_fname = example_file.replace(os.path.sep, '_')
     example_rst = """\n\n.. _sphx_glr_{0}:\n\n""".format(ref_fname)
-    example_nb = Notebook(fname, target_dir)
 
     filename_pattern = gallery_conf.get('filename_pattern')
-    if re.search(filename_pattern, src_file) and gallery_conf['plot_gallery']:
-        example_globals = {
-            # A lot of examples contains 'print(__doc__)' for example in
-            # scikit-learn so that running the example prints some useful
-            # information. Because the docstring has been separated from
-            # the code blocks in sphinx-gallery, __doc__ is actually
-            # __builtin__.__doc__ in the execution context and we do not
-            # want to print it
-            '__doc__': '',
-            # Examples may contain if __name__ == '__main__' guards
-            # for in example scikit-learn if the example uses multiprocessing
-            '__name__': '__main__'}
+    execute_script = re.search(filename_pattern, src_file) and gallery_conf[
+        'plot_gallery']
+    example_globals = {
+        # A lot of examples contains 'print(__doc__)' for example in
+        # scikit-learn so that running the example prints some useful
+        # information. Because the docstring has been separated from
+        # the code blocks in sphinx-gallery, __doc__ is actually
+        # __builtin__.__doc__ in the execution context and we do not
+        # want to print it
+        '__doc__': '',
+        # Examples may contain if __name__ == '__main__' guards
+        # for in example scikit-learn if the example uses multiprocessing
+        '__name__': '__main__',
+    }
 
-        fig_count = 0
-        # A simple example has two blocks: one for the
-        # example introduction/explanation and one for the code
-        is_example_notebook_like = len(script_blocks) > 2
-        for blabel, bcontent in script_blocks:
-            if blabel == 'code':
-                code_output, rtime, fig_count = execute_script(bcontent,
-                                                               example_globals,
-                                                               image_path,
-                                                               fig_count,
-                                                               src_file,
-                                                               gallery_conf)
+    # A simple example has two blocks: one for the
+    # example introduction/explanation and one for the code
+    is_example_notebook_like = len(script_blocks) > 2
+    time_elapsed = 0
+    block_vars = {'execute_script': execute_script, 'fig_count': 0,
+                  'image_path': image_path_template, 'src_file': src_file}
+    print('Executing file %s' % src_file)
+    for blabel, bcontent in script_blocks:
+        if blabel == 'code':
+            code_output, rtime = execute_code_block(bcontent,
+                                                    example_globals,
+                                                    block_vars,
+                                                    gallery_conf)
 
-                time_elapsed += rtime
-                example_nb.add_code_cell(bcontent)
+            time_elapsed += rtime
 
-                if is_example_notebook_like:
-                    example_rst += codestr2rst(bcontent) + '\n'
-                    example_rst += code_output
-                else:
-                    example_rst += code_output
-                    if 'sphx-glr-script-out' in code_output:
-                        # Add some vertical space after output
-                        example_rst += "\n\n|\n\n"
-                    example_rst += codestr2rst(bcontent) + '\n'
-
+            if is_example_notebook_like:
+                example_rst += codestr2rst(bcontent) + '\n'
+                example_rst += code_output
             else:
                 example_rst += text2string(bcontent) + '\n'
                 example_nb.add_markdown_cell(text2string(bcontent))
@@ -603,13 +554,30 @@ def generate_file_rst(fname, target_dir, src_dir, gallery_conf):
                 example_rst += bcontent + '\n'
                 example_nb.add_markdown_cell(text2string(bcontent))
 
-    save_thumbnail(image_path, base_image_name, gallery_conf)
+        else:
+            example_rst += text2string(bcontent) + '\n'
+
+    clean_modules()
+
+    # Writes md5 checksum if example has build correctly
+    # not failed and was initially meant to run(no-plot shall not cache md5sum)
+    if block_vars['execute_script']:
+        with open(example_file + '.md5', 'w') as file_checksum:
+            file_checksum.write(get_md5sum(example_file))
+
+    save_thumbnail(image_path_template, src_file, gallery_conf)
 
     time_m, time_s = divmod(time_elapsed, 60)
-    example_nb.save_file()
-    with open(os.path.join(target_dir, base_image_name + '.rst'), 'w') as f:
-        example_rst += CODE_DOWNLOAD.format(time_m, time_s, fname,
-                                            example_nb.file_name)
+    example_nb = jupyter_notebook(script_blocks)
+    save_notebook(example_nb, example_file.replace('.py', '.ipynb'))
+    with codecs.open(os.path.join(target_dir, base_image_name + '.rst'),
+                     mode='w', encoding='utf-8') as f:
+        example_rst += "**Total running time of the script:**" \
+                       " ({0: .0f} minutes {1: .3f} seconds)\n\n".format(
+                           time_m, time_s)
+        example_rst += CODE_DOWNLOAD.format(fname,
+                                            fname.replace('.py', '.ipynb'))
+        example_rst += SPHX_GLR_SIG
         f.write(example_rst)
 
     return amount_of_code
