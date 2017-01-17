@@ -2019,9 +2019,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         len_data = len(X)
         self.col_num_X_ = len(X[0])
-
-        self.count_cache_ = [defaultdict(lambda: defaultdict(int))
-                             for i in range(self.col_num_Y_)]
+        self.count_cache_ = defaultdict(
+            lambda: defaultdict(lambda: defaultdict(int)))
         self.y_set_ = [set() for i in range(self.col_num_Y_)]
 
         if type(self.inclusion) == str and self.inclusion == 'all':
@@ -2040,17 +2039,16 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                         y_key = tuple([y[i]])
                     else:
                         y_key = tuple(y[i].take([j]))
-                    self.count_cache_[j][X_key][y_key] += 1
+                    self.count_cache_[X_key][j][y_key] += 1
                     self.y_set_[j].add(y_key)
         else:
             self.y_set_[0].add(0)
             for i in range(len_data):
                 X_key = tuple(X[i].take(inclusion_used))
-                self.count_cache_[0][X_key][0] += 1
+                self.count_cache_[X_key][0][0] += 1
         self.y_set_ = [list(enumerate(sorted(ys))) for ys in self.y_set_]
         # freeze the dicts for pickling
-        for cc in self.count_cache_:
-            cc.default_factory = None
+        self.count_cache_.default_factory = None
         return self
 
     def transform(self, X):
@@ -2077,8 +2075,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, ['count_cache_', 'col_num_X_'])
-        for cc in self.count_cache_:
-            cc.default_factory = lambda: defaultdict(int)
+        self.count_cache_.default_factory = \
+            lambda: defaultdict(lambda: defaultdict(int))
         X = check_array(X)
         len_data = len(X)
         len_y_set = 0
@@ -2103,9 +2101,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                 for i in range(len_data):
                     X_key = tuple(X[i].take(inclusion_used))
                     transformed[i, num_features + y_ind + col_offset] = \
-                        self.count_cache_[j][X_key][y_key]
+                        self.count_cache_[X_key][j][y_key]
             col_offset += len(self.y_set_[j])
 
-        for cc in self.count_cache_:
-            cc.default_factory = None
+        self.count_cache_.default_factory = None
         return transformed
