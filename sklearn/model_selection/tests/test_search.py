@@ -827,13 +827,11 @@ def test_random_search_cv_results():
     # errors across CV folds and parameter settings
     X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
                                random_state=0)
-
-    # scipy.stats dists now supports `seed` but we still support scipy 0.12
-    # which doesn't support the seed. Hence the assertions in the test for
-    # random_search alone should not depend on randomization.
     n_splits = 3
     n_search_iter = 30
-    params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
+
+    # Scipy 0.12's stats dists do not accept seed, hence we use param grid
+    params = dict(C=np.logspace(-10, 1), gamma=np.logspace(-5, 0, base=0.1))
     random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                        cv=n_splits, iid=False,
                                        param_distributions=params)
