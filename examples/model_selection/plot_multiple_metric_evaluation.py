@@ -1,4 +1,4 @@
-"""Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV
+"""Demonstration of multimetric evaluation on cross_val_score and GridSearchCV
 
 Multiple metric grid search (or random search) can be done by setting the
 ``scoring`` parameter to a list of metric scorer names or a dict mapping the
@@ -32,6 +32,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics.scorer import make_scorer
 from sklearn.tree import DecisionTreeClassifier
 
+
 print(__doc__)
 
 
@@ -60,8 +61,8 @@ plt.ylabel("Score")
 plt.grid()
 
 ax = plt.axes()
-ax.set_xlim(2, 402)
-ax.set_ylim(0.7, 1)
+ax.set_xlim(0, 402)
+ax.set_ylim(0.68, 1)
 
 # Get the regular numpy array from the MaskedArray
 X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
@@ -78,19 +79,18 @@ for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'k'),
                 alpha=1 if sample == 'test' else 0.7,
                 label="%s (%s)" % (scorer, sample))
 
-# The min_samples_split that gave the best AUC Score
-ax.plot([X_axis[gs.best_index_], ] * 2, [0, gs.best_score_],
-        linestyle='-.', color='g', marker='x', markeredgewidth=3, markersize=8)
-ax.annotate("%d" % X_axis[gs.best_index_],
-            (X_axis[gs.best_index_], gs.best_score_ + 0.005))
+    best_index = np.nonzero(results['rank_test_%s' % scorer] == 1)[0][0]
+    best_score = results['mean_test_%s' % scorer][best_index]
 
-# The min_samples_split that gave the best F1 Score
-best_index_f1_score = np.nonzero(results['rank_test_F1 Score'] == 1)[0][0]
-best_f1_score = results['mean_test_F1 Score'][best_index_f1_score]
-ax.plot([X_axis[best_index_f1_score], ] * 2, [0, best_f1_score],
-        linestyle='-.', color='k', marker='x', markeredgewidth=3, ms=8)
-ax.annotate("%d" % X_axis[best_index_f1_score],
-            (X_axis[best_index_f1_score], best_f1_score + 0.005))
+    # Plot a dotted vertical line at the best score for that scorer marked by x
+    ax.plot([X_axis[best_index], ] * 2, [0, best_score],
+            linestyle='-.', color=color, marker='x', markeredgewidth=3, ms=8)
+
+    # Annotate the score and the min_samples_split chosen by that scorer
+    ax.annotate("%d" % X_axis[best_index],
+                (X_axis[best_index] + 3, 0.685))
+    ax.annotate("%0.2f" % best_score,
+                (X_axis[best_index], best_score + 0.005))
 
 plt.legend(loc="best")
 plt.grid('off')
