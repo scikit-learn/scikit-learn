@@ -965,7 +965,7 @@ def test_grid_search_cv_results_multimetric():
             grid_searches.append(grid_search)
 
         compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-            *grid_searches, iid)
+            *grid_searches, iid=iid)
 
 
 def test_random_search_cv_results_multimetric():
@@ -989,7 +989,7 @@ def test_random_search_cv_results_multimetric():
             random_searches.append(random_search)
 
         compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-            *random_searches, iid)
+            *random_searches, iid=iid)
 
 
 def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
