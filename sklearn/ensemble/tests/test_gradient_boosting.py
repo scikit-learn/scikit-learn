@@ -256,12 +256,21 @@ def test_regression_synthetic():
                                    noise=1.0)
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
+    X_idx_sorted_train = np.asfortranarray(np.argsort(X_train, axis=0),
+                                           dtype=np.int32)
 
     for presort in True, False:
-        clf = GradientBoostingRegressor(presort=presort)
+        clf = GradientBoostingRegressor(presort=presort, random_state=0)
         clf.fit(X_train, y_train)
         mse = mean_squared_error(y_test, clf.predict(X_test))
         assert_less(mse, 5.0)
+        if presort:
+            # Check that presorting can be done manually ahead of time
+            # and yield the same output
+            clf2 = GradientBoostingRegressor(presort=presort, random_state=0)
+            clf2.fit(X_train, y_train, X_idx_sorted=X_idx_sorted_train)
+            assert_array_almost_equal(clf.predict(X_test),
+                                      clf2.predict(X_test))
 
     # Friedman2
     X, y = datasets.make_friedman2(n_samples=1200, random_state=random_state)
