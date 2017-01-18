@@ -194,6 +194,10 @@ Bug fixes
      would be raised on trying to stack matrices with different dimensions.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
+   - Fix a bug where :func:`sklearn.linear_model.LassoLars.fit` sometimes
+     left `coef_` as a list, rather than an ndarray.
+     :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
+
 API changes summary
 -------------------
 
