@@ -1,3 +1,7 @@
+checkout:
+  post:
+    - ./build_tools/circle/checkout_merge_commit.sh
+
 dependencies:
   cache_directories:
     - "~/scikit_learn_data"
