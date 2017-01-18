@@ -35,7 +35,7 @@ from sklearn.tree import DecisionTreeClassifier
 print(__doc__)
 
 
-X, y = make_hastie_10_2()
+X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 
 # The scorers can be a std scorer referenced by its name or one wrapped
 # by sklearn.metrics.scorer.make_scorer
@@ -51,21 +51,22 @@ gs.fit(X, y)
 
 results = gs.cv_results_
 
-plt.figure().set_size_inches(15, 15)
+plt.figure().set_size_inches(13, 13)
 plt.title("GridSearchCV evaluating using multiple scorers simultaneously",
           fontsize=16)
 
-plt.xlabel("min_samples_split", fontsize=14)
-plt.ylabel("Score", fontsize=14)
+plt.xlabel("min_samples_split")
+plt.ylabel("Score")
 plt.grid()
 
 ax = plt.axes()
-ax.set_xlim(0, 402)
+ax.set_xlim(2, 402)
+ax.set_ylim(0.7, 1)
 
 # Get the regular numpy array from the MaskedArray
 X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
 
-for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'grey'),
+for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'k'),
                       ('Precision', 'r'), ('recall', 'blue')):
     for sample, style in (('train', '--'), ('test', '-')):
         sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
@@ -75,7 +76,22 @@ for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'grey'),
                         alpha=0.1 if sample == 'test' else 0, color=color)
         ax.plot(X_axis, sample_score_mean, style, color=color,
                 alpha=1 if sample == 'test' else 0.7,
-                label="Mean %s on the %sing set" % (scorer, sample))
+                label="%s (%s)" % (scorer, sample))
 
-plt.legend(loc="best", fontsize=12)
+# The min_samples_split that gave the best AUC Score
+ax.plot([X_axis[gs.best_index_], ] * 2, [0, gs.best_score_],
+        linestyle='-.', color='g', marker='x', markeredgewidth=3, markersize=8)
+ax.annotate("%d" % X_axis[gs.best_index_],
+            (X_axis[gs.best_index_], gs.best_score_ + 0.005))
+
+# The min_samples_split that gave the best F1 Score
+best_index_f1_score = np.nonzero(results['rank_test_F1 Score'] == 1)[0][0]
+best_f1_score = results['mean_test_F1 Score'][best_index_f1_score]
+ax.plot([X_axis[best_index_f1_score], ] * 2, [0, best_f1_score],
+        linestyle='-.', color='k', marker='x', markeredgewidth=3, ms=8)
+ax.annotate("%d" % X_axis[best_index_f1_score],
+            (X_axis[best_index_f1_score], best_f1_score + 0.005))
+
+plt.legend(loc="best")
+plt.grid('off')
 plt.show()
