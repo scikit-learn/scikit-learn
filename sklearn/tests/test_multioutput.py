@@ -355,6 +355,7 @@ def test_classifier_chain_fit_and_predict():
     assert_equal(Y_pred.shape, Y.shape)
     assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
 
+
 def test_classifier_chain_fit_and_predict_with_linear_svc():
     """Fit classifier chain and verify predict performance using LinearSVC"""
     X, Y = datasets.make_multilabel_classification(n_samples=10000,
