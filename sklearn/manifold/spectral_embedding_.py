@@ -191,9 +191,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Notes
     -----
-    Spectral Embedding (Laplacian Eigenmaps) is most useful when the graph has one connected
-    component. If there graph has many components, the first few eigenvectors
-    will simply uncover the connected components of the graph.
+    Spectral Embedding (Laplacian Eigenmaps) is most useful when the graph
+    has one connected component. If there graph has many components, the first
+    few eigenvectors will simply uncover the connected components of the graph.
 
     References
     ----------
