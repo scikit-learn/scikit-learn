@@ -393,6 +393,9 @@ class ClassifierChain(BaseEstimator):
 
     Attributes
     ----------
+    classes_ : list of arrays of length len(estimators_) containing the
+        class labels for each estimator in the chain.
+
     estimators_ : list
         A list of copies of base_estimator. Once fit the estimators in
         this list will be ordered as specified by the order attribute.
@@ -446,11 +449,13 @@ class ClassifierChain(BaseEstimator):
         self.estimators_ = [clone(self.base_estimator)
                             for _ in range(Y.shape[1])]
 
+        self.classes_ = []
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_labels = Y[:, self.order[:chain_idx]]
             y = Y[:, self.order[chain_idx]]
             X_aug = np.hstack((X, previous_labels))
             estimator.fit(X_aug, y)
+            self.classes_.append(estimator.classes_)
 
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.
