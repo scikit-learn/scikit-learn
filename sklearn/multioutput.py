@@ -497,10 +497,12 @@ class ClassifierChain(BaseEstimator):
             X = X.toarray()
 
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
+        Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
-            previous_predictions = Y_prob_chain[:, :chain_idx]
+            previous_predictions = Y_pred_chain[:, :chain_idx]
             X_aug = np.hstack((X, previous_predictions))
             Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
+            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
         chain_key = [self.order.index(i) for i in range(len(self.order))]
         Y_prob = Y_prob_chain[:, chain_key]
 
@@ -528,10 +530,12 @@ class ClassifierChain(BaseEstimator):
             X = X.toarray()
 
         Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
+        Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
-            previous_predictions = Y_decision_chain[:, :chain_idx]
+            previous_predictions = Y_pred_chain[:, :chain_idx]
             X_aug = np.hstack((X, previous_predictions))
             Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
+            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
         chain_key = [self.order.index(i) for i in range(len(self.order))]
         Y_decision = Y_decision_chain[:, chain_key]
 
