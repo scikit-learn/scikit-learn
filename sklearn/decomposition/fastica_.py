@@ -317,8 +317,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         X1 = as_float_array(X, copy=False)  # copy has been taken care of
 
     if w_init is None:
-        w_init = np.asarray(random_state.normal(size=(n_components,
-                                                      n_components)), dtype=X1.dtype)
+        w_init = np.asarray(random_state.normal(
+                            size=(n_components, n_components)), dtype=X1.dtype)
 
     else:
         w_init = np.asarray(w_init)
