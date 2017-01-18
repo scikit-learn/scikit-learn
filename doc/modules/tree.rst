@@ -140,14 +140,12 @@ supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
     >>> import os
     >>> os.unlink('iris.dot')
 
-Alternatively, if we have Python module ``pydot`` installed, we can generate
+Alternatively, if we have Python module ``pydotplus`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
-    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
-    >>> import pydot # doctest: +SKIP
-    >>> dot_data = StringIO() # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
+    >>> import pydotplus # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
@@ -156,13 +154,12 @@ using explicit variable and class names if desired. IPython notebooks can also
 render these plots inline using the `Image()` function::
 
     >>> from IPython.display import Image  # doctest: +SKIP
-    >>> dot_data = StringIO()  # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data,  # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
                              feature_names=iris.feature_names,  # doctest: +SKIP
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data)  # doctest: +SKIP
     >>> Image(graph.create_png())  # doctest: +SKIP
 
 .. only:: html

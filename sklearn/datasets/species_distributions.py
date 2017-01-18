@@ -141,7 +141,7 @@ def fetch_species_distributions(data_home=None,
         Specify another download and cache folder for the datasets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -222,6 +222,9 @@ def fetch_species_distributions(data_home=None,
     archive_path = _pkl_filepath(data_home, DATA_ARCHIVE_NAME)
 
     if not exists(archive_path):
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
+
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
         X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))

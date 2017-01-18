@@ -237,7 +237,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    neighbors: int64 array, shape (n_samples, K)
+    neighbors : int64 array, shape (n_samples, K)
         Array with element [i, j] giving the index for the jth
         closest neighbor to point i.
 
@@ -546,15 +546,19 @@ class TSNE(BaseEstimator):
         least 200.
 
     n_iter_without_progress : int, optional (default: 30)
+        Only used if method='exact'
         Maximum number of iterations without progress before we abort the
-        optimization.
+        optimization. If method='barnes_hut' this parameter is fixed to
+        a value of 30 and cannot be changed.
 
         .. versionadded:: 0.17
            parameter *n_iter_without_progress* to control stopping criteria.
 
-    min_grad_norm : float, optional (default: 1E-7)
+    min_grad_norm : float, optional (default: 1e-7)
+        Only used if method='exact'
         If the gradient norm is below this threshold, the optimization will
-        be aborted.
+        be aborted. If method='barnes_hut' this parameter is fixed to a value
+        of 1e-3 and cannot be changed.
 
     metric : string or callable, optional
         The metric to use when calculating distance between instances in a
@@ -663,7 +667,6 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
-        self.embedding_ = None
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -802,9 +805,9 @@ class TSNE(BaseEstimator):
                                                    self.n_components)
         params = X_embedded.ravel()
 
-        opt_args = {}
         opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
                     "learning_rate": self.learning_rate,
+                    "n_iter_without_progress": self.n_iter_without_progress,
                     "verbose": self.verbose, "n_iter_check": 25,
                     "kwargs": dict(skip_num_points=skip_num_points)}
         if self.method == 'barnes_hut':
@@ -829,7 +832,7 @@ class TSNE(BaseEstimator):
             opt_args['args'] = [P, degrees_of_freedom, n_samples,
                                 self.n_components]
             opt_args['min_error_diff'] = 0.0
-            opt_args['min_grad_norm'] = 0.0
+            opt_args['min_grad_norm'] = self.min_grad_norm
 
         # Early exaggeration
         P *= self.early_exaggeration

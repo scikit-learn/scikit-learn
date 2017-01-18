@@ -29,7 +29,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use by default for :meth:`k_neighbors` queries.
+        Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     weights : str or callable, optional (default = 'uniform')
         weight function used in prediction.  Possible values:
@@ -108,7 +108,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     .. warning::
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
-       neighbors, neighbor `k+1` and `k`, have identical distances but
+       neighbors, neighbor `k+1` and `k`, have identical distances
        but different labels, the results will depend on the ordering of the
        training data.
 

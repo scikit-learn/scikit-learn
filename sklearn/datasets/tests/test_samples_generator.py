@@ -24,6 +24,7 @@ from sklearn.datasets import make_friedman1
 from sklearn.datasets import make_friedman2
 from sklearn.datasets import make_friedman3
 from sklearn.datasets import make_low_rank_matrix
+from sklearn.datasets import make_moons
 from sklearn.datasets import make_sparse_coded_signal
 from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
@@ -360,3 +361,12 @@ def test_make_checkerboard():
     X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
                                  shuffle=True, random_state=0)
     assert_array_equal(X1, X2)
+
+
+def test_make_moons():
+    X, y = make_moons(3, shuffle=False)
+    for x, label in zip(X, y):
+        center = [0.0, 0.0] if label == 0 else [1.0, 0.5]
+        dist_sqr = ((x - center) ** 2).sum()
+        assert_almost_equal(dist_sqr, 1.0,
+                            err_msg="Point is not on expected unit circle")

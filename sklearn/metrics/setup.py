@@ -15,7 +15,7 @@ def configuration(parent_package="", top_path=None):
         cblas_libs.append('m')
 
     config.add_extension("pairwise_fast",
-                         sources=["pairwise_fast.c"],
+                         sources=["pairwise_fast.pyx"],
                          include_dirs=[os.path.join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],

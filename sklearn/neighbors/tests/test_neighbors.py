@@ -942,7 +942,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     test = rng.rand(n_query_pts, n_features)
 
     for metric, metric_params in metrics:
-        results = []
+        results = {}
         p = metric_params.pop('p', 2)
         for algorithm in algorithms:
             # KD tree doesn't support all metrics
@@ -953,16 +953,19 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                               algorithm=algorithm,
                               metric=metric, metric_params=metric_params)
                 continue
-
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
             neigh.fit(X)
-            results.append(neigh.kneighbors(test, return_distance=True))
-
-        assert_array_almost_equal(results[0][0], results[1][0])
-        assert_array_almost_equal(results[0][1], results[1][1])
+            results[algorithm] = neigh.kneighbors(test, return_distance=True)
+        assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
+        assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
+        if 'kd_tree' in results:
+            assert_array_almost_equal(results['brute'][0],
+                                      results['kd_tree'][0])
+            assert_array_almost_equal(results['brute'][1],
+                                      results['kd_tree'][1])
 
 
 def test_callable_metric():

@@ -14,6 +14,7 @@ Link: http://matthewdhoffman.com/code/onlineldavb.tar
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
@@ -159,6 +160,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
+        The default learning method is going to be changed to 'batch' in the 0.20 release.
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -246,7 +248,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_topics=10, doc_topic_prior=None,
-                 topic_word_prior=None, learning_method='online',
+                 topic_word_prior=None, learning_method=None,
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
@@ -283,7 +285,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid 'learning_offset' parameter: %r"
                              % self.learning_offset)
 
-        if self.learning_method not in ("batch", "online"):
+        if self.learning_method not in ("batch", "online", None):
             raise ValueError("Invalid 'learning_method' parameter: %r"
                              % self.learning_method)
 
@@ -337,7 +339,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Returns
         -------
         (doc_topic_distr, suff_stats) :
-            `doc_topic_distr` is unnormailzed topic distribution for each
+            `doc_topic_distr` is unnormalized topic distribution for each
             document. In the literature, this is called `gamma`.
             `suff_stats` is expected sufficient statistics for the M-step.
             When `cal_sstats == False`, it will be None.
@@ -499,6 +501,13 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
+        if learning_method == None:
+            warnings.warn("The default value for 'learning_method' will be "
+                          "changed from 'online' to 'batch' in the release 0.20. "
+                          "This warning was introduced in 0.18.",
+                          DeprecationWarning)
+            learning_method = 'online'
+
         batch_size = self.batch_size
 
         # initialize parameters
@@ -522,8 +531,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
                                                        random_init=False,
                                                        parallel=parallel)
-                    bound = self.perplexity(X, doc_topics_distr,
-                                            sub_sampling=False)
+                    bound = self._perplexity_precomp_distr(X, doc_topics_distr,
+                                                           sub_sampling=False)
                     if self.verbose:
                         print('iteration: %d, perplexity: %.4f'
                               % (i + 1, bound))
@@ -532,10 +541,18 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                         break
                     last_bound = bound
                 self.n_iter_ += 1
+
+        # calculate final perplexity value on train set
+        doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
+                                           random_init=False,
+                                           parallel=parallel)
+        self.bound_ = self._perplexity_precomp_distr(X, doc_topics_distr,
+                                                     sub_sampling=False)
+
         return self
 
-    def transform(self, X):
-        """Transform data X according to the fitted model.
+    def _unnormalized_transform(self, X):
+        """Transform data X according to fitted model.
 
         Parameters
         ----------
@@ -547,7 +564,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr : shape=(n_samples, n_topics)
             Document topic distribution for X.
         """
-
         if not hasattr(self, 'components_'):
             raise NotFittedError("no 'components_' attribute in model."
                                  " Please fit model first.")
@@ -563,7 +579,26 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False,
                                           random_init=False)
-        # normalize doc_topic_distr
+
+        return doc_topic_distr
+
+    def transform(self, X):
+        """Transform data X according to the fitted model.
+
+           .. versionchanged:: 0.18
+              *doc_topic_distr* is now normalized
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
+
+        Returns
+        -------
+        doc_topic_distr : shape=(n_samples, n_topics)
+            Document topic distribution for X.
+        """
+        doc_topic_distr = self._unnormalized_transform(X)
         doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
 
@@ -656,15 +691,16 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
             Use approximate bound as score.
         """
-
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.score")
 
-        doc_topic_distr = self.transform(X)
+        doc_topic_distr = self._unnormalized_transform(X)
         score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
         return score
 
-    def perplexity(self, X, doc_topic_distr=None, sub_sampling=False):
-        """Calculate approximate perplexity for data X.
+    def _perplexity_precomp_distr(self, X, doc_topic_distr=None,
+                                  sub_sampling=False):
+        """Calculate approximate perplexity for data X with ability to accept
+        precomputed doc_topic_distr
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
 
@@ -690,7 +726,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                                       "LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
-            doc_topic_distr = self.transform(X)
+            doc_topic_distr = self._unnormalized_transform(X)
         else:
             n_samples, n_topics = doc_topic_distr.shape
             if n_samples != X.shape[0]:
@@ -710,3 +746,35 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         perword_bound = bound / word_cnt
 
         return np.exp(-1.0 * perword_bound)
+
+    def perplexity(self, X, doc_topic_distr='deprecated', sub_sampling=False):
+        """Calculate approximate perplexity for data X.
+
+        Perplexity is defined as exp(-1. * log-likelihood per word)
+
+        .. versionchanged:: 0.19
+           *doc_topic_distr* argument has been depricated because user no
+           longer has access to unnormalized distribution
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, [n_samples, n_features]
+            Document word matrix.
+
+        doc_topic_distr : None or array, shape=(n_samples, n_topics)
+            Document topic distribution.
+            If it is None, it will be generated by applying transform on X.
+
+            .. deprecated:: 0.19
+
+        Returns
+        -------
+        score : float
+            Perplexity score.
+        """
+        if doc_topic_distr != 'deprecated':
+            warnings.warn("Argument 'doc_topic_distr' is deprecated and will "
+                          "be ignored as of 0.19. Support for this argument "
+                          "will be removed in 0.21.", DeprecationWarning)
+
+        return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)

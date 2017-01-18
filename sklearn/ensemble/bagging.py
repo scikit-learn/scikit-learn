@@ -86,12 +86,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                   (i + 1, n_estimators, total_n_estimators))
 
         random_state = np.random.RandomState(seeds[i])
-        estimator = ensemble._make_estimator(append=False)
-
-        try:  # Not all estimators accept a random_state
-            estimator.set_params(random_state=seeds[i])
-        except ValueError:
-            pass
+        estimator = ensemble._make_estimator(append=False,
+                                             random_state=random_state)
 
         # Draw random feature, sample indices
         features, indices = _generate_bagging_indices(random_state,
@@ -334,7 +330,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if hasattr(self, "oob_score_") and self.warm_start:
             del self.oob_score_
 
-        if not self.warm_start or len(self.estimators_) == 0:
+        if not self.warm_start or not hasattr(self, 'estimators_'):
             # Free allocated memory, if any
             self.estimators_ = []
             self.estimators_features_ = []

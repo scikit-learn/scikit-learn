@@ -411,7 +411,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             Number of neighbors required. If not provided, this will
             return the number specified at the initialization.
 
-        return_distance : boolean, optional (default = False)
+        return_distance : boolean, optional (default = True)
             Returns the distances of neighbors if set to True.
 
         Returns

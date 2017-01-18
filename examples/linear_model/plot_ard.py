@@ -15,6 +15,12 @@ prior is implied on the weights.
 
 The estimation of the model is done by iteratively maximizing the
 marginal log-likelihood of the observations.
+
+We also plot predictions and uncertainties for ARD
+for one dimensional regression using polynomial feature expansion.
+Note the uncertainty starts going up on the right side of the plot.
+This is because these test samples are outside of the range of the training
+samples.
 """
 print(__doc__)
 
@@ -54,8 +60,8 @@ ols = LinearRegression()
 ols.fit(X, y)
 
 ###############################################################################
-# Plot the true weights, the estimated weights and the histogram of the
-# weights
+# Plot the true weights, the estimated weights, the histogram of the
+# weights, and predictions with standard deviations
 plt.figure(figsize=(6, 5))
 plt.title("Weights of the model")
 plt.plot(clf.coef_, color='darkblue', linestyle='-', linewidth=2,
@@ -81,4 +87,30 @@ plt.title("Marginal log-likelihood")
 plt.plot(clf.scores_, color='navy', linewidth=2)
 plt.ylabel("Score")
 plt.xlabel("Iterations")
+
+
+# Plotting some predictions for polynomial regression
+def f(x, noise_amount):
+    y = np.sqrt(x) * np.sin(x)
+    noise = np.random.normal(0, 1, len(x))
+    return y + noise_amount * noise
+
+
+degree = 10
+X = np.linspace(0, 10, 100)
+y = f(X, noise_amount=1)
+clf_poly = ARDRegression(threshold_lambda=1e5)
+clf_poly.fit(np.vander(X, degree), y)
+
+X_plot = np.linspace(0, 11, 25)
+y_plot = f(X_plot, noise_amount=0)
+y_mean, y_std = clf_poly.predict(np.vander(X_plot, degree), return_std=True)
+plt.figure(figsize=(6, 5))
+plt.errorbar(X_plot, y_mean, y_std, color='navy',
+             label="Polynomial ARD", linewidth=2)
+plt.plot(X_plot, y_plot, color='gold', linewidth=2,
+         label="Ground Truth")
+plt.ylabel("Output y")
+plt.xlabel("Feature X")
+plt.legend(loc="lower left")
 plt.show()

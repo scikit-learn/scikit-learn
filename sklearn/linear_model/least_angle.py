@@ -21,7 +21,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y
+from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -404,7 +404,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 # resize the coefs and alphas array
                 add_features = 2 * max(1, (max_features - n_active))
                 coefs = np.resize(coefs, (n_iter + add_features, n_features))
+                coefs[-add_features:] = 0
                 alphas = np.resize(alphas, n_iter + add_features)
+                alphas[-add_features:] = 0
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
             alpha = alphas[n_iter, np.newaxis]
@@ -663,9 +665,9 @@ class Lars(LinearModel, RegressorMixin):
 
         self.alphas_ = []
         self.n_iter_ = []
+        self.coef_ = np.empty((n_targets, n_features))
 
         if self.fit_path:
-            self.coef_ = []
             self.active_ = []
             self.coef_path_ = []
             for k in xrange(n_targets):
@@ -680,7 +682,7 @@ class Lars(LinearModel, RegressorMixin):
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
                 self.coef_path_.append(coef_path)
-                self.coef_.append(coef_path[:, -1])
+                self.coef_[k] = coef_path[:, -1]
 
             if n_targets == 1:
                 self.alphas_, self.active_, self.coef_path_, self.coef_ = [
@@ -688,7 +690,6 @@ class Lars(LinearModel, RegressorMixin):
                                    self.coef_)]
                 self.n_iter_ = self.n_iter_[0]
         else:
-            self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, _, self.coef_[k], n_iter_ = lars_path(
@@ -1005,7 +1006,7 @@ class LarsCV(Lars):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform.
 
     cv : int, cross-validation generator or an iterable, optional
@@ -1056,7 +1057,7 @@ class LarsCV(Lars):
     cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1152,7 +1153,7 @@ class LarsCV(Lars):
         # Store our parameters
         self.alpha_ = best_alpha
         self.cv_alphas_ = all_alphas
-        self.cv_mse_path_ = mse_path
+        self.mse_path_ = mse_path
 
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
@@ -1164,6 +1165,12 @@ class LarsCV(Lars):
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
+
+    @property
+    @deprecated("Attribute cv_mse_path_ is deprecated in 0.18 and "
+                "will be removed in 0.20. Use 'mse_path_' instead")
+    def cv_mse_path_(self):
+        return self.mse_path_
 
 
 class LassoLarsCV(LarsCV):
@@ -1265,7 +1272,7 @@ class LassoLarsCV(LarsCV):
     cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 

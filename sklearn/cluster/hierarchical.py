@@ -116,7 +116,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    return_distance: bool (optional)
+    return_distance : bool (optional)
         If True, return the distance between the clusters.
 
     Returns
@@ -660,7 +660,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
-                 memory=Memory(cachedir=None, verbose=0),
+                 memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
         self.n_clusters = n_clusters
@@ -685,8 +685,13 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
-        if isinstance(memory, six.string_types):
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError('`memory` has to be a `str` or a `joblib.Memory`'
+                             ' instance')
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."

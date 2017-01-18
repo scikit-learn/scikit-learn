@@ -58,21 +58,21 @@ cdef class Criterion:
 
         Parameters
         ----------
-        y: array-like, dtype=DOUBLE_t
+        y : array-like, dtype=DOUBLE_t
             y is a buffer that can store values for n_outputs target variables
-        y_stride: SIZE_t
+        y_stride : SIZE_t
             y_stride is used to index the kth output value as follows:
             y[i, k] = y[i * y_stride + k]
-        sample_weight: array-like, dtype=DOUBLE_t
+        sample_weight : array-like, dtype=DOUBLE_t
             The weight of each sample
-        weighted_n_samples: DOUBLE_t
+        weighted_n_samples : DOUBLE_t
             The total weight of the samples being considered
-        samples: array-like, dtype=DOUBLE_t
+        samples : array-like, dtype=DOUBLE_t
             Indices of the samples in X and y, where samples[start:end]
             correspond to the samples in this node
-        start: SIZE_t
+        start : SIZE_t
             The first sample to be used on this node
-        end: SIZE_t
+        end : SIZE_t
             The last sample used on this node
 
         """
@@ -103,7 +103,7 @@ cdef class Criterion:
 
         Parameters
         ----------
-        new_pos: SIZE_t
+        new_pos : SIZE_t
             New starting index position of the samples in the right child
         """
 
@@ -129,10 +129,10 @@ cdef class Criterion:
 
         Parameters
         ----------
-        impurity_left: double pointer
+        impurity_left : double pointer
             The memory address where the impurity of the left child should be
             stored.
-        impurity_right: double pointer
+        impurity_right : double pointer
             The memory address where the impurity of the right child should be
             stored
         """
@@ -147,7 +147,7 @@ cdef class Criterion:
 
         Parameters
         ----------
-        dest: double pointer
+        dest : double pointer
             The memory address where the node value should be stored.
         """
 
@@ -172,11 +172,10 @@ cdef class Criterion:
                 - self.weighted_n_left * impurity_left)
 
     cdef double impurity_improvement(self, double impurity) nogil:
-        """Placeholder for improvement in impurity after a split.
+        """Compute the improvement in impurity
 
-        Placeholder for a method which computes the improvement
-        in impurity when a split occurs. The weighted impurity improvement
-        equation is the following:
+        This method computes the improvement in impurity when a split occurs.
+        The weighted impurity improvement equation is the following:
 
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
@@ -187,12 +186,12 @@ cdef class Criterion:
 
         Parameters
         ----------
-        impurity: double
+        impurity : double
             The initial impurity of the node before the split
 
         Return
         ------
-        double: improvement in impurity after the split occurs
+        double : improvement in impurity after the split occurs
         """
 
         cdef double impurity_left
@@ -219,9 +218,9 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        n_outputs: SIZE_t
+        n_outputs : SIZE_t
             The number of targets, the dimensionality of the prediction
-        n_classes: numpy.ndarray, dtype=SIZE_t
+        n_classes : numpy.ndarray, dtype=SIZE_t
             The number of unique classes in each target
         """
 
@@ -235,6 +234,7 @@ cdef class ClassificationCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = 0
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -266,18 +266,17 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_left = <double*> calloc(n_elements, sizeof(double))
         self.sum_right = <double*> calloc(n_elements, sizeof(double))
 
-        if (self.sum_total == NULL or 
+        if (self.sum_total == NULL or
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
 
     def __dealloc__(self):
         """Destructor."""
-
         free(self.n_classes)
 
     def __reduce__(self):
-        return (ClassificationCriterion,
+        return (type(self),
                 (self.n_outputs,
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
@@ -290,20 +289,20 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        y: array-like, dtype=DOUBLE_t
+        y : array-like, dtype=DOUBLE_t
             The target stored as a buffer for memory efficiency
-        y_stride: SIZE_t
+        y_stride : SIZE_t
             The stride between elements in the buffer, important if there
             are multiple targets (multi-output)
-        sample_weight: array-like, dtype=DTYPE_t
+        sample_weight : array-like, dtype=DTYPE_t
             The weight of each sample
-        weighted_n_samples: SIZE_t
+        weighted_n_samples : SIZE_t
             The total weight of all samples
-        samples: array-like, dtype=SIZE_t
+        samples : array-like, dtype=SIZE_t
             A mask on the samples, showing which ones we want to use
-        start: SIZE_t
+        start : SIZE_t
             The first sample to use in the mask
-        end: SIZE_t
+        end : SIZE_t
             The last sample to use in the mask
         """
 
@@ -399,7 +398,7 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        new_pos: SIZE_t
+        new_pos : SIZE_t
             The new ending position for which to move samples from the right
             child to the left child.
         """
@@ -484,7 +483,7 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        dest: double pointer
+        dest : double pointer
             The memory address which we will save the node value into.
         """
 
@@ -545,9 +544,9 @@ cdef class Entropy(ClassificationCriterion):
 
         Parameters
         ----------
-        impurity_left: double pointer
+        impurity_left : double pointer
             The memory address to save the impurity of the left node
-        impurity_right: double pointer
+        impurity_right : double pointer
             The memory address to save the impurity of the right node
         """
 
@@ -632,9 +631,9 @@ cdef class Gini(ClassificationCriterion):
 
         Parameters
         ----------
-        impurity_left: DTYPE_t
+        impurity_left : DTYPE_t
             The memory address to save the impurity of the left node to
-        impurity_right: DTYPE_t
+        impurity_right : DTYPE_t
             The memory address to save the impurity of the right node to
         """
 
@@ -692,10 +691,10 @@ cdef class RegressionCriterion(Criterion):
 
         Parameters
         ----------
-        n_outputs: SIZE_t
+        n_outputs : SIZE_t
             The number of targets to be predicted
 
-        n_samples: SIZE_t
+        n_samples : SIZE_t
             The total number of samples to fit on
         """
 
@@ -710,6 +709,7 @@ cdef class RegressionCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -734,7 +734,7 @@ cdef class RegressionCriterion(Criterion):
             raise MemoryError()
 
     def __reduce__(self):
-        return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
@@ -853,7 +853,7 @@ cdef class RegressionCriterion(Criterion):
 
                 self.weighted_n_left -= w
 
-        self.weighted_n_right = (self.weighted_n_node_samples - 
+        self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         for k in range(self.n_outputs):
             sum_right[k] = sum_total[k] - sum_left[k]
@@ -881,6 +881,7 @@ cdef class MSE(RegressionCriterion):
 
         MSE = var_left + var_right
     """
+
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
@@ -963,7 +964,7 @@ cdef class MSE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
@@ -986,10 +987,10 @@ cdef class MAE(RegressionCriterion):
 
         Parameters
         ----------
-        n_outputs: SIZE_t
+        n_outputs : SIZE_t
             The number of targets to be predicted
 
-        n_samples: SIZE_t
+        n_samples : SIZE_t
             The total number of samples to fit on
         """
 
@@ -1004,6 +1005,7 @@ cdef class MAE(RegressionCriterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -1265,7 +1267,7 @@ cdef class MAE(RegressionCriterion):
 cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman
 
-    Uses the formula (35) in Friedmans original Gradient Boosting paper:
+    Uses the formula (35) in Friedman's original Gradient Boosting paper:
 
         diff = mean_left - mean_right
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
@@ -1318,5 +1320,5 @@ cdef class FriedmanMSE(MSE):
         diff = (self.weighted_n_right * total_sum_left -
                 self.weighted_n_left * total_sum_right) / self.n_outputs
 
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right * 
+        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
                                self.weighted_n_node_samples))

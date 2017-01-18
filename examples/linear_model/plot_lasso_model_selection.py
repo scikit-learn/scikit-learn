@@ -138,8 +138,8 @@ t_lasso_lars_cv = time.time() - t1
 m_log_alphas = -np.log10(model.cv_alphas_)
 
 plt.figure()
-plt.plot(m_log_alphas, model.cv_mse_path_, ':')
-plt.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k',
+plt.plot(m_log_alphas, model.mse_path_, ':')
+plt.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k',
          label='Average across the folds', linewidth=2)
 plt.axvline(-np.log10(model.alpha_), linestyle='--', color='k',
             label='alpha CV')
