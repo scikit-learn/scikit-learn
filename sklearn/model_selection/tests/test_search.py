@@ -1008,7 +1008,7 @@ def test_grid_search_cv_results_multimetric():
 def test_random_search_cv_results_multimetric():
     # Make a dataset with a lot of noise to get various kind of prediction
     # errors across CV folds and parameter settings
-    X, y = make_classification(n_samples=500, n_features=100, n_informative=3,
+    X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
                                random_state=0)
 
     # scipy.stats dists now supports `seed` but we still support scipy 0.12
