@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
+from ..externals.joblib import Parallel, delayed
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
@@ -107,6 +108,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
+    n_jobs : int, default: 1
+        Number of CPU cores used during the 'n_restarts_optimizer' iterations.
+        If given a value of -1, all cores are used.
+
     Attributes
     ----------
     X_train_ : array-like, shape = (n_samples, n_features)
@@ -131,7 +136,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
-                 normalize_y=False, copy_X_train=True, random_state=None):
+                 normalize_y=False, copy_X_train=True, random_state=None,
+                 n_jobs=1):
         self.kernel = kernel
         self.alpha = alpha
         self.optimizer = optimizer
@@ -139,6 +145,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
         self.random_state = random_state
+        self.n_jobs = n_jobs
+
+    def _optima_iterations(self, bounds, theta_initial, obj_func):
+        return self._constrained_optimization(obj_func, theta_initial,
+                                              bounds)
 
     def fit(self, X, y):
         """Fit Gaussian process regression model
@@ -200,7 +211,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             optima = [(self._constrained_optimization(obj_func,
                                                       self.kernel_.theta,
                                                       self.kernel_.bounds))]
-
             # Additional runs are performed from log-uniform chosen initial
             # theta
             if self.n_restarts_optimizer > 0:
@@ -209,12 +219,22 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite.")
                 bounds = self.kernel_.bounds
-                for iteration in range(self.n_restarts_optimizer):
-                    theta_initial = \
-                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(
-                        self._constrained_optimization(obj_func, theta_initial,
-                                                       bounds))
+                # Initial theta values for 'n_restarts_optimizer' iterations
+                # for better optima
+                theta_initials = \
+                    self.rng.uniform(bounds[:, 0], bounds[:, 1],
+                                     size=(self.n_restarts_optimizer,
+                                     len(self.kernel_.theta)))
+                # 'n_restarts_optimizer' iterations using Embarrassingly
+                # Parallel helper
+                delayed_optima = delayed(self._optima_iterations,
+                                         check_pickle=False)
+                optima_new = Parallel(n_jobs=self.n_jobs, backend="threading")(
+                    delayed_optima(bounds=bounds, theta_initial=theta_initial,
+                                   obj_func=obj_func)
+                    for theta_initial in theta_initials)
+                optima = optima + optima_new
+
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
