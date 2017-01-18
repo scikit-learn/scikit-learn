@@ -305,11 +305,11 @@ The overall complexity of standard HLLE is
 Spectral Embedding
 ====================
 
-Spectral Embedding (also known as Laplacian Eigenmaps) is one method
-to calculate non-linear embedding. It finds a low dimensional representation
-of the data using a spectral decomposition of the graph Laplacian.
-The graph generated can be considered as a discrete approximation of the
-low dimensional manifold in the high dimensional space. Minimization of a
+Spectral Embedding is an approach to calculating a non-linear embedding.
+Scikit-learn implements Laplacian Eigenmaps, which finds a low dimensional
+representation of the data using a spectral decomposition of the graph
+Laplacian. The graph generated can be considered as a discrete approximation of
+the low dimensional manifold in the high dimensional space. Minimization of a
 cost function based on the graph ensures that points close to each other on
 the manifold are mapped close to each other in the low dimensional space,
 preserving local distances. Spectral embedding can be  performed with the
@@ -319,7 +319,7 @@ function :func:`spectral_embedding` or its object-oriented counterpart
 Complexity
 ----------
 
-The Spectral Embedding algorithm comprises three stages:
+The Spectral Embedding (Laplacian Eigenmaps) algorithm comprises three stages:
 
 1. **Weighted Graph Construction**. Transform the raw input data into
    graph representation using affinity (adjacency) matrix representation.
@@ -640,4 +640,3 @@ Tips on practical use
    :ref:`random_trees_embedding` can also be useful to derive non-linear
    representations of feature space, also it does not perform
    dimensionality reduction.
-
