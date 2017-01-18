@@ -366,8 +366,15 @@ def test_multitarget():
     X = diabetes.data
     Y = np.vstack([diabetes.target, diabetes.target ** 2]).T
     n_targets = Y.shape[1]
+    estimators = [
+        linear_model.LassoLars(),
+        linear_model.Lars(),
+        # regression test for gh-1615
+        linear_model.LassoLars(fit_intercept=False),
+        linear_model.Lars(fit_intercept=False),
+    ]
 
-    for estimator in (linear_model.LassoLars(), linear_model.Lars()):
+    for estimator in estimators:
         estimator.fit(X, Y)
         Y_pred = estimator.predict(X)
         alphas, active, coef, path = (estimator.alphas_, estimator.active_,
