@@ -58,9 +58,9 @@ cdef class Tree:
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
-                          double weighted_n_samples) nogil
-    cdef void _resize(self, SIZE_t capacity) except *
-    cdef int _resize_c(self, SIZE_t capacity=*) nogil
+                          double weighted_n_samples) nogil except -1
+    cdef int _resize(self, SIZE_t capacity) nogil except -1
+    cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
