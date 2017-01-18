@@ -1018,51 +1018,28 @@ def test_random_search_cv_results_multimetric():
     n_search_iter = 30
     scoring = ('accuracy', 'recall')
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search_multi = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                             cv=n_splits, iid=False,
-                                             param_distributions=params,
-                                             scoring=scoring, refit=False,
-                                             random_state=42)
-    random_search_acc = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                           cv=n_splits, iid=False,
-                                           param_distributions=params,
-                                           scoring='accuracy', refit=False,
-                                           random_state=42)
-    random_search_rec = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                           cv=n_splits, iid=False,
-                                           param_distributions=params,
-                                           scoring='recall', refit=False,
-                                           random_state=42)
-    random_search_multi.fit(X, y)
-    random_search_acc.fit(X, y)
-    random_search_rec.fit(X, y)
-    scoring = {'accuracy': make_scorer(accuracy_score),
-               'recall': make_scorer(recall_score)}
-    random_search_iid_multi = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                                 cv=n_splits, iid=True,
+    for iid in (True, False):
+        random_search_multi = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                                 cv=n_splits, iid=False,
                                                  param_distributions=params,
                                                  scoring=scoring, refit=False,
                                                  random_state=42)
-    random_search_iid_acc = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                               cv=n_splits, iid=True,
+        random_search_acc = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                               cv=n_splits, iid=False,
                                                param_distributions=params,
                                                scoring='accuracy', refit=False,
                                                random_state=42)
-    random_search_iid_rec = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                               cv=n_splits, iid=True,
+        random_search_rec = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                               cv=n_splits, iid=False,
                                                param_distributions=params,
                                                scoring='recall', refit=False,
                                                random_state=42)
-    random_search_iid_multi.fit(X, y)
-    random_search_iid_acc.fit(X, y)
-    random_search_iid_rec.fit(X, y)
+        random_search_multi.fit(X, y)
+        random_search_acc.fit(X, y)
+        random_search_rec.fit(X, y)
 
-    for (search_multi, search_acc, search_rec), iid in zip(
-            ((random_search_multi, random_search_acc, random_search_rec),
-             (random_search_iid_multi, random_search_iid_acc,
-              random_search_iid_rec)), (False, True)):
         compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-            search_multi, search_acc, search_rec, iid)
+            random_search_multi, random_search_acc, random_search_rec, iid)
 
 
 def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
