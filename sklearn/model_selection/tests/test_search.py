@@ -28,7 +28,6 @@ from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
-from sklearn.externals.six.moves import zip
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
@@ -774,12 +773,6 @@ def test_grid_search_cv_results():
     n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
-                               param_grid=params)
-    grid_search.fit(X, y)
-    grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
-                                   param_grid=params)
-    grid_search_iid.fit(X, y)
 
     param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
     score_keys = ('mean_test_score', 'mean_train_score',
@@ -793,7 +786,9 @@ def test_grid_search_cv_results():
                   'mean_score_time', 'std_score_time')
     n_candidates = n_grid_points
 
-    for search, iid in zip((grid_search, grid_search_iid), (False, True)):
+    for iid in (False, True):
+        search = GridSearchCV(SVC(), cv=n_splits, iid=iid, param_grid=params)
+        search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
         # Check if score and timing are reasonable
@@ -807,8 +802,8 @@ def test_grid_search_cv_results():
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
         # Check masking
-        cv_results = grid_search.cv_results_
-        n_candidates = len(grid_search.cv_results_['params'])
+        cv_results = search.cv_results_
+        n_candidates = len(search.cv_results_['params'])
         assert_true(all((cv_results['param_C'].mask[i] and
                          cv_results['param_gamma'].mask[i] and
                          not cv_results['param_degree'].mask[i])
@@ -823,24 +818,12 @@ def test_grid_search_cv_results():
 
 
 def test_random_search_cv_results():
-    # Make a dataset with a lot of noise to get various kind of prediction
-    # errors across CV folds and parameter settings
-    X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
-                               random_state=0)
+    X, y = make_classification(n_samples=50, n_features=4, random_state=42)
+
     n_splits = 3
     n_search_iter = 30
 
-    # Scipy 0.12's stats dists do not accept seed, hence we use param grid
-    params = dict(C=np.logspace(-10, 1), gamma=np.logspace(-5, 0, base=0.1))
-    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                       cv=n_splits, iid=False,
-                                       param_distributions=params)
-    random_search.fit(X, y)
-    random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                           cv=n_splits, iid=True,
-                                           param_distributions=params)
-    random_search_iid.fit(X, y)
-
+    params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
     param_keys = ('param_C', 'param_gamma')
     score_keys = ('mean_test_score', 'mean_train_score',
                   'rank_test_score',
@@ -853,7 +836,10 @@ def test_random_search_cv_results():
                   'mean_score_time', 'std_score_time')
     n_cand = n_search_iter
 
-    for search, iid in zip((random_search, random_search_iid), (False, True)):
+    for iid in (False, True):
+        search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_splits,
+                                    iid=iid, param_distributions=params)
+        search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
         # Check results structure
@@ -960,84 +946,50 @@ def test_search_iid_param():
 
 
 def test_grid_search_cv_results_multimetric():
-    X, y = make_classification(n_samples=50, n_features=4,
-                               random_state=42)
+    X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
     n_splits = 3
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    scoring = ('accuracy', 'recall')
-    grid_search_multi = GridSearchCV(SVC(), cv=n_splits, iid=False,
-                                     param_grid=params, scoring=scoring,
-                                     refit=False)
-    grid_search_acc = GridSearchCV(SVC(), cv=n_splits, iid=False,
-                                   param_grid=params, scoring='accuracy',
-                                   refit=False)
-    grid_search_rec = GridSearchCV(SVC(), cv=n_splits, iid=False,
-                                   param_grid=params, scoring='recall',
-                                   refit=False)
-    grid_search_multi.fit(X, y)
-    grid_search_acc.fit(X, y)
-    grid_search_rec.fit(X, y)
 
-    scoring = {'accuracy': make_scorer(accuracy_score),
-               'recall': make_scorer(recall_score)}
-    grid_search_iid_multi = GridSearchCV(SVC(), cv=n_splits, iid=True,
-                                         param_grid=params, scoring=scoring,
-                                         refit=False)
-    grid_search_iid_acc = GridSearchCV(SVC(), cv=n_splits, iid=True,
-                                       param_grid=params, scoring='accuracy',
-                                       refit='accuracy')
-    grid_search_iid_rec = GridSearchCV(SVC(), cv=n_splits, iid=True,
-                                       param_grid=params, scoring='recall',
-                                       refit='recall')
-    grid_search_iid_multi.fit(X, y)
-    grid_search_iid_acc.fit(X, y)
-    grid_search_iid_rec.fit(X, y)
+    for iid in (False, True):
+        grid_searches = []
+        for scoring in ({'accuracy': make_scorer(accuracy_score),
+                         'recall': make_scorer(recall_score)},
+                        'accuracy', 'recall'):
+            grid_search = GridSearchCV(SVC(), cv=n_splits, iid=iid,
+                                       param_grid=params, scoring=scoring,
+                                       refit=False)
+            grid_search.fit(X, y)
+            assert_equal(grid_search.iid, iid)
+            grid_searches.append(grid_search)
 
-    for (search_multi, search_acc, search_rec), iid in zip(
-            ((grid_search_multi, grid_search_acc, grid_search_rec),
-             (grid_search_iid_multi, grid_search_iid_acc,
-              grid_search_iid_rec)), (False, True)):
         compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-            search_multi, search_acc, search_rec, iid)
+            *grid_searches, iid)
 
 
 def test_random_search_cv_results_multimetric():
-    # Make a dataset with a lot of noise to get various kind of prediction
-    # errors across CV folds and parameter settings
-    X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
-                               random_state=0)
+    X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
-    # scipy.stats dists now supports `seed` but we still support scipy 0.12
-    # which doesn't support the seed. Hence the assertions in the test for
-    # random_search alone should not depend on randomization.
     n_splits = 3
     n_search_iter = 30
     scoring = ('accuracy', 'recall')
-    params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
+
+    # Scipy 0.12's stats dists do not accept seed, hence we use param grid
+    params = dict(C=np.logspace(-10, 1), gamma=np.logspace(-5, 0, base=0.1))
     for iid in (True, False):
-        random_search_multi = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                                 cv=n_splits, iid=False,
-                                                 param_distributions=params,
-                                                 scoring=scoring, refit=False,
-                                                 random_state=42)
-        random_search_acc = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                               cv=n_splits, iid=False,
+        random_searches = []
+        for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
+            random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                               cv=n_splits, iid=iid,
                                                param_distributions=params,
-                                               scoring='accuracy', refit=False,
+                                               scoring=scoring, refit=False,
                                                random_state=42)
-        random_search_rec = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                               cv=n_splits, iid=False,
-                                               param_distributions=params,
-                                               scoring='recall', refit=False,
-                                               random_state=42)
-        random_search_multi.fit(X, y)
-        random_search_acc.fit(X, y)
-        random_search_rec.fit(X, y)
+            random_search.fit(X, y)
+            random_searches.append(random_search)
 
         compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-            random_search_multi, random_search_acc, random_search_rec, iid)
+            *random_searches, iid)
 
 
 def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
