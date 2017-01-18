@@ -1042,9 +1042,6 @@ cdef class MAE(RegressionCriterion):
         # Allocate memory for the accumulators
         safe_realloc(&self.node_medians, n_outputs)
 
-        if (self.node_medians == NULL):
-            raise MemoryError()
-
         self.left_child = np.empty(n_outputs, dtype='object')
         self.right_child = np.empty(n_outputs, dtype='object')
         # initialize WeightedMedianCalculators

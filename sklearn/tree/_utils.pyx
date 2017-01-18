@@ -110,8 +110,6 @@ cdef class Stack:
         self.capacity = capacity
         self.top = 0
         self.stack_ = <StackRecord*> malloc(capacity * sizeof(StackRecord))
-        if self.stack_ == NULL:
-            raise MemoryError()
 
     def __dealloc__(self):
         free(self.stack_)
@@ -321,9 +319,6 @@ cdef class WeightedPQueue:
         self.capacity = capacity
         self.array_ptr = 0
         safe_realloc(&self.array_, capacity)
-
-        if self.array_ == NULL:
-            raise MemoryError()
 
     def __dealloc__(self):
         free(self.array_)
