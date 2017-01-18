@@ -542,6 +542,12 @@ def test_unsupervised_grid_search():
     # ARI can find the right number :)
     assert_equal(grid_search.best_params_["n_clusters"], 3)
 
+    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
+                               scoring='fowlkes_mallows_score')
+    grid_search.fit(X, y)
+    # So can FMS ;)
+    assert_equal(grid_search.best_params_["n_clusters"], 3)
+
     # Now without a score, and without y
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]))
     grid_search.fit(X)

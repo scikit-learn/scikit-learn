@@ -118,7 +118,7 @@ popd
 # Using sphinx 1.4 for now until sphinx-gallery has a fix for sphinx 1.5
 # See https://github.com/sphinx-gallery/sphinx-gallery/pull/178 for more details
 conda create -n testenv --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx=1.4 pillow
+  cython nose coverage matplotlib sphinx pillow
 source activate testenv
 
 # Build and install scikit-learn in dev mode
