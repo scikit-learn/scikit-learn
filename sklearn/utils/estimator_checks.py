@@ -519,6 +519,7 @@ def check_transformer_general(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
+    # some estimators require nonnegative or strictly positive features
     X -= X.min() - .1
     _check_transformer(name, Transformer, X, y)
     _check_transformer(name, Transformer, X.tolist(), y.tolist())
@@ -630,6 +631,7 @@ def check_pipeline_consistency(name, Estimator):
     # check that make_pipeline(est) gives same score as est
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
+    # some estimators require nonnegative or strictly positive features
     X -= X.min() - .1
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
@@ -815,7 +817,7 @@ def check_estimators_pickle(name, Estimator):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
 
-    # some estimators can't do features less than 0
+    # some estimators require nonnegative or strictly positive features
     X -= X.min() - .1
 
     # some estimators only take multioutputs
@@ -1026,7 +1028,7 @@ def check_estimators_fit_returns_self(name, Estimator):
     """Check if self is returned when calling fit"""
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     y = multioutput_estimator_convert_y_2d(name, y)
-    # some want non-negative input
+    # some estimators require nonnegative or strictly positive features
     X -= X.min() - .1
 
     estimator = Estimator()

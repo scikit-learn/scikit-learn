@@ -1660,23 +1660,24 @@ def test_boxcox_transform():
     # Apply boxcox transform and check if it is
     # applying individually on each feature
     X = np.array([[4, 2, 1], [1, 6, 3], [1, 5, 2], [3, 1, 3]])
-    Xtr = boxcox(X)
+    X_tr = boxcox(X)
     n_features = X.shape[1]
     for k in range(n_features):
-        assert_array_equal(stats.boxcox(X[:, k])[0], Xtr[:, k])
+        assert_array_equal(stats.boxcox(X[:, k])[0], X_tr[:, k])
         assert_array_equal(boxcox(X[:, k:k + 1]).ravel(),
-                           Xtr[:, k])
+                           X_tr[:, k])
 
 
 def test_boxcox_transformer():
     rng = np.random.RandomState(42)
-    X = rng.randn(3000, 2)
+    X_orig = rng.randn(3000, 2)
     lambda0 = 0.1
-    X[:, 0] = np.exp(X[:, 0])
-    X[:, 1] = ((X[:, 1] * lambda0 + 1)) ** (1. / lambda0)
+    X = np.ones((3000, 2))
+    X[:, 0] = np.exp(X_orig[:, 0])
+    X[:, 1] = ((X_orig[:, 1] * lambda0 + 1)) ** (1. / lambda0)
 
-    feature_indices = [0]
-    bct = BoxCoxTransformer(feature_indices=feature_indices)
+    transformed_features = [0]
+    bct = BoxCoxTransformer(transformed_features=transformed_features)
 
     bct.fit(X)
     assert_true(len(bct.lambdas_), 1)
@@ -1685,15 +1686,15 @@ def test_boxcox_transformer():
     assert_true(np.min(X_tr[:, 0]) < 0.)
     assert_true(np.min(X_tr[:, 1]) > 0.)
 
-    bct.set_params(feature_indices=np.array([False, True]))
+    bct.set_params(transformed_features=np.array([False, True]))
     bct.fit(X)
     assert_true(len(bct.lambdas_), 1)
     X_tr = bct.transform(X)
     assert_true(X_tr.shape, X.shape)
     assert_true(np.min(X_tr[:, 0]) > 0.)
-    assert_true(np.min(X_tr[:, 1]) < 0.)
+    assert_allclose(X_tr[:, 1], X_orig[:, 1])
 
-    bct.set_params(feature_indices=None)
+    bct.set_params(transformed_features="all")
     bct.fit(X)
     assert_true(len(bct.lambdas_), 2)
     X_tr = bct.transform(X)
