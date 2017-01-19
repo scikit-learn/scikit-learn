@@ -847,26 +847,26 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if self.max_features == "auto":
                 # if is_classification
                 if self.n_classes_ > 1:
-                    max_features = max(1, int(np.sqrt(self._n_features)))
+                    max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
                     # is regression
-                    max_features = self._n_features
+                    max_features = self.n_features_
             elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self._n_features)))
+                max_features = max(1, int(np.sqrt(self.n_features_)))
             elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self._n_features)))
+                max_features = max(1, int(np.log2(self.n_features_)))
             else:
                 raise ValueError("Invalid value for max_features: %r. "
                                  "Allowed string values are 'auto', 'sqrt' "
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
-            max_features = self._n_features
+            max_features = self.n_features_
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
                 max_features = max(int(self.max_features *
-                                       self._n_features), 1)
+                                       self.n_features_), 1)
             else:
                 raise ValueError("max_features must be in (0, n_features]")
 
@@ -930,7 +930,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @deprecated("Attribute n_features was deprecated in version 0.19 and "
                 "will be removed in 0.21.")
     def n_features(self):
-        return self._n_features
+        return self.n_features_
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
@@ -973,7 +973,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Check input
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
-        n_samples, self._n_features = X.shape
+        n_samples, self.n_features_ = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
@@ -1114,9 +1114,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """Check input and compute prediction of ``init``. """
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
-        if X.shape[1] != self._n_features:
+        if X.shape[1] != self.n_features_:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
-                self._n_features, X.shape[1]))
+                self.n_features_, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
         return score
 
@@ -1166,7 +1166,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         self._check_initialized()
 
-        total_sum = np.zeros((self._n_features, ), dtype=np.float64)
+        total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
         for stage in self.estimators_:
             stage_sum = sum(tree.feature_importances_
                             for tree in stage) / len(stage)
