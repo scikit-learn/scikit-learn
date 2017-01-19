@@ -281,7 +281,7 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         y = scale(y, with_mean=False)
         y += 1e-10 * np.maximum(1, np.mean(np.abs(y))) * rng.randn(n_samples)
 
-    mi = [_compute_mi(x, y, discrete_feature, discrete_target) for
+    mi = [_compute_mi(x, y, discrete_feature, discrete_target, n_neighbors) for
           x, discrete_feature in moves.zip(_iterate_columns(X), discrete_mask)]
 
     return np.array(mi)
