@@ -196,7 +196,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
         folder_path = join(data_folder_path, person_name)
         if not isdir(folder_path):
             continue
-        paths = [join(folder_path, f) for f in listdir(folder_path)]
+        paths = [join(folder_path, f) for f in sorted(listdir(folder_path))]
         n_pictures = len(paths)
         if n_pictures >= min_faces_per_person:
             person_name = person_name.replace('_', ' ')
