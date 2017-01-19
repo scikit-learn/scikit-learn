@@ -149,8 +149,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     However care must taken to always make the affinity matrix symmetric
     so that the eigenvector decomposition works as expected.
 
-    Note : Laplacian Eigenmaps is the actual algorithm implemented here.
-
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
@@ -191,9 +189,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Notes
     -----
-    Spectral Embedding (Laplacian Eigenmaps) is most useful when the graph
-    has one connected component. If there graph has many components, the first
-    few eigenvectors will simply uncover the connected components of the graph.
+    Spectral embedding is most useful when the graph has one connected
+    component. If there graph has many components, the first few eigenvectors
+    will simply uncover the connected components of the graph.
 
     References
     ----------
@@ -265,7 +263,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigsh(laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol, v0=v0)
-            embedding = diffusion_map.T[n_components::-1] * dd
+            embedding = diffusion_map.T[n_components::-1]
+            if(norm_laplacian):
+                embedding = embedding / dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -288,7 +288,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
-        embedding = diffusion_map.T * dd
+        embedding = diffusion_map.T
+        if(norm_laplacian):
+            embedding = embedding / dd
         if embedding.shape[0] == 1:
             raise ValueError
 
@@ -303,7 +305,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
             lambdas, diffusion_map = eigh(laplacian)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T
+            if(norm_laplacian):
+                embedding = embedding / dd
         else:
             laplacian = _set_diag(laplacian, 1, norm_laplacian)
             # We increase the number of eigenvectors requested, as lobpcg
@@ -312,7 +316,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T
+            if(norm_laplacian):
+                embedding = embedding / dd
             if embedding.shape[0] == 1:
                 raise ValueError
 
@@ -330,8 +336,6 @@ class SpectralEmbedding(BaseEstimator):
     applies spectral decomposition to the corresponding graph laplacian.
     The resulting transformation is given by the value of the
     eigenvectors for each data point.
-
-    Note : Laplacian Eigenmaps is the actual algorithm implemented here.
 
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
