@@ -372,19 +372,20 @@ def test_trivial_cv_results_attr():
 def test_no_refit():
     # Test that GSCV can be used for model selection alone without refitting
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
-    grid_search.fit(X, y)
-    assert_true(not hasattr(grid_search, "best_estimator_") and
-                hasattr(grid_search, "best_index_") and
-                hasattr(grid_search, "best_params_"))
+    for scoring in (None, ('accuracy', 'precision')):
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
+        grid_search.fit(X, y)
+        assert_true(not hasattr(grid_search, "best_estimator_") and
+                    hasattr(grid_search, "best_index_") and
+                    hasattr(grid_search, "best_params_"))
 
-    # Make sure the predict/transform etc fns raise meaningfull error msg
-    for fn_name in ('predict', 'predict_proba', 'predict_log_proba',
-                    'transform', 'inverse_transform'):
-        assert_raise_message(NotFittedError,
-                             ('refit=False. %s is available only after '
-                              'refitting on the best parameters' % fn_name),
-                             getattr(grid_search, fn_name), X)
+        # Make sure the predict/transform etc fns raise meaningfull error msg
+        for fn_name in ('predict', 'predict_proba', 'predict_log_proba',
+                        'transform', 'inverse_transform'):
+            assert_raise_message(NotFittedError,
+                                 ('refit=False. %s is available only after '
+                                  'refitting on the best parameters'
+                                  % fn_name), getattr(grid_search, fn_name), X)
 
 
 def test_grid_search_error():
@@ -978,18 +979,26 @@ def test_random_search_cv_results_multimetric():
     # Scipy 0.12's stats dists do not accept seed, hence we use param grid
     params = dict(C=np.logspace(-10, 1), gamma=np.logspace(-5, 0, base=0.1))
     for iid in (True, False):
-        random_searches = []
-        for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
-            random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                               cv=n_splits, iid=iid,
-                                               param_distributions=params,
-                                               scoring=scoring, refit=False,
-                                               random_state=42)
-            random_search.fit(X, y)
-            random_searches.append(random_search)
+        for refit in (True, False):
+            random_searches = []
+            for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
+                # If True, for multimetric pass refit='accuracy'
+                if refit:
+                    refit = 'accuracy' if isinstance(scoring, tuple) else refit
+                clf = SVC(probability=True, random_state=42)
+                random_search = RandomizedSearchCV(clf, n_iter=n_search_iter,
+                                                   cv=n_splits, iid=iid,
+                                                   param_distributions=params,
+                                                   scoring=scoring,
+                                                   refit=refit, random_state=0)
+                random_search.fit(X, y)
+                random_searches.append(random_search)
 
-        compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-            *random_searches, iid=iid)
+            compare_cv_results_multimetric_with_single_metric_accuracy_recall(
+                *random_searches, iid=iid)
+            if refit:
+                compare_refit_methods_when_refit_with_acc(
+                    random_searches[0], random_searches[1], refit)
 
 
 def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
@@ -1022,9 +1031,19 @@ def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
                             _pop_cv_results_time_keys(cv_results_acc_rec))
 
 
-def test_search_delegated_methods_in_mulimetric_setting():
-    # TODO Add tests for predict / score / transform after review
-    pass
+def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
+    """Compare refit multimetric search methods with single metric methods"""
+    if refit:
+        assert_equal(search_multi.refit, 'accuracy')
+    else:
+        assert_false(search_multi.refit)
+    assert_equal(search_acc.refit, refit)
+
+    X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
+    for method in ('predict', 'predict_proba', 'predict_log_proba'):
+        assert_almost_equal(getattr(search_multi, method)(X),
+                            getattr(search_acc, method)(X))
+    assert_almost_equal(search_multi.score(X, y), search_acc.score(X, y))
 
 
 def test_search_cv_results_rank_tie_breaking():
@@ -1202,6 +1221,10 @@ def test_predict_proba_disabled():
     clf = SVC(probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
+
+    # Multimetric case
+    gs = GridSearchCV(clf, {}, scoring=('precision', 'recall'), refit='recall')
+    assert_false(hasattr(gs.fit(X, y), "predict_proba"))
 
 
 def test_grid_search_allows_nans():
