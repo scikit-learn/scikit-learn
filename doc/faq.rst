@@ -282,6 +282,9 @@ the design constraints of scikit-learn; as a result, deep learning
 and reinforcement learning are currently out of scope for what
 scikit-learn seeks to achieve.
 
+You can find more information about addition of gpu support at
+`Will you add GPU support?`_.
+
 Why is my pull request not getting any attention?
 -------------------------------------------------
 
