@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.deprecation import deprecated
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
@@ -140,8 +141,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
+    @property
+    @deprecated("Attribute rng was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def rng(self):
+        return self._rng
+
+    @property
+    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def y_train_mean(self):
+        return self._y_train_mean
+
     def fit(self, X, y):
-        """Fit Gaussian process regression model
+        """Fit Gaussian process regression model.
 
         Parameters
         ----------
@@ -161,17 +174,17 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.kernel_ = clone(self.kernel)
 
-        self.rng = check_random_state(self.random_state)
+        self._rng = check_random_state(self.random_state)
 
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
         # Normalize target value
         if self.normalize_y:
-            self.y_train_mean = np.mean(y, axis=0)
+            self._y_train_mean = np.mean(y, axis=0)
             # demean y
-            y = y - self.y_train_mean
+            y = y - self._y_train_mean
         else:
-            self.y_train_mean = np.zeros(1)
+            self._y_train_mean = np.zeros(1)
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
@@ -211,7 +224,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 bounds = self.kernel_.bounds
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
-                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
+                        self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
@@ -287,7 +300,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self.y_train_mean + y_mean  # undo normal.
+            y_mean = self._y_train_mean + y_mean  # undo normal.
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
