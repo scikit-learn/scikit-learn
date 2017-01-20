@@ -282,8 +282,9 @@ Example of 2-fold K-Fold repeated 2 times::
   ...
   [2 3] [0 1]
   [0 1] [2 3]
-  [1 2] [0 3]
-  [0 3] [1 2]
+  [0 2] [1 3]
+  [1 3] [0 2]
+
 
 Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
 with different randomization in each repetition.

@@ -826,20 +826,20 @@ def test_repeated_kfold_determinstic_split():
     for _ in range(3):
         splits = rkf.split(X)
         train, test = next(splits)
-        assert_array_equal(train, [0, 3])
-        assert_array_equal(test, [1, 2, 4])
+        assert_array_equal(train, [2, 4])
+        assert_array_equal(test, [0, 1, 3])
 
         train, test = next(splits)
-        assert_array_equal(train, [1, 2, 4])
-        assert_array_equal(test, [0, 3])
+        assert_array_equal(train, [0, 1, 3])
+        assert_array_equal(test, [2, 4])
 
         train, test = next(splits)
-        assert_array_equal(train, [3, 4])
-        assert_array_equal(test, [0, 1, 2])
+        assert_array_equal(train, [0, 1])
+        assert_array_equal(test, [2, 3, 4])
 
         train, test = next(splits)
-        assert_array_equal(train, [0, 1, 2])
-        assert_array_equal(test, [3, 4])
+        assert_array_equal(train, [2, 3, 4])
+        assert_array_equal(test, [0, 1])
 
         assert_raises(StopIteration, next, splits)
 
@@ -858,20 +858,20 @@ def test_repeated_stratified_kfold_determinstic_split():
     for _ in range(3):
         splits = rskf.split(X, y)
         train, test = next(splits)
-        assert_array_equal(train, [0, 3])
-        assert_array_equal(test, [1, 2, 4])
+        assert_array_equal(train, [1, 4])
+        assert_array_equal(test, [0, 2, 3])
 
         train, test = next(splits)
-        assert_array_equal(train, [1, 2, 4])
-        assert_array_equal(test, [0, 3])
+        assert_array_equal(train, [0, 2, 3])
+        assert_array_equal(test, [1, 4])
 
         train, test = next(splits)
-        assert_array_equal(train, [2, 4])
-        assert_array_equal(test, [0, 1, 3])
+        assert_array_equal(train, [2, 3])
+        assert_array_equal(test, [0, 1, 4])
 
         train, test = next(splits)
-        assert_array_equal(train, [0, 1, 3])
-        assert_array_equal(test, [2, 4])
+        assert_array_equal(train, [0, 1, 4])
+        assert_array_equal(test, [2, 3])
 
         assert_raises(StopIteration, next, splits)
 

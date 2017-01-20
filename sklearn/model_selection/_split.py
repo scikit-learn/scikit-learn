@@ -949,6 +949,9 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
         if n_repeats <= 1:
             raise ValueError("Number of repetitions must be greater than 1.")
 
+        if any(key in cvargs for key in ('random_state', 'shuffle')):
+            raise ValueError("cvargs must not contain random_state or shuffle.")
+
         self.cv = cv
         self.n_repeats = n_repeats
         self.random_state = random_state
@@ -982,8 +985,7 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
         rng = check_random_state(self.random_state)
 
         for idx in range(n_repeats):
-            random_state = rng.randint(np.iinfo(np.int32).max)
-            cv = self.cv(random_state=random_state, shuffle=True,
+            cv = self.cv(random_state=rng, shuffle=True,
                          **self.cvargs)
             for train_index, test_index in cv.split(X, y, groups):
                 yield train_index, test_index
@@ -1013,16 +1015,17 @@ class RepeatedKFold(_RepeatedSplits):
     >>> from sklearn.model_selection import RepeatedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652946)
+    >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652124)
     >>> for train_index, test_index in rkf.split(X):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...
-    TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [0 1] TEST: [2 3]
+    TRAIN: [2 3] TEST: [0 1]
     TRAIN: [1 2] TEST: [0 3]
     TRAIN: [0 3] TEST: [1 2]
+
 
     See also
     --------
@@ -1059,16 +1062,17 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
-    ...     random_state=36852745)
+    ...     random_state=36851234)
     >>> for train_index, test_index in rskf.split(X, y):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...
+    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 3] TEST: [1 2]
     TRAIN: [1 3] TEST: [0 2]
     TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [1 3] TEST: [0 2]
+
 
     See also
     --------
