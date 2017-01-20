@@ -950,7 +950,8 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             raise ValueError("Number of repetitions must be greater than 1.")
 
         if any(key in cvargs for key in ('random_state', 'shuffle')):
-            raise ValueError("cvargs must not contain random_state or shuffle.")
+            raise ValueError(
+                "cvargs must not contain random_state or shuffle.")
 
         self.cv = cv
         self.n_repeats = n_repeats
