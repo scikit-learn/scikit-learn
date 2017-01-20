@@ -169,14 +169,17 @@ def _special_sparse_dot(W, H, X):
         return fast_dot(W, H)
 
 
-def _compute_regularization(alpha, l1_ratio, regularization):
+def _compute_regularization(alpha, beta, l1_ratio, regularization):
     """Compute L1 and L2 regularization coefficients for W and H"""
     alpha_H = 0.
     alpha_W = 0.
     if regularization in ('both', 'components'):
         alpha_H = float(alpha)
     if regularization in ('both', 'transformation'):
-        alpha_W = float(alpha)
+        if beta > 0:
+            alpha_W = float(beta)
+        else:
+            alpha_W = float(alpha)
 
     l1_reg_W = alpha_W * l1_ratio
     l1_reg_H = alpha_H * l1_ratio
@@ -800,7 +803,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 def non_negative_factorization(X, W=None, H=None, n_components=None,
                                init='random', update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
-                               max_iter=200, alpha=0., l1_ratio=0.,
+                               max_iter=200, alpha=0., beta=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
     """Compute Non-negative Matrix Factorization (NMF)
@@ -989,7 +992,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                random_state=random_state)
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-        alpha, l1_ratio, regularization)
+        alpha, beta, l1_ratio, regularization)
 
     if solver == 'cd':
         W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
@@ -1158,7 +1161,7 @@ class NMF(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=None, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
-                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+                 random_state=None, alpha=0., beta=0., l1_ratio=0., verbose=0,
                  shuffle=False):
         self.n_components = n_components
         self.init = init
@@ -1168,6 +1171,7 @@ class NMF(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.random_state = random_state
         self.alpha = alpha
+        self.beta = beta
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
@@ -1198,7 +1202,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha, beta=self.beta,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
@@ -1246,7 +1250,7 @@ class NMF(BaseEstimator, TransformerMixin):
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
+            alpha=self.alpha, beta=self.beta, l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
