@@ -43,6 +43,26 @@ class ChangesDict(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class SetsWrongAttribute(BaseEstimator):
+    def __init__(self):
+        self.acceptable_key = 0
+
+    def fit(self, X, y=None):
+        self.wrong_attribute = 0
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ChangesWrongAttribute(BaseEstimator):
+    def __init__(self):
+        self.wrong_attribute = 0
+
+    def fit(self, X, y=None):
+        self.wrong_attribute = 1
+        X, y = check_X_y(X, y)
+        return self
+
+
 class NoCheckinPredict(BaseBadClassifier):
     def fit(self, X, y):
         X, y = check_X_y(X, y)
@@ -122,7 +142,20 @@ def test_check_estimator():
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
     assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict)
-
+    # check that `fit` only changes attribures that
+    # are private (start with an _ or end with a _).
+    msg = ('Estimator changes public attribute\(s\) during the fit method.'
+           ' Estimators are only allowed to change attributes started'
+           ' or ended with _, but wrong_attribute changed')
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, ChangesWrongAttribute)
+    # check that `fit` doesn't add any public attribute
+    msg = ('Estimator adds public attribute\(s\) during the fit method.'
+           ' Estimators are only allowed to add private attributes'
+           ' either started with _ or ended'
+           ' with _ but wrong_attribute added')
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, SetsWrongAttribute)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator " + name + " doesn't seem to fail gracefully on sparse data"

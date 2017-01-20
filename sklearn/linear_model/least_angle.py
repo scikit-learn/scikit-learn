@@ -587,6 +587,8 @@ class Lars(LinearModel, RegressorMixin):
     sklearn.decomposition.sparse_encode
 
     """
+    method = 'lar'
+
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
@@ -594,7 +596,6 @@ class Lars(LinearModel, RegressorMixin):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
-        self.method = 'lar'
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
         self.positive = positive
@@ -827,6 +828,7 @@ class LassoLars(Lars):
     sklearn.decomposition.sparse_encode
 
     """
+    method = 'lasso'
 
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
@@ -837,7 +839,6 @@ class LassoLars(Lars):
         self.max_iter = max_iter
         self.verbose = verbose
         self.normalize = normalize
-        self.method = 'lasso'
         self.positive = positive
         self.precompute = precompute
         self.copy_X = copy_X
@@ -1075,17 +1076,16 @@ class LarsCV(Lars):
                  normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
-        self.fit_intercept = fit_intercept
-        self.positive = positive
         self.max_iter = max_iter
-        self.verbose = verbose
-        self.normalize = normalize
-        self.precompute = precompute
-        self.copy_X = copy_X
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
-        self.eps = eps
+        super(LarsCV, self).__init__(fit_intercept=fit_intercept,
+                                     verbose=verbose, normalize=normalize,
+                                     precompute=precompute,
+                                     n_nonzero_coefs=500,
+                                     eps=eps, copy_X=copy_X, fit_path=True,
+                                     positive=positive)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1103,7 +1103,6 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
-        self.fit_path = True
         X, y = check_X_y(X, y, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
@@ -1428,6 +1427,7 @@ class LassoLarsIC(LassoLars):
         self.copy_X = copy_X
         self.precompute = precompute
         self.eps = eps
+        self.fit_path = True
 
     def fit(self, X, y, copy_X=True):
         """Fit the model using X, y as training data.
@@ -1448,7 +1448,6 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
-        self.fit_path = True
         X, y = check_X_y(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
