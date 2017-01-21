@@ -72,7 +72,7 @@ for i in range(5):
     pred_entropies = stats.distributions.entropy(
         lp_model.label_distributions_.T)
 
-    # select up to five digit examples that the classifier is most uncertain about
+    # select up to 5 digit examples that the classifier is most uncertain about
     uncertainty_index = np.argsort(pred_entropies)[::-1]
     uncertainty_index = uncertainty_index[
         np.in1d(uncertainty_index, unlabeled_indices)][:5]
@@ -80,14 +80,15 @@ for i in range(5):
     # keep track of indices that we get labels for
     delete_indices = np.array([])
 
-    # if running for more than 5 iterations, visualize the gain on only the first 5
+    # for more than 5 iterations, visualize the gain only on the first 5
     if i < 5:
         f.text(.05, (1 - (i + 1) * .183),
-               "model %d\n\nfit with\n%d labels" % ((i + 1), i * 5 + 10), size=10)
+               "model %d\n\nfit with\n%d labels" %
+               ((i + 1), i * 5 + 10), size=10)
     for index, image_index in enumerate(uncertainty_index):
         image = images[image_index]
 
-        # if running for more than 5 iterations, visualize the gain on only the first 5
+        # for more than 5 iterations, visualize the gain only on the first 5
         if i < 5:
             sub = f.add_subplot(5, 5, index + 1 + (5 * i))
             sub.imshow(image, cmap=plt.cm.gray_r)
