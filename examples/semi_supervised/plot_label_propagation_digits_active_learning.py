@@ -9,7 +9,10 @@ using label propagation.
 We start by training a label propagation model with only 10 labeled points,
 then we select the top five most uncertain points to label. Next, we train
 with 15 labeled points (original 10 + 5 new ones). We repeat this process
-four times to have a model trained with 30 labeled examples.
+four times to have a model trained with 30 labeled examples. Note you can
+increase this to label more than 30 by changing `max_iterations`. Labeling
+more than 30 can be useful to get a sense for the speed of convergence of
+this active learning technique.
 
 A plot will appear showing the top 5 most uncertain digits for each iteration
 of training. These may or may not contain mistakes, but we will train the next
@@ -39,11 +42,12 @@ images = digits.images[indices[:330]]
 
 n_total_samples = len(y)
 n_labeled_points = 10
+max_iterations = 5
 
 unlabeled_indices = np.arange(n_total_samples)[n_labeled_points:]
 f = plt.figure()
 
-for i in range(5):
+for i in range(max_iterations):
     if len(unlabeled_indices) == 0:
         print("No unlabeled items left to label.")
         break
