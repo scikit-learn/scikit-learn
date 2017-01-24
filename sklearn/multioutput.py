@@ -461,7 +461,6 @@ class ClassifierChain(BaseEstimator):
                 estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
                 self.classes_.append(estimator.classes_)
 
-
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.
 
