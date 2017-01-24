@@ -8,16 +8,8 @@ The scores of all the scorers are available in the ``cv_results_`` dict at keys
 ending in ``'_<scorer_name/metric_name>'`` (``'mean_test_precision'``,
 ``'rank_test_precision'``, etc...)
 
-The ``best_estimator_`` and ``best_index_`` attributes are now
-a dict mapping the scorer name to the best estimator and the best candidate
-index corresponding to the best score for that metric which is stored in
-``best_score_[<scorer_name/metric_name>]``.
-
-Similarly the :func:`sklearn.model_selection.cross_val_score`,
-:func:`sklearn.model_selection.learning_curve` and
-:func:`sklearn.model_selection.validation_curve` all support multiple metric
-evaluation when the scoring parameter is a list/tuple of strings denoting
-predefined scorers or a dict mapping the scorer names to the scorer callables.
+The ``best_estimator_``, ``best_index_``, ``best_score_`` and ``best_params_``
+correspond to the scorer (key) that is set to the ``refit`` attribute.
 """
 
 # Author: Raghav RV <rvraghav93@gmail.com>
@@ -38,8 +30,8 @@ print(__doc__)
 
 X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 
-# The scorers can be a std scorer referenced by its name or one wrapped
-# by sklearn.metrics.scorer.make_scorer
+# The scorers can be a standard scorer referenced by its name or one a
+# callable-like returned from make_scorer
 scoring = {'AUC Score': 'roc_auc', 'Precision': make_scorer(precision_score),
            'recall': 'recall', 'F1 Score': 'f1'}
 
@@ -74,7 +66,7 @@ for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'k'),
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
         ax.fill_between(X_axis, sample_score_mean - sample_score_std,
                         sample_score_mean + sample_score_std,
-                        alpha=0.1 if sample == 'test' else 0, color=color)
+                        alpha=0.3 if sample == 'test' else 0, color=color)
         ax.plot(X_axis, sample_score_mean, style, color=color,
                 alpha=1 if sample == 'test' else 0.7,
                 label="%s (%s)" % (scorer, sample))
