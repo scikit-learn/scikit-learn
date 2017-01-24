@@ -15,7 +15,9 @@ from .iforest import IsolationForest
 from .weight_boosting import AdaBoostClassifier
 from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
+from .gradient_boosting import GradientBoostingClassifierCV
 from .gradient_boosting import GradientBoostingRegressor
+# from .gradient_boosting import GradientBoostingRegressorCV
 from .voting_classifier import VotingClassifier
 
 from . import bagging
@@ -29,7 +31,7 @@ __all__ = ["BaseEnsemble",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
            "ExtraTreesRegressor", "BaggingClassifier",
            "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
-           "GradientBoostingRegressor", "AdaBoostClassifier",
-           "AdaBoostRegressor", "VotingClassifier",
-           "bagging", "forest", "gradient_boosting",
-           "partial_dependence", "weight_boosting"]
+           "GradientBoostingClassifierCV", "GradientBoostingRegressor",
+           "GradientBoostingRegressorCV", "AdaBoostClassifier",
+           "AdaBoostRegressor", "VotingClassifier", "bagging", "forest",
+           "gradient_boosting", "partial_dependence", "weight_boosting"]
