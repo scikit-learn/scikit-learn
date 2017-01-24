@@ -1652,21 +1652,68 @@ def test_fit_cold_start():
 def test_count_featurizer():
     # test count featurizer fit-transform on a very standard data
 
-    cf_1 = CountFeaturizer()
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    cf_1 = CountFeaturizer()
     assert_array_equal(
         cf_1.fit_transform(X),
         np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
 
 
+def test_count_featurizer_diff_fit():
+    # test count featurizer where fit is trained on something different
+    # than what we are transforming
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    X2 = np.array([[0, 2, 1], [0, 2, 1], [0, 2, 1], [1, 0, 2]])
+    cf_1 = CountFeaturizer().fit(X)
+    assert_array_equal(
+        cf_1.transform(X2),
+        np.array([[0, 2, 1, 1], [0, 2, 1, 1], [0, 2, 1, 1], [1, 0, 2, 2]]))
+
+
+def test_count_featurizer_diff_fit_y():
+    # test count featurizer where fit is trained on something different
+    # than what we are transforming with a y in fit
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    X2 = np.array([[0, 2, 1], [0, 2, 1], [0, 2, 1], [1, 0, 2]])
+    y = np.array([0, 0, 1, 0])
+    cf_1 = CountFeaturizer().fit(X, y=y)
+    assert_array_equal(
+        cf_1.transform(X2),
+        np.array([[0, 2, 1, 1, 0], [0, 2, 1, 1, 0],
+                 [0, 2, 1, 1, 0], [1, 0, 2, 1, 1]]))
+
+
+def test_count_featurizer_diff_fit_multi_y():
+    # test count featurizer where fit is trained on something different
+    # than what we are transforming, now with multi-dimensional y
+
+    X = np.array([[0], [0], [1], [1]])
+    X2 = np.array([[1], [1], [0], [0]])
+    y = np.array([[0, 1], [0, 1], [0, 0], [0, 1]])
+    cf = CountFeaturizer().fit(X, y=y)
+    assert_array_equal(
+        cf.transform(X2),
+        np.array([[1, 2, 1, 1], [1, 2, 1, 1],
+                 [0, 2, 0, 2], [0, 2, 0, 2]]))
+
+    X2 = np.array([[1], [1], [1], [1]])
+    cf = CountFeaturizer().fit(X, y=y)
+    assert_array_equal(
+        cf.transform(X2),
+        np.array([[1, 2, 1, 1], [1, 2, 1, 1],
+                 [1, 2, 1, 1], [1, 2, 1, 1]]))
+
+
 def test_count_featurizer_inclusion():
     # test with the inclusion parameter set
 
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    X2 = np.array([[0, 2, 1], [0, 2, 3], [1, 0, 5], [1, 1, 5]])
     cf_inclusion_1 = CountFeaturizer(inclusion=[0])
     cf_inclusion_2 = CountFeaturizer(inclusion=[0, 1, 2])
     cf_inclusion_3 = CountFeaturizer(inclusion=[0, 1])
-    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
-    X2 = np.array([[0, 2, 1], [0, 2, 3], [1, 0, 5], [1, 1, 5]])
     assert_array_equal(
         cf_inclusion_1.fit_transform(X),
         np.array([[0, 2, 1, 1], [1, 0, 3, 3], [1, 0, 2, 3], [1, 0, 2, 3]]))
