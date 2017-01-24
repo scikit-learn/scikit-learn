@@ -1396,6 +1396,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     else:
         labels = np.asarray(labels)
 
+    if target_names is not None and len(labels) != len(target_names):
+        warnings.warn(
+            "labels size, {0}, does not match size of target_names, {1}"
+            .format(len(labels), len(target_names))
+        )
+
     last_line_heading = 'avg / total'
 
     if target_names is None:
