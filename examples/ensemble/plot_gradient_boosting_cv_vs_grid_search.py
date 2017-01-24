@@ -41,14 +41,12 @@ times = []
 
 for use_warm_start in [False, True]:
     for X, y in data_list:
-        start = time.time()
-        for _ in range(3):
-            gb_gs = GridSearchCV(
-                GradientBoostingClassifier(random_state=42),
-                param_grid={'n_estimators': search_n_estimators},
-                scoring='f1_micro', cv=3, refit=True, verbose=True,
-                use_warm_start=use_warm_start).fit(X, y)
-        times.append((time.time() - start) / 3.)
+        gb_gs = GridSearchCV(
+            GradientBoostingClassifier(random_state=42),
+            param_grid={'n_estimators': search_n_estimators},
+            scoring='f1_micro', cv=3, refit=True, verbose=True,
+            use_warm_start=use_warm_start).fit(X, y)
+        times.append(gb_gs.cv_results_['mean_fit_time'].sum())
 
 
 plt.figure(figsize=(9, 5))
@@ -73,4 +71,4 @@ plt.grid(True)
 
 plt.xlabel('Datasets')
 plt.ylabel('Mean fit time')
-plt.savefig('/tmp/times.png')
+plt.show()
