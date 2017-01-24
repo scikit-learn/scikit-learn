@@ -295,7 +295,7 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
         A single string (see :ref:`_scoring_parameter`) or a callable
         (see :ref:`_scoring`) to evaluate the predictions on the test set.
 
-        For evaluating multiple metrics, either give a list of (unique) strings
+        For evaluating multiple metrics either give a list of unique strings
         or a dict with names as keys and callables as values.
 
         NOTE that when using custom scorers, each scorer should return a single
