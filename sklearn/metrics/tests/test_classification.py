@@ -722,6 +722,18 @@ greengreengreengreengreen       0.33      0.10      0.15        31
     assert_equal(report, expected_report)
 
 
+def test_classification_report_labels_target_names_unequal_length():
+    y_true = [0, 0, 2, 0, 0]
+    y_pred = [0, 2, 2, 0, 0]
+    target_names = ['class 0', 'class 1', 'class 2']
+
+    assert_warns_message(UserWarning,
+                         "labels size, 2, does not "
+                         "match size of target_names, 3",
+                         classification_report,
+                         y_true, y_pred, target_names=target_names)
+
+
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
