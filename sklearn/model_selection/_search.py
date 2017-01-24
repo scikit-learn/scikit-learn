@@ -369,6 +369,11 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
+def _warm_fit_and_score(candidates, estimator, **kwargs):
+    return [_fit_and_score(estimator, parameters=parameters, **kwargs)
+            for parameters in candidates]
+
+
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
@@ -567,18 +572,38 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
 
-        out = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch
-        )(delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
-                                  train, test, self.verbose, parameters,
-                                  fit_params=self.fit_params,
-                                  return_train_score=self.return_train_score,
-                                  return_n_test_samples=True,
-                                  return_times=True, return_parameters=False,
-                                  error_score=self.error_score)
-          for train, test in cv.split(X, y, groups)
-          for parameters in candidate_params)
+        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                            pre_dispatch=pre_dispatch)
+
+        fit_and_score_kw = dict(
+            X=X, y=y, scorer=self.scorer_, verbose=self.verbose,
+            fit_params=self.fit_params,
+            return_train_score=self.return_train_score,
+            error_score=self.error_score,
+            return_n_test_samples=True, return_times=True,
+            return_parameters=False)
+
+        if not self.use_warm_start:
+            out = parallel(delayed(_fit_and_score)(clone(base_estimator),
+                                                   train=train, test=test,
+                                                   parameters=parameters,
+                                                   **fit_and_score_kw)
+                           for train, test in cv.split(X, y, groups)
+                           for parameters in candidate_params)
+        else:
+            # Enable warm_start on all constituent estimators
+            # XXX: is this the right thing to do?
+            base_estimator.set_params(
+                **{k: True
+                   for k in base_estimator.get_params(deep=True)
+                   if k == 'warm_start' or k.endswith('__warm_start')})
+            # one clone per fold
+            out = parallel(delayed(_warm_fit_and_score)(candidate_params,
+                                                        clone(base_estimator),
+                                                        train=train, test=test,
+                                                        **fit_and_score_kw)
+                           for train, test in cv.split(X, y, groups))
+            out = sum(out, [])
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -773,6 +798,14 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+    use_warm_start : boolean, default=False
+        Where the estimator includes a parameter (at the top level or nested)
+        called ``warm_start``, it is enabled and parameter settings are
+        attempted in order on the same estimator instance for each CV split.
+
+        Where ``use_warm_start=True``, the ``n_jobs`` parameter only controls
+        parallelism over CV splits, not over candidate parameters.
+
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
@@ -928,7 +961,7 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=True):
+                 return_train_score=True, use_warm_start=False):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -936,6 +969,7 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
+        self.use_warm_start = use_warm_start
 
     def _get_param_iterator(self):
         """Return ParameterGrid instance for the given param_grid"""
