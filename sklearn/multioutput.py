@@ -430,12 +430,6 @@ class ClassifierChain(BaseEstimator):
             Returns self.
         """
 
-        if sp.issparse(Y):
-            Y = Y.toarray()
-
-        if sp.issparse(X):
-            X = X.toarray()
-
         random_state = check_random_state(self.random_state)
 
         if self.order is None:
@@ -450,12 +444,23 @@ class ClassifierChain(BaseEstimator):
                             for _ in range(Y.shape[1])]
 
         self.classes_ = []
-        for chain_idx, estimator in enumerate(self.estimators_):
-            previous_labels = Y[:, self.order[:chain_idx]]
-            y = Y[:, self.order[chain_idx]]
-            X_aug = np.hstack((X, previous_labels))
-            estimator.fit(X_aug, y)
-            self.classes_.append(estimator.classes_)
+        if sp.issparse(X):
+            for chain_idx, estimator in enumerate(self.estimators_):
+                previous_labels = Y[:, self.order[:chain_idx]]
+                if sp.issparse(X):
+                    X_aug = sp.hstack((X, previous_labels))
+                else:
+                    X_aug = np.hstack((X, previous_labels))
+                y = Y[:, self.order[chain_idx]]
+                estimator.fit(X_aug, y)
+                self.classes_.append(estimator.classes_)
+        else:
+            X_aug = np.hstack((X, Y[:, self.order]))
+            for chain_idx, estimator in enumerate(self.estimators_):
+                y = Y[:, self.order[chain_idx]]
+                estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
+                self.classes_.append(estimator.classes_)
+
 
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.
@@ -469,13 +474,13 @@ class ClassifierChain(BaseEstimator):
         Y_pred : array-like, shape (n_samples, n_classes)
         """
 
-        if sp.issparse(X):
-            X = X.toarray()
-
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
-            X_aug = np.hstack((X, previous_predictions))
+            if sp.issparse(X):
+                X_aug = sp.hstack((X, previous_predictions))
+            else:
+                X_aug = np.hstack((X, previous_predictions))
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
         chain_key = [self.order.index(i) for i in range(len(self.order))]
         Y_pred = Y_pred_chain[:, chain_key]
@@ -498,14 +503,14 @@ class ClassifierChain(BaseEstimator):
         Y_prob : array-like, shape (n_samples, n_classes)
         """
 
-        if sp.issparse(X):
-            X = X.toarray()
-
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
-            X_aug = np.hstack((X, previous_predictions))
+            if sp.issparse(X):
+                X_aug = sp.hstack((X, previous_predictions))
+            else:
+                X_aug = np.hstack((X, previous_predictions))
             Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
         chain_key = [self.order.index(i) for i in range(len(self.order))]
@@ -531,14 +536,14 @@ class ClassifierChain(BaseEstimator):
             in the chain.
         """
 
-        if sp.issparse(X):
-            X = X.toarray()
-
         Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
-            X_aug = np.hstack((X, previous_predictions))
+            if sp.issparse(X):
+                X_aug = sp.hstack((X, previous_predictions))
+            else:
+                X_aug = np.hstack((X, previous_predictions))
             Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
         chain_key = [self.order.index(i) for i in range(len(self.order))]

@@ -398,16 +398,15 @@ def test_classifier_chain_fit_and_decision_function():
     assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
 
 
-def test_classifier_chain_fit_and_predict_with_data_and_labels():
-    """Fit classifier chain with sparse data and labels"""
+def test_classifier_chain_fit_and_predict_with_sparse_data():
+    """Fit classifier chain with sparse data"""
     X, Y = datasets.make_multilabel_classification(n_samples=10000,
                                                    n_features=100,
                                                    n_classes=10)
 
-    Y_sparse = sp.csr_matrix(Y)
     X_sparse = sp.csr_matrix(X)
     classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X_sparse, Y_sparse)
+    classifier_chain.fit(X_sparse, Y)
     Y_pred = classifier_chain.predict(X_sparse)
     assert_equal(Y_pred.shape, Y.shape)
 
