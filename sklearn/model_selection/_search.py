@@ -594,7 +594,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     not isinstance(self.refit, six.string_types) or
                     # This will work for both dict / list (tuple)
                     self.refit not in self.scorer_):
-                raise ValueError("For multimetric scoring, the parameter "
+                raise ValueError("For multi-metric scoring, the parameter "
                                  "refit must be set to a string "
                                  "metric name to make the best_* attributes "
                                  "available for that metric. If the "
@@ -705,7 +705,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
 
-        # For multimetric evaluation, store the best_index_, best_params_ and
+        # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
@@ -737,7 +737,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         check_is_fitted(self, 'cv_results_')
         if self.multimetric_:
             raise AttributeError("grid_scores_ attribute is not available for"
-                                 " multimetric evaluation.")
+                                 " multi-metric evaluation.")
         warnings.warn(
             "The grid_scores_ attribute was deprecated in version 0.18"
             " in favor of the more elaborate cv_results_ attribute."
@@ -846,7 +846,7 @@ class GridSearchCV(BaseSearchCV):
         If "False", it is impossible to make predictions using
         this GridSearchCV instance after fitting.
 
-        For multimetric evaluation, this needs to be a string denoting the
+        For multi-metric evaluation, this needs to be a string denoting the
         metric that should be used for setting the ``best_estimator_``,
         ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
         If those attributes are not to be made available, ``refit`` must be set
@@ -957,21 +957,21 @@ class GridSearchCV(BaseSearchCV):
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict mapping scorer names to the estimator
         that gave the best score for that scorer.
 
     best_score_ : float or dict
         Score of best_estimator on the left out data.
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict mapping scorer names to the best score
         for that scorer.
 
     best_params_ : dict or dict of dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict of dict mapping scorer names to the
         dict of the parameter setting that gave the best scores for that
         scorer.
@@ -984,7 +984,7 @@ class GridSearchCV(BaseSearchCV):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict mapping scorer names to the
         index which corresponds to the parameter setting that gave the best
         scores for that scorer.
@@ -993,7 +993,7 @@ class GridSearchCV(BaseSearchCV):
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
-        For multimetric evaluation this parameter is a dict mapping scorer
+        For multi-metric evaluation this parameter is a dict mapping scorer
         names to the corresponding scorer functions.
 
     n_splits_ : int
@@ -1137,7 +1137,7 @@ class RandomizedSearchCV(BaseSearchCV):
         If "False", it is impossible to make predictions using
         this RandomizedSearchCV instance after fitting.
 
-        For multimetric evaluation, this needs to be a string denoting the
+        For multi-metric evaluation, this needs to be a string denoting the
         metric that should be used for setting the ``best_estimator_``,
         ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
         If those attributes are not to be made available, ``refit`` must be set
@@ -1222,21 +1222,21 @@ class RandomizedSearchCV(BaseSearchCV):
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict mapping scorer names to the estimator
         that gave the best score for that scorer.
 
     best_score_ : float or dict
         Score of best_estimator on the left out data.
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict mapping scorer names to the best score
         for that scorer.
 
     best_params_ : dict or dict of dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict of dict mapping scorer names to the
         dict of the parameter setting that gave the best scores for that
         scorer.
@@ -1249,7 +1249,7 @@ class RandomizedSearchCV(BaseSearchCV):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict mapping scorer names to the
         index which corresponds to the parameter setting that gave the best
         scores for that scorer.
@@ -1258,7 +1258,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
-        For multimetric evaluation this parameter is a dict mapping scorer
+        For multi-metric evaluation this parameter is a dict mapping scorer
         names to the corresponding scorer functions.
 
     n_splits_ : int

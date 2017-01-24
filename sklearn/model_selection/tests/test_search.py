@@ -646,7 +646,7 @@ def test_pandas_input():
         grid_search.fit(X_df, y_ser).score(X_df, y_ser)
         assert_true(hasattr(grid_search, "cv_results_"))
 
-        # Multimetric scoring
+        # Multi-metric scoring
         for scoring in (('accuracy', ), ('accuracy', 'precision')):
             grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
                                        scoring=scoring, refit='accuracy')
@@ -745,7 +745,7 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
 def check_cv_results_grid_scores_consistency(search):
     # TODO Remove test in 0.20
     if search.multimetric_:
-        assert_raise_message(AttributeError, "not available for multimetric",
+        assert_raise_message(AttributeError, "not available for multi-metric",
                              getattr, search, 'grid_scores_')
     else:
         cv_results = search.cv_results_
@@ -982,7 +982,7 @@ def test_random_search_cv_results_multimetric():
         for refit in (True, False):
             random_searches = []
             for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
-                # If True, for multimetric pass refit='accuracy'
+                # If True, for multi-metric pass refit='accuracy'
                 if refit:
                     refit = 'accuracy' if isinstance(scoring, tuple) else refit
                 clf = SVC(probability=True, random_state=42)
@@ -1003,7 +1003,7 @@ def test_random_search_cv_results_multimetric():
 
 def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
         search_multi, search_acc, search_rec, iid):
-    """Compare multimetric cv_results with the ensemble of multiple
+    """Compare multi-metric cv_results with the ensemble of multiple
     single metric cv_results from single metric grid/random search"""
 
     assert_equal(search_multi.iid, iid)
@@ -1024,7 +1024,7 @@ def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
                  'mean_recall_time', 'std_recall_time',
                  'mean_fit_time', 'std_fit_time'))
 
-    # Pop the time keys and compare the other keys among multimetric and
+    # Pop the time keys and compare the other keys among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
     # deep nested comparison of the two cv_results dicts
     np.testing.assert_equal(_pop_cv_results_time_keys(cv_results_multi),
@@ -1032,7 +1032,7 @@ def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
 
 
 def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
-    """Compare refit multimetric search methods with single metric methods"""
+    """Compare refit multi-metric search methods with single metric methods"""
     if refit:
         assert_equal(search_multi.refit, 'accuracy')
     else:
@@ -1222,7 +1222,7 @@ def test_predict_proba_disabled():
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
 
-    # Multimetric case
+    # Multi-metric case
     gs = GridSearchCV(clf, {}, scoring=('precision', 'recall'), refit='recall')
     assert_false(hasattr(gs.fit(X, y), "predict_proba"))
 
