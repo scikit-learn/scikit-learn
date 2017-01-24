@@ -9,6 +9,7 @@ from __future__ import division
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
@@ -583,7 +584,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             return_n_test_samples=True, return_times=True,
             return_parameters=False)
 
-        if not self.use_warm_start:
+        if not getattr(self, 'use_warm_start', False):
             out = parallel(delayed(_fit_and_score)(clone(base_estimator),
                                                    train=train, test=test,
                                                    parameters=parameters,
