@@ -447,10 +447,10 @@ class ClassifierChain(BaseEstimator):
         if sp.issparse(X):
             for chain_idx, estimator in enumerate(self.estimators_):
                 previous_labels = Y[:, self.order[:chain_idx]]
-                if sp.issparse(X):
-                    X_aug = sp.hstack((X, previous_labels))
+                if chain_idx == 0:
+                    X_aug = X
                 else:
-                    X_aug = np.hstack((X, previous_labels))
+                    X_aug = sp.hstack((X, previous_labels))
                 y = Y[:, self.order[chain_idx]]
                 estimator.fit(X_aug, y)
                 self.classes_.append(estimator.classes_)
