@@ -2,6 +2,11 @@ checkout:
   post:
     - ./build_tools/circle/checkout_merge_commit.sh
 
+machine:
+  environment:
+    MINICONDA_PATH: $HOME/miniconda
+    CONDA_ENV_NAME: testenv
+
 dependencies:
   cache_directories:
     - "~/scikit_learn_data"
@@ -12,10 +17,13 @@ dependencies:
   override:
     - ./build_tools/circle/build_doc.sh:
         timeout: 3600 # seconds
+
 test:
   override:
-    # override is needed otherwise nosetests is run by default
-    - echo "Documentation has been built in the 'dependencies' step. No additional test to run"
+    - |
+      export PATH="$MINICONDA_PATH/bin:$PATH"
+      source activate $CONDA_ENV_NAME
+      make test-sphinxext
 deployment:
  push:
    branch: /^master$|^[0-9]+\.[0-9]+\.X$/

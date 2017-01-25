@@ -107,15 +107,15 @@ then
    wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
    -O miniconda.sh
 fi
-chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
+chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 cd ..
-export PATH="$HOME/miniconda/bin:$PATH"
+export PATH="$MINICONDA_PATH/bin:$PATH"
 conda update --yes --quiet conda
 popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n testenv --yes --quiet python numpy scipy \
+conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
   cython nose coverage matplotlib sphinx pillow
 source activate testenv
 
