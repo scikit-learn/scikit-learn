@@ -42,6 +42,7 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics import top_n_accuracy_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 
@@ -100,6 +101,19 @@ def make_prediction(dataset=None, binary=False):
 
 ###############################################################################
 # Tests
+
+def test_top_n_accuracy_score():
+    # Test top_n_accuracy_score on three-class prediction task
+    y_true, y_pred, pred_proba = make_prediction(binary=False)
+    # edge case, perfect accuracy
+    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=3), 1)
+    # edge case. Should be the same as accuracy_score, but 'probabilities' for SVM 
+    # don't always align with predictions. This happens with make_prediction function
+    # so we validate predictions with np.argmax on pred_proba instead of using generated class
+    # predictions y_pred. Maybe preferable to generate test data with a classifier that
+    # produces valid probabilities. 
+    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=1), np.argmax(pred_proba, axis=1)) 
+    assert_almost_equal(top_n_accuracy_score(y_true, pred_proba, n=2), 0.8666666666666667)
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
