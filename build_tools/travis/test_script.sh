@@ -41,7 +41,7 @@ run_tests() {
 
     # Test doc
     cd $OLDPWD
-    make test-doc test-sphinxext
+    make test-doc
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
