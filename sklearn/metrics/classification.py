@@ -184,11 +184,11 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
+def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None):
     """top N Accuracy classification score.
-    For multiclass classification tasks, this metric returns the
+    For multiclass classification tasks, this metric returns the 
     number of times that the correct class was among the top N classes
-    predicted.
+    predicted. 
 
     Parameters
     ----------
