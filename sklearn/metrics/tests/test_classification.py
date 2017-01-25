@@ -112,8 +112,7 @@ def test_top_n_accuracy_score():
     # so we validate predictions with np.argmax on pred_proba instead of using generated class
     # predictions y_pred. Maybe preferable to generate test data with a classifier that
     # produces valid probabilities.
-    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=1), accuracy_score(y_true, np.argmax(pred_proba, axis=1))) 
-    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=2), 0.8666666666666667)
+    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=1), accuracy_score(y_true, np.argmax(pred_proba, axis=1)))  
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
