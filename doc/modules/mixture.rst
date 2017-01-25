@@ -189,7 +189,7 @@ this is not necessarily the case for the 'dirichlet_process' type (used by
 default).
 
 .. |plot_bgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
-   :target: ../auto_examples/mixture/plot_gmm.html
+   :target: ../auto_examples/mixture/plot_concentration_prior.html
    :scale: 48%
 
 .. |plot_dpgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
