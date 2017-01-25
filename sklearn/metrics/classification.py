@@ -221,15 +221,14 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import top_n_accuracy_score
-    >>> y_pred = [[0.146, 0.063, 0.0833, 0.146, 0.125, 0.125, 0.167, 0.021, 0.042, 0.083],
-                  [0.174, 0.043, 0.130, 0.196, 0.109, 0.022, 0.152, 0.066, 0.065, 0.044]]
-    >>> y_true = [0, 1]
+    >>> y_pred = np.array([[0.146, 0.063, 0.0833, 0.146, 0.125, 0.125, 0.167, 0.021, 0.042, 0.083], [0.174, 0.043, 0.130, 0.196, 0.109, 0.022, 0.152, 0.066, 0.065, 0.044]])
+    >>> y_true = np.array([0, 1])
     >>> top_n_accuracy_score(y_true, y_pred, n=5)
     0.5
     >>> top_n_accuracy_score(y_true, y_pred, n=9)
-    1
+    1.0
     >>> top_n_accuracy_score(y_true, y_pred, n=1)
-    0
+    0.0
     >>> top_n_accuracy_score(y_true, y_pred, n=5, normalize=False)
     1
     """
