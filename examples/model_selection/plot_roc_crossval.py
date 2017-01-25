@@ -94,7 +94,7 @@ std_tpr = np.std(tprs, axis=0)
 tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
 tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
 plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-                 label='1 sigma range')
+                 label=r'$\pm$ 1 std. dev.')
 
 plt.xlim([-0.05, 1.05])
 plt.ylim([-0.05, 1.05])
