@@ -63,6 +63,7 @@ classifier = svm.SVC(kernel='linear', probability=True,
                      random_state=random_state)
 
 tprs = []
+aucs = []
 mean_fpr = np.linspace(0, 1, 100)
 
 i = 0
@@ -73,7 +74,8 @@ for train, test in cv.split(X, y):
     tprs.append(interp(mean_fpr, fpr, tpr))
     tprs[-1][0] = 0.0
     roc_auc = auc(fpr, tpr)
-    plt.plot(fpr, tpr, lw=1, color='b', alpha=0.15,
+    aucs.append(roc_auc)
+    plt.plot(fpr, tpr, lw=1, alpha=0.3,
              label='ROC fold %d (AUC = %0.2f)' % (i, roc_auc))
 
     i += 1
@@ -83,8 +85,10 @@ plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
 mean_tpr = np.mean(tprs, axis=0)
 mean_tpr[-1] = 1.0
 mean_auc = auc(mean_fpr, mean_tpr)
+std_auc = np.std(aucs)
 plt.plot(mean_fpr, mean_tpr, color='b',
-         label='Mean ROC (AUC = %0.2f)' % mean_auc, lw=2, alpha=.8)
+         label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+         lw=2, alpha=.8)
 
 std_tpr = np.std(tprs, axis=0)
 tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
