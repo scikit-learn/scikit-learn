@@ -387,6 +387,14 @@ def test_no_refit():
                                   'refitting on the best parameters'
                                   % fn_name), getattr(grid_search, fn_name), X)
 
+    # Test that an invalid refit param raises appropriate error messages
+    for refit in ("", 5, True, 'recall', 'accuracy'):
+        assert_raise_message(ValueError, "For multi-metric scoring, the "
+                             "parameter refit must be set to a string metric",
+                             GridSearchCV(clf, {}, refit=refit,
+                             scoring={'acc': 'accuracy',
+                                      'prec': 'precision'}).fit, X, y)
+
 
 def test_grid_search_error():
     # Test that grid search will capture errors on data with different length
