@@ -20,6 +20,12 @@ from .gen_rst import generate_dir_rst, SPHX_GLR_SIG
 from .docs_resolv import embed_code_links
 from .downloads import generate_zipfiles
 
+try:
+    FileNotFoundError
+except NameError:
+    # Python2
+    FileNotFoundError = IOError
+
 DEFAULT_GALLERY_CONF = {
     'filename_pattern': re.escape(os.sep) + 'plot',
     'examples_dirs': os.path.join('..', 'examples'),
@@ -117,6 +123,10 @@ def generate_gallery_rst(app):
         this_fhindex, this_computation_times = \
             generate_dir_rst(examples_dir, gallery_dir, gallery_conf,
                              seen_backrefs)
+        if this_fhindex == "":
+            raise FileNotFoundError("Main example directory {0} does not "
+                                    "have a README.txt file. Please write "
+                                    "one to introduce your gallery.".format(examples_dir))
 
         computation_times += this_computation_times
 
@@ -178,8 +188,10 @@ def sumarize_failing_examples(app, exception):
         return
 
     gallery_conf = app.config.sphinx_gallery_conf
-    failing_examples = set(gallery_conf['failing_examples'])
-    expected_failing_examples = set(gallery_conf['expected_failing_examples'])
+    failing_examples = set([os.path.normpath(path) for path in
+                            gallery_conf['failing_examples']])
+    expected_failing_examples = set([os.path.normpath(path) for path in
+                                     gallery_conf['expected_failing_examples']])
 
     examples_expected_to_fail = failing_examples.intersection(
         expected_failing_examples)
@@ -204,7 +216,7 @@ def sumarize_failing_examples(app, exception):
         failing_examples)
     if examples_not_expected_to_pass:
         fail_msgs.append("Examples expected to fail, but not failling:\n" +
-                         "Please remove this examples from\n" +
+                         "Please remove these examples from\n" +
                          "sphinx_gallery_conf['expected_failing_examples']\n" +
                          "in your conf.py file"
                          "\n".join(examples_not_expected_to_pass))
