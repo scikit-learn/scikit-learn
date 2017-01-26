@@ -24,8 +24,7 @@ from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.scorer import (
-    _check_multimetric_scoring as check_multimetric_scoring)
+from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -182,7 +181,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    scorers, is_multi = check_multimetric_scoring(*args, **kwargs)
+    scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
     assert_false(is_multi)
     if scorers is not None:
@@ -212,7 +211,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         estimator = EstimatorWithFitAndPredict()
         estimator.fit([[1]], [1])
 
-        scorers, is_multi = check_multimetric_scoring(estimator, scoring)
+        scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert_true(is_multi)
         assert_true(isinstance(scorers, dict))
         assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
@@ -228,7 +227,7 @@ def test_check_scoring_and_check_multimetric_scoring():
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
-    scorers, is_multi = check_multimetric_scoring(estimator, allow_none=True)
+    scorers, is_multi = _check_multimetric_scoring(estimator, allow_none=True)
     assert_equal(scorers, {'score': None})
     assert_false(is_multi)
 
@@ -236,37 +235,21 @@ def test_check_scoring_and_check_multimetric_scoring():
 
     error_message_regexp = ".*must be unique strings.*\n.*use a dict.*"
 
-    # List/tuple of callables should raise a message advising users to use
-    # dict of names to callables mapping
-    assert_raises_regexp(ValueError, error_message_regexp,
-                         check_multimetric_scoring, estimator,
-                         scoring=(make_scorer(precision_score),
-                                  make_scorer(accuracy_score)))
-
-    assert_raises_regexp(ValueError, error_message_regexp,
-                         check_multimetric_scoring, estimator,
-                         scoring=(make_scorer(precision_score),))
-
-    # So should empty lists/tuples
-    assert_raises_regexp(ValueError, error_message_regexp,
-                         check_multimetric_scoring, estimator, scoring=())
-
-    # So should duplicated entries
-    assert_raises_regexp(ValueError, error_message_regexp,
-                         check_multimetric_scoring, estimator,
-                         scoring=('f1_micro', 'f1_micro'))
+    for scoring in ((make_scorer(precision_score),  # Tuple of callables
+                     make_scorer(accuracy_score)), [5],
+                    (make_scorer(precision_score),), (), ('f1', 'f1')):
+        assert_raises_regexp(ValueError, error_message_regexp,
+                             _check_multimetric_scoring, estimator,
+                             scoring=scoring)
 
     error_message_regexp = (".*should.*be.*string or callable.*for single"
                             ".*dict.*for multi.*")
 
-    # Empty dict should raise invalid scoring error
-    assert_raises_regexp(ValueError, error_message_regexp,
-                         check_multimetric_scoring, estimator,
-                         scoring=(dict()))
-
-    # And so should any other invalid entry
-    assert_raises_regexp(ValueError, error_message_regexp,
-                         check_multimetric_scoring, estimator, scoring=5)
+    for scoring in (dict(), 5, {1: 'f1_micro', 'bar': 'precision'},
+                    [['precision']], [[['accuracy']]], {}):
+        assert_raises_regexp(ValueError, error_message_regexp,
+                             _check_multimetric_scoring, estimator,
+                             scoring=scoring)
 
 
 def test_check_scoring_gridsearchcv():

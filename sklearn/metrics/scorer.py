@@ -326,34 +326,43 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
         True if scorer is a list/tuple or dict of callables
         False if scorer is None/str/callable
     """
-    scorers = {}
-    is_multimetric = True
-    if (isinstance(scoring, dict) and
-            np.asarray(list(scoring.keys())).dtype.kind in ('S', 'U')):
-        for name, scorer in scoring.items():
-            # Validate for each scorer
-            scorers[name] = check_scoring(estimator, scoring=scorer)
-    elif isinstance(scoring, (list, tuple)):
-        if (np.asarray(scoring).dtype.kind not in ("S", "U") or
-                np.unique(scoring).shape[0] != len(scoring)):
-            raise ValueError("The list/tuple elements must be unique strings"
-                             " of predefined scorers. Got %s.\nHint: To"
-                             " evaluate on multiple custom score functions"
-                             ", use a dict mapping the score name to the"
-                             " callable scorers." % repr(scoring))
-        for scorer in scoring:
-            scorers[scorer] = check_scoring(estimator, scoring=scorer)
-    elif callable(scoring) or (scoring is None) or isinstance(scoring, str):
-        is_multimetric = False
+    if callable(scoring) or scoring is None or isinstance(scoring,
+                                                            six.string_types):
         scorers = {"score": check_scoring(estimator, scoring=scoring,
                                           allow_none=allow_none)}
+        return scorers, False
     else:
-        raise ValueError("scoring should either be a single string or callable"
-                         " for single metric evaluation or a list/tuple of"
-                         " strings or a dict of scorer name mapped to the"
-                         " callable for multiple metric evaluation. Got %s of"
-                         " type %s" % (repr(scoring), type(scoring)))
-    return scorers, is_multimetric
+        err_msg_generic = ("scoring should either be a single string or "
+                           "callable for single metric evaluation or a "
+                           "list/tuple of strings or a dict of scorer name "
+                           "mapped to the callable for multiple metric "
+                           "evaluation. Got %s of type %s"
+                           % (repr(scoring), type(scoring)))
+        try:
+            keys = set(scoring)
+            valid_keys = (all(isinstance(i, six.string_types) for i in keys)
+                          if len(keys) == len(scoring) > 0 else False)
+        except:  # If set(scoring) failed
+            raise ValueError(err_msg_generic)
+
+        if isinstance(scoring, dict):
+            if not valid_keys:
+                raise ValueError(err_msg_generic)
+            scorers = {key: check_scoring(estimator, scoring=scorer)
+                       for key, scorer in scoring.items()}
+        elif isinstance(scoring, (list, tuple)):
+            if not valid_keys:
+                raise ValueError("The list/tuple elements must be unique "
+                                 "strings of predefined scorers. Got "
+                                 "%s.\nHint: To evaluate on multiple custom "
+                                 "score functions, use a dict mapping the "
+                                 "score name to the callable scorers."
+                                 % repr(scoring))
+            scorers = {scorer: check_scoring(estimator, scoring=scorer)
+                       for scorer in scoring}
+        else:
+            raise ValueError(err_msg_generic)
+        return scorers, True
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
