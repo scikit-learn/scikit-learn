@@ -327,7 +327,7 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
         False if scorer is None/str/callable
     """
     if callable(scoring) or scoring is None or isinstance(scoring,
-                                                            six.string_types):
+                                                          six.string_types):
         scorers = {"score": check_scoring(estimator, scoring=scoring,
                                           allow_none=allow_none)}
         return scorers, False

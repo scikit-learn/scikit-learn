@@ -392,8 +392,9 @@ def test_no_refit():
         assert_raise_message(ValueError, "For multi-metric scoring, the "
                              "parameter refit must be set to a string metric",
                              GridSearchCV(clf, {}, refit=refit,
-                             scoring={'acc': 'accuracy',
-                                      'prec': 'precision'}).fit, X, y)
+                                          scoring={'acc': 'accuracy',
+                                                   'prec': 'precision'}).fit,
+                             X, y)
 
 
 def test_grid_search_error():
