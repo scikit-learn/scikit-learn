@@ -590,7 +590,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             self.estimator, scoring=self.scoring)
 
         if self.multimetric_:
-            if self.refit and (
+            if self.refit is not False and (
                     not isinstance(self.refit, six.string_types) or
                     # This will work for both dict / list (tuple)
                     self.refit not in self.scorer_):
