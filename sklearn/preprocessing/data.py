@@ -1904,17 +1904,43 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
 
+def _get_count_dict_3():
+    """Gets the outer count dictionary."""
+
+    # get_count_dict() is an optimization on key-value access
+    # where we have multi-layer dicts for accessing dict[X][y] instead of
+    # using dict[(X, y)], because using dict[(X, y)] is inefficient
+    # Using external helper methods is also required to avoid a picking
+    # error involving lambda expressions in defaultdict
+    return defaultdict(_get_count_dict_2)
+
+
+def _get_count_dict_2():
+    """Gets the inner count dictionary."""
+    return defaultdict(_get_count_dict_1)
+
+
+def _get_count_dict_1():
+    """Gets the inner count dictionary."""
+    return defaultdict(_get_count_dict_0)
+
+
+def _get_count_dict_0():
+    """Gets the innermost count dictionary."""
+    return defaultdict(int)
+
+
 class CountFeaturizer(BaseEstimator, TransformerMixin):
     """Adds a feature representing each feature value's count in training
 
-    Specifically, for each data point X_i in the dataset X, it will add in
-    a new set of columns count_X_i to the end of X_i where count_X_i is the
-    number of occurences of X_i in the dataset X given the equality indicator
+    Specifically, for each data point 'X_i' in the dataset 'X', it will add in
+    a new set of columns 'count_X_i' to the end of 'X_i' where 'count_X_i' is the
+    number of occurences of 'X_i' in the dataset 'X' given the equality indicator
     'inclusion'.
 
-    If a y argument is given during the fit step, then the
-    count in the transform step will be conditional on the y.
-    The number of columns added will be the number of different values y can
+    If a 'y' argument is given during the fit step, then the
+    count in the transform step will be conditional on the 'y'.
+    The number of columns added will be the number of different values 'y' can
     take on.
 
     This preprocessing step is useful when the number of occurences
@@ -1922,26 +1948,31 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    inclusion : 'all', list, or numpy.ndarray
+    inclusion : 'all', 'each', list, or numpy.ndarray
         The inclusion criteria for counting
 
         - 'all' (default) : Every feature given is counted
-        - collection of indices : Only the given collection of features is
+        - 'each' : Each feature will have its own set of counts
+        - 1D list of indices : Only the given list of features is
         counted
+        - 2D list of indices : The given list of lists of features is counted,
+        but each list in the list of lists have its own set of counts
 
     Attributes
     ----------
     count_cache_ : defaultdict(int)
         The counts of each example learned during 'fit'
 
-    y_set_ : list of (index, y) tuples
-        An enumerated set of all unique values y can have
+    classes_ : list of (index, y) tuples
+        An enumerated set of all unique values 'y' can have
 
     col_num_X_ : int
         The number of columns of 'X' learned during 'fit'
+        We use this to compare to the number of columns of 'X'
+        during transform to make sure that the transformation is compatible
 
     col_num_Y_ : int
-        The number of clumns of 'y' learned during 'fit'
+        The number of columns of 'y' learned during 'fit'
         If 0, then the fit is not conditional on the y given
 
     Examples
@@ -1977,13 +2008,28 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def _check_params(inclusion=None):
-        if (inclusion is not None and inclusion != 'all' and
+        if inclusion is None:
+            raise ValueError("Inclusion cannot be none")
+        if (inclusion is not None and (type(inclusion) == str and
+            inclusion != "all" and inclusion != "each") and
                 not CountFeaturizer._valid_data_type(inclusion)):
             raise ValueError("Illegal data type in inclusion")
 
     @staticmethod
     def _valid_data_type(type_check):
         return type(type_check) == np.ndarray or type(type_check) == list
+
+    def _get_inclusion_used(self):
+        if type(self.inclusion) == str and self.inclusion == "all":
+            return np.array([range(self.col_num_X_)])
+        elif type(self.inclusion) == str and self.inclusion == "each":
+            return np.array([[i] for i in range(self.col_num_X_)])
+        elif CountFeaturizer._valid_data_type(self.inclusion):
+            inclusion_used = np.array(self.inclusion)
+            if len(inclusion_used.shape) == 1:
+                return np.array([inclusion_used])
+            else:
+                return inclusion_used
 
     def fit(self, X, y=None):
         """Fits the CountFeaturizer to X, y
@@ -2020,38 +2066,30 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         len_data = len(X)
         self.col_num_X_ = len(X[0])
-        self.count_cache_ = defaultdict(
-            lambda: defaultdict(lambda: defaultdict(int)))
-        self.y_set_ = [set() for i in range(self.col_num_Y_)]
+        self.count_cache_ = _get_count_dict_3()
+        self.classes_ = [set() for i in range(self.col_num_Y_)]
 
-        if type(self.inclusion) == str and self.inclusion == 'all':
-            inclusion_used = np.array(range(self.col_num_X_))
-        elif self.inclusion is None:
-            inclusion_used = np.array([])
-        elif CountFeaturizer._valid_data_type(self.inclusion):
-            inclusion_used = np.array(self.inclusion)
+        inclusion_used = self._get_inclusion_used()
 
-        if y is not None:
-            for i in range(len_data):
-                for j in range(self.col_num_Y_):
-                    X_key = tuple(X[i].take(inclusion_used))
-                    if len(y.shape) == 1:
-                        # if y is 1D, y[i] is a scalar, which is not iterable
-                        y_key = tuple([y[i]])
-                    else:
-                        y_key = tuple(y[i].take([j]))
-                    self.count_cache_[X_key][j][y_key] += 1
-                    self.y_set_[j].add(y_key)
-        else:
-            self.y_set_[0].add(0)
-            for i in range(len_data):
-                X_key = tuple(X[i].take(inclusion_used))
-                self.count_cache_[X_key][0][0] += 1
-        self.y_set_ = [list(enumerate(sorted(ys))) for ys in self.y_set_]
-        # freeze the dicts for pickling
-        self.count_cache_.default_factory = None
-        for cc_inner_dict in self.count_cache_.values():
-            cc_inner_dict.default_factory = None
+        for inclusion_i in range(len(inclusion_used)):
+            if y is not None:
+                for i in range(len_data):
+                    for j in range(self.col_num_Y_):
+                        X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
+                        if len(y.shape) == 1:
+                            # if y is 1D, y[i] is a scalar; not iterable
+                            y_key = tuple([y[i]])
+                        else:
+                            y_key = tuple(y[i].take([j]))
+                        self.count_cache_[X_key][j][y_key][inclusion_i] += 1
+                        self.classes_[j].add(y_key)
+            else:
+                self.classes_[0].add(0)
+                for i in range(len_data):
+                    X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
+                    self.count_cache_[X_key][0][0][inclusion_i] += 1
+        self.classes_ = [list(enumerate(sorted(ys))) for ys in self.classes_]
+
         return self
 
     def transform(self, X):
@@ -2063,8 +2101,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array
-            The X that we augment with count columns
-            X must not be 1 dimensional
+            The 'X' that we augment with count columns
+            'X' must not be 1 dimensional
 
         Returns
         -------
@@ -2079,41 +2117,34 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         check_is_fitted(self, ['count_cache_', 'col_num_X_'])
 
-        # unfreeze dictionary for pickling
-        self.count_cache_.default_factory = \
-            lambda: defaultdict(lambda: defaultdict(int))
-        for cc_inner_dict in self.count_cache_.values():
-            cc_inner_dict.default_factory = lambda: defaultdict(int)
-
         X = check_array(X)
         len_data = len(X)
-        len_y_set = 0
-        for ys in self.y_set_:
-            len_y_set += len(ys)
+        len_classes = 0
+        for ys in self.classes_:
+            len_classes += len(ys)
+
         num_features = len(X[0])
         if self.col_num_X_ != num_features:
             raise ValueError("Dimensions mismatch in X during transform")
-        transformed = np.zeros((len_data, num_features + len_y_set))
-        transformed[:, :-len_y_set] = X
+        inclusion_used = self._get_inclusion_used()
 
-        if type(self.inclusion) == str and self.inclusion == 'all':
-            inclusion_used = np.array(np.arange(self.col_num_X_))
-        elif self.inclusion is None:
-            raise ValueError("The inclusion list must not be None")
-        elif CountFeaturizer._valid_data_type(self.inclusion):
-            inclusion_used = np.array(self.inclusion)
+        # the number of added cols is the number of unique y vals
+        # multiplied by the number of different inclusion lists
+        num_added_cols = len_classes * len(inclusion_used)
+        transformed = np.zeros((len_data, num_features + num_added_cols))
+        transformed[:, :-num_added_cols] = X
 
-        col_offset = 0
-        for j in range(self.col_num_Y_):
-            for y_ind, y_key in self.y_set_[j]:
-                for i in range(len_data):
-                    X_key = tuple(X[i].take(inclusion_used))
-                    transformed[i, num_features + y_ind + col_offset] = \
-                        self.count_cache_[X_key][j][y_key]
-            col_offset += len(self.y_set_[j])
+        col_offset_inclusion = 0
+        for inclusion_i in range(len(inclusion_used)):
+            col_offset_y = 0
+            col_offset_inclusion = inclusion_i * len_classes
+            for j in range(self.col_num_Y_):
+                for y_ind, y_key in self.classes_[j]:
+                    for i in range(len_data):
+                        X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
+                        transformed[i, num_features + y_ind +
+                                    col_offset_y + col_offset_inclusion] = \
+                            self.count_cache_[X_key][j][y_key][inclusion_i]
+                col_offset_y += len(self.classes_[j])
 
-        # freeze dictionary for pickling
-        self.count_cache_.default_factory = None
-        for cc_inner_dict in self.count_cache_.values():
-            cc_inner_dict.default_factory = None
         return transformed

@@ -1767,3 +1767,36 @@ def test_count_featurizer_multi_y():
         cf.fit_transform(X, y=y),
         np.array([[0, 2, 0, 2], [0, 2, 0, 2],
                  [1, 2, 1, 1], [1, 2, 1, 1]]))
+
+
+def test_count_featurizer_multi_inclusion():
+    # test with 2D inclusion
+    X = np.array([[0, 0], [0, 0], [1, 0], [1, 0]])
+    y = np.array([[0], [0], [0], [1]])
+    cf = CountFeaturizer(inclusion=np.array([[0], [1]]))
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0, 3, 1], [0, 0, 2, 0, 3, 1],
+                 [1, 0, 1, 1, 3, 1], [1, 0, 1, 1, 3, 1]]))
+
+    # each should be the same as [[0], [1]]
+    cf = CountFeaturizer(inclusion="each")
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0, 3, 1], [0, 0, 2, 0, 3, 1],
+                 [1, 0, 1, 1, 3, 1], [1, 0, 1, 1, 3, 1]]))
+
+    cf = CountFeaturizer(inclusion=[[0]])
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0], [0, 0, 2, 0],
+                 [1, 0, 1, 1], [1, 0, 1, 1]]))
+
+    cf = CountFeaturizer(inclusion="each")
+    y = np.array([[0, 0], [0, 1], [0, 2], [1, 3]])
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0, 1, 1, 0, 0, 3, 1, 1, 1, 1, 1],
+                 [0, 0, 2, 0, 1, 1, 0, 0, 3, 1, 1, 1, 1, 1],
+                 [1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1],
+                 [1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1]]))
