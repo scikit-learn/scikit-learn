@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import sparse as sp
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import spearmanr
 
 from numpy.testing import assert_array_equal
 
@@ -122,28 +122,13 @@ def test_featurewise_scorer():
     X, y = make_classification(random_state=0)
 
     # spearmanr from scipy.stats
-    sp1 = SelectPercentile(featurewise_scorer(spearmanr), percentile=50)
-    skb1 = SelectKBest(featurewise_scorer(spearmanr), k=10)
-
-    # pearsonr from scipy.stats
-    sp2 = SelectPercentile(featurewise_scorer(pearsonr), percentile=50)
-    skb2 = SelectKBest(featurewise_scorer(pearsonr), k=10)
-
-    sp1.fit(X, y)
-    sp2.fit(X, y)
-    skb1.fit(X, y)
-    skb2.fit(X, y)
-
-    new_X1 = sp1.transform(X)
-    new_X2 = sp2.transform(X)
-    new_X4 = skb1.transform(X)
-    new_X5 = skb2.transform(X)
+    skb = SelectKBest(featurewise_scorer(spearmanr, nan_policy='propagate'),
+                      k=10)
+    skb.fit(X, y)
+    new_X = skb.transform(X)
 
     # Check if the feature selectors behave as expected
-    assert_equal(new_X1.shape[1], 0.5 * X.shape[1])
-    assert_equal(new_X2.shape[1], 0.5 * X.shape[1])
-    assert_equal(new_X4.shape[1], 10)
-    assert_equal(new_X5.shape[1], 10)
+    assert_equal(new_X.shape[1], 10)
 
 
 def test_featurewise_scorer_list_input():
@@ -151,15 +136,10 @@ def test_featurewise_scorer_list_input():
     X, y = make_classification(random_state=0)
     X = X.tolist()  # convert X from array to list
     y = y.tolist()  # convert y from array to list
-    skb = SelectKBest(featurewise_scorer(spearmanr), k=10)
+
     sp = SelectPercentile(featurewise_scorer(spearmanr), percentile=50)
-
-    skb.fit(X, y)
     sp.fit(X, y)
-
-    new_X1 = skb.transform(X)
-    new_X2 = sp.transform(X)
+    new_X = sp.transform(X)
 
     # Check if the feature selectors behave as expected
-    assert_equal(new_X1.shape[1], 10)
-    assert_equal(new_X2.shape[1], 10)
+    assert_equal(new_X.shape[1], 10)

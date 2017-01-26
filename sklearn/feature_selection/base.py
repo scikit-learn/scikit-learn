@@ -153,21 +153,17 @@ def featurewise_scorer(score_func, **kwargs):
     >>> from scipy.stats import spearmanr
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(random_state=0)
-    >>> skb = SelectKBest(featurewise_scorer(spearmanr), k=10)
+    >>> skb = SelectKBest(featurewise_scorer(spearmanr, nan_policy='propagate'), k=10)
     >>> skb.fit(X, y) #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     SelectKBest(k=10, score_func=...)
-    >>> new_X1 = skb.transform(X)
+    >>> new_X = skb.transform(X)
 
     """
-    def call_scorer(*args):
-        if len(args) == 2:
-            X = args[0]
-            y = args[1]
-            X, y = check_X_y(X, y, ('csr', 'csc'), multi_output=True)
-        else:
-            X = args[0]
-            y = None
+    def call_scorer(X, y=None):
+        if y is None:
             X = check_array(X, ('csr', 'csc'))
+        else:
+            X, y = check_X_y(X, y, ('csr', 'csc'), multi_output=True)
 
         scores = []
         p_vals = []
@@ -183,11 +179,10 @@ def featurewise_scorer(score_func, **kwargs):
                 p_vals.append(p_val)
             else:
                 score = score_func_ret
-                p_vals = None
             scores.append(abs(score))
 
         scores = np.asarray(scores)
-        if p_vals is not None:
+        if len(p_vals) > 0:
             p_vals = np.asarray(p_vals)
             return (scores, p_vals)
         else:
