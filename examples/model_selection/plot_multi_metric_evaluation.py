@@ -5,7 +5,7 @@ Multiple metric grid search (or random search) can be done by setting the
 scorer names to the scorer callables.
 
 The scores of all the scorers are available in the ``cv_results_`` dict at keys
-ending in ``'_<scorer_name/metric_name>'`` (``'mean_test_precision'``,
+ending in ``'_<scorer_name>'`` (``'mean_test_precision'``,
 ``'rank_test_precision'``, etc...)
 
 The ``best_estimator_``, ``best_index_``, ``best_score_`` and ``best_params_``
@@ -33,7 +33,7 @@ X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 # The scorers can be a standard scorer referenced by its name or one a
 # callable-like returned from make_scorer
 scoring = {'AUC Score': 'roc_auc', 'Precision': make_scorer(precision_score),
-           'recall': 'recall', 'F1 Score': 'f1'}
+           'Recall': 'recall', 'F1 Score': 'f1'}
 
 # Multiple metric GridSearchCV, best_* attributes are exposed for the scorer
 # with key 'AUC Score' ('roc_auc')
@@ -60,7 +60,7 @@ ax.set_ylim(0.68, 1)
 X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
 
 for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'k'),
-                      ('Precision', 'r'), ('recall', 'blue')):
+                      ('Precision', 'r'), ('Recall', 'blue')):
     for sample, style in (('train', '--'), ('test', '-')):
         sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
