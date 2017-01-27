@@ -300,8 +300,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorers,
     scorers : dict
         dict which maps the scorer name to the scorer callable.
 
-        If provided, the scorer callable object / function must be with
-        signature ``scorer(estimator, X, y)``.
+        If provided, the scorer callable object / function must have its
+        signature as ``scorer(estimator, X, y)``.
 
     verbose : int
         Verbosity level.
@@ -425,22 +425,20 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         score : float
         """
         self._check_is_fitted('score')
-
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-
         score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
-
         return score(self.best_estimator_, X, y)
 
     def _check_is_fitted(self, method_name):
         if not self.refit:
-            raise NotFittedError(('This SearchCV instance was initialized '
-                                  'with refit=False. %s is '
-                                  'available only after refitting on the best '
-                                  'parameters. ') % method_name)
+            raise NotFittedError('This %s instance was initialized '
+                                 'with refit=False. %s is '
+                                 'available only after refitting on the best '
+                                 'parameters. '
+                                 % (type(self).__name__, method_name))
         else:
             check_is_fitted(self, 'best_estimator_')
 
@@ -657,7 +655,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                                               n_candidates).T
             if splits:
                 for split_i in range(n_splits):
-                    # Uses closure to reference the results
+                    # Uses closure to alter the results
                     results["split%d_%s"
                             % (split_i, key_name)] = array[:, split_i]
 
@@ -792,7 +790,7 @@ class GridSearchCV(BaseSearchCV):
         A single string (see :ref:`_scoring_parameter`) or a callable
         (see :ref:`_scoring`) to evaluate the predictions on the test set.
 
-        For evaluating multiple metrics, either give a list of (unique) strings
+        To evaluate multiple metrics, either give a list of (unique) strings
         or a dict with names as keys and callables as values.
 
         NOTE that when using custom scorers, each scorer should return a single
@@ -942,7 +940,7 @@ class GridSearchCV(BaseSearchCV):
         NOTE
 
         The key ``'params'`` is used to store a list of parameter
-        settings dict for all the parameter candidates.
+        settings dicts for all the parameter candidates.
 
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
@@ -962,7 +960,7 @@ class GridSearchCV(BaseSearchCV):
         that gave the best score for that scorer.
 
     best_score_ : float or dict
-        Score of best_estimator on the left out data.
+        Mean cross-validated score of the best_estimator
 
         For multi-metric evaluation (when the ``scoring`` parameter is a dict/
         list), this parameter is a dict mapping scorer names to the best score
