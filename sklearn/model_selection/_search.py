@@ -799,7 +799,7 @@ class GridSearchCV(BaseSearchCV):
         value. Single scorers returning a list/array of values may be wrapped
         into multiple scorers that return one value each.
 
-        If None the estimator's default scorer, if available is used.
+        If None, the estimator's default scorer, if available, is used.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.
