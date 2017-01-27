@@ -184,12 +184,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                               fit_params)
                       for train, test in cv.split(X, y, groups))
     scores = list(zip(*scores))[0]
-
     test_scores = _aggregate_score_dicts(scores)
-
     if not is_multimetric:
-        test_scores = list(test_scores.values())[0]
-
+        test_scores = test_scores['score']
     return test_scores
 
 
