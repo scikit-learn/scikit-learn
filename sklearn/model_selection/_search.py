@@ -270,7 +270,7 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, estimator, parameters, train, test, scorers,
+def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, error_score='raise', **fit_params):
     """Run fit on one set of parameters.
 
@@ -297,11 +297,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorers,
     test : ndarray, dtype int or bool
         Boolean mask or indices for test set.
 
-    scorers : dict
+    scorer : callable or dict of callables or None
+        If it's a single callable / None, it returns scores as a 
         dict which maps the scorer name to the scorer callable.
 
-        If provided, the scorer callable object / function must have its
-        signature as ``scorer(estimator, X, y)``.
+        The scorer callable object / function must have its signature as
+        ``scorer(estimator, X, y)``.
 
     verbose : int
         Verbosity level.
@@ -317,9 +318,11 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorers,
 
     Returns
     -------
-    scores : dict
-        A dict mapping the scorer name to its score value for the given
-        parameter setting on given training / test split.
+    score : float or dict
+        A float of the single score value, in case of a single metric or
+        a dict mapping the the scorer name to its score value, in case of
+        multi-metric evaluation for the given parameter setting on given
+        training / test split.
 
     parameters : dict
         The parameters that have been evaluated.
@@ -327,11 +330,13 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorers,
     n_samples_test : int
         Number of test samples in this split.
     """
-    scores, n_samples_test, _ = _fit_and_score(estimator, X, y, scorers, train,
+    scores, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
                                                test, verbose, parameters,
                                                fit_params=fit_params,
                                                return_n_test_samples=True,
                                                error_score=error_score)
+    if not isinstance(scorer, (dict, list, tuple)):
+        scores = scores['score']
     return scores, parameters, n_samples_test
 
 
