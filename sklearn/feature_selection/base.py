@@ -153,7 +153,7 @@ def featurewise_scorer(score_func, **kwargs):
     >>> from scipy.stats import spearmanr
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(random_state=0)
-    >>> skb = SelectKBest(featurewise_scorer(spearmanr, nan_policy='propagate'), k=10)
+    >>> skb = SelectKBest(featurewise_scorer(spearmanr, axis=0), k=10)
     >>> skb.fit(X, y) #doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     SelectKBest(k=10, score_func=...)
     >>> new_X = skb.transform(X)

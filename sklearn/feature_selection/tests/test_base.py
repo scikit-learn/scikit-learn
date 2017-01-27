@@ -122,8 +122,7 @@ def test_featurewise_scorer():
     X, y = make_classification(random_state=0)
 
     # spearmanr from scipy.stats
-    skb = SelectKBest(featurewise_scorer(spearmanr, nan_policy='propagate'),
-                      k=10)
+    skb = SelectKBest(featurewise_scorer(spearmanr, axis=0), k=10)
     skb.fit(X, y)
     new_X = skb.transform(X)
 
