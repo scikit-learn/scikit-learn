@@ -202,7 +202,7 @@ Bug fixes
      applied a sparse random projection to the hashed features, preventing
      the use of `sklearn.feature_extraction.text.HashingVectorizer` in a
      pipeline with  `sklearn.feature_extraction.text.TfidfTransformer`.
-     :issue:`3637`, :issue:`7513` by `Roman Yurchal <rth>`.
+     :issue:`7513` by `Roman Yurchal <rth>`.
 
 API changes summary
 -------------------
