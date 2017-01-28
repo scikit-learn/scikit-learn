@@ -1360,10 +1360,14 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
+    output_dict : boolean (default = False)
+        Optional to return a dictionary.
+
     Returns
     -------
-    report : string
+    report : string/dictionary
         Text summary of the precision, recall, F1 score for each class.
+        Dictionary returned if output_dict is true.
 
         The reported averages are a prevalence-weighted macro-average across
         classes (equivalent to :func:`precision_recall_fscore_support` with
