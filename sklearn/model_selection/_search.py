@@ -298,7 +298,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         Boolean mask or indices for test set.
 
     scorer : callable or dict of callables or None
-        If it's a single callable / None, it returns scores as a 
+        If it's a single callable / None, it returns scores as a
         dict which maps the scorer name to the scorer callable.
 
         The scorer callable object / function must have its signature as
