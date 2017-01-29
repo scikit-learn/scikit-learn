@@ -183,8 +183,6 @@ for i in range(n_classes):
     plt.step(recall[i], precision[i], color=colors[i],
              label='Precision-recall curve of class {0} (area = {1:0.2f})'
                    ''.format(i, average_precision[i]))
-    p_long = [v for v in precision[i] for _ in (0, 1)][1:]
-    r_long = [v for v in recall[i] for _ in (0, 1)][:-1]
     c_r, c_p = get_circle_coords(recall[i], precision[i])
     eleven_point_precisions[i] = c_p
     for this_r, this_p in zip(c_r, c_p):
