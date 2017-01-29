@@ -140,13 +140,6 @@ def get_circle_coords(r, p):
     return r[indices], p[indices]
 
 
-def fill_beneath_step(x, y, color, alpha=0.2):
-    """Fill an area underneath a step function"""
-    x_long = [v for v in x for _ in (0, 1)][:-1]
-    y_long = [v for v in y for _ in (0, 1)][1:]
-    plt.fill_between(x_long, 0, y_long, alpha=alpha, color=color)
-
-
 # Compute Precision-Recall, average precision and eleven-point interpolated
 # average precision
 precision = dict()
@@ -170,7 +163,8 @@ average_precision["micro"] = average_precision_score(y_test, y_score,
 # Plot micro-average Precision-Recall curve
 plt.clf()
 plt.step(recall["micro"], precision["micro"], label='Precision-Recall curve')
-fill_beneath_step(recall["micro"], precision["micro"], color='b')
+plt.fill_between(recall["micro"], precision["micro"], step='pre', alpha=0.2,
+                 color='b')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
@@ -202,7 +196,8 @@ for i in range(n_classes):
                 label='Eleven point interpolated precisions of class {0} '
                       '(mean = {1:0.2f})'.format(
                         i, interpolated_average_precision[i]))
-    fill_beneath_step(recall[i], precision[i], colors[i])
+    plt.fill_between(recall[i], precision[i], step='pre', alpha=0.2,
+                     color=colors[i])
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
