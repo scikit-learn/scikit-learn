@@ -133,16 +133,11 @@ def reversed_precision_recall_curve(y_true, y_score):
     return p[::-1], r[::-1], t[::-1]
 
 
-def get_circle_coords(p, r):
+def get_circle_coords(r, p):
     """Get coordinates of operating points chosen for 11-point interpolated
     average precision"""
-    recall_circles = list()
-    precision_circles = list()
-    for threshold in np.arange(0, 1.1, 0.1):
-        i = sum(r[1:] >= threshold)
-        recall_circles.append(r[-i])
-        precision_circles.append(p[-i])
-    return recall_circles, precision_circles
+    indices = np.searchsorted(r, np.arange(0, 1.1, 0.1))
+    return r[indices], p[indices]
 
 
 def fill_beneath_step(x, y, color, alpha=0.2):
@@ -196,7 +191,7 @@ for i in range(n_classes):
                    ''.format(i, average_precision[i]))
     p_long = [v for v in precision[i] for _ in (0, 1)][1:]
     r_long = [v for v in recall[i] for _ in (0, 1)][:-1]
-    c_r, c_p = get_circle_coords(precision[i], recall[i])
+    c_r, c_p = get_circle_coords(recall[i], precision[i])
     eleven_point_precisions[i] = c_p
     for this_r, this_p in zip(c_r, c_p):
         t = plt.text(this_r + 0.0075, this_p + 0.01, "{:3.3f}".format(this_p),
