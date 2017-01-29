@@ -204,7 +204,7 @@ def average_precision_score(y_true, y_score, average="macro",
     def _binary_eleven_point_average_precision(
             y_true, y_score, sample_weight=None):
         precision, recall, thresholds = precision_recall_curve(
-            y_true, y_score)
+            y_true, y_score, sample_weight=sample_weight)
 
         # We need the recall values in ascending order, and to ignore the first
         # (precision, recall) pair with precision = 1.
