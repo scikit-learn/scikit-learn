@@ -147,11 +147,11 @@ def average_precision_score(y_true, y_score, average="macro",
 
         ``None``:
             Do not interpolate the average precision. Instead, compute
-            sum(p[i] * (r[i] - r[i-1])) for all precision, recall pairs
-            p[i], r[i] for i >= 1. This is the primary definition used in
-            the Wikipedia entry for Average precision. See References.
+            ``sum(p[i] * (r[i] - r[i-1]))`` for all precision, recall pairs
+            ``p[i], r[i]`` for ``i >= 1``. This is the primary definition used
+            in the Wikipedia entry for Average precision. See References.
         ``'eleven_point'``:
-            For each of the recall values, r in {0, 0.1, 0.2, ..., 1.0},
+            For each of the recall values, r, in {0, 0.1, 0.2, ..., 1.0},
             compute the arithmetic mean of the first precision value with a
             corresponding recall >= r. This is the metric used in the Pascal
             Visual Objects Classes (VOC) Challenge and is as described in the
@@ -188,8 +188,6 @@ def average_precision_score(y_true, y_score, average="macro",
     >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
     0.83...
 
-    >>> import numpy as np
-    >>> from sklearn.metrics import average_precision_score
     >>> yt = np.array([0, 0, 1, 1])
     >>> ys = np.array([0.1, 0.4, 0.35, 0.8])
     >>> ap = average_precision_score(yt, ys, interpolation='eleven_point')
