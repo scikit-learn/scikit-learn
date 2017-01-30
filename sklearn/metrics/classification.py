@@ -233,10 +233,14 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     >>> import numpy as np
     >>> from sklearn.metrics import top_n_accuracy_score
 <<<<<<< HEAD
+<<<<<<< HEAD
     >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2],
 =======
     >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2], 
 >>>>>>> fixed PEP8 style issues
+=======
+    >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2],
+>>>>>>> fixed PEP8 issues
     ...                     [0.4, 0.3, 0.2, 0.1],
     ...                     [0.2, 0.3, 0.4, 0.1],
     ...                     [0.8, 0.1, 0.025, 0.075]])
