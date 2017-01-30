@@ -321,43 +321,35 @@ def test_cross_val_score_multiple_metric():
     reg = Ridge(random_state=0)
 
     # List scoring
-    scores = cross_val_score(reg, X, y, cv=5,
-                             scoring=('r2', 'neg_mean_squared_error'))
-    expected_r2_scores = np.array([0.42, -0.45,  0.02,  0.3, -0.07])
-    assert_array_almost_equal(scores['r2'], expected_r2_scores, 2)
-    expected_neg_mse = np.array([-19998.7, -18317.25, -28975.93,
-                                 -32681.15, -73933.1])
-    assert_array_almost_equal(scores['neg_mean_squared_error'],
-                              expected_neg_mse, 2)
+    all_scoring = (('r2', 'neg_mean_squared_error'),
+                   {'r2': make_scorer(r2_score),
+                    'neg_mean_squared_error': 'neg_mean_squared_error'})
 
-    # Dict scoring
-    scores = cross_val_score(reg, X, y, cv=5,
-                             scoring={
-                                'r2': make_scorer(r2_score),
-                                'ev': make_scorer(explained_variance_score)})
-    assert_array_almost_equal(scores['r2'], expected_r2_scores, 2)
-    expected_ev_scores = np.array([0.57,  0.66,  0.21,  0.35,  0.08])
-    assert_array_almost_equal(scores['ev'], expected_ev_scores, 2)
+    r2_scores = cross_val_score(reg, X, y, cv=5, scoring='r2')
+    mse_scores = cross_val_score(reg, X, y, cv=5,
+                                 scoring='neg_mean_squared_error')
+
+    for scoring in all_scoring:
+        multi_scores = cross_val_score(reg, X, y, cv=5, scoring=scoring)
+        assert_array_almost_equal(multi_scores['r2'], r2_scores)
+        assert_array_almost_equal(multi_scores['neg_mean_squared_error'],
+                                  mse_scores)
 
     # Classification
     X, y = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel='linear', random_state=0)
 
-    precision = make_scorer(precision_score)
-    accuracy = make_scorer(accuracy_score)
+    all_scoring = (('precision', 'accuracy'),
+                   {'precision': make_scorer(precision_score),
+                    'accuracy': make_scorer(accuracy_score)})
 
-    expected_acc = np.array([1., 0.8333333, 0.8333333, 1., 1.])
-    expected_pre = np.array([1., 0.75, 0.75, 1., 1.])
-    scores = cross_val_score(clf, X, y, cv=5,
-                             scoring={'pre': precision, 'acc': accuracy})
+    prec_scores = cross_val_score(clf, X, y, cv=5, scoring='precision')
+    acc_scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
 
-    assert_almost_equal(scores['acc'], expected_acc)
-    assert_almost_equal(scores['pre'], expected_pre)
-
-    scores = cross_val_score(clf, X, y, cv=5,
-                             scoring=('precision', 'accuracy'))
-    assert_almost_equal(scores['accuracy'], expected_acc)
-    assert_almost_equal(scores['precision'], expected_pre)
+    for scoring in all_scoring:
+        multi_scores = cross_val_score(clf, X, y, cv=5, scoring=scoring)
+        assert_array_almost_equal(multi_scores['precision'], prec_scores)
+        assert_array_almost_equal(multi_scores['accuracy'], acc_scores)
 
 
 def test_cross_val_score_predict_groups():
