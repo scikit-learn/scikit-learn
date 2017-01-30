@@ -1036,8 +1036,10 @@ def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
     # Pop the time keys and compare the other keys among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
     # deep nested comparison of the two cv_results dicts
-    np.testing.assert_equal(_pop_cv_results_time_keys(cv_results_multi),
-                            _pop_cv_results_time_keys(cv_results_acc_rec))
+    np.testing.assert_equal({k: v for k, v in cv_results_multi.items()
+                             if not k.endswith('_time')},
+                            {k: v for k, v in cv_results_acc_rec.items()
+                             if not k.endswith('_time')})
 
 
 def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
@@ -1409,8 +1411,10 @@ def test_grid_search_cv_splits_consistency():
     # will be generated for the 2nd and subsequent cv.split calls.
     # This is a check to make sure cv.split is not called once per param
     # setting.
-    np.testing.assert_equal(_pop_cv_results_time_keys(gs.cv_results_),
-                            _pop_cv_results_time_keys(gs2.cv_results_))
+    np.testing.assert_equal({k: v for k, v in gs.cv_results_.items()
+                             if not k.endswith('_time')},
+                            {k: v for k, v in gs2.cv_results_.items()
+                             if not k.endswith('_time')})
 
     # Check consistency of folds across the parameters
     gs = GridSearchCV(LinearSVC(random_state=0),
@@ -1442,14 +1446,6 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
-
-
-def _pop_cv_results_time_keys(cv_results):
-    all_keys = list(cv_results)
-    for key in all_keys:
-        if 'time' in key:
-            cv_results.pop(key)
-    return cv_results
 
 
 def _replace_cv_results_keys_with_metric_name(cv_results, metric_name):
