@@ -209,8 +209,8 @@ def test_check_scoring_and_check_multimetric_scoring():
                     ('accuracy', 'precision'), ['precision', 'accuracy'],
                     {'accuracy': make_scorer(accuracy_score),
                      'precision': make_scorer(precision_score)}):
-        estimator = EstimatorWithFitAndPredict()
-        estimator.fit([[1]], [1])
+        estimator = LinearSVC(random_state=0)
+        estimator.fit([[1], [2], [3]], [1, 1, 0])
 
         scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
         assert_true(is_multi)
@@ -220,11 +220,14 @@ def test_check_scoring_and_check_multimetric_scoring():
                          for scorer in list(scorers.values())]))
 
         if 'acc' in scoring:
-            assert_almost_equal(scorers['acc'](estimator, [[1]], [1]), 1)
+            assert_almost_equal(scorers['acc'](
+                estimator, [[1], [2], [3]], [1, 0, 0]), 2./3.)
         if 'accuracy' in scoring:
-            assert_almost_equal(scorers['accuracy'](estimator, [[1]], [1]), 1)
+            assert_almost_equal(scorers['accuracy'](
+                estimator, [[1], [2], [3]], [1, 0, 0]), 2./3.)
         if 'precision' in scoring:
-            assert_almost_equal(scorers['precision'](estimator, [[1]], [0]), 0)
+            assert_almost_equal(scorers['precision'](
+                estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
