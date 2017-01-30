@@ -39,8 +39,10 @@ from .base import _average_binary_score
 
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
+
     This is a general function, given points on a curve.  For computing the
     area under the ROC-curve, see :func:`roc_auc_score`.
+
     Parameters
     ----------
     x : array, shape = [n]
@@ -50,9 +52,11 @@ def auc(x, y, reorder=False):
     reorder : boolean, optional (default=False)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
+
     Returns
     -------
     auc : float
+
     Examples
     --------
     >>> import numpy as np
