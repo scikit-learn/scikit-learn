@@ -1233,10 +1233,6 @@ def test_predict_proba_disabled():
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
 
-    # Multi-metric case
-    gs = GridSearchCV(clf, {}, scoring=('precision', 'recall'), refit='recall')
-    assert_false(hasattr(gs.fit(X, y), "predict_proba"))
-
 
 def test_grid_search_allows_nans():
     # Test GridSearchCV with Imputer
