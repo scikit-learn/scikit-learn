@@ -67,15 +67,16 @@ where :math:`P_n` and :math:`R_n` are the precision and recall at the
 *operating point*.
 
 In *interpolated* average precision, a set of desired recall values is
-specified and for each desired value, we select the first operating point
-that corresponds to a recall greater than or equal to it. The interpolated
-average precision is the mean of the precisions of these operating points.
+specified and for each desired value, we average the best precision scores
+possible with a recall value at least equal to the target value.
 The most common choice is 'eleven point' interpolated precision, where the
 desired recall values are [0, 0.1, 0.2, ..., 1.0]. This is the metric used in
 `The PASCAL Visual Object Classes (VOC) Challenge <http://citeseerx.ist.psu.edu
 /viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_. In the example
-below, the eleven precision values are circled. Note that it's possible that
-the same operating point might correspond to multiple desired recall values.
+below, the eleven precision values are circled, with a line to pointing to
+the best precision possible while meeting or exceeding the desired recall.
+Note that it's possible that the same operating point might correspond to
+multiple desired recall values.
 
 Precision-recall curves are typically used in binary classification to study
 the output of a classifier. In order to extend the Precision-recall curve and
@@ -92,7 +93,6 @@ matrix as a binary prediction (micro-averaging).
              :func:`sklearn.metrics.f1_score`
 """
 print(__doc__)
-
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import svm, datasets
@@ -137,7 +137,10 @@ def get_circle_coords(r, p):
     """Get coordinates of operating points chosen for 11-point interpolated
     average precision"""
     indices = np.searchsorted(r, np.arange(0, 1.1, 0.1))
-    return r[indices], p[indices]
+    precisions = [p[i:].max() for i in indices]
+    precisions_used = [i + np.where(p[i:] == v)[0][0]
+                       for i, v in zip(indices, precisions)]
+    return precisions, r[precisions_used]
 
 
 # Compute Precision-Recall, average precision and eleven-point interpolated
@@ -150,50 +153,51 @@ for i in range(n_classes):
     precision[i], recall[i], _ = reversed_precision_recall_curve(y_test[:, i],
                                                         y_score[:, i])
     average_precision[i] = average_precision_score(y_test[:, i], y_score[:, i])
-    interpolated_average_precision[i] = average_precision_score(
-        y_test[:, i], y_score[:, i], interpolation='eleven_point')
 
 # Compute micro-average Precision-Recall curve and average precision
 precision["micro"], recall["micro"], thresholds = \
     reversed_precision_recall_curve(y_test.ravel(), y_score.ravel())
 average_precision["micro"] = average_precision_score(y_test, y_score,
                                                      average="micro")
+interpolated_average_precision['micro'] = average_precision_score(
+    y_test, y_score, average='micro', interpolation='eleven_point')
 
-
-# Plot micro-average Precision-Recall curve
+# Plot micro-average Precision-Recall curve with 11-point interpolated AP
 plt.clf()
-plt.step(recall["micro"], precision["micro"], label='Precision-Recall curve')
+plt.step(recall['micro'], precision['micro'], color='b', alpha=0.2,
+         label='Precision-recall curve (area = {:0.3f})'
+               ''.format(average_precision['micro']))
 plt.fill_between(recall["micro"], precision["micro"], step='pre', alpha=0.2,
                  color='b')
+epp, epr = get_circle_coords(recall["micro"], precision["micro"])
+eleven_point_precisions = epp
+for this_r, this_p in zip(np.arange(0, 1.1, 0.1), epp):
+    t = plt.text(this_r + 0.0075, this_p + 0.01, "{:3.3f}".format(this_p),
+                 color='k')
+plt.scatter(np.arange(0, 1.1, 0.1), epp, marker='o', s=50, facecolor='none',
+            edgecolor='k',
+            label='Eleven-point interpolated precisions '
+                  '(mean = {:0.3f})'.format(np.mean(epp)))
+for i in range(11):
+    plt.plot([i / 10 + 0.01, epr[i]], [epp[i], epp[i]], color='k')
+
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
 plt.xlim([0.0, 1.0])
 plt.title('Precision-Recall example: AUC={0:0.2f}'.format(
         average_precision["micro"]))
-plt.legend(loc="lower left")
+plt.legend(loc="lower left",prop={'size':8})
 plt.show()
 
 # Plot Precision-Recall curves for each class
-plt.figure(figsize=(12, 10))
+# plt.figure(figsize=(12, 10))
 plt.clf()
 colors = ['r', 'b', 'g']
-eleven_point_precisions = dict()
 for i in range(n_classes):
     plt.step(recall[i], precision[i], color=colors[i],
              label='Precision-recall curve of class {0} (area = {1:0.2f})'
                    ''.format(i, average_precision[i]))
-    c_r, c_p = get_circle_coords(recall[i], precision[i])
-    eleven_point_precisions[i] = c_p
-    for this_r, this_p in zip(c_r, c_p):
-        t = plt.text(this_r + 0.0075, this_p + 0.01, "{:3.3f}".format(this_p),
-                     color=colors[i])
-
-    plt.scatter(c_r, c_p, marker='o', s=100, facecolor='none',
-                edgecolor=colors[i],
-                label='Eleven point interpolated precisions of class {0} '
-                      '(mean = {1:0.2f})'.format(
-                        i, interpolated_average_precision[i]))
     plt.fill_between(recall[i], precision[i], step='pre', alpha=0.2,
                      color=colors[i])
 plt.xlim([0.0, 1.0])
@@ -201,5 +205,5 @@ plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.title('Extension of Precision-Recall curve to multi-class')
-plt.legend(loc="lower right")
+plt.legend(loc="lower right", prop={'size':8})
 plt.show()
