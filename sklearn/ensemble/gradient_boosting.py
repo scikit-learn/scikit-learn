@@ -1908,7 +1908,10 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
         There is a trade-off between learning_rate and n_estimators.
 
     cv_n_estimators : int or array-like of shape (n_cv_stages), (default=100)
-        The number of boosting stages to perform.
+        The range of boosting stages to search through.
+
+        If given as an int, the range of values ``[1, cv_n_estimators]`` is
+        searched for the best number of boosting stages.
 
         This parameter can be a list, in which case the different values are
         sorted and the stages are incrementally chosen and tested by
@@ -2037,7 +2040,7 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
     n_estimators_ : int
         The number of boosting stages chosen by cross-validation.
 
-    cv_n_estimators_ : int
+    cv_n_estimators_ : ndarray
         Sorted version of the ``cv_n_estimators`` parameter.
 
     feature_importances_ : array, shape = [n_features]
@@ -2118,7 +2121,7 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
             Sample groups for the cross-validation splitter.
         """
         if isinstance(self.cv_n_estimators, (numbers.Integral, np.integer)):
-            cv_n_estimators = np.array([self.cv_n_estimators, ], dtype=np.int)
+            cv_n_estimators = np.arange(1, self.cv_n_estimators + 1)
         else:
             cv_n_estimators = np.array(self.cv_n_estimators, dtype=np.int,
                                        copy=False)
