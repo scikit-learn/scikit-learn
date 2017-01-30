@@ -232,18 +232,10 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import top_n_accuracy_score
-<<<<<<< HEAD
-<<<<<<< HEAD
     >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2],
-=======
-    >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2], 
->>>>>>> fixed PEP8 style issues
-=======
-    >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2],
->>>>>>> fixed PEP8 issues
-    ...                     [0.4, 0.3, 0.2, 0.1],
-    ...                     [0.2, 0.3, 0.4, 0.1],
-    ...                     [0.8, 0.1, 0.025, 0.075]])
+    ...                    [0.4, 0.3, 0.2, 0.1],
+    ...                    [0.2, 0.3, 0.4, 0.1],
+    ...                    [0.8, 0.1, 0.025, 0.075]])
     >>> y_true = np.array([2, 2, 2, 1])
     >>> top_n_accuracy_score(y_true, y_pred, n=1)
     0.5
@@ -251,22 +243,13 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     0.75
     >>> top_n_accuracy_score(y_true, y_pred, n=3)
     1.0
-<<<<<<< HEAD
     >>> top_n_accuracy_score(y_true, y_pred, n=2, normalize=False)
     3
-=======
-    >>> top_n_accuracy_score(y_true, y_pred, n=5, normalize=False)
-    1
->>>>>>> fixed PEP8 style issues
     """
     num_obs, num_labels = y_pred.shape
     idx = num_labels - n - 1
     counter = 0
-<<<<<<< HEAD
     argsorted = np.argsort(y_pred, axis=1)
-=======
-    parted = np.argpartition(y_pred, kth=idx, axis=1)
->>>>>>> fixed PEP8 style issues
     for i in range(num_obs):
         if y_true[i] in argsorted[i, idx+1:]:
             counter += 1
