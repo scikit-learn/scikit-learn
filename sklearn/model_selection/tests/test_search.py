@@ -1055,6 +1055,8 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
         assert_almost_equal(getattr(search_multi, method)(X),
                             getattr(search_acc, method)(X))
     assert_almost_equal(search_multi.score(X, y), search_acc.score(X, y))
+    for key in ('best_index_', 'best_score_', 'best_params_'):
+        assert_equal(getattr(search_multi, key), getattr(search_acc, key))
 
 
 def test_search_cv_results_rank_tie_breaking():
