@@ -1907,10 +1907,10 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
         learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
-    cv_n_estimators : int or array-like of shape (n_cv_stages), (default=100)
+    n_estimators_range : int or array-like of shape (n_cv_stages), (default=100)
         The range of boosting stages to search through.
 
-        If given as an int, the range of values ``[1, cv_n_estimators]`` is
+        If given as an int, the range of values ``[1, n_estimators_range]`` is
         searched for the best number of boosting stages.
 
         This parameter can be a list, in which case the different values are
@@ -2040,8 +2040,8 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
     n_estimators_ : int
         The number of boosting stages chosen by cross-validation.
 
-    cv_n_estimators_ : ndarray
-        Sorted version of the ``cv_n_estimators`` parameter.
+    n_estimators_range_ : ndarray
+        Sorted version of the ``n_estimators_range`` parameter.
 
     feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
@@ -2074,14 +2074,14 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
     GradientBoostingRegressorCV, GradientBoostingClassifier
     """
 
-    def __init__(self, cv_n_estimators=100, cv=None, scoring=None,
+    def __init__(self, n_estimators_range=100, cv=None, scoring=None,
                  loss='deviance', learning_rate=0.1, subsample=1.0,
                  criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0., max_depth=3,
                  min_impurity_split=1e-7, init=None, random_state=None,
                  max_features=None, verbose=0, max_leaf_nodes=None,
                  presort='auto', n_jobs=None, pre_dispatch='2*n_jobs'):
-        self.cv_n_estimators = cv_n_estimators
+        self.n_estimators_range = n_estimators_range
         self.cv = cv
         self.scoring = scoring
         self.n_jobs = n_jobs
@@ -2099,7 +2099,7 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
             min_impurity_split=min_impurity_split, presort=presort)
 
     def fit(self, X, y, sample_weight=None, sample_groups=None):
-        """Find the best n_estimators from the given cv_n_estimators and fit
+        """Find the best n_estimators from the given n_estimators_range and fit
 
         Parameters
         ----------
@@ -2120,17 +2120,17 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
         sample_groups : array-like, shape = [n_samples] or None
             Sample groups for the cross-validation splitter.
         """
-        if isinstance(self.cv_n_estimators, (numbers.Integral, np.integer)):
-            cv_n_estimators = np.arange(1, self.cv_n_estimators + 1)
+        if isinstance(self.n_estimators_range, (numbers.Integral, np.integer)):
+            n_estimators_range = np.arange(1, self.n_estimators_range + 1)
         else:
-            cv_n_estimators = np.array(self.cv_n_estimators, dtype=np.int,
+            n_estimators_range = np.array(self.n_estimators_range, dtype=np.int,
                                        copy=False)
-            if cv_n_estimators.ndim != 1:
-                raise ValueError("The cv_n_estimators is expected to be a 1D "
+            if n_estimators_range.ndim != 1:
+                raise ValueError("The n_estimators_range is expected to be a 1D "
                                  "array of possible n_estimators values. %r "
-                                 "is not" % cv_n_estimators)
+                                 "is not" % n_estimators_range)
 
-        cv_n_estimators.sort()
+        n_estimators_range.sort()
         cv = check_cv(self.cv)
         scorer = check_scoring(self, scoring=self.scoring)
 
@@ -2138,21 +2138,21 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
         # The same base estimator must be used for each split for all
         # boost iterations
         base_estimator = GradientBoostingClassifier(
-            n_estimators=cv_n_estimators[0], warm_start=True,
+            n_estimators=n_estimators_range[0], warm_start=True,
             random_state=self.random_state)
 
         parallel = Parallel(n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch)
         out = parallel(delayed(_fit_score_all_stages)(clone(base_estimator),
                                                       X, y, sample_weight,
                                                       train, test, scorer,
-                                                      cv_n_estimators)
+                                                      n_estimators_range)
                        for train, test in cv.split(X, y, groups=sample_groups))
 
         # Store the mean cross-val scores across all splits for each stage
         self.scores_ = np.asarray(out).mean(axis=0)
-        # Store the sorted cv_n_estimators
-        self.cv_n_estimators_ = cv_n_estimators
-        self.n_estimators_ = cv_n_estimators[self.scores_.argmax()]
+        # Store the sorted n_estimators_range
+        self.n_estimators_range_ = n_estimators_range
+        self.n_estimators_ = n_estimators_range[self.scores_.argmax()]
 
         # Set the final n_estimators based on the best score and do a full fit
         # set_params wont work as n_estimators is not a param of GBCV
@@ -2162,7 +2162,7 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
 
 
 def _fit_score_all_stages(estimator, X, y, sample_weight, train, test,
-                          scorer, cv_n_estimators):
+                          scorer, n_estimators_range):
     """Fit all stages and compute scores after each stage for given cv split"""
     X_train, y_train = X[train], y[train]
     X_test, y_test = X[test], y[test]
@@ -2172,9 +2172,9 @@ def _fit_score_all_stages(estimator, X, y, sample_weight, train, test,
     else:
         weight_train = weight_test = None
 
-    all_stage_scores = np.zeros(cv_n_estimators.shape, dtype=np.float64)
+    all_stage_scores = np.zeros(n_estimators_range.shape, dtype=np.float64)
 
-    for i, n_estimators in enumerate(cv_n_estimators):
+    for i, n_estimators in enumerate(n_estimators_range):
         estimator.set_params(n_estimators=n_estimators)
         estimator.fit(X_train, y_train, sample_weight=weight_train)
         all_stage_scores[i] = scorer(estimator, X_test, y_test,
