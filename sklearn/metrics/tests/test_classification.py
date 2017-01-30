@@ -107,13 +107,16 @@ def test_top_n_accuracy_score():
     y_true, y_pred, pred_proba = make_prediction(binary=False)
     # edge case, perfect accuracy
     assert_equal(top_n_accuracy_score(y_true, pred_proba, n=3), 1.0)
-    # edge case. Should be the same as accuracy_score, but 'probabilities' for SVM 
-    # don't always align with predictions. This happens with make_prediction function
-    # so we validate predictions with np.argmax on pred_proba instead of using generated class
-    # predictions y_pred. Maybe preferable to generate test data with a classifier that
-    # produces valid probabilities.
-    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=1), accuracy_score(y_true, np.argmax(pred_proba, axis=1)))  
-
+    # edge case. Should be the same as accuracy_score, but 'probabilities'
+    # for SVM don't always align with class predictions. This happens with
+    # make_prediction function so we validate predictions with np.argmax on
+    # pred_proba instead of using generated class predictions y_pred. Maybe
+    # preferable to generate test data with a classifier that produces valid
+    # probabilities.
+    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=1),
+                 accuracy_score(y_true, np.argmax(pred_proba, axis=1)))
+    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=3),
+                 1.0)
 
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
