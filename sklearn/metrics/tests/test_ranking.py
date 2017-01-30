@@ -156,11 +156,8 @@ def _interpolated_average_precision_slow(y_true, y_score):
     precision, recall, _ = precision_recall_curve(y_true, y_score)
     precision = list(reversed(precision))
     recall = list(reversed(recall))
-    eleven_precisions = list()
-    for threshold in np.arange(0, 1.1, 0.1):
-        i = sum(recall[1:] >= threshold)
-        eleven_precisions.append(precision[-i])
-    return np.mean(eleven_precisions)
+    indices = np.searchsorted(recall, np.arange(0, 1.1, 0.1))
+    return np.mean(precision[i:].max() for i in indices)
 
 
 def test_roc_curve():
