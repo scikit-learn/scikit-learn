@@ -2177,7 +2177,6 @@ def _fit_score_all_stages(estimator, X, y, sample_weight, train, test,
     for i, n_estimators in enumerate(n_estimators_range):
         estimator.set_params(n_estimators=n_estimators)
         estimator.fit(X_train, y_train, sample_weight=weight_train)
-        all_stage_scores[i] = scorer(estimator, X_test, y_test,
-                                     sample_weight=weight_test)
+        all_stage_scores[i] = scorer(estimator, X_test, y_test)
 
     return all_stage_scores
