@@ -534,21 +534,21 @@ def _test_precision_recall_curve(y_true, probas_pred):
     precision_recall_auc = _average_precision_slow(y_true, probas_pred)
     interpolated_average_precision = _interpolated_average_precision_slow(
         y_true, probas_pred)
-    assert_array_almost_equal(precision_recall_auc, 0.85, 2)
+    assert_array_almost_equal(precision_recall_auc, 0.8587, 4)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
     assert_equal(interpolated_average_precision,
                  average_precision_score(y_true, probas_pred,
                                          interpolation='eleven_point'))
     assert_almost_equal(_average_precision(y_true, probas_pred),
-                        precision_recall_auc, 1)
+                        precision_recall_auc)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
     precision_recall_auc = auc(r, p)
-    assert_array_almost_equal(precision_recall_auc, 0.75, 3)
+    assert_array_almost_equal(precision_recall_auc, 0.75)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
 
