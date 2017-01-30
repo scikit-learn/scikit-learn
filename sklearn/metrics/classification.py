@@ -217,16 +217,16 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     -----
     If n = 1, the result will be the same as the accuracy_score. If n is the
     same as the number of classes, this score will be perfect and meaningless.
-    
+
     In cases where two or more classes are assigned equal likelihood, the
     result may be incorrect if one of those classes falls at the threshold, as
-    one class must be chosen to be the nth class and the class chosen may not be
-    the correct one. 
+    one class must be chosen to be the nth class and the class chosen may not
+    be the correct one.
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import top_n_accuracy_score
-    >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2], 
+    >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2],
     ...                     [0.4, 0.3, 0.2, 0.1],
     ...                     [0.2, 0.3, 0.4, 0.1],
     ...                     [0.8, 0.1, 0.025, 0.075]])
