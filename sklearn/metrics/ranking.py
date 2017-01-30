@@ -211,8 +211,8 @@ def average_precision_score(y_true, y_score, average="macro",
         precision = precision[-2::-1]
         recall = recall[-2::-1]
 
-        return np.mean(precision[np.searchsorted(
-                recall, np.arange(0, 1.1, 0.1))])
+        return np.mean([precision[i:].max() for i in
+                        np.searchsorted(recall, np.arange(0, 1.1, 0.1))])
 
     if interpolation is None:
         return _average_binary_score(_binary_uninterpolated_average_precision,
