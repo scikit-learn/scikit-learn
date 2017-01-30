@@ -1082,15 +1082,13 @@ def _aggregate_score_dicts(scores, shape=None, transpose=False):
         if np.product(shape) != len(scores):
             raise ValueError("Shape must conform to the size of the scores")
 
-    np_empty = partial(np.empty, shape=(len(scores),), dtype=np.float64)
-    scores_arr = defaultdict(np_empty)
-    for i, score_dict_i in enumerate(scores):
-        for key in scores[0].keys():
-            scores_arr[key][i] = score_dict_i[key]
+    out = {}
 
-    scores_arr_reshaped = dict()
-    for scorer_name, array in scores_arr.items():
-        scores_arr_reshaped[scorer_name] = (array.reshape(shape)
-                                            if not transpose
-                                            else array.reshape(shape).T)
-    return scores_arr_reshaped
+    for key in scores[0]:
+        key_scores = np.asarray([score[key] for score in scores])
+        key_scores = key_scores.reshape(shape)
+        if transpose:
+            key_scores = key_scores.T
+        out[key] = key_scores
+
+    return out
