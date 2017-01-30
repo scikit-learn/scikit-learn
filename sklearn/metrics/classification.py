@@ -179,20 +179,21 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None):
+def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     """top N Accuracy classification score.
-    For multiclass classification tasks, this metric returns the 
+    For multiclass classification tasks, this metric returns the
     number of times that the correct class was among the top N classes
-    predicted. 
+    predicted.
 
     Parameters
     ----------
     y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like, where for each sample, each row represents the likelihood of each
-        possible label.
-        the number of columns must be at least as large as the set of possible label values. 
+    y_pred : array-like, where for each sample, each row represents the
+        likelihood of each possible label.
+        The number of columns must be at least as large as the set of possible
+        label values.
 
     normalize : bool, optional (default=True)
         If ``False``, return the number of top N correctly classified samples.
@@ -201,9 +202,9 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None
     Returns
     -------
     score : float
-        If ``normalize == True``, return the proportion of top N correctly classified samples
-        (float), else it returns the number of top N correctly classified samples
-        (int).
+        If ``normalize == True``, return the proportion of top N correctly
+        classified samples, (float), else it returns the number of top N
+        correctly classified samples (int.)
 
         The best performance is 1 with ``normalize == True`` and the number
         of samples with ``normalize == False``.
@@ -214,27 +215,34 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None
 
     Notes
     -----
-    If n = 1, the result will be the same as the accuracy_score. If n is the same as the number
-    of classes, this score will be perfect and meaningless.
-
+    If n = 1, the result will be the same as the accuracy_score. If n is the
+    same as the number of classes, this score will be perfect and meaningless.
+    
+    In cases where two or more classes are assigned equal likelihood, the
+    result may be incorrect if one of those classes falls at the threshold, as
+    one class must be chosen to be the nth class and the class chosen may not be
+    the correct one. 
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import top_n_accuracy_score
-    >>> y_pred = np.array([[0.146, 0.063, 0.0833, 0.146, 0.125, 0.125, 0.167, 0.021, 0.042, 0.083], [0.174, 0.043, 0.130, 0.196, 0.109, 0.022, 0.152, 0.066, 0.065, 0.044]])
-    >>> y_true = np.array([0, 1])
-    >>> top_n_accuracy_score(y_true, y_pred, n=5)
-    0.5
-    >>> top_n_accuracy_score(y_true, y_pred, n=9)
-    1.0
+    >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2], 
+    ...                     [0.4, 0.3, 0.2, 0.1],
+    ...                     [0.2, 0.3, 0.4, 0.1],
+    ...                     [0.8, 0.1, 0.025, 0.075]])
+    >>> y_true = np.array([2, 2, 2, 1])
     >>> top_n_accuracy_score(y_true, y_pred, n=1)
-    0.0
+    0.5
+    >>> top_n_accuracy_score(y_true, y_pred, n=2)
+    0.75
+    >>> top_n_accuracy_score(y_true, y_pred, n=3)
+    1.0
     >>> top_n_accuracy_score(y_true, y_pred, n=5, normalize=False)
     1
     """
     num_obs, num_labels = y_pred.shape
     idx = num_labels - n - 1
-    counter = 0 
+    counter = 0
     parted = np.argpartition(y_pred, kth=idx, axis=1)
     for i in range(num_obs):
         if y_true[i] in parted[i, idx+1:]:
