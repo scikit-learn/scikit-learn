@@ -17,7 +17,7 @@ The module structure is the following:
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
-#          Arnaud Joly, Jacob Schreiber
+#          Arnaud Joly, Jacob Schreiber, Vighnesh Birodkar, Raghav RV
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -2118,7 +2118,6 @@ class GradientBoostingClassifierCV(GradientBoostingClassifier):
             Sample groups for the cross-validation splitter.
         """
         if isinstance(self.cv_n_estimators, (numbers.Integral, np.integer)):
-            print('heee')
             cv_n_estimators = np.array([self.cv_n_estimators, ], dtype=np.int)
         else:
             cv_n_estimators = np.array(self.cv_n_estimators, dtype=np.int,
