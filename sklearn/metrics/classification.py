@@ -237,8 +237,8 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     0.75
     >>> top_n_accuracy_score(y_true, y_pred, n=3)
     1.0
-    >>> top_n_accuracy_score(y_true, y_pred, n=5, normalize=False)
-    1
+    >>> top_n_accuracy_score(y_true, y_pred, n=2, normalize=False)
+    3
     """
     num_obs, num_labels = y_pred.shape
     idx = num_labels - n - 1
