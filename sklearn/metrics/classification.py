@@ -184,11 +184,11 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None):
+def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     """top N Accuracy classification score.
-    For multiclass classification tasks, this metric returns the 
+    For multiclass classification tasks, this metric returns the
     number of times that the correct class was among the top N classes
-    predicted. 
+    predicted.
 
     Parameters
     ----------
@@ -227,11 +227,16 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None
     result may be incorrect if one of those classes falls at the threshold, as
     one class must be chosen to be the nth class and the class chosen may not
     be the correct one.
+
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import top_n_accuracy_score
+<<<<<<< HEAD
     >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2],
+=======
+    >>> y_pred = np.array([[0.1, 0.3, 0.4, 0.2], 
+>>>>>>> fixed PEP8 style issues
     ...                     [0.4, 0.3, 0.2, 0.1],
     ...                     [0.2, 0.3, 0.4, 0.1],
     ...                     [0.8, 0.1, 0.025, 0.075]])
@@ -242,13 +247,22 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True, sample_weight=None
     0.75
     >>> top_n_accuracy_score(y_true, y_pred, n=3)
     1.0
+<<<<<<< HEAD
     >>> top_n_accuracy_score(y_true, y_pred, n=2, normalize=False)
     3
+=======
+    >>> top_n_accuracy_score(y_true, y_pred, n=5, normalize=False)
+    1
+>>>>>>> fixed PEP8 style issues
     """
     num_obs, num_labels = y_pred.shape
     idx = num_labels - n - 1
     counter = 0
+<<<<<<< HEAD
     argsorted = np.argsort(y_pred, axis=1)
+=======
+    parted = np.argpartition(y_pred, kth=idx, axis=1)
+>>>>>>> fixed PEP8 style issues
     for i in range(num_obs):
         if y_true[i] in argsorted[i, idx+1:]:
             counter += 1
