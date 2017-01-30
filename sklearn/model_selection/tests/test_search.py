@@ -7,6 +7,7 @@ from sklearn.externals.joblib._compat import PY3_OR_LATER
 from itertools import chain, product
 import pickle
 import sys
+import re
 
 import numpy as np
 import scipy.sparse as sp
@@ -1021,10 +1022,10 @@ def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
                        ('accuracy', 'recall'))
 
     cv_results_multi = search_multi.cv_results_
-    cv_results_acc_rec = _replace_cv_results_keys_with_metric_name(
-            search_acc.cv_results_, 'accuracy').copy()
-    cv_results_acc_rec.update(_replace_cv_results_keys_with_metric_name(
-        search_rec.cv_results_, 'recall'))
+    cv_results_acc_rec = {re.sub('_score$', '_accuracy', k): v
+                          for k, v in search_acc.cv_results_.items()}
+    cv_results_acc_rec.update({re.sub('_score$', '_recall', k): v
+                               for k, v in search_rec.cv_results_.items()})
 
     # Check if score and timing are reasonable, also checks if the keys
     # are present
@@ -1441,13 +1442,3 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
-
-
-def _replace_cv_results_keys_with_metric_name(cv_results, metric_name):
-    all_keys = list(cv_results)
-    for key in all_keys:
-        if 'score' in key:
-            val = cv_results[key]
-            cv_results.pop(key)
-            cv_results[key.replace('score', metric_name)] = val
-    return cv_results
