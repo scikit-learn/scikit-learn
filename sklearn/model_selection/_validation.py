@@ -15,8 +15,6 @@ from __future__ import division
 import warnings
 import numbers
 import time
-from collections import defaultdict
-from functools import partial
 
 import numpy as np
 import scipy.sparse as sp
@@ -153,9 +151,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> scores = cross_val_score(svm.fit(X, y), X, y, scoring=scoring)
     >>> print(scores['tp'])                   # doctest: +NORMALIZE_WHITESPACE
-    [ 12. 13. 15.]
+    [12 13 15]
     >>> print(scores['fn'])                   # doctest: +NORMALIZE_WHITESPACE
-    [ 5. 4. 1.]
+    [5 4 1]
 
     See Also
     ---------
