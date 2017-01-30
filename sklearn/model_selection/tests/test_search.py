@@ -1028,10 +1028,9 @@ def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
 
     # Check if score and timing are reasonable, also checks if the keys
     # are present
-    assert_true(all(cv_results_multi[k] <= 1) for k in
-                ('mean_accuracy_time', 'std_accuracy_time',
-                 'mean_recall_time', 'std_recall_time',
-                 'mean_fit_time', 'std_fit_time'))
+    assert_true(all((np.all(cv_results_multi[k] <= 1) for k in (
+                    'mean_score_time', 'std_score_time', 'mean_fit_time',
+                    'std_fit_time'))))
 
     # Pop the time keys and compare the other keys among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
