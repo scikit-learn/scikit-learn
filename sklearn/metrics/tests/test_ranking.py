@@ -534,7 +534,7 @@ def _test_precision_recall_curve(y_true, probas_pred):
     precision_recall_auc = _average_precision_slow(y_true, probas_pred)
     interpolated_average_precision = _interpolated_average_precision_slow(
         y_true, probas_pred)
-    assert_array_almost_equal(precision_recall_auc, 0.8587, 4)
+    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
     assert_equal(interpolated_average_precision,
