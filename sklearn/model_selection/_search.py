@@ -62,6 +62,9 @@ class ParameterGrid(object):
         useful to avoid exploring parameter combinations that make no sense
         or have no effect. See the examples below.
 
+    least_significant : str or list of str, optional
+        These parameters should be iterated last.
+
     Examples
     --------
     >>> from sklearn.model_selection import ParameterGrid
@@ -86,12 +89,21 @@ class ParameterGrid(object):
         search.
     """
 
-    def __init__(self, param_grid):
+    def __init__(self, param_grid, least_significant=None):
         if isinstance(param_grid, Mapping):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
             param_grid = [param_grid]
         self.param_grid = param_grid
+
+        if isinstance(least_significant, six.string_types):
+            least_significant = (least_significant,)
+        self.least_significant = least_significant or ()
+
+    def _sort_key(self, item):
+        if item[0] in self.least_significant:
+            return self.least_significant.index(item[0])
+        return -1
 
     def __iter__(self):
         """Iterate over the points in the grid.
@@ -104,7 +116,7 @@ class ParameterGrid(object):
         """
         for p in self.param_grid:
             # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(p.items())
+            items = sorted(p.items(), key=self._sort_key)
             if not items:
                 yield {}
             else:
@@ -370,9 +382,9 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
-def _warm_fit_and_score(candidates, estimator, **kwargs):
+def _warm_fit_and_score(estimator, warm_candidates, **kwargs):
     return [_fit_and_score(estimator, parameters=parameters, **kwargs)
-            for parameters in candidates]
+            for parameters in warm_candidates]
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
@@ -538,6 +550,36 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.transform(Xt)
 
+    def _generate_warm_start_groups(self, candidate_params):
+        """Yield lists of parameter settings to perform warm start within
+
+        Groups by keys not specified in use_warm_start
+        """
+        use_warm_start = getattr(self, 'use_warm_start', None) or ()
+        if not use_warm_start:
+            for parameters in candidate_params:
+                yield [parameters]
+            return
+
+        if isinstance(use_warm_start, six.string_types):
+            use_warm_start = {use_warm_start: None}
+        else:
+            use_warm_start = {k: None for k in use_warm_start}
+
+        prev_key = None
+        group = []
+        for parameters in candidate_params:
+            param_key = parameters.copy()
+            param_key.update(use_warm_start)
+            if param_key == prev_key:
+                group.append(parameters)
+            else:
+                prev_key = param_key
+                yield group
+                group = [parameters]
+        if group:
+            yield group
+
     def fit(self, X, y=None, groups=None):
         """Run fit with all sets of parameters.
 
@@ -584,27 +626,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             return_n_test_samples=True, return_times=True,
             return_parameters=False)
 
-        if not getattr(self, 'use_warm_start', False):
-            out = parallel(delayed(_fit_and_score)(clone(base_estimator),
-                                                   train=train, test=test,
-                                                   parameters=parameters,
-                                                   **fit_and_score_kw)
-                           for train, test in cv.split(X, y, groups)
-                           for parameters in candidate_params)
-        else:
-            # Enable warm_start on all constituent estimators
-            # XXX: is this the right thing to do?
-            base_estimator.set_params(
-                **{k: True
-                   for k in base_estimator.get_params(deep=True)
-                   if k == 'warm_start' or k.endswith('__warm_start')})
-            # one clone per fold
-            out = parallel(delayed(_warm_fit_and_score)(candidate_params,
-                                                        clone(base_estimator),
-                                                        train=train, test=test,
-                                                        **fit_and_score_kw)
-                           for train, test in cv.split(X, y, groups))
-            out = sum(out, [])
+        out = parallel(delayed(_warm_fit_and_score)(clone(base_estimator),
+                                                    warm_candidates,
+                                                    train=train, test=test,
+                                                    **fit_and_score_kw)
+                       for train, test in cv.split(X, y, groups)
+                       for warm_candidates in self._generate_warm_start_groups(
+                           candidate_params))
+        out = sum(out, [])
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -799,13 +828,14 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    use_warm_start : boolean, default=False
-        Where the estimator includes a parameter (at the top level or nested)
-        called ``warm_start``, it is enabled and parameter settings are
-        attempted in order on the same estimator instance for each CV split.
+    use_warm_start : str or list of str, optional
+        The parameters named here will be searched over without clearing the
+        estimator state in between.  This allows efficient searches over
+        parameters where ``warm_start`` can be used. The user should also set
+        the estimator's ``warm_start`` parameter to True.
 
-        Where ``use_warm_start=True``, the ``n_jobs`` parameter only controls
-        parallelism over CV splits, not over candidate parameters.
+        Candidate parameter settings will be reordered to maximise use of this
+        feature.
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -974,7 +1004,8 @@ class GridSearchCV(BaseSearchCV):
 
     def _get_param_iterator(self):
         """Return ParameterGrid instance for the given param_grid"""
-        return ParameterGrid(self.param_grid)
+        return ParameterGrid(self.param_grid,
+                             least_significant=self.use_warm_start)
 
 
 class RandomizedSearchCV(BaseSearchCV):

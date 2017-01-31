@@ -11,7 +11,7 @@ iterative fashion.
 efficiently search for the best number of boosting stages by enabling
 ``use_warm_start``. This example compares ``GridSearchCV`` performance
 for :class:`sklearn.ensemble.GradientBoostingClassifier` with and without
-``use_warm_start``.
+``use_warm_start='n_estimators'``.
 """
 
 # Authors: Raghav RV <rvraghav93@gmail.com>
@@ -39,10 +39,10 @@ search_n_estimators = range(1, 20)
 
 times = []
 
-for use_warm_start in [False, True]:
+for use_warm_start in [None, 'n_estimators']:
     for X, y in data_list:
         gb_gs = GridSearchCV(
-            GradientBoostingClassifier(random_state=42),
+            GradientBoostingClassifier(random_state=42, warm_start=True),
             param_grid={'n_estimators': search_n_estimators},
             scoring='f1_micro', cv=3, refit=True, verbose=True,
             use_warm_start=use_warm_start).fit(X, y)
@@ -59,10 +59,10 @@ true_times = times[len(times) // 2:]
 false_times = times[:len(times) // 2]
 
 
-plt.bar(index, true_times, bar_width, label='use_warm_start=True',
+plt.bar(index, true_times, bar_width, label='use_warm_start="n_estimators"',
         color='green')
 plt.bar(index + bar_width, false_times, bar_width,
-        label='use_warm_start=False', color='red')
+        label='use_warm_start=None', color='red')
 
 plt.xticks(index + bar_width, names)
 
