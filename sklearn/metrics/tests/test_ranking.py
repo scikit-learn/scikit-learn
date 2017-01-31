@@ -726,7 +726,7 @@ def test_ndcg_score():
         [0.7, 0.2, 0.1],
         [0.06, 0.04, 0.9]
     ]
-    average_ranking = ndcg_score(y_true, y_score, k=1)
+    average_ranking = ndcg_score(y_true, y_score, k=2)
     assert_almost_equal(average_ranking, 0.63092975)
 
 
