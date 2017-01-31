@@ -2,11 +2,13 @@
 
 import numpy as np
 
+from sklearn.cluster import _c_means
+from sklearn.cluster._c_means import _calculate_centers
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
-from ..utils import check_array
-from ..utils import check_random_state
-from ..utils import as_float_array
 from ..externals.six import string_types
+from ..metrics.pairwise import euclidean_distances
+from ..utils import as_float_array
+from ..utils import check_random_state
 
 
 def _validate_center_shape(X, n_centers, centers):
@@ -22,9 +24,9 @@ def _validate_center_shape(X, n_centers, centers):
             % (centers.shape[1], X.shape[1]))
 
 
-def c_means(X, n_clusters, n_init=10, max_iter=300, verbose=False, tol=1e-4,
-            random_state=None, algorithm="auto", return_n_iter=False,
-            copy_x=True):
+def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='random',
+            verbose=False, tol=1e-4, random_state=None, algorithm="auto",
+            return_n_iter=False, copy_x=True):
     if n_init <= 0:
         raise ValueError('Number of initializations should be a positive'
                          ' number, got {:d} instead.'.format(n_init))
@@ -43,11 +45,31 @@ def c_means(X, n_clusters, n_init=10, max_iter=300, verbose=False, tol=1e-4,
     if not copy_x:
         X += X_mean
 
-def _cmeans_single_probabilistic(X, n_clusters, max_iter=300, random_state=None,
-                                 tol=1e-4):
+
+def _cmeans_single_probabilistic(X, n_clusters, m=2, max_iter=300, init='random', random_state=None, tol=1e-4):
     random_state = check_random_state(random_state)
 
-    memberships_best, intertia_best, centers_best = None, None, None
+    memberships_best, inertia_best, centers_best = None, None, None
+
+    centers = _init_centroids(X, n_clusters, init, random_state=random_state)
+    inertia = np.infty
+
+    for i in range(max_iter):
+        inertia_old = inertia
+        distances = euclidean_distances(X, centers)
+        memberships = _c_means._calculate_memberships(distances, m)
+        inertia = np.sum(memberships ** m * distances)
+        centers = _calculate_centers(X, memberships, m)
+
+        if inertia_best is None or inertia < inertia_best:
+            memberships_best = memberships.copy()
+            centers_best = centers.copy()
+            inertia_best = inertia
+
+        if inertia - inertia_old < tol:
+            break
+
+    return memberships_best, inertia_best, centers_best, i+1
 
 
 def _init_centroids(X, k, init, random_state=None):
@@ -74,11 +96,13 @@ def _init_centroids(X, k, init, random_state=None):
 
 class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
-    def __init__(self, n_clusters=8, n_init=10, max_iter=300, tol=1e-4,
-                 random_state=None, algorithm='auto', copy_x=True):
+    def __init__(self, n_clusters=8, m=2, n_init=10, max_iter=300, init='random',
+                 tol=1e-4, random_state=None, algorithm='auto', copy_x=True):
 
         self.n_clusters = n_clusters
+        self.m = m
         self.max_iter = max_iter
+        self.init = init
         self.tol = tol
         self.n_init = n_init
         self.random_state = random_state
@@ -87,8 +111,8 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def fit(self, X, y=None):
         c_means(
-            X, n_clusters=self.n_clusters, n_init=self.n_init,
-            max_iter=self.max_iter, tol=self.tol,
+            X, n_clusters=self.n_clusters, m=self.m, n_init=self.n_init,
+            max_iter=self.max_iter, init=self.init, tol=self.tol,
             random_state=self.random_state, algorithm=self.algorithm,
             copy_x=self.copy_x)
         return self
