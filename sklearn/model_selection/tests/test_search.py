@@ -148,6 +148,13 @@ def test_parameter_grid():
     assert_grid_iter_equals_getitem(has_empty)
 
 
+def test_parameter_grid_least_significant():
+    # TODO!
+    # test single value
+    # test multiple values
+    pass
+
+
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
@@ -1208,3 +1215,54 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2],
                                   per_param_scores[3])
+
+
+class CountingSGDClassifier(SGDClassifier):
+    """An SGDClassifier which counts the number of calls to `fit`"""
+
+    def fit(self, X, y):
+        if not hasattr(self, 'n_fit_calls_'):
+            self.n_fit_calls_ = 0
+        self.n_fit_calls_ += 1
+        return super(CountingSGDClassifier, self).fit(X, y)
+
+
+def test_grid_search_cv_use_warm_start():
+    # Check number of calls to fit is correct with respect to use_warm_start
+    clf = GridSearchCV(CountingSGDClassifier(penalty='elasticnet',
+                                             warm_start=True),
+                       param_grid={'alpha': [1e-3, 1e-2],
+                                   'l1_ratio': [0.15, 0.85],
+                                   'loss': ['hinge', 'log']},
+                       cv=2, refit=False,
+                       scoring=lambda estimator, X, y: estimator.n_fit_calls_)
+
+    # Expected score: 1 everywhere
+    clf.set_params(use_warm_start=None).fit(X, y)
+    assert_array_equal(clf.cv_results_['std_test_score'], 0)
+    assert_array_equal(clf.cv_results_['mean_test_score'], 1)
+
+    # Expected score: 2 when alpha == 1e-2, 1 otherwise
+    clf.set_params(use_warm_start='alpha').fit(X, y)
+    assert_array_equal(clf.cv_results_['std_test_score'], 0)
+    mask = clf.cv_results_['param_alpha'] == 1e-2
+    assert_array_equal(clf.cv_results_['mean_test_score'][mask], 2)
+    assert_array_equal(clf.cv_results_['mean_test_score'][~mask], 1)
+
+    # Expected score: 2 when l1_ratio == 0.85, 1 otherwise
+    clf.set_params(use_warm_start=['l1_ratio']).fit(X, y)
+    assert_array_equal(clf.cv_results_['std_test_score'], 0)
+    mask = clf.cv_results_['param_l1_ratio'] == 0.85
+    assert_array_equal(clf.cv_results_['mean_test_score'][mask], 2)
+    assert_array_equal(clf.cv_results_['mean_test_score'][~mask], 1)
+
+    # Expected score: 1, 2, 3 or 4 depending on alpha and l1_ratio
+    clf.set_params(use_warm_start=['l1_ratio', 'alpha']).fit(X, y)
+    assert_array_equal(clf.cv_results_['std_test_score'], 0)
+    alpha_mask = clf.cv_results_['param_alpha'] == 1e-2
+    l1r_mask = clf.cv_results_['param_l1_ratio'] == 0.85
+    assert_array_equal(clf.cv_results_['mean_test_score'],
+                       l1r_mask * 2 + alpha_mask + 1)
+
+    # TODO: Also check search is consistent on challenging data with and
+    # without use_warm_start
