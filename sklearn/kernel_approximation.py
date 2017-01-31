@@ -223,8 +223,14 @@ class BaseAdditiveHomogenousKernelSampler(six.with_metaclass(ABCMeta,
         X = check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             if not isinstance(self.preset_sample_intervals, dict):
-                raise ValueError("Preset sample intervals not defined,"
-                                 " base class method call?")
+                raise ValueError("The attribute ``preset_sample_intervals`` "
+                                 "is not defined correctly. Its type is %s "
+                                 "instead of dict. Please check that the "
+                                 "class extending "
+                                 "``BaseAdditiveHomogenousKernelSampler`` "
+                                 "defines ``preset_sample_intervals`` "
+                                 "correctly." %
+                                 type(self.preset_sample_intervals))
             if self.sample_steps in self.preset_sample_intervals:
                 self.sample_interval_ = \
                     self.preset_sample_intervals[self.sample_steps]
@@ -336,10 +342,10 @@ class AdditiveChi2Sampler(BaseAdditiveHomogenousKernelSampler):
     at regular intervals.
 
     Since the kernel that is to be approximated is additive, the components of
-    the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2*sample_steps+1 features, where sample_steps is
-    a parameter of the method. Typical values of sample_steps include 1, 2 and
-    3.
+    the input vectors can be treated separately. Each entry in the original
+    space is transformed into ``2*sample_steps+1`` features, where
+    ``sample_steps`` is a parameter of the method. Typical values of
+    ``sample_steps`` include 1, 2 and 3.
 
     Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
@@ -350,8 +356,16 @@ class AdditiveChi2Sampler(BaseAdditiveHomogenousKernelSampler):
     ----------
     sample_steps : int, optional
         Gives the number of (complex) sampling points.
+
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
+
+
+    Attributes
+    ----------
+    sample_interval_ : float
+        Sampling interval.
+
 
     Notes
     -----
@@ -391,10 +405,10 @@ class IntersectionSampler(BaseAdditiveHomogenousKernelSampler):
     at regular intervals.
 
     Since the kernel that is to be approximated is additive, the components of
-    the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2*sample_steps+1 features, where sample_steps is
-    a parameter of the method. Typical values of sample_steps include 1, 2 and
-    3.
+    the input vectors can be treated separately. Each entry in the original
+    space is transformed into ``2*sample_steps+1`` features, where
+    ``sample_steps`` is a parameter of the method. Typical values of
+    ``sample_steps`` include 1, 2 and 3.
 
     Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
@@ -405,6 +419,7 @@ class IntersectionSampler(BaseAdditiveHomogenousKernelSampler):
     ----------
     sample_steps : int, optional
         Gives the number of (complex) sampling points.
+
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
@@ -439,10 +454,10 @@ class JensenShannonSampler(BaseAdditiveHomogenousKernelSampler):
     at regular intervals.
 
     Since the kernel that is to be approximated is additive, the components of
-    the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2*sample_steps+1 features, where sample_steps is
-    a parameter of the method. Typical values of sample_steps include 1, 2 and
-    3.
+    the input vectors can be treated separately. Each entry in the original
+    space is transformed into ``2*sample_steps+1`` features, where
+    ``sample_steps`` is a parameter of the method. Typical values of
+    ``sample_steps`` include 1, 2 and 3.
 
     Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
@@ -453,6 +468,7 @@ class JensenShannonSampler(BaseAdditiveHomogenousKernelSampler):
     ----------
     sample_steps : int, optional
         Gives the number of (complex) sampling points.
+
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
@@ -641,7 +657,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         return params
 
-# Relative entropy for tests
+# Add `rel_entr` if it is not defined by scipy (0.14.0 and earlier).
 try:
     from scipy.special import rel_entr
 except ImportError:

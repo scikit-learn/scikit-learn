@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_less_equal
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
+from sklearn.kernel_approximation import BaseAdditiveHomogenousKernelSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import IntersectionSampler
 from sklearn.kernel_approximation import JensenShannonSampler
@@ -79,6 +80,16 @@ def _test_additive_homogenous_sampler(exact_kernel, sampler, sample_interval):
     assert_equal(transform.sample_interval, sample_interval)
     transform.fit(X)
     assert_equal(transform.sample_interval_, sample_interval)
+
+
+def test_base_additive_homogenous_sampler():
+    # test error on incorrect extending of base class
+    class DerivedSampler(BaseAdditiveHomogenousKernelSampler):
+        def _spectrum(self, omega):
+            # Fake spectrum function
+            return 1.
+    transform = DerivedSampler()
+    assert_raises(ValueError, transform.fit, X)
 
 
 def test_additive_chi2_sampler():
