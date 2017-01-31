@@ -835,6 +835,8 @@ def ndcg_score(y_true, y_score, k=5):
     """
     y_score, y_true = check_X_y(y_score, y_true)
 
+    # Make sure we use all the labels (max between the lenght and the higher
+    # number in the array)
     lb = LabelBinarizer()
     lb.fit(range(max(max(y_true) + 1, len(y_true))))
     binarized_y_true = lb.transform(y_true)
