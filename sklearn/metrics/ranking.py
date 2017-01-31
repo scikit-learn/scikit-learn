@@ -788,8 +788,6 @@ def dcg_score(y_true, y_score, k=5):
     ----------
     .. [1] `Wikipedia entry for the Discounted Cumulative Gain
            <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
-    .. [2] `Gist about Ranking Metrics`
-           <https://gist.github.com/mblondel/7337391>
     """
     order = np.argsort(y_score)[::-1]
     y_true = np.take(y_true, order[:k])
