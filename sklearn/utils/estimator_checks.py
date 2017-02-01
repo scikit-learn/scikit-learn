@@ -6,7 +6,6 @@ import sys
 import traceback
 import pickle
 from copy import deepcopy
-
 import numpy as np
 from scipy import sparse
 from scipy.stats import stats
@@ -114,12 +113,12 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
+    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]):
         # TODO some complication with -1 label
-        and name not in ["DecisionTreeClassifier",
-                             "ExtraTreeClassifier"]):
+        if (name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
+            pass
 
         yield check_supervised_y_2d
     # test if NotFittedError is raised
@@ -1559,9 +1558,8 @@ def check_parameters_default_constructible(name, Estimator):
         try:
             def param_filter(p):
                 """Identify hyper parameters of an estimator"""
-                return (p.name != 'self'
-                        and p.kind != p.VAR_KEYWORD
-                        and p.kind != p.VAR_POSITIONAL)
+                return (p.name != 'self' and p.kind != p.VAR_KEYWORD and
+                        p.kind != p.VAR_POSITIONAL)
 
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
