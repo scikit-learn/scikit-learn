@@ -190,8 +190,8 @@ setting independently.  Computations can be run in parallel if your OS
 supports it, by using the keyword ``n_jobs=-1``. See function signature for
 more details.
 
-Efficiency
-----------
+Avoiding repeated work
+----------------------
 
 Ordinarily, the model is fit anew for each parameter setting.  However, some
 estimators provide a ``warm_start`` parameter which allow different parameter
