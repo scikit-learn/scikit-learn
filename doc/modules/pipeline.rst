@@ -134,7 +134,7 @@ each configuration.
 
 The parameter ``memory`` is needed in order to cache the transformers.
 ``memory`` can be either a string containing the directory where to cache the
-transfomers or a `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_
+transformers or a `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_
 object::
 
     >>> from tempfile import mkdtemp
@@ -172,7 +172,7 @@ object::
 
    Enabling caching triggers a clone of the transformers before fitting.
    Therefore, the transformer instance given to the pipeline cannot be
-   instrospected directly. Use the attribute ``named_steps`` to introspect
+   introspected directly. Use the attribute ``named_steps`` to introspect
    estimators within the pipeline.
 
    In this case, the :class:`PCA` instance ``pca2`` cannot be

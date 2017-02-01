@@ -89,9 +89,7 @@ class Pipeline(_BasePipeline):
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement fit and transform methods.
     The final estimator only needs to implement fit.
-
-    The transformers in the pipeline can be cached using `memory` argument.
-    Caching the transformers is advantageous when fitting is time consuming.
+    The transformers in the pipeline can be cached using ```memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters.
@@ -116,8 +114,11 @@ class Pipeline(_BasePipeline):
         If a string is given, it is the path to the caching directory.
         Enabling caching triggers a clone of the transformers before fitting.
         Therefore, the transformer instance given to the pipeline cannot be
-        instrospected directly. Use the attribute ``named_steps`` to introspect
+        introspected directly. Use the attribute ``named_steps`` to introspect
         estimators within the pipeline.
+        Caching the transformers is advantageous when fitting is time
+        consuming.
+
 
     Attributes
     ----------
@@ -243,11 +244,11 @@ class Pipeline(_BasePipeline):
         elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
         elif not isinstance(memory, Memory):
-            raise ValueError('memory is either `str` or a `joblib.Memory`'
-                             ' instance, got: %s' % memory)
-        # Decorate _fit_transform_one to be able to use it
-        # with cache
-        fit_transform_one = memory.cache(_fit_transform_one)
+            raise ValueError("'memory' should either be a string or"
+                             " a joblib.Memory instance, got"
+                             " 'memory={!r}' instead.".format(memory))
+
+        fit_transform_one_cached = memory.cache(_fit_transform_one)
 
         fit_params_steps = dict((name, {}) for name, step in self.steps
                                 if step is not None)
@@ -267,8 +268,8 @@ class Pipeline(_BasePipeline):
                 else:
                     cloned_transformer = clone(transformer)
                 # Fit or load from cache the current transfomer
-                Xt, fitted_transformer = fit_transform_one(
-                    cloned_transformer, name, None, Xt, y,
+                Xt, fitted_transformer = fit_transform_one_cached(
+                    cloned_transformer, None, Xt, y,
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary while loading the transformer
@@ -606,7 +607,7 @@ def _fit_one_transformer(transformer, X, y):
     return transformer.fit(X, y)
 
 
-def _transform_one(transformer, name, weight, X):
+def _transform_one(transformer, weight, X):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -614,7 +615,7 @@ def _transform_one(transformer, name, weight, X):
     return res * weight
 
 
-def _fit_transform_one(transformer, name, weight, X, y,
+def _fit_transform_one(transformer, weight, X, y,
                        **fit_params):
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
@@ -772,7 +773,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, name, weight, X, y,
+            delayed(_fit_transform_one)(trans, weight, X, y,
                                         **fit_params)
             for name, trans, weight in self._iter())
 
@@ -802,7 +803,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, name, weight, X)
+            delayed(_transform_one)(trans, weight, X)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None

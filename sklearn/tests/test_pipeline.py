@@ -136,8 +136,8 @@ class DummyTransf(Transf):
 
     def fit(self, X, y):
         self.means_ = np.mean(X, axis=0)
-        # Store a timestamp such that we know
-        # that we have a cache object
+        # store timestamp to figure out whether the result of 'fit' has been
+        # cached or not
         self.timestamp_ = time.time()
         return self
 
@@ -829,11 +829,12 @@ def test_pipeline_wrong_memory():
     memory = 1
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
-    assert_raises(ValueError, cached_pipe.fit, X, y)
+    assert_raises_regex(ValueError, "'memory' should either be a string or a"
+                        " joblib.Memory instance, got 'memory=1' instead.",
+                        cached_pipe.fit, X, y)
 
 
 def test_cached_pipeline():
-    # Test the various methods of the pipeline (pca + svm).
     iris = load_iris()
     X = iris.data
     y = iris.target
@@ -852,7 +853,7 @@ def test_cached_pipeline():
         pipe.fit(X, y)
         # Get the time stamp of the tranformer in the cached pipeline
         ts = cached_pipe.named_steps['transf'].timestamp_
-        # Check if the results are similar
+        # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
         assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
         assert_array_equal(pipe.predict_log_proba(X),
@@ -860,13 +861,11 @@ def test_cached_pipeline():
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
         assert_array_equal(pipe.named_steps['transf'].means_,
                            cached_pipe.named_steps['transf'].means_)
-        # Check that we can introspect transf
         assert_false(hasattr(transf, 'means_'))
-
         # Check that we are reading the cache while fitting
         # a second time
         cached_pipe.fit(X, y)
-        # Check if the results are similar
+        # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
         assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
         assert_array_equal(pipe.predict_log_proba(X),
@@ -875,16 +874,15 @@ def test_cached_pipeline():
         assert_array_equal(pipe.named_steps['transf'].means_,
                            cached_pipe.named_steps['transf'].means_)
         assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
-
         # Create a new pipeline with cloned estimators
-        # Check that we are reading the cache
+        # Check that even changing the name step does not affect the cache hit
         clf_2 = SVC(probability=True, random_state=0)
         transf_2 = DummyTransf()
-        cached_pipe_2 = Pipeline([('transf', transf_2), ('svc', clf_2)],
+        cached_pipe_2 = Pipeline([('transf_2', transf_2), ('svc', clf_2)],
                                  memory=memory)
         cached_pipe_2.fit(X, y)
 
-        # Check if the results are similar
+        # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe_2.predict(X))
         assert_array_equal(pipe.predict_proba(X),
                            cached_pipe_2.predict_proba(X))
@@ -892,7 +890,7 @@ def test_cached_pipeline():
                            cached_pipe_2.predict_log_proba(X))
         assert_array_equal(pipe.score(X, y), cached_pipe_2.score(X, y))
         assert_array_equal(pipe.named_steps['transf'].means_,
-                           cached_pipe_2.named_steps['transf'].means_)
-        assert_equal(ts, cached_pipe_2.named_steps['transf'].timestamp_)
+                           cached_pipe_2.named_steps['transf_2'].means_)
+        assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)
