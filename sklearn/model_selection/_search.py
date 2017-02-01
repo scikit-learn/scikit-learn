@@ -102,8 +102,8 @@ class ParameterGrid(object):
 
     def _sort_key(self, item):
         if item[0] in self.least_significant:
-            return self.least_significant.index(item[0])
-        return -1
+            return self.least_significant.index(item[0]), item
+        return -1, item
 
     def __iter__(self):
         """Iterate over the points in the grid.
@@ -561,6 +561,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 yield [parameters]
             return
 
+        # we hide use_warm_start parameters' values so that they share a group
+        # if all other parameters match
         if isinstance(use_warm_start, six.string_types):
             use_warm_start = {use_warm_start: None}
         else:
