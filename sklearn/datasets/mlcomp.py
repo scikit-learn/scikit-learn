@@ -68,6 +68,11 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     if not os.path.exists(mlcomp_root):
         raise ValueError("Could not find folder: " + mlcomp_root)
 
+    if name_or_id in ['20news-18828', '20news-19997', '20news-bydate']:
+        raise DeprecationWarning("please consider using "
+                                 "sklearn.datasets.fetch_20newsgroups "
+                                 "for loading the 20 Newsgoups dataset.")
+
     # dataset lookup
     if isinstance(name_or_id, numbers.Integral):
         # id lookup
