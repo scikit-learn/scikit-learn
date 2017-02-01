@@ -15,8 +15,8 @@ example compares ``GridSearchCV`` performance for searching over
 ``n_estimators`` in :class:`sklearn.ensemble.GradientBoostingClassifier` with
 and without ``use_warm_start='n_estimators'``.  """
 
-# Authors: Raghav RV <rvraghav93@gmail.com>
-#          Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
+# Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
+#          Raghav RV <rvraghav93@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
