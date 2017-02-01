@@ -190,6 +190,24 @@ setting independently.  Computations can be run in parallel if your OS
 supports it, by using the keyword ``n_jobs=-1``. See function signature for
 more details.
 
+Efficiency
+----------
+
+Ordinarily, the model is fit anew for each parameter setting.  However, some
+estimators provide a ``warm_start`` parameter which allow different parameter
+settings to be evaluated without clearing the model.  This can be exploited
+in :class:`GridSearchCV` by using its ``use_warm_start`` parameter.  Users
+should take care to specify the parameter values in an appropriate order for
+greatest efficiency, e.g. in order of increasing regularization for a linear
+model; increasing the number of estimators for an ensemble. Note that
+not all parameters can be varied sensibly with ``warm_start``; it can be used
+to search over ``n_estimators`` in :class:`sklearn.ensemble.GradientBoostingClassifier`,
+but not ``max_depth``, ``min_samples_split``, etc.
+
+.. topic:: Example
+
+    :ref:`sphx_glr_auto_examples_model_selection_grid_search_use_warm_start.py
+
 Robustness to failure
 ---------------------
 
@@ -207,7 +225,6 @@ Alternatives to brute force parameter search
 
 Model specific cross-validation
 -------------------------------
-
 
 Some models can fit data for a range of values of some parameter almost
 as efficiently as fitting the estimator for a single value of the
@@ -237,6 +254,8 @@ Here is the list of such models:
    linear_model.RidgeCV
    linear_model.RidgeClassifierCV
 
+Similar efficiency may be obtained in some cases by using
+:class:`model_selection.GridSearchCV` with its ``use_warm_start`` parameter.
 
 Information Criterion
 ---------------------
