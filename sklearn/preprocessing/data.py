@@ -1735,7 +1735,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    Given a dataset with three features and two samples, we let the encoder
+    Given a dataset with three features and four samples, we let the encoder
     find the maximum value per feature and transform the data to a binary
     one-hot encoding.
 
