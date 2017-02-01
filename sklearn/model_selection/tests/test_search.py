@@ -1228,9 +1228,13 @@ class CountingSGDClassifier(SGDClassifier):
 
 
 def test_grid_search_cv_use_warm_start():
+    X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    y = np.array([1, 1, 2, 2])
+
     # Check number of calls to fit is correct with respect to use_warm_start
     clf = GridSearchCV(CountingSGDClassifier(penalty='elasticnet',
-                                             warm_start=True),
+                                             warm_start=True,
+                                             random_state=0),
                        param_grid={'alpha': [1e-3, 1e-2],
                                    'l1_ratio': [0.15, 0.85],
                                    'loss': ['hinge', 'log']},
@@ -1264,5 +1268,27 @@ def test_grid_search_cv_use_warm_start():
     assert_array_equal(clf.cv_results_['mean_test_score'],
                        l1r_mask * 2 + alpha_mask + 1)
 
-    # TODO: Also check search is consistent on challenging data with and
-    # without use_warm_start
+    # Check use_warm_start gets same solution as without
+    # use mean coef_ as approximation for "found same solution"
+
+    clf = GridSearchCV(SGDClassifier(penalty='elasticnet',
+                                     warm_start=True,
+                                     random_state=0),
+                       param_grid={'alpha': [1e-3, 1e-2],
+                                   'l1_ratio': [0.15, 0.85]},
+                       cv=2, refit=False,
+                       scoring=lambda estimator, X, y: estimator.coef_.mean())
+    X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
+                               random_state=0)
+
+    def _get_scores(results):
+        # consistent result ordering
+        order = np.lexsort((results['param_alpha'],
+                            results['param_l1_ratio']))
+        return np.concatenate([results['split%d_test_score' % i][order]
+                               for i in range(clf.n_splits_)])
+
+    base_scores = _get_scores(clf.fit(X, y).cv_results_)
+    for use_warm_start in ['alpha', ['l1_ratio'], ['alpha', 'l1_ratio']]:
+        assert_array_almost_equal(base_scores,
+                                  _get_scores(clf.fit(X, y).cv_results_))
