@@ -54,4 +54,6 @@ plt.plot(line_X, line_y, color='navy', linewidth=lw, label='Linear regressor')
 plt.plot(line_X, line_y_ransac, color='cornflowerblue', linewidth=lw,
          label='RANSAC regressor')
 plt.legend(loc='lower right')
+plt.xlabel("Input")
+plt.ylabel("Response")
 plt.show()
