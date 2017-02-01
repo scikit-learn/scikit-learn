@@ -54,7 +54,7 @@ for use_warm_start in [None, 'n_estimators']:
 plt.figure(figsize=(9, 5))
 bar_width = 0.2
 n = len(data_list)
-index = np.arange(0, n*bar_width, bar_width)*2.5
+index = np.arange(0, n * bar_width, bar_width) * 2.5
 index = index[0:n]
 
 true_times = times[len(times) // 2:]

@@ -1316,8 +1316,8 @@ def test_grid_search_cv_use_warm_start():
 
     def _get_scores(results):
         # consistent result ordering
-        order = np.lexsort((results['param_alpha'],
-                            results['param_l1_ratio']))
+        order = np.lexsort((results['param_alpha'].astype('f'),
+                            results['param_l1_ratio'].astype('f')))
         return np.concatenate([results['split%d_test_score' % i][order]
                                for i in range(clf.n_splits_)])
 
