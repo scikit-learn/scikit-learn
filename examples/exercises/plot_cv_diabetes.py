@@ -31,26 +31,25 @@ alphas = np.logspace(-4, -0.5, 30)
 tuned_parameters = [{'alpha': alphas}]
 n_folds = 3
 
-
 clf = GridSearchCV(lasso, tuned_parameters, cv=n_folds, refit=False)
 clf.fit(X, y)
-means = clf.cv_results_['mean_test_score']
-stds = clf.cv_results_['std_test_score']
+scores = clf.cv_results_['mean_test_score']
+scores_std = clf.cv_results_['std_test_score']
 plt.figure().set_size_inches(8, 6)
-plt.semilogx(alphas, means)
+plt.semilogx(alphas, scores)
 
 # plot error lines showing +/- std. errors of the scores
-std_error = stds / np.sqrt(n_folds)
+std_error = scores_std / np.sqrt(n_folds)
 
-plt.semilogx(alphas, means + std_error, 'b--')
-plt.semilogx(alphas, means - std_error, 'b--')
+plt.semilogx(alphas, scores + std_error, 'b--')
+plt.semilogx(alphas, scores - std_error, 'b--')
 
 # alpha=0.2 controls the translucency of the fill color
-plt.fill_between(alphas, means + std_error, means - std_error, alpha=0.2)
+plt.fill_between(alphas, scores + std_error, scores - std_error, alpha=0.2)
 
 plt.ylabel('CV score +/- std error')
 plt.xlabel('alpha')
-plt.axhline(np.max(means), linestyle='--', color='.5')
+plt.axhline(np.max(scores), linestyle='--', color='.5')
 plt.xlim([alphas[0], alphas[-1]])
 
 ##############################################################################
