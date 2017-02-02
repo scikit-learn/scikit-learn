@@ -203,6 +203,7 @@ def setup_package():
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.4',
                                  'Programming Language :: Python :: 3.5',
+                                 'Programming Language :: Python :: 3.6',
                                  ],
                     cmdclass=cmdclass,
                     **extra_setuptools_args)
