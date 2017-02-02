@@ -474,8 +474,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
     @staticmethod
     def _calc_mislabel_rate(expected, predicted):
-        bool_mislabel = np.squeeze(expected) != np.squeeze(predicted)
-        return np.sum(bool_mislabel)
+        return np.sum(expected != predicted)
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
