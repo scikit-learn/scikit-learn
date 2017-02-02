@@ -430,7 +430,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         if y.ndim != 1:
             raise NotImplementedError('permutation feature importances not '
-                                      'implemented for multiple output problems.')
+                                      'implemented for multiple output '
+                                      'problems.')
 
         n_features = X.shape[1]
         random_state = check_random_state(self.random_state)
@@ -449,7 +450,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                                                     random_state=random_state)
                 n_wrong_perm = self._calc_mislabel_rate(y_oob, y_oob_pred_perm)
 
-                feature_importances[feature_ind] = (n_wrong_perm - n_wrong) / n_oob
+                delta_wrong = n_wrong_perm - n_wrong
+                feature_importances[feature_ind] = delta_wrong / n_oob
 
             tree._feature_importances = feature_importances
 
@@ -467,8 +469,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
     def _predict_oob(feature_data, tree, shuffle_ind=None, random_state=None):
         features_tmp = feature_data.copy()
         if shuffle_ind is not None:
-            features_tmp[:, shuffle_ind] = shuffle(features_tmp[:, shuffle_ind],
-                                                   random_state=random_state)
+            features_tmp[:, shuffle_ind] = shuffle(
+                features_tmp[:, shuffle_ind], random_state=random_state)
+
         return tree.predict(features_tmp)
 
     @staticmethod
