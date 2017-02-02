@@ -26,8 +26,6 @@ detector from various online websites.
 from os import listdir, makedirs, remove, rename
 from os.path import join, exists, isdir
 
-from sklearn.utils import deprecated
-
 import logging
 import numpy as np
 
@@ -198,7 +196,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
         folder_path = join(data_folder_path, person_name)
         if not isdir(folder_path):
             continue
-        paths = [join(folder_path, f) for f in listdir(folder_path)]
+        paths = [join(folder_path, f) for f in sorted(listdir(folder_path))]
         n_pictures = len(paths)
         if n_pictures >= min_faces_per_person:
             person_name = person_name.replace('_', ' ')
@@ -376,23 +374,6 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
-@deprecated("Function 'load_lfw_people' has been deprecated in 0.17 and will "
-            "be removed in 0.19."
-            "Use fetch_lfw_people(download_if_missing=False) instead.")
-def load_lfw_people(download_if_missing=False, **kwargs):
-    """
-    Alias for fetch_lfw_people(download_if_missing=False)
-
-    .. deprecated:: 0.17
-        This function will be removed in 0.19.
-        Use :func:`sklearn.datasets.fetch_lfw_people` with parameter
-        ``download_if_missing=False`` instead.
-
-    Check fetch_lfw_people.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_people(download_if_missing=download_if_missing, **kwargs)
-
-
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
@@ -509,20 +490,3 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     return Bunch(data=pairs.reshape(len(pairs), -1), pairs=pairs,
                  target=target, target_names=target_names,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
-
-
-@deprecated("Function 'load_lfw_pairs' has been deprecated in 0.17 and will "
-            "be removed in 0.19."
-            "Use fetch_lfw_pairs(download_if_missing=False) instead.")
-def load_lfw_pairs(download_if_missing=False, **kwargs):
-    """
-    Alias for fetch_lfw_pairs(download_if_missing=False)
-
-    .. deprecated:: 0.17
-        This function will be removed in 0.19.
-        Use :func:`sklearn.datasets.fetch_lfw_pairs` with parameter
-        ``download_if_missing=False`` instead.
-
-    Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_pairs(download_if_missing=download_if_missing, **kwargs)

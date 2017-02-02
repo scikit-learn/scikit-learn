@@ -80,7 +80,7 @@ def test_kernel_theta():
         # Determine kernel parameters that contribute to theta
         init_sign = signature(kernel.__class__.__init__).parameters.values()
         args = [p.name for p in init_sign if p.name != 'self']
-        theta_vars = map(lambda s: s.rstrip("_bounds"),
+        theta_vars = map(lambda s: s[0:-len("_bounds")],
                          filter(lambda s: s.endswith("_bounds"), args))
         assert_equal(
             set(hyperparameter.name

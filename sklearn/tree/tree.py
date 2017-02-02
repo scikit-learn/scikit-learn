@@ -29,11 +29,11 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 
 from ._criterion import Criterion
@@ -71,8 +71,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
-                                          _LearntSelectorMixin)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -105,16 +104,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
-
-        self.n_features_ = None
-        self.n_outputs_ = None
-        self.classes_ = None
-        self.n_classes_ = None
-
-        self.tree_ = None
-        self.max_features_ = None
-
         self._feature_importances = None
+
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -199,14 +190,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
-                raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1], got %s"
+                raise ValueError("min_samples_split must be an integer "
+                                 "greater than 1 or a float in (0.0, 1.0]; "
+                                 "got the integer %s"
                                  % self.min_samples_split)
             min_samples_split = self.min_samples_split
         else:  # float
             if not 0. < self.min_samples_split <= 1.:
-                raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1], got %s"
+                raise ValueError("min_samples_split must be an integer "
+                                 "greater than 1 or a float in (0.0, 1.0]; "
+                                 "got the float %s"
                                  % self.min_samples_split)
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
@@ -405,7 +398,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
@@ -458,6 +451,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
@@ -499,9 +493,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.tree_ is None:
-            raise NotFittedError("Estimator not fitted, call `fit` before"
-                                 " `feature_importances_`.")
+        check_is_fitted(self, 'tree_')
 
         if self._feature_importances is not None:
             feature_importances = self._feature_importances
@@ -749,7 +741,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             X_idx_sorted=X_idx_sorted)
         return self
 
-
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
 
@@ -774,6 +765,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 

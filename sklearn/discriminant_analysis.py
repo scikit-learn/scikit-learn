@@ -56,7 +56,8 @@ def _cov(X, shrinkage=None):
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
             s = ledoit_wolf(X)[0]
-            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]  # rescale
+            # rescale
+            s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
         elif shrinkage == 'empirical':
             s = empirical_covariance(X)
         else:
@@ -407,15 +408,15 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
-    def fit(self, X, y, store_covariance=None, tol=None):
+    def fit(self, X, y):
         """Fit LinearDiscriminantAnalysis model according to the given
            training data and parameters.
 
-           .. versionchanged:: 0.17
-              Deprecated *store_covariance* have been moved to main constructor.
+           .. versionchanged:: 0.19
+              *store_covariance* has been moved to main constructor.
 
-           .. versionchanged:: 0.17
-              Deprecated *tol* have been moved to main constructor.
+           .. versionchanged:: 0.19
+              *tol* has been moved to main constructor.
 
         Parameters
         ----------
@@ -425,20 +426,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array, shape (n_samples,)
             Target values.
         """
-        if store_covariance:
-            warnings.warn("The parameter 'store_covariance' is deprecated as "
-                          "of version 0.17 and will be removed in 0.19. The "
-                          "parameter is no longer necessary because the value "
-                          "is set via the estimator initialisation or "
-                          "set_params method.", DeprecationWarning)
-            self.store_covariance = store_covariance
-        if tol:
-            warnings.warn("The parameter 'tol' is deprecated as of version "
-                          "0.17 and will be removed in 0.19. The parameter is "
-                          "no longer necessary because the value is set via "
-                          "the estimator initialisation or set_params method.",
-                          DeprecationWarning)
-            self.tol = tol
         X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
         self.classes_ = unique_labels(y)
 
@@ -547,8 +534,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
 
 class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
-    """
-    Quadratic Discriminant Analysis
+    """Quadratic Discriminant Analysis
 
     A classifier with a quadratic decision boundary, generated
     by fitting class conditional densities to the data
@@ -630,14 +616,14 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         self.store_covariances = store_covariances
         self.tol = tol
 
-    def fit(self, X, y, store_covariances=None, tol=None):
+    def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
-            .. versionchanged:: 0.17
-               Deprecated *store_covariance* have been moved to main constructor.
+            .. versionchanged:: 0.19
+               *store_covariance* has been moved to main constructor.
 
-            .. versionchanged:: 0.17
-               Deprecated *tol* have been moved to main constructor.
+            .. versionchanged:: 0.19
+               *tol* has been moved to main constructor.
 
         Parameters
         ----------
@@ -648,20 +634,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
-        if store_covariances:
-            warnings.warn("The parameter 'store_covariances' is deprecated as "
-                          "of version 0.17 and will be removed in 0.19. The "
-                          "parameter is no longer necessary because the value "
-                          "is set via the estimator initialisation or "
-                          "set_params method.", DeprecationWarning)
-            self.store_covariances = store_covariances
-        if tol:
-            warnings.warn("The parameter 'tol' is deprecated as of version "
-                          "0.17 and will be removed in 0.19. The parameter is "
-                          "no longer necessary because the value is set via "
-                          "the estimator initialisation or set_params method.",
-                          DeprecationWarning)
-            self.tol = tol
         X, y = check_X_y(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)

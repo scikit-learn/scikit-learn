@@ -34,6 +34,11 @@ get_build_type() {
 		echo SKIP: [doc skip] marker found
 		return
 	fi
+	if [[ "$commit_msg" =~ \[doc\ quick\] ]]
+	then
+		echo QUICK: [doc quick] marker found
+		return
+	fi
 	if [[ "$commit_msg" =~ \[doc\ build\] ]]
 	then
 		echo BUILD: [doc build] marker found
@@ -52,12 +57,12 @@ get_build_type() {
 		echo QUICK BUILD: no changed filenames for $git_range
 		return
 	fi
-	if echo "$filenames" | grep -q -e ^examples/ -e ^doc/
+	if echo "$filenames" | grep -q -e ^examples/
 	then
-		echo BUILD: detected doc/ or examples/ filename modified in $git_range: $(echo "$filenames" | grep -e ^examples/ -e ^doc/ | head -n1)
+		echo BUILD: detected examples/ filename modified in $git_range: $(echo "$filenames" | grep -e ^examples/ | head -n1)
 		return
 	fi
-	echo QUICK BUILD: no doc/ or examples/ filename modified in $git_range:
+	echo QUICK BUILD: no examples/ filename modified in $git_range:
 	echo "$filenames"
 }
 
@@ -102,15 +107,15 @@ then
    wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
    -O miniconda.sh
 fi
-chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
+chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 cd ..
-export PATH="$HOME/miniconda/bin:$PATH"
+export PATH="$MINICONDA_PATH/bin:$PATH"
 conda update --yes --quiet conda
 popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n testenv --yes --quiet python numpy scipy \
+conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
   cython nose coverage matplotlib sphinx pillow
 source activate testenv
 
@@ -119,3 +124,29 @@ python setup.py develop
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt
+
+cd -
+set +o pipefail
+
+affected_doc_paths() {
+	files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
+	echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
+	echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
+	sklearn_files=$(echo "$files" | grep '^sklearn/')
+	if [ -n "$sklearn_files" ]
+	then
+		grep -hlR -f<(echo "$sklearn_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/stable/modules/generated | cut -d/ -f5-
+	fi
+}
+
+if [ -n "$CI_PULL_REQUEST" ]
+then
+	echo "The following documentation files may have been changed by PR #$CI_PULL_REQUEST:"
+	affected=$(affected_doc_paths)
+	echo "$affected" | sed 's|^|* http://scikit-learn.org/circle?'$CIRCLE_BUILD_NUM'/|'
+	(
+	echo '<html><body><ul>'
+	echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
+	echo '</ul></body></html>'
+	) > 'doc/_build/html/stable/_changed.html'
+fi

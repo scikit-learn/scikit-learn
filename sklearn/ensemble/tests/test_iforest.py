@@ -200,3 +200,14 @@ def test_max_samples_consistency():
     X = iris.data
     clf = IsolationForest().fit(X)
     assert_equal(clf.max_samples_, clf._max_samples)
+
+
+def test_iforest_subsampled_features():
+    # It tests non-regression for #5732 which failed at predict.
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
+                                                        random_state=rng)
+    clf = IsolationForest(max_features=0.8)
+    clf.fit(X_train, y_train)
+    clf.predict(X_test)

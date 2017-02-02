@@ -17,7 +17,7 @@ sy-kit learn. sci stands for science!
 
 Why scikit?
 ------------
-There are multiple scikits, which are scientific toolboxes build around SciPy.
+There are multiple scikits, which are scientific toolboxes built around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
 
@@ -281,6 +281,9 @@ GPUs for efficient computing. However, neither of these fit within
 the design constraints of scikit-learn; as a result, deep learning
 and reinforcement learning are currently out of scope for what
 scikit-learn seeks to achieve.
+
+You can find more information about addition of gpu support at
+`Will you add GPU support?`_.
 
 Why is my pull request not getting any attention?
 -------------------------------------------------

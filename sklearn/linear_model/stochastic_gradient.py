@@ -13,9 +13,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from .base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
-from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (check_array, check_random_state, check_X_y,
-                     deprecated)
+from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
@@ -24,6 +22,7 @@ from ..externals import six
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils.fixes import astype
 from ..utils import compute_class_weight
+from ..utils import deprecated
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
 from .sgd_fast import Log
@@ -69,15 +68,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.average = average
 
         self._validate_params()
-
-        self.coef_ = None
-
-        if self.average > 0:
-            self.standard_coef_ = None
-            self.average_coef_ = None
-        # iteration count for learning rate schedule
-        # must not be int (e.g. if ``learning_rate=='optimal'``)
-        self.t_ = None
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
@@ -269,7 +259,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
     if not est.average:
-        return plain_sgd(coef, intercept, est.loss_function,
+        return plain_sgd(coef, intercept, est.loss_function_,
                          penalty_type, alpha, C, est.l1_ratio,
                          dataset, n_iter, int(est.fit_intercept),
                          int(est.verbose), int(est.shuffle), seed,
@@ -281,7 +271,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
         standard_coef, standard_intercept, average_coef, \
             average_intercept = average_sgd(coef, intercept, average_coef,
                                             average_intercept,
-                                            est.loss_function, penalty_type,
+                                            est.loss_function_, penalty_type,
                                             alpha, C, est.l1_ratio, dataset,
                                             n_iter, int(est.fit_intercept),
                                             int(est.verbose), int(est.shuffle),
@@ -334,8 +324,13 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                 warm_start=warm_start,
                                                 average=average)
         self.class_weight = class_weight
-        self.classes_ = None
         self.n_jobs = int(n_jobs)
+
+    @property
+    @deprecated("Attribute loss_function was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'loss_function_' instead")
+    def loss_function(self):
+        return self.loss_function_
 
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
@@ -355,15 +350,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                            self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None or coef_init is not None:
+        if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
 
-        self.loss_function = self._get_loss_function(loss)
-        if self.t_ is None:
+        self.loss_function_ = self._get_loss_function(loss)
+        if not hasattr(self, "t_"):
             self.t_ = 1.0
 
         # delegate to concrete training procedure
@@ -393,7 +388,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
 
-        if self.warm_start and self.coef_ is not None:
+        if self.warm_start and hasattr(self, "coef_"):
             if coef_init is None:
                 coef_init = self.coef_
             if intercept_init is None:
@@ -409,7 +404,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.average_intercept_ = None
 
         # Clear iteration count for multiple call to fit.
-        self.t_ = None
+        self.t_ = 1.0
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
@@ -497,7 +492,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if self.class_weight in ['balanced', 'auto']:
+        if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
                              " use compute_class_weight('{0}', classes, y). "
@@ -545,7 +540,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                          sample_weight=sample_weight)
 
 
-class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
+class SGDClassifier(BaseSGDClassifier):
     """Linear classifiers (SVM, logistic regression, a.o.) with SGD training.
 
     This estimator implements regularized linear models with stochastic
@@ -679,6 +674,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
+
+    loss_function_ : concrete ``LossFunction``
 
     Examples
     --------
@@ -873,13 +870,13 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None:
+        if getattr(self, "coef_", None) is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
-        if self.average > 0 and self.average_coef_ is None:
+        if self.average > 0 and getattr(self, "average_coef_", None) is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
                                           order="C")
@@ -919,7 +916,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        if self.warm_start and self.coef_ is not None:
+        if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
             if intercept_init is None:
@@ -935,7 +932,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.average_intercept_ = None
 
         # Clear iteration count for multiple call to fit.
-        self.t_ = None
+        self.t_ = 1.0
 
         return self._partial_fit(X, y, alpha, C, loss, learning_rate,
                                  self.n_iter, sample_weight,
@@ -971,21 +968,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                          coef_init=coef_init,
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
-
-    @deprecated(" and will be removed in 0.19.")
-    def decision_function(self, X):
-        """Predict using the linear model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-
-        Returns
-        -------
-        array, shape (n_samples,)
-           Predicted target values per element in X.
-        """
-        return self._decision_function(X)
 
     def _decision_function(self, X):
         """Predict using the linear model
@@ -1029,7 +1011,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
 
-        if self.t_ is None:
+        if not hasattr(self, "t_"):
             self.t_ = 1.0
 
         random_state = check_random_state(self.random_state)
@@ -1093,7 +1075,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.intercept_ = np.atleast_1d(self.intercept_)
 
 
-class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
+class SGDRegressor(BaseSGDRegressor):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is

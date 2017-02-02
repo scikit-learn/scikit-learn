@@ -670,8 +670,16 @@ class GridSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default=1
-        Number of jobs to run in parallel.
+    n_jobs: int, default: 1 :
+        The maximum number of estimators fit in parallel.
+
+            - If -1 all CPUs are used.
+
+            - If 1 is given, no parallel computing code is used at all,
+              which is useful for debugging.
+
+            - For ``n_jobs`` below -1, ``(n_cpus + n_jobs + 1)`` are used.
+              For example, with ``n_jobs = -2`` all CPUs but one are used.
 
         .. versionchanged:: 0.17
            Upgraded to joblib 0.9.3.
@@ -741,7 +749,7 @@ class GridSearchCV(BaseSearchCV):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
-                         decision_function_shape=None, degree=..., gamma=...,
+                         decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
@@ -888,8 +896,16 @@ class RandomizedSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default=1
-        Number of jobs to run in parallel.
+    n_jobs: int, default: 1 :
+        The maximum number of estimators fit in parallel.
+
+            - If -1 all CPUs are used.
+
+            - If 1 is given, no parallel computing code is used at all,
+              which is useful for debugging.
+
+            - For ``n_jobs`` below -1, ``(n_cpus + n_jobs + 1)`` are used.
+              For example, with ``n_jobs = -2`` all CPUs but one are used.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
