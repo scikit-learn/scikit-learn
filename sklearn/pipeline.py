@@ -262,8 +262,7 @@ class Pipeline(_BasePipeline):
             else:
                 if memory.cachedir is None:
                     # we do not clone when caching is disabled to preserve
-                    # backward compatibility and the possibility to use warm
-                    # started models in that case
+                    # backward compatibility
                     cloned_transformer = transformer
                 else:
                     cloned_transformer = clone(transformer)
@@ -272,7 +271,7 @@ class Pipeline(_BasePipeline):
                     cloned_transformer, None, Xt, y,
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
-                # transformer. This is necessary while loading the transformer
+                # transformer. This is necessary when loading the transformer
                 # from the cache.
                 self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator is None:
