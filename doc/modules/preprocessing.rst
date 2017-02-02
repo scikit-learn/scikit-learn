@@ -601,7 +601,7 @@ Tools for imputing missing values are discussed at :ref:`impute`.
 Transformer indicating missing values
 =====================================
 
-MissingIndicator transformer is useful to transform a dataset into corresponding
+:class:`MissingIndicator` transformer is useful to transform a dataset into corresponding
 binary matrix indicating the presence of missing values in the dataset.
 The knowledge of which features were imputed can be exploited by a downstream
 estimator by adding features that indicate which elements have been imputed.
@@ -624,9 +624,9 @@ estimator by adding features that indicate which elements have been imputed.
     MissingIndicator(features='train', missing_values=-1, sparse='auto')
     >>> X2_tr = MI.transform(X2)
     >>> X2_tr
-    array([[False, False,  True],
-           [ True,  True, False],
-           [False, False, False]], dtype=bool)
+    array([[0, 0, 1],
+           [1, 1, 0],
+           [0, 0, 0]], dtype=int32)
 
 
 .. _polynomial_features:

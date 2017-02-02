@@ -421,9 +421,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     MissingIndicator(features='train', missing_values=-1, sparse='auto')
     >>> X2_tr = MI.transform(X2)
     >>> X2_tr
-    array([[False,  True],
-           [ True, False],
-           [False, False]], dtype=bool)
+    array([[0, 1],
+           [1, 0],
+           [0, 0]], dtype=int32)
 
     """
 
@@ -434,11 +434,13 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     def fit(self, X):
         """Fit the transformer on X.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
+
         Returns
         -------
         self : object
@@ -466,15 +468,17 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Impute all missing values in X.
+        """Generate missing values indicator for X.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
+
         Returns
         -------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            The transformerwith missing indicator.
+        Xt : {array-like, sparse matrix}, shape = [n_samples, n_features]
+             The missing indicator for input data
 
         """
         if self.features == "train":
@@ -482,16 +486,15 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64,
                         force_all_finite=False)
-
         imputer_mask, feat_with_missing = self._get_missing_features_info(X)
 
         if self.features == "train":
             features = np.setdiff1d(feat_with_missing,
                                     self.feat_with_missing_)
             if features.size:
-                warnings.warn("The features %s have missing "
-                              "values in transform but have no missing values"
-                              " in fit " % features, RuntimeWarning,
+                warnings.warn("The features %s have missing values "
+                              "in transform but have no missing values "
+                              "in fit " % features, RuntimeWarning,
                               stacklevel=1)
             imputer_mask = imputer_mask[:, self.feat_with_missing_]
 
@@ -518,6 +521,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 X = X.toarray()
             imputer_mask = _get_mask(X, self.missing_values)
+            imputer_mask = imputer_mask.astype(np.int32, copy=False)
             feat_with_missing = np.where(np.any(imputer_mask, axis=0))[0]
 
         if self.sparse is True:
@@ -527,5 +531,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 imputer_mask = sparse.csc_matrix(imputer_mask)
         elif self.sparse is False and sparse.issparse(imputer_mask):
             imputer_mask = imputer_mask.toarray()
+        elif self.sparse == 'auto' and self.missing_values != 0:
+            if sparse.issparse(imputer_mask):
+                imputer_mask = imputer_mask.tocsc()
 
         return imputer_mask, feat_with_missing
