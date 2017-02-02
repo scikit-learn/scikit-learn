@@ -8,7 +8,7 @@ import pickle
 from copy import deepcopy
 import numpy as np
 from scipy import sparse
-from scipy.stats import stats
+from scipy.stats import rankdata
 import struct
 
 from sklearn.externals.six.moves import zip
@@ -46,6 +46,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
+from sklearn.multiclass import OneVsRestClassifier
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
@@ -162,7 +163,7 @@ def _yield_regressor_checks(name, Regressor):
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
     yield check_supervised_y_no_nan
-    yield check_rank_corr
+    yield check_decision_proba_consistency
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
@@ -1707,7 +1708,7 @@ def check_classifiers_regression_target(name, Estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_rank_corr(name, Estimator):
+def check_decision_proba_consistency(name, Estimator):
     """
     Check whether an estimator having both decision_function and
     predict_proba methods has outputs with perfect rank correlation.
@@ -1725,11 +1726,12 @@ def check_rank_corr(name, Estimator):
 
         if hasattr(estimator, "predict_proba"):
             try:
-                estimator.fit(X, Y)
-                a = estimator.predict_proba([i for i in range(20)])
-                b = estimator.decision_function([i for i in range(20)])
-                assert_equal(a.shape, b.shape)
-                assert_equal(stats.spearmanr(a[0], b[0]).correlation, 1)
+                classif = OneVsRestClassifier(estimator)
+                classif.fit(X, Y)
+                a = classif.predict_proba([i for i in range(20)])
+                b = classif.decision_function([i for i in range(20)])
+                assert_equal(
+                 rankdata(a, method='average'), rankdata(b, method='average'))
 
             except ValueError:
                 pass
