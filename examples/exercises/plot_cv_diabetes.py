@@ -28,11 +28,11 @@ y = diabetes.target[:150]
 lasso = Lasso(random_state=0)
 alphas = np.logspace(-4, -0.5, 30)
 
-tuned_parameters = [{'alpha':alphas}]
+tuned_parameters = [{'alpha': alphas}]
 n_folds = 3
 
 
-clf = GridSearchCV(lasso,tuned_parameters,cv=n_folds, refit=False)
+clf = GridSearchCV(lasso, tuned_parameters, cv=n_folds, refit=False)
 clf.fit(X, y)
 means = clf.cv_results_['mean_test_score']
 stds = clf.cv_results_['std_test_score']
