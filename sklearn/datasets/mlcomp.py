@@ -5,6 +5,7 @@
 import os
 import numbers
 from sklearn.datasets.base import load_files
+from sklearn.utils import deprecated
 
 
 def _load_document_classification(dataset_path, metadata, set_=None, **kwargs):
@@ -19,6 +20,8 @@ LOADERS = {
 }
 
 
+@deprecated("load_mlcomp function was deprecated in version 0.19 and "
+            "will be removed in 0.21.")
 def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     """Load a datasets as downloaded from http://mlcomp.org
 
@@ -67,11 +70,6 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
 
     if not os.path.exists(mlcomp_root):
         raise ValueError("Could not find folder: " + mlcomp_root)
-
-    if name_or_id in ['20news-18828', '20news-19997', '20news-bydate']:
-        raise DeprecationWarning("please consider using "
-                                 "sklearn.datasets.fetch_20newsgroups "
-                                 "for loading the 20 Newsgoups dataset.")
 
     # dataset lookup
     if isinstance(name_or_id, numbers.Integral):
