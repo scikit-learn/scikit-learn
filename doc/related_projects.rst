@@ -131,7 +131,7 @@ and tasks.
 
 **Other regression and classification**
 
-- `xgboost https://github.com/dmlc/xgboost` Optimised gradient boosted decision
+- `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
   tree library.
 
 - `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast
