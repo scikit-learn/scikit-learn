@@ -46,14 +46,12 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
-from sklearn.multiclass import OneVsRestClassifier
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
 from sklearn.utils.validation import has_fit_parameter
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
-from sklearn.datasets import make_multilabel_classification
 
 
 BOSTON = None
@@ -1713,28 +1711,18 @@ def check_decision_proba_consistency(name, Estimator):
     Check whether an estimator having both decision_function and
     predict_proba methods has outputs with perfect rank correlation.
     """
-
-    X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
-                                          allow_unlabeled=True,
-                                          random_state=1)
-
+    rnd = np.random.RandomState(0)
+    X_train = (3*rnd.uniform(size=(10, 4))).astype(int)
+    y = X[:, 0]
     estimator = Estimator()
 
     set_testing_parameters(estimator)
 
-    if hasattr(estimator, "decision_function"):
+    if (hasattr(estimator, "decision_function") and
+            hasattr(estimator, "predict_proba")):
 
-        if hasattr(estimator, "predict_proba"):
-            try:
-                classif = OneVsRestClassifier(estimator)
-                classif.fit(X, Y)
-                a = classif.predict_proba([i for i in range(20)])
-                b = classif.decision_function([i for i in range(20)])
-                assert_equal(
-                 rankdata(a, method='average'), rankdata(b, method='average'))
-
-            except ValueError:
-                pass
-
-    else:
-        pass
+        estimator.fit(X_train, y)
+        X_test = (3*rnd.uniform(size=(5, 4))).astype(int)
+        a = estimator.predict_proba(X_test)
+        b = estimator.decision_function(X_test)
+        assert_array_equal(rankdata(a), rankdata(b))
