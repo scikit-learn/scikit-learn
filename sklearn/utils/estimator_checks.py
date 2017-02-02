@@ -1713,7 +1713,7 @@ def check_decision_proba_consistency(name, Estimator):
     """
     rnd = np.random.RandomState(0)
     X_train = (3*rnd.uniform(size=(10, 4))).astype(int)
-    y = X[:, 0]
+    y = X_train[:, 0]
     estimator = Estimator()
 
     set_testing_parameters(estimator)
