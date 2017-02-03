@@ -408,7 +408,12 @@ def check_sample_weights_list(name, Estimator):
         y = np.arange(10) % 3
         y = multioutput_estimator_convert_y_2d(name, y)
         sample_weight = [3] * 10
-        estimator.fit(X, y, sample_weight=sample_weight)
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except Exception as e:
+            assert_equal(type(e), TypeError)
+            assert_equal(e.message, "sample_weight should either be "
+                         "array-like or None")
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
