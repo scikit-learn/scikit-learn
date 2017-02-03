@@ -128,6 +128,9 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         mask = self.scores_ > self.selection_threshold
         return mask if not indices else np.where(mask)[0]
 
+    def get_support(self, indices=False):
+        return self._get_support_mask(indices)
+
 
 ###############################################################################
 # Randomized lasso: regression settings
