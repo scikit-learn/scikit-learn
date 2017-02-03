@@ -56,8 +56,9 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
-                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
+MULTI_OUTPUT = ['CCA',  'DecisionTreeClassifier', 'DecisionTreeRegressor',
+                'ElasticNet', 'ExtraTreeClassifier', 'ExtraTreeRegressor',
+                'ExtraTreesRegressor', 'GaussianProcess',
                 'GaussianProcessRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
