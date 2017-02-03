@@ -173,6 +173,28 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+def test_grid_search_with_fit_params():
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+
+    # The CheckingClassifer generates an assertion error if
+    # a parameter is missing or has length != len(X).
+    grid_search.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
+
+
+def test_random_search_with_fit_params():
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
+    random_search = RandomizedSearchCV(clf, {'foo_param': [0]}, n_iter=1)
+
+    # The CheckingClassifer generates an assertion error if
+    # a parameter is missing or has length != len(X).
+    random_search.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
+
+
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
