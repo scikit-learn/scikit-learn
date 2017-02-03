@@ -129,6 +129,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         return mask if not indices else np.where(mask)[0]
 
     def get_support(self, indices=False):
+        """Return a mask, or list, of the features/indices selected."""
         return self._get_support_mask(indices)
 
 
