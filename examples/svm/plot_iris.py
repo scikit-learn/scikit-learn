@@ -42,6 +42,16 @@ from sklearn import svm, datasets
 
 def make_meshgrid(x, y, h=.02):
     """Create a mesh of points to plot in
+
+    Parameters
+    ----------
+    x: data to base x-axis meshgrid on
+    y: data to base y-axis meshgrid on
+    h: stepsize for meshgrid, optional
+
+    Returns
+    -------
+    xx, yy : ndarray
     """
     x_min, x_max = x.min() - 1, x.max() + 1
     y_min, y_max = y.min() - 1, y.max() + 1
@@ -49,8 +59,17 @@ def make_meshgrid(x, y, h=.02):
                          np.arange(y_min, y_max, h))
     return xx, yy
 
+
 def plot_contours(ax, clf, xx, yy, **params):
     """Plot the decision boundaries for a classifier.
+
+    Parameters
+    ----------
+    ax: matplotlib axes object
+    clf: a classifier
+    xx: meshgrid ndarray
+    yy: meshgrid ndarray
+    params: dictionary of params to pass to contourf, optional
     """
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
@@ -59,9 +78,21 @@ def plot_contours(ax, clf, xx, yy, **params):
     ax.set_ylim(yy.min(), yy.max())
     return out
 
+
 def plot_points_boundary(ax, clf, x, y, xx, yy,
-                               points_params, contour_params):
+                         points_params, contour_params):
     """Plot the decision boundaries and points.
+
+    Parameters
+    ----------
+    ax: matplotlib axes object
+    clf: a classifier
+    x: x-axis of points to plot
+    y: y-axis of points to plot
+    xx: meshgrid ndarray
+    yy: meshgrid ndarray
+    point_params: dictionary of params to pass to `ax.scatter`, optional
+    countour_params: dictionary of params to pass to `plot_contours`, optional
     """
     contours = plot_contours(ax, clf, xx, yy, **contour_params)
     points = ax.scatter(x, y, **points_params)
@@ -69,8 +100,8 @@ def plot_points_boundary(ax, clf, x, y, xx, yy,
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+# Take the first two features. We could avoid this by using a two-dim dataset
+X = iris.data[:, :2]
 y = iris.target
 
 # we create an instance of SVM and fit out data. We do not scale our
@@ -88,16 +119,16 @@ titles = ('SVC with linear kernel',
           'SVC with RBF kernel',
           'SVC with polynomial (degree 3) kernel')
 
-#Set-up 2x2 grid for plotting.
-fig, sub = plt.subplots(2,2)
+# Set-up 2x2 grid for plotting.
+fig, sub = plt.subplots(2, 2)
 plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
 xx, yy = make_meshgrid(X[:, 0], X[:, 1])
 
 for clf, title, ax in zip(models, titles, sub.flatten()):
     plot_points_boundary(ax, clf, X[:, 0], X[:, 1], xx, yy,
-                               dict(c=y, cmap=plt.cm.coolwarm),
-                               dict(cmap=plt.cm.coolwarm, alpha=0.8))
+                         dict(c=y, cmap=plt.cm.coolwarm),
+                         dict(cmap=plt.cm.coolwarm, alpha=0.8))
     ax.set_xlabel('Sepal length')
     ax.set_ylabel('Sepal width')
     ax.set_xticks(())
