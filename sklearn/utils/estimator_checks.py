@@ -412,7 +412,7 @@ def check_sample_weights_list(name, Estimator):
             estimator.fit(X, y, sample_weight=sample_weight)
         except Exception as e:
             assert_equal(type(e), TypeError)
-            assert_equal(e.message, "sample_weight should either be "
+            assert_equal(str(e), "sample_weight should either be "
                          "array-like or None")
 
 
