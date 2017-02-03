@@ -167,14 +167,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                               " itself." % estimator_name)
                 base_estimator_sample_weight = None
             else:
+                if isinstance(sample_weight, list):
+                    sample_weight = np.array(sample_weight)
                 base_estimator_sample_weight = sample_weight
             for train, test in cv.split(X, y):
                 this_estimator = clone(base_estimator)
                 if base_estimator_sample_weight is not None:
-                    if isinstance(sample_weight, list):
-                        raise TypeError("sample_weight should either be "
-                                        "array-like or None")
-
                     this_estimator.fit(
                         X[train], y[train],
                         sample_weight=base_estimator_sample_weight[train])

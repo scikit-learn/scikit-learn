@@ -281,8 +281,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         if isinstance(sample_weight, list):
-            raise TypeError("sample_weight should either be array-like or "
-                            "None")
+            sample_weight = np.array(sample_weight)
 
         # Convert data
         X, y = check_X_y(X, y, ['csr', 'csc'])

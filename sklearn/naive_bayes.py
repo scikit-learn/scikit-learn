@@ -334,8 +334,7 @@ class GaussianNB(BaseNB):
         """
         X, y = check_X_y(X, y)
         if isinstance(sample_weight, list):
-            raise TypeError("sample_weight should either be array-like or "
-                            "None")
+            sample_weight = np.array(sample_weight)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
