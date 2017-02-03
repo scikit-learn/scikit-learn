@@ -67,8 +67,7 @@ repeat = 10
 
 range_n_outliers = np.concatenate(
     (np.linspace(0, n_samples / 8, 5),
-     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1]))
-range_n_outliers = np.array(range_n_outliers, dtype=np.int)
+     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1])).astype(np.int)
 
 # definition of arrays to store results
 err_loc_mcd = np.zeros((range_n_outliers.size, repeat))
