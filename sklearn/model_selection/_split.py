@@ -672,9 +672,9 @@ class TimeSeriesSplit(_BaseKFold):
     >>> from sklearn.model_selection import TimeSeriesSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> tscv = TimeSeriesSplit(max_train_size=0, n_splits=3)
+    >>> tscv = TimeSeriesSplit(n_splits=3)
     >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-    TimeSeriesSplit(n_splits=3)
+    TimeSeriesSplit(max_train_size=0, n_splits=3)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
