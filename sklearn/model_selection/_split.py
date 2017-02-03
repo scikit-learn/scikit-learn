@@ -664,6 +664,9 @@ class TimeSeriesSplit(_BaseKFold):
     n_splits : int, default=3
         Number of splits. Must be at least 1.
 
+    max_train_size : int, optional
+        Maximum size for a single training fold.
+
     Examples
     --------
     >>> from sklearn.model_selection import TimeSeriesSplit
@@ -687,7 +690,8 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=3):
+    def __init__(self, n_splits=3, max_train_size=0):
+        self.max_train_size = max_train_size
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
                                               random_state=None)
@@ -729,8 +733,12 @@ class TimeSeriesSplit(_BaseKFold):
         test_starts = range(test_size + n_samples % n_folds,
                             n_samples, test_size)
         for test_start in test_starts:
-            yield (indices[:test_start],
-                   indices[test_start:test_start + test_size])
+            if self.max_train_size > 0 and self.max_train_size < test_start:
+                yield (indices[test_start - self.max_train_size:test_start],
+                       indices[test_start:test_start + test_size])
+            else:
+                yield (indices[:test_start],
+                       indices[test_start:test_start + test_size])
 
 
 class LeaveOneGroupOut(BaseCrossValidator):

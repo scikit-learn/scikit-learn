@@ -1176,6 +1176,29 @@ def test_time_series_cv():
     assert_equal(n_splits_actual, 2)
 
 
+def test_time_series_max_train_size():
+    X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    splits = TimeSeriesSplit(n_splits=3, max_train_size=3).split(X)
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [1, 2, 3])
+    assert_array_equal(test, [4])
+
+    # Test for the case where the first split is less than the max_train_size
+    splits = TimeSeriesSplit(n_splits=3, max_train_size=2).split(X)
+    train, test = next(splits)
+    assert_array_equal(train, [1, 2])
+    assert_array_equal(test, [3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3])
+    assert_array_equal(test, [4])
+
+
+
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)
