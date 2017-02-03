@@ -243,9 +243,9 @@ def top_n_accuracy_score(y_true, y_pred, n=5, normalize=True):
     num_obs, num_labels = y_pred.shape
     idx = num_labels - n - 1
     counter = 0
-    parted = np.argpartition(y_pred, kth=idx, axis=1)
+    argsorted = np.argsort(y_pred, axis=1)
     for i in range(num_obs):
-        if y_true[i] in parted[i, idx+1:]:
+        if y_true[i] in argsorted[i, idx+1:]:
             counter += 1
     if normalize:
         return counter / num_obs
