@@ -38,8 +38,8 @@ from sklearn.neighbors import KernelDensity
 # Plot the progression of histograms to kernels
 np.random.seed(1)
 N = 20
-X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
-                    np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
+X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),
+                    np.random.normal(5, 1, int(0.7 * N))))[:, np.newaxis]
 X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 bins = np.linspace(-5, 10, 10)
 
@@ -116,8 +116,8 @@ ax[0, 1].set_title('Available Kernels')
 # Plot a 1D density example
 N = 100
 np.random.seed(1)
-X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
-                    np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
+X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),
+                    np.random.normal(5, 1, int(0.7 * N))))[:, np.newaxis]
 
 X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 

@@ -99,7 +99,7 @@ def build_projection_operator(l_x, n_dir):
 def generate_synthetic_data():
     """ Synthetic binary data """
     rs = np.random.RandomState(0)
-    n_pts = 36.
+    n_pts = 36
     x, y = np.ogrid[0:l, 0:l]
     mask_outer = (x - l / 2) ** 2 + (y - l / 2) ** 2 < (l / 2) ** 2
     mask = np.zeros((l, l))
