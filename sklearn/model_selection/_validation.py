@@ -144,7 +144,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
-                   return_times=False, error_score='raise'):
+                   return_times=False, error_score='raise',
+                   split_progress=None, param_progress=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -210,13 +211,22 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     parameters : dict or None, optional
         The parameters that have been evaluated.
     """
+    current_fit_msg = ""
+    if verbose > 2:
+        if split_progress:
+            current_fit_msg = " split %d of %d;" % (*split_progress,)
+        if param_progress:
+            current_fit_msg += " candidate %d of %d" % (*param_progress,)
+
     if verbose > 1:
         if parameters is None:
-            msg = ''
+            params_msg = 'params - {}'
         else:
-            msg = '%s' % (', '.join('%s=%s' % (k, v)
-                          for k, v in parameters.items()))
-        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
+            params_msg = ('params - {%s}'
+                          % (', '.join('%s=%s' % (k, v)
+                                       for k, v in parameters.items())))
+        start_msg = "[CV%s] %s - Started" % (current_fit_msg, params_msg)
+        print("%s%s" % (start_msg, (80 - len(start_msg)) * '.'))
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
@@ -262,12 +272,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if return_train_score:
             train_score = _score(estimator, X_train, y_train, scorer)
 
-    if verbose > 2:
-        msg += ", score=%f" % test_score
     if verbose > 1:
         total_time = score_time + fit_time
-        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
-        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+        end_msg = "[CV%s] %s - Done; " % (current_fit_msg, params_msg)
+        if verbose > 2:
+            end_msg += "score=%f, " % test_score
+        end_msg += "total time=%s" % logger.short_format_time(total_time)
+        print("%s%s" % (end_msg, (80 - len(end_msg)) * '.'))
 
     ret = [train_score, test_score] if return_train_score else [test_score]
 

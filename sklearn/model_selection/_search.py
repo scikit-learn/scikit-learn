@@ -595,9 +595,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_train_score=self.return_train_score,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
-                                  error_score=self.error_score)
-          for train, test in cv.split(X, y, groups)
-          for parameters in candidate_params)
+                                  error_score=self.error_score,
+                                  split_progress=(split_i, n_splits),
+                                  param_progress=(param_i, n_candidates))
+          for split_i, (train, test) in enumerate(cv.split(X, y, groups))
+          for param_i, parameters in enumerate(candidate_params))
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
