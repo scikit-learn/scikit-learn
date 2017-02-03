@@ -20,8 +20,9 @@ LOADERS = {
 }
 
 
-@deprecated("load_mlcomp function was deprecated in version 0.19 and "
-            "will be removed in 0.21.")
+@deprecated("since the http://mlcomp.org/ website will shut down "
+            "in March 2017, the load_mlcomp function was deprecated "
+            "in version 0.19 and will be removed in 0.21.")
 def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     """Load a datasets as downloaded from http://mlcomp.org
 
