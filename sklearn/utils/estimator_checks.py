@@ -72,6 +72,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_fit_score_takes_y
     yield check_dtype_object
     yield check_sample_weights_pandas_series
+    yield check_sample_weights_list
     yield check_estimators_fit_returns_self
 
     # Check that all estimator yield informative messages when
@@ -394,6 +395,21 @@ def check_sample_weights_pandas_series(name, Estimator):
         except ImportError:
             raise SkipTest("pandas is not installed: not testing for "
                            "input of type pandas.Series to class weight.")
+
+
+@ignore_warnings(category=DeprecationWarning)
+def check_sample_weights_list(name, Estimator):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type list in the 'fit' function.
+    estimator = Estimator()
+    if has_fit_parameter(estimator, "sample_weight"):
+        rnd = np.random.RandomState(0)
+        X = rnd.uniform(size=(10, 3))
+        y = np.arange(10) % 3
+        y = multioutput_estimator_convert_y_2d(name, y)
+        sample_weight = [3] * 10
+        # Test that estimators don't raise any exception
+        estimator.fit(X, y, sample_weight=sample_weight)
 
 
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
