@@ -22,10 +22,9 @@ y = 0.2 * X + 20
 data = np.column_stack([X, y])
 
 # Add some faulty data
-outliers = np.array((10, 30, 200))
-data[outliers[0], :] = (1000, 1000)
-data[outliers[1], :] = (-1000, -1000)
-data[outliers[2], :] = (-100, -50)
+np.random.seed(1)
+outliers = (np.random.rand(80) * len(X)).astype(np.uint32)
+data[outliers, :] = np.random.rand(80, 2) * 1000
 
 X = data[:, 0][:, np.newaxis]
 y = data[:, 1]
@@ -90,12 +89,13 @@ def test_ransac_max_trials():
                                        random_state=0)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
 
-    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
-                                       residual_threshold=5, max_trials=11,
-                                       random_state=0)
-    assert getattr(ransac_estimator, 'n_trials_', None) is None
-    ransac_estimator.fit(X, y)
-    assert_equal(ransac_estimator.n_trials_, 2)
+    for i in range(400):
+        ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                           random_state=i)
+        assert getattr(ransac_estimator, 'n_trials_', None) is None
+        ransac_estimator.fit(X, y)
+        max_trials = _dynamic_max_trials(len(X) - len(outliers), X.shape[0], X.shape[1] + 1, 1 - 1e9)
+        assert_less(ransac_estimator.n_trials_, max_trials)
 
 
 def test_ransac_stop_n_inliers():
