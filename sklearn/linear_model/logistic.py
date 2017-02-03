@@ -888,6 +888,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     y_test = y[test]
 
     if sample_weight is not None:
+        sample_weight = check_array(sample_weight, ensure_2d=False)
+        check_consistent_length(y, sample_weight)
+
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = logistic_regression_path(
