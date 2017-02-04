@@ -562,12 +562,12 @@ cdef void predict_sample(double* x_data_ptr, int* x_ind_ptr, int xnnz,
 
         prediction[class_ind] = wscale * innerprod + intercept[class_ind]
 
-cdef get_max_squared_sum(X):
-     """
-     Computes the summation of square of individual elements along each row
-     finds the maximum and return it
-     Parameters:
-     -----------
-     X : np.ndarray
-     """
-     return np.sum(X ** 2, axis=1).max()
+def get_max_squared_sum(X):
+    """
+    Computes the summation of square of individual elements along each row
+    finds the maximum and return it
+    Parameters:
+    -----------
+    X : np.ndarray
+    """
+    return np.sum(X ** 2, axis=1).max()
