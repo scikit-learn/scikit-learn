@@ -7,6 +7,7 @@
 # License: 3-clause BSD
 
 set -e
+Cache-Control: no-cache, no-store, must-revalidate, proxy-revalidate
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
