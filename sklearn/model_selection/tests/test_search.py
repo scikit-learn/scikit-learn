@@ -72,6 +72,7 @@ class MockClassifier(object):
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
+        self.classes_ = np.unique(Y)
         return self
 
     def predict(self, T):
@@ -252,6 +253,15 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+def test_grid_search_classes_parameter():
+    # Verify that the GridSearchCV can pass through the classes_ attribute
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+
+    grid_search.fit(X, y)
+    assert_array_equal(grid_search.classes_, np.unique(y))
 
 
 def test_trivial_cv_results_attr():
