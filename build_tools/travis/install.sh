@@ -21,7 +21,9 @@ export CXX=g++
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
-
+cache : 
+    before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
