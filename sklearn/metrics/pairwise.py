@@ -1183,7 +1183,7 @@ def _generate_pairwise_distances_blockwise(X, Y=None, metric='euclidean',
 
 
 def _generate_pairwise_distances_reduce(X, Y=None, metric='euclidean',
-                                        n_jobs=1, reduce_func=None,
+                                        reduce_func=None, n_jobs=1,
                                         block_size=DEFAULT_BLOCK_SIZE,
                                         block_n_rows=1, **kwds):
     if metric != 'precomputed' and Y is None:
@@ -1197,9 +1197,8 @@ def _generate_pairwise_distances_reduce(X, Y=None, metric='euclidean',
             yield reduce_func(dist=dist)
 
 
-def pairwise_distances_reduce(X, Y=None, metric='euclidean', n_jobs=1,
-                              reduce_func=None, block_size=DEFAULT_BLOCK_SIZE,
-                              **kwds):
+def pairwise_distances_reduce(X, Y=None, metric='euclidean', reduce_func=None,
+                              n_jobs=1, block_size=DEFAULT_BLOCK_SIZE, **kwds):
     if (metric not in _VALID_METRICS and
             not callable(metric) and metric != "precomputed"):
         raise ValueError("Unknown metric %s. "
