@@ -330,18 +330,6 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     centroids or can be provided as input to another clustering algorithm
     such as `AgglomerativeClustering`.
 
-    The tree data-structure consists of nodes with each node consisting of
-    a number of subclusters. The maximum number of subclusters in a node
-    is determined by the branching factor. Each subcluster maintains a
-    linear sum, squared sum and the number of samples in that subcluster.
-    In addition, each subcluster can also have a node as its child, if the
-    subcluster is not a member of a leaf node.
-
-    For a new point entering the root, it is merged with the subcluster closest
-    to it and the linear sum, squared sum and the number of samples of that
-    subcluster are updated. This is done recursively till the properties of
-    the leaf node are updated.
-
     Read more in the :ref:`User Guide <birch>`.
 
     Parameters
@@ -420,6 +408,20 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm
       https://code.google.com/archive/p/jbirch
+
+    Notes
+    -----
+    The tree data-structure consists of nodes with each node consisting of
+    a number of subclusters. The maximum number of subclusters in a node
+    is determined by the branching factor. Each subcluster maintains a
+    linear sum, squared sum and the number of samples in that subcluster.
+    In addition, each subcluster can also have a node as its child, if the
+    subcluster is not a member of a leaf node.
+
+    For a new point entering the root, it is merged with the subcluster closest
+    to it and the linear sum, squared sum and the number of samples of that
+    subcluster are updated. This is done recursively till the properties of
+    the leaf node are updated.
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
