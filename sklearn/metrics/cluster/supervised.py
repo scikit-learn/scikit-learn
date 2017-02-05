@@ -51,7 +51,7 @@ def check_clusterings(labels_true, labels_pred):
     return labels_true, labels_pred
 
 
-def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
+def contingency_matrix(labels_true, labels_pred = None, eps=None, sparse=False):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -85,18 +85,26 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
 
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
-
-    classes, class_idx = np.unique(labels_true, return_inverse=True)
-    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
-    n_classes = classes.shape[0]
-    n_clusters = clusters.shape[0]
-    # Using coo_matrix to accelerate simple histogram calculation,
-    # i.e. bins are consecutive integers
-    # Currently, coo_matrix is faster than histogram2d for simple cases
-    contingency = sp.coo_matrix((np.ones(class_idx.shape[0]),
-                                 (class_idx, cluster_idx)),
-                                shape=(n_classes, n_clusters),
-                                dtype=np.int)
+    
+    if labels_pred is None:
+        contingency = labels_true
+        contingency = check_array(contingency,
+                                  accept_sparse = True,
+                                  dtype=[int, np.int32, np.int64])
+        if not sp.issparse(contingency):
+            contingency = sp.csr_matrix(contingency)
+    else :    
+        classes, class_idx = np.unique(labels_true, return_inverse=True)
+        clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
+        n_classes = classes.shape[0]
+        n_clusters = clusters.shape[0]
+        # Using coo_matrix to accelerate simple histogram calculation,
+        # i.e. bins are consecutive integers
+        # Currently, coo_matrix is faster than histogram2d for simple cases
+        contingency = sp.coo_matrix((np.ones(class_idx.shape[0]),
+                                     (class_idx, cluster_idx)),
+                                    shape=(n_classes, n_clusters),
+                                    dtype=np.int)
     if sparse:
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
@@ -110,7 +118,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
 
 # clustering measures
 
-def adjusted_rand_score(labels_true, labels_pred):
+def adjusted_rand_score(labels_true, labels_pred = None):
     """Rand index adjusted for chance.
 
     The Rand Index computes a similarity measure between two clusterings
@@ -191,21 +199,32 @@ def adjusted_rand_score(labels_true, labels_pred):
     adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
-    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples = labels_true.shape[0]
-    n_classes = np.unique(labels_true).shape[0]
-    n_clusters = np.unique(labels_pred).shape[0]
+    if labels_pred is None:
+        # labels_true is actually contingency
+        contingency = check_array(labels_true,
+                                  accept_sparse= True,
+                                  dtype=[int, np.int32, np.int64])
+        if not sp.issparse(contingency):
+            contingency = sp.csr_matrix(contingency)
+        n_samples = contingency.sum()    
 
-    # Special limit cases: no clustering since the data is not split;
-    # or trivial clustering where each document is assigned a unique cluster.
-    # These are perfect matches hence return 1.0.
-    if (n_classes == n_clusters == 1 or
-            n_classes == n_clusters == 0 or
-            n_classes == n_clusters == n_samples):
-        return 1.0
+    else:
+        labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+        n_samples = labels_true.shape[0]
+        n_classes = np.unique(labels_true).shape[0]
+        n_clusters = np.unique(labels_pred).shape[0]
 
-    # Compute the ARI using the contingency data
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+        # Special limit cases: no clustering since the data is not split;
+        # or trivial clustering where each document is assigned a unique cluster.
+        # These are perfect matches hence return 1.0.
+        if (n_classes == n_clusters == 1 or
+                n_classes == n_clusters == 0 or
+                n_classes == n_clusters == n_samples):
+            return 1.0
+
+        # Compute the ARI using the contingency data
+        contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    
     sum_comb_c = sum(comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
@@ -787,7 +806,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     return nmi
 
 
-def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred = None, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
@@ -849,13 +868,25 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
            <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
-    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples, = labels_true.shape
+    
+    if labels_pred is None:
+        # labels_true is actually contingency
+        contingency = check_array(labels_true,
+                                  accept_sparse= True,
+                                  dtype=[int, np.int32, np.int64])
+        if not sp.issparse(contingency):
+            contingency = sp.csr_matrix(contingency)
+        n_samples = contingency.sum()
 
-    c = contingency_matrix(labels_true, labels_pred, sparse=True)
-    tk = np.dot(c.data, c.data) - n_samples
-    pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
-    qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
+
+    else:
+        labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+        n_samples, = labels_true.shape
+
+    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    tk = np.dot(contingency.data, contingency.data) - n_samples
+    pk = np.sum(np.asarray(contingency.sum(axis=0)).ravel() ** 2) - n_samples
+    qk = np.sum(np.asarray(contingency.sum(axis=1)).ravel() ** 2) - n_samples
     return tk / np.sqrt(pk * qk) if tk != 0. else 0.
 
 
