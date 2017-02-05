@@ -48,6 +48,9 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
+- `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
+  algorithms instead of gridsearch in scikit-learn.
+
 **Model inspection and visualisation**
 
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
@@ -57,6 +60,8 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
+- `Fast svmlight / libsvm file loader <https://github.com/mblondel/svmlight-loader>`_
+  Fast and memory-efficient svmlight / libsvm file loader for Python.
 
 **Model export for production**
 
@@ -121,6 +126,10 @@ and tasks.
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to
   build and train neural networks in Theano.
 
+- `Extreme Learning Machines <https://github.com/dclambert/Python-ELM>`_
+  Implementation of ELM (random layer + ridge) with a scikit-learn compatible
+  interface.
+
 **Broad scope**
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
@@ -150,6 +159,17 @@ and tasks.
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic
   regression on multidimensional features.
 
+- `libOPF <https://github.com/LibOPF/LibOPF>`_ Optimal path forest classifier
+
+- `pyensemble <https://github.com/dclambert/pyensemble>`_ An implementation of
+  Caruana et al's Ensemble Selection algorithm in Python, based on scikit-learn
+
+- `random-output-trees <https://github.com/arjoly/random-output-trees>`_
+  Multi-output random forest on randomised output space
+
+- `fastFM <https://github.com/ibayer/fastFM>`_ Fast factorization machine
+  implementation compatible with scikit-learn
+
 **Decomposition and clustering**
 
 - `lda <https://github.com/ariddell/lda/>`_: Fast implementation of latent
@@ -173,6 +193,9 @@ and tasks.
 - `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
+
+- `pyIPCA <https://github.com/pickle27/pyIPCA>`_ Incremental Principal
+  Component Analysis
 
 Statistical learning with Python
 --------------------------------
@@ -199,6 +222,9 @@ Other packages useful for data analysis and machine learning.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
+
+- `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_ scikit-learn
+  compatible wrapper around the GLM module in statsmodel.
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
