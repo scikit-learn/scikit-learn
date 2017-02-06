@@ -102,14 +102,12 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if (self.base_estimator is None or
                 isinstance(self.base_estimator, (BaseDecisionTree,
                                                  BaseForest))):
-            dtype = DTYPE
             accept_sparse = 'csc'
         else:
-            dtype = None
             accept_sparse = ['csr', 'csc']
 
-        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype,
-                         y_numeric=is_regressor(self))
+        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=None,
+                         allow_nd=True, y_numeric=is_regressor(self))
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
