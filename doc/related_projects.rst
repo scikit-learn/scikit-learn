@@ -29,6 +29,9 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
 
+- `pyensemble <https://github.com/dclambert/pyensemble>`_ An implementation of
+  Caruana et al's Ensemble Selection algorithm in Python, based on scikit-learn
+
 **Experimentation frameworks**
 
 - `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
@@ -161,14 +164,14 @@ and tasks.
 
 - `libOPF <https://github.com/LibOPF/LibOPF>`_ Optimal path forest classifier
 
-- `pyensemble <https://github.com/dclambert/pyensemble>`_ An implementation of
-  Caruana et al's Ensemble Selection algorithm in Python, based on scikit-learn
-
 - `random-output-trees <https://github.com/arjoly/random-output-trees>`_
-  Multi-output random forest on randomised output space
+  Randomized output tree for multilabel / multi-output regression tasks
 
 - `fastFM <https://github.com/ibayer/fastFM>`_ Fast factorization machine
   implementation compatible with scikit-learn
+
+- `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_ scikit-learn
+  compatible wrapper around the GLM module in statsmodel.
 
 **Decomposition and clustering**
 
@@ -197,6 +200,9 @@ and tasks.
 - `pyIPCA <https://github.com/pickle27/pyIPCA>`_ Incremental Principal
   Component Analysis
 
+- `scikit-protopy <https://github.com/dvro/scikit-protopy>`_ scikit-learn
+  compatible prototype selection and generation algorithms.
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
@@ -222,9 +228,6 @@ Other packages useful for data analysis and machine learning.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
-
-- `glm-sklearn <https://github.com/jcrudy/glm-sklearn>`_ scikit-learn
-  compatible wrapper around the GLM module in statsmodel.
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -278,6 +281,3 @@ Code snippets that do not follow the fit / predict / transform API.
 
 - Generating data with `non-parametric Gaussian mixture models <https://gist.github.com/2011426>`_
   Useful if you need "random" data that should have non-trivial structure.
-
-- `scikit-protopy <https://github.com/dvro/scikit-protopy>`_ scikit-learn
-  compatible prototype selection and generation algorithms.
