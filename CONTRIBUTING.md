@@ -79,7 +79,8 @@ following rules before you submit a pull request:
 
 -  Please prefix the title of your pull request with `[MRG]` (Ready for
    Merge), if the contribution is complete and ready for a detailed review.
-   Incomplete contributions should be prefixed `[WIP]` (to indicate a work
+   An incomplete contribution -- where you expect to do more work before
+   receiving a full review -- should be prefixed `[WIP]` (to indicate a work
    in progress) and changed to `[MRG]` when it matures. WIPs may be useful
    to: indicate you are working on something to avoid duplicated work,
    request broad review of functionality or API, or seek collaborators.
