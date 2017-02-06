@@ -13,8 +13,6 @@ from sklearn.linear_model import (LogisticRegression, SGDClassifier)
 from sklearn.datasets import fetch_rcv1
 from sklearn.linear_model.sag import get_auto_step_size
 
-
-
 try:
     import lightning.classification as lightning_clf
 except ImportError:
@@ -140,14 +138,9 @@ def plot_dloss(clfs):
         plt.xlabel("seconds")
         plt.ylabel("log(best - train_loss)")
 
+
 def get_max_squared_sum(X):
-    """
-    Computes the summation of square of individual elements along each row
-    finds the maximum and return it
-    Parameters:
-    -----------
-    X : np.ndarray
-    """
+    """Get the maximum row-wise sum of squares"""
     return np.sum(X ** 2, axis=1).max()
 
 rcv1 = fetch_rcv1()
