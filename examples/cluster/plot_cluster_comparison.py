@@ -40,7 +40,13 @@ noisy_circles = datasets.make_circles(n_samples=n_samples, factor=.5,
                                       noise=.05)
 noisy_moons = datasets.make_moons(n_samples=n_samples, noise=.05)
 blobs = datasets.make_blobs(n_samples=n_samples, random_state=8)
+gaussians = np.concatenate([
+    np.multiply(np.random.randn(n_samples/3, 2), 10),
+    np.add(np.random.randn(n_samples/3, 2), (10,10)),
+    np.add(np.random.randn(n_samples/3,2), (-5, -5)),
+    ]), None
 no_structure = np.random.rand(n_samples, 2), None
+
 
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 20)
@@ -56,7 +62,7 @@ plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
 
 plot_num = 1
 
-datasets = [noisy_circles, noisy_moons, blobs, no_structure]
+datasets = [noisy_circles, noisy_moons, blobs, gaussians, no_structure]
 for i_dataset, dataset in enumerate(datasets):
     X, y = dataset
     # normalize dataset for easier parameter selection
@@ -102,7 +108,7 @@ for i_dataset, dataset in enumerate(datasets):
             y_pred = algorithm.predict(X)
 
         # plot
-        plt.subplot(4, len(clustering_algorithms), plot_num)
+        plt.subplot(5, len(clustering_algorithms), plot_num)
         if i_dataset == 0:
             plt.title(name, size=18)
         plt.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist(), s=10)
