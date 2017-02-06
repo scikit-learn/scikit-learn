@@ -1186,7 +1186,7 @@ def pairwise_distances_reduce(X, Y=None, metric='euclidean', reduce_func=None,
                               n_jobs=1, block_size=DEFAULT_BLOCK_SIZE, **kwds):
 
     return [reduce_func(dist=D) for D in pairwise_distances_blockwise(X,
-        Y, metric, n_jobs, block_size, **kwds)]
+            Y, metric, n_jobs, block_size, **kwds)]
 
 
 def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
