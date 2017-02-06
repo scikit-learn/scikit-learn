@@ -1182,45 +1182,11 @@ def _generate_pairwise_distances_blockwise(X, Y=None, metric='euclidean',
         yield pairwise_distances(X[start:stop], Y, metric, n_jobs, **kwds)
 
 
-def _generate_pairwise_distances_reduce(X, Y=None, metric='euclidean',
-                                        reduce_func=None, n_jobs=1,
-                                        block_size=DEFAULT_BLOCK_SIZE,
-                                        block_n_rows=1, **kwds):
-    if metric != 'precomputed' and Y is None:
-        Y = X
-    n_samples = X.shape[0]
-    if reduce_func:
-        for start in range(0, n_samples, block_n_rows):
-            # get distances from block to every other sample
-            stop = min(start + block_n_rows, X.shape[0])
-            dist = pairwise_distances(X[start:stop], Y, metric, n_jobs, **kwds)
-            yield reduce_func(dist=dist)
-
-
 def pairwise_distances_reduce(X, Y=None, metric='euclidean', reduce_func=None,
                               n_jobs=1, block_size=DEFAULT_BLOCK_SIZE, **kwds):
-    if (metric not in _VALID_METRICS and
-            not callable(metric) and metric != "precomputed"):
-        raise ValueError("Unknown metric %s. "
-                         "Valid metrics are %s, or 'precomputed', or a "
-                         "callable" % (metric, _VALID_METRICS))
 
-    n_samples = X.shape[0]
-    block_n_rows = block_size * (2 ** 20) // (BYTES_PER_FLOAT * n_samples)
-    if block_n_rows > n_samples:
-        block_n_rows = min(block_n_rows, n_samples)
-    if block_n_rows < 1:
-        min_block_mib = np.ceil(n_samples * BYTES_PER_FLOAT * 2 ** -20)
-        raise ValueError('block_size should be at least n_samples * %d bytes '
-                         '= %.0f MiB, got %r' % (BYTES_PER_FLOAT,
-                                                 min_block_mib, block_size))
-
-    return _generate_pairwise_distances_reduce(X, Y, metric=metric,
-                                               n_jobs=n_jobs,
-                                               reduce_func=reduce_func,
-                                               block_size=block_size,
-                                               block_n_rows=block_n_rows,
-                                               **kwds)
+    return [reduce_func(dist=D) for D in pairwise_distances_blockwise(X,
+        Y, metric, n_jobs, block_size, **kwds)]
 
 
 def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,

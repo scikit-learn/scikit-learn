@@ -270,7 +270,6 @@ class KNeighborsMixin(object):
 
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
-
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
@@ -363,10 +362,13 @@ class KNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
                     reduce_func=reduce_func, block_size=1,
                     **self.effective_metric_params_)
-            result = np.hstack(list(result))
+
             if return_distance:
-                dist, neigh_ind = result[0], np.array(result[1], dtype=np.int)
+                result = np.hstack(result)
+                dist, neigh_ind = result[0], result[1].astype(np.int)
                 result = dist, neigh_ind
+            else:
+                result = np.vstack(result)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -513,6 +515,29 @@ class KNeighborsMixin(object):
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
+    def reduce_func(self, radius, return_distance, dist):
+        neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
+
+        # See https://github.com/numpy/numpy/issues/5456
+        # if you want to understand why this is initialized this way.
+        neigh_ind = np.empty(dist.shape[0], dtype='object')
+        neigh_ind[:] = neigh_ind_list
+
+        if return_distance:
+            dist_array = np.empty(dist.shape[0], dtype='object')
+            if self.effective_metric_ == 'euclidean':
+                dist_list = [np.sqrt(d[neigh_ind[i]])
+                             for i, d in enumerate(dist)]
+            else:
+                dist_list = [d[neigh_ind[i]]
+                             for i, d in enumerate(dist)]
+            dist_array[:] = dist_list
+
+            results = dist_array, neigh_ind
+        else:
+            results = neigh_ind
+        return results
+
     def radius_neighbors(self, X=None, radius=None, return_distance=True):
         """Finds the neighbors within a given radius of a point or points.
 
@@ -610,7 +635,9 @@ class RadiusNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=self.n_jobs,
                     reduce_func=reduce_func, block_size=1,
                     **self.effective_metric_params_)
-            results = np.hstack(list(results))
+
+            results = np.hstack(results)
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -644,29 +671,6 @@ class RadiusNeighborsMixin(object):
             if return_distance:
                 return dist, neigh_ind
             return neigh_ind
-
-    def reduce_func(self, radius, return_distance, dist):
-        neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
-
-        # See https://github.com/numpy/numpy/issues/5456
-        # if you want to understand why this is initialized this way.
-        neigh_ind = np.empty(dist.shape[0], dtype='object')
-        neigh_ind[:] = neigh_ind_list
-
-        if return_distance:
-            dist_array = np.empty(dist.shape[0], dtype='object')
-            if self.effective_metric_ == 'euclidean':
-                dist_list = [np.sqrt(d[neigh_ind[i]])
-                             for i, d in enumerate(dist)]
-            else:
-                dist_list = [d[neigh_ind[i]]
-                             for i, d in enumerate(dist)]
-            dist_array[:] = dist_list
-
-            results = dist_array, neigh_ind
-        else:
-            results = neigh_ind
-        return results
 
     def radius_neighbors_graph(self, X=None, radius=None, mode='connectivity'):
         """Computes the (weighted) graph of Neighbors for points in X
