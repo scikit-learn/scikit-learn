@@ -915,7 +915,7 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def run_cross_val_predict_with_method(est):
+def check_cross_val_predict_with_method(est):
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
@@ -955,14 +955,14 @@ def run_cross_val_predict_with_method(est):
 
 
 def test_cross_val_predict_with_method():
-    run_cross_val_predict_with_method(LogisticRegression())
+    check_cross_val_predict_with_method(LogisticRegression())
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
     est = GridSearchCV(LogisticRegression(random_state=42),
                        {'C': [0.1, 1]},
                        cv=2)
-    run_cross_val_predict_with_method(est)
+    check_cross_val_predict_with_method(est)
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
