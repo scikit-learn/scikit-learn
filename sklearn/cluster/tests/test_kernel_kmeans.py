@@ -2,11 +2,13 @@
 import sys
 
 import numpy as np
+from contextlib import contextmanager
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_not_equal
 
 from sklearn.cluster import KernelKMeans
 from sklearn.datasets.samples_generator import make_blobs
@@ -83,9 +85,17 @@ def test_kernel_kmeans_max_iter():
 
 def test_kernel_kmeans_verbose():
     clf = KernelKMeans(n_clusters=n_clusters, random_state=42, verbose=1)
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
+
+    @contextmanager
+    def capture_output():
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            yield sys.stdout
+        finally:
+            sys.stdout = old_stdout
+
+    with capture_output() as out:
         clf.fit(X)
-    finally:
-        sys.stdout = old_stdout
+        output = out.getvalue().strip()
+        assert_not_equal(output, '')

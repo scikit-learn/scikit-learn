@@ -63,8 +63,9 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    kernel_params : optional
-        Additional kernel parameters.
+    kernel_params : dict, optional
+        Additional kernel parameters that are only referenced when the
+        kernel is a callable.
 
     random_state : int seed, RandomState instance, or None (default=None)
         The seed of the pseudo random number generator to use when
@@ -132,9 +133,17 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
         if callable(self.kernel):
             params = self.kernel_params or {}
         else:
-            params = {"gamma": self.gamma,
-                      "degree": self.degree,
-                      "coef0": self.coef0}
+            if self.gamma == 'auto':
+                params = {
+                    "degree": self.degree,
+                    "coef0": self.coef0
+                }
+            else:
+                params = {
+                    "gamma": self.gamma,
+                    "degree": self.degree,
+                    "coef0": self.coef0
+                }
         return pairwise_kernels(X, Y, metric=self.kernel,
                                 filter_params=True, **params)
 
