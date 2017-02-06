@@ -40,11 +40,10 @@ noisy_circles = datasets.make_circles(n_samples=n_samples, factor=.5,
                                       noise=.05)
 noisy_moons = datasets.make_moons(n_samples=n_samples, noise=.05)
 blobs = datasets.make_blobs(n_samples=n_samples, random_state=8)
-gaussians = np.concatenate([
-    np.multiply(np.random.randn(n_samples/3, 2), 10),
-    np.add(np.random.randn(n_samples/3, 2), (10,10)),
-    np.add(np.random.randn(n_samples/3,2), (-5, -5)),
-    ]), None
+gaussians = np.concatenate([np.multiply(np.random.randn(n_samples / 3, 2), 10),
+                            np.add(np.random.randn(n_samples / 3, 2), (10,10)),
+                            np.add(np.random.randn(n_samples / 3, 2), (-5, -5))
+                            ]), None
 no_structure = np.random.rand(n_samples, 2), None
 
 
