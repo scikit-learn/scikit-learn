@@ -325,10 +325,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """Implements the Birch clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an alternative
-    to MiniBatchKMeans. It constructs a tree data-structure with the cluster
+    to :class:`MiniBatchKMeans`. It constructs a tree data-structure with the cluster
     centroids being read off the leaf. These can be either the final cluster
     centroids or can be provided as input to another clustering algorithm
-    such as `AgglomerativeClustering`.
+    such as :class:`AgglomerativeClustering`.
 
     Read more in the :ref:`User Guide <birch>`.
 
@@ -337,7 +337,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     threshold : float, default 0.5
         The radius of the subcluster obtained by merging a new sample and the
         closest subcluster should be lesser than the threshold. Otherwise a new
-        subcluster is started. Setting this value to be very low, promotes
+        subcluster is started. Setting this value to be very low promotes
         splitting and vice-versa.
 
     branching_factor : int, default 50
@@ -351,14 +351,15 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
-        "None" : the final clustering step is not performed and the subclusters are
-        returned as they are.
+        - `None` : the final clustering step is not performed and the subclusters
+          are returned as they are.
 
-        "sklearn.cluster" Estimator: If a model is provided, the model is fit
-        treating the subclusters as new samples and the initial data is mapped to the
-        label of the closest subcluster.
+        - `sklearn.cluster` Estimator : If a model is provided, the model is fit
+          treating the subclusters as new samples and the initial data is mapped
+          to the label of the closest subcluster.
 
-        "int" : the model fit is AgglomerativeClustering with n_clusters set to the int.
+        - `int` : the model fit is :class:`AgglomerativeClustering` with
+          `n_clusters` set to be equal to the int.
 
     compute_labels : bool, default True
         Whether or not to compute labels for each fit.
@@ -411,7 +412,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     Notes
     -----
-    The tree data-structure consists of nodes with each node consisting of
+    The tree data structure consists of nodes with each node consisting of
     a number of subclusters. The maximum number of subclusters in a node
     is determined by the branching factor. Each subcluster maintains a
     linear sum, squared sum and the number of samples in that subcluster.
