@@ -175,10 +175,9 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
 
         rs = check_random_state(self.random_state)
 
+        sw = sample_weight if sample_weight is not None else np.ones(n_samples)
+        self.sample_weight_ = sw
         for i in xrange(self.n_init):
-            sw = sample_weight if sample_weight else np.ones(n_samples)
-            self.sample_weight_ = sw
-
             self.labels_ = rs.randint(self.n_clusters, size=n_samples)
 
             dist = np.zeros((n_samples, self.n_clusters))
