@@ -234,7 +234,7 @@ def adjusted_rand_score(labels_true, labels_pred = None):
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
-def homogeneity_completeness_v_measure(labels_true, labels_pred):
+def homogeneity_completeness_v_measure(labels_true, labels_pred = None):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
@@ -285,15 +285,26 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     completeness_score
     v_measure_score
     """
-    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+    if labels_pred is None:
+        # labels_true is actually contingency
+        contingency = check_array(labels_true,
+                                  accept_sparse= True,
+                                  dtype=[int, np.int32, np.int64])
+        if not sp.issparse(contingency):
+            contingency = sp.csr_matrix(contingency)
+        entropy_C, entropy_K = entropy(contingency)   
 
-    if len(labels_true) == 0:
-        return 1.0, 1.0, 1.0
+    else:
+        labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
-    entropy_C = entropy(labels_true)
-    entropy_K = entropy(labels_pred)
+        if len(labels_true) == 0:
+            return 1.0, 1.0, 1.0
 
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+        entropy_C = entropy(labels_true)
+        entropy_K = entropy(labels_pred)
+
+        contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+    
     MI = mutual_info_score(None, None, contingency=contingency)
 
     homogeneity = MI / (entropy_C) if entropy_C else 1.0
@@ -308,7 +319,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     return homogeneity, completeness, v_measure_score
 
 
-def homogeneity_score(labels_true, labels_pred):
+def homogeneity_score(labels_true, labels_pred = None):
     """Homogeneity metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies homogeneity if all of its clusters
@@ -382,7 +393,7 @@ def homogeneity_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
 
 
-def completeness_score(labels_true, labels_pred):
+def completeness_score(labels_true, labels_pred = None):
     """Completeness metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies completeness if all the data points
@@ -452,7 +463,7 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
-def v_measure_score(labels_true, labels_pred):
+def v_measure_score(labels_true, labels_pred = None):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score`.
