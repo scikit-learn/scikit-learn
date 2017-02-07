@@ -43,6 +43,12 @@ from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
 from . import _tree, _splitter, _criterion
 
+from ._utils import Stack
+# from ._utils import StackRecord
+# from ._utils import PriorityHeap
+# from ._utils import PriorityHeapRecord
+
+
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
            "ExtraTreeClassifier",
@@ -326,21 +332,53 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
-        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
-        if max_leaf_nodes < 0:
-            builder = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                            min_samples_leaf,
-                                            min_weight_leaf,
-                                            max_depth, self.min_impurity_split)
-        else:
-            builder = BestFirstTreeBuilder(splitter, min_samples_split,
-                                           min_samples_leaf,
-                                           min_weight_leaf,
-                                           max_depth,
-                                           max_leaf_nodes,
-                                           self.min_impurity_split)
+        # # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
+        # if max_leaf_nodes < 0:
+        #     builder = DepthFirstTreeBuilder(splitter, min_samples_split,
+        #                                     min_samples_leaf,
+        #                                     min_weight_leaf,
+        #                                     max_depth,
+        #                                     self.min_impurity_split)
+        # else:
+        #     builder = BestFirstTreeBuilder(splitter, min_samples_split,
+        #                                    min_samples_leaf,
+        #                                    min_weight_leaf,
+        #                                    max_depth,
+        #                                    max_leaf_nodes,
+        #                                    self.min_impurity_split)
 
-        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+        # builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+
+        # import our new type of data
+        from splitter import NewSplitter
+
+        # initialize the number of splitter
+        nb_splitter = 1
+        last_id_node = 0
+
+        # Create an array which will affect a sample to its current node
+        X_nid = np.zeros(y.shape)
+
+        # # Create the root node
+        # stack = Stack(nb_splitter)
+        # rc = stack.push(0, n_samples, 0, -2, 0, np.inf, 0)
+
+        # Loop over the feature of X
+        for X_col in X_idx_sorted:
+            # we need to dispatch each ordered samples in X
+            # X need to be ordered
+            # weighted_n_samples = reduce(lambda x, y: x + y
+            #                             if y is not None else x,
+            #                             sample_weight)
+            splitter_list = [NewSplitter(X, y, sample_weight,
+                                         weighted_n_samples,
+                                         last_id_node + current_id_inc,
+                                         min_samples_leaf,
+                                         min_weight_leaf)
+                             for current_id_inc in range(nb_splitter)]
+            for sample_idx_sorted, sample_nid in zip(X_idx_sorted, X_nid):
+                splitter_list[sample_nid].node_evaluate_split(
+                    sample_idx_sorted)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
