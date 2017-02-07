@@ -240,7 +240,7 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
         update_within : {true, false}
             To update within_distances or not.
         """
-        sw = self.sample_weight_
+        sw = np.array(self.sample_weight_)
         for j in xrange(self.n_clusters):
             mask = self.labels_ == j
 
