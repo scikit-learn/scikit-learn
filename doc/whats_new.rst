@@ -227,6 +227,14 @@ API changes summary
 Version 0.18.1
 ==============
 
+**November 11, 2016**
+
+.. topic:: Last release with Python 2.6 support
+
+    Scikit-learn 0.18 is the last major release of scikit-learn to support Python 2.6.
+    Later versions of scikit-learn will require Python 2.7 or above.
+
+
 Changelog
 ---------
 
