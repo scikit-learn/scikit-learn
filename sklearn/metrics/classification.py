@@ -18,7 +18,6 @@ the lower the better
 #          Jatin Shah <jatindshah@gmail.com>
 #          Saurabh Jha <saurabh.jhaa@gmail.com>
 #          Bernardo Stein <bernardovstein@gmail.com>
-#          Victor Poughon <victor.poughon@cnes.fr>
 # License: BSD 3 clause
 
 from __future__ import division
