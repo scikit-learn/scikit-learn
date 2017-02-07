@@ -349,7 +349,8 @@ class KNeighborsMixin(object):
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
 
-            reduce_func = partial(self._reduce_func, n_neighbors=n_neighbors,
+            reduce_func = partial(self._kneighbors_reduce_func,
+                                  n_neighbors=n_neighbors,
                                   return_distance=return_distance)
 
             # for efficiency, use squared euclidean distances
@@ -417,7 +418,7 @@ class KNeighborsMixin(object):
                 return dist, neigh_ind
             return neigh_ind
 
-    def _reduce_func(self, n_neighbors, return_distance, dist):
+    def _kneighbors_reduce_func(self, dist, n_neighbors, return_distance):
         sample_range = np.arange(dist.shape[0])[:, None]
         neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
         neigh_ind = neigh_ind[:, :n_neighbors]
@@ -515,7 +516,7 @@ class KNeighborsMixin(object):
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
-    def reduce_func(self, radius, return_distance, dist):
+    def _radius_neighbors_reduce_func(self, dist, radius, return_distance):
         neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
 
         # See https://github.com/numpy/numpy/issues/5456
@@ -621,14 +622,16 @@ class RadiusNeighborsMixin(object):
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 radius *= radius
-                reduce_func = partial(self.reduce_func, radius=radius,
+                reduce_func = partial(self._radius_neighbors_reduce_func,
+                                      radius=radius,
                                       return_distance=return_distance)
 
                 results = pairwise_distances_reduce(
                     X, self._fit_X, 'euclidean', n_jobs=self.n_jobs,
                     reduce_func=reduce_func, block_size=1, squared=True)
             else:
-                reduce_func = partial(self.reduce_func, radius=radius,
+                reduce_func = partial(self._radius_neighbors_reduce_func,
+                                      radius=radius,
                                       return_distance=return_distance)
 
                 results = pairwise_distances_reduce(
