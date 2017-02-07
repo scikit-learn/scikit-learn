@@ -324,11 +324,11 @@ class _CFSubcluster(object):
 class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """Implements the Birch clustering algorithm.
 
-    It is a memory-efficient, online-learning algorithm provided as an alternative
-    to :class:`MiniBatchKMeans`. It constructs a tree data-structure with the cluster
-    centroids being read off the leaf. These can be either the final cluster
-    centroids or can be provided as input to another clustering algorithm
-    such as :class:`AgglomerativeClustering`.
+    It is a memory-efficient, online-learning algorithm provided as an
+    alternative to :class:`MiniBatchKMeans`. It constructs a tree
+    data structure with the cluster centroids being read off the leaf.
+    These can be either the final cluster centroids or can be provided as input
+    to another clustering algorithm such as :class:`AgglomerativeClustering`.
 
     Read more in the :ref:`User Guide <birch>`.
 
@@ -351,12 +351,12 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
-        - `None` : the final clustering step is not performed and the subclusters
-          are returned as they are.
+        - `None` : the final clustering step is not performed and the
+          subclusters are returned as they are.
 
-        - `sklearn.cluster` Estimator : If a model is provided, the model is fit
-          treating the subclusters as new samples and the initial data is mapped
-          to the label of the closest subcluster.
+        - `sklearn.cluster` Estimator : If a model is provided, the model is
+          fit treating the subclusters as new samples and the initial data is
+          mapped to the label of the closest subcluster.
 
         - `int` : the model fit is :class:`AgglomerativeClustering` with
           `n_clusters` set to be equal to the int.
