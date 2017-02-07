@@ -890,14 +890,28 @@ def fowlkes_mallows_score(labels_true, labels_pred = None, sparse=False):
     return tk / np.sqrt(pk * qk) if tk != 0. else 0.
 
 
-def entropy(labels):
+def entropy(data):
     """Calculates the entropy for a labeling."""
-    if len(labels) == 0:
-        return 1.0
-    label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = bincount(label_idx).astype(np.float64)
-    pi = pi[pi > 0]
-    pi_sum = np.sum(pi)
-    # log(a / b) should be calculated as log(a) - log(b) for
-    # possible loss of precision
-    return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
+    if data.ndim == 2:
+        pi_true, pi_pred = (data.sum(axis=1).ravel().astype(np.float64) ,
+                         data.sum(axis=0).ravel().astype(np.float64))
+    
+        pi_true = pi_true[pi_true>0]
+        pi_pred = pi_pred[pi_pred>0]
+        pi_sum = data.sum()
+        
+        # return entropy(labels_true), entropy(labels_pred) 
+        return (-np.sum( (pi_true / pi_sum) * (np.log(pi_true) - log(pi_sum)).T ),
+              -np.sum( (pi_pred / pi_sum) * (np.log(pi_pred) - log(pi_sum)).T ) ) 
+ 
+
+    else:
+        if len(data) == 0:
+            return 1.0
+        label_idx = np.unique(data, return_inverse=True)[1]
+        pi = bincount(label_idx).astype(np.float64)
+        pi = pi[pi > 0]
+        pi_sum = np.sum(pi)
+        # log(a / b) should be calculated as log(a) - log(b) for
+        # possible loss of precision
+        return -np.sum((pi / pi_sum) * (np.log(pi) - log(pi_sum)))
