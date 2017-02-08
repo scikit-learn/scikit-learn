@@ -4,14 +4,14 @@
 
 PYTHON ?= python
 CYTHON ?= cython
-NOSETESTS ?= nosetests
+PYTEST ?= py.test
 CTAGS ?= ctags
 
 # skip doctests on 32bit python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
 
 ifeq ($(BITS),32)
-  NOSETESTS:=$(NOSETESTS) -c setup32.cfg
+  PYTEST:=$(PYTEST) -c setup32.cfg
 endif
 
 
@@ -29,21 +29,19 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(NOSETESTS) -s -v sklearn
+	$(PYTEST) -s -v sklearn
 test-sphinxext:
-	$(NOSETESTS) -s -v doc/sphinxext/
+	$(PYTEST) -s -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
-	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
-	doc/tutorial/text_analytics
+	$(PYTEST) -s -v --doctest-glob='*.rst'
 endif
 
 test-coverage:
 	rm -rf coverage .coverage
-	$(NOSETESTS) -s -v --with-coverage sklearn
+	$(PYTEST) -s -v --cov=sklearn
 
-test: test-code test-sphinxext test-doc
+test: test-code test-doc
 
 trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
