@@ -124,12 +124,12 @@ Caching transformers: avoid repeated computation
 
 .. currentmodule:: sklearn.pipeline
 
-Fitting transformers may sometimes be computational expensive. With its
+Fitting transformers may be computationally expensive. With its
 ``memory`` parameter set, :class:`Pipeline` will cache each transformer
 after calling ``fit``.
 This feature is used to avoid computing the fit transformers within a pipeline
 if the parameters and input data are identical. A typical example is the case of
-a grid search in which the transformers can be fitted only once and reuse for
+a grid search in which the transformers can be fitted only once and reused for
 each configuration.
 
 The parameter ``memory`` is needed in order to cache the transformers.
@@ -154,8 +154,8 @@ object::
 
 .. warning:: **Side effect of caching transfomers**
 
-   Using a :class:`Pipeline` without cache enabled, this is possible to
-   introspect the original instance such as::
+   Using a :class:`Pipeline` without cache enabled, it is possible to
+   inspect the original instance such as::
 
      >>> from sklearn.datasets import load_digits
      >>> digits = load_digits()
@@ -166,19 +166,18 @@ object::
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
      Pipeline(memory=None,
               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
-     >>> # The pca instance can be introspected directly
+     >>> # The pca instance can be inspected directly
      >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[ -1.77484909e-19  ... 4.07058917e-18]]
 
    Enabling caching triggers a clone of the transformers before fitting.
    Therefore, the transformer instance given to the pipeline cannot be
-   introspected directly. Use the attribute ``named_steps`` to introspect
-   estimators within the pipeline.
-
-   In this case, the :class:`PCA` instance ``pca2`` cannot be
-   introspected directly. An ``AttributeError`` error will be raised since
-   ``pca2`` will be an unfitted transformer. You need to use the attribute
-   ``named_steps`` to introspect the object::
+   inspected directly.
+   In following example, accessing the :class:`PCA` instance ``pca2``
+   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
+   transformer.
+   Instead, use the attribute ``named_steps`` to inspect estimators within
+   the pipeline::
 
      >>> cachedir = mkdtemp()
      >>> pca2 = PCA()

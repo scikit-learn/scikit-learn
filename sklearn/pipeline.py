@@ -109,13 +109,13 @@ class Pipeline(_BasePipeline):
         an estimator.
 
     memory : Instance of joblib.Memory or string, optional (default=None)
-        Used to cache the fitted transformers of the transformer of the
+        Used to caching the fitted transformers of the transformer of the
         pipeline. By default, no cache is performed.
         If a string is given, it is the path to the caching directory.
         Enabling caching triggers a clone of the transformers before fitting.
         Therefore, the transformer instance given to the pipeline cannot be
-        introspected directly. Use the attribute ``named_steps`` to introspect
-        estimators within the pipeline.
+        inspected directly. Use the attribute ``named_steps`` or ``steps``
+        to inspect estimators within the pipeline.
         Caching the transformers is advantageous when fitting is time
         consuming.
 

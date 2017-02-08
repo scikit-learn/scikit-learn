@@ -834,7 +834,7 @@ def test_pipeline_wrong_memory():
                         cached_pipe.fit, X, y)
 
 
-def test_cached_pipeline():
+def test_pipeline_memory():
     iris = load_iris()
     X = iris.data
     y = iris.target
