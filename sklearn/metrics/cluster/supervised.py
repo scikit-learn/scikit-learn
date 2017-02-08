@@ -621,7 +621,8 @@ def mutual_info_score(labels_true, labels_pred = None, contingency=None):
             labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
             contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     else:
-        warnings.warn("Contingency is deprecated in 0.19 and will be removed in 0.21, to use contingency matrix pass only contingency matrix to scoring function", DeprecationWarning)
+        warnings.warn("Contingency is deprecated in 0.19 and will be removed in 0.21,"+
+            "to use contingency matrix pass only contingency matrix to scoring function", DeprecationWarning)
         contingency = check_array(contingency,
                                   accept_sparse=['csr', 'csc', 'coo'],
                                   dtype=[int, np.int32, np.int64])
