@@ -214,7 +214,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The parameters that have been evaluated.
 
     diagnostic : object, optional
-        The return value of ``diagnostic_func``, or the exception raised by it
+        The return value of ``diagnostic_func``
     """
     if verbose > 1:
         if parameters is None:
@@ -286,26 +286,22 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.append(parameters)
 
     if diagnostic_func is not None:
-        try:
-            dia = diagnostic_func({'estimator': estimator,
-                                   'split_idx': split_idx,
-                                   'X_train': X_train,
-                                   'y_train': y_train,
-                                   'train_score': (train_score
-                                                   if return_train_score
-                                                   else None),
-                                   'X_test': X_test,
-                                   'y_test': y_test,
-                                   'test_score': test_score,
-                                   'fit_time': fit_time,
-                                   'score_time': score_time,
-                                   'parameters': parameters,
-                                   'fit_params': fit_params,
-                                   'exception': exc})
-        except Exception as dia_exc:
-            ret.append(dia_exc)
-        else:
-            ret.append(dia)
+        dia = diagnostic_func({'estimator': estimator,
+                               'split_idx': split_idx,
+                               'X_train': X_train,
+                               'y_train': y_train,
+                               'train_score': (train_score
+                                               if return_train_score
+                                               else None),
+                               'X_test': X_test,
+                               'y_test': y_test,
+                               'test_score': test_score,
+                               'fit_time': fit_time,
+                               'score_time': score_time,
+                               'parameters': parameters,
+                               'fit_params': fit_params,
+                               'exception': exc})
+        ret.append(dia)
     return ret
 
 
