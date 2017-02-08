@@ -52,7 +52,7 @@ def test_kernel_density(n_samples=100, n_features=3):
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
                     for breadth_first in (True, False):
-                        yield (check_results, kernel, bandwidth, atol, rtol)
+                        check_results(kernel, bandwidth, atol, rtol)
 
 
 def test_kernel_density_sampling(n_samples=100, n_features=3):

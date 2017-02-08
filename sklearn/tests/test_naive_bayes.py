@@ -2,6 +2,7 @@ import pickle
 from io import BytesIO
 import numpy as np
 import scipy.sparse
+import pytest
 
 from sklearn.datasets import load_digits, load_iris
 
@@ -223,9 +224,9 @@ def check_partial_fit(cls):
     assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
-def test_discretenb_partial_fit():
-    for cls in [MultinomialNB, BernoulliNB]:
-        yield check_partial_fit, cls
+@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB])
+def test_discretenb_partial_fit(cls):
+    check_partial_fit(cls)
 
 
 def test_gnb_partial_fit():

@@ -23,7 +23,7 @@ from sklearn.base import clone
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_raises
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.random import choice
 from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_not_equal, assert_almost_equal,

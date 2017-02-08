@@ -13,24 +13,24 @@ from sklearn.utils.testing import assert_not_in
 from sklearn.utils.testing import mock_mldata_urlopen
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import with_setup
 from sklearn.utils.testing import assert_array_equal
+
+import pytest
 
 
 tmpdir = None
 
 
-def setup_tmpdata():
-    # create temporary dir
-    global tmpdir
-    tmpdir = tempfile.mkdtemp()
-    os.makedirs(os.path.join(tmpdir, 'mldata'))
-
-
-def teardown_tmpdata():
-    # remove temporary dir
-    if tmpdir is not None:
-        shutil.rmtree(tmpdir)
+@pytest.fixture
+def tmpdata():
+    try:
+        global tmpdir
+        tmpdir = tempfile.mkdtemp()
+        os.makedirs(os.path.join(tmpdir, 'mldata'))
+        yield tmpdir
+    finally:
+        if tmpdir is not None:
+            shutil.rmtree(tmpdir)
 
 
 def test_mldata_filename():
@@ -43,8 +43,7 @@ def test_mldata_filename():
         assert_equal(mldata_filename(name), desired)
 
 
-@with_setup(setup_tmpdata, teardown_tmpdata)
-def test_download():
+def test_download(tmpdata):
     """Test that fetch_mldata is able to download and cache a data set."""
 
     _urlopen_ref = datasets.mldata.urlopen
@@ -55,7 +54,7 @@ def test_download():
         },
     })
     try:
-        mock = fetch_mldata('mock', data_home=tmpdir)
+        mock = fetch_mldata('mock', data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data"]:
             assert_in(n, mock)
 
@@ -68,8 +67,7 @@ def test_download():
         datasets.mldata.urlopen = _urlopen_ref
 
 
-@with_setup(setup_tmpdata, teardown_tmpdata)
-def test_fetch_one_column():
+def test_fetch_one_column(tmpdata):
     _urlopen_ref = datasets.mldata.urlopen
     try:
         dataname = 'onecol'
@@ -92,8 +90,7 @@ def test_fetch_one_column():
         datasets.mldata.urlopen = _urlopen_ref
 
 
-@with_setup(setup_tmpdata, teardown_tmpdata)
-def test_fetch_multiple_column():
+def test_fetch_multiple_column(tmpdata):
     _urlopen_ref = datasets.mldata.urlopen
     try:
         # create fake data set in cache
