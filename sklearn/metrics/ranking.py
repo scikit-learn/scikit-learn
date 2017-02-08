@@ -417,7 +417,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
                                              sample_weight=sample_weight)
 
     precision = tps / (tps + fps)
-    recall = tps / tps[-1]
+    recall = np.ones(tps.size) if tps[-1] == 0 else tps / tps[-1]
 
     # stop when full recall attained
     # and reverse the outputs so recall is decreasing
