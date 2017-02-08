@@ -383,7 +383,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         TREE_UNDEFINED, TREE_LEAF, FEAT_UNKNOWN = -2, -1, -3  # FIXME
 
-        parent.nid = self.tree_._add_node(parent=TREE_UNDEFINED,
+        parent.nid = self.tree_._add_node_py(parent=TREE_UNDEFINED,
                                           is_left=1, is_leaf=TREE_LEAF,
                                           feature=FEAT_UNKNOWN,
                                           threshold=TREE_UNDEFINED,
@@ -391,17 +391,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                           n_node_samples=n_samples,
                                           weighted_n_node_samples=weighted_n_samples)
 
-        parent_split_map = {parent.nid, parent}
+        parent_split_map = {parent.nid: parent}
 
         while current_depth < max_depth:
             # FIXME: shuffle and select ``max_features`` feats
-            expandable_nids = np.unique(X_nid[X_nid != -1])
+            expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
 
             n_splitters = expandable_nids.size
             curr_n_splitters = len(splitter_list)
 
             splitter_list += [NewSplitter(X, y, sample_weight,
-                                          FEAT_UNKNOWN, UNDEFINED,
+                                          FEAT_UNKNOWN, TREE_UNDEFINED,
                                           weighted_n_samples,
                                           parent_split_map[nid],
                                           min_samples_leaf,
@@ -421,77 +421,92 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     splitter_list[i].reset(feat_i, X_col[0],
                                            parent_split_map[nid])
 
+                    print("for nid %d, the parent n_samples" % nid,
+                          parent_split_map[nid].n_samples)
+
+                print("\ncurrently searching feat - ", feat_i)
                 # Update all the splitters for current feature
                 # for the expandable nodes (at current depth)
-                for sample_idx_sorted, sample_nid in zip(X_col, X_nid):
+                for sample_idx_sorted, splitter_id in zip(X_col, X_nid):
                     # check that the sample value are different enough
-                    splitter_map[sample_nid].node_evaluate_split(
+                    splitter_map[splitter_id].node_evaluate_split(
                         sample_idx_sorted)
 
                 # Update the splitrecord for the expanding nodes based on this
                 # iteration (for this feature)
                 for nid in expandable_nids:
-                    print("nid / found split",
-                           nid, splitter_map[nid].split_record.__dict__)
                     if (splitrecord_map[nid] is None) or (
                             splitter_map[nid].split_record.impurity <
                             splitrecord_map[nid].impurity):
                         splitrecord_map[nid] = copy(splitter_map[nid].split_record)
 
-            print((i, splitrecord_map[i].__dict__) for i in expandable_nids)
+            print("\n\n\n\nbest splits for all NIDS --\n")
+            for nid in expandable_nids:
+                print("NID/split: ", nid, splitrecord_map[nid].__dict__)
 
+            parent_split_map = {}
             for nid in expandable_nids:
                 #if np.isnan(splitrecord_map[nid].threshold):
                 #    X_nid[X_nid==nid] = -1  # Mark it as a leaf
                 #else:
                 if not np.isnan(splitrecord_map[nid].threshold):
                     best_split = splitrecord_map[nid]
-                    best_criterion = splitter_map[nid].criterion
 
                     # Add a node for left child
-                    left_nid = self.tree_._add_node(
-                        parent=best_split.nid,
+                    left_nid = self.tree_._add_node_py(
+                        parent=nid,
                         is_left=1,
                         is_leaf=TREE_LEAF,
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
                         impurity=parent.impurity,
-                        n_node_samples=best_criterion.n_left_samples,
-                        weighted_n_node_samples=best_criterion.weighted_n_left)
+                        n_node_samples=best_split.n_left_samples,
+                        weighted_n_node_samples=best_split.weighted_n_left)
 
-                    right_nid = self.tree_._add_node(
-                        parent=best_split.nid,
+                    right_nid = self.tree_._add_node_py(
+                        parent=nid,
                         is_left=0,
                         is_leaf=TREE_LEAF,
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
                         impurity=parent.impurity,
-                        n_node_samples=best_criterion.n_right_samples,
-                        weighted_n_node_samples=best_criterion.weighted_n_right)
+                        n_node_samples=best_split.n_right_samples,
+                        weighted_n_node_samples=best_split.weighted_n_right)
 
                     # Update the parent node with the found best split
-                    parent = self.tree_.nodes[nid]
-                    parent.left_child = left_nid
-                    parent.right_child = right_nid
-                    parent.threshold = best_split.threshold
-                    parent.impurity = best_split.impurity
-                    parent.feature = best_split.feature
-                    parent.n_node_samples = best_split.n_samples
-                    parent.weighted_n_node_samples = best_split.weighted_samples
+                    self.tree_._update_node_py(
+                        node_id=nid,
+                        left_child=left_nid,
+                        right_child=right_nid,
+                        threshold=best_split.threshold,
+                        impurity=best_split.impurity,
+                        feature=best_split.feature,
+                        n_node_samples=best_split.n_samples,
+                        weighted_n_node_samples=best_split.weighted_samples)
+
+                    # Update parent_split
+                    print("for nid L (%d) and R (%d) the parent split"
+                          % (left_nid, right_nid), best_split.__dict__)
+                    parent_split_map = {left_nid: copy(best_split),
+                                        right_nid: copy(best_split)}
+
+
 
             # Update X_nid
             for i in range(X_nid.size):
                 parent_nid = X_nid[i]
-                parent_pos = splitrecord_map[parent_nid].pos
+                parent_thresh = splitrecord_map[parent_nid].threshold
                 parent_feat = splitrecord_map[parent_nid].feature
 
-                if np.nan(splitrecord_map[parent_nid].threshold):
+                if np.isnan(splitrecord_map[parent_nid].threshold):
                     X_nid[i] = -1
                 else:
-                    if X[i, parent_feat] < X[parent_pos, parent_feat]:
-                        X_nid[i] = self.tree_.nodes[parent_nid].left_nid
+                    if X[i, parent_feat] <= parent_thresh:
+                        X_nid[i] = self.tree_.children_left[parent_nid]
                     else:
-                        X_nid[i] = self.tree_.nodes[parent_nid].right_nid
+                        X_nid[i] = self.tree_.children_right[parent_nid]
+
+            print("X_nid: ", X_nid)
 
             current_depth += 1
 

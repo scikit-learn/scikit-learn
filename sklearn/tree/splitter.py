@@ -1,4 +1,5 @@
 from __future__ import division, print_function
+from copy import copy
 
 from .criterion import NewCriterion
 from .criterion import NewSplitRecord
@@ -19,7 +20,8 @@ class NewSplitter(object):
         self.weighted_n_total_samples = weighted_n_total_samples
 
         # get the parent criterion
-        self.p_split_record = p_split_record
+        self.p_split_record = copy(p_split_record)
+        print("A new splitter n_samples is ", self.p_split_record.n_samples)
 
         # parameters for early stop of split
         self.min_samples_leaf = min_samples_leaf
@@ -29,6 +31,7 @@ class NewSplitter(object):
         self.split_record = NewSplitRecord()
         self.split_record.feature = feature_idx
         self.split_record.pos = start
+        self.split_record.n_samples = p_split_record.n_samples
 
         # create the criterion for the current splitter
         self.criterion = NewCriterion(self.X, self.y, self.sample_weight,
@@ -40,12 +43,14 @@ class NewSplitter(object):
         It could correspond to a new feature to be scanned.
         """
         self.feature_idx = feature_idx
-        self.p_split_record = p_split_record
+        self.p_split_record = copy(p_split_record)
 
         # reinitialize the split record
         self.split_record.__init__()
         self.split_record.feature = feature_idx
         self.split_record.pos = start
+        #self.split_record.n_samples = p_split_record.n_samples
+        #self.split_record.weighted_samples = p_split_record.n_samples
 
         # reinitialize the criterion
         self.criterion.__init__(self.X, self.y, self.sample_weight,
@@ -57,7 +62,6 @@ class NewSplitter(object):
         """
         feat_i = self.feature_idx
 
-        print('feat', self.split_record.feature)
         print('cur_sample/pos', self.X[sample_idx, feat_i], self.X[self.split_record.pos,
                                                  self.split_record.feature])
 
@@ -73,12 +77,19 @@ class NewSplitter(object):
             if (self.criterion.n_left_samples < self.min_samples_leaf or
                     self.criterion.n_right_samples < self.min_samples_leaf):
                 # early stopping
+                print("Stopping here. n_left or n_right less than min_samples_leaf")
+                print("n_left/n_right - ", self.criterion.n_left_samples, 
+                      self.criterion.n_right_samples)
                 return
 
             # check that the weight are enough important to make a proper split
             if (self.criterion.weighted_n_left < self.min_weight_leaf or
                     self.criterion.weighted_n_right < self.min_weight_leaf):
                 # early stopping
+                print("Stopping here. n_weighted_left or n_weighted_right "
+                      "less than min_samples_leaf")
+                print("n_w_left/n_w_right - ", self.criterion.weighted_n_left, 
+                      self.criterion.weighted_n_right)
                 return
 
             # compute the impurity improvement
@@ -94,6 +105,10 @@ class NewSplitter(object):
                      self.X[self.prev_idx, feat_i]) / 2.0)
                 print('thres', self.split_record.threshold)
                 self.split_record.impurity = current_impurity
-                self.split_record.pos = sample_idx
+                self.split_record.pos = self.prev_idx
+                self.split_record.n_left_samples = self.criterion.n_left_samples
+                self.split_record.n_right_samples = self.criterion.n_right_samples
+                self.split_record.weighted_n_left = self.criterion.weighted_n_left
+                self.split_record.weighted_n_right = self.criterion.weighted_n_right
 
         self.prev_idx = sample_idx

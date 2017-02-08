@@ -15,7 +15,11 @@ class NewSplitRecord(object):
         self.sq_sum_residual = 0
         self.impurity = np.inf
         self.n_samples = 0
+        self.n_right_samples = 0
+        self.n_left_samples = 0
         self.weighted_samples = 0
+        self.weighted_n_left = 0
+        self.weighted_n_right = 0
 
 
 class NewCriterion(object):
