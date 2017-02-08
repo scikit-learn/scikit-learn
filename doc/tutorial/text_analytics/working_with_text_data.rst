@@ -324,7 +324,8 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> text_clf = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
 
 
 Evaluation of the performance on the test set
@@ -353,7 +354,8 @@ classifier object into our pipeline::
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
   ...                                            alpha=1e-3, n_iter=5, random_state=42)),
   ... ])
-  >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
   0.912...
