@@ -744,10 +744,6 @@ class GridSearchCV(BaseSearchCV):
         ``scorer(estimator, X, y)``.
         If ``None``, the ``score`` method of the estimator is used.
 
-    fit_params : dict, optional
-        Parameters to pass to the fit method.
-        DEPRECATED -- pass parameters directly to the fit method instead.
-
     n_jobs : int, default=1
         Number of jobs to run in parallel.
 
@@ -1004,10 +1000,6 @@ class RandomizedSearchCV(BaseSearchCV):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
         If ``None``, the ``score`` method of the estimator is used.
-
-    fit_params : dict, optional
-        Parameters to pass to the fit method.
-        DEPRECATED -- pass parameters directly to the fit method instead.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.

@@ -44,8 +44,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
     This allows testing whether pipelines / cross-validation or metaestimators
     changed the input.
     """
-    def __init__(self, check_y=None,
-                 check_X=None, foo_param=0,
+    def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):
         self.check_y = check_y
         self.check_X = check_X
@@ -61,10 +60,9 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         self.classes_ = np.unique(check_array(y, ensure_2d=False,
                                               allow_nd=True))
         if self.expected_fit_params:
-            missing = (set(np.atleast_1d(self.expected_fit_params)) -
-                       set(fit_params))
-            assert_true(len(missing) == 0, 'Expected fit parameters "%s" not '
-                                           'seen.' % self.expected_fit_params)
+            missing = set(self.expected_fit_params) - set(fit_params)
+            assert_true(len(missing) == 0, 'Expected fit parameter(s) %s not '
+                                           'seen.' % missing)
             for key, value in fit_params.items():
                 assert_true(len(value) == len(X),
                             'Fit parameter %s has length %d; '
