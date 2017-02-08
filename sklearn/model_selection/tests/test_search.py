@@ -183,7 +183,7 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
     # The CheckingClassifer generates an assertion error if
     # a parameter is missing or has length != len(X).
     assert_raise_message(AssertionError,
-                         "Expected fit parameter(s) {'eggs'} not seen.",
+                         "Expected fit parameter(s) ['eggs'] not seen.",
                          searcher.fit, X, y, spam=np.ones(10))
     assert_raise_message(AssertionError,
                          "Fit parameter spam has length 1; expected 4.",

@@ -62,7 +62,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
             assert_true(len(missing) == 0, 'Expected fit parameter(s) %s not '
-                                           'seen.' % missing)
+                                           'seen.' % list(missing))
             for key, value in fit_params.items():
                 assert_true(len(value) == len(X),
                             'Fit parameter %s has length %d; '
