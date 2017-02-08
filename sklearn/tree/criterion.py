@@ -8,15 +8,14 @@ class NewSplitRecord(object):
     """
 
     def __init__(self):
-        self.threshold = 0
-        self.position = 0
+        self.threshold = np.nan
+        self.feature = 0
+        self.pos = 0
         self.sum_residual = 0
         self.sq_sum_residual = 0
-        self.impurity = 0
+        self.impurity = np.inf
         self.n_samples = 0
         self.weighted_samples = 0
-        # id of the node associate with this record
-        self.nid = 0
 
 
 class NewCriterion(object):
@@ -63,13 +62,13 @@ class NewCriterion(object):
         """
         # udpate the sum of the residual for the left node
         # sum_l += w_l * y_l
-        self.sum_left += self.y[sample_idx] + self.sample_weight[sample_idx]
+        self.sum_left += self.y[sample_idx] * self.sample_weight[sample_idx]
         # deduce the stat for the right node
         self.sum_right = self.sum_total - self.sum_left
 
         # update the sum of the residual squared for the left node
         # sq_sum_l += w_l * y_l * y_l
-        self.sq_sum_left += (self.y[sample_idx] ** 2.0 +
+        self.sq_sum_left += (self.y[sample_idx] ** 2.0 *
                              self.sample_weight[sample_idx])
         # deduce the stat for the right node
         self.sq_sum_right = self.sq_sum_total - self.sq_sum_left
