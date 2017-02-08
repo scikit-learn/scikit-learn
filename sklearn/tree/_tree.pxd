@@ -55,10 +55,10 @@ cdef class Tree:
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
-    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples,
-                          double weighted_n_samples) nogil except -1
+    cpdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
+                           SIZE_t feature, double threshold, double impurity,
+                           SIZE_t n_node_samples,
+                           double weighted_n_samples)
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
