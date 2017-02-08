@@ -62,8 +62,8 @@ class NewSplitter(object):
         """
         feat_i = self.feature_idx
 
-        print('cur_sample/pos', self.X[sample_idx, feat_i], self.X[self.split_record.pos,
-                                                 self.split_record.feature])
+        print('cur_sample/pos', self.X[sample_idx, feat_i],
+              self.X[self.split_record.pos, self.split_record.feature])
 
         # make an update of the statistics
         self.criterion.update_stats(sample_idx)
@@ -78,7 +78,7 @@ class NewSplitter(object):
                     self.criterion.n_right_samples < self.min_samples_leaf):
                 # early stopping
                 print("Stopping here. n_left or n_right less than min_samples_leaf")
-                print("n_left/n_right - ", self.criterion.n_left_samples, 
+                print("n_left/n_right - ", self.criterion.n_left_samples,
                       self.criterion.n_right_samples)
                 return
 
@@ -88,7 +88,7 @@ class NewSplitter(object):
                 # early stopping
                 print("Stopping here. n_weighted_left or n_weighted_right "
                       "less than min_samples_leaf")
-                print("n_w_left/n_w_right - ", self.criterion.weighted_n_left, 
+                print("n_w_left/n_w_right - ", self.criterion.weighted_n_left,
                       self.criterion.weighted_n_right)
                 return
 
@@ -100,15 +100,21 @@ class NewSplitter(object):
                    self.criterion.impurity_right)
             # check the impurity improved
             if current_impurity < self.split_record.impurity:
+                # Update all the record for the current record
                 self.split_record.threshold = (
                     (self.X[sample_idx, feat_i] +
                      self.X[self.prev_idx, feat_i]) / 2.0)
-                print('thres', self.split_record.threshold)
                 self.split_record.impurity = current_impurity
                 self.split_record.pos = self.prev_idx
+                # Update the statistic of the future children
+                self.split_record.sum_left_residual = self.criterion.sum_left
+                self.split_record.sq_sum_left_residual = self.criterion.sq_sum_left
                 self.split_record.n_left_samples = self.criterion.n_left_samples
+                self.split_record.weighted_left_samples = self.criterion.weighted_n_left
+                # right node
+                self.split_record.sum_right_residual = self.criterion.sum_right
+                self.split_record.sq_sum_right_residual = self.criterion.sq_sum_right
                 self.split_record.n_right_samples = self.criterion.n_right_samples
-                self.split_record.weighted_n_left = self.criterion.weighted_n_left
-                self.split_record.weighted_n_right = self.criterion.weighted_n_right
+                self.split_record.weighted_right_samples = self.criterion.weighted_n_right
 
         self.prev_idx = sample_idx

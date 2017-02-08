@@ -11,15 +11,25 @@ class NewSplitRecord(object):
         self.threshold = np.nan
         self.feature = 0
         self.pos = 0
+        self.impurity = np.inf
+
+        # statistic of the current node
         self.sum_residual = 0
         self.sq_sum_residual = 0
-        self.impurity = np.inf
         self.n_samples = 0
-        self.n_right_samples = 0
-        self.n_left_samples = 0
         self.weighted_samples = 0
-        self.weighted_n_left = 0
-        self.weighted_n_right = 0
+
+        # statistic which will be used by the left and right child
+        # left node
+        self.sum_left_residual = 0
+        self.sq_sum_left_residual = 0
+        self.n_left_samples = 0
+        self.weighted_left_samples = 0
+        # right node
+        self.sum_right_residual = 0
+        self.sq_sum_right_residual = 0
+        self.n_right_samples = 0
+        self.weighted_right_samples = 0
 
 
 class NewCriterion(object):
