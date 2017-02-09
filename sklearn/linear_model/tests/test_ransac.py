@@ -28,7 +28,6 @@ data[outliers, :] += 50 + np.random.rand(80, 2) * 10
 X = data[:, 0][:, np.newaxis]
 y = data[:, 1]
 
-
 def test_ransac_inliers_outliers():
 
     base_estimator = LinearRegression()
