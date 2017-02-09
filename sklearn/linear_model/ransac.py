@@ -418,11 +418,13 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             X_inlier_best = X_inlier_subset
             y_inlier_best = y_inlier_subset
 
-            max_trials = min(max_trials, _dynamic_max_trials(n_inliers_best, n_samples,
-                                                             min_samples, self.stop_probability))
+            max_trials = min(max_trials,
+                             _dynamic_max_trials(n_inliers_best, n_samples,
+                                                 min_samples, self.stop_probability))
 
             # break if sufficient number of inliers or score is reached
-            if n_inliers_best >= self.stop_n_inliers or score_best >= self.stop_score:
+            if (n_inliers_best >= self.stop_n_inliers
+                or score_best >= self.stop_score):
                 break
 
         # if none of the iterations met the required criteria
