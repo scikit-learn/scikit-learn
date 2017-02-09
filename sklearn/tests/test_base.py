@@ -1,8 +1,6 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
-import sys
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -359,3 +357,81 @@ def test_pickle_version_warning():
     # check that no warning is raised for external estimators
     TreeNoVersion.__module__ = "notsklearn"
     assert_no_warnings(pickle.loads, tree_pickle_noversion)
+
+
+class DontPickleCacheMixin(object):
+    def __getstate__(self):
+        data = self.__dict__.copy()
+        data["_cache"] = None
+        return data
+
+
+class MultiInheritanceEstimator(BaseEstimator, DontPickleCacheMixin):
+    def __init__(self, b=5):
+        self.b = b
+        self._cache = None
+
+    @property
+    def cache(self):
+        if not self._cache:
+            self._cache = "some value"
+        return self._cache
+
+
+class SingleInheritanceEstimator(BaseEstimator):
+    def __init__(self, b=5):
+        self.b = b
+        self._cache = None
+
+    def __getstate__(self):
+        data = self.__dict__.copy()
+        data["_cache"] = None
+        return data
+
+    @property
+    def cache(self):
+        if not self._cache:
+            self._cache = "some value"
+        return self._cache
+
+
+class TestPicklingConstraints(object):
+    def test_multiple_inheritance_setting_sklearn_namespace(self):
+        estimator = MultiInheritanceEstimator()
+        assert estimator.cache
+
+        serialized = pickle.dumps(estimator, protocol=2)
+        estimator_restored = pickle.loads(serialized)
+        assert estimator_restored.b == 5
+        assert estimator_restored._cache is None
+
+    def test_multiple_inheritance_setting_foreign_namespace_getstate(self):
+        try:
+            estimator = MultiInheritanceEstimator()
+            old_mod = type(estimator).__module__
+            type(estimator).__module__ = "notsklearn"
+
+            serialized = estimator.__getstate__()
+            assert serialized == {'_cache': None, 'b': 5}
+
+            serialized['b'] = 4
+            estimator.__setstate__(serialized)
+            assert estimator.b == 4
+        finally:
+            type(estimator).__module__ = old_mod
+
+    def test_uses_object_dictionary_when_getstate_not_present(self):
+        estimator = MultiInheritanceEstimator()
+
+        serialized = pickle.dumps(estimator, protocol=2)
+        estimator_restored = pickle.loads(serialized)
+        assert estimator_restored.b == 5
+
+    def test_singleinheritance_clone(self):
+        estimator = SingleInheritanceEstimator()
+        assert estimator.cache
+
+        serialized = pickle.dumps(estimator, protocol=2)
+        estimator_restored = pickle.loads(serialized)
+        assert estimator_restored.b == 5
+        assert estimator_restored._cache is None
