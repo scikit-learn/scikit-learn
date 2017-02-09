@@ -190,7 +190,7 @@ def resample(*arrays, **options):
     if max_n_samples is None:
         max_n_samples = n_samples
     elif (max_n_samples > n_samples) and (not replace):
-        raise ValueError("Cannot sample %d out of arrays with dim %d"
+        raise ValueError("Cannot sample %d out of arrays with dim %d "
                          "when replace is False" % (max_n_samples,
                                                     n_samples))
 
