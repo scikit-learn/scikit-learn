@@ -4,6 +4,8 @@
 #
 # License: BSD 3 clause
 
+import itertools
+
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
@@ -90,6 +92,23 @@ def test_mcd_issue1127():
     X = rnd.normal(size=(3, 1))
     mcd = MinCovDet()
     mcd.fit(X)
+
+
+def test_mcd_issue3367():
+    # Check that MCD completes when the covariance matrix is singular
+    # i.e. one of the rows and columns are all zeros
+    rand_gen = np.random.RandomState(0)
+
+    # Think of these as the values for X and Y -> 10 values between -5 and 5
+    data_values = np.linspace(-5, 5, 10).tolist()
+    # Get the cartesian product of all possible coordinate pairs from above set
+    data = np.array(list(itertools.product(data_values, data_values)))
+
+    # Add a third column that's all zeros to make our data a set of point
+    # within a plane, which means that the covariance matrix will be singular
+    data = np.hstack((data, np.zeros((data.shape[0], 1))))
+    # This should raise an exception if the covariance matrix is singular
+    mcd_fit = MinCovDet(random_state=rand_gen).fit()
 
 
 def test_outlier_detection():
