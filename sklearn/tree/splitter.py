@@ -49,6 +49,7 @@ class NewSplitter(object):
         # information about the feature and first sampled
         self.feature_idx = feature_idx
         self.start_idx = start_idx
+        self.prev_idx = start_idx
 
         # split record to work with
         self.split_record = split_record
@@ -68,6 +69,7 @@ class NewSplitter(object):
         # information about the feature and first sampled
         self.feature_idx = feature_idx
         self.start_idx = start_idx
+        self.prev_idx = start_idx
 
         # split record to work with
         self.split_record = split_record
@@ -76,20 +78,13 @@ class NewSplitter(object):
         # split to store the best split record
         self.best_split_record = deepcopy(split_record)
 
-    def update_split_record(self, sample_idx):
-        """Update the statistics of the split record.
-
-        Parameters
-        ----------
-        sample_idx: int,
-            The index of the samples to use to update the statistics
-            of the split record.
-
-        Returns
-        -------
-        None
-
+    def node_evaluate_split(self, sample_idx):
+        """Update the impurity and check the corresponding split should be
+        kept.
         """
+        feat_i = self.feature_idx
+
+        # make an update of the statistics
         # collect the statistics to add to the left node
         stats_samples = StatsNode(
             sum_residuals=self.y[sample_idx] * self.sample_weight[sample_idx],
@@ -103,15 +98,6 @@ class NewSplitter(object):
         # update the statistics of the right child
         self.split_record.r_stats = (self.split_record.c_stats -
                                      self.split_record.l_stats)
-
-    def node_evaluate_split(self, sample_idx):
-        """Update the impurity and check the corresponding split should be
-        kept.
-        """
-        feat_i = self.feature_idx
-
-        # make an update of the statistics
-        self.update_split_record(sample_idx)
 
         # check that the sample value are different enough
         if self.X[sample_idx, feat_i] != self.X[self.split_record.pos,

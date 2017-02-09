@@ -430,6 +430,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             for feat_i, X_col in enumerate(X_idx_sorted.T):
 
                 # reset the splitter
+                # give a deepcopy of the parent_split since that it will be
+                # modified at each update of the statistics
                 for i, nid in enumerate(expandable_nids):
                     splitter_list[i].reset(feat_i, X_col[0],
                                            deepcopy(parent_split_map[nid]))
