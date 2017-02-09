@@ -342,7 +342,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         n_samples, _ = X.shape
 
         self.n_trials_ = 0
-        while self.n_trials_ < self.max_trials:
+        max_trials = self.max_trials
+        while self.n_trials_ < max_trials:
             self.n_trials_ += 1
 
             if (self.n_skips_no_inliers_ + self.n_skips_invalid_data_ +
@@ -417,8 +418,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             X_inlier_best = X_inlier_subset
             y_inlier_best = y_inlier_subset
 
-            self.max_trials = min(self.max_trials, _dynamic_max_trials(n_inliers_best, n_samples,
-                                                                       min_samples, self.stop_probability))
+            max_trials = min(max_trials, _dynamic_max_trials(n_inliers_best, n_samples,
+                                                             min_samples, self.stop_probability))
 
             # break if sufficient number of inliers or score is reached
             if n_inliers_best >= self.stop_n_inliers or score_best >= self.stop_score:
