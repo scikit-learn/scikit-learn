@@ -24,8 +24,7 @@ data = np.column_stack([X, y])
 # Add some faulty data
 np.random.seed(1)
 outliers = (np.random.rand(80) * len(X)).astype(np.uint32)
-data[outliers, :] = np.random.rand(80, 2) * 1000
-
+data[outliers, :] += 50 + np.random.rand(80, 2) * 10
 X = data[:, 0][:, np.newaxis]
 y = data[:, 1]
 
@@ -95,7 +94,7 @@ def test_ransac_max_trials():
         assert getattr(ransac_estimator, 'n_trials_', None) is None
         ransac_estimator.fit(X, y)
         max_trials = _dynamic_max_trials(len(X) - len(outliers), X.shape[0], X.shape[1] + 1, 1 - 1e9)
-        assert_less(ransac_estimator.n_trials_, max_trials)
+        assert_less(ransac_estimator.n_trials_, max_trials + 1)
 
 
 def test_ransac_stop_n_inliers():
@@ -382,6 +381,7 @@ def test_ransac_residual_metric():
     assert_warns(DeprecationWarning, ransac_estimator2.fit, X, y)
     assert_array_almost_equal(ransac_estimator0.predict(X),
                               ransac_estimator2.predict(X))
+
 
 def test_ransac_residual_loss():
     loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
