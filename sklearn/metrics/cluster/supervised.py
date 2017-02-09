@@ -215,7 +215,8 @@ def adjusted_rand_score(labels_true, labels_pred=None):
         n_clusters = np.unique(labels_pred).shape[0]
 
         # Special limit cases: no clustering since the data is not split;
-        # or trivial clustering where each document is assigned a unique cluster.
+        # or trivial clustering where each document is assigned
+        # a unique cluster.
         # These are perfect matches hence return 1.0.
         if (n_classes == n_clusters == 1 or
                 n_classes == n_clusters == 0 or
@@ -292,7 +293,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred=None):
                                   dtype=[int, np.int32, np.int64])
         if not sp.issparse(contingency):
             contingency = sp.csr_matrix(contingency)
-        entropy_C, entropy_K = entropy(contingency)   
+        entropy_C, entropy_K = entropy(contingency)
 
     else:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -617,11 +618,15 @@ def mutual_info_score(labels_true, labels_pred=None, contingency=None):
                                       dtype=[int, np.int32, np.int64])
 
         else:
-            labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-            contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
+            labels_true, labels_pred = check_clusterings(labels_true,
+                                                         labels_pred)
+            contingency = contingency_matrix(labels_true,
+                                             labels_pred,
+                                             sparse=True)
     else:
-        warnings.warn("Contingency is deprecated in 0.19 and will be removed in 0.21," +
-            "to use contingency matrix pass only contingency matrix to scoring function", DeprecationWarning)
+        warnings.warn("Contingency is deprecated in 0.19 and will be removed" +
+                      "in 0.21 to use contingency matrix pass only contingency"
+                      + " matrix to scoring function", DeprecationWarning)
         contingency = check_array(contingency,
                                   accept_sparse=['csr', 'csc', 'coo'],
                                   dtype=[int, np.int32, np.int64])
@@ -839,8 +844,9 @@ def normalized_mutual_info_score(labels_true, labels_pred=None):
         # Special limit cases: no clustering since the data is not split.
         # This is a perfect match hence return 1.0.
         if (classes.shape[0] == clusters.shape[0] == 1 or
-            classes.shape[0] == clusters.shape[0] == 0):
+                classes.shape[0] == clusters.shape[0] == 0):
             return 1.0
+
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
 
     contingency = contingency.astype(np.float64)
@@ -945,15 +951,15 @@ def entropy(data):
 
     if data.ndim == 2:
         pi_true, pi_pred = (data.sum(axis=1).ravel().astype(np.float64),
-                         data.sum(axis=0).ravel().astype(np.float64))
+                            data.sum(axis=0).ravel().astype(np.float64))
 
         pi_true = pi_true[pi_true > 0]
         pi_pred = pi_pred[pi_pred > 0]
         pi_sum = data.sum()
 
         # return entropy(labels_true), entropy(labels_pred)
-        return (-np.sum((pi_true / pi_sum) * (np.log(pi_true) - log(pi_sum)).T),
-                -np.sum((pi_pred / pi_sum) * (np.log(pi_pred) - log(pi_sum)).T))
+        return(-np.sum((pi_true / pi_sum) * (np.log(pi_true) - log(pi_sum)).T),
+               -np.sum((pi_pred / pi_sum) * (np.log(pi_pred) - log(pi_sum)).T))
 
     else:
         if len(data) == 0:
