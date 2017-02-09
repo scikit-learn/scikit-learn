@@ -52,7 +52,7 @@ def check_clusterings(labels_true, labels_pred):
     return labels_true, labels_pred
 
 
-def contingency_matrix(labels_true, labels_pred = None, eps=None, sparse=False):
+def contingency_matrix(labels_true, labels_pred=None, eps=None, sparse=False):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -86,15 +86,14 @@ def contingency_matrix(labels_true, labels_pred = None, eps=None, sparse=False):
 
     if eps is not None and sparse:
         raise ValueError("Cannot set 'eps' when sparse=True")
-    
     if labels_pred is None:
         contingency = labels_true
         contingency = check_array(contingency,
-                                  accept_sparse = True,
+                                  accept_sparse=True,
                                   dtype=[int, np.int32, np.int64])
         if not sp.issparse(contingency):
             contingency = sp.csr_matrix(contingency)
-    else :    
+    else:
         classes, class_idx = np.unique(labels_true, return_inverse=True)
         clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
         n_classes = classes.shape[0]
@@ -119,7 +118,7 @@ def contingency_matrix(labels_true, labels_pred = None, eps=None, sparse=False):
 
 # clustering measures
 
-def adjusted_rand_score(labels_true, labels_pred = None):
+def adjusted_rand_score(labels_true, labels_pred=None):
     """Rand index adjusted for chance.
 
     The Rand Index computes a similarity measure between two clusterings
@@ -203,11 +202,11 @@ def adjusted_rand_score(labels_true, labels_pred = None):
     if labels_pred is None:
         # labels_true is actually contingency
         contingency = check_array(labels_true,
-                                  accept_sparse= True,
+                                  accept_sparse=True,
                                   dtype=[int, np.int32, np.int64])
         if not sp.issparse(contingency):
             contingency = sp.csr_matrix(contingency)
-        n_samples = contingency.sum()    
+        n_samples = contingency.sum()
 
     else:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -225,7 +224,7 @@ def adjusted_rand_score(labels_true, labels_pred = None):
 
         # Compute the ARI using the contingency data
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    
+
     sum_comb_c = sum(comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
@@ -235,7 +234,7 @@ def adjusted_rand_score(labels_true, labels_pred = None):
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
-def homogeneity_completeness_v_measure(labels_true, labels_pred = None):
+def homogeneity_completeness_v_measure(labels_true, labels_pred=None):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
@@ -289,7 +288,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred = None):
     if labels_pred is None:
         # labels_true is actually contingency
         contingency = check_array(labels_true,
-                                  accept_sparse= True,
+                                  accept_sparse=True,
                                   dtype=[int, np.int32, np.int64])
         if not sp.issparse(contingency):
             contingency = sp.csr_matrix(contingency)
@@ -305,7 +304,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred = None):
         entropy_K = entropy(labels_pred)
 
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    
+
     MI = mutual_info_score(contingency)
 
     homogeneity = MI / (entropy_C) if entropy_C else 1.0
@@ -320,7 +319,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred = None):
     return homogeneity, completeness, v_measure_score
 
 
-def homogeneity_score(labels_true, labels_pred = None):
+def homogeneity_score(labels_true, labels_pred=None):
     """Homogeneity metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies homogeneity if all of its clusters
@@ -394,7 +393,7 @@ def homogeneity_score(labels_true, labels_pred = None):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
 
 
-def completeness_score(labels_true, labels_pred = None):
+def completeness_score(labels_true, labels_pred=None):
     """Completeness metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies completeness if all the data points
@@ -464,7 +463,7 @@ def completeness_score(labels_true, labels_pred = None):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
-def v_measure_score(labels_true, labels_pred = None):
+def v_measure_score(labels_true, labels_pred=None):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score`.
@@ -559,7 +558,7 @@ def v_measure_score(labels_true, labels_pred = None):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
 
 
-def mutual_info_score(labels_true, labels_pred = None, contingency=None):
+def mutual_info_score(labels_true, labels_pred=None, contingency=None):
     """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
@@ -614,14 +613,14 @@ def mutual_info_score(labels_true, labels_pred = None, contingency=None):
         if labels_pred is None:
             # labels_true is actually contingency
             contingency = check_array(labels_true,
-                                      accept_sparse= ['csr', 'csc', 'coo'],
+                                      accept_sparse=['csr', 'csc', 'coo'],
                                       dtype=[int, np.int32, np.int64])
 
-        else:    
+        else:
             labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
             contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     else:
-        warnings.warn("Contingency is deprecated in 0.19 and will be removed in 0.21,"+
+        warnings.warn("Contingency is deprecated in 0.19 and will be removed in 0.21," +
             "to use contingency matrix pass only contingency matrix to scoring function", DeprecationWarning)
         contingency = check_array(contingency,
                                   accept_sparse=['csr', 'csc', 'coo'],
@@ -651,7 +650,7 @@ def mutual_info_score(labels_true, labels_pred = None, contingency=None):
     return mi.sum()
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred = None):
+def adjusted_mutual_info_score(labels_true, labels_pred=None):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -728,15 +727,15 @@ def adjusted_mutual_info_score(labels_true, labels_pred = None):
     if labels_pred is None:
         # labels_true is actually contingency
         contingency = check_array(labels_true,
-                                  accept_sparse= True,
+                                  accept_sparse=True,
                                   dtype=[int, np.int32, np.int64])
         if not sp.issparse(contingency):
             contingency = sp.csr_matrix(contingency)
 
-        if contingency.shape == (1,1) or contingency.shape == (0,0):
-            return 1.0    
-        n_samples = contingency.sum()    
-    
+        if contingency.shape == (1, 1) or contingency.shape == (0, 0):
+            return 1.0
+        n_samples = contingency.sum()
+
     else:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
         n_samples = labels_true.shape[0]
@@ -748,21 +747,21 @@ def adjusted_mutual_info_score(labels_true, labels_pred = None):
                 classes.shape[0] == clusters.shape[0] == 0):
             return 1.0
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    
+
     contingency = contingency.astype(np.float64)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(contingency)
 
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
-    
+
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(contingency)
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred = None):
+def normalized_mutual_info_score(labels_true, labels_pred=None):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
@@ -825,13 +824,13 @@ def normalized_mutual_info_score(labels_true, labels_pred = None):
     if labels_pred is None:
         # labels_true is actually contingency
         contingency = check_array(labels_true,
-                                  accept_sparse= True,
+                                  accept_sparse=True,
                                   dtype=[int, np.int32, np.int64])
         if not sp.issparse(contingency):
             contingency = sp.csr_matrix(contingency)
 
-        if contingency.shape == (1,1) or contingency.shape == (0,0):
-            return 1.0     
+        if contingency.shape == (1, 1) or contingency.shape == (0, 0):
+            return 1.0
 
     else:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -840,14 +839,14 @@ def normalized_mutual_info_score(labels_true, labels_pred = None):
         # Special limit cases: no clustering since the data is not split.
         # This is a perfect match hence return 1.0.
         if (classes.shape[0] == clusters.shape[0] == 1 or
-               classes.shape[0] == clusters.shape[0] == 0):
+            classes.shape[0] == clusters.shape[0] == 0):
             return 1.0
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    
+
     contingency = contingency.astype(np.float64)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(contingency)
-   
+
     # Calculate the expected value for the mutual information
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(contingency)
@@ -855,7 +854,7 @@ def normalized_mutual_info_score(labels_true, labels_pred = None):
     return nmi
 
 
-def fowlkes_mallows_score(labels_true, labels_pred = None, sparse=False):
+def fowlkes_mallows_score(labels_true, labels_pred=None, sparse=False):
     """Measure the similarity of two clusterings of a set of points.
 
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
@@ -917,22 +916,21 @@ def fowlkes_mallows_score(labels_true, labels_pred = None, sparse=False):
     .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
            <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
-    
+
     if labels_pred is None:
         # labels_true is actually contingency
         contingency = check_array(labels_true,
-                                  accept_sparse= True,
+                                  accept_sparse=True,
                                   dtype=[int, np.int32, np.int64])
         if not sp.issparse(contingency):
             contingency = sp.csr_matrix(contingency)
         n_samples = contingency.sum()
 
-
     else:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
         n_samples, = labels_true.shape
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    
+
     tk = np.dot(contingency.data, contingency.data) - n_samples
     pk = np.sum(np.asarray(contingency.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(contingency.sum(axis=1)).ravel() ** 2) - n_samples
@@ -941,22 +939,21 @@ def fowlkes_mallows_score(labels_true, labels_pred = None, sparse=False):
 
 def entropy(data):
     """Calculates the entropy for a labeling."""
-    
-    if isinstance(data,list):
+
+    if isinstance(data, list):
         data = np.array(data)
 
     if data.ndim == 2:
-        pi_true, pi_pred = (data.sum(axis=1).ravel().astype(np.float64) ,
+        pi_true, pi_pred = (data.sum(axis=1).ravel().astype(np.float64),
                          data.sum(axis=0).ravel().astype(np.float64))
-    
-        pi_true = pi_true[pi_true>0]
-        pi_pred = pi_pred[pi_pred>0]
+
+        pi_true = pi_true[pi_true > 0]
+        pi_pred = pi_pred[pi_pred > 0]
         pi_sum = data.sum()
-        
-        # return entropy(labels_true), entropy(labels_pred) 
-        return (-np.sum( (pi_true / pi_sum) * (np.log(pi_true) - log(pi_sum)).T ),
-              -np.sum( (pi_pred / pi_sum) * (np.log(pi_pred) - log(pi_sum)).T ) ) 
- 
+
+        # return entropy(labels_true), entropy(labels_pred)
+        return (-np.sum((pi_true / pi_sum) * (np.log(pi_true) - log(pi_sum)).T),
+                -np.sum((pi_pred / pi_sum) * (np.log(pi_pred) - log(pi_sum)).T))
 
     else:
         if len(data) == 0:
