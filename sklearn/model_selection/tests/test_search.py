@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -171,6 +172,74 @@ def test_grid_search():
     # Test exception handling on scoring
     grid_search.scoring = 'sklearn'
     assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
+    searcher = klass(clf, {'foo_param': [1, 2, 3]}, cv=2, **klass_kwargs)
+
+    # The CheckingClassifer generates an assertion error if
+    # a parameter is missing or has length != len(X).
+    assert_raise_message(AssertionError,
+                         "Expected fit parameter(s) ['eggs'] not seen.",
+                         searcher.fit, X, y, spam=np.ones(10))
+    assert_raise_message(AssertionError,
+                         "Fit parameter spam has length 1; expected 4.",
+                         searcher.fit, X, y, spam=np.ones(1),
+                         eggs=np.zeros(10))
+    searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
+
+
+def test_grid_search_with_fit_params():
+    check_hyperparameter_searcher_with_fit_params(GridSearchCV)
+
+
+def test_random_search_with_fit_params():
+    check_hyperparameter_searcher_with_fit_params(RandomizedSearchCV, n_iter=1)
+
+
+def test_grid_search_fit_params_deprecation():
+    # NOTE: Remove this test in v0.21
+
+    # Use of `fit_params` in the class constructor is deprecated,
+    # but will still work until v0.21.
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam'])
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                               fit_params={'spam': np.ones(10)})
+    assert_warns(DeprecationWarning, grid_search.fit, X, y)
+
+
+def test_grid_search_fit_params_two_places():
+    # NOTE: Remove this test in v0.21
+
+    # If users try to input fit parameters in both
+    # the constructor (deprecated use) and the `fit`
+    # method, we'll ignore the values passed to the constructor.
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam'])
+
+    # The "spam" array is too short and will raise an
+    # error in the CheckingClassifier if used.
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                               fit_params={'spam': np.ones(1)})
+
+    expected_warning = ('Ignoring fit_params passed as a constructor '
+                        'argument in favor of keyword arguments to '
+                        'the "fit" method.')
+    assert_warns_message(RuntimeWarning, expected_warning,
+                         grid_search.fit, X, y, spam=np.ones(10))
+
+    # Verify that `fit` prefers its own kwargs by giving valid
+    # kwargs in the constructor and invalid in the method call
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                               fit_params={'spam': np.ones(10)})
+    assert_raise_message(AssertionError, "Fit parameter spam has length 1",
+                         grid_search.fit, X, y, spam=np.ones(1))
 
 
 @ignore_warnings
