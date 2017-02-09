@@ -233,6 +233,11 @@ API changes summary
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+    - Deprecate the ``raw_values`` argument of the ``decision_function``
+      method in :class:`sklearn.covariance.EllipticEnvelope` in favor of the
+      estimator parameter ``raw_decision``. ``raw_decision`` now makes
+      ``decision_function`` return the negated Mahalanobis distances.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
