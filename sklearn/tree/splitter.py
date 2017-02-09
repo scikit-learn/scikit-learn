@@ -2,6 +2,8 @@ from __future__ import division, print_function
 
 from copy import deepcopy
 
+from numpy import inf
+
 from .stats_node import StatsNode
 from .criterion import impurity_improvement
 
@@ -123,7 +125,8 @@ class NewSplitter(object):
             c_impurity_improvement = impurity_improvement(self.split_record)
 
             # check the impurity improved
-            if c_impurity_improvement < self.best_split_record.impurity:
+            if (c_impurity_improvement >
+                self.best_split_record.impurity_improvement):
                 # reset the best split record
                 threshold = ((self.X[sample_idx, feat_i] +
                               self.X[self.prev_idx, feat_i]) / 2.0)
@@ -131,7 +134,8 @@ class NewSplitter(object):
                     feature=feat_i,
                     pos=self.prev_idx,
                     threshold=threshold,
-                    impurity=c_impurity_improvement,
+                    impurity=self.split_record.impurity,
+                    impurity_improvement=c_impurity_improvement,
                     nid=self.split_record.nid,
                     c_stats=self.split_record.c_stats,
                     l_stats=self.split_record.l_stats,

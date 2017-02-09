@@ -443,17 +443,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     splitter_map[splitter_id].node_evaluate_split(
                         sample_idx_sorted)
 
-                # copy the split_record if this is the best record so far
+                # copy the split_record if the improvement is better
                 for nid in expandable_nids:
-                    if (split_record_map[nid] is None) or (
-                            splitter_map[nid].best_split_record.impurity <
-                            split_record_map[nid].impurity):
+                    if ((split_record_map[nid] is None) or
+                        (splitter_map[nid].best_split_record.impurity_improvement >
+                         split_record_map[nid].impurity_improvement)):
                         split_record_map[nid] = deepcopy(
                             splitter_map[nid].best_split_record)
 
             for nid in expandable_nids:
                 if not np.isnan(split_record_map[nid].threshold):
                     best_split = split_record_map[nid]
+
+                    print(best_split)
 
                     # the statistics for the children are not computed yet
                     # add a node for left child
@@ -495,10 +497,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     parent_split_map.update({left_nid: left_sr,
                                              right_nid: right_sr})
 
-                    # we can flush the data from the parent_split_map for the
-                    # current node
-                    del parent_split_map[nid]
-                    print(parent_split_map.keys())
+                # we can flush the data from the parent_split_map for the
+                # current node
+                del parent_split_map[nid]
 
             # Update X_nid
             for i in range(X_nid.size):

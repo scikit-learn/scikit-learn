@@ -42,6 +42,7 @@ class SplitRecord(object):
         self.pos = 0
         self.threshold = nan
         self.impurity = inf
+        self.impurity_improvement = -inf
         self.nid = 0
 
         # statistics related to current and children node
@@ -50,12 +51,13 @@ class SplitRecord(object):
         self.r_stats = StatsNode(0., 0., 0, 0.)
 
     def reset(self, feature, pos, threshold, impurity,
-              nid, c_stats, l_stats, r_stats):
+              impurity_improvement, nid, c_stats, l_stats, r_stats):
         """Reset the split record"""
         self.feature = int(feature)
         self.pos = (pos)
         self.threshold = float(threshold)
         self.impurity = float(impurity)
+        self.impurity_improvement = float(impurity_improvement)
         self.nid = int(nid)
         self.c_stats = c_stats
         self.l_stats = l_stats
@@ -67,6 +69,7 @@ class SplitRecord(object):
         self.pos = 0
         self.threshold = nan
         self.impurity = inf
+        self.impurity_improvement = -inf
         self.nid = 0
         self.c_stats.clear()
         self.l_stats.clear()
@@ -82,7 +85,7 @@ class SplitRecord(object):
 
         # create the right child split record
         right_sr = SplitRecord()
-        right_sr.c_stats = self.l_stats
+        right_sr.c_stats = self.r_stats
         # FIXME stuck with impurity mse for the moment
         right_sr.impurity = _impurity_mse(right_sr.c_stats)
 
@@ -93,6 +96,7 @@ class SplitRecord(object):
                 "position: {}\n"
                 "threshold: {}\n"
                 "impurity: {}\n"
+                "impurity improvement: {}\n"
                 "node id: {}\n"
                 "current stats: {}\n"
                 "left stats: {}\n"
@@ -100,6 +104,7 @@ class SplitRecord(object):
                                            self.pos,
                                            self.threshold,
                                            self.impurity,
+                                           self.impurity_improvement,
                                            self.nid,
                                            self.c_stats,
                                            self.l_stats,

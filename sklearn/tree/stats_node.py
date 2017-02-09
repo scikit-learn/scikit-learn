@@ -61,14 +61,13 @@ class StatsNode(object):
     def __iadd__(self, val):
         """In place add to StatsNodes together."""
         if isinstance(val, StatsNode):
-            self.sum_residuals += val.sum_residuals
-            self.sum_sq_residuals += val.sum_sq_residuals
-            self.n_samples += val.n_samples
-            self.sum_weighted_samples += val.sum_weighted_samples
+            return StatsNode(
+                self.sum_residuals + val.sum_residuals,
+                self.sum_sq_residuals + val.sum_sq_residuals,
+                self.n_samples + val.n_samples,
+                self.sum_weighted_samples + val.sum_weighted_samples)
         else:
             return NotImplemented
-
-        return self
 
     def __add__(self, val):
         """Add to StatsNodes together."""
@@ -84,17 +83,16 @@ class StatsNode(object):
     def __isub__(self, val):
         """In place subtract to StatsNodes together."""
         if isinstance(val, StatsNode):
-            self.sum_residuals -= val.sum_residuals
-            self.sum_sq_residuals -= val.sum_sq_residuals
-            self.n_samples -= val.n_samples
-            self.sum_weighted_samples -= val.sum_weighted_samples
+            return StatsNode(
+                self.sum_residuals - val.sum_residuals,
+                self.sum_sq_residuals - val.sum_sq_residuals,
+                self.n_samples - val.n_samples,
+                self.sum_weighted_samples - val.sum_weighted_samples)
         else:
             return NotImplemented
 
-        return self
-
     def __sub__(self, val):
-        """Add to StatsNodes together."""
+        """Subtract to StatsNodes together."""
         if isinstance(val, StatsNode):
             return StatsNode(
                 self.sum_residuals - val.sum_residuals,
