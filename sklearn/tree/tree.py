@@ -22,7 +22,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
 from collections import defaultdict
-from copy import copy
+from copy import deepcopy
 
 import numpy as np
 from scipy.sparse import issparse
@@ -354,126 +354,127 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # import our new type of data
         from .splitter import NewSplitter
+        from .split_record import SplitRecord
+        from .stats_node import StatsNode
+        from .criterion import _impurity_mse
 
+        # FIXME
+        TREE_UNDEFINED, TREE_LEAF, FEAT_UNKNOWN = -2, -1, -3
         y = y.ravel()
+        weighted_n_samples = np.sum(sample_weight)
 
         # initialize the number of splitter
         n_splitters = 0
-        last_id_node = 0
-
-        # Create an array which will affect a sample to its current node
+        # the array to map the samples to the correct splitter
         X_nid = np.zeros(y.size, dtype=int)
+        # the list of splitter at each round
         splitter_list = []
-        splitrecord_map = defaultdict(lambda: None)
+        # the output split record
+        split_record_map = defaultdict(lambda: None)
 
-        current_depth = 0
+        # create the root node statistics
+        root_stats = StatsNode(
+            sum_residuals=np.sum(y * sample_weight),
+            sum_sq_residuals=np.sum((y ** 2) * sample_weight),
+            n_samples=n_samples,
+            sum_weighted_samples=weighted_n_samples)
+        # create the parent split record
+        parent_split_record = SplitRecord()
+        # affect the stats to the record
+        parent_split_record.c_stats = deepcopy(root_stats)
+        # compute the impurity for the parent node
+        # FIXME only MSE impurity for the moment
+        parent_split_record.impurity = _impurity_mse(root_stats)
 
-        weighted_n_samples = np.sum(sample_weight)  # FIXME optimize
-
-        from .criterion import NewSplitRecord
-
-        # Create a SplitRecord with infinity impurity as parent for root node
-        parent = NewSplitRecord()
-        parent.sum_residual = np.sum(y * sample_weight)
-        parent.sq_sum_residual = np.sum((y ** 2) * sample_weight)
-        parent.impurity = parent.sq_sum_residual / weighted_n_samples
-        parent.impurity -= (parent.sum_residual / weighted_n_samples) ** 2
-        parent.n_samples = n_samples
-        parent.weighted_samples = weighted_n_samples
-
-        TREE_UNDEFINED, TREE_LEAF, FEAT_UNKNOWN = -2, -1, -3  # FIXME
-
-        parent.nid = self.tree_._add_node_py(
+        parent_split_record.nid = self.tree_._add_node_py(
             parent=TREE_UNDEFINED,
             is_left=1, is_leaf=TREE_LEAF,
             feature=FEAT_UNKNOWN,
             threshold=TREE_UNDEFINED,
-            impurity=parent.impurity,
+            impurity=parent_split_record.impurity,
             n_node_samples=n_samples,
             weighted_n_node_samples=weighted_n_samples)
 
-        parent_split_map = {parent.nid: parent}
+        # Create a dictionary to store the parents split overtime
+        parent_split_map = {parent_split_record.nid: parent_split_record}
 
+        current_depth = 0
         while current_depth < max_depth:
             # FIXME: shuffle and select ``max_features`` feats
-            expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
 
+            # find the node to be extended
+            expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
+            # see if we should add or remove splitter
             n_splitters = expandable_nids.size
             curr_n_splitters = len(splitter_list)
 
-            splitter_list += [NewSplitter(X, y, sample_weight,
-                                          FEAT_UNKNOWN, TREE_UNDEFINED,
-                                          weighted_n_samples,
-                                          parent_split_map[nid],
-                                          min_samples_leaf,
-                                          min_weight_leaf)
-                              for nid in expandable_nids[curr_n_splitters:]]
+            # add splitters
+            if n_splitters - curr_n_splitters > 0:
+                splitter_list += [NewSplitter(X, y, sample_weight,
+                                              FEAT_UNKNOWN, TREE_UNDEFINED,
+                                              parent_split_map[nid],
+                                              min_samples_leaf,
+                                              min_weight_leaf)
+                                  for nid in expandable_nids[
+                                          curr_n_splitters:]]
 
-            # Clear unused splitter
-            splitter_list = splitter_list[:n_splitters]
+            # drop splitters
+            else:
+                splitter_list = splitter_list[:n_splitters]
 
+            # create a dictionary from the list of splitter
             splitter_map = {nid: splitter_list[i]
                             for i, nid in enumerate(expandable_nids)}
 
-            # Loop over the feature of X
+            # get the feature
             for feat_i, X_col in enumerate(X_idx_sorted.T):
 
+                # reset the splitter
                 for i, nid in enumerate(expandable_nids):
                     splitter_list[i].reset(feat_i, X_col[0],
-                                           parent_split_map[nid])
+                                           deepcopy(parent_split_map[nid]))
 
-                    print("for nid %d, the parent n_samples" % nid,
-                          parent_split_map[nid].n_samples)
-
-                print("\ncurrently searching feat - ", feat_i)
-                # Update all the splitters for current feature
-                # for the expandable nodes (at current depth)
+                # scans all samples and evaluate all possible splits for all
+                # the different splitters
                 for sample_idx_sorted, splitter_id in zip(X_col, X_nid):
                     # check that the sample value are different enough
                     splitter_map[splitter_id].node_evaluate_split(
                         sample_idx_sorted)
 
-                # Update the splitrecord for the expanding nodes based on this
-                # iteration (for this feature)
+                # copy the split_record if this is the best record so far
                 for nid in expandable_nids:
-                    if (splitrecord_map[nid] is None) or (
-                            splitter_map[nid].split_record.impurity <
-                            splitrecord_map[nid].impurity):
-                        splitrecord_map[nid] = copy(
-                            splitter_map[nid].split_record)
+                    if (split_record_map[nid] is None) or (
+                            splitter_map[nid].best_split_record.impurity <
+                            split_record_map[nid].impurity):
+                        split_record_map[nid] = deepcopy(
+                            splitter_map[nid].best_split_record)
 
-            print("\n\n\n\nbest splits for all NIDS --\n")
             for nid in expandable_nids:
-                print("NID/split: ", nid, splitrecord_map[nid].__dict__)
+                if not np.isnan(split_record_map[nid].threshold):
+                    best_split = split_record_map[nid]
 
-            # parent_split_map = {}
-            for nid in expandable_nids:
-                # if np.isnan(splitrecord_map[nid].threshold):
-                #    X_nid[X_nid==nid] = -1  # Mark it as a leaf
-                # else:
-                if not np.isnan(splitrecord_map[nid].threshold):
-                    best_split = splitrecord_map[nid]
-
-                    # Add a node for left child
+                    # the statistics for the children are not computed yet
+                    # add a node for left child
                     left_nid = self.tree_._add_node_py(
                         parent=nid,
                         is_left=1,
                         is_leaf=TREE_LEAF,
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
-                        impurity=parent.impurity,
-                        n_node_samples=best_split.n_left_samples,
-                        weighted_n_node_samples=best_split.weighted_left_samples)
+                        impurity=best_split.impurity,
+                        n_node_samples=best_split.l_stats.n_samples,
+                        weighted_n_node_samples=best_split.l_stats.sum_weighted_samples)
 
+                    # add a node for the right child
                     right_nid = self.tree_._add_node_py(
                         parent=nid,
                         is_left=0,
                         is_leaf=TREE_LEAF,
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
-                        impurity=parent.impurity,
-                        n_node_samples=best_split.n_right_samples,
-                        weighted_n_node_samples=best_split.weighted_right_samples)
+                        impurity=best_split.impurity,
+                        n_node_samples=best_split.r_stats.n_samples,
+                        weighted_n_node_samples=best_split.r_stats.sum_weighted_samples)
 
                     # Update the parent node with the found best split
                     self.tree_._update_node_py(
@@ -483,41 +484,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                         threshold=best_split.threshold,
                         impurity=best_split.impurity,
                         feature=best_split.feature,
-                        n_node_samples=best_split.n_samples,
-                        weighted_n_node_samples=best_split.weighted_samples)
+                        n_node_samples=best_split.c_stats.n_samples,
+                        weighted_n_node_samples=best_split.c_stats.sum_weighted_samples)
 
-                    # Update parent_split
-                    print("for nid L (%d) and R (%d) the parent split"
-                          % (left_nid, right_nid), best_split.__dict__)
-                    # The left node will correspond to the best split
-                    # The right node will be the complement of the best split
-                    # taking into account the parent split
-
-                    # build the left splitter record
-                    left_record = NewSplitRecord()
-                    left_record.sum_residual = best_split.sum_left_residual
-                    left_record.sq_sum_residual = best_split.sq_sum_left_residual
-                    left_record.n_samples = best_split.n_left_samples
-                    left_record.weighted_samples = best_split.weighted_left_samples
-                    left_record.impurity = (left_record.sq_sum_residual /
-                                            left_record.weighted_samples)
-                    left_record.impurity -= (left_record.sum_residual /
-                                             left_record.weighted_samples) ** 2
-
-                    # build the right splitter record
-                    right_record = NewSplitRecord()
-                    right_record.sum_residual = best_split.sum_right_residual
-                    right_record.sq_sum_residual = best_split.sq_sum_right_residual
-                    right_record.n_samples = best_split.n_right_samples
-                    right_record.weighted_samples = best_split.weighted_right_samples
-                    right_record.impurity = (right_record.sq_sum_residual /
-                                             right_record.weighted_samples)
-                    right_record.impurity -= (right_record.sum_residual /
-                                              right_record.weighted_samples) ** 2
-
+                    # update parent_split
+                    left_sr, right_sr = best_split.expand_record()
                     # update the dictionary with the new record
-                    parent_split_map.update({left_nid: left_record,
-                                             right_nid: right_record})
+                    parent_split_map.update({left_nid: left_sr,
+                                             right_nid: right_sr})
 
                     # we can flush the data from the parent_split_map for the
                     # current node
@@ -527,10 +501,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             # Update X_nid
             for i in range(X_nid.size):
                 parent_nid = X_nid[i]
-                parent_thresh = splitrecord_map[parent_nid].threshold
-                parent_feat = splitrecord_map[parent_nid].feature
+                parent_thresh = split_record_map[parent_nid].threshold
+                parent_feat = split_record_map[parent_nid].feature
 
-                if np.isnan(splitrecord_map[parent_nid].threshold):
+                if np.isnan(split_record_map[parent_nid].threshold):
                     X_nid[i] = -1
                 else:
                     if X[i, parent_feat] <= parent_thresh:
