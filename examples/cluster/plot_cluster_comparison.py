@@ -27,7 +27,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import cluster, datasets
+from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
 
@@ -53,7 +53,7 @@ colors = np.hstack([colors] * 20)
 clustering_names = [
     'MiniBatchKMeans', 'AffinityPropagation', 'MeanShift',
     'SpectralClustering', 'Ward', 'AgglomerativeClustering',
-    'DBSCAN', 'Birch']
+    'DBSCAN', 'Birch', "GMM"]
 
 plt.figure(figsize=(len(clustering_names) * 2 + 3, 9.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
@@ -92,9 +92,10 @@ for i_dataset, dataset in enumerate(datasets):
         connectivity=connectivity)
 
     birch = cluster.Birch(n_clusters=2)
+    gmm = mixture.GaussianMixture(n_components=3, covariance_type='full')
     clustering_algorithms = [
         two_means, affinity_propagation, ms, spectral, ward, average_linkage,
-        dbscan, birch]
+        dbscan, birch, gmm]
 
     for name, algorithm in zip(clustering_names, clustering_algorithms):
         # predict cluster memberships
