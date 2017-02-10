@@ -432,7 +432,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                                        size=self.max_features_,
                                                        replace=False)
             # get the feature
-            # for feat_i, X_col in enumerate(X_idx_sorted.T):
             for feat_i in shuffled_feature_idx:
                 # Get the sorted index
                 X_col = X_idx_sorted[:, feat_i]
