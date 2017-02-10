@@ -439,9 +439,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # scans all samples and evaluate all possible splits for all
                 # the different splitters
                 for sample_idx_sorted, splitter_id in zip(X_col, X_nid):
-                    # check that the sample value are different enough
-                    splitter_map[splitter_id].node_evaluate_split(
-                        sample_idx_sorted)
+                    # Samples which are not in a leaf
+                    if splitter_id != -1:
+                        # check that the sample value are different enough
+                        splitter_map[splitter_id].node_evaluate_split(
+                            sample_idx_sorted)
 
                 # copy the split_record if the improvement is better
                 for nid in expandable_nids:
@@ -503,17 +505,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # Update X_nid
             for i in range(X_nid.size):
-                parent_nid = X_nid[i]
-                parent_thresh = split_record_map[parent_nid].threshold
-                parent_feat = split_record_map[parent_nid].feature
+                # Do not change the sample if already in a leaf
+                if X_nid[i] != -1:
+                    parent_nid = X_nid[i]
+                    parent_thresh = split_record_map[parent_nid].threshold
+                    parent_feat = split_record_map[parent_nid].feature
 
-                if np.isnan(split_record_map[parent_nid].threshold):
-                    X_nid[i] = -1
-                else:
-                    if X[i, parent_feat] <= parent_thresh:
-                        X_nid[i] = self.tree_.children_left[parent_nid]
+                    if np.isnan(split_record_map[parent_nid].threshold):
+                        X_nid[i] = -1
                     else:
-                        X_nid[i] = self.tree_.children_right[parent_nid]
+                        if X[i, parent_feat] <= parent_thresh:
+                            X_nid[i] = self.tree_.children_left[parent_nid]
+                        else:
+                            X_nid[i] = self.tree_.children_right[parent_nid]
 
             print("X_nid: ", X_nid)
 
