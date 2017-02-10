@@ -87,7 +87,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         self : object
-            Returns an instance of self.
+               Returns an instance of self.
         """
         X, y = check_X_y(X, y, ['csr', 'csc'], y_numeric=True,
                          ensure_min_samples=2, estimator=self)
@@ -121,16 +121,17 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         """Return the parameters passed to the estimator"""
         raise NotImplementedError
 
-    def _get_support_mask(self, indices=False):
-        """Return a mask, or list, of the features/indices selected."""
+    def _get_support_mask(self):
+        """Get the boolean mask indicating which features are selected.
+
+        Returns
+        -------
+        support : boolean array of shape [# input features]
+                  An element is True iff its corresponding feature is selected
+                  for retention.
+        """
         check_is_fitted(self, 'scores_')
-
-        mask = self.scores_ > self.selection_threshold
-        return mask if not indices else np.where(mask)[0]
-
-    def get_support(self, indices=False):
-        """Return a mask, or list, of the features/indices selected."""
-        return self._get_support_mask(indices)
+        return self.scores_ > self.selection_threshold
 
 
 ###############################################################################
