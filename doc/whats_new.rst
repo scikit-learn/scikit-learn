@@ -144,6 +144,9 @@ Enhancements
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
+   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
+     Victor Poughon.
+
 Bug fixes
 .........
 
