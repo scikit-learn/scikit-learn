@@ -532,6 +532,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.transform(Xt)
 
+    @property
+    def classes_(self):
+        self._check_is_fitted("classes_")
+        return self.best_estimator_.classes_
+
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
