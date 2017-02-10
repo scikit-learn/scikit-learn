@@ -403,8 +403,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         current_depth = 0
         while current_depth < max_depth:
-            # FIXME: shuffle and select ``max_features`` feats
-
             # see if we should add or remove splitter
             n_splitters = len(expandable_nids)
             curr_n_splitters = len(splitter_list)
@@ -428,8 +426,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             splitter_map = {nid: splitter_list[i]
                             for i, nid in enumerate(expandable_nids)}
 
+            # FIXME: shuffle and select ``max_features`` feats
+            # Create an array from where to select randomly the feature
+            shuffled_feature_idx = random_state.choice(np.arange(X.shape[1]),
+                                                       size=self.max_features_,
+                                                       replace=False)
             # get the feature
-            for feat_i, X_col in enumerate(X_idx_sorted.T):
+            # for feat_i, X_col in enumerate(X_idx_sorted.T):
+            for feat_i in shuffled_feature_idx:
+                # Get the sorted index
+                X_col = X_idx_sorted[:, feat_i]
 
                 # reset the splitter
 
