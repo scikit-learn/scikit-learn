@@ -66,9 +66,12 @@ Enhancements
      now uses significantly less memory when assigning data points to their
      nearest cluster center. :issue:`7721` by :user:`Jon Crall <Erotemic>`.
 
-   - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
-     that matches the ``classes_`` attribute of ``best_estimator_``. :issue:`7661`
-     by :user:`Alyssa Batula <abatula>` and :user:`Dylan Werner-Meier <unautre>`.
+   - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`,
+     :class:`model_selection.RandomizedSearchCV`,  :class:`grid_search.GridSearchCV`,
+     and  :class:`grid_search.RandomizedSearchCV` that matches the ``classes_``
+     attribute of ``best_estimator_``. :issue:`7661` and :issue:`8295`
+     by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
+     and :user:`Stephen Hoover <stephen-hoover>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -140,9 +143,9 @@ Enhancements
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
-   - Added :func:`feature_selection.featurewise_scorer` in :mod:`feature_selection`.
-     It is a wrapper function that enables the use of `scipy.stats` scoring functions
-     with scikit-learn algorithms. :issue:`6673` by :user:`Aman Pratik <amanp10>`
+   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
+     Victor Poughon.
+
 
 Bug fixes
 .........
@@ -225,10 +228,29 @@ API changes summary
      (``n_samples``, ``n_classes``) for that particular output.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
+    - Deprecate the ``fit_params`` constructor input to the
+      :class:`sklearn.model_selection.GridSearchCV` and
+      :class:`sklearn.model_selection.RandomizedSearchCV` in favor
+      of passing keyword parameters to the ``fit`` methods
+      of those classes. Data-dependent parameters needed for model
+      training should be passed as keyword arguments to ``fit``,
+      and conforming to this convention will allow the hyperparameter
+      selection classes to be used with tools such as
+      :func:`sklearn.model_selection.cross_val_predict`.
+      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
 ==============
+
+**November 11, 2016**
+
+.. topic:: Last release with Python 2.6 support
+
+    Scikit-learn 0.18 is the last major release of scikit-learn to support Python 2.6.
+    Later versions of scikit-learn will require Python 2.7 or above.
+
 
 Changelog
 ---------
