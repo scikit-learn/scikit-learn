@@ -54,7 +54,8 @@ class NewSplitter(object):
         self.prev_idx = start_idx
 
         # split record to work with
-        self.split_record = split_record
+        # make a deepcopy to not change the orignal object
+        self.split_record = deepcopy(split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
         # split to store the best split record
@@ -74,7 +75,8 @@ class NewSplitter(object):
         self.prev_idx = start_idx
 
         # split record to work with
-        self.split_record = split_record
+        # make a deepcopy to not change the orignal object
+        self.split_record = deepcopy(split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
         # split to store the best split record

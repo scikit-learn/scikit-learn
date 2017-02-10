@@ -381,7 +381,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         # create the parent split record
         parent_split_record = SplitRecord()
         # affect the stats to the record
-        parent_split_record.c_stats = deepcopy(root_stats)
+        parent_split_record.c_stats = root_stats
         # compute the impurity for the parent node
         # FIXME only MSE impurity for the moment
         parent_split_record.impurity = _impurity_mse(root_stats)
@@ -430,11 +430,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             for feat_i, X_col in enumerate(X_idx_sorted.T):
 
                 # reset the splitter
-                # give a deepcopy of the parent_split since that it will be
-                # modified at each update of the statistics
+
                 for i, nid in enumerate(expandable_nids):
                     splitter_list[i].reset(feat_i, X_col[0],
-                                           deepcopy(parent_split_map[nid]))
+                                           parent_split_map[nid])
 
                 # scans all samples and evaluate all possible splits for all
                 # the different splitters
