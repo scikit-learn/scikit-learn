@@ -59,7 +59,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -73,6 +73,7 @@ class MockClassifier(object):
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
+        self.classes_ = np.unique(Y)
         return self
 
     def predict(self, T):
@@ -321,6 +322,33 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+def test_classes__property():
+    # Test that classes_ property matches best_estimator_.classes_
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    Cs = [.1, 1, 10]
+
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    grid_search.fit(X, y)
+    assert_array_equal(grid_search.best_estimator_.classes_,
+                       grid_search.classes_)
+
+    # Test that regressors do not have a classes_ attribute
+    grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
+
+    # Test that the grid searcher has no classes_ attribute before it's fit
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    assert_false(hasattr(grid_search, 'classes_'))
+
+    # Test that the grid searcher has no classes_ attribute without a refit
+    grid_search = GridSearchCV(LinearSVC(random_state=0),
+                               {'C': Cs}, refit=False)
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
 
 
 def test_trivial_cv_results_attr():
