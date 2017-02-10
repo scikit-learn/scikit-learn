@@ -397,20 +397,22 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Create a dictionary to store the parents split overtime
         parent_split_map = {parent_split_record.nid: parent_split_record}
+        # find the node to be extended
+        # expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
+        expandable_nids = parent_split_map.keys()
 
         current_depth = 0
         while current_depth < max_depth:
             # FIXME: shuffle and select ``max_features`` feats
 
-            # find the node to be extended
-            expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
             # see if we should add or remove splitter
-            n_splitters = expandable_nids.size
+            n_splitters = len(expandable_nids)
             curr_n_splitters = len(splitter_list)
 
             # add splitters
             if n_splitters - curr_n_splitters > 0:
                 splitter_list += [NewSplitter(X, y, sample_weight,
+                                              weighted_n_samples,
                                               FEAT_UNKNOWN, TREE_UNDEFINED,
                                               parent_split_map[nid],
                                               min_samples_leaf,
@@ -437,12 +439,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
                 # scans all samples and evaluate all possible splits for all
                 # the different splitters
-                for sample_idx_sorted, splitter_id in zip(X_col, X_nid):
+                for sample_idx_sorted in X_col:
                     # Samples which are not in a leaf
-                    if splitter_id != -1:
+                    if X_nid[sample_idx_sorted] != -1:
                         # check that the sample value are different enough
-                        splitter_map[splitter_id].node_evaluate_split(
-                            sample_idx_sorted)
+                        splitter_map[X_nid[
+                            sample_idx_sorted]].node_evaluate_split(
+                                sample_idx_sorted)
 
                 # copy the split_record if the improvement is better
                 for nid in expandable_nids:
@@ -456,19 +459,22 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 if not np.isnan(split_record_map[nid].threshold):
                     best_split = split_record_map[nid]
 
-                    print(best_split)
+                    # create the left and right which have been found
+                    # from the parent splits
+                    left_sr, right_sr = best_split.expand_record()
 
                     # the statistics for the children are not computed yet
                     # add a node for left child
+                    # find out if the next node will be a lead or not
                     left_nid = self.tree_._add_node_py(
                         parent=nid,
                         is_left=1,
                         is_leaf=TREE_LEAF,
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
-                        impurity=best_split.impurity,
-                        n_node_samples=best_split.l_stats.n_samples,
-                        weighted_n_node_samples=best_split.l_stats.sum_weighted_samples)
+                        impurity=left_sr.impurity,
+                        n_node_samples=left_sr.c_stats.n_samples,
+                        weighted_n_node_samples=left_sr.c_stats.sum_weighted_samples)
 
                     # add a node for the right child
                     right_nid = self.tree_._add_node_py(
@@ -477,9 +483,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                         is_leaf=TREE_LEAF,
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
-                        impurity=best_split.impurity,
-                        n_node_samples=best_split.r_stats.n_samples,
-                        weighted_n_node_samples=best_split.r_stats.sum_weighted_samples)
+                        impurity=right_sr.impurity,
+                        n_node_samples=right_sr.c_stats.n_samples,
+                        weighted_n_node_samples=right_sr.c_stats.sum_weighted_samples)
 
                     # Update the parent node with the found best split
                     self.tree_._update_node_py(
@@ -492,33 +498,76 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                         n_node_samples=best_split.c_stats.n_samples,
                         weighted_n_node_samples=best_split.c_stats.sum_weighted_samples)
 
-                    # update parent_split
-                    left_sr, right_sr = best_split.expand_record()
                     # update the dictionary with the new record
-                    parent_split_map.update({left_nid: left_sr,
-                                             right_nid: right_sr})
+                    # add only the record if the impurity at the node is large
+                    # enough
+                    if left_sr.impurity > self.min_impurity_split:
+                        parent_split_map.update({left_nid: left_sr})
+                    if right_sr.impurity > self.min_impurity_split:
+                        parent_split_map.update({right_nid: right_sr})
+
+                    self.counter_X_nid_labels_ = np.zeros(
+                        max(parent_split_map.keys()), dtype=int)
+
+                print(best_split)
 
                 # we can flush the data from the parent_split_map for the
                 # current node
                 del parent_split_map[nid]
 
-            # Update X_nid
-            for i in range(X_nid.size):
-                # Do not change the sample if already in a leaf
-                if X_nid[i] != -1:
-                    parent_nid = X_nid[i]
-                    parent_thresh = split_record_map[parent_nid].threshold
-                    parent_feat = split_record_map[parent_nid].feature
+            # update of the expandable nodes
+            expandable_nids = parent_split_map.keys()
 
-                    if np.isnan(split_record_map[parent_nid].threshold):
-                        X_nid[i] = -1
-                    else:
-                        if X[i, parent_feat] <= parent_thresh:
-                            X_nid[i] = self.tree_.children_left[parent_nid]
+            # check that some node need to be extended before to update
+            # the node index
+            if not expandable_nids:
+                # break if we cannot grow anymore
+                break
+            else:
+                # Update X_nid
+                for i in range(X_nid.size):
+                    # Do not change the sample if already in a leaf
+                    if X_nid[i] != -1:
+                        parent_nid = X_nid[i]
+                        parent_n_left_samples = split_record_map[
+                            parent_nid].l_stats.n_samples
+                        parent_thresh = split_record_map[parent_nid].threshold
+                        parent_feat = split_record_map[parent_nid].feature
+
+                        if np.isnan(split_record_map[parent_nid].threshold):
+                            X_nid[i] = -1
                         else:
-                            X_nid[i] = self.tree_.children_right[parent_nid]
-
-            print("X_nid: ", X_nid)
+                            if X[i, parent_feat] <= parent_thresh:
+                                # counter to know how many samples we checked
+                                # per splitter
+                                self.counter_X_nid_labels_[parent_nid] += 1
+                                # track how many samples we send to the left
+                                # child handle the time that several samples
+                                # are equal
+                                if (self.counter_X_nid_labels_[parent_nid] <=
+                                        parent_n_left_samples):
+                                    # is it a leaf
+                                    if (self.tree_.children_left[parent_nid] in
+                                            expandable_nids):
+                                        X_nid[i] = self.tree_.children_left[
+                                            parent_nid]
+                                    else:
+                                        X_nid[i] = -1
+                                else:
+                                    # is it a leaf
+                                    if (self.tree_.children_right[
+                                            parent_nid] in expandable_nids):
+                                        X_nid[i] = self.tree_.children_right[
+                                            parent_nid]
+                                    else:
+                                        X_nid[i] = -1
+                            else:
+                                if (self.tree_.children_right[parent_nid] in
+                                        expandable_nids):
+                                    X_nid[i] = self.tree_.children_right[
+                                        parent_nid]
+                                else:
+                                    X_nid[i] = -1
 
             current_depth += 1
 

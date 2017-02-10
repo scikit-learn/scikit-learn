@@ -24,6 +24,9 @@ class NewSplitter(object):
     sample_weight: ndarray, shape (n_samples,)
         The weight associated to each samples.
 
+    sum_total_weighted_samples: float,
+        The sum of the weights for all samples.
+
     split_record: SplitRecord,
         The split record to associate with this splitter.
 
@@ -39,7 +42,7 @@ class NewSplitter(object):
         The best split record found after iterating all the samples.
     """
 
-    def __init__(self, X, y, sample_weight,
+    def __init__(self, X, y, sample_weight, sum_total_weighted_samples,
                  feature_idx, start_idx,
                  split_record,
                  min_samples_leaf, min_weight_leaf):
@@ -47,6 +50,7 @@ class NewSplitter(object):
         self.X = X
         self.y = y
         self.sample_weight = sample_weight
+        self.sum_total_weighted_samples = sum_total_weighted_samples
 
         # information about the feature and first sampled
         self.feature_idx = feature_idx
@@ -75,19 +79,14 @@ class NewSplitter(object):
         self.prev_idx = start_idx
 
         # split record to work with
-        # make a deepcopy to not change the orignal object
+        # make a deepcopy to not change the original object
         self.split_record = deepcopy(split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
         # split to store the best split record
         self.best_split_record = deepcopy(split_record)
 
-    def node_evaluate_split(self, sample_idx):
-        """Update the impurity and check the corresponding split should be
-        kept.
-        """
-        feat_i = self.feature_idx
-
+    def update_stats(self, sample_idx):
         # make an update of the statistics
         # collect the statistics to add to the left node
         stats_samples = StatsNode(
@@ -102,6 +101,18 @@ class NewSplitter(object):
         # update the statistics of the right child
         self.split_record.r_stats = (self.split_record.c_stats -
                                      self.split_record.l_stats)
+
+    def node_evaluate_split(self, sample_idx):
+        """Update the impurity and check the corresponding split should be
+        kept.
+        """
+        feat_i = self.feature_idx
+
+        self.update_stats(sample_idx)
+        # check if it was the first hit
+        if self.split_record.l_stats.n_samples == 1:
+            self.prev_idx = sample_idx
+            return
 
         # check that the sample value are different enough
         if self.X[sample_idx, feat_i] != self.X[self.split_record.pos,
@@ -124,17 +135,23 @@ class NewSplitter(object):
 
             # compute the impurity improvement
             # FIXME we use the mse impurity for the moment
-            c_impurity_improvement = impurity_improvement(self.split_record)
+            c_impurity_improvement = impurity_improvement(
+                self.split_record,
+                self.sum_total_weighted_samples)
 
             # check the impurity improved
             if (c_impurity_improvement >
                 self.best_split_record.impurity_improvement):
                 # reset the best split record
-                threshold = ((self.X[sample_idx, feat_i] +
-                              self.X[self.prev_idx, feat_i]) / 2.0)
+                # threshold = ((self.X[sample_idx, feat_i] +
+                #               self.X[self.prev_idx, feat_i]) / 2.0)
+                # if threshold == self.X[sample_idx, feat_i]:
+                #     threshold = self.X[self.prev_idx, feat_i]
+                threshold = self.X[sample_idx, feat_i]
+                # update the best splitter
                 self.best_split_record.reset(
                     feature=feat_i,
-                    pos=self.prev_idx,
+                    pos=sample_idx,
                     threshold=threshold,
                     impurity=self.split_record.impurity,
                     impurity_improvement=c_impurity_improvement,

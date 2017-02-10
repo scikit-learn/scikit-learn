@@ -22,16 +22,17 @@ def _impurity_mse(stats_node):
     return impurity
 
 
-def impurity_improvement(c_split_record, criterion='mse'):
+def impurity_improvement(c_split_record, sum_total_weighted_samples,
+                         criterion='mse'):
     """Compute the impurity improvement.
 
     Parameters
     ----------
-    p_split_record: SplitRecord,
-        Split record of the parent node.
-
     c_split_record: SplitRecord,
         Split record of the current node.
+
+    sum_total_weighted_samples: float,
+        The sum of all the weights for all samples.
 
     criterion: str, optional(default='mse')
         The criterion to use to compute the impurity improvement.
@@ -53,7 +54,10 @@ def impurity_improvement(c_split_record, criterion='mse'):
     # impurity right child
     r_impurity = _impurity_func(c_split_record.r_stats)
 
-    # FIXME The formula is for the moment incorrect
-    # we need to take into account the total number of samples to get a
-    # relative improvement
-    return c_impurity - l_impurity - r_impurity
+    return ((c_split_record.c_stats.sum_weighted_samples /
+             sum_total_weighted_samples) *
+            (c_impurity -
+             (c_split_record.l_stats.sum_weighted_samples /
+              sum_total_weighted_samples * l_impurity) -
+             (c_split_record.r_stats.sum_weighted_samples /
+              sum_total_weighted_samples * r_impurity)))
