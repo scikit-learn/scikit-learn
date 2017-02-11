@@ -1880,16 +1880,8 @@ class SelectDimensionKernel(Kernel):
     """
 
     def __init__(self, kernel, active_dim):
-        self.kernel = kernel
-        if type(active_dim) is not np.ndarray:
-            raise ValueError("active_dim should be numpy array \
-                              not %s." % type(active_dim))
-
-        if active_dim.size == 0:
-            raise ValueError("active_dim should be have at least one \
-                              element, current size: %d " % active_dim.size)
-
         self.active_dim = active_dim
+        self.kernel = kernel
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient on selected
@@ -1918,8 +1910,15 @@ class SelectDimensionKernel(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        return self.kernel(X[:, self.active_dim],
-                           None if Y is None else Y[:, self.active_dim],
+
+        active_dim = np.asarray(self.active_dim, dtype=np.int)
+
+        if active_dim.size == 0:
+            raise ValueError("active_dim should be have at least one \
+                              element, current size: %d " % active_dim.size)
+
+        return self.kernel(X[:, active_dim],
+                           None if Y is None else Y[:, active_dim],
                            eval_gradient)
 
     def get_params(self, deep=True):
