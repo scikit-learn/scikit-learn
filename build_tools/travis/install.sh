@@ -52,8 +52,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # provided versions
     if [[ "$INSTALL_MKL" == "true" ]]; then
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
-            mkl flake8 cython=$CYTHON_VERSION \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
@@ -95,7 +95,7 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
+    pip install coverage codecov
 fi
 
 if [[ "$SKIP_TESTS" == "true" ]]; then
@@ -118,5 +118,5 @@ except ImportError:
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    conda install flake8
+    conda install --yes flake8
 fi
