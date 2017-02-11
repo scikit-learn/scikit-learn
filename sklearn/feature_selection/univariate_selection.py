@@ -711,7 +711,7 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fdr': SelectFdr,
                         'fwe': SelectFwe}
 
-    def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
+    def __init__(self, score_func=f_classif, mode='percentile', param=10):
         super(GenericUnivariateSelect, self).__init__(score_func)
         self.mode = mode
         self.param = param
