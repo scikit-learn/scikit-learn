@@ -70,7 +70,6 @@ This example shows an example usage of the ``split`` method.
 
 The cross-validation can then be performed easily::
 
-    >>> kfold = KFold(n_splits=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in k_fold.split(X_digits)]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
