@@ -109,7 +109,7 @@ scoring method.
 
     - :class:`StratifiedKFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`GroupKFold` **(n_splits, shuffle, random_state)**
+    - :class:`GroupKFold` **(n_splits)**
 
 
    *
