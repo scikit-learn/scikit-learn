@@ -199,35 +199,35 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    alpha : float, 'aic', or 'bic', optional
+    alpha : float, 'aic', or 'bic', optional (default='aic')
         The regularization parameter alpha parameter in the Lasso.
         Warning: this is not the alpha parameter in the stability selection
         article which is scaling.
 
-    scaling : float, optional
+    scaling : float, optional (default=0.5)
         The s parameter used to randomly scale the penalty of different
         features (See :ref:`User Guide <randomized_l1>` for details ).
         Should be between 0 and 1.
 
-    sample_fraction : float, optional
+    sample_fraction : float, optional (default=0.75)
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    n_resampling : int, optional
+    n_resampling : int, optional (default=200)
         Number of randomized models.
 
-    selection_threshold : float, optional
+    selection_threshold : float, optional (default=0.25)
         The score above which features should be selected.
 
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, optional (default=True)
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    verbose : boolean or integer, optional
+    verbose : boolean or integer, optional (default=False)
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional (default=True)
         If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
         When the regressors are normalized, note that this makes the
@@ -237,22 +237,22 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         use `preprocessing.StandardScaler` before calling `fit` on an
         estimator with `normalize=False`.
 
-    precompute : True | False | 'auto'
+    precompute : True | False | 'auto', optional (default='auto')
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to 'auto' let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter : integer, optional
+    max_iter : integer, optional (default=500)
         Maximum number of iterations to perform in the Lars algorithm.
 
-    eps : float, optional
+    eps : float, optional (default=``np.finfo(np.float).eps``)
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the 'tol' parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
-    n_jobs : integer, optional
+    n_jobs : integer, optional (default=1)
         Number of CPUs to use during the resampling. If '-1', use
         all the CPUs
 
@@ -262,7 +262,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, optional (default='3*n_jobs')
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -395,25 +395,25 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    C : float, optional, default=1
+    C : float, optional (default=1)
         The regularization parameter C in the LogisticRegression.
 
-    scaling : float, optional, default=0.5
+    scaling : float, optional (default=0.5)
         The s parameter used to randomly scale the penalty of different
         features (See :ref:`User Guide <randomized_l1>` for details ).
         Should be between 0 and 1.
 
-    sample_fraction : float, optional, default=0.75
+    sample_fraction : float, optional (default=0.75)
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    n_resampling : int, optional, default=200
+    n_resampling : int, optional (default=200)
         Number of randomized models.
 
-    selection_threshold : float, optional, default=0.25
+    selection_threshold : float, optional (default=0.25)
         The score above which features should be selected.
 
-    fit_intercept : boolean, optional, default=True
+    fit_intercept : boolean, optional (default=True)
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -421,7 +421,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional (default False)
         If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
         When the regressors are normalized, note that this makes the
@@ -431,7 +431,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         `preprocessing.StandardScaler` before calling `fit` on an estimator
         with `normalize=False`.
 
-    tol : float, optional, default=1e-3
+    tol : float, optional (default=1e-3)
          tolerance for stopping criteria of LogisticRegression
 
     n_jobs : integer, optional
@@ -576,21 +576,21 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     y : array-like, shape = [n_samples]
         target values.
 
-    scaling : float, optional, default=0.5
+    scaling : float, optional (default=0.5)
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
     random_state : integer or numpy.random.RandomState, optional
         The generator used to randomize the design.
 
-    n_resampling : int, optional, default=200
+    n_resampling : int, optional (default=200)
         Number of randomized models.
 
-    n_grid : int, optional, default=100
+    n_grid : int, optional (default=100)
         Number of grid points. The path is linearly reinterpolated
         on a grid between 0 and 1 before computing the scores.
 
-    sample_fraction : float, optional, default=0.75
+    sample_fraction : float, optional (default=0.75)
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
