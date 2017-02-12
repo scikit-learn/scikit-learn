@@ -24,7 +24,6 @@ from sklearn.utils.testing import (assert_equal, assert_almost_equal,
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))
-
 kernel_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
 kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            ConstantKernel(constant_value=10.0),
@@ -47,9 +46,11 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
         continue
     kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
 kernels += [SelectDimensionKernel(RBF(length_scale=2.0),
-                                  active_dim=np.array([0])),
-            SelectDimensionKernel(RBF(length_scale=2.0),
-                                  active_dim=np.array([0, 1]))]
+                                  active_dim=[0]),
+            SelectDimensionKernel(RBF(length_scale=[2.0, 1.0]),
+                                  active_dim=[0, 1]),
+            SelectDimensionKernel(Matern(length_scale=0.5, nu=0.5),
+                                  active_dim=[1])]
 
 
 def test_kernel_gradient():
