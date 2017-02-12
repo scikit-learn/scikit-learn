@@ -1669,10 +1669,12 @@ def test_boxcox_transform():
 
 
 def test_boxcox_transformer():
+    n_samples = 3000
+    n_features = 2
     rng = np.random.RandomState(42)
-    X_orig = rng.randn(3000, 2)
+    X_orig = rng.randn(n_samples, n_features)
     lambda0 = 0.1
-    X = np.ones((3000, 2))
+    X = np.ones((n_samples, n_features))
     X[:, 0] = np.exp(X_orig[:, 0])
     X[:, 1] = ((X_orig[:, 1] * lambda0 + 1)) ** (1. / lambda0)
 
@@ -1685,14 +1687,18 @@ def test_boxcox_transformer():
     assert_true(X_tr.shape, X.shape)
     assert_true(np.min(X_tr[:, 0]) < 0.)
     assert_true(np.min(X_tr[:, 1]) > 0.)
-
+    X_or = bct.inverse_transform(X_tr)
+    assert_array_almost_equal(X_or, X, 10)
+    
     bct.set_params(transformed_features=np.array([False, True]))
     bct.fit(X)
     assert_true(len(bct.lambdas_), 1)
     X_tr = bct.transform(X)
+    X_or = bct.inverse_transform(X_tr)
     assert_true(X_tr.shape, X.shape)
     assert_true(np.min(X_tr[:, 0]) > 0.)
-    assert_allclose(X_tr[:, 1], X_orig[:, 1])
+    assert_true(np.min(X_tr[:, 1]) < 0.)
+    assert_array_almost_equal(X_or, X, 10)
 
     bct.set_params(transformed_features="all")
     bct.fit(X)
@@ -1701,4 +1707,4 @@ def test_boxcox_transformer():
     assert_true(X_tr.shape, X.shape)
     assert_true(np.min(X_tr[:, 0]) < 0.)
     assert_true(np.min(X_tr[:, 1]) < 0.)
-    assert_array_almost_equal(bct.lambdas_, [0., lambda0], 2)
+    assert_array_almost_equal(X_or, X, 10)

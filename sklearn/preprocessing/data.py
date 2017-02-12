@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 from scipy import stats
+from scipy import special
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -2108,3 +2109,30 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             for i in range(len(self.transformed_features_)))
         output = np.concatenate([o[..., np.newaxis] for o in outputs], axis=1)
         return output
+
+    def inverse_transform(self, X, y=None):
+        """Invere transform each feature using the lambdas evaluated during fit time
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The transformed data after boxcox transform.
+
+        Returns
+        -------
+        X_inv : array-like, shape (n_samples, n_features)
+            The original data.
+        """
+        
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
+        if X.shape[1] != self.n_features_:
+            raise ValueError("X has a different shape than during fitting.")
+        X_inv = _transform_selected(X, self._inverse_transform,
+                                    self.transformed_features_, copy=False,
+                                    order=True)
+        return X_inv
+
+    def _inverse_transform(self, X):
+        for i in range(len(self.transformed_features_)):
+            X[:, i] = special.inv_boxcox(X[:, i], self.lambdas_[i])    
+        return X
