@@ -741,6 +741,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred=None):
         if contingency.shape == (1, 1) or contingency.shape == (0, 0):
             return 1.0
         n_samples = contingency.sum()
+        # Calculate entropy for each labeling
+        h_true, h_pred = entropy(contingency)
 
     else:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -752,6 +754,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred=None):
         if (classes.shape[0] == clusters.shape[0] == 1 or
                 classes.shape[0] == clusters.shape[0] == 0):
             return 1.0
+
+        h_true, h_pred = entropy(labels_true), entropy(labels_pred)
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
 
     contingency = contingency.astype(np.float64)
@@ -761,8 +765,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred=None):
     # Calculate the expected value for the mutual information
     emi = expected_mutual_information(contingency, n_samples)
 
-    # Calculate entropy for each labeling
-    h_true, h_pred = entropy(contingency)
     ami = (mi - emi) / (max(h_true, h_pred) - emi)
     return ami
 
@@ -837,6 +839,9 @@ def normalized_mutual_info_score(labels_true, labels_pred=None):
 
         if contingency.shape == (1, 1) or contingency.shape == (0, 0):
             return 1.0
+        # Calculate the expected value for the mutual information
+        # Calculate entropy for each labeling
+        h_true, h_pred = entropy(contingency)
 
     else:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -848,15 +853,13 @@ def normalized_mutual_info_score(labels_true, labels_pred=None):
                 classes.shape[0] == clusters.shape[0] == 0):
             return 1.0
 
+        h_true, h_pred = entropy(labels_true), entropy(labels_pred)
         contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
 
     contingency = contingency.astype(np.float64)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(contingency)
 
-    # Calculate the expected value for the mutual information
-    # Calculate entropy for each labeling
-    h_true, h_pred = entropy(contingency)
     nmi = mi / max(np.sqrt(h_true * h_pred), 1e-10)
     return nmi
 
