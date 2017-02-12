@@ -402,6 +402,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         expandable_nids = parent_split_map.keys()
 
         current_depth = 0
+        # FIXME: to debug the successive layer
+        # max_depth = 5
         while current_depth < max_depth:
             # see if we should add or remove splitter
             n_splitters = len(expandable_nids)
@@ -426,7 +428,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             splitter_map = {nid: splitter_list[i]
                             for i, nid in enumerate(expandable_nids)}
 
-            # FIXME: shuffle and select ``max_features`` feats
             # Create an array from where to select randomly the feature
             shuffled_feature_idx = random_state.choice(np.arange(X.shape[1]),
                                                        size=self.max_features_,
@@ -439,14 +440,20 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # reset the splitter
 
                 for i, nid in enumerate(expandable_nids):
-                    splitter_list[i].reset(feat_i, X_col[0],
-                                           parent_split_map[nid])
+                    print('==============')
+                    print(parent_split_map[nid])
+                    print('==============')
+                    splitter_map[nid].reset(feat_i, X_col[0],
+                                            parent_split_map[nid])
+                    # splitter_list[i].reset(feat_i, X_col[0],
+                    #                        parent_split_map[nid])
 
                 # scans all samples and evaluate all possible splits for all
                 # the different splitters
                 for sample_idx_sorted in X_col:
                     # Samples which are not in a leaf
                     if X_nid[sample_idx_sorted] != -1:
+                        print('X_nid=', X_nid[sample_idx_sorted])
                         # check that the sample value are different enough
                         splitter_map[X_nid[
                             sample_idx_sorted]].node_evaluate_split(
@@ -460,9 +467,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                         split_record_map[nid] = deepcopy(
                             splitter_map[nid].best_split_record)
 
+            feature_update_X_nid = []
             for nid in expandable_nids:
+                # store the feature to visit for the update of X_nid
+                feature_update_X_nid.append(split_record_map[nid].feature)
+
+                # expand the tree structure
                 if not np.isnan(split_record_map[nid].threshold):
                     best_split = split_record_map[nid]
+
+                    print('best split record')
+                    print('-----------------')
+                    print(best_split)
+                    print('-----------------')
 
                     # create the left and right which have been found
                     # from the parent splits
@@ -514,65 +531,77 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.counter_X_nid_labels_ = np.zeros(
                         max(parent_split_map.keys()), dtype=int)
 
-                print(best_split)
-
                 # we can flush the data from the parent_split_map for the
                 # current node
                 del parent_split_map[nid]
 
             # update of the expandable nodes
             expandable_nids = parent_split_map.keys()
+            print('expandable nids: ', expandable_nids)
+
+            # remove redundant index of feature to visit when updating X_nid
+            feature_update_X_nid = np.unique(feature_update_X_nid)
+            print('Feature to be visited')
+            print(feature_update_X_nid)
 
             # check that some node need to be extended before to update
             # the node index
+            # make a copy of X_nid
+            X_nid_tmp = X_nid.copy()
             if not expandable_nids:
                 # break if we cannot grow anymore
                 break
             else:
-                # Update X_nid
-                for i in range(X_nid.size):
-                    # Do not change the sample if already in a leaf
-                    if X_nid[i] != -1:
-                        parent_nid = X_nid[i]
-                        parent_n_left_samples = split_record_map[
-                            parent_nid].l_stats.n_samples
-                        parent_thresh = split_record_map[parent_nid].threshold
-                        parent_feat = split_record_map[parent_nid].feature
+                for sample_idx in range(X.shape[0]):
+                    for feat_i in feature_update_X_nid:
+                        # get the index of samples to update
+                        X_idx = X_idx_sorted[sample_idx, feat_i]
+                        parent_nid = X_nid[X_idx]
+                        # only if the sample was not a leaf
+                        if parent_nid != -1:
+                            if split_record_map[parent_nid].feature == feat_i:
+                                # if the feature correspond, we can update the
+                                # feature
+                                parent_n_left_samples = split_record_map[
+                                    parent_nid].l_stats.n_samples
 
-                        if np.isnan(split_record_map[parent_nid].threshold):
-                            X_nid[i] = -1
-                        else:
-                            if X[i, parent_feat] <= parent_thresh:
-                                # counter to know how many samples we checked
-                                # per splitter
-                                self.counter_X_nid_labels_[parent_nid] += 1
-                                # track how many samples we send to the left
-                                # child handle the time that several samples
-                                # are equal
-                                if (self.counter_X_nid_labels_[parent_nid] <=
-                                        parent_n_left_samples):
-                                    # is it a leaf
-                                    if (self.tree_.children_left[parent_nid] in
-                                            expandable_nids):
-                                        X_nid[i] = self.tree_.children_left[
-                                            parent_nid]
-                                    else:
-                                        X_nid[i] = -1
+                                # no threshold found -> this is a leaf
+                                if np.isnan(split_record_map[
+                                        parent_nid].threshold):
+                                    X_nid_tmp[X_idx] = -1
                                 else:
-                                    # is it a leaf
-                                    if (self.tree_.children_right[
-                                            parent_nid] in expandable_nids):
-                                        X_nid[i] = self.tree_.children_right[
-                                            parent_nid]
+                                    # counter to know how many samples we
+                                    # checked per splitter
+                                    self.counter_X_nid_labels_[parent_nid] += 1
+                                    # track how many samples we send to the
+                                    # left child handle the time that several
+                                    # samples are equal
+                                    print(self.tree_.children_left[
+                                                parent_nid],
+                                          self.tree_.children_right[
+                                                parent_nid])
+                                    if (self.counter_X_nid_labels_[
+                                            parent_nid] <=
+                                            parent_n_left_samples):
+                                        # is it a leaf
+                                        if (self.tree_.children_left[
+                                                parent_nid] in
+                                                expandable_nids):
+                                            X_nid_tmp[X_idx] = self.tree_.children_left[
+                                                parent_nid]
+                                        else:
+                                            X_nid_tmp[X_idx] = -1
                                     else:
-                                        X_nid[i] = -1
-                            else:
-                                if (self.tree_.children_right[parent_nid] in
-                                        expandable_nids):
-                                    X_nid[i] = self.tree_.children_right[
-                                        parent_nid]
-                                else:
-                                    X_nid[i] = -1
+                                        # is it a leaf
+                                        if (self.tree_.children_right[
+                                                parent_nid] in
+                                                expandable_nids):
+                                            X_nid_tmp[X_idx] = self.tree_.children_right[
+                                                parent_nid]
+                                        else:
+                                            X_nid_tmp[X_idx] = -1
+                X_nid = X_nid_tmp
+                print(X_nid)
 
             current_depth += 1
 

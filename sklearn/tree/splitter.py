@@ -109,10 +109,11 @@ class NewSplitter(object):
         feat_i = self.feature_idx
 
         self.update_stats(sample_idx)
-        # check if it was the first hit
-        if self.split_record.l_stats.n_samples == 1:
-            self.prev_idx = sample_idx
-            return
+
+        # # check if it was the first hit
+        # if self.split_record.l_stats.n_samples == 1:
+        #     self.prev_idx = sample_idx
+        #     return
 
         # check that the sample value are different enough
         if self.X[sample_idx, feat_i] != self.X[self.split_record.pos,
@@ -139,14 +140,15 @@ class NewSplitter(object):
                 self.split_record,
                 self.sum_total_weighted_samples)
 
+            print(sample_idx, feat_i)
+            print(self.split_record)
+            print(c_impurity_improvement)
+            assert self.split_record.r_stats.sum_sq_residuals >= 0
+
             # check the impurity improved
             if (c_impurity_improvement >
                 self.best_split_record.impurity_improvement):
                 # reset the best split record
-                # threshold = ((self.X[sample_idx, feat_i] +
-                #               self.X[self.prev_idx, feat_i]) / 2.0)
-                # if threshold == self.X[sample_idx, feat_i]:
-                #     threshold = self.X[self.prev_idx, feat_i]
                 threshold = self.X[sample_idx, feat_i]
                 # update the best splitter
                 self.best_split_record.reset(
