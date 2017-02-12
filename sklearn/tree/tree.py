@@ -440,20 +440,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # reset the splitter
 
                 for i, nid in enumerate(expandable_nids):
-                    print('==============')
-                    print(parent_split_map[nid])
-                    print('==============')
                     splitter_map[nid].reset(feat_i, X_col[0],
                                             parent_split_map[nid])
-                    # splitter_list[i].reset(feat_i, X_col[0],
-                    #                        parent_split_map[nid])
 
                 # scans all samples and evaluate all possible splits for all
                 # the different splitters
                 for sample_idx_sorted in X_col:
                     # Samples which are not in a leaf
                     if X_nid[sample_idx_sorted] != -1:
-                        print('X_nid=', X_nid[sample_idx_sorted])
                         # check that the sample value are different enough
                         splitter_map[X_nid[
                             sample_idx_sorted]].node_evaluate_split(
@@ -475,11 +469,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # expand the tree structure
                 if not np.isnan(split_record_map[nid].threshold):
                     best_split = split_record_map[nid]
-
-                    print('best split record')
-                    print('-----------------')
-                    print(best_split)
-                    print('-----------------')
 
                     # create the left and right which have been found
                     # from the parent splits
@@ -537,12 +526,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # update of the expandable nodes
             expandable_nids = parent_split_map.keys()
-            print('expandable nids: ', expandable_nids)
 
             # remove redundant index of feature to visit when updating X_nid
             feature_update_X_nid = np.unique(feature_update_X_nid)
-            print('Feature to be visited')
-            print(feature_update_X_nid)
 
             # check that some node need to be extended before to update
             # the node index
@@ -576,10 +562,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                     # track how many samples we send to the
                                     # left child handle the time that several
                                     # samples are equal
-                                    print(self.tree_.children_left[
-                                                parent_nid],
-                                          self.tree_.children_right[
-                                                parent_nid])
                                     if (self.counter_X_nid_labels_[
                                             parent_nid] <=
                                             parent_n_left_samples):
@@ -601,7 +583,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                         else:
                                             X_nid_tmp[X_idx] = -1
                 X_nid = X_nid_tmp
-                print(X_nid)
 
             current_depth += 1
 

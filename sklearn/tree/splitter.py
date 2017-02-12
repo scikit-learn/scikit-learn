@@ -2,8 +2,6 @@ from __future__ import division, print_function
 
 from copy import deepcopy
 
-from numpy import inf
-
 from .stats_node import StatsNode
 from .criterion import impurity_improvement
 
@@ -110,11 +108,6 @@ class NewSplitter(object):
 
         self.update_stats(sample_idx)
 
-        # # check if it was the first hit
-        # if self.split_record.l_stats.n_samples == 1:
-        #     self.prev_idx = sample_idx
-        #     return
-
         # check that the sample value are different enough
         if self.X[sample_idx, feat_i] != self.X[self.split_record.pos,
                                                 self.split_record.feature]:
@@ -140,9 +133,6 @@ class NewSplitter(object):
                 self.split_record,
                 self.sum_total_weighted_samples)
 
-            print(sample_idx, feat_i)
-            print(self.split_record)
-            print(c_impurity_improvement)
             assert self.split_record.r_stats.sum_sq_residuals >= 0
 
             # check the impurity improved
