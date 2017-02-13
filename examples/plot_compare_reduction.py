@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 =================================================================
@@ -7,13 +7,27 @@ Selecting dimensionality reduction with Pipeline and GridSearchCV
 
 This example constructs a pipeline that does dimensionality
 reduction followed by prediction with a support vector
-classifier. It demonstrates the use of GridSearchCV and
-Pipeline to optimize over different classes of estimators in a
-single CV run -- unsupervised PCA and NMF dimensionality
+classifier. It demonstrates the use of ``GridSearchCV`` and
+``Pipeline`` to optimize over different classes of estimators in a
+single CV run -- unsupervised ``PCA`` and ``NMF`` dimensionality
 reductions are compared to univariate feature selection during
 the grid search.
+
+Additionally, ``Pipeline`` can be instantiated with the ``memory``
+argument to memoize the transformers within the pipeline, avoiding to fit
+again the same transformers over and over.
+
+Note that the use of ``memory`` to enable caching becomes interesting when the
+fitting of a transformer is costly.
 """
-# Authors: Robert McGibbon, Joel Nothman
+
+###############################################################################
+# Illustration of ``Pipeline`` and ``GridSearchCV``
+###############################################################################
+# This section illustrates the use of a ``Pipeline`` with
+# ``GridSearchCV``
+
+# Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
 from __future__ import print_function, division
 
@@ -49,7 +63,7 @@ param_grid = [
 ]
 reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
 
-grid = GridSearchCV(pipe, cv=3, n_jobs=2, param_grid=param_grid)
+grid = GridSearchCV(pipe, cv=3, n_jobs=1, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
@@ -72,4 +86,45 @@ plt.xticks(bar_offsets + len(reducer_labels) / 2, N_FEATURES_OPTIONS)
 plt.ylabel('Digit classification accuracy')
 plt.ylim((0, 1))
 plt.legend(loc='upper left')
+
+###############################################################################
+# Caching transformers within a ``Pipeline``
+###############################################################################
+# It is sometimes worthwhile storing the state of a specific transformer
+# since it could be used again. Using a pipeline in ``GridSearchCV`` triggers
+# such situations. Therefore, we use the argument ``memory`` to enable caching.
+#
+# .. warning::
+#     Note that this example is, however, only an illustration since for this
+#     specific case fitting PCA is not necessarily slower than loading the
+#     cache. Hence, use the ``memory`` constructor parameter when the fitting
+#     of a transformer is costly.
+
+from tempfile import mkdtemp
+from shutil import rmtree
+from sklearn.externals.joblib import Memory
+
+# Create a temporary folder to store the transformers of the pipeline
+cachedir = mkdtemp()
+memory = Memory(cachedir=cachedir, verbose=10)
+cached_pipe = Pipeline([('reduce_dim', PCA()),
+                        ('classify', LinearSVC())],
+                       memory=memory)
+
+# This time, a cached pipeline will be used within the grid search
+grid = GridSearchCV(cached_pipe, cv=3, n_jobs=1, param_grid=param_grid)
+digits = load_digits()
+grid.fit(digits.data, digits.target)
+
+# Delete the temporary cache before exiting
+rmtree(cachedir)
+
+###############################################################################
+# The ``PCA`` fitting is only computed at the evaluation of the first
+# configuration of the ``C`` parameter of the ``LinearSVC`` classifier. The
+# other configurations of ``C`` will trigger the loading of the cached ``PCA``
+# estimator data, leading to save processing time. Therefore, the use of
+# caching the pipeline using ``memory`` is highly beneficial when fitting
+# a transformer is costly.
+
 plt.show()
