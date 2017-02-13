@@ -1377,7 +1377,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The
-        default scoring option used is accuracy_score.
+        default scoring option used is 'accuracy'.
 
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}
