@@ -86,7 +86,7 @@ def plot_points_boundary(ax, clf, x, y, xx, yy,
     Parameters
     ----------
     ax: matplotlib axes object
-    clf: a classifier
+    clf: a fitted classifier
     x: x-axis of points to plot
     y: y-axis of points to plot
     xx: meshgrid ndarray
