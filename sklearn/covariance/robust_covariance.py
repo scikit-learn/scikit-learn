@@ -120,7 +120,8 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
     previous_det = np.inf
-    while (det < previous_det) and (remaining_iterations > 0) and (not np.isinf(det)):
+    while (det < previous_det and remaining_iterations > 0
+            and not np.isinf(det)):
         # save old estimates values
         previous_location = location
         previous_covariance = covariance

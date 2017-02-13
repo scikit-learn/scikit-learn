@@ -121,8 +121,9 @@ def test_mcd_issue3367():
     #
     # After which we need to assert that our `normal` is equal to [0, 0, 1].
     # Do note that there is floating point error associated with this, so it's
-    # best to subtract the two and then compare some small tolerance (e.g. 1e-12).
-    mcd_fit = MinCovDet(random_state=rand_gen).fit(data)
+    # best to subtract the two and then compare some small tolerance (e.g.
+    # 1e-12).
+    MinCovDet(random_state=rand_gen).fit(data)
 
 
 def test_outlier_detection():
