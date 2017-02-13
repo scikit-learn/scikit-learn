@@ -227,18 +227,15 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def f_regression(X, y, center=True):
-    """Univariate linear regression tests.
+def r_regression(X, y, center=True):
+    """Univariate linear regression tests returning Pearson R.
 
     Quick linear model for testing the effect of a single regressor,
     sequentially for many regressors.
 
-    This is done in 2 steps:
-
-    1. The cross correlation between each regressor and the target is computed,
+    The cross correlation between each regressor and the target is computed,
        that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
        std(y)).
-    2. It is converted to an F score then to a p-value.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -255,14 +252,12 @@ def f_regression(X, y, center=True):
 
     Returns
     -------
-    F : array, shape=(n_features,)
-        F values of features.
-
-    pval : array, shape=(n_features,)
-        p-values of F-scores.
+    corr : array, shape=(n_features,)
+        Pearson R correlation coefficients of features.
 
     See also
     --------
+    f_regression: Univariate linear regression tests returning f-statistic and p-values
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
@@ -288,13 +283,69 @@ def f_regression(X, y, center=True):
     corr = safe_sparse_dot(y, X)
     corr /= X_norms
     corr /= norm(y)
+    return corr
 
-    # convert to p-value
+def f_regression(X, y, center=True):
+    """Univariate linear regression tests returning F-statistic and p-values.
+
+    Quick linear model for testing the effect of a single regressor,
+    sequentially for many regressors.
+
+    This is done in 2 steps:
+
+    1. The cross correlation between each regressor and the target is computed,
+       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
+       std(y)) using r_regression function.
+    2. It is converted to an F score and then to a p-value.
+
+    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}  shape = (n_samples, n_features)
+        The set of regressors that will be tested sequentially.
+
+    y : array of shape(n_samples).
+        The data matrix
+
+    center : True, bool,
+        If true, X and y will be centered.
+
+    Returns
+    -------
+    F : array, shape=(n_features,)
+        F values of features.
+
+    pval : array, shape=(n_features,)
+        p-values of F-scores.
+
+    See also
+    --------
+    r_regression: Univariate linear regression tests returning Pearson R.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    chi2: Chi-squared stats of non-negative features for classification tasks.
+    """
+
+    # compute the correlation
+    corr = r_regression(X, y, center=center)
     degrees_of_freedom = y.size - (2 if center else 1)
+    # convert to p-value
     F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
     pv = stats.f.sf(F, 1, degrees_of_freedom)
     return F, pv
 
+
+def abs_r_regression(X, y, center=True):
+   """Univariate linear regression tests returning absolute value of Pearson R.
+
+   This convenience wrapper is to be used with SelectKBest and other models
+   that require a statistic which is increases with significance of association.
+
+   see r_regression for details.
+   """
+   # compute the correlation
+   corr = r_regression(X, y, center=center)
+   return abs(corr)
 
 ######################################################################
 # Base classes
@@ -464,6 +515,8 @@ class SelectKBest(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    abs_r_regression: absolute value of Pearson R between label/feature for 
+        regression tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continious target.
     SelectPercentile: Select features based on percentile of the highest scores.
