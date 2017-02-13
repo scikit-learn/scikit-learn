@@ -109,8 +109,9 @@ class NewSplitter(object):
         self.update_stats(sample_idx)
 
         # check that the sample value are different enough
-        if self.X[sample_idx, feat_i] != self.X[self.split_record.pos,
-                                                self.split_record.feature]:
+        change = abs(self.X[sample_idx, feat_i] -
+                     self.X[self.split_record.pos, self.split_record.feature])
+        if change > FEATURE_THRESHOLD:
 
             # check that there is enough samples to make the proper split
             if (self.split_record.l_stats.n_samples < self.min_samples_leaf or
@@ -133,13 +134,12 @@ class NewSplitter(object):
                 self.split_record,
                 self.sum_total_weighted_samples)
 
-            assert self.split_record.r_stats.sum_sq_residuals >= 0
-
             # check the impurity improved
             if (c_impurity_improvement >
-                self.best_split_record.impurity_improvement):
+                    self.best_split_record.impurity_improvement):
                 # reset the best split record
-                threshold = self.X[sample_idx, feat_i]
+                threshold = (self.X[sample_idx, feat_i] +
+                             self.X[self.prev_idx, feat_i]) / 2
                 # update the best splitter
                 self.best_split_record.reset(
                     feature=feat_i,
