@@ -9,6 +9,8 @@ estimator, as a chain of transforms and estimators.
 #         Lars Buitinck
 # License: BSD
 
+import warnings
+
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
 
@@ -20,6 +22,7 @@ from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
+from .utils.validation import check_is_fitted
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -114,7 +117,7 @@ class Pipeline(_BasePipeline):
         If a string is given, it is the path to the caching directory.
         Enabling caching triggers a clone of the transformers before fitting.
         Therefore, the transformer instance given to the pipeline cannot be
-        inspected directly. Use the attribute ``named_steps`` or ``steps``
+        inspected directly. Use the attribute ``named_steps_`` or ``steps_``
         to inspect estimators within the pipeline.
         Caching the transformers is advantageous when fitting is time
         consuming.
@@ -123,8 +126,12 @@ class Pipeline(_BasePipeline):
     Attributes
     ----------
     named_steps : dict
-        Read-only attribute to access any step parameter by user given name.
-        Keys are step names and values are steps parameters.
+        Read-only attribute to access any unfitted step parameter by user
+        given name. Keys are step names and values are steps parameters.
+
+    named_steps_ : dict
+        Read-only attribute to access any fitted step parameter by user
+        given name. Keys are step names and values are steps parameters.
 
     Examples
     --------
@@ -152,7 +159,7 @@ class Pipeline(_BasePipeline):
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.829...
     >>> # getting the selected features chosen by anova_filter
-    >>> anova_svm.named_steps['anova'].get_support()
+    >>> anova_svm.named_steps_['anova'].get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
@@ -165,7 +172,6 @@ class Pipeline(_BasePipeline):
     def __init__(self, steps, memory=None):
         # shallow copy of steps
         self.steps = tosequence(steps)
-        self._validate_steps()
         self.memory = memory
 
     def get_params(self, deep=True):
@@ -221,22 +227,38 @@ class Pipeline(_BasePipeline):
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
+        return self.steps
+
     @property
     def _estimator_type(self):
-        return self.steps[-1][1]._estimator_type
+        return self.steps_[-1][1]._estimator_type
 
     @property
     def named_steps(self):
-        return dict(self.steps)
+        if hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'named_steps' will returned the"
+                          " unfitted estimator. To get the fitted estimator,"
+                          " use 'name_steps_' instead.", FutureWarning)
+            return dict(self.steps_)
+        else:
+            return dict(self.steps)
+
+    @property
+    def named_steps_(self):
+        return dict(self.steps_)
 
     @property
     def _final_estimator(self):
-        return self.steps[-1][1]
+        # FIXME: Not sure about the right implementation there.
+        if hasattr(self, 'steps_'):
+            return self.steps_[-1][1]
+        else:
+            return self.steps[-1][1]
 
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
-        self._validate_steps()
+        steps_ = self._validate_steps()
         # Setup the memory
         memory = self.memory
         if memory is None:
@@ -250,13 +272,13 @@ class Pipeline(_BasePipeline):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = dict((name, {}) for name, step in self.steps
+        fit_params_steps = dict((name, {}) for name, step in steps_
                                 if step is not None)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
+        for step_idx, (name, transformer) in enumerate(steps_[:-1]):
             if transformer is None:
                 pass
             else:
@@ -273,10 +295,11 @@ class Pipeline(_BasePipeline):
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
                 # from the cache.
-                self.steps[step_idx] = (name, fitted_transformer)
+                steps_[step_idx] = (name, fitted_transformer)
+        self.steps_ = steps_
         if self._final_estimator is None:
             return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+        return Xt, fit_params_steps[steps_[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -359,11 +382,12 @@ class Pipeline(_BasePipeline):
         -------
         y_pred : array-like
         """
+        check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt)
+        return self.steps_[-1][-1].predict(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def fit_predict(self, X, y=None, **fit_params):
@@ -393,7 +417,7 @@ class Pipeline(_BasePipeline):
         y_pred : array-like
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
-        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+        return self.steps_[-1][-1].fit_predict(Xt, y, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
@@ -409,11 +433,12 @@ class Pipeline(_BasePipeline):
         -------
         y_proba : array-like, shape = [n_samples, n_classes]
         """
+        check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        return self.steps_[-1][-1].predict_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
@@ -429,11 +454,12 @@ class Pipeline(_BasePipeline):
         -------
         y_score : array-like, shape = [n_samples, n_classes]
         """
+        check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].decision_function(Xt)
+        return self.steps_[-1][-1].decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
@@ -449,11 +475,12 @@ class Pipeline(_BasePipeline):
         -------
         y_score : array-like, shape = [n_samples, n_classes]
         """
+        check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        return self.steps_[-1][-1].predict_log_proba(Xt)
 
     @property
     def transform(self):
@@ -473,13 +500,14 @@ class Pipeline(_BasePipeline):
         Xt : array-like, shape = [n_samples, n_transformed_features]
         """
         # _final_estimator is None or has transform, otherwise attribute error
+        check_is_fitted(self, 'steps_')
         if self._final_estimator is not None:
             self._final_estimator.transform
         return self._transform
 
     def _transform(self, X):
         Xt = X
-        for name, transform in self.steps:
+        for name, transform in self.steps_:
             if transform is not None:
                 Xt = transform.transform(Xt)
         return Xt
@@ -503,14 +531,15 @@ class Pipeline(_BasePipeline):
         Xt : array-like, shape = [n_samples, n_features]
         """
         # raise AttributeError if necessary for hasattr behaviour
-        for name, transform in self.steps:
+        check_is_fitted(self, 'steps_')
+        for name, transform in self.steps_:
             if transform is not None:
                 transform.inverse_transform
         return self._inverse_transform
 
     def _inverse_transform(self, X):
         Xt = X
-        for name, transform in self.steps[::-1]:
+        for name, transform in self.steps_[::-1]:
             if transform is not None:
                 Xt = transform.inverse_transform(Xt)
         return Xt
@@ -537,23 +566,24 @@ class Pipeline(_BasePipeline):
         -------
         score : float
         """
+        check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
-        return self.steps[-1][-1].score(Xt, y, **score_params)
+        return self.steps_[-1][-1].score(Xt, y, **score_params)
 
     @property
     def classes_(self):
-        return self.steps[-1][-1].classes_
+        return self.steps_[-1][-1].classes_
 
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
-        return getattr(self.steps[0][1], '_pairwise', False)
+        return getattr(self.steps_[0][1], '_pairwise', False)
 
 
 def _name_estimators(estimators):

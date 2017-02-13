@@ -86,15 +86,15 @@ print('\nPrediction accuracy for the standardized test dataset with PCA')
 print('{:.2%}\n'.format(metrics.accuracy_score(y_test, pred_test_std)))
 
 # Extract PCA from pipeline
-pca = unscaled_clf.named_steps['pca']
-pca_std = std_clf.named_steps['pca']
+pca = unscaled_clf.named_steps_['pca']
+pca_std = std_clf.named_steps_['pca']
 
 # Show first principal componenets
 print('\nPC 1 without scaling:\n', pca.components_[0])
 print('\nPC 1 with scaling:\n', pca_std.components_[0])
 
 # Scale and use PCA on X_train data for visualization.
-scaler = std_clf.named_steps['standardscaler']
+scaler = std_clf.named_steps_['standardscaler']
 X_train_std = pca_std.transform(scaler.transform(X_train))
 
 # visualize standardized vs. untouched dataset with PCA performed

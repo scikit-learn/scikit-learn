@@ -145,12 +145,16 @@ class DummyTransf(Transf):
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
     # Check that we can't instantiate pipelines with objects without fit
     # method
+    pipe = Pipeline([('clf', NoFit())])
     assert_raises_regex(TypeError,
                         'Last step of Pipeline should implement fit. '
                         '.*NoFit.*',
-                        Pipeline, [('clf', NoFit())])
+                        pipe.fit, X, y)
     # Smoke test with only an estimator
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
@@ -172,10 +176,11 @@ def test_pipeline_init():
 
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
+    pipe_no_transf = Pipeline([('t', NoTrans()), ('svc', clf)])
     assert_raises_regex(TypeError,
                         'All intermediate steps should be transformers'
                         '.*\\bNoTrans\\b.*',
-                        Pipeline, [('t', NoTrans()), ('svc', clf)])
+                        pipe_no_transf.fit, X, y)
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -231,8 +236,8 @@ def test_pipeline_fit_params():
     # classifier should return True
     assert_true(pipe.predict(None))
     # and transformer params should not be changed
-    assert_true(pipe.named_steps['transf'].a is None)
-    assert_true(pipe.named_steps['transf'].b is None)
+    assert_true(pipe.named_steps_['transf'].a is None)
+    assert_true(pipe.named_steps_['transf'].b is None)
     # invalid parameters should raise an error message
     assert_raise_message(
         TypeError,
@@ -379,9 +384,9 @@ def test_fit_predict_with_intermediate_fit_params():
                      y=None,
                      transf__should_get_this=True,
                      clf__should_succeed=True)
-    assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
-    assert_true(pipe.named_steps['clf'].successful)
-    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+    assert_true(pipe.named_steps_['transf'].fit_params['should_get_this'])
+    assert_true(pipe.named_steps_['clf'].successful)
+    assert_false('should_succeed' in pipe.named_steps_['transf'].fit_params)
 
 
 def test_feature_union():
@@ -580,27 +585,35 @@ def test_set_pipeline_step_none():
 
 
 def test_pipeline_ducktyping():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
     pipeline = make_pipeline(Mult(5))
+    pipeline.fit(X, y)
     pipeline.predict
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf())
+    pipeline.fit(X, y)
     assert_false(hasattr(pipeline, 'predict'))
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline(None)
+    pipeline.fit(X, y)
     assert_false(hasattr(pipeline, 'predict'))
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf(), NoInvTransf())
+    pipeline.fit(X, y)
     assert_false(hasattr(pipeline, 'predict'))
     pipeline.transform
     assert_false(hasattr(pipeline, 'inverse_transform'))
 
     pipeline = make_pipeline(NoInvTransf(), Transf())
+    pipeline.fit(X, y)
     assert_false(hasattr(pipeline, 'predict'))
     pipeline.transform
     assert_false(hasattr(pipeline, 'inverse_transform'))
@@ -786,37 +799,72 @@ def test_set_feature_union_step_none():
     assert_array_equal([[3]], ft.fit(X).transform(X))
 
 
-def test_step_name_validation():
+def test_step_name_validation_pipeline():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
     bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
     bad_steps2 = [('a', Mult(2)), ('a', Mult(3))]
-    for cls, param in [(Pipeline, 'steps'),
-                       (FeatureUnion, 'transformer_list')]:
-        # we validate in construction (despite scikit-learn convention)
-        bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
-        for bad_steps, message in [
+    cls, param = (Pipeline, 'steps')
+    # we validate in construction (despite scikit-learn convention)
+    bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
+    for bad_steps, message in [
             (bad_steps1, "Step names must not contain __: got ['a__q']"),
             (bad_steps2, "Names provided are not unique: ['a', 'a']"),
             (bad_steps3, "Step names conflict with constructor "
-                         "arguments: ['%s']" % param),
-        ]:
-            # three ways to make invalid:
-            # - construction
-            assert_raise_message(ValueError, message, cls,
-                                 **{param: bad_steps})
+             "arguments: ['%s']" % param),
+    ]:
+        # three ways to make invalid:
+        # - construction
+        pipe = cls(bad_steps)
+        assert_raise_message(ValueError, message, pipe.fit, X, y)
 
-            # - setattr
-            est = cls(**{param: [('a', Mult(1))]})
-            setattr(est, param, bad_steps)
-            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
-            assert_raise_message(ValueError, message, est.fit_transform,
-                                 [[1]], [1])
+        # - setattr
+        est = cls(**{param: [('a', Mult(1))]})
+        setattr(est, param, bad_steps)
+        assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+        assert_raise_message(ValueError, message, est.fit_transform,
+                             [[1]], [1])
 
-            # - set_params
-            est = cls(**{param: [('a', Mult(1))]})
-            est.set_params(**{param: bad_steps})
-            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
-            assert_raise_message(ValueError, message, est.fit_transform,
-                                 [[1]], [1])
+        # - set_params
+        est = cls(**{param: [('a', Mult(1))]})
+        est.set_params(**{param: bad_steps})
+        assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+        assert_raise_message(ValueError, message, est.fit_transform,
+                             [[1]], [1])
+
+
+def test_step_name_validation_feature_union():
+    bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
+    bad_steps2 = [('a', Mult(2)), ('a', Mult(3))]
+    cls, param = (FeatureUnion, 'transformer_list')
+    # we validate in construction (despite scikit-learn convention)
+    bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
+    for bad_steps, message in [
+            (bad_steps1, "Step names must not contain __: got ['a__q']"),
+            (bad_steps2, "Names provided are not unique: ['a', 'a']"),
+            (bad_steps3, "Step names conflict with constructor "
+             "arguments: ['%s']" % param),
+    ]:
+        # three ways to make invalid:
+        # - construction
+        assert_raise_message(ValueError, message, cls,
+                             **{param: bad_steps})
+
+        # - setattr
+        est = cls(**{param: [('a', Mult(1))]})
+        setattr(est, param, bad_steps)
+        assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+        assert_raise_message(ValueError, message, est.fit_transform,
+                             [[1]], [1])
+
+        # - set_params
+        est = cls(**{param: [('a', Mult(1))]})
+        est.set_params(**{param: bad_steps})
+        assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+        assert_raise_message(ValueError, message, est.fit_transform,
+                             [[1]], [1])
 
 
 def test_pipeline_wrong_memory():
@@ -852,15 +900,15 @@ def test_pipeline_memory():
         cached_pipe.fit(X, y)
         pipe.fit(X, y)
         # Get the time stamp of the tranformer in the cached pipeline
-        ts = cached_pipe.named_steps['transf'].timestamp_
+        ts = cached_pipe.named_steps_['transf'].timestamp_
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
         assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
         assert_array_equal(pipe.predict_log_proba(X),
                            cached_pipe.predict_log_proba(X))
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
-        assert_array_equal(pipe.named_steps['transf'].means_,
-                           cached_pipe.named_steps['transf'].means_)
+        assert_array_equal(pipe.named_steps_['transf'].means_,
+                           cached_pipe.named_steps_['transf'].means_)
         assert_false(hasattr(transf, 'means_'))
         # Check that we are reading the cache while fitting
         # a second time
@@ -871,9 +919,9 @@ def test_pipeline_memory():
         assert_array_equal(pipe.predict_log_proba(X),
                            cached_pipe.predict_log_proba(X))
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
-        assert_array_equal(pipe.named_steps['transf'].means_,
-                           cached_pipe.named_steps['transf'].means_)
-        assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
+        assert_array_equal(pipe.named_steps_['transf'].means_,
+                           cached_pipe.named_steps_['transf'].means_)
+        assert_equal(ts, cached_pipe.named_steps_['transf'].timestamp_)
         # Create a new pipeline with cloned estimators
         # Check that even changing the name step does not affect the cache hit
         clf_2 = SVC(probability=True, random_state=0)
@@ -889,8 +937,8 @@ def test_pipeline_memory():
         assert_array_equal(pipe.predict_log_proba(X),
                            cached_pipe_2.predict_log_proba(X))
         assert_array_equal(pipe.score(X, y), cached_pipe_2.score(X, y))
-        assert_array_equal(pipe.named_steps['transf'].means_,
-                           cached_pipe_2.named_steps['transf_2'].means_)
-        assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
+        assert_array_equal(pipe.named_steps_['transf'].means_,
+                           cached_pipe_2.named_steps_['transf_2'].means_)
+        assert_equal(ts, cached_pipe_2.named_steps_['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)

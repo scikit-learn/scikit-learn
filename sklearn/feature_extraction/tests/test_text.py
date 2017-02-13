@@ -246,7 +246,7 @@ def test_countvectorizer_custom_vocabulary_pipeline():
         ('count', CountVectorizer(vocabulary=what_we_like)),
         ('tfidf', TfidfTransformer())])
     X = pipe.fit_transform(ALL_FOOD_DOCS)
-    assert_equal(set(pipe.named_steps['count'].vocabulary_),
+    assert_equal(set(pipe.named_steps_['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
 
@@ -728,7 +728,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     # the grid_search is considered the best estimator since they all converge
     # to 100% accuracy models
     assert_equal(grid_search.best_score_, 1.0)
-    best_vectorizer = grid_search.best_estimator_.named_steps['vect']
+    best_vectorizer = grid_search.best_estimator_.named_steps_['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
 
 
@@ -765,7 +765,7 @@ def test_vectorizer_pipeline_grid_selection():
     # the grid_search is considered the best estimator since they all converge
     # to 100% accuracy models
     assert_equal(grid_search.best_score_, 1.0)
-    best_vectorizer = grid_search.best_estimator_.named_steps['vect']
+    best_vectorizer = grid_search.best_estimator_.named_steps_['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
     assert_false(best_vectorizer.fixed_vocabulary_)

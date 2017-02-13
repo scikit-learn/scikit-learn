@@ -65,9 +65,9 @@ The estimators of a pipeline are stored as a list in the ``steps`` attribute::
     ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False))
 
-and as a ``dict`` in ``named_steps``::
+and as a ``dict`` in ``named_steps_``::
 
-    >>> pipe.named_steps['reduce_dim']
+    >>> pipe.named_steps_['reduce_dim']
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
 
@@ -176,7 +176,7 @@ object::
    In following example, accessing the :class:`PCA` instance ``pca2``
    will raise an ``AttributeError`` since ``pca2`` will be an unfitted
    transformer.
-   Instead, use the attribute ``named_steps`` to inspect estimators within
+   Instead, use the attribute ``named_steps_`` to inspect estimators within
    the pipeline::
 
      >>> cachedir = mkdtemp()
@@ -188,7 +188,7 @@ object::
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
       Pipeline(memory=...,
                steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
-     >>> print(cached_pipe.named_steps['reduce_dim'].components_)
+     >>> print(cached_pipe.named_steps_['reduce_dim'].components_)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[ -1.77484909e-19  ... 4.07058917e-18]]
      >>> # Remove the cache directory
