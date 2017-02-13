@@ -312,9 +312,12 @@ def test_clone_pandas_dataframe():
     assert_equal(e.scalar_param, cloned_e.scalar_param)
 
 
-class TreeNoVersion(DecisionTreeClassifier):
-    def __getstate__(self):
-        return self.__dict__
+def test_pickle_version_warning_is_not_raised_with_matching_version():
+    iris = datasets.load_iris()
+    tree = DecisionTreeClassifier().fit(iris.data, iris.target)
+    tree_pickle = pickle.dumps(tree)
+    assert_true(b"version" in tree_pickle)
+    assert_no_warnings(pickle.loads, tree_pickle)
 
 
 class TreeBadVersion(DecisionTreeClassifier):
@@ -322,17 +325,8 @@ class TreeBadVersion(DecisionTreeClassifier):
         return dict(self.__dict__.items(), _sklearn_version="something")
 
 
-def test_pickle_version_warning():
-    # check that warnings are raised when unpickling in a different version
-
-    # first, check no warning when in the same version:
+def test_pickle_version_warning_is_issued_upon_different_version():
     iris = datasets.load_iris()
-    tree = DecisionTreeClassifier().fit(iris.data, iris.target)
-    tree_pickle = pickle.dumps(tree)
-    assert_true(b"version" in tree_pickle)
-    assert_no_warnings(pickle.loads, tree_pickle)
-
-    # check that warning is raised on different version
     tree = TreeBadVersion().fit(iris.data, iris.target)
     tree_pickle_other = pickle.dumps(tree)
     message = ("Trying to unpickle estimator TreeBadVersion from "
@@ -342,19 +336,33 @@ def test_pickle_version_warning():
                                               sklearn.__version__))
     assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
 
-    # check that not including any version also works:
+
+class TreeNoVersion(DecisionTreeClassifier):
+    def __getstate__(self):
+        return self.__dict__
+
+
+def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
+    iris = datasets.load_iris()
     # TreeNoVersion has no getstate, like pre-0.18
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
     assert_false(b"version" in tree_pickle_noversion)
-    message = message.replace("something", "pre-0.18")
-    message = message.replace("TreeBadVersion", "TreeNoVersion")
+    message = ("Trying to unpickle estimator TreeNoVersion from "
+               "version {0} when using version {1}. This might lead to "
+               "breaking code or invalid results. "
+               "Use at your own risk.".format("pre-0.18",
+                                              sklearn.__version__))
     # check we got the warning about using pre-0.18 pickle
     assert_warns_message(UserWarning, message, pickle.loads,
                          tree_pickle_noversion)
 
-    # check that no warning is raised for external estimators
+
+def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
+    iris = datasets.load_iris()
+    tree = TreeNoVersion().fit(iris.data, iris.target)
+    tree_pickle_noversion = pickle.dumps(tree)
     TreeNoVersion.__module__ = "notsklearn"
     assert_no_warnings(pickle.loads, tree_pickle_noversion)
 
@@ -419,13 +427,6 @@ class TestPicklingConstraints(object):
             assert estimator.b == 4
         finally:
             type(estimator).__module__ = old_mod
-
-    def test_uses_object_dictionary_when_getstate_not_present(self):
-        estimator = MultiInheritanceEstimator()
-
-        serialized = pickle.dumps(estimator, protocol=2)
-        estimator_restored = pickle.loads(serialized)
-        assert estimator_restored.b == 5
 
     def test_singleinheritance_clone(self):
         estimator = SingleInheritanceEstimator()
