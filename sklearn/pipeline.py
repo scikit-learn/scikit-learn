@@ -15,8 +15,8 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import sparse
 
-from .base import BaseEstimator, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .base import clone, BaseEstimator, TransformerMixin
+from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
@@ -89,6 +89,7 @@ class Pipeline(_BasePipeline):
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement fit and transform methods.
     The final estimator only needs to implement fit.
+    The transformers in the pipeline can be cached using ```memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters.
@@ -106,6 +107,18 @@ class Pipeline(_BasePipeline):
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
+
+    memory : Instance of joblib.Memory or string, optional (default=None)
+        Used to caching the fitted transformers of the transformer of the
+        pipeline. By default, no cache is performed.
+        If a string is given, it is the path to the caching directory.
+        Enabling caching triggers a clone of the transformers before fitting.
+        Therefore, the transformer instance given to the pipeline cannot be
+        inspected directly. Use the attribute ``named_steps`` or ``steps``
+        to inspect estimators within the pipeline.
+        Caching the transformers is advantageous when fitting is time
+        consuming.
+
 
     Attributes
     ----------
@@ -131,8 +144,10 @@ class Pipeline(_BasePipeline):
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-    ...                                              # doctest: +ELLIPSIS
-    Pipeline(steps=[...])
+    ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Pipeline(memory=None,
+             steps=[('anova', SelectKBest(...)),
+                    ('svc', SVC(...))])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.829...
@@ -142,14 +157,16 @@ class Pipeline(_BasePipeline):
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
            False, False], dtype=bool)
+
     """
 
     # BaseEstimator interface
 
-    def __init__(self, steps):
+    def __init__(self, steps, memory=None):
         # shallow copy of steps
         self.steps = tosequence(steps)
         self._validate_steps()
+        self.memory = memory
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -220,20 +237,43 @@ class Pipeline(_BasePipeline):
 
     def _fit(self, X, y=None, **fit_params):
         self._validate_steps()
+        # Setup the memory
+        memory = self.memory
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
+            memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError("'memory' should either be a string or"
+                             " a joblib.Memory instance, got"
+                             " 'memory={!r}' instead.".format(memory))
+
+        fit_transform_one_cached = memory.cache(_fit_transform_one)
+
         fit_params_steps = dict((name, {}) for name, step in self.steps
                                 if step is not None)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for name, transform in self.steps[:-1]:
-            if transform is None:
+        for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
+            if transformer is None:
                 pass
-            elif hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
             else:
-                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
-                              .transform(Xt)
+                if memory.cachedir is None:
+                    # we do not clone when caching is disabled to preserve
+                    # backward compatibility
+                    cloned_transformer = transformer
+                else:
+                    cloned_transformer = clone(transformer)
+                # Fit or load from cache the current transfomer
+                Xt, fitted_transformer = fit_transform_one_cached(
+                    cloned_transformer, None, Xt, y,
+                    **fit_params_steps[name])
+                # Replace the transformer of the step with the fitted
+                # transformer. This is necessary when loading the transformer
+                # from the cache.
+                self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator is None:
             return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]
@@ -550,7 +590,8 @@ def make_pipeline(*steps):
     >>> from sklearn.preprocessing import StandardScaler
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
     ...     # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('standardscaler',
+    Pipeline(memory=None,
+             steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
                     ('gaussiannb', GaussianNB(priors=None))])
 
@@ -565,7 +606,7 @@ def _fit_one_transformer(transformer, X, y):
     return transformer.fit(X, y)
 
 
-def _transform_one(transformer, name, weight, X):
+def _transform_one(transformer, weight, X):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -573,7 +614,7 @@ def _transform_one(transformer, name, weight, X):
     return res * weight
 
 
-def _fit_transform_one(transformer, name, weight, X, y,
+def _fit_transform_one(transformer, weight, X, y,
                        **fit_params):
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
@@ -731,7 +772,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, name, weight, X, y,
+            delayed(_fit_transform_one)(trans, weight, X, y,
                                         **fit_params)
             for name, trans, weight in self._iter())
 
@@ -761,7 +802,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, name, weight, X)
+            delayed(_transform_one)(trans, weight, X)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
