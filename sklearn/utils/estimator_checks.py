@@ -114,9 +114,9 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]):
+    if name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]:
         # TODO some complication with -1 label
-        if (name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+        if name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]:
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
             pass
@@ -128,6 +128,8 @@ def _yield_classifier_checks(name, Classifier):
         yield check_class_weight_classifiers
 
     yield check_non_transformer_estimators_n_iter
+    # test if predict_proba is a monotonic transformation of decision_function
+    yield check_decision_proba_consistency
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -163,7 +165,6 @@ def _yield_regressor_checks(name, Regressor):
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
     yield check_supervised_y_no_nan
-    yield check_decision_proba_consistency
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
@@ -1574,7 +1575,8 @@ def check_parameters_default_constructible(name, Estimator):
         try:
             def param_filter(p):
                 """Identify hyper parameters of an estimator"""
-                return (p.name != 'self' and p.kind != p.VAR_KEYWORD and
+                return (p.name != 'self' and
+                        p.kind != p.VAR_KEYWORD and
                         p.kind != p.VAR_POSITIONAL)
 
             init_params = [p for p in signature(init).parameters.values()
@@ -1724,10 +1726,9 @@ def check_classifiers_regression_target(name, Estimator):
 
 @ignore_warnings(category=DeprecationWarning)
 def check_decision_proba_consistency(name, Estimator):
-    """
-    Check whether an estimator having both decision_function and
-    predict_proba methods has outputs with perfect rank correlation.
-    """
+    # Check whether an estimator having both decision_function and
+    # predict_proba methods has outputs with perfect rank correlation.
+
     rnd = np.random.RandomState(0)
     X_train = (3*rnd.uniform(size=(10, 4))).astype(int)
     y = X_train[:, 0]
