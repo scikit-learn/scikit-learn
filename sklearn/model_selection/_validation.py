@@ -279,8 +279,6 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     n_scorers = len(scorers.keys())
-    test_scores = dict(zip(scorers.keys(), [error_score, ] * n_scorers))
-    train_scores = dict(zip(scorers.keys(), [error_score, ] * n_scorers))
 
     try:
         if y_train is None:
@@ -295,6 +293,11 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
+            test_scores = dict(zip(scorers.keys(),
+                               [error_score, ] * n_scorers))
+            if return_train_score:
+                train_scores = dict(zip(scorers.keys(),
+                                    [error_score, ] * n_scorers))
             warnings.warn("Classifier fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%r" % (error_score, e), FitFailedWarning)

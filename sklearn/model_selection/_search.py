@@ -313,7 +313,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the refit
+        FitFailedWarning is raised. This parameter does not affect the eefit
         step, which will always raise the error.
 
     Returns
@@ -844,16 +844,18 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    refit : boolean, default=True
+    refit : boolean, or string default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this GridSearchCV instance after fitting.
 
         For multi-metric evaluation, this needs to be a string denoting the
-        metric that should be used for setting the ``best_estimator_``,
+        scorer that should be used for setting the ``best_estimator_``,
         ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
         If those attributes are not to be made available, ``refit`` must be set
         to ``False``, explicitly otherwise an error will be raised.
+
+        See ``scoring`` parameter.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -950,9 +952,9 @@ class GridSearchCV(BaseSearchCV):
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-        For multiple metric evaluation, the scores for all the scorers are
+        For multi-metric evaluation, the scores for all the scorers are
         available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` as shown
+        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator or dict
@@ -960,9 +962,10 @@ class GridSearchCV(BaseSearchCV):
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict mapping scorer names to the estimator
-        that gave the best score for that scorer.
+        For multi-metric evaluation, this attribute is present only if
+        ``refit`` is specified.
+
+        See ``refit`` parameter for more information on allowed values.
 
     best_score_ : float
         Mean cross-validated score of the best_estimator
@@ -1130,16 +1133,18 @@ class RandomizedSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    refit : boolean, default=True
+    refit : boolean, or string default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this RandomizedSearchCV instance after fitting.
 
         For multi-metric evaluation, this needs to be a string denoting the
-        metric that should be used for setting the ``best_estimator_``,
+        scorer that should be used for setting the ``best_estimator_``,
         ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
         If those attributes are not to be made available, ``refit`` must be set
         to ``False``, explicitly otherwise an error will be raised.
+
+        See ``scoring`` parameter.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -1210,7 +1215,7 @@ class RandomizedSearchCV(BaseSearchCV):
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-        For multiple metric evaluation, the scores for all the scorers are
+        For multi-metric evaluation, the scores for all the scorers are
         available in the ``cv_results_`` dict at the keys ending with that
         scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` as shown
         above.
