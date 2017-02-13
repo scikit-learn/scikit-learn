@@ -125,6 +125,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         X_mask = X.data <= eps
         masked_indices = astype(X.indices, np.intp, copy=False)[X_mask]
         masked_indptr = np.cumsum(X_mask)[X.indptr[1:] - 1]
+
+        if X.indptr[0] == X.indptr[1] == 0:  # check if first row is all zero
+            masked_indptr[0] = 0
+
         # insert the diagonal: a point is its own neighbor, but 0 distance
         # means absence from sparse matrix data
         masked_indices = np.insert(masked_indices, masked_indptr,
