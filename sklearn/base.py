@@ -293,12 +293,12 @@ class BaseEstimator(object):
         try:
             state = super(BaseEstimator, self).__getstate__()
         except AttributeError:
-            state = self.__dict__
+            state = self.__dict__.copy()
 
         if type(self).__module__.startswith('sklearn.'):
             return dict(state.items(), _sklearn_version=__version__)
         else:
-            return state.copy()
+            return state
 
     def __setstate__(self, state):
         if type(self).__module__.startswith('sklearn.'):
