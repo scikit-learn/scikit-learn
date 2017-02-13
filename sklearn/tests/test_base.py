@@ -317,7 +317,12 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
     tree = DecisionTreeClassifier().fit(iris.data, iris.target)
     tree_pickle = pickle.dumps(tree)
     assert_true(b"version" in tree_pickle)
-    assert_no_warnings(pickle.loads, tree_pickle)
+    tree_restored = assert_no_warnings(pickle.loads, tree_pickle)
+
+    # test that we can predict with the restored decision tree classifier
+    score_of_original = tree.score(iris.data, iris.target)
+    score_of_restored = tree_restored.score(iris.data, iris.target)
+    assert_equal(score_of_original, score_of_restored)
 
 
 class TreeBadVersion(DecisionTreeClassifier):
