@@ -722,9 +722,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             self.best_estimator_ = clone(base_estimator).set_params(
                 **self.best_params_)
             if y is not None:
-                self.best_estimator_.fit(X, y, **self.fit_params)
+                self.best_estimator_.fit(X, y, **fit_params)
             else:
-                self.best_estimator_.fit(X, **self.fit_params)
+                self.best_estimator_.fit(X, **fit_params)
 
         if not self.multimetric_:
             # Store the only scorer not as a dict for single metric evaluation
