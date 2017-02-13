@@ -87,7 +87,7 @@ def test_base_additive_homogenous_sampler():
     class DerivedSampler(BaseAdditiveHomogenousKernelSampler):
         def _spectrum(self, omega):
             # Fake spectrum function
-            return 1.
+            pass
     transform = DerivedSampler()
     assert_raises(ValueError, transform.fit, X)
 
