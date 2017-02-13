@@ -1916,10 +1916,10 @@ class SelectDimensionKernel(Kernel):
         if active_dim.size == 0:
             raise ValueError("active_dim should be have at least one \
                               element, current size: %d " % active_dim.size)
-
-        return self.kernel(X[:, active_dim],
-                           None if Y is None else Y[:, active_dim],
-                           eval_gradient)
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        return kern(X[:, active_dim],
+                    None if Y is None else Y[:, active_dim],
+                    eval_gradient)
 
     def get_params(self, deep=True):
         """Get parameters of this kernel.
@@ -1935,9 +1935,10 @@ class SelectDimensionKernel(Kernel):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        params = dict(kernel=self.kernel, active_dim=self.active_dim)
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        params = dict(kernel=kern, active_dim=self.active_dim)
         if deep:
-            deep_items = self.kernel.get_params().items()
+            deep_items = kern.get_params().items()
             params.update(('kernel__' + k, val) for k, val in deep_items)
         return params
 
@@ -1945,7 +1946,8 @@ class SelectDimensionKernel(Kernel):
     def hyperparameters(self):
         """Returns a list of all hyperparameter."""
         r = []
-        for hyperparameter in self.kernel.hyperparameters:
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        for hyperparameter in kern.hyperparameters:
             r.append(Hyperparameter("kernel__" + hyperparameter.name,
                                     hyperparameter.value_type,
                                     hyperparameter.bounds,
@@ -1966,7 +1968,16 @@ class SelectDimensionKernel(Kernel):
         theta : array, shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
-        return self.kernel.theta
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        return kern.theta
+
+
+    @property
+    def kernel_(self):
+        if not hasattr(self, "_kernel"):
+            self._kernel = clone(self.kernel)
+        return self._kernel
+
 
     @theta.setter
     def theta(self, theta):
@@ -1977,7 +1988,8 @@ class SelectDimensionKernel(Kernel):
         theta : array, shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
-        self.kernel.theta = theta
+        kern = self.kernel_
+        kern.theta = theta
 
     @property
     def bounds(self):
@@ -1988,12 +2000,15 @@ class SelectDimensionKernel(Kernel):
         bounds : array, shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
-        return self.kernel.bounds
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        return kern.bounds
 
     def __eq__(self, b):
         if type(self) != type(b):
             return False
-        return (self.kernel == b.kernel and
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        kern_b = b.kernel if not hasattr(b, "kernel_") else b.kernel_
+        return (kern == b.kernel and
                 np.all([self.active_dim == b.active_dim]))
 
     def diag(self, X):
@@ -2014,12 +2029,15 @@ class SelectDimensionKernel(Kernel):
             Diagonal of kernel k(X, X)
         """
         # We have to fall back to slow way of computing diagonal
-        return self.kernel.diag(X[:, self.active_dim])
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        return kern.diag(X[:, self.active_dim])
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
-        return self.kernel.is_stationary()
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
+        return kern.is_stationary()
 
     def __repr__(self):
+        kern = self.kernel if not hasattr(self, "kernel_") else self.kernel_
         return "{0}(kernel: {1}, active dimensions:{2})".format(
-            self.__class__.__name__, self.kernel.__repr__(), self.active_dim)
+            self.__class__.__name__, kern.__repr__(), self.active_dim)
