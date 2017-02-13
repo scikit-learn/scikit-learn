@@ -1558,8 +1558,8 @@ class MultiTaskElasticNet(Lasso):
 
     l1_ratio : float
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
-        is an L1 penalty.
+        For l1_ratio = 1 the penalty is an L1/L2 penalty. For l1_ratio = 0 it
+        is an L2 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
 
     fit_intercept : boolean
@@ -1873,8 +1873,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     l1_ratio : float or array of floats
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
-        is an L1 penalty.
+        For l1_ratio = 1 the penalty is an L1/L2 penalty. For l1_ratio = 0 it
+        is an L2 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
         This parameter can be a list, in which case the different
         values are tested by cross-validation and the one giving the best
