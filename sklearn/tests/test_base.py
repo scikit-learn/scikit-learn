@@ -391,6 +391,32 @@ class MultiInheritanceEstimator(BaseEstimator, DontPickleCacheMixin):
         return self._cache
 
 
+def test_pickling_when_getstate_is_overwritten_by_mixin():
+    estimator = MultiInheritanceEstimator()
+    assert estimator.cache
+
+    serialized = pickle.dumps(estimator, protocol=2)
+    estimator_restored = pickle.loads(serialized)
+    assert estimator_restored.b == 5
+    assert estimator_restored._cache is None
+
+
+def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
+    try:
+        estimator = MultiInheritanceEstimator()
+        old_mod = type(estimator).__module__
+        type(estimator).__module__ = "notsklearn"
+
+        serialized = estimator.__getstate__()
+        assert serialized == {'_cache': None, 'b': 5}
+
+        serialized['b'] = 4
+        estimator.__setstate__(serialized)
+        assert estimator.b == 4
+    finally:
+        type(estimator).__module__ = old_mod
+
+
 class SingleInheritanceEstimator(BaseEstimator):
     def __init__(self, b=5):
         self.b = b
@@ -408,36 +434,11 @@ class SingleInheritanceEstimator(BaseEstimator):
         return self._cache
 
 
-class TestPicklingConstraints(object):
-    def test_multiple_inheritance_setting_sklearn_namespace(self):
-        estimator = MultiInheritanceEstimator()
-        assert estimator.cache
+def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
+    estimator = SingleInheritanceEstimator()
+    assert estimator.cache
 
-        serialized = pickle.dumps(estimator, protocol=2)
-        estimator_restored = pickle.loads(serialized)
-        assert estimator_restored.b == 5
-        assert estimator_restored._cache is None
-
-    def test_multiple_inheritance_setting_foreign_namespace_getstate(self):
-        try:
-            estimator = MultiInheritanceEstimator()
-            old_mod = type(estimator).__module__
-            type(estimator).__module__ = "notsklearn"
-
-            serialized = estimator.__getstate__()
-            assert serialized == {'_cache': None, 'b': 5}
-
-            serialized['b'] = 4
-            estimator.__setstate__(serialized)
-            assert estimator.b == 4
-        finally:
-            type(estimator).__module__ = old_mod
-
-    def test_singleinheritance_clone(self):
-        estimator = SingleInheritanceEstimator()
-        assert estimator.cache
-
-        serialized = pickle.dumps(estimator, protocol=2)
-        estimator_restored = pickle.loads(serialized)
-        assert estimator_restored.b == 5
-        assert estimator_restored._cache is None
+    serialized = pickle.dumps(estimator, protocol=2)
+    estimator_restored = pickle.loads(serialized)
+    assert estimator_restored.b == 5
+    assert estimator_restored._cache is None
