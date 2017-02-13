@@ -127,7 +127,7 @@ xx, yy = make_meshgrid(X[:, 0], X[:, 1])
 
 for clf, title, ax in zip(models, titles, sub.flatten()):
     plot_points_boundary(ax, clf, X[:, 0], X[:, 1], xx, yy,
-                         dict(c=y, cmap=plt.cm.coolwarm),
+                         dict(c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k'),
                          dict(cmap=plt.cm.coolwarm, alpha=0.8))
     ax.set_xlabel('Sepal length')
     ax.set_ylabel('Sepal width')
