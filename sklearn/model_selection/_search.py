@@ -799,7 +799,7 @@ class GridSearchCV(BaseSearchCV):
         or a dict with names as keys and callables as values.
 
         NOTE that when using custom scorers, each scorer should return a single
-        value. Single scorers returning a list/array of values may be wrapped
+        value. Metric functions returning a list/array of values may be wrapped
         into multiple scorers that return one value each.
 
         If None, the estimator's default scorer, if available, is used.
@@ -908,7 +908,7 @@ class GridSearchCV(BaseSearchCV):
         For instance the below given table
 
         +------------+-----------+------------+-----------------+---+---------+
-        |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_....|
+        |param_kernel|param_gamma|param_degree|split0_test_score|...|..rank...|
         +============+===========+============+=================+===+=========+
         |  'poly'    |     --    |      2     |        0.8      |...|    2    |
         +------------+-----------+------------+-----------------+---+---------+
@@ -947,7 +947,7 @@ class GridSearchCV(BaseSearchCV):
         NOTE
 
         The key ``'params'`` is used to store a list of parameter
-        settings dicts for all the parameter candidates.
+        settings dict for all the parameter candidates.
 
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
@@ -1087,11 +1087,18 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string, callable or None, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        If ``None``, the ``score`` method of the estimator is used.
+    scoring : string, callable or None, optional, default: None
+        A single string (see :ref:`_scoring_parameter`) or a callable
+        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+
+        To evaluate multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Metric functions returning a list/array of values may be wrapped
+        into multiple scorers that return one value each.
+
+        If None, the estimator's default scorer, if available, is used.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.
@@ -1204,7 +1211,7 @@ class RandomizedSearchCV(BaseSearchCV):
             'std_fit_time'       : [0.01, 0.02, 0.01, 0.01],
             'mean_score_time'    : [0.007, 0.06, 0.04, 0.04],
             'std_score_time'     : [0.001, 0.002, 0.003, 0.005],
-            'params' : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
+            'params'             : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
         NOTE
@@ -1217,34 +1224,32 @@ class RandomizedSearchCV(BaseSearchCV):
 
         For multi-metric evaluation, the scores for all the scorers are
         available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` as shown
-        above.
+        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
+        above. ('split0_test_precision', 'mean_train_precision' etc.)
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict mapping scorer names to the estimator
-        that gave the best score for that scorer.
+        For multi-metric evaluation, this attribute is present only if
+        ``refit`` is specified.
 
-    best_score_ : float or dict
-        Score of best_estimator on the left out data.
+        See ``refit`` parameter for more information on allowed values.
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict mapping scorer names to the best score
-        for that scorer.
+    best_score_ : float
+        Mean cross-validated score of the best_estimator
 
-    best_params_ : dict or dict of dict
+        For multi-metric evaluation, this is present only if ``refit`` is
+        specified.
+
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict of dict mapping scorer names to the
-        dict of the parameter setting that gave the best scores for that
-        scorer.
+        For multi-metric evaluation, this is present only if ``refit`` is
+        specified.
 
-    best_index_ : int or dict
+    best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
@@ -1252,17 +1257,15 @@ class RandomizedSearchCV(BaseSearchCV):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict mapping scorer names to the
-        index which corresponds to the parameter setting that gave the best
-        scores for that scorer.
+        For multi-metric evaluation, this is present only if ``refit`` is
+        specified.
 
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
-        For multi-metric evaluation this parameter is a dict mapping scorer
-        names to the corresponding scorer functions.
+        For multi-metric evaluation, this attribute holds the validated
+        ``scoring`` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
