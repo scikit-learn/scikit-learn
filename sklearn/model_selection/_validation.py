@@ -213,14 +213,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     """
     current_fit_msg = ""
     if verbose > 2:
-        if split_progress:
+        if split_progress is not None:
             current_fit_msg = " split %d of %d;" % split_progress
         if param_progress:
             current_fit_msg += " candidate %d of %d" % param_progress
 
     if verbose > 1:
         if parameters is None:
-            params_msg = 'params - {}'
+            params_msg = ''
         else:
             params_msg = ('params - {%s}'
                           % (', '.join('%s=%s' % (k, v)
