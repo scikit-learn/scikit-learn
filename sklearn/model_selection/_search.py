@@ -319,10 +319,10 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     Returns
     -------
     score : float or dict
-        A float of the single score value, in case of a single metric or
-        a dict mapping the the scorer name to its score value, in case of
-        multi-metric evaluation for the given parameter setting on given
-        training / test split.
+        A float of the single score value, in case of a single metric; Or
+        a dict mapping the the scorer name to its score value for the given
+        parameter setting on given training / test split, in case of
+        multi-metric evaluation.
 
     parameters : dict
         The parameters that have been evaluated.
@@ -728,7 +728,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if not self.multimetric_:
             # Store the only scorer not as a dict for single metric evaluation
-            self.scorer_ = list(self.scorer_.values())[0]
+            self.scorer_ = self.scorer_['score']
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -964,22 +964,19 @@ class GridSearchCV(BaseSearchCV):
         list), this parameter is a dict mapping scorer names to the estimator
         that gave the best score for that scorer.
 
-    best_score_ : float or dict
+    best_score_ : float
         Mean cross-validated score of the best_estimator
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict mapping scorer names to the best score
-        for that scorer.
+        For multi-metric evaluation, this is present only if ``refit`` is
+        specified.
 
-    best_params_ : dict or dict of dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict of dict mapping scorer names to the
-        dict of the parameter setting that gave the best scores for that
-        scorer.
+        For multi-metric evaluation, this is present only if ``refit`` is
+        specified.
 
-    best_index_ : int or dict
+    best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
@@ -987,17 +984,15 @@ class GridSearchCV(BaseSearchCV):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multi-metric evaluation (when the ``scoring`` parameter is a dict/
-        list), this parameter is a dict mapping scorer names to the
-        index which corresponds to the parameter setting that gave the best
-        scores for that scorer.
+        For multi-metric evaluation, this is present only if ``refit`` is
+        specified.
 
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
-        For multi-metric evaluation this parameter is a dict mapping scorer
-        names to the corresponding scorer functions.
+        For multi-metric evaluation, this attribute holds the validated
+        ``scoring`` dict which maps the scorer key to the scorer callable.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).

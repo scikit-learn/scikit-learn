@@ -65,7 +65,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         or a dict with names as keys and callables as values.
 
         NOTE that when using custom scorers, each scorer should return a single
-        value. Single scorers returning a list/array of values may be wrapped
+        value. Metric functions returning a list/array of values may be wrapped
         into multiple scorers that return one value each.
 
         If None the estimator's default scorer, if available is used.
@@ -114,8 +114,11 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Returns
     -------
-    scores : array of float, shape=(len(list(cv)),)
+    scores : array of float or dict of such arrays, array shape=(n_splits,)
         Array of scores of the estimator for each run of the cross validation.
+
+        For multi-metric evaluation, a dict of arrays containing the score
+        arrays for each scorer is returned.
 
     Examples
     --------
@@ -610,7 +613,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         A single string (see :ref:`_scoring_parameter`) or a callable
         (see :ref:`_scoring`) to evaluate the predictions on the test set.
 
-        If None the estimator's default scorer, if available is used.
+        If None the estimator's default scorer, if available, is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.

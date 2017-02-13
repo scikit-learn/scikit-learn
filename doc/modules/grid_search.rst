@@ -84,8 +84,9 @@ evaluated and the best combination is retained.
       dataset. This is the best practice for evaluating the performance of a
       model with grid search.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multiple_metric_evaluation` for an
-      example of :class:`GridSearchCV` being used to evaluate multiple metrics simultaneously.
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multiple_metric_evaluation`
+      for an example of :class:`GridSearchCV` being used to evaluate multiple
+      metrics simultaneously.
 
 .. _randomized_parameter_search:
 

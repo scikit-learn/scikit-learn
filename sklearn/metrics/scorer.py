@@ -340,9 +340,11 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
                            % (repr(scoring), type(scoring)))
         try:
             keys = set(scoring)
-            valid_keys = (all(isinstance(i, six.string_types) for i in keys)
-                          if len(keys) == len(scoring) > 0 else False)
-        except:  # If set(scoring) failed
+            if len(keys) == len(scoring) and len(keys) > 0:
+                valid_keys = all(isinstance(k, six.string_types) for k in keys)
+            else:
+                valid_keys = False
+        except Exception:  # If set(scoring) failed
             raise ValueError(err_msg_generic)
 
         if isinstance(scoring, dict):
