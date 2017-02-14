@@ -36,6 +36,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
+from sklearn.model_selection._validation import _fit_and_score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -1069,3 +1070,91 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_fit_and_score_verbose():
+    # Test the _fit_and_score helper
+    estimator = SVC(kernel="linear", random_state=42)
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    cv = GroupShuffleSplit(n_splits=5, random_state=42)
+    scorer = make_scorer(precision_score, average='micro')
+    groups = y.copy()
+    np.random.RandomState(42).shuffle(groups)
+
+    old_stdout = sys.stdout
+
+    try:
+        verbose_output_map = {
+                1: (),  # verbose level 1 should not produce any output
+                2: ("[CV] {p} - Started", "[CV] {p} - ", "total time=   0.0s"),
+                3: ("[CV{s}] {p} - Started", "[CV{s}] {p} - ",
+                    "score=0.900000, total time=   0.0s"),
+                10: ("[CV{s}] {p} - Started", "[CV{s}] {p} - ",
+                     "score=0.900000, total time=   0.0s")
+        }
+
+        # The prefixing status string based on the split_progress and
+        # param_progress values
+        status_map = {(None, None): "",
+                      (None, (1, 2)): " candidate 1 of 2",
+                      ((1, 2), None): " split 1 of 2",
+                      ((1, 2), (2, 3)): " split 1 of 2; candidate 2 of 3"}
+
+        train, test = next(cv.split(X, y, groups))
+
+        for verbose, expected_template in verbose_output_map.items():
+            for (split_progress, param_progress), status in status_map.items():
+                # candidate # is not printed for verbose < 10
+                if verbose < 10:
+                    status = status.split(" candidate")[0].strip(';')
+
+                for params in (None, {}, {'C': 0.01}):
+                    # Flush it for each run; No need to close(). Will be gc-ed
+                    sys.stdout = StringIO()
+                    if params is None:
+                        p_msg = ""
+                    else:
+                        p_msg = (', '.join('%s=%s' % (k, v)
+                                           for k, v in params.items()))
+
+                    _fit_and_score(estimator, X, y, scorer, train, test,
+                                   verbose, parameters=params, fit_params=None,
+                                   return_train_score=False,
+                                   return_parameters=False,
+                                   return_n_test_samples=False,
+                                   return_times=False, error_score='raise',
+                                   split_progress=split_progress,
+                                   param_progress=param_progress)
+
+                    out = sys.stdout.getvalue().splitlines()
+                    if verbose == 1:  # No output from _fit_and_score
+                        assert_true(out == [])
+                        continue
+
+                    # Check if the verbose output matches correctly
+                    # First line (the one with "Started")
+                    assert_true(out[0].startswith(expected_template[0].format(
+                        p=p_msg, s=status)))
+
+                    # Check the left part and right part of 2nd line
+                    left, right = out[1].split("Done;")
+                    left, right = left.lstrip(), right.lstrip('. ')
+
+                    assert_true(left.startswith(expected_template[1].format(
+                        p=p_msg, s=status)))
+
+                    assert_true(right.startswith(expected_template[2]))
+    except Exception:
+        sys.stdout = old_stdout  # So we can simply do print below
+        # To help debug changes to verbose. Otherwise it's difficult to trace
+        print("verbose=%d; params=%s; split_progress=%s; param_progress=%s"
+              % (verbose, params, split_progress, param_progress))
+        print("Verbose output received:\n%s" % "\n".join(out))
+        print("Expected verbose output:\n%s\n%sDone;<...>%s"
+              % (expected_template[0].format(p=p_msg, s=status),
+                 expected_template[1].format(p=p_msg, s=status),
+                 expected_template[2]))
+        raise
+    finally:
+        sys.stdout = old_stdout
