@@ -102,7 +102,7 @@ titles = ('SVC with linear kernel',
 fig, sub = plt.subplots(2, 2)
 plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
-X0, X1 = X[:,0], X[:,1]
+X0, X1 = X[:, 0], X[:, 1]
 xx, yy = make_meshgrid(X0, X1)
 
 for clf, title, ax in zip(models, titles, sub.flatten()):
