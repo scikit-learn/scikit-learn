@@ -11,9 +11,12 @@ from sklearn.utils.testing import (assert_array_almost_equal,
 
 from sklearn.cluster import CMeans
 from sklearn.cluster.c_means_ import (_cmeans_single_probabilistic,
+                                      _cmeans_single_possibilistic,
                                       _init_centroids)
 from sklearn.cluster._c_means import (_memberships_probabilistic,
-                                      _centers_probabilistic)
+                                      _centers_probabilistic,
+                                      _memberships_possibilistic,
+                                      _centers_possibilistic,)
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.metrics.pairwise import euclidean_distances
@@ -72,14 +75,14 @@ def test_init_centroids_bounds():
     assert_array_almost_equal(c, np.nan_to_num(c))
 
 
-def test_calculate_memberships_shape():
+def test_probabilistic_update_memberships_shape():
     c = _init_centroids(X, n_clusters, 'random', random_state=42)
     distances = euclidean_distances(X, c)
     m = _memberships_probabilistic(distances, 2)
     assert_equal(m.shape, (n_samples, n_clusters))
 
 
-def test_calculate_memberships_bounds():
+def test_probabilistic_update_memberships_bounds():
     c = _init_centroids(X, n_clusters, 'random', random_state=42)
     distances = euclidean_distances(X, c)
     m = _memberships_probabilistic(distances, 2)
@@ -87,7 +90,7 @@ def test_calculate_memberships_bounds():
     assert_array_less(np.zeros_like(m) - 1e-6, m)
 
 
-def test_calculate_centers_shape():
+def test_probabilistic_update_centers_shape():
     distances = euclidean_distances(X, centers)
     m = _memberships_probabilistic(distances, 2)
     c = _centers_probabilistic(X, m, 2)
@@ -103,6 +106,38 @@ def test_probabilistic_center_shape():
     m, i, c, _ = _cmeans_single_probabilistic(X, n_clusters)
     assert_equal(c.shape, (n_clusters, n_features))
 
+
+def test_possibilistic_update_memberships_shape():
+    c = _init_centroids(X, n_clusters, 'random', random_state=42)
+    distances = euclidean_distances(X, c)
+    m = _memberships_possibilistic(distances, 2)
+    assert_equal(m.shape, (n_samples, n_clusters))
+
+
+def test_possibilistic_update_memberships_bounds():
+    c = _init_centroids(X, n_clusters, 'random', random_state=42)
+    distances = euclidean_distances(X, c)
+    m = _memberships_possibilistic(distances, 2)
+    assert_array_less(m, 1e-6 + np.ones_like(m))
+    assert_array_less(np.zeros_like(m) - 1e-6, m)
+
+
+def test_possibilistic_update_centers_shape():
+    distances = euclidean_distances(X, centers)
+    m = _memberships_possibilistic(distances, 2)
+    c = _centers_possibilistic(X, m, 2)
+    assert_equal(c.shape, (n_clusters, n_features))
+
+
+def test_possibilistic_membership_shape():
+    m, i, c, _ = _cmeans_single_possibilistic(X, n_clusters)
+    assert_equal(m.shape, (n_samples, n_clusters))
+
+
+def test_possibilistic_center_shape():
+    m, i, c, _ = _cmeans_single_possibilistic(X, n_clusters)
+    assert_equal(c.shape, (n_clusters, n_features))
+    
 
 def test_labels():
     cm = CMeans()
@@ -123,7 +158,13 @@ def _check_fitted_model(cm):
 
 
 def test_probabilistic_results():
-    cm = CMeans(n_clusters=3, random_state=4)
+    cm = CMeans(n_clusters=3, algorithm="probabilistic", random_state=4)
+    cm.fit(X)
+    _check_fitted_model(cm)
+
+
+def test_possibilistic_results():
+    cm = CMeans(n_clusters=3, algorithm="possibilistic", random_state=4)
     cm.fit(X)
     _check_fitted_model(cm)
 
