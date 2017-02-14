@@ -3,7 +3,7 @@
 Illustration of SelectDimensionKernel
 =========================================================
 A simple two-dimensional regression example computed in two different ways:
-1. With a product of two RBF kernels on each feature.
+1. With a product of two RBF kernels, where each is applied only to a single feature.
 2. With one anisotropic RBF kernels applied on both feature.
 
 The figures illustrate the property of SelectDimensionKernel when applied on
@@ -29,8 +29,8 @@ from sklearn.gaussian_process.kernels import SelectDimensionKernel, RBF
 np.random.seed(1)
 
 # Define a kernel with sum of two RBF kernels applied on individual dimentsion.
-kernel = SelectDimensionKernel(RBF(length_scale=0.1), np.array([0])) * \
-         SelectDimensionKernel(RBF(length_scale=0.4), np.array([1]))
+kernel = SelectDimensionKernel(RBF(length_scale=0.1), [0]) * \
+         SelectDimensionKernel(RBF(length_scale=0.4), [1])
 
 # create GaussianProcessRegressor object.
 gp = GaussianProcessRegressor(kernel=kernel)
