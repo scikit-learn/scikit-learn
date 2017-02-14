@@ -191,6 +191,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
+    split_progress : list or tuple, optional, default: None
+        A list or tuple of format (<current_split_id>, <total_num_of_splits>)
+
+    param_progress : list or tuple, optional, default: None
+        A list or tuple of format
+        (<current_candidate_id>, <total_number_of_candidates>)
+
     Returns
     -------
     train_score : float, optional
@@ -214,17 +221,17 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     current_fit_msg = ""
     if verbose > 2:
         if split_progress is not None:
-            current_fit_msg = " split %d of %d;" % split_progress
-        if param_progress:
+            current_fit_msg = " split %d of %d" % split_progress
+        if param_progress and verbose > 9:
+            current_fit_msg += ";" if split_progress else ""
             current_fit_msg += " candidate %d of %d" % param_progress
 
     if verbose > 1:
         if parameters is None:
             params_msg = ''
         else:
-            params_msg = ('params - {%s}'
-                          % (', '.join('%s=%s' % (k, v)
-                                       for k, v in parameters.items())))
+            params_msg = (', '.join('%s=%s' % (k, v)
+                                    for k, v in parameters.items()))
         start_msg = "[CV%s] %s - Started" % (current_fit_msg, params_msg)
         print("%s%s" % (start_msg, (80 - len(start_msg)) * '.'))
 
@@ -275,10 +282,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = "[CV%s] %s - Done; " % (current_fit_msg, params_msg)
+        result_msg = ""
         if verbose > 2:
-            end_msg += "score=%f, " % test_score
-        end_msg += "total time=%s" % logger.short_format_time(total_time)
-        print("%s%s" % (end_msg, (80 - len(end_msg)) * '.'))
+            result_msg += "score=%f, " % test_score
+        result_msg += "total time=%s" % logger.short_format_time(total_time)
+
+        # Right align the result_msg
+        end_msg += "." * (80 - len(end_msg) - len(result_msg))
+        end_msg += result_msg
+        print(end_msg)
 
     ret = [train_score, test_score] if return_train_score else [test_score]
 
