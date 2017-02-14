@@ -245,7 +245,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     max_iter : integer (default=500)
         Maximum number of iterations to perform in the Lars algorithm.
 
-    eps : float (default=`np.finfo(np.float).eps`)
+    eps : float (default=np.finfo(np.float).eps)
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the 'tol' parameter in some iterative
@@ -594,7 +594,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    eps : float (default=`4 * np.finfo(np.float).eps`)
+    eps : float (default=4 * np.finfo(np.float).eps)
         Smallest value of alpha / alpha_max considered
 
     n_jobs : integer (default=1)
