@@ -178,21 +178,26 @@ def test_enet_screening():
     X, y, X_test, y_test = build_dataset()
     max_iter = 500
 
-    clf_screening = ElasticNet(screening=11, l1_ratio=1, tol=1e-8,
-                               alpha=0.05, max_iter=max_iter).fit(X, y)
-    clf_no_screening = ElasticNet(screening=0, l1_ratio=1, tol=1e-8,
-                                  alpha=0.05, max_iter=max_iter).fit(X, y)
-    assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
-    assert_true(clf_no_screening.dual_gap_ < 1e-5)
-    assert_true(clf_screening.dual_gap_ < 1e-5)
+    for precompute in (False, True):
+        clf_screening = ElasticNet(screening=11, l1_ratio=1, tol=1e-8,
+                                   alpha=0.05, max_iter=max_iter,
+                                   precompute=precompute).fit(X, y)
+        clf_no_screening = ElasticNet(screening=0, l1_ratio=1, tol=1e-8,
+                                      alpha=0.05, max_iter=max_iter,
+                                      precompute=precompute,).fit(X, y)
+        assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
+        assert_true(clf_no_screening.dual_gap_ < 1e-5)
+        assert_true(clf_screening.dual_gap_ < 1e-5)
 
-    clf_screening = ElasticNet(screening=11, l1_ratio=0.5, tol=1e-8,
-                               alpha=0.05, max_iter=max_iter).fit(X, y)
-    clf_no_screening = ElasticNet(screening=0, l1_ratio=0.5, tol=1e-8,
-                                  alpha=0.05, max_iter=max_iter).fit(X, y)
-    assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
-    assert_true(clf_no_screening.dual_gap_ < 1e-5)
-    assert_true(clf_screening.dual_gap_ < 1e-5)
+        clf_screening = ElasticNet(screening=11, l1_ratio=0.5, tol=1e-8,
+                                   alpha=0.05, max_iter=max_iter,
+                                   precompute=precompute).fit(X, y)
+        clf_no_screening = ElasticNet(screening=0, l1_ratio=0.5, tol=1e-8,
+                                      alpha=0.05, max_iter=max_iter,
+                                      precompute=precompute).fit(X, y)
+        assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
+        assert_true(clf_no_screening.dual_gap_ < 1e-5)
+        assert_true(clf_screening.dual_gap_ < 1e-5)
 
 
 def test_lasso_cv():
