@@ -2,18 +2,16 @@
 
 import numpy as np
 
-from sklearn.cluster._c_means import (
-    _centers_probabilistic,
-    _memberships_probabilistic,
-    _centers_possibilistic,
-    _memberships_possibilistic,
-)
+from sklearn.cluster._c_means import Probabilistic, Possibilistic
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..externals.six import string_types
-from ..metrics.pairwise import euclidean_distances
 from ..utils import as_float_array
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import check_is_fitted
+
+from sklearn.metrics import euclidean_distances
 
 
 def _validate_center_shape(X, n_centers, centers):
@@ -47,49 +45,49 @@ def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='random',
     X_mean = X.mean(axis=0)
     X -= X_mean
 
-    membership_best, inertia_best, centers_best, n_iter_best = (
-        None, None, None, None
-    )
+    results_best = ()
+    inertia_best = None
 
     if algorithm == "probabilistic":
-        cmeans_single = _cmeans_single_probabilistic
+        single = probabilistic_single
     elif algorithm == "possibilistic":
-        cmeans_single = _cmeans_single_possibilistic
+        single = possibilistic_single
     elif algorithm == "auto":
-        cmeans_single = _cmeans_single_probabilistic
+        single = probabilistic_single
     else:
-        cmeans_single = _cmeans_single_probabilistic
+        raise NotImplementedError(
+            "{} is not an implemented algorithm.".format(algorithm))
 
     for it in range(n_init):
-        membership, inertia, centers, n_iter_ = cmeans_single(
+        results = single(
             X, n_clusters, max_iter=max_iter, init=init, tol=tol,
             random_state=random_state)
+        inertia = results['inertia']
         if inertia_best is None or inertia < inertia_best:
-            membership_best = membership
-            centers_best = centers
-            inertia_best = inertia
-            n_iter_best = n_iter_
-
+            results_best = results
+            inertia_best = results['inertia']
     if not copy_x:
         X += X_mean
+    results_best['centers'] += X_mean
 
-    return membership_best, centers_best, inertia_best, n_iter_best
+    return results_best
 
 
-def _cmeans_single_probabilistic(X, n_clusters, m=2., max_iter=300,
-                                 init='random', random_state=None, tol=1e-4):
+def probabilistic_single(X, n_clusters, m=2., max_iter=300,
+                         init='random', random_state=None, tol=1e-4):
     random_state = check_random_state(random_state)
     memberships_best, inertia_best, centers_best = None, None, None
 
-    centers = _init_centroids(X, n_clusters, init, random_state=random_state)
+    centers = _init_centroids(X, n_clusters, init,
+                              random_state=random_state)
     inertia = np.infty
 
     for i in range(max_iter):
         inertia_old = inertia
         distances = euclidean_distances(X, centers)
-        memberships = _memberships_probabilistic(distances, m)
+        memberships = Probabilistic.memberships(distances, m)
         inertia = np.sum(memberships ** m * distances)
-        centers = _centers_probabilistic(X, memberships, m)
+        centers = Probabilistic.centers(X, memberships, m)
 
         if inertia_best is None or inertia < inertia_best:
             memberships_best = memberships.copy()
@@ -99,19 +97,30 @@ def _cmeans_single_probabilistic(X, n_clusters, m=2., max_iter=300,
         if inertia - inertia_old < tol:
             break
 
-    return memberships_best, inertia_best, centers_best, i+1
+    results = {
+        'memberships': memberships_best,
+        'inertia': inertia_best,
+        'centers': centers_best,
+        'n_iter': i + 1,
+    }
+
+    return results
 
 
-def _cmeans_single_possibilistic(X, n_clusters, m=2., max_iter=300,
-                                 init='probabilistic', random_state=None,
-                                 tol=1e-4):
+def possibilistic_single(X, n_clusters, m=2., max_iter=300,
+                         init='probabilistic', random_state=None,
+                         tol=1e-4):
     random_state = check_random_state(random_state)
     memberships_best, inertia_best, centers_best = None, None, None
 
     # Initialize using a probabilistic run
-    memberships, centers, inertia, _ = c_means(X,
-                                               n_clusters=n_clusters,
-                                               random_state=random_state)
+    results_init = c_means(
+        X, n_clusters=n_clusters, algorithm="probabilistic",
+        random_state=random_state)
+
+    memberships = results_init['memberships']
+    centers = results_init['centers']
+    inertia = results_init['inertia']
 
     distances = euclidean_distances(X, centers)
     weights = np.sum(memberships ** m * distances,
@@ -120,9 +129,9 @@ def _cmeans_single_possibilistic(X, n_clusters, m=2., max_iter=300,
     for i in range(max_iter):
         inertia_old = inertia
         distances = euclidean_distances(X, centers)
-        memberships = _memberships_possibilistic(distances, weights, m)
+        memberships = Possibilistic.memberships(distances, m)
         inertia = np.sum(memberships ** m * distances)
-        centers = _centers_possibilistic(X, memberships, m)
+        centers = Possibilistic.centers(X, memberships, m)
 
         if inertia_best is None or inertia < inertia_best:
             memberships_best = memberships.copy()
@@ -132,7 +141,15 @@ def _cmeans_single_possibilistic(X, n_clusters, m=2., max_iter=300,
         if inertia - inertia_old < tol:
             break
 
-    return memberships_best, inertia_best, centers_best, i+1
+    results = {
+        'memberships': memberships_best,
+        'inertia': inertia_best,
+        'centers': centers_best,
+        'weights': weights,
+        'n_iter': i + 1,
+    }
+
+    return results
 
 
 def _init_centroids(X, k, init, random_state=None):
@@ -161,7 +178,6 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def __init__(self, n_clusters=8, m=2, n_init=10, max_iter=300, init='random',
                  tol=1e-4, random_state=None, algorithm='auto', copy_x=True):
-
         self.n_clusters = n_clusters
         self.m = m
         self.max_iter = max_iter
@@ -180,17 +196,91 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
                 X.shape[0], self.n_clusters))
         return X
 
-    def fit(self, X, y=None):
-        random_state = check_random_state(self.random_state)
-        X = self._check_fit_data(X)
-
-        self.memberships_, self.centers_, self.inertia_, self.n_iter_ = c_means(
-            X, n_clusters=self.n_clusters, m=self.m, n_init=self.n_init,
-            max_iter=self.max_iter, init=self.init, tol=self.tol,
-            random_state=random_state, algorithm=self.algorithm,
-            copy_x=self.copy_x)
-        return self
+    def _check_test_data(self, X):
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+        n_samples, n_features = X.shape
+        expected_n_features = self.centers_.shape[1]
+        if not n_features == expected_n_features:
+            raise ValueError("Incorrect number of features. "
+                             "Got %d features, expected %d" % (
+                                 n_features, expected_n_features))
+        return X
 
     @property
     def labels_(self):
         return np.argmax(self.memberships_, axis=1)
+
+
+class ProbabilisticCMeans(CMeans):
+
+    def fit(self, X, y=None):
+        random_state = check_random_state(self.random_state)
+        X = self._check_fit_data(X)
+
+        results = c_means(
+            X, n_clusters=self.n_clusters, m=self.m, n_init=self.n_init,
+            max_iter=self.max_iter, init=self.init, tol=self.tol,
+            random_state=random_state, algorithm="probabilistic",
+            copy_x=self.copy_x)
+        self.memberships_ = results['memberships']
+        self.centers_ = results['centers']
+        self.inertia_ = results['inertia']
+        self.n_iter_ = results['n_iter']
+        return self
+
+    def predict(self, X):
+        """Predict the memberships for each sample in X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Data to predict
+
+        Returns
+        -------
+        memberships : ndarray, shape (n_samples, n_clusters)
+            Membership of each sample to each cluster.
+
+        """
+        check_is_fitted(self, 'centers_')
+        X = self._check_test_data(X)
+        distances = euclidean_distances(X, self.centers_)
+        return Probabilistic.memberships(distances, m=self.m)
+
+
+class PossibilisticCMeans(CMeans):
+
+    def fit(self, X, y=None):
+        random_state = check_random_state(self.random_state)
+        X = self._check_fit_data(X)
+
+        results = c_means(
+            X, n_clusters=self.n_clusters, m=self.m, n_init=self.n_init,
+            max_iter=self.max_iter, init=self.init, tol=self.tol,
+            random_state=random_state, algorithm="possibilistic",
+            copy_x=self.copy_x)
+        self.memberships_ = results['memberships']
+        self.centers_ = results['centers']
+        self.inertia_ = results['inertia']
+        self.n_iter_ = results['n_iter']
+        self.weights_ = results['weights']
+        return self
+
+    def predict(self, X):
+        """Predict the memberships for each sample in X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Data to predict
+
+        Returns
+        -------
+        memberships : ndarray, shape (n_samples, n_clusters)
+            Membership of each sample to each cluster.
+
+        """
+        check_is_fitted(self, 'centers_')
+        X = self._check_test_data(X)
+        distances = euclidean_distances(X, self.centers_)
+        return Possibilistic.memberships(distances, self.weights_, m=self.m)
