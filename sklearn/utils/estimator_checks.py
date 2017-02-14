@@ -1730,7 +1730,7 @@ def check_decision_proba_consistency(name, Estimator):
     # predict_proba methods has outputs with perfect rank correlation.
 
     rnd = np.random.RandomState(0)
-    X_train = (3*rnd.uniform(size=(10, 4))).astype(int)
+    X_train = (2*rnd.uniform(size=(10, 4))).astype(int)
     y = X_train[:, 0]
     estimator = Estimator()
 
@@ -1740,10 +1740,7 @@ def check_decision_proba_consistency(name, Estimator):
             hasattr(estimator, "predict_proba")):
 
         estimator.fit(X_train, y)
-        X_test = (3*rnd.uniform(size=(5, 4))).astype(int)
-        a = estimator.predict_proba(X_test)
+        X_test = (2*rnd.uniform(size=(5, 4))).astype(int)
+        a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
-        try:
-            assert_array_equal(rankdata(a), rankdata(b))
-        except AssertionError as e:
-            raise SkipTest(e)
+        assert_array_equal(rankdata(a), rankdata(b))
