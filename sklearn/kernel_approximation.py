@@ -276,7 +276,7 @@ class BaseAdditiveHomogenousKernelSampler(six.with_metaclass(ABCMeta,
 
     @abstractmethod
     def _spectrum(self, omega):
-        pass
+        raise NotImplementedError("No spectrum function in base class")
 
     def _transform_dense(self, X):
         non_zero = (X != 0.0)
