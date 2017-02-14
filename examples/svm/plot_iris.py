@@ -102,12 +102,13 @@ titles = ('SVC with linear kernel',
 fig, sub = plt.subplots(2, 2)
 plt.subplots_adjust(wspace=0.4, hspace=0.4)
 
-xx, yy = make_meshgrid(X[:, 0], X[:, 1])
+X0, X1 = X[:,0], X[:,1]
+xx, yy = make_meshgrid(X0, X1)
 
 for clf, title, ax in zip(models, titles, sub.flatten()):
     plot_contours(ax, clf, xx, yy,
                   cmap=plt.cm.coolwarm, alpha=0.8)
-    ax.scatter(x, y, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k')
+    ax.scatter(X0, X1, c=y, cmap=plt.cm.coolwarm, s=20, edgecolors='k')
     ax.set_xlim(xx.min(), xx.max())
     ax.set_ylim(yy.min(), yy.max())
     ax.set_xlabel('Sepal length')
