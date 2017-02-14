@@ -245,7 +245,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     max_iter : integer, optional (default=500)
         Maximum number of iterations to perform in the Lars algorithm.
 
-    eps : float, optional (default=``np.finfo(np.float).eps``)
+    eps : float, optional (default=`np.finfo(np.float).eps`)
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the 'tol' parameter in some iterative
@@ -418,7 +418,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    verbose : boolean or integer, optional
+    verbose : boolean or integer, optional (default False)
         Sets the verbosity amount
 
     normalize : boolean, optional (default False)
@@ -434,7 +434,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     tol : float, optional (default=1e-3)
          tolerance for stopping criteria of LogisticRegression
 
-    n_jobs : integer, optional
+    n_jobs : integer, optional (default=1)
         Number of CPUs to use during the resampling. If '-1', use
         all the CPUs
 
@@ -444,7 +444,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, optional (default=None)
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -580,7 +580,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    random_state : integer or numpy.random.RandomState, optional
+    random_state : integer or numpy.random.RandomState, optional (default=None)
         The generator used to randomize the design.
 
     n_resampling : int, optional (default=200)
@@ -594,14 +594,14 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    eps : float, optional
+    eps : float, optional (default=`4 * np.finfo(np.float).eps`)
         Smallest value of alpha / alpha_max considered
 
-    n_jobs : integer, optional
+    n_jobs : integer, optional (default=1)
         Number of CPUs to use during the resampling. If '-1', use
         all the CPUs
 
-    verbose : boolean or integer, optional
+    verbose : boolean or integer, optional (default=False)
         Sets the verbosity amount
 
     Returns
