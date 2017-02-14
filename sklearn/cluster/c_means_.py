@@ -3,11 +3,12 @@
 import numpy as np
 
 from sklearn.cluster import _c_means
-from sklearn.cluster._c_means import _calculate_centers
+from sklearn.cluster._c_means import _centers_probabilistic
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..externals.six import string_types
 from ..metrics.pairwise import euclidean_distances
 from ..utils import as_float_array
+from ..utils import check_array
 from ..utils import check_random_state
 
 
@@ -76,9 +77,9 @@ def _cmeans_single_probabilistic(X, n_clusters, m=2, max_iter=300,
     for i in range(max_iter):
         inertia_old = inertia
         distances = euclidean_distances(X, centers)
-        memberships = _c_means._calculate_memberships(distances, m)
+        memberships = _c_means._memberships_probabilistic(distances, m)
         inertia = np.sum(memberships ** m * distances)
-        centers = _calculate_centers(X, memberships, m)
+        centers = _centers_probabilistic(X, memberships, m)
 
         if inertia_best is None or inertia < inertia_best:
             memberships_best = memberships.copy()
@@ -128,10 +129,25 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.algorithm = algorithm
         self.copy_x = copy_x
 
+    def _check_fit_data(self, X):
+        """Verify that the number of samples given is larger than k"""
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32])
+        if X.shape[0] < self.n_clusters:
+            raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
+                X.shape[0], self.n_clusters))
+        return X
+
     def fit(self, X, y=None):
-        c_means(
+        random_state = check_random_state(self.random_state)
+        X = self._check_fit_data(X)
+
+        self.memberships_, self.centers_, self.inertia_, self.n_iter_ = c_means(
             X, n_clusters=self.n_clusters, m=self.m, n_init=self.n_init,
             max_iter=self.max_iter, init=self.init, tol=self.tol,
-            random_state=self.random_state, algorithm=self.algorithm,
+            random_state=random_state, algorithm=self.algorithm,
             copy_x=self.copy_x)
         return self
+
+    @property
+    def labels_(self):
+        return np.argmax(self.memberships_, axis=1)
