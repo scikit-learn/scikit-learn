@@ -231,7 +231,7 @@ class Pipeline(_BasePipeline):
 
     @property
     def _estimator_type(self):
-        return self.steps_[-1][1]._estimator_type
+        return self._steps[-1][1]._estimator_type
 
     @property
     def steps(self):
