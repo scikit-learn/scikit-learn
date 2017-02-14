@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import (assert_array_almost_equal,
                                    assert_array_less)
@@ -11,11 +12,12 @@ from sklearn.utils.testing import (assert_array_almost_equal,
 from sklearn.cluster import CMeans
 from sklearn.cluster.c_means_ import (_cmeans_single_probabilistic,
                                       _init_centroids)
-from sklearn.cluster._c_means import (_calculate_memberships,
-                                      _calculate_centers)
+from sklearn.cluster._c_means import (_memberships_probabilistic,
+                                      _centers_probabilistic)
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.cluster import v_measure_score
 
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 
@@ -73,22 +75,22 @@ def test_init_centroids_bounds():
 def test_calculate_memberships_shape():
     c = _init_centroids(X, n_clusters, 'random', random_state=42)
     distances = euclidean_distances(X, c)
-    m = _calculate_memberships(distances, 2)
+    m = _memberships_probabilistic(distances, 2)
     assert_equal(m.shape, (n_samples, n_clusters))
 
 
 def test_calculate_memberships_bounds():
     c = _init_centroids(X, n_clusters, 'random', random_state=42)
     distances = euclidean_distances(X, c)
-    m = _calculate_memberships(distances, 2)
+    m = _memberships_probabilistic(distances, 2)
     assert_array_less(m, 1e-6 + np.ones_like(m))
     assert_array_less(np.zeros_like(m) - 1e-6, m)
 
 
 def test_calculate_centers_shape():
     distances = euclidean_distances(X, centers)
-    m = _calculate_memberships(distances, 2)
-    c = _calculate_centers(X, m, 2)
+    m = _memberships_probabilistic(distances, 2)
+    c = _centers_probabilistic(X, m, 2)
     assert_equal(c.shape, (n_clusters, n_features))
 
 
@@ -100,3 +102,28 @@ def test_probabilistic_membership_shape():
 def test_probabilistic_center_shape():
     m, i, c, _ = _cmeans_single_probabilistic(X, n_clusters)
     assert_equal(c.shape, (n_clusters, n_features))
+
+
+def test_labels():
+    cm = CMeans()
+    cm.memberships_ = np.array([
+        [1.0, 0.0],
+        [0.7, 0.3],
+        [0.4, 0.6],
+        [0.2, 0.3],
+        [0.5, 0.5],
+    ])
+    labels_true = np.array([0, 0, 1, 1, 0])
+    assert_array_almost_equal(cm.labels_, labels_true)
+
+
+def _check_fitted_model(cm):
+    assert_equal(v_measure_score(true_labels, cm.labels_), 1.0)
+    assert_greater(cm.inertia_, 0.0)
+
+
+def test_probabilistic_results():
+    cm = CMeans(n_clusters=3, random_state=4)
+    cm.fit(X)
+    _check_fitted_model(cm)
+
