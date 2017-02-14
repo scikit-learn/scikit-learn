@@ -171,7 +171,7 @@ class Pipeline(_BasePipeline):
 
     def __init__(self, steps, memory=None):
         # shallow copy of steps
-        self.steps = tosequence(steps)
+        self._steps = tosequence(steps)
         self.memory = memory
 
     def get_params(self, deep=True):
@@ -203,7 +203,7 @@ class Pipeline(_BasePipeline):
         return self
 
     def _validate_steps(self):
-        names, estimators = zip(*self.steps)
+        names, estimators = zip(*self._steps)
 
         # validate names
         self._validate_names(names)
@@ -227,11 +227,32 @@ class Pipeline(_BasePipeline):
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
-        return self.steps
+        return self._steps
 
     @property
     def _estimator_type(self):
         return self.steps_[-1][1]._estimator_type
+
+    @property
+    def steps(self):
+        if hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps' will be the steps used to"
+                          " instantiate the pipeline. To get the fitted"
+                          " steps, use 'steps_' instead.", FutureWarning)
+            return self.steps_
+        else:
+            return self._steps
+
+    @steps.setter
+    def steps(self, val):
+        # set the steps_ to keep current behavior and warn the user
+        if hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps' will be the steps used to"
+                          " instantiate the pipeline. To set the fitted"
+                          " steps, use 'steps_' instead.", FutureWarning)
+            self.steps_ = val
+        # set the user argument
+        self._steps = val
 
     @property
     def named_steps(self):
@@ -241,7 +262,7 @@ class Pipeline(_BasePipeline):
                           " use 'name_steps_' instead.", FutureWarning)
             return dict(self.steps_)
         else:
-            return dict(self.steps)
+            return dict(self._steps)
 
     @property
     def named_steps_(self):
@@ -249,11 +270,10 @@ class Pipeline(_BasePipeline):
 
     @property
     def _final_estimator(self):
-        # FIXME: Not sure about the right implementation there.
         if hasattr(self, 'steps_'):
             return self.steps_[-1][1]
         else:
-            return self.steps[-1][1]
+            return self._steps[-1][1]
 
     # Estimator interface
 
@@ -500,12 +520,12 @@ class Pipeline(_BasePipeline):
         Xt : array-like, shape = [n_samples, n_transformed_features]
         """
         # _final_estimator is None or has transform, otherwise attribute error
-        check_is_fitted(self, 'steps_')
         if self._final_estimator is not None:
             self._final_estimator.transform
         return self._transform
 
     def _transform(self, X):
+        check_is_fitted(self, 'steps_')
         Xt = X
         for name, transform in self.steps_:
             if transform is not None:
@@ -531,13 +551,13 @@ class Pipeline(_BasePipeline):
         Xt : array-like, shape = [n_samples, n_features]
         """
         # raise AttributeError if necessary for hasattr behaviour
-        check_is_fitted(self, 'steps_')
-        for name, transform in self.steps_:
+        for name, transform in self._steps:
             if transform is not None:
                 transform.inverse_transform
         return self._inverse_transform
 
     def _inverse_transform(self, X):
+        check_is_fitted(self, 'steps_')
         Xt = X
         for name, transform in self.steps_[::-1]:
             if transform is not None:
@@ -583,7 +603,7 @@ class Pipeline(_BasePipeline):
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
-        return getattr(self.steps_[0][1], '_pairwise', False)
+        return getattr(self._steps[0][1], '_pairwise', False)
 
 
 def _name_estimators(estimators):
