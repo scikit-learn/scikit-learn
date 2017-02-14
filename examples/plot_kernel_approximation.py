@@ -118,7 +118,7 @@ def plot_projected_decision_surface(ax, clf, X, multiples, flat_grid):
     Z = clf.predict(flat_grid)
 
     # Put the result into a color plot
-    s = np.sqrt(flat_grid.shape[0])
+    s = int(np.sqrt(flat_grid.shape[0]))
     Z = Z.reshape((s, s))
     contour = ax.contourf(multiples, multiples, Z, cmap=plt.cm.Paired)
     return contour
@@ -134,7 +134,7 @@ data = digits.data / 16.
 data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
-split_index = n_samples / 2
+split_index = int(n_samples / 2)
 data_train, targets_train = data[:split_index], digits.target[:split_index]
 
 
@@ -178,9 +178,9 @@ for D in sample_sizes:
         scores[feature_map].append(score)
 
 # layout figure
-fig, vstacked_subplots = plt.subplots(2, 1, figsize=(8, 8))
+fig, subplots = plt.subplots(2, 1, figsize=(8, 8))
 # zip together information for creating plots.
-plot_layout = zip(vstacked_subplots,
+plot_layout = zip(subplots,
                   (scores, times),
                   (svm_scores, svm_times),
                   ({'linestyle': 'solid'}, {'linestyle': 'dashed'}))
@@ -191,10 +191,10 @@ for ax, performance, svm_data, lineargs in plot_layout:
     ax.legend(loc='best')
         
 #Make fine-grained tweaks to plots.
-accuracy, timescale = vstacked_subplots
+accuracy, timescale = subplots
 
 # plot verticle line.
-accuracy.plot([64, 64], [0.7, 1], label="n_features")
+accuracy.plot([data.shape[1]]*2, [0.7, 1], label="n_features")
 
 # format legends and axes
 accuracy.set_title("Classification accuracy")
@@ -209,7 +209,7 @@ timescale.set_ylabel("Training time in seconds")
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
-pca = PCA(n_components=8).fit(data_train)
+pca = PCA(n_components=8, random_state=1).fit(data_train)
 multiples = np.arange(-2, 2, 0.1)
 X = pca.transform(data_train)
 
@@ -230,7 +230,8 @@ classifiers = [svms['rbf svm'], approx_svm[approximate_kernel_labels[0]],
                approx_svm[approximate_kernel_labels[1]]]
 for ax, title, clf in zip(subplots.flatten(), titles, classifiers):
     plot_projected_decision_surface(ax, clf, X, multiples, flat_grid)
-    ax.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired)
+    ax.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired, s=20,
+               edgecolors='k')
     ax.set_title(title)
     ax.axis('off')
 plt.tight_layout()
