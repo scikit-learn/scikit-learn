@@ -42,11 +42,30 @@ def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='random',
     X_mean = X.mean(axis=0)
     X -= X_mean
 
+    membership_best, inertia_best, centers_best, n_iter_best = (
+        None, None, None, None
+    )
+
+    cmeans_single = _cmeans_single_probabilistic
+
+    for it in range(n_init):
+        membership, inertia, centers, n_iter_ = cmeans_single(
+            X, n_clusters, max_iter=max_iter, init=init, tol=tol,
+            random_state=random_state)
+        if inertia_best is None or inertia < inertia_best:
+            membership_best = membership
+            centers_best = centers
+            inertia_best = inertia
+            n_iter_best = n_iter_
+
     if not copy_x:
         X += X_mean
 
+    return membership_best, centers_best, inertia_best, n_iter_best
 
-def _cmeans_single_probabilistic(X, n_clusters, m=2, max_iter=300, init='random', random_state=None, tol=1e-4):
+
+def _cmeans_single_probabilistic(X, n_clusters, m=2, max_iter=300,
+                                 init='random', random_state=None, tol=1e-4):
     random_state = check_random_state(random_state)
 
     memberships_best, inertia_best, centers_best = None, None, None
