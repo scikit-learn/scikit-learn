@@ -50,26 +50,40 @@ it takes a variable number of estimators and returns a pipeline,
 filling in the names automatically::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> from sklearn.preprocessing import Binarizer
-    >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
+    >>> make_pipeline(PCA(), SVC()) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
-             steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
-                    ('multinomialnb', MultinomialNB(alpha=1.0,
-                                                    class_prior=None,
-                                                    fit_prior=True))])
+             steps=[('pca', PCA(copy=True,...)),
+                    ('svc', SVC(C=1.0,...))])
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute::
+The original estimators of a pipeline are stored as a list in the ``steps``
+attribute::
 
     >>> pipe.steps[0]
     ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False))
 
-and as a ``dict`` in ``named_steps_``::
+and as a ``dict`` in ``named_steps``::
 
-    >>> pipe.named_steps_['reduce_dim']
+    >>> pipe.named_steps['reduce_dim']
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
+
+Once the pipeline has been fitted, ``steps_`` and ``named_steps_`` have to be
+used.
+
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> pipe.fit(iris.data, iris.target)
+    ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    Pipeline(memory=None,
+             steps=[('reduce_dim', PCA(copy=True,...)),
+                    ('clf', SVC(C=1.0,...))])
+    >>> pipe.named_steps_['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
+        svd_solver='auto', tol=0.0, whiten=False)
+    >>> pipe.steps_[0]  # doctest: +NORMALIZE_WHITESPACE
+    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None,
+     random_state=None, svd_solver='auto', tol=0.0, whiten=False))
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
