@@ -13,6 +13,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
+from scipy.interpolate import interp1d
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -25,7 +26,8 @@ from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
 from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.validation import (check_is_fitted, check_random_state,
+                                FLOAT_DTYPES)
 
 
 zip = six.moves.zip
@@ -41,6 +43,7 @@ __all__ = [
     'OneHotEncoder',
     'RobustScaler',
     'StandardScaler',
+    'QuantileNormalizer',
     'add_dummy_feature',
     'binarize',
     'normalize',
@@ -1903,7 +1906,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
 
-class RankScaler(BaseEstimator, TransformerMixin):
+class QuantileNormalizer(BaseEstimator, TransformerMixin):
     """Rank-standardize features to a percentile, in the range [0, 1].
 
     Rank-scaling happens independently on each feature, by determining
@@ -1945,74 +1948,63 @@ class RankScaler(BaseEstimator, TransformerMixin):
     that is faster, but less robust to outliers.
     """
 
-    def __init__(self, n_ranks=1000):
-        # TODO: Add min and max parameters? Default = [0, 1]
-        self.n_ranks = n_ranks
+    def __init__(self, n_quantiles=1000, subsample=int(1e5),
+                 random_state=None):
+        self.n_quantiles = n_quantiles
+        self.subsample = subsample
+        self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Compute the feature ranks for later scaling.
-
-        fit will take time O(n_features * n_samples * log(n_samples)),
-        because it must sort the entire matrix.
-
-        It use memory O(n_features * n_ranks).
+        """Compute the quantiles used for normalizing.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The data used to compute feature ranks.
+            The data used to compute the quantiles.
         """
-        X = array2d(X)
-        n_samples, n_features = X.shape
-        full_sort_X_ = np.sort(X, axis=0)
-        if not self.n_ranks or self.n_ranks >= n_samples:
-            # Store the full matrix
-            self.sort_X_ = full_sort_X_
-        else:
-            # Approximate the stored sort_X_
-            self.sort_X_ = np.zeros((self.n_ranks, n_features))
-            for i in range(self.n_ranks):
-                for j in range(n_features):
-                    # Find the corresponding i in the original ranking
-                    iorig = i * 1. * n_samples / self.n_ranks
-                    ioriglo = int(iorig)
-                    iorighi = ioriglo + 1
+        X = check_array(X)
+        rng = check_random_state(self.random_state)
 
-                    if ioriglo == n_samples:
-                        self.sort_X_[i, j] = full_sort_X_[ioriglo, j]
-                    else:
-                        # And use linear interpolation to combine the
-                        # original values.
-                        wlo = (1 - (iorig - ioriglo))
-                        whi = (1 - (iorighi - iorig))
-                        assert wlo >= 0 and wlo <= 1
-                        assert whi >= 0 and whi <= 1
-                        assert_almost_equal(wlo+whi, 1.)
-                        self.sort_X_[i, j] = wlo * full_sort_X_[ioriglo, j] \
-                                           + whi * full_sort_X_[iorighi, j]
+        # subsample the matrix X if necessary
+        if self.subsample < X.shape[0]:
+            subsample_idx = rng.choice(X.shape[0], self.subsample,
+                                       replace=False)
+        else:
+            subsample_idx = np.range(X.shape[0])
+
+        self.references_ = np.linspace(0., 100., self.n_quantiles,
+                                       endpoint=True)
+        self.quantiles_ = np.percentile(X[subsample_idx], self.references_,
+                                        axis=0)
+
         return self
 
     def transform(self, X):
-        """Perform rank-standardization.
-
-        transform will take O(n_features * n_samples * log(n_ranks)),
-        where `n_fit_samples` is the number of samples used during `fit`.
+        """Feature-wise normalization of the data.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             The data used to scale along the features axis.
         """
-        X = array2d(X)
-        warn_if_not_float(X, estimator=self)
-        # TODO: Can add a copy parameter, and simply overwrite X if copy=False
-        X2 = np.zeros(X.shape)
-        for j in range(X.shape[1]):
-            lidx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='left')
-            ridx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='right')
-            v = 1. * (lidx + ridx) / (2 * self.sort_X_.shape[0])
-            X2[:,j] = v
-        return X2
+        X = check_array(X)
 
-    # TODO : Add inverse_transform method.
-    #        I believe we could reuse the approximation code in `fit`.
+        Xt = X.copy()
+        for feat_idx, quantiles_feat in enumerate(self.quantiles_.T):
+            mapping_func = interp1d(self.references_, self.quantiles_feat)
+            Xt[:, feat_idx] = mapping_func(Xt[:, feat_idx])
+
+    def inverse_transform(self, X):
+        """Back-projection to the original space.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data used to scale along the features axis.
+        """
+        X = check_array(X)
+
+        Xt = X.copy()
+        for feat_idx, quantiles_feat in enumerate(self.quantiles_.T):
+            mapping_func = interp1d(self.references_, self.quantiles_feat)
+            Xt[:, feat_idx] = mapping_func(Xt[:, feat_idx])
