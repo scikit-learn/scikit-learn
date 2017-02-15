@@ -857,6 +857,23 @@ def test_quantile_normalizer_iris():
     normalizer = QuantileNormalizer()
 
     X_trans = normalizer.fit_transform(X)
+    # FIXME: one of those will drive to precision error
+    # in the interpolation
+    assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
+    assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
+
+    X_trans_inv = normalizer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+
+def test_quantile_normalizer_dense_toy():
+
+    X = np.array([[0, 25, 50, 75, 100],
+                  [2, 4, 6, 8, 10],
+                  [2.6, 4.1, 2.3, 9.5, 0.1]]).T
+
+    normalizer = QuantileNormalizer()
+    X_trans = normalizer.fit_transform(X)
     assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
     assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
 
@@ -1657,7 +1674,6 @@ def test_fit_cold_start():
 
 
 def test_quantile_normalizer_pickling():
-    iris = datasets.load_iris()
     qn = QuantileNormalizer()
     qn.fit(iris.data)
 

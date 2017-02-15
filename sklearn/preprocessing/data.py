@@ -1960,20 +1960,19 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         """Build the transform functions."""
         check_is_fitted(self, 'quantiles_')
 
-        self.f_transform_ = [interp1d(quantiles_feat, self.references_,
-                                      bounds_error=False,
-                                      fill_value=(min(self.references_),
-                                                  max(self.references_)))
-                             for feat_idx, quantiles_feat in enumerate(
-                                     self.quantiles_.T)]
+        self.f_transform_ = [
+            interp1d(quantiles_feat, self.references_,
+                     bounds_error=False,
+                     fill_value=(min(self.references_),
+                                 max(self.references_)))
+            for quantiles_feat in self.quantiles_.T]
 
         self.f_inverse_transform_ = [
             interp1d(self.references_, quantiles_feat,
                      bounds_error=False,
                      fill_value=(min(quantiles_feat),
                                  max(quantiles_feat)))
-            for feat_idx, quantiles_feat in enumerate(
-                    self.quantiles_.T)]
+            for quantiles_feat in self.quantiles_.T]
 
     def _dense_fit(self, X):
         """Compute percentiles for dense matrices.
@@ -1997,12 +1996,10 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         else:
             subsample_idx = range(X.shape[0])
 
-        self.references_ = np.linspace(0., 100., self.n_quantiles,
+        self.references_ = np.linspace(0, 1, self.n_quantiles,
                                        endpoint=True)
-        self.quantiles_ = np.percentile(X[subsample_idx], self.references_,
-                                        axis=0)
-        # normalize the value between 0 and 1
-        self.references_ /= 100
+        self.quantiles_ = np.percentile(X[subsample_idx, :],
+                                        self.references_ * 100, axis=0)
 
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
@@ -2012,11 +2009,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             The data used to compute the quantiles.
         """
-        X = check_array(X)
+        X_ = check_array(X)
 
         # FIXME: remove not and put sparse first
-        if not sparse.issparse(X):
-            self._dense_fit(X)
+        if not sparse.issparse(X_):
+            self._dense_fit(X_)
 
         self._build_f()
 
