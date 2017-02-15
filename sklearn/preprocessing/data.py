@@ -6,6 +6,8 @@
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
+from __future__ import division
+
 from itertools import chain, combinations
 import numbers
 import warnings
@@ -1973,15 +1975,19 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             for feat_idx, quantiles_feat in enumerate(
                     self.quantiles_.T)]
 
-    def fit(self, X, y=None):
-        """Compute the quantiles used for normalizing.
+    def _dense_fit(self, X):
+        """Compute percentiles for dense matrices.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The data used to compute the quantiles.
+            The data used to scale along the features axis.
+
+        Returns
+        -------
+        Xt : array-like, shape (n_samples, n_features)
+            Projected data.
         """
-        X = check_array(X)
         rng = check_random_state(self.random_state)
 
         # subsample the matrix X if necessary
@@ -1995,13 +2001,29 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                                        endpoint=True)
         self.quantiles_ = np.percentile(X[subsample_idx], self.references_,
                                         axis=0)
-        self.references_ /= 100.
+        # normalize the value between 0 and 1
+        self.references_ /= 100
+
+    def fit(self, X, y=None):
+        """Compute the quantiles used for normalizing.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data used to compute the quantiles.
+        """
+        X = check_array(X)
+
+        # FIXME: remove not and put sparse first
+        if not sparse.issparse(X):
+            self._dense_fit(X)
+
         self._build_f()
 
         return self
 
     def _dense_transform(self, X, direction=True):
-        """Forward and inverse transform for dense matrices
+        """Forward and inverse transform for dense matrices.
 
         Parameters
         ----------
@@ -2025,8 +2047,6 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         for feat_idx, f in enumerate(func_transform):
             Xt[:, feat_idx] = f(Xt[:, feat_idx])
-
-        print(Xt.shape)
 
         return Xt
 
