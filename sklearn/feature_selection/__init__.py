@@ -41,5 +41,7 @@ __all__ = ['GenericUnivariateSelect',
            'f_classif',
            'f_oneway',
            'f_regression',
+           'r_regression',
+           'abs_r_regression',
            'mutual_info_classif',
            'mutual_info_regression']
