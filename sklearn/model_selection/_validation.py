@@ -230,8 +230,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if parameters is None:
             params_msg = ''
         else:
-            params_msg = (', '.join('%s=%s' % (k, v)
-                                    for k, v in parameters.items()))
+            sorted_keys = sorted(parameters)  # Ensure deterministic o/p
+            params_msg = (', '.join('%s=%r' % (k, parameters[k])
+                                    for k in sorted_keys))
         start_msg = "[CV%s] START %s" % (progress_msg, params_msg)
         print("%s%s" % (start_msg, (80 - len(start_msg)) * '.'))
 
