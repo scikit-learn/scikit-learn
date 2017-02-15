@@ -257,7 +257,8 @@ def r_regression(X, y, center=True):
 
     See also
     --------
-    f_regression: Univariate linear regression tests returning f-statistic and p-values
+    f_regression: Univariate linear regression tests returning f-statistic
+        and p-values
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
@@ -284,6 +285,7 @@ def r_regression(X, y, center=True):
     corr /= X_norms
     corr /= norm(y)
     return corr
+
 
 def f_regression(X, y, center=True):
     """Univariate linear regression tests returning F-statistic and p-values.
@@ -336,10 +338,11 @@ def f_regression(X, y, center=True):
 
 
 def abs_r_regression(X, y, center=True):
-    """Univariate linear regression tests returning absolute value of Pearson R.
+    """Absolute value of Pearson R from univariate linear regressions.
 
     This convenience wrapper is to be used with SelectKBest and other models
-    that require a statistic which is increases with significance of association.
+    that require a statistic which is increases with significance of
+    association.
 
     see r_regression for details.
     """

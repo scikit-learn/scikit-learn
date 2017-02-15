@@ -89,7 +89,7 @@ def test_abs_r_regression():
     abs_pearson_r = abs_r_regression(X, y)
     assert_true((abs_pearson_r < 1).all())
     assert_true((abs_pearson_r[:5] > 0.1).all())
-    assert_true((abs_pearson_r[5:] < 0.2 ).all())
+    assert_true((abs_pearson_r[5:] < 0.2).all())
 
     # with centering, compare with sparse
     abs_pearson_r = f_regression(X, y, center=True)
