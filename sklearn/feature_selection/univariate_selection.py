@@ -336,16 +336,16 @@ def f_regression(X, y, center=True):
 
 
 def abs_r_regression(X, y, center=True):
-   """Univariate linear regression tests returning absolute value of Pearson R.
+    """Univariate linear regression tests returning absolute value of Pearson R.
 
-   This convenience wrapper is to be used with SelectKBest and other models
-   that require a statistic which is increases with significance of association.
+    This convenience wrapper is to be used with SelectKBest and other models
+    that require a statistic which is increases with significance of association.
 
-   see r_regression for details.
-   """
-   # compute the correlation
-   corr = r_regression(X, y, center=center)
-   return abs(corr)
+    see r_regression for details.
+    """
+    # compute the correlation
+    corr = r_regression(X, y, center=center)
+    return abs(corr)
 
 ######################################################################
 # Base classes
