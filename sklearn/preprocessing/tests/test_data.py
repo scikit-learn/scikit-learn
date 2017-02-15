@@ -1,4 +1,3 @@
-
 # Authors:
 #
 #          Giorgio Patrini
@@ -48,6 +47,7 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
+from sklearn.preprocessing.data import RankScaler
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.pipeline import Pipeline
@@ -289,6 +289,42 @@ def test_scaler_2d_arrays():
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert_true(X_scaled is not X)
+
+    X = np.array([[1, 0, 0, 0, 1],
+                  [2, 1, 4, 1, 1],
+                  [3, 2, 3, 1, 0],
+                  [3, 0, 0, 4, 1]])
+
+    rank_scaler = RankScaler()
+    rank_scaler.fit(X)
+    X_scaled = rank_scaler.transform(X)
+    assert_array_almost_equal(X_scaled, [[0.125, 0.25,  0.25,  0.125, 0.625],
+                                         [0.375, 0.625, 0.875, 0.5,   0.625],
+                                         [0.75,  0.875, 0.625, 0.5,   0.125],
+                                         [0.75,  0.25,  0.25,  0.875, 0.625]])
+
+    X2 = np.array([[0, 1.5, 0, 5, 10]])
+    X2_scaled = rank_scaler.transform(X2)
+    assert_array_almost_equal(X2_scaled, [[0., 0.75, 0.25, 1., 1.]])
+
+    # Check RankScaler at different n_ranks
+    n_features = 100
+    for n_samples in [10, 100, 1000]:
+        for n_ranks in [n_samples + 1, n_samples, n_samples - 1,
+                        int(n_samples / 2), int(n_samples / 7), int(n_samples / 10)]:
+            X = rng.randn(n_samples, n_features)
+            rank_scaler1 = RankScaler(n_ranks=None)
+            rank_scaler2 = RankScaler(n_ranks=n_ranks)
+            rank_scaler1.fit(X)
+            rank_scaler2.fit(X)
+
+            X2 = rng.randn(1000, n_features)
+            X21 = rank_scaler1.transform(X2)
+            X22 = rank_scaler2.transform(X2)
+
+            # In the approximate version X22, all values must
+            # be within 1./n_ranks of the exact value X11.
+            assert_true(np.all(np.fabs(X21 - X22) < 1. / n_ranks))
 
 
 def test_handle_zeros_in_scale():

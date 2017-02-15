@@ -1901,3 +1901,118 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         """
         return _transform_selected(X, self._transform,
                                    self.categorical_features, copy=True)
+
+
+class RankScaler(BaseEstimator, TransformerMixin):
+    """Rank-standardize features to a percentile, in the range [0, 1].
+
+    Rank-scaling happens independently on each feature, by determining
+    the percentile of the feature value.
+    A feature value that is smaller than observed during fitting
+    will scale to 0.
+    A feature value that is larger than observed during fitting
+    will scale to 1.
+    A feature value that is the median will scale to 0.5.
+
+    Standardization of a dataset is a common requirement for many
+    machine learning estimators. Rank-scaling is useful when
+    estimators perform badly on StandardScalar features. Rank-scaling
+    is more robust than StandardScaler, because outliers can't have
+    large values post scaling. It is an empirical question whether
+    you want outliers to be given high importance (StandardScaler)
+    or not (RankScaler).
+
+    Parameters
+    ----------
+    n_ranks : int, 1000 by default
+        The number of different ranks possible.
+        i.e. The number of indices in the compressed ranking matrix
+        `sort_X_`.
+        This is an approximation, to save memory and transform
+        computation time.
+        e.g. if 1000, transformed values will have resolution 0.001.
+        If `None`, we store the full size matrix, comparable
+        in size to the initial fit `X`.
+
+    Attributes
+    ----------
+    `sort_X_` : array of ints, shape (n_samples, n_features)
+        The rank-index of every feature in the fit X.
+
+    See also
+    --------
+    :class:`sklearn.preprocessing.StandardScaler` to perform standardization
+    that is faster, but less robust to outliers.
+    """
+
+    def __init__(self, n_ranks=1000):
+        # TODO: Add min and max parameters? Default = [0, 1]
+        self.n_ranks = n_ranks
+
+    def fit(self, X, y=None):
+        """Compute the feature ranks for later scaling.
+
+        fit will take time O(n_features * n_samples * log(n_samples)),
+        because it must sort the entire matrix.
+
+        It use memory O(n_features * n_ranks).
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data used to compute feature ranks.
+        """
+        X = array2d(X)
+        n_samples, n_features = X.shape
+        full_sort_X_ = np.sort(X, axis=0)
+        if not self.n_ranks or self.n_ranks >= n_samples:
+            # Store the full matrix
+            self.sort_X_ = full_sort_X_
+        else:
+            # Approximate the stored sort_X_
+            self.sort_X_ = np.zeros((self.n_ranks, n_features))
+            for i in range(self.n_ranks):
+                for j in range(n_features):
+                    # Find the corresponding i in the original ranking
+                    iorig = i * 1. * n_samples / self.n_ranks
+                    ioriglo = int(iorig)
+                    iorighi = ioriglo + 1
+
+                    if ioriglo == n_samples:
+                        self.sort_X_[i, j] = full_sort_X_[ioriglo, j]
+                    else:
+                        # And use linear interpolation to combine the
+                        # original values.
+                        wlo = (1 - (iorig - ioriglo))
+                        whi = (1 - (iorighi - iorig))
+                        assert wlo >= 0 and wlo <= 1
+                        assert whi >= 0 and whi <= 1
+                        assert_almost_equal(wlo+whi, 1.)
+                        self.sort_X_[i, j] = wlo * full_sort_X_[ioriglo, j] \
+                                           + whi * full_sort_X_[iorighi, j]
+        return self
+
+    def transform(self, X):
+        """Perform rank-standardization.
+
+        transform will take O(n_features * n_samples * log(n_ranks)),
+        where `n_fit_samples` is the number of samples used during `fit`.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data used to scale along the features axis.
+        """
+        X = array2d(X)
+        warn_if_not_float(X, estimator=self)
+        # TODO: Can add a copy parameter, and simply overwrite X if copy=False
+        X2 = np.zeros(X.shape)
+        for j in range(X.shape[1]):
+            lidx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='left')
+            ridx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='right')
+            v = 1. * (lidx + ridx) / (2 * self.sort_X_.shape[0])
+            X2[:,j] = v
+        return X2
+
+    # TODO : Add inverse_transform method.
+    #        I believe we could reuse the approximation code in `fit`.
