@@ -627,7 +627,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The number of outputs when ``fit`` is performed.
 
     tree_ : Tree object
-        The underlying Tree object.
+        The underlying :class:`Tree` object.
 
     See also
     --------
@@ -920,7 +920,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The number of outputs when ``fit`` is performed.
 
     tree_ : Tree object
-        The underlying Tree object.
+        The underlying :class:`Tree` object.
 
     See also
     --------

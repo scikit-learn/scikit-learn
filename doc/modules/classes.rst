@@ -1326,6 +1326,7 @@ Low-level methods
    tree.DecisionTreeRegressor
    tree.ExtraTreeClassifier
    tree.ExtraTreeRegressor
+   tree.Tree
 
 .. autosummary::
    :toctree: generated/
