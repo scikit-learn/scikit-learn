@@ -18,7 +18,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_dict_equal
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -32,6 +31,8 @@ from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.externals.joblib import Memory
+from sklearn.externals.joblib import hash
+from sklearn.utils.validation import check_is_fitted
 
 
 JUNK_FOOD_DOCS = (
@@ -537,17 +538,22 @@ def test_set_pipeline_step_none():
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
-    print(pipeline.get_params(deep=True))
-    assert_dict_equal(pipeline.get_params(deep=True),
-                      {'last': Mult(mult=5),
-                       'memory': None,
-                       'last__mult': 5,
-                       'steps': [('m2', Mult(mult=2)),
-                                 ('m3', None),
-                                 ('last', Mult(mult=5))],
-                       'm2__mult': 2,
-                       'm3': None,
-                       'm2': Mult(mult=2)})
+
+    pipeline_params = pipeline.get_params(deep=True)
+    pipeline_params2 = {'steps': pipeline.steps,
+                        'm2': mult2,
+                        'm3': None,
+                        'last': mult5,
+                        'memory': None,
+                        'm2__mult': 2,
+                        'last__mult': 5}
+    # check if the keys are the same
+    assert_equal(sorted(pipeline_params.keys()),
+                 sorted(pipeline_params2.keys()))
+    # check if the arrays are the same using joblib.hash
+    for k in pipeline_params.keys():
+        assert_equal(hash(pipeline_params[k]),
+                     hash(pipeline_params2[k]))
 
     pipeline.set_params(m2=None)
     exp = 5
@@ -620,6 +626,22 @@ def test_pipeline_ducktyping():
     pipeline.transform
     assert_false(hasattr(pipeline, 'inverse_transform'))
 
+
+def test_pipeline_steps():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    clf = SVC(probability=True, random_state=0)
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
+    pipe = Pipeline([('pca', pca), ('svc', clf)])
+    pipe.fit(X, y)
+
+    # check that _steps was not change after fitting
+    assert_equal(pca, pipe._steps[0][1])
+    assert_equal(clf, pipe._steps[1][1])
+    # check that the estimators have been fitted in steps_
+    check_is_fitted(pipe.named_steps_['pca'], 'n_components_')
+    check_is_fitted(pipe.named_steps_['svc'], 'support_vectors_')
 
 def test_make_pipeline():
     t1 = Transf()

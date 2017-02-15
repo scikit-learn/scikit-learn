@@ -381,7 +381,11 @@ class Pipeline(_BasePipeline):
         """
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
-        if last_step is None:
+        if hasattr(last_step, 'fit_transform'):
+            Xt = last_step.fit_transform(Xt, y, **fit_params)
+            self.steps_[-1] = (self.steps_[-1][0], last_step)
+            return Xt
+        elif last_step is None:
             return Xt
         else:
             fitted_transformer = last_step.fit(Xt, y, **fit_params)

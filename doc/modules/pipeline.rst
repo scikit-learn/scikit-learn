@@ -166,48 +166,6 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-.. warning:: **Side effect of caching transfomers**
-
-   Using a :class:`Pipeline` without cache enabled, it is possible to
-   inspect the original instance such as::
-
-     >>> from sklearn.datasets import load_digits
-     >>> digits = load_digits()
-     >>> pca1 = PCA()
-     >>> svm1 = SVC()
-     >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-     >>> pipe.fit(digits.data, digits.target)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-     Pipeline(memory=None,
-              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
-     >>> # The pca instance can be inspected directly
-     >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-         [[ -1.77484909e-19  ... 4.07058917e-18]]
-
-   Enabling caching triggers a clone of the transformers before fitting.
-   Therefore, the transformer instance given to the pipeline cannot be
-   inspected directly.
-   In following example, accessing the :class:`PCA` instance ``pca2``
-   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
-   transformer.
-   Instead, use the attribute ``named_steps_`` to inspect estimators within
-   the pipeline::
-
-     >>> cachedir = mkdtemp()
-     >>> pca2 = PCA()
-     >>> svm2 = SVC()
-     >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
-     ...                        memory=cachedir)
-     >>> cached_pipe.fit(digits.data, digits.target)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-      Pipeline(memory=...,
-               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
-     >>> print(cached_pipe.named_steps_['reduce_dim'].components_)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-         [[ -1.77484909e-19  ... 4.07058917e-18]]
-     >>> # Remove the cache directory
-     >>> rmtree(cachedir)
-
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_plot_compare_reduction.py`
