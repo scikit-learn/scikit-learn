@@ -1074,7 +1074,7 @@ def test_permutation_test_score_pandas():
 
 def test_fit_and_score_verbose():
     # Test the _fit_and_score helper
-    estimator = SVC(kernel="linear", random_state=42)
+    estimator = SVC(kernel="rbf", random_state=42)
     iris = load_iris()
     X, y = iris.data, iris.target
     cv = GroupShuffleSplit(n_splits=5, random_state=42)
@@ -1089,9 +1089,9 @@ def test_fit_and_score_verbose():
                 1: (),  # verbose level 1 should not produce any output
                 2: ("[CV] START {p}", "[CV] ", "{p}total time=   0.0s"),
                 3: ("[CV{s}] START {p}", "[CV{s}] ",
-                    "{p}score=0.900000, total time=   0.0s"),
+                    "{p}score=0.260000, total time=   0.0s"),
                 10: ("[CV{s}] START {p}", "[CV{s}] ",
-                     "{p}score=0.900000, total time=   0.0s")
+                     "{p}score=0.260000, total time=   0.0s")
         }
 
         # The prefixing status string based on the split_progress and
@@ -1109,14 +1109,16 @@ def test_fit_and_score_verbose():
                 if verbose < 10:
                     status = status.split(" candidate")[0].strip(';')
 
-                for params in (None, {}, {'C': 0.01}):
+                for params in (None, {}, {'C': 0.01},
+                               {'kernel': 'rbf', 'C': 0.001}):
                     # Flush it for each run; No need to close(). Will be gc-ed
                     sys.stdout = StringIO()
-                    if params is None:
-                        p_msg = ""
+                    if params == {'C': 0.01}:
+                        p_msg = "C=0.01"
+                    elif params == {'kernel': 'rbf', 'C': 0.001}:
+                        p_msg = "C=0.001, kernel='rbf'"
                     else:
-                        p_msg = (', '.join('%s=%s' % (k, v)
-                                           for k, v in params.items()))
+                        p_msg = ""
 
                     _fit_and_score(estimator, X, y, scorer, train, test,
                                    verbose, parameters=params, fit_params=None,
