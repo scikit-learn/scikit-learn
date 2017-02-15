@@ -2000,6 +2000,36 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         return self
 
+    def _dense_transform(self, X, direction=True):
+        """Forward and inverse transform for dense matrices
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data used to scale along the features axis.
+
+        direction : bool, optional (default=True)
+            If True, apply forward transform. If False, apply
+            inverse transform.
+
+        Returns
+        -------
+        Xt : array-like, shape (n_samples, n_features)
+            Projected data.
+        """
+        Xt = X.copy()
+        if direction:
+            func_transform = self.f_transform_
+        else:
+            func_transform = self.f_inverse_transform_
+
+        for feat_idx, f in enumerate(func_transform):
+            Xt[:, feat_idx] = f(Xt[:, feat_idx])
+
+        print(Xt.shape)
+
+        return Xt
+
     def transform(self, X):
         """Feature-wise normalization of the data.
 
@@ -2007,15 +2037,17 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             The data used to scale along the features axis.
+
+        Returns
+        -------
+        Xt : array-like, shape (n_samples, n_features)
+            Projected data.
         """
         X = check_array(X)
         check_is_fitted(self, 'f_transform_')
-
-        Xt = X.copy()
-        for feat_idx, f in enumerate(self.f_transform_):
-            Xt[:, feat_idx] = f(Xt[:, feat_idx])
-
-        return Xt
+        # FIXME: remove not and put sparse first
+        if not sparse.issparse(X):
+            return self._dense_transform(X, True)
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
@@ -2024,14 +2056,17 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             The data used to scale along the features axis.
+
+        Returns
+        -------
+        Xt : array-like, shape (n_samples, n_features)
+            Projected data.
         """
         X = check_array(X)
         check_is_fitted(self, 'f_inverse_transform_')
-        Xt = X.copy()
-        for feat_idx, f in enumerate(self.f_inverse_transform_):
-            Xt[:, feat_idx] = f(Xt[:, feat_idx])
-
-        return Xt
+        # FIXME: remove not and put sparse first
+        if not sparse.issparse(X):
+            return self._dense_transform(X, False)
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator. """
