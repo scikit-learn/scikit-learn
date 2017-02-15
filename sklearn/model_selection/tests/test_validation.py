@@ -1087,11 +1087,11 @@ def test_fit_and_score_verbose():
     try:
         verbose_output_map = {
                 1: (),  # verbose level 1 should not produce any output
-                2: ("[CV] {p} - Started", "[CV] {p} - ", "total time=   0.0s"),
-                3: ("[CV{s}] {p} - Started", "[CV{s}] {p} - ",
-                    "score=0.900000, total time=   0.0s"),
-                10: ("[CV{s}] {p} - Started", "[CV{s}] {p} - ",
-                     "score=0.900000, total time=   0.0s")
+                2: ("[CV] START {p}", "[CV] ", "{p}total time=   0.0s"),
+                3: ("[CV{s}] START {p}", "[CV{s}] ",
+                    "{p}score=0.900000, total time=   0.0s"),
+                10: ("[CV{s}] START {p}", "[CV{s}] ",
+                     "{p}score=0.900000, total time=   0.0s")
         }
 
         # The prefixing status string based on the split_progress and
@@ -1138,23 +1138,26 @@ def test_fit_and_score_verbose():
                         p=p_msg, s=status)))
 
                     # Check the left part and right part of 2nd line
-                    left, right = out[1].split("Done;")
-                    left, right = left.lstrip(), right.lstrip('. ')
+                    left, right = out[1].split("END ")
+                    left, right = left, right.strip('. ')
 
                     assert_true(left.startswith(expected_template[1].format(
-                        p=p_msg, s=status)))
+                        s=status)))
 
-                    assert_true(right.startswith(expected_template[2]))
+                    # Params displaed at the end should have a separating colon
+                    p_msg += '; ' if p_msg else ''
+                    assert_true(right.startswith(expected_template[2].format(
+                        p=p_msg)))
     except Exception:
         sys.stdout = old_stdout  # So we can simply do print below
         # To help debug changes to verbose. Otherwise it's difficult to trace
         print("verbose=%d; params=%s; split_progress=%s; param_progress=%s"
               % (verbose, params, split_progress, param_progress))
         print("Verbose output received:\n%s" % "\n".join(out))
-        print("Expected verbose output:\n%s\n%sDone;<...>%s"
+        print("Expected verbose output:\n'%s'\n'%sEND <...>%s'"
               % (expected_template[0].format(p=p_msg, s=status),
-                 expected_template[1].format(p=p_msg, s=status),
-                 expected_template[2]))
+                 expected_template[1].format(s=status),
+                 expected_template[2].format(p=p_msg)))
         raise
     finally:
         sys.stdout = old_stdout

@@ -218,13 +218,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     parameters : dict or None, optional
         The parameters that have been evaluated.
     """
-    current_fit_msg = ""
+    progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
-            current_fit_msg = " split %d of %d" % split_progress
+            progress_msg = " split %d of %d" % split_progress
         if param_progress and verbose > 9:
-            current_fit_msg += ";" if split_progress else ""
-            current_fit_msg += " candidate %d of %d" % param_progress
+            progress_msg += ";" if split_progress else ""
+            progress_msg += " candidate %d of %d" % param_progress
 
     if verbose > 1:
         if parameters is None:
@@ -232,7 +232,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             params_msg = (', '.join('%s=%s' % (k, v)
                                     for k, v in parameters.items()))
-        start_msg = "[CV%s] %s - Started" % (current_fit_msg, params_msg)
+        start_msg = "[CV%s] START %s" % (progress_msg, params_msg)
         print("%s%s" % (start_msg, (80 - len(start_msg)) * '.'))
 
     # Adjust length of sample weights
@@ -281,8 +281,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     if verbose > 1:
         total_time = score_time + fit_time
-        end_msg = "[CV%s] %s - Done; " % (current_fit_msg, params_msg)
-        result_msg = ""
+        end_msg = "[CV%s] END " % progress_msg
+        result_msg = params_msg + ("; " if params_msg else "")
         if verbose > 2:
             result_msg += "score=%f, " % test_score
         result_msg += "total time=%s" % logger.short_format_time(total_time)
