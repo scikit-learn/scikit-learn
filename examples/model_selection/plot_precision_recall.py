@@ -127,6 +127,21 @@ average_precision["micro"] = average_precision_score(y_test, y_score,
                                                      average="micro")
 
 
+# Plot ISO-F1 curve
+plt.clf()
+f_scores = np.linspace(0.1, 0.9, num=9)
+for F in f_scores:
+    x = R = np.linspace(0.01, 1)
+    y = F * R / (2 * R - F)
+    plt.plot(x[y >= 0], y[y >= 0], color='navy')
+    plt.annotate('f1={0:0.1f}'.format(F), xy=(0.9, y[45] + 0.02))
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.0])
+plt.title('ISO-F1 curves')
+plt.show()
+
 # Plot Precision-Recall curve
 plt.clf()
 plt.plot(recall[0], precision[0], lw=lw, color='navy',
