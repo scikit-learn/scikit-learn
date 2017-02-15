@@ -149,6 +149,10 @@ Enhancements
 
 Bug fixes
 .........
+   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect 
+     result when input is precomputed sparse matrix with initial rows
+     all zero.
+     :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
 
    - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
