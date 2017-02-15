@@ -12,12 +12,13 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
-
+from sklearn.datasets import make_classification
 # we create 40 separable points
 np.random.seed(0)
-X = np.r_[np.random.randn(20, 2) - [2, 2], np.random.randn(20, 2) + [2, 2]]
-Y = [0] * 20 + [1] * 20
-
+#X = np.r_[np.random.randn(20, 2) - [2, 2], np.random.randn(20, 2) + [2, 2]]
+#Y = [0] * 20 + [1] * 20
+X, Y = make_classification(n_features=2, n_redundant=0, n_informative=1,
+                           n_clusters_per_class=1)
 # fit the model
 clf = svm.SVC(kernel='linear')
 clf.fit(X, Y)
@@ -41,8 +42,8 @@ plt.plot(xx, yy_down, 'k--')
 plt.plot(xx, yy_up, 'k--')
 
 plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
-            s=80, facecolors='none')
-plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
+            s=120, facecolors='none', edgecolors=(0, 0, 0))
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors=(0, 0, 0))
 
 plt.axis('tight')
 plt.show()
