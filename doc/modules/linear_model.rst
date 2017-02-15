@@ -229,7 +229,7 @@ For high-dimensional datasets with many collinear regressors,
 :class:`LassoCV` is most often preferable. However, :class:`LassoLarsCV` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
-observations, it is often faster than :class:`LassoCV`.
+features, it is often faster than :class:`LassoCV`.
 
 .. |lasso_cv_1| image:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_002.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
