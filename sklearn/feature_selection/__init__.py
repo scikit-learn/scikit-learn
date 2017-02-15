@@ -8,6 +8,8 @@ from .univariate_selection import chi2
 from .univariate_selection import f_classif
 from .univariate_selection import f_oneway
 from .univariate_selection import f_regression
+from .univariate_selection import r_regression
+from .univariate_selection import abs_r_regression
 from .univariate_selection import SelectPercentile
 from .univariate_selection import SelectKBest
 from .univariate_selection import SelectFpr

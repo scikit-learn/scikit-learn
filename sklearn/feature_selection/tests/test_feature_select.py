@@ -26,9 +26,10 @@ from sklearn.utils import safe_mask
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
 from sklearn.feature_selection import (
-    chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
-    mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
-    SelectFdr, SelectFwe, GenericUnivariateSelect)
+    chi2, f_classif, f_oneway, f_regression, abs_r_regression,
+    mutual_info_classif, mutual_info_regression, SelectPercentile,
+    SelectKBest, SelectFpr, SelectFdr, SelectFwe,
+    GenericUnivariateSelect)
 
 
 ##############################################################################
@@ -77,6 +78,28 @@ def test_f_classif():
     assert_true((pv[5:] > 1.e-4).all())
     assert_array_almost_equal(F_sparse, F)
     assert_array_almost_equal(pv_sparse, pv)
+
+
+def test_abs_r_regression():
+    # Test whether the F test yields meaningful results
+    # on a simple simulated regression problem
+    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
+                           shuffle=False, random_state=0)
+
+    abs_pearson_r = abs_r_regression(X, y)
+    assert_true((abs_pearson_r < 1).all())
+    assert_true((abs_pearson_r[:5] > 0.1).all())
+    assert_true((abs_pearson_r[5:] < 0.2 ).all())
+
+    # with centering, compare with sparse
+    abs_pearson_r = f_regression(X, y, center=True)
+    abs_pearson_r_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
+    assert_array_almost_equal(abs_pearson_r_sparse, abs_pearson_r)
+
+    # again without centering, compare with sparse
+    abs_pearson_r = f_regression(X, y, center=False)
+    abs_pearson_r_sparse = f_regression(sparse.csr_matrix(X), y, center=False)
+    assert_array_almost_equal(abs_pearson_r_sparse, abs_pearson_r)
 
 
 def test_f_regression():
@@ -346,6 +369,25 @@ def test_select_kbest_regression():
                            shuffle=False, random_state=0, noise=10)
 
     univariate_filter = SelectKBest(f_regression, k=5)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    assert_best_scores_kept(univariate_filter)
+    X_r2 = GenericUnivariateSelect(
+        f_regression, mode='k_best', param=5).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(20)
+    gtruth[:5] = 1
+    assert_array_equal(support, gtruth)
+
+
+def test_select_kbest_abs_r_regression():
+    # Test whether the relative univariate feature selection
+    # gets the correct items in a simple regression problem
+    # with the k best heuristic
+    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
+                           shuffle=False, random_state=0, noise=10)
+
+    univariate_filter = SelectKBest(abs_r_regression, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_best_scores_kept(univariate_filter)
     X_r2 = GenericUnivariateSelect(
