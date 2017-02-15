@@ -1954,6 +1954,25 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         self.subsample = subsample
         self.random_state = random_state
 
+    def _build_f(self):
+        """Build the transform functions."""
+        check_is_fitted(self, 'quantiles_')
+
+        self.f_transform_ = [interp1d(quantiles_feat, self.references_,
+                                      bounds_error=False,
+                                      fill_value=(min(self.references_),
+                                                  max(self.references_)))
+                             for feat_idx, quantiles_feat in enumerate(
+                                     self.quantiles_.T)]
+
+        self.f_inverse_transform_ = [
+            interp1d(self.references_, quantiles_feat,
+                     bounds_error=False,
+                     fill_value=(min(quantiles_feat),
+                                 max(quantiles_feat)))
+            for feat_idx, quantiles_feat in enumerate(
+                    self.quantiles_.T)]
+
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
 
@@ -1976,8 +1995,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                                        endpoint=True)
         self.quantiles_ = np.percentile(X[subsample_idx], self.references_,
                                         axis=0)
-
         self.references_ /= 100.
+        self._build_f()
 
         return self
 
@@ -1990,11 +2009,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         X = check_array(X)
+        check_is_fitted(self, 'f_transform_')
 
         Xt = X.copy()
-        for feat_idx, quantiles_feat in enumerate(self.quantiles_.T):
-            mapping_func = interp1d(quantiles_feat, self.references_)
-            Xt[:, feat_idx] = mapping_func(Xt[:, feat_idx])
+        for feat_idx, f in enumerate(self.f_transform_):
+            Xt[:, feat_idx] = f(Xt[:, feat_idx])
 
         return Xt
 
@@ -2007,13 +2026,28 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         X = check_array(X)
-
+        check_is_fitted(self, 'f_inverse_transform_')
         Xt = X.copy()
-        for feat_idx, quantiles_feat in enumerate(self.quantiles_.T):
-            mapping_func = interp1d(self.references_, quantiles_feat)
-            Xt[:, feat_idx] = mapping_func(Xt[:, feat_idx])
+        for feat_idx, f in enumerate(self.f_inverse_transform_):
+            Xt[:, feat_idx] = f(Xt[:, feat_idx])
 
         return Xt
+
+    def __getstate__(self):
+        """Pickle-protocol - return state of the estimator. """
+        state = super(QuantileNormalizer, self).__getstate__()
+        # remove interpolation method
+        state.pop('f_transform_', None)
+        state.pop('f_inverse_transform_', None)
+        return state
+
+    def __setstate__(self, state):
+        """Pickle-protocol - set state of the estimator.
+        We need to rebuild the interpolation function.
+        """
+        super(QuantileNormalizer, self).__setstate__(state)
+        if hasattr(self, 'references_') and hasattr(self, 'quantiles_'):
+            self._build_f()
 
 
 def quantile_normalize(X, axis=0, n_quantiles=1000, subsample=int(1e5),

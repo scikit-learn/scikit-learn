@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import warnings
+import pickle
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
@@ -48,7 +49,6 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.preprocessing.data import RankScaler
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.pipeline import Pipeline
@@ -1690,3 +1690,14 @@ def test_fit_cold_start():
         # with a different shape, this may break the scaler unless the internal
         # state is reset
         scaler.fit_transform(X_2d)
+
+
+def test_quantile_normalizer_pickling():
+    iris = datasets.load_iris()
+    qn = QuantileNormalizer()
+    qn.fit(iris.data)
+
+    qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
+    qn2 = pickle.loads(qn_ser)
+    assert_array_almost_equal(qn.transform(iris.data),
+                              qn2.transform(iris.data))
