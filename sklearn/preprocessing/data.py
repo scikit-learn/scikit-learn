@@ -1970,12 +1970,14 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             subsample_idx = rng.choice(X.shape[0], self.subsample,
                                        replace=False)
         else:
-            subsample_idx = np.range(X.shape[0])
+            subsample_idx = range(X.shape[0])
 
         self.references_ = np.linspace(0., 100., self.n_quantiles,
                                        endpoint=True)
         self.quantiles_ = np.percentile(X[subsample_idx], self.references_,
                                         axis=0)
+
+        self.references_ /= 100.
 
         return self
 
@@ -1991,8 +1993,10 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Xt = X.copy()
         for feat_idx, quantiles_feat in enumerate(self.quantiles_.T):
-            mapping_func = interp1d(self.references_, self.quantiles_feat)
+            mapping_func = interp1d(quantiles_feat, self.references_)
             Xt[:, feat_idx] = mapping_func(Xt[:, feat_idx])
+
+        return Xt
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
@@ -2006,5 +2010,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Xt = X.copy()
         for feat_idx, quantiles_feat in enumerate(self.quantiles_.T):
-            mapping_func = interp1d(self.references_, self.quantiles_feat)
+            mapping_func = interp1d(self.references_, quantiles_feat)
             Xt[:, feat_idx] = mapping_func(Xt[:, feat_idx])
+
+        return Xt
