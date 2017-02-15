@@ -124,8 +124,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         X.sum_duplicates()  # XXX: modifies X's internals in-place
         X_mask = X.data <= eps
         masked_indices = astype(X.indices, np.intp, copy=False)[X_mask]
-        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)),
-                                       axis=0)[X.indptr[1:]]
+        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))[X.indptr[1:]]
 
         # insert the diagonal: a point is its own neighbor, but 0 distance
         # means absence from sparse matrix data
