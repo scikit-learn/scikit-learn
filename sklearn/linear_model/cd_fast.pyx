@@ -1062,25 +1062,36 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef inline floating enet_multi_duality_gap(unsigned int n_samples,
-                                            unsigned int n_features,
-                                            unsigned int n_tasks,
-                                            floating * X_data,
-                                            floating * Y_data,
-                                            floating * R_data,
-                                            floating * W_data,
-                                            # Variables intended to be modified
-                                            floating * XtA_data,
-                                            # floating * dual_scaling,
-                                            # Parameters
-                                            floating alpha,
-                                            floating beta,
-                                            floating ry_sum,
-                                            # bint positive,
-                                            # active set for improved performance
-                                            # np.int32_t* disabled_data = NULL,
-                                            # unsigned int n_disabled = 0
-                                            ) nogil:
+cdef floating multi_task_duality_gap(
+                     unsigned int n_samples,
+                     unsigned int n_features,
+                     unsigned int n_tasks,
+                     floating * X_data,
+                     floating * Y_data,
+                     floating * R_data,
+                     floating * W_data,
+                     floating ry_sum,
+                     # Variables intended to be modified
+                     floating[:, ::1] XtA,
+                     floating[:] dual_scaling,
+                     # Parameters
+                     floating l1_reg,
+                     floating l2_reg,
+                     # active set for improved performance
+                     int[:] disabled,
+                     unsigned int n_disabled=0
+                     ) nogil:
+
+    cdef floating R_norm2
+    cdef floating W_norm2
+    cdef floating l1_norm
+    cdef floating const
+    cdef floating gap
+    cdef floating yTA
+    cdef floating dual_norm_XtA
+    cdef floating axis1_norm_XtA
+    cdef unsigned int i
+    cdef unsigned int j
 
     # fused types version of BLAS functions
     cdef DOT dot
@@ -1093,42 +1104,13 @@ cdef inline floating enet_multi_duality_gap(unsigned int n_samples,
         dot = ddot
         nrm2 = dnrm2
 
-    cdef floating R_norm
-    cdef floating w_norm
-    cdef floating l1_norm
-    cdef floating const
-    cdef floating gap
-    cdef floating yTA
-    cdef floating dual_norm_XtA
-    cdef floating axis1_norm_XtA
-    cdef unsigned int i
-    cdef unsigned int j
+    # ry_sum = dot(n_samples * n_tasks, R_data, 1, Y_data, 1)
 
-    # XtA = np.dot(X.T, R) - beta * W.T
-    for i in range(n_features):
-        for j in range(n_tasks):
-            XtA_data[i * n_tasks + j] = (dot(n_samples, X_data + i * n_samples,
-                                             1, R_data + j, n_tasks) -
-                                         beta * W_data[i * n_tasks + j])
+    # R_norm2 = linalg.norm(R, ord='fro') ** 2
+    R_norm2 = nrm2(n_samples * n_tasks, R_data, 1) ** 2
 
-    # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
-    dual_norm_XtA = 0.0
-    for i in range(n_features):
-        # np.sqrt(np.sum(XtA ** 2, axis=1))
-        axis1_norm_XtA = nrm2(n_tasks, &XtA_data[i * n_tasks], 1)
-        if axis1_norm_XtA > dual_norm_XtA:
-            dual_norm_XtA = axis1_norm_XtA
-
-    # R_norm = linalg.norm(R, ord='fro')
-    R_norm = nrm2(n_samples * n_tasks, R_data, 1)
-    # w_norm = linalg.norm(W, ord='fro')
-    w_norm = nrm2(n_features * n_tasks, W_data, 1)
-    if (dual_norm_XtA > alpha):
-        const = alpha / dual_norm_XtA
-        gap = 0.5 * (1 + const ** 2) * R_norm ** 2
-    else:
-        const = 1.0
-        gap = R_norm ** 2
+    # W_norm2 = linalg.norm(W, ord='fro')
+    W_norm2 = nrm2(n_features * n_tasks, W_data, 1) ** 2
 
     # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
     l21_norm = 0.0
@@ -1136,8 +1118,46 @@ cdef inline floating enet_multi_duality_gap(unsigned int n_samples,
         # np.sqrt(np.sum(W ** 2, axis=0))
         l21_norm += nrm2(n_tasks, W_data + n_tasks * i, 1)
 
-    gap += alpha * l21_norm - const * ry_sum + \
-         0.5 * beta * (1 + const ** 2) * (w_norm ** 2)
+    # XtA = np.dot(X.T, R) - l2_reg * W.T
+    for i in range(n_features):
+        if (n_disabled == 0 or disabled[i] == 0):
+            for j in range(n_tasks):
+                XtA[i, j] = dot(
+                    n_samples, X_data + i * n_samples, 1,
+                    R_data + j, n_tasks
+                    ) - l2_reg * W_data[i * n_tasks + j]
+        else:
+            # We only need the infinity norm of XtA and by KKT, we know that
+            # in the present case, XtA[i] will not reach the maximum
+            for j in range(n_tasks):
+                XtA[i, j] = 0.
+
+    if l1_reg == 0:
+        dual_scaling[0] = 1
+    else:
+        # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
+        dual_norm_XtA = 0.0
+        for i in range(n_features):
+            # np.sqrt(np.sum(XtA ** 2, axis=1))
+            axis1_norm_XtA = nrm2(n_tasks, &XtA[i, 0], 1)
+            if axis1_norm_XtA > dual_norm_XtA:
+                dual_norm_XtA = axis1_norm_XtA
+
+        if dual_norm_XtA <= 0:
+            if R_norm2 == 0:
+                dual_scaling[0] = 1. / l1_reg
+            else:
+                dual_scaling[0] = ry_sum / R_norm2 / l1_reg
+        else:
+            dual_scaling[0] = fmin(fmax(ry_sum / (l1_reg * R_norm2),
+                                        -1. / dual_norm_XtA),
+                                   1. / dual_norm_XtA)
+
+    dual_scaling[0] = 1. / dual_scaling[0]
+
+    const = l1_reg / dual_scaling[0]
+    gap = (l1_reg * l21_norm - const * ry_sum +
+           0.5 * (1 + const ** 2) * (R_norm2 + l2_reg * W_norm2))
 
     return gap
 
@@ -1154,7 +1174,8 @@ def enet_coordinate_descent_multi_task(
     int max_iter,
     floating tol,
     object rng,
-    bint random=0):
+    bint random=0,
+    int screening=5):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
@@ -1190,19 +1211,27 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int n_features = X.shape[1]
     cdef unsigned int n_tasks = Y.shape[1]
 
-    # to store XtA
-    cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
+    # compute norms of the columns of X
+    cdef floating[:] norm2_cols_X = np.zeros(n_features, dtype=dtype)
+    cdef floating[:] norm_cols_X = np.zeros(n_features, dtype=dtype)
 
     # initial value of the residuals
     cdef floating[:, ::1] R = np.zeros((n_samples, n_tasks), dtype=dtype)
+    cdef floating[:, ::1] XtA = np.zeros((n_features, n_tasks), dtype=dtype)
 
-    cdef floating[:] norm2_cols_X = np.zeros(n_features, dtype=dtype)
+    # compute the active set
+    cdef np.ndarray[np.int32_t, ndim=1] active_set = np.empty(n_features,
+                                                              dtype=np.intc)
+    cdef int[:] disabled = np.zeros(n_features, dtype=np.intc)
+    cdef floating[:] dual_scaling = np.empty(1, dtype=dtype)
+
     cdef floating[::1] tmp = np.zeros(n_tasks, dtype=dtype)
     cdef floating[:] w_ii = np.zeros(n_tasks, dtype=dtype)
     cdef floating d_w_max
     cdef floating w_max
     cdef floating d_w_ii
     cdef floating nn
+    cdef floating tmp_d
     cdef floating W_ii_abs_max
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
@@ -1211,6 +1240,7 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
+    cdef unsigned int n_active = 0
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
@@ -1220,6 +1250,7 @@ def enet_coordinate_descent_multi_task(
     cdef floating* wii_ptr = &w_ii[0]
     cdef floating* R_data = &R[0, 0]
     cdef floating* XtA_data = &XtA[0, 0]
+    # cdef floating *dual_scaling_data = <floating*> dual_scaling.data
 
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
@@ -1228,7 +1259,8 @@ def enet_coordinate_descent_multi_task(
     with nogil:
         # norm2_cols_X = (np.asarray(X) ** 2).sum(axis=0)
         for ii in range(n_features):
-            norm2_cols_X[ii] += nrm2(n_samples, X_ptr + ii * n_samples, 1) ** 2
+            norm_cols_X[ii] += nrm2(n_samples, X_ptr + ii * n_samples, 1)
+            norm2_cols_X[ii] += norm_cols_X[ii] ** 2
 
         # R = Y - np.dot(X, W.T)
         for ii in range(n_samples):
@@ -1239,6 +1271,14 @@ def enet_coordinate_descent_multi_task(
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         tol = tol * nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
+
+        # Activate variable
+        for ii in range(n_features):
+            if norm2_cols_X[ii] != 0.0:
+                active_set[n_active] = ii
+                n_active += 1
+            else:
+                disabled[ii] = 1
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -1257,23 +1297,25 @@ def enet_coordinate_descent_multi_task(
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
                 if nrm2(n_tasks, wii_ptr, 1) != 0.0:
-                    # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
+                    # rank 1 update
+                    # R += np.dot(X[:, ii][:, None], w_ii[None, :])
                     ger(CblasRowMajor, n_samples, n_tasks, 1.0,
-                         X_ptr + ii * n_samples, 1,
-                         wii_ptr, 1, &R[0, 0], n_tasks)
+                        X_ptr + ii * n_samples, 1,
+                        wii_ptr, 1, &R[0, 0], n_tasks)
 
                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
                 gemv(CblasRowMajor, CblasTrans,
-                      n_samples, n_tasks, 1.0, &R[0, 0], n_tasks,
-                      X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
+                     n_samples, n_tasks, 1.0, &R[0, 0], n_tasks,
+                     X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
 
                 # nn = sqrt(np.sum(tmp ** 2))
                 nn = nrm2(n_tasks, &tmp[0], 1)
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg)
                 copy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
-                scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg),
-                          W_ptr + ii * n_tasks, 1)
+                scal(n_tasks,
+                     fmax(1. - l1_reg / nn, 0) / (norm2_cols_X[ii] + l2_reg),
+                     W_ptr + ii * n_tasks, 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
                 if nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
@@ -1295,22 +1337,46 @@ def enet_coordinate_descent_multi_task(
 
             if (w_max == 0.0 or
                 d_w_max / w_max < d_w_tol or
-                n_iter == max_iter - 1):
+                n_iter == max_iter - 1 or
+                screening > 0 and n_iter % screening == 0) and n_iter != 0:
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
 
-                # ry_sum = np.sum(R * y)
-                ry_sum = 0.0
+                # Compute fastly ry_sum = np.sum(R * y) for both
+                # f_order and c_order
+                ry_sum = 0.
                 for ii in range(n_samples):
                     for jj in range(n_tasks):
                         ry_sum += R[ii, jj] * Y[ii, jj]
 
-                gap = enet_multi_duality_gap(n_samples, n_features, n_tasks,
-                                       X_ptr, Y_ptr, R_data, W_ptr,
-                                       XtA_data, l1_reg, l2_reg, ry_sum)
+                gap = multi_task_duality_gap(n_samples, n_features, n_tasks,
+                                             X_ptr, Y_ptr, R_data, W_ptr,
+                                             ry_sum, XtA, dual_scaling,
+                                             l1_reg, l2_reg, disabled,
+                                             n_features - n_active)
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+
+                # Remove inactive variables (screening)
+                if screening > 0:
+                    n_active = 0
+                    r_screening = sqrt(2. * gap) / l1_reg
+
+                    # Loop over coordinates
+                    for ii in range(n_features):
+                        if disabled[ii] == 1:
+                            continue
+
+                        tmp_d = (nrm2(n_tasks, XtA_data + ii * n_tasks, 1) /
+                                 dual_scaling[0])
+
+                        if (tmp_d >= (1. - r_screening * norm_cols_X[ii]) or
+                           W[ii, 0] != 0.0):
+                            active_set[n_active] = ii
+                            n_active += 1
+                        else:
+                            disabled[ii] = 1
 
     return np.asarray(W), gap, tol, n_iter + 1
