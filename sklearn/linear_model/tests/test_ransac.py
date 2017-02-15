@@ -22,9 +22,10 @@ y = 0.2 * X + 20
 data = np.column_stack([X, y])
 
 # Add some faulty data
-np.random.seed(1)
-outliers = (np.random.rand(80) * len(X)).astype(np.uint32)
-data[outliers, :] += 50 + np.random.rand(80, 2) * 10
+rng = np.random.RandomState(1000)
+outliers = np.unique(rng.randint(len(X), size=80))
+data[outliers, :] += 50 + rng.rand(len(outliers), 2) * 10
+
 X = data[:, 0][:, np.newaxis]
 y = data[:, 1]
 
@@ -92,7 +93,8 @@ def test_ransac_max_trials():
                                            random_state=i)
         assert getattr(ransac_estimator, 'n_trials_', None) is None
         ransac_estimator.fit(X, y)
-        max_trials = _dynamic_max_trials(len(X) - len(outliers), X.shape[0], X.shape[1] + 1, 1 - 1e9)
+        max_trials = _dynamic_max_trials(
+            len(X) - len(outliers), X.shape[0], X.shape[1] + 1, 1 - 1e9)
         assert_less(ransac_estimator.n_trials_, max_trials + 1)
 
 
@@ -522,3 +524,4 @@ def test_ransac_fit_sample_weight():
     base_estimator = Lasso()
     ransac_estimator = RANSACRegressor(base_estimator)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
+
