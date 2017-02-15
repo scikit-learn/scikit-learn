@@ -382,16 +382,10 @@ class MultiInheritanceEstimator(BaseEstimator, DontPickleCacheMixin):
         self.b = b
         self._cache = None
 
-    @property
-    def cache(self):
-        if not self._cache:
-            self._cache = "some value"
-        return self._cache
-
 
 def test_pickling_when_getstate_is_overwritten_by_mixin():
     estimator = MultiInheritanceEstimator()
-    assert estimator.cache
+    estimator._cache = "this attribute should not be pickled"
 
     serialized = pickle.dumps(estimator, protocol=2)
     estimator_restored = pickle.loads(serialized)
@@ -402,6 +396,7 @@ def test_pickling_when_getstate_is_overwritten_by_mixin():
 def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
     try:
         estimator = MultiInheritanceEstimator()
+        estimator._cache = "this attribute should not be pickled"
         old_mod = type(estimator).__module__
         type(estimator).__module__ = "notsklearn"
 
@@ -434,7 +429,7 @@ class SingleInheritanceEstimator(BaseEstimator):
 
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
-    assert estimator.cache
+    estimator._cache = "this attribute should not be pickled"
 
     serialized = pickle.dumps(estimator, protocol=2)
     estimator_restored = pickle.loads(serialized)
