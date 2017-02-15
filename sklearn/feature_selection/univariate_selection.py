@@ -515,7 +515,7 @@ class SelectKBest(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    abs_r_regression: absolute value of Pearson R between label/feature for 
+    abs_r_regression: absolute value of Pearson R between label/feature for
         regression tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continious target.
