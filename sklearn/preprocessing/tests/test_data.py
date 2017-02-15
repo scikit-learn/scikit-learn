@@ -887,6 +887,17 @@ def test_robust_scaler_iris_quantiles():
     assert_array_almost_equal(q_range, 1)
 
 
+def test_robust_scaler_iris():
+    X = iris.data
+    normalizer = QuantileNormalizer()
+    X_trans = normalizer.fit_transform(X)
+    assert_array_almost_equal(np.min(X_trans, axis=0), 0)
+    assert_array_almost_equal(np.max(X_trans, axis=0), 1)
+
+    X_trans_inv = normalizer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
