@@ -2014,3 +2014,13 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             Xt[:, feat_idx] = mapping_func(Xt[:, feat_idx])
 
         return Xt
+
+
+def quantile_normalize(X, axis=0, n_quantiles=1000, subsample=int(1e5),
+                       random_state=None):
+    n = QuantileNormalizer(n_quantiles=n_quantiles, subsample=subsample,
+                           random_state=random_state)
+    if axis == 0:
+        return n.fit_transform(X)
+    else:
+        return n.fit_transform(X.T).T

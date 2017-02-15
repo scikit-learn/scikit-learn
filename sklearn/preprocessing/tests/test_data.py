@@ -41,6 +41,7 @@ from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
 from sklearn.preprocessing.data import minmax_scale
+from sklearn.preprocessing.data import QuantileNormalizer
 from sklearn.preprocessing.data import MaxAbsScaler
 from sklearn.preprocessing.data import maxabs_scale
 from sklearn.preprocessing.data import RobustScaler
@@ -887,12 +888,13 @@ def test_robust_scaler_iris_quantiles():
     assert_array_almost_equal(q_range, 1)
 
 
-def test_robust_scaler_iris():
+def test_quantile_normalizer_iris():
     X = iris.data
     normalizer = QuantileNormalizer()
+
     X_trans = normalizer.fit_transform(X)
-    assert_array_almost_equal(np.min(X_trans, axis=0), 0)
-    assert_array_almost_equal(np.max(X_trans, axis=0), 1)
+    assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
+    assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
 
     X_trans_inv = normalizer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
