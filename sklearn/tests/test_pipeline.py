@@ -537,15 +537,17 @@ def test_set_pipeline_step_none():
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+    print(pipeline.get_params(deep=True))
     assert_dict_equal(pipeline.get_params(deep=True),
-                      {'steps': pipeline.steps,
-                       'm2': mult2,
-                       'm3': None,
-                       'last': mult5,
+                      {'last': Mult(mult=5),
                        'memory': None,
-                       'm2__mult': 2,
                        'last__mult': 5,
-                       })
+                       'steps': [('m2', Mult(mult=2)),
+                                 ('m3', None),
+                                 ('last', Mult(mult=5))],
+                       'm2__mult': 2,
+                       'm3': None,
+                       'm2': Mult(mult=2)})
 
     pipeline.set_params(m2=None)
     exp = 5

@@ -13,6 +13,7 @@ import warnings
 
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
+from copy import deepcopy
 
 import numpy as np
 from scipy import sparse
@@ -122,7 +123,6 @@ class Pipeline(_BasePipeline):
         Caching the transformers is advantageous when fitting is time
         consuming.
 
-
     Attributes
     ----------
     named_steps : dict
@@ -227,7 +227,7 @@ class Pipeline(_BasePipeline):
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
-        return self._steps
+        return deepcopy(self._steps)
 
     @property
     def _estimator_type(self):
@@ -308,7 +308,7 @@ class Pipeline(_BasePipeline):
                     cloned_transformer = transformer
                 else:
                     cloned_transformer = clone(transformer)
-                # Fit or load from cache the current transfomer
+                # Fit or load from cache the current transformer
                 Xt, fitted_transformer = fit_transform_one_cached(
                     cloned_transformer, None, Xt, y,
                     **fit_params_steps[name])
@@ -381,12 +381,12 @@ class Pipeline(_BasePipeline):
         """
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
-        if hasattr(last_step, 'fit_transform'):
-            return last_step.fit_transform(Xt, y, **fit_params)
-        elif last_step is None:
+        if last_step is None:
             return Xt
         else:
-            return last_step.fit(Xt, y, **fit_params).transform(Xt)
+            fitted_transformer = last_step.fit(Xt, y, **fit_params)
+            self.steps_[-1] = (self.steps_[-1][0], fitted_transformer)
+            return fitted_transformer.transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
