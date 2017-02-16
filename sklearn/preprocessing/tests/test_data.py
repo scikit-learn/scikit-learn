@@ -909,15 +909,28 @@ def test_quantile_normalizer_sparse_toy():
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
 
-def test_quantile_normalizer_error_neg_sparse():
+def test_quantile_normalizer_sparse_error():
     X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-                  [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+                  [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
                   [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
     X = sparse.csc_matrix(X)
 
+    X_neg = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+                  [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+                  [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
+    X_neg = sparse.csc_matrix(X_neg)
+
     normalizer = QuantileNormalizer()
     assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
-                        "non-negative sparse matrices", normalizer.fit, X)
+                        "non-negative sparse matrices", normalizer.fit, X_neg)
+
+    normalizer.fit(X)
+    assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
+                        "non-negative sparse matrices",
+                        normalizer.transform, X_neg)
+    assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
+                        "non-negative sparse matrices",
+                        normalizer.inverse_transform, X_neg)
 
 def test_robust_scaler_invalid_range():
     for range_ in [
