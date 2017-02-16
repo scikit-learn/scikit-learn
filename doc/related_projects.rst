@@ -51,9 +51,6 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
-- `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
-  algorithms instead of gridsearch in scikit-learn.
-
 **Model inspection and visualisation**
 
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
@@ -229,6 +226,9 @@ Other packages useful for data analysis and machine learning.
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
 
+- `sklearn-deap <https://github.com/rsteca/sklearn-deap>`_ Use evolutionary
+   algorithms instead of gridsearch in scikit-learn.
+
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -247,33 +247,6 @@ Domain specific packages
 
 Snippets and tidbits
 ---------------------
-
-**Gists**
-
-- `Multi-Layer-Perceptron <https://gist.github.com/2061456>`_ neural network
-  classifier trained by SGD
-
-- `Non-Negative Garotte <https://gist.github.com/2351057>`_
-
-- `Kernel SGD <https://gist.github.com/2573392>`_
-
-- `Fuzzy K-means and K-medians <https://gist.github.com/1451300>`_
-
-- `Kernel k-means <https://gist.github.com/mblondel/6230787>`_
-
-- `Non-negative Least-Squares <https://gist.github.com/mblondel/4421380>`_
-
-- `Non-negative Matrix Factorization for I-divergence <https://gist.github.com/omangin/8801846>`_
-
-- `K-means + RBF transformation <https://gist.github.com/larsmans/5996074>`_
-  inspired by `The secret of the big guys <http://fastml.com/the-secret-of-the-big-guys>`_
-
-- `Multiclass SVMs <https://gist.github.com/mblondel/97cffbea574a5890f0d7>`_
-
-- `Coordinate descent solver for NMF <https://gist.github.com/mblondel/09648344984565f9477a>`_
-  designed for sparse data without missing values
-
-**Other**
 
 Code snippets that do not follow the fit / predict / transform API.
 
