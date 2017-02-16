@@ -93,6 +93,7 @@ def test_ransac_max_trials():
                                            random_state=i)
         assert getattr(ransac_estimator, 'n_trials_', None) is None
         ransac_estimator.fit(X, y)
+        #there is a 1e9 chance it will take thise many trials. No good reason
         max_trials = _dynamic_max_trials(
             len(X) - len(outliers), X.shape[0], X.shape[1] + 1, 1 - 1e9)
         assert_less(ransac_estimator.n_trials_, max_trials + 1)
