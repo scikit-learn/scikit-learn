@@ -1198,7 +1198,6 @@ def test_time_series_max_train_size():
     assert_array_equal(test, [4])
 
 
-
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)

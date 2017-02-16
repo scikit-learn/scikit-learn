@@ -691,10 +691,10 @@ class TimeSeriesSplit(_BaseKFold):
     where ``n_samples`` is the number of samples.
     """
     def __init__(self, n_splits=3, max_train_size=0):
-        self.max_train_size = max_train_size
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
                                               random_state=None)
+        self.max_train_size = max_train_size
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
