@@ -1619,7 +1619,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 class LinearKernel(Kernel):
     """Linear kernel.
 
-    The Linear kernel is non-stationary and can be obtained from Bayesiann
+    The Linear kernel is non-stationary and can be obtained from Bayesian
     linear regression by putting N(0, \sigma_v^2) priors on the coefficients of
     x_d (d = 1, . . . , D) and a prior of N(0, \sigma_b^2) on the bias. It is
     parameterized by parameters sigma_v and sigma_0. The parameters of the
