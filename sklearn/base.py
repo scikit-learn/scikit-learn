@@ -46,7 +46,7 @@ def clone(estimator, safe=True):
     """
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
-    if isinstance(getattr(estimator, 'fit'), _FrozenFit):
+    if isinstance(getattr(estimator, 'fit', None), _FrozenFit):
         return estimator
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
