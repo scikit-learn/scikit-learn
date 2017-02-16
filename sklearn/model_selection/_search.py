@@ -613,7 +613,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Computed the (weighted) mean and std for test scores alone
         # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[::n_candidates],
+        test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
 
         _store('test_score', test_scores, splits=True, rank=True,
