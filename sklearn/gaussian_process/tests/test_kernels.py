@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation)
+            Exponentiation, LinearKernel)
 from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
@@ -41,7 +41,8 @@ kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            RationalQuadratic(length_scale=0.5, alpha=1.5),
            ExpSineSquared(length_scale=0.5, periodicity=1.5),
            DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
-           RBF(length_scale=[2.0]), Matern(length_scale=[2.0])]
+           RBF(length_scale=[2.0]), Matern(length_scale=[2.0]),
+           LinearKernel(sigma_b=2.0, sigma_v=3.0)]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
