@@ -2003,7 +2003,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         # references is a list that we need to scale between
         # 0 and 100.
         self.quantiles_ = np.array([np.percentile(
-            X[subsample_idx,feature_idx], [x * 100 for x in references])
+            X[subsample_idx, feature_idx], [x * 100 for x in references])
                                     for feature_idx in range(n_features)]).T
 
     def _sparse_fit(self, X):
