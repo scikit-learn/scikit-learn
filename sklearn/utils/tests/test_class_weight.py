@@ -121,7 +121,7 @@ def test_class_weight_with_string_label():
     y = np.asarray(["A","A","A","B","B","C"])
     classes = np.unique(y)
     class_weights = {c: 1.0 for c in classes}
-    class_weights['D'] = 1.0 # because of this, we should get a proper ValueError
+    class_weights['D'] = 1.0  # This should get a proper ValueError
     cw = assert_raises(ValueError, compute_class_weight, class_weights, 
                        classes, y)
     return
