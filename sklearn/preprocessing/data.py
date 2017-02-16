@@ -1967,19 +1967,19 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         """Build the transform functions."""
         check_is_fitted(self, 'quantiles_')
 
-        self.f_transform_ = [
+        self.f_transform_ = tuple([
             interp1d(quantiles_feat, self.references_,
                      bounds_error=False,
                      fill_value=(min(self.references_),
                                  max(self.references_)))
-            for quantiles_feat in self.quantiles_.T]
+            for quantiles_feat in self.quantiles_.T])
 
-        self.f_inverse_transform_ = [
+        self.f_inverse_transform_ = tuple([
             interp1d(self.references_, quantiles_feat,
                      bounds_error=False,
                      fill_value=(min(quantiles_feat),
                                  max(quantiles_feat)))
-            for quantiles_feat in self.quantiles_.T]
+            for quantiles_feat in self.quantiles_.T])
 
     def _dense_fit(self, X):
         """Compute percentiles for dense matrices.
@@ -2139,6 +2139,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             raise ValueError('QuantileNormalizer only accepts non-negative'
                              ' sparse matrices')
         check_is_fitted(self, 'f_transform_')
+        # check that the dimension of X are adequate with the fitted data
+        if X.shape[1] != len(self.f_transform_):
+            raise ValueError('X does not have the same number feature than the'
+                             ' the previously fitted data. Got {} instead of'
+                             ' {}'.format(X.shape[1], len(self.f_transform_)))
         if sparse.issparse(X):
             return self._sparse_transform(X, True)
         else:
@@ -2164,6 +2169,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             raise ValueError('QuantileNormalizer only accepts non-negative'
                              ' sparse matrices')
         check_is_fitted(self, 'f_inverse_transform_')
+        # check that the dimension of X are adequate with the fitted data
+        if X.shape[1] != len(self.f_inverse_transform_):
+            raise ValueError('X does not have the same number feature than the'
+                             ' the previously fitted data. Got {} instead of'
+                             ' {}'.format(X.shape[1],
+                                          len(self.f_inverse_transform_)))
         if sparse.issparse(X):
             return self._sparse_transform(X, False)
         else:

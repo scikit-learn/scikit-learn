@@ -919,7 +919,6 @@ def test_quantile_normalizer_error_neg_sparse():
     assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
                         "non-negative sparse matrices", normalizer.fit, X)
 
-
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
