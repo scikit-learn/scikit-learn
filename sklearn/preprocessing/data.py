@@ -2160,7 +2160,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'f_transform_')
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != len(self.f_transform_):
-            raise ValueError('X does not have the same number feature than the'
+            raise ValueError('X does not have the same number of feature than'
                              ' the previously fitted data. Got {} instead of'
                              ' {}'.format(X.shape[1], len(self.f_transform_)))
         if sparse.issparse(X):
@@ -2190,7 +2190,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'f_inverse_transform_')
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != len(self.f_inverse_transform_):
-            raise ValueError('X does not have the same number feature than the'
+            raise ValueError('X does not have the same number of feature than'
                              ' the previously fitted data. Got {} instead of'
                              ' {}'.format(X.shape[1],
                                           len(self.f_inverse_transform_)))
