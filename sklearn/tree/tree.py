@@ -21,8 +21,6 @@ import numbers
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
-from collections import defaultdict
-from copy import deepcopy
 
 import numpy as np
 from scipy.sparse import issparse
@@ -44,11 +42,6 @@ from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
 from . import _tree, _splitter, _criterion
-
-from ._utils import Stack
-# from ._utils import StackRecord
-# from ._utils import PriorityHeap
-# from ._utils import PriorityHeapRecord
 
 
 __all__ = ["DecisionTreeClassifier",
@@ -335,256 +328,22 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
-        # # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
-        # if max_leaf_nodes < 0:
-        #     builder = DepthFirstTreeBuilder(splitter, min_samples_split,
-        #                                     min_samples_leaf,
-        #                                     min_weight_leaf,
-        #                                     max_depth,
-        #                                     self.min_impurity_split)
-        # else:
-        #     builder = BestFirstTreeBuilder(splitter, min_samples_split,
-        #                                    min_samples_leaf,
-        #                                    min_weight_leaf,
-        #                                    max_depth,
-        #                                    max_leaf_nodes,
-        #                                    self.min_impurity_split)
+        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
+        if max_leaf_nodes < 0:
+            builder = DepthFirstTreeBuilder(splitter, min_samples_split,
+                                            min_samples_leaf,
+                                            min_weight_leaf,
+                                            max_depth,
+                                            self.min_impurity_split)
+        else:
+            builder = BestFirstTreeBuilder(splitter, min_samples_split,
+                                           min_samples_leaf,
+                                           min_weight_leaf,
+                                           max_depth,
+                                           max_leaf_nodes,
+                                           self.min_impurity_split)
 
-        # builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
-
-        # import our new type of data
-        from .splitter import NewSplitter
-        from .split_record import SplitRecord
-        from .stats_node import StatsNode
-        from .criterion import _impurity_mse
-
-        # FIXME
-        TREE_UNDEFINED, TREE_LEAF, FEAT_UNKNOWN = -2, -1, -3
-        y = y.ravel()
-        weighted_n_samples = np.sum(sample_weight)
-
-        # initialize the number of splitter
-        n_splitters = 0
-        # the array to map the samples to the correct splitter
-        X_nid = np.zeros(y.size, dtype=int)
-        # the list of splitter at each round
-        splitter_list = []
-        # the output split record
-        split_record_map = defaultdict(lambda: None)
-
-        # create the root node statistics
-        root_stats = StatsNode(
-            sum_residuals=np.sum(y * sample_weight),
-            sum_sq_residuals=np.sum((y ** 2) * sample_weight),
-            n_samples=n_samples,
-            sum_weighted_samples=weighted_n_samples)
-        # create the parent split record
-        parent_split_record = SplitRecord()
-        # affect the stats to the record
-        parent_split_record.c_stats = root_stats
-        # compute the impurity for the parent node
-        # FIXME only MSE impurity for the moment
-        parent_split_record.impurity = _impurity_mse(root_stats)
-
-        parent_split_record.nid = self.tree_._add_node_py(
-            parent=TREE_UNDEFINED,
-            is_left=1, is_leaf=TREE_LEAF,
-            feature=FEAT_UNKNOWN,
-            threshold=TREE_UNDEFINED,
-            impurity=parent_split_record.impurity,
-            n_node_samples=n_samples,
-            weighted_n_node_samples=weighted_n_samples)
-
-        # Create a dictionary to store the parents split overtime
-        parent_split_map = {parent_split_record.nid: parent_split_record}
-        # find the node to be extended
-        # expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
-        expandable_nids = parent_split_map.keys()
-
-        current_depth = 0
-        # FIXME: to debug the successive layer
-        # max_depth = 5
-        while current_depth < max_depth:
-            # see if we should add or remove splitter
-            n_splitters = len(expandable_nids)
-            curr_n_splitters = len(splitter_list)
-
-            # add splitters
-            if n_splitters - curr_n_splitters > 0:
-                splitter_list += [NewSplitter(X, y, sample_weight,
-                                              weighted_n_samples,
-                                              FEAT_UNKNOWN, TREE_UNDEFINED,
-                                              parent_split_map[nid],
-                                              min_samples_leaf,
-                                              min_weight_leaf)
-                                  for nid in expandable_nids[
-                                          curr_n_splitters:]]
-
-            # drop splitters
-            else:
-                splitter_list = splitter_list[:n_splitters]
-
-            # create a dictionary from the list of splitter
-            splitter_map = {nid: splitter_list[i]
-                            for i, nid in enumerate(expandable_nids)}
-
-            # Create an array from where to select randomly the feature
-            shuffled_feature_idx = random_state.choice(np.arange(X.shape[1]),
-                                                       size=self.max_features_,
-                                                       replace=False)
-            # get the feature
-            for feat_i in shuffled_feature_idx:
-                # Get the sorted index
-                X_col = X_idx_sorted[:, feat_i]
-
-                # reset the splitter
-
-                for i, nid in enumerate(expandable_nids):
-                    splitter_map[nid].reset(feat_i, X_col[0],
-                                            parent_split_map[nid])
-
-                # scans all samples and evaluate all possible splits for all
-                # the different splitters
-                for sample_idx_sorted in X_col:
-                    # Samples which are not in a leaf
-                    if X_nid[sample_idx_sorted] != -1:
-                        # check that the sample value are different enough
-                        splitter_map[X_nid[
-                            sample_idx_sorted]].node_evaluate_split(
-                                sample_idx_sorted)
-
-                # copy the split_record if the improvement is better
-                for nid in expandable_nids:
-                    if ((split_record_map[nid] is None) or
-                        (splitter_map[nid].best_split_record.impurity_improvement >
-                         split_record_map[nid].impurity_improvement)):
-                        split_record_map[nid] = deepcopy(
-                            splitter_map[nid].best_split_record)
-
-            feature_update_X_nid = []
-            for nid in expandable_nids:
-                # store the feature to visit for the update of X_nid
-                feature_update_X_nid.append(split_record_map[nid].feature)
-
-                # expand the tree structure
-                if not np.isnan(split_record_map[nid].threshold):
-                    best_split = split_record_map[nid]
-
-                    # create the left and right which have been found
-                    # from the parent splits
-                    left_sr, right_sr = best_split.expand_record()
-
-                    # the statistics for the children are not computed yet
-                    # add a node for left child
-                    # find out if the next node will be a lead or not
-                    left_nid = self.tree_._add_node_py(
-                        parent=nid,
-                        is_left=1,
-                        is_leaf=TREE_LEAF,
-                        feature=FEAT_UNKNOWN,
-                        threshold=TREE_UNDEFINED,
-                        impurity=left_sr.impurity,
-                        n_node_samples=left_sr.c_stats.n_samples,
-                        weighted_n_node_samples=left_sr.c_stats.sum_weighted_samples)
-
-                    # add a node for the right child
-                    right_nid = self.tree_._add_node_py(
-                        parent=nid,
-                        is_left=0,
-                        is_leaf=TREE_LEAF,
-                        feature=FEAT_UNKNOWN,
-                        threshold=TREE_UNDEFINED,
-                        impurity=right_sr.impurity,
-                        n_node_samples=right_sr.c_stats.n_samples,
-                        weighted_n_node_samples=right_sr.c_stats.sum_weighted_samples)
-
-                    # Update the parent node with the found best split
-                    self.tree_._update_node_py(
-                        node_id=nid,
-                        left_child=left_nid,
-                        right_child=right_nid,
-                        threshold=best_split.threshold,
-                        impurity=best_split.impurity,
-                        feature=best_split.feature,
-                        n_node_samples=best_split.c_stats.n_samples,
-                        weighted_n_node_samples=best_split.c_stats.sum_weighted_samples)
-
-                    # update the dictionary with the new record
-                    # add only the record if the impurity at the node is large
-                    # enough
-                    if left_sr.impurity > self.min_impurity_split:
-                        parent_split_map.update({left_nid: left_sr})
-                    if right_sr.impurity > self.min_impurity_split:
-                        parent_split_map.update({right_nid: right_sr})
-
-                    self.counter_X_nid_labels_ = np.zeros(
-                        max(parent_split_map.keys()), dtype=int)
-
-                # we can flush the data from the parent_split_map for the
-                # current node
-                del parent_split_map[nid]
-
-            # update of the expandable nodes
-            expandable_nids = parent_split_map.keys()
-
-            # remove redundant index of feature to visit when updating X_nid
-            feature_update_X_nid = np.unique(feature_update_X_nid)
-
-            # check that some node need to be extended before to update
-            # the node index
-            # make a copy of X_nid
-            X_nid_tmp = X_nid.copy()
-            if not expandable_nids:
-                # break if we cannot grow anymore
-                break
-            else:
-                for sample_idx in range(X.shape[0]):
-                    for feat_i in feature_update_X_nid:
-                        # get the index of samples to update
-                        X_idx = X_idx_sorted[sample_idx, feat_i]
-                        parent_nid = X_nid[X_idx]
-                        # only if the sample was not a leaf
-                        if parent_nid != -1:
-                            if split_record_map[parent_nid].feature == feat_i:
-                                # if the feature correspond, we can update the
-                                # feature
-                                parent_n_left_samples = split_record_map[
-                                    parent_nid].l_stats.n_samples
-
-                                # no threshold found -> this is a leaf
-                                if np.isnan(split_record_map[
-                                        parent_nid].threshold):
-                                    X_nid_tmp[X_idx] = -1
-                                else:
-                                    # counter to know how many samples we
-                                    # checked per splitter
-                                    self.counter_X_nid_labels_[parent_nid] += 1
-                                    # track how many samples we send to the
-                                    # left child handle the time that several
-                                    # samples are equal
-                                    if (self.counter_X_nid_labels_[
-                                            parent_nid] <=
-                                            parent_n_left_samples):
-                                        # is it a leaf
-                                        if (self.tree_.children_left[
-                                                parent_nid] in
-                                                expandable_nids):
-                                            X_nid_tmp[X_idx] = self.tree_.children_left[
-                                                parent_nid]
-                                        else:
-                                            X_nid_tmp[X_idx] = -1
-                                    else:
-                                        # is it a leaf
-                                        if (self.tree_.children_right[
-                                                parent_nid] in
-                                                expandable_nids):
-                                            X_nid_tmp[X_idx] = self.tree_.children_right[
-                                                parent_nid]
-                                        else:
-                                            X_nid_tmp[X_idx] = -1
-                X_nid = X_nid_tmp
-
-            current_depth += 1
+        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]

@@ -56,6 +56,10 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('tree')
     config.add_subpackage('svm')
 
+    # add the regression trees which do not have to do anything here yet
+    config.add_subpackage('regression_tree')
+    config.add_subpackage('regression_tree/tests')
+
     # add cython extension module for isotonic regression
     config.add_extension('_isotonic',
                          sources=['_isotonic.pyx'],
