@@ -1918,7 +1918,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
     The normalization is applied on each feature independently.
     The cumulative density function of a feature is used to project the
-    original values.
+    original values. Features values of new/unseen data that fall below
+    or above the fitted range will be mapped to 0 and 1, respectively.
+    Note that this transform is non-linear. It may remove correlations between
+    variables measured at the same scale but renders variables measured at
+    different scales more directly comparable.
 
     Parameters
     ----------
@@ -1934,7 +1938,6 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by np.random.
-
 
     Attributes
     ----------
@@ -1955,6 +1958,10 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
     --------
     :class:`sklearn.preprocessing.StandardScaler` to perform standardization
     that is faster, but less robust to outliers.
+
+    :class:`sklearn.preprocessing.RobustScaler` to perform robust
+    standardization that removes the influence of outliers but does not put
+    outliers and inliers on the same scale.
     """
 
     def __init__(self, n_quantiles=1000, subsample=int(1e5),
