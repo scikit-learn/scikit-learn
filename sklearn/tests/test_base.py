@@ -366,9 +366,14 @@ def test_pickle_version_warning():
 def test_freeze():
     X, y = datasets.load_iris(return_X_y=True)
     est = LogisticRegression().fit(X, y)
-    frozen_est = freeze(est)
 
+    frozen_est = freeze(est, copy=True)
     assert_false(est is frozen_est)
+    assert_array_equal(est.coef_, frozen_est.coef_)
+    assert_true(isinstance(frozen_est, LogisticRegression))
+
+    frozen_est = freeze(est)
+    assert_true(est is frozen_est)
     assert_array_equal(est.coef_, frozen_est.coef_)
     assert_true(isinstance(frozen_est, LogisticRegression))
 
