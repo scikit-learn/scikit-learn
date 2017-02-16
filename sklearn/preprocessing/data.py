@@ -2041,12 +2041,13 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             if len(column_nnz_data) > self.subsample:
                 column_subsample = (self.subsample * len(column_nnz_data) //
                                     n_samples)
+                column_idx = rng.permutation(range(len(column_nnz_data)))
                 column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_data[:column_subsample] = rng.choice(column_nnz_data,
-                                                            column_subsample,
-                                                            replace=False)
+                column_data[:column_subsample] = column_nnz_data[
+                    column_idx[:column_subsample]]
             else:
-                column_data = column_nnz_data
+                column_data = np.zeros(shape=n_samples, dtype=X.dtype)
+                column_data[:len(column_nnz_data)] = column_nnz_data
             self.quantiles_.append(
                 np.percentile(column_data,
                               [x * 100 for x in self.references_]))
