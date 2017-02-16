@@ -765,12 +765,14 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                         for estimator, w in zip(self.estimators_,
                                                 self.estimator_weights_))
 
-        proba /= self.estimator_weights_.sum()
-        proba = np.exp((1. / (n_classes - 1)) * proba)
-        normalizer = proba.sum(axis=1)[:, np.newaxis]
-        normalizer[normalizer == 0.0] = 1.0
-        proba /= normalizer
-
+        if n_classes > 1:
+            proba /= self.estimator_weights_.sum()
+            proba = np.exp((1. / (n_classes - 1)) * proba)
+            normalizer = proba.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            proba /= normalizer
+        else:
+            proba = np.ones(proba.shape)
         return proba
 
     def staged_predict_proba(self, X):
