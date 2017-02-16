@@ -9,7 +9,6 @@ import warnings
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
-from distutils.version import LooseVersion
 
 from sklearn.utils import gen_batches
 
@@ -29,6 +28,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils.version import parse_version
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -206,7 +206,7 @@ def test_standard_scaler_numerical_stability():
     # was empirically found to cause numerical problems with np.mean & np.std.
 
     x = np.zeros(8, dtype=np.float64) + np.log(1e-5, dtype=np.float64)
-    if LooseVersion(np.__version__) >= LooseVersion('1.9'):
+    if parse_version(np.__version__) >= parse_version('1.9'):
         # This does not raise a warning as the number of samples is too low
         # to trigger the problem in recent numpy
         x_scaled = assert_no_warnings(scale, x)

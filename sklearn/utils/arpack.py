@@ -52,7 +52,7 @@ from scipy.sparse.linalg import gmres, splu
 import scipy
 import functools
 import operator
-from distutils.version import LooseVersion
+from .version import parse_version
 
 __docformat__ = "restructuredtext en"
 
@@ -276,9 +276,9 @@ _NEUPD_WHICH = ['LM', 'SM', 'LR', 'SR', 'LI', 'SI']
 
 
 # CHECK IF BACKPORT IS ACTUALLY NEEDED
-if scipy.version.version >= LooseVersion('0.12'):
+if scipy.version.version >= parse_version('0.12'):
     BACKPORT_TO = None
-elif scipy.version.version >= LooseVersion('0.11'):
+elif scipy.version.version >= parse_version('0.11'):
     BACKPORT_TO = '0.10'
 else:
     BACKPORT_TO = '0.09'
@@ -1853,7 +1853,7 @@ def _svds(A, k=6, ncv=None, tol=0, which='LM', v0=None,
 
 
 # Redefine the backported function
-if scipy.version.version >= LooseVersion('0.12'):
+if scipy.version.version >= parse_version('0.12'):
     from scipy.sparse.linalg import eigs, eigsh, svds
 else:
     eigs, eigsh, svds = _eigs, _eigsh, _svds

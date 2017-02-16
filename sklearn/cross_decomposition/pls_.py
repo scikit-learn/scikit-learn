@@ -4,11 +4,10 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
-from distutils.version import LooseVersion
 from sklearn.utils.extmath import svd_flip
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..utils import check_array, check_consistent_length
+from ..utils import check_array, check_consistent_length, parse_version
 from ..externals import six
 
 import warnings
@@ -22,7 +21,7 @@ __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
 import scipy
 pinv2_args = {}
-if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
+if parse_version(scipy.__version__) >= parse_version('0.12'):
     # check_finite=False is an optimization available only in scipy >=0.12
     pinv2_args = {'check_finite': False}
 

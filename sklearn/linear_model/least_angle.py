@@ -13,7 +13,6 @@ from __future__ import print_function
 from math import log
 import sys
 import warnings
-from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import linalg, interpolate
@@ -28,9 +27,11 @@ from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..externals.six import string_types
 
+from ..utils import parse_version
+
 import scipy
 solve_triangular_args = {}
-if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
+if parse_version(scipy.__version__) >= parse_version('0.12'):
     solve_triangular_args = {'check_finite': False}
 
 

@@ -6,7 +6,7 @@ import re
 
 
 __all__ = [
-    "parse", "Version", "InvalidVersion", "VERSION_PATTERN"
+    "parse_version", "Version", "InvalidVersion", "VERSION_PATTERN"
 ]
 
 
@@ -16,7 +16,7 @@ _Version = collections.namedtuple(
 )
 
 
-def parse(version):
+def parse_version(version):
     """
     Parse the given version string and return a :class:`Version` object.
     """
