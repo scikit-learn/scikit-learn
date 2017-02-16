@@ -432,12 +432,6 @@ class SingleInheritanceEstimator(BaseEstimator):
         data["_cache"] = None
         return data
 
-    @property
-    def cache(self):
-        if not self._cache:
-            self._cache = "some value"
-        return self._cache
-
 
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
