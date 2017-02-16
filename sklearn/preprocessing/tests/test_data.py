@@ -43,6 +43,7 @@ from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
 from sklearn.preprocessing.data import minmax_scale
 from sklearn.preprocessing.data import QuantileNormalizer
+from sklearn.preprocessing.data import quantile_normalize
 from sklearn.preprocessing.data import MaxAbsScaler
 from sklearn.preprocessing.data import maxabs_scale
 from sklearn.preprocessing.data import RobustScaler
@@ -870,8 +871,8 @@ def test_quantile_normalizer_check_error():
                   [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
     X = sparse.csc_matrix(X)
     X_neg = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-                  [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
-                  [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
+                      [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+                      [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
     X_neg = sparse.csc_matrix(X_neg)
 
     normalizer = QuantileNormalizer()
@@ -920,6 +921,14 @@ def test_quantile_normalizer_dense_toy():
     X_trans_inv = normalizer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
+    # test subsampling
+    # FIXME: there is not comparison for the moment
+    random_state = 42
+    normalizer.set_params(**{'subsample': 3,
+                             'n_quantiles': 2,
+                             'random_state': random_state})
+    X_trans = normalizer.fit_transform(X)
+
 
 def test_quantile_normalizer_sparse_toy():
     X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
@@ -936,6 +945,25 @@ def test_quantile_normalizer_sparse_toy():
 
     X_trans_inv = normalizer.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
+
+    # test subsampling
+    # FIXME: there is not comparison for the moment
+    random_state = 42
+    normalizer.set_params(**{'subsample': 3,
+                             'n_quantiles': 2,
+                             'random_state': random_state})
+    X_trans = normalizer.fit_transform(X)
+
+
+def test_quantile_normalize_axis1():
+    X = np.array([[0, 25, 50, 75, 100],
+                  [2, 4, 6, 8, 10],
+                  [2.6, 4.1, 2.3, 9.5, 0.1]])
+
+    X_trans_a0 = quantile_normalize(X.T, axis=0)
+    X_trans_a1 = quantile_normalize(X, axis=1)
+    assert_array_almost_equal(X_trans_a0, X_trans_a1.T)
+
 
 def test_robust_scaler_invalid_range():
     for range_ in [

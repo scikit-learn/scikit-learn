@@ -57,4 +57,5 @@ __all__ = [
     'maxabs_scale',
     'minmax_scale',
     'label_binarize',
+    'quantile_normalize',
 ]
