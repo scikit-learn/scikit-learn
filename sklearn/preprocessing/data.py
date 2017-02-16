@@ -2096,10 +2096,9 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : ndarray, shape (n_samples, n_features)
+        X : ndarray, shape (n_samples, n_features)
             Projected data.
         """
-        Xt = X.copy()
         if direction:
             func_transform = self.f_transform_
         else:
@@ -2108,19 +2107,21 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         for feature_idx, f in enumerate(func_transform):
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
-            if not direction:
-                np.clip(Xt[:, feature_idx], min(self.references_),
-                        max(self.references_), out=Xt[:, feature_idx])
-            else:
-                np.clip(Xt[:, feature_idx], min(self.quantiles_[feature_idx]),
+            if direction:
+                np.clip(X[:, feature_idx], min(self.quantiles_[feature_idx]),
                         max(self.quantiles_[feature_idx]),
-                        out=Xt[:, feature_idx])
-            Xt[:, feature_idx] = f(Xt[:, feature_idx])
+                        out=X[:, feature_idx])
+            else:
+                np.clip(X[:, feature_idx], min(self.references_),
+                        max(self.references_), out=X[:, feature_idx])
+            print(X[:, feature_idx])
+            X[:, feature_idx] = f(X[:, feature_idx])
+            print(X[:, feature_idx])
             # FIXME: earlier version of scipy through nan when x_min is passed
             # New one just has float precision problem
-            Xt[:, feature_idx][np.isnan(Xt[:, feature_idx])] = 0.0
+            # X[:, feature_idx][np.isnan(X[:, feature_idx])] = 0.0
 
-        return Xt
+        return X
 
     def _sparse_transform(self, X, direction=True):
         """Forward and inverse transform for sparse matrices.
@@ -2137,34 +2138,33 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : sparse matrix CSC, shape (n_samples, n_features)
+        X : sparse matrix CSC, shape (n_samples, n_features)
             Projected data.
         """
-        Xt = X.copy()
         if direction:
             func_transform = self.f_transform_
         else:
             func_transform = self.f_inverse_transform_
 
         for feature_idx, f in enumerate(func_transform):
-            column_slice = slice(Xt.indptr[feature_idx],
-                                 Xt.indptr[feature_idx + 1])
+            column_slice = slice(X.indptr[feature_idx],
+                                 X.indptr[feature_idx + 1])
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
             if not direction:
-                np.clip(Xt.data[column_slice], min(self.references_),
-                        max(self.references_), out=Xt.data[column_slice])
+                np.clip(X.data[column_slice], min(self.references_),
+                        max(self.references_), out=X.data[column_slice])
             else:
-                np.clip(Xt.data[column_slice],
+                np.clip(X.data[column_slice],
                         min(self.quantiles_[feature_idx]),
                         max(self.quantiles_[feature_idx]),
-                        out=Xt.data[column_slice])
-            Xt.data[column_slice] = f(Xt.data[column_slice])
+                        out=X.data[column_slice])
+            X.data[column_slice] = f(X.data[column_slice])
             # FIXME: earlier version of scipy through nan when x_min is passed
             # New one just has float precision problem
-            Xt.data[column_slice][np.isnan(Xt.data[column_slice])] = 0.0
+            X.data[column_slice][np.isnan(X.data[column_slice])] = 0.0
 
-        return Xt
+        return X
 
     def transform(self, X):
         """Feature-wise normalization of the data.
@@ -2182,7 +2182,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = check_array(X, accept_sparse='csc')
+        X = check_array(X, accept_sparse='csc', copy=True,
+                        dtype=[np.float64, np.float32])
         # we only accept positive sparse matrix
         if sparse.issparse(X) and np.any(X.data < 0):
             raise ValueError('QuantileNormalizer only accepts non-negative'
