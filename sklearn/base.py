@@ -541,7 +541,7 @@ def _frozen_fit_method(obj, method, X, *args, **kwargs):
     return getattr(obj, method)(args[0])
 
 
-def freeze(estimator):
+def freeze(estimator, copy=False):
     """Copies estimator and freezes it
 
     Frozen estimators:
@@ -551,8 +551,20 @@ def freeze(estimator):
     Parameters
     ----------
     estimator : estimator
+    copy : bool
+
+    Returns
+    -------
+    frozen_estimator : estimator
+        A frozen copy of the input estimator, if ``copy``; otherwise, the
+        estimator is mutated to a frozen version of itself.
+
+    Notes
+    -----
+    Only works on estimators with ``__dict__``.
     """
-    estimator = copy.deepcopy(estimator)
+    if copy:
+        estimator = copy.deepcopy(estimator)
     estimator.fit = _FrozenFit(estimator)
     if hasattr(estimator, 'fit_transform'):
         estimator.fit_transform = functools.partial(_frozen_fit_method,
