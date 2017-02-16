@@ -78,7 +78,7 @@ def test_oneclass_proba():
     # Test `predict_proba` robustness for one class label input.
     y_t = np.ones((len(X),))
     clf = AdaBoostClassifier().fit(X, y_t)
-    assert_array_equal(clf.predict_proba(X), np.ones((X.shape[0], 1)))
+    assert_array_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
 def test_classification_toy():
