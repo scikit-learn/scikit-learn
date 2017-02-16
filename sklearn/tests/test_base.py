@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_dict_equal
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -399,9 +400,9 @@ def test_pickling_when_getstate_is_overwritten_by_mixin():
 
     serialized = pickle.dumps(estimator, protocol=2)
     estimator_restored = pickle.loads(serialized)
-    assert estimator_restored.b == 5
-    assert estimator_restored._cache is None
-    assert estimator_restored._restored
+    assert_equal(estimator_restored.b, 5)
+    assert_equal(estimator_restored._cache, None)
+    assert_true(estimator_restored._restored)
 
 
 def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
@@ -412,12 +413,12 @@ def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
         type(estimator).__module__ = "notsklearn"
 
         serialized = estimator.__getstate__()
-        assert serialized == {'_cache': None, 'b': 5}
+        assert_dict_equal(serialized, {'_cache': None, 'b': 5})
 
         serialized['b'] = 4
         estimator.__setstate__(serialized)
-        assert estimator.b == 4
-        assert estimator._restored
+        assert_equal(estimator.b, 4)
+        assert_true(estimator._restored)
     finally:
         type(estimator).__module__ = old_mod
 
@@ -439,5 +440,5 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
 
     serialized = pickle.dumps(estimator, protocol=2)
     estimator_restored = pickle.loads(serialized)
-    assert estimator_restored.b == 5
-    assert estimator_restored._cache is None
+    assert_equal(estimator_restored.b, 5)
+    assert_equal(estimator_restored._cache, None)
