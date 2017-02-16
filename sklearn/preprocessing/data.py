@@ -1999,8 +1999,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         # subsample the matrix X if necessary
         n_samples, n_features = X.shape
         if self.subsample < n_samples:
-            subsample_idx = rng.choice(n_samples, self.subsample,
-                                       replace=False)
+            subsample_idx = rng.permutation(range(n_samples))[:self.subsample]
         else:
             subsample_idx = range(n_samples)
 
