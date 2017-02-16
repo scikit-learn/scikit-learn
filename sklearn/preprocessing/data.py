@@ -1942,18 +1942,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    references_ : ndarray, shape (n_quantiles,)
-        The quantiles of reference.
-
     quantiles_ : ndarray, shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
-
-    f_transform_ : list of callable, shape (n_quantiles,)
-        The cumulative density function used to project the data.
-
-    f_inverse_transform_ : list of callable, shape (n_quantiles,)
-        The inverse of the cumulative density function used to project the
-        data.
 
     See also
     --------
@@ -1975,17 +1965,19 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         """Build the transform functions."""
         check_is_fitted(self, 'quantiles_')
 
-        self.f_transform_ = tuple([
-            interp1d(quantiles_feature, self.references_,
-                     bounds_error=False,
-                     fill_value=0.)
-            for quantiles_feature in self.quantiles_])
+        references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
 
-        self.f_inverse_transform_ = tuple([
-            interp1d(self.references_, quantiles_feature,
+        self._f_transform = tuple([
+            interp1d(quantiles_feature, references,
                      bounds_error=False,
                      fill_value=0.)
-            for quantiles_feature in self.quantiles_])
+            for quantiles_feature in self.quantiles_.T])
+
+        self._f_inverse_transform = tuple([
+            interp1d(references, quantiles_feature,
+                     bounds_error=False,
+                     fill_value=0.)
+            for quantiles_feature in self.quantiles_.T])
 
     def _dense_fit(self, X):
         """Compute percentiles for dense matrices.
@@ -2004,15 +1996,15 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         else:
             subsample_idx = range(n_samples)
 
-        # for compatibility issue with numpy<=1.8.X, references_
+        # for compatibility issue with numpy<=1.8.X, references
         # need to be a list scaled between 0 and 100
-        self.references_ = np.linspace(0, 1, self.n_quantiles,
-                                       endpoint=True).tolist()
-        # references_ is a list that we need to scale between
+        references = np.linspace(0, 1, self.n_quantiles,
+                                 endpoint=True).tolist()
+        # references is a list that we need to scale between
         # 0 and 100.
-        self.quantiles_ = [np.percentile(X[subsample_idx, feature_idx],
-                                         [x * 100 for x in self.references_])
-                           for feature_idx in range(n_features)]
+        self.quantiles_ = np.array([np.percentile(
+            X[subsample_idx,feature_idx], [x * 100 for x in references])
+                                    for feature_idx in range(n_features)]).T
 
     def _sparse_fit(self, X):
         """Compute percentiles for sparse matrices.
@@ -2027,12 +2019,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.get_shape()
 
-        # for compatibility issue with numpy<=1.8.X, references_
+        # for compatibility issue with numpy<=1.8.X, references
         # need to be a list
-        self.references_ = np.linspace(0, 1, self.n_quantiles,
-                                       endpoint=True).tolist()
-        # FIXME: it does not take into account the zero in the computation
-        # references_ is a list that we need to scale between
+        references = np.linspace(0, 1, self.n_quantiles,
+                                 endpoint=True).tolist()
+        # references is a list that we need to scale between
         # 0 and 100.
         self.quantiles_ = []
         for feature_idx in range(n_features):
@@ -2052,7 +2043,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                 column_data[:len(column_nnz_data)] = column_nnz_data
             self.quantiles_.append(
                 np.percentile(column_data,
-                              [x * 100 for x in self.references_]))
+                              [x * 100 for x in references]))
+        self.quantiles_ = np.array(self.quantiles_).T
 
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
@@ -2103,20 +2095,23 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             Projected data.
         """
         if direction:
-            func_transform = self.f_transform_
+            func_transform = self._f_transform
         else:
-            func_transform = self.f_inverse_transform_
+            func_transform = self._f_inverse_transform
+
+        references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
 
         for feature_idx, f in enumerate(func_transform):
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
             if direction:
-                np.clip(X[:, feature_idx], min(self.quantiles_[feature_idx]),
-                        max(self.quantiles_[feature_idx]),
+                np.clip(X[:, feature_idx],
+                        min(self.quantiles_[:, feature_idx]),
+                        max(self.quantiles_[:, feature_idx]),
                         out=X[:, feature_idx])
             else:
-                np.clip(X[:, feature_idx], min(self.references_),
-                        max(self.references_), out=X[:, feature_idx])
+                np.clip(X[:, feature_idx], min(references),
+                        max(references), out=X[:, feature_idx])
             X[:, feature_idx] = f(X[:, feature_idx])
             # FIXME: earlier version of scipy through nan when x_min is passed
             # New one just has float precision problem
@@ -2143,9 +2138,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             Projected data.
         """
         if direction:
-            func_transform = self.f_transform_
+            func_transform = self._f_transform
         else:
-            func_transform = self.f_inverse_transform_
+            func_transform = self._f_inverse_transform
+
+        references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
 
         for feature_idx, f in enumerate(func_transform):
             column_slice = slice(X.indptr[feature_idx],
@@ -2153,12 +2150,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
             if not direction:
-                np.clip(X.data[column_slice], min(self.references_),
-                        max(self.references_), out=X.data[column_slice])
+                np.clip(X.data[column_slice], min(references),
+                        max(references), out=X.data[column_slice])
             else:
                 np.clip(X.data[column_slice],
-                        min(self.quantiles_[feature_idx]),
-                        max(self.quantiles_[feature_idx]),
+                        min(self.quantiles_[:, feature_idx]),
+                        max(self.quantiles_[:, feature_idx]),
                         out=X.data[column_slice])
             X.data[column_slice] = f(X.data[column_slice])
             # FIXME: earlier version of scipy through nan when x_min is passed
@@ -2189,12 +2186,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         if sparse.issparse(X) and np.any(X.data < 0):
             raise ValueError('QuantileNormalizer only accepts non-negative'
                              ' sparse matrices')
-        check_is_fitted(self, 'f_transform_')
+        check_is_fitted(self, '_f_transform')
         # check that the dimension of X are adequate with the fitted data
-        if X.shape[1] != len(self.f_transform_):
+        if X.shape[1] != len(self._f_transform):
             raise ValueError('X does not have the same number of feature than'
                              ' the previously fitted data. Got {} instead of'
-                             ' {}'.format(X.shape[1], len(self.f_transform_)))
+                             ' {}'.format(X.shape[1], len(self._f_transform)))
         if sparse.issparse(X):
             return self._sparse_transform(X, True)
         else:
@@ -2219,13 +2216,13 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         if sparse.issparse(X) and np.any(X.data < 0):
             raise ValueError('QuantileNormalizer only accepts non-negative'
                              ' sparse matrices')
-        check_is_fitted(self, 'f_inverse_transform_')
+        check_is_fitted(self, '_f_inverse_transform')
         # check that the dimension of X are adequate with the fitted data
-        if X.shape[1] != len(self.f_inverse_transform_):
+        if X.shape[1] != len(self._f_inverse_transform):
             raise ValueError('X does not have the same number of feature than'
                              ' the previously fitted data. Got {} instead of'
                              ' {}'.format(X.shape[1],
-                                          len(self.f_inverse_transform_)))
+                                          len(self._f_inverse_transform)))
         if sparse.issparse(X):
             return self._sparse_transform(X, False)
         else:
@@ -2235,8 +2232,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         """Pickle-protocol - return state of the estimator. """
         state = super(QuantileNormalizer, self).__getstate__()
         # remove interpolation method
-        state.pop('f_transform_', None)
-        state.pop('f_inverse_transform_', None)
+        state.pop('_f_transform', None)
+        state.pop('_f_inverse_transform', None)
         return state
 
     def __setstate__(self, state):
@@ -2244,7 +2241,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         We need to rebuild the interpolation function.
         """
         super(QuantileNormalizer, self).__setstate__(state)
-        if hasattr(self, 'references_') and hasattr(self, 'quantiles_'):
+        if hasattr(self, 'quantiles_'):
             self._build_f()
 
 

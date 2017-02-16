@@ -934,6 +934,7 @@ def test_quantile_normalizer_sparse_toy():
     X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                   [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
                   [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
+
     X = sparse.csc_matrix(X)
 
     normalizer = QuantileNormalizer()
@@ -944,6 +945,15 @@ def test_quantile_normalizer_sparse_toy():
     assert_array_almost_equal(np.max(X_trans.toarray(), axis=0), 1.)
 
     X_trans_inv = normalizer.inverse_transform(X_trans)
+    assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
+
+    normalizer_dense = QuantileNormalizer().fit(X.toarray())
+
+    X_trans = normalizer_dense.transform(X)
+    assert_array_almost_equal(np.min(X_trans.toarray(), axis=0), 0.)
+    assert_array_almost_equal(np.max(X_trans.toarray(), axis=0), 1.)
+
+    X_trans_inv = normalizer_dense.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
     # test subsampling
