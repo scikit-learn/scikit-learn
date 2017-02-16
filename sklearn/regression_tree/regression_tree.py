@@ -22,7 +22,8 @@ from .split_record import SplitRecord
 from .stats_node import StatsNode
 from .criterion import _impurity_mse
 
-from . import _tree
+from ..tree._tree import Tree
+from ..tree import _tree
 
 TREE_UNDEFINED, TREE_LEAF, FEAT_UNKNOWN = -2, -1, -3
 DTYPE = _tree.DTYPE
@@ -362,6 +363,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                              ".shape = {})".format(X.shape,
                                                    X_idx_sorted.shape))
 
+        self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+
         weighted_n_samples = np.sum(sample_weight)
 
         # initialize the number of splitter
@@ -403,8 +406,6 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         expandable_nids = parent_split_map.keys()
 
         current_depth = 0
-        # FIXME: to debug the successive layer
-        # max_depth = 5
         while current_depth < max_depth:
             # see if we should add or remove splitter
             n_splitters = len(expandable_nids)
