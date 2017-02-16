@@ -1963,15 +1963,6 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         self.subsample = subsample
         self.random_state = random_state
 
-    def _validate_X(self, X):
-        """Private function to validate X."""
-        X = check_array(X, accept_sparse='csc')
-        # we only accept positive sparse matrix
-        if sparse.issparse(X) and X.min() < 0:
-            raise ValueError('QuantileNormalizer only accepts semi-positive'
-                             ' sparse matrices')
-        return X
-
     def _build_f(self):
         """Build the transform functions."""
         check_is_fitted(self, 'quantiles_')
@@ -2017,7 +2008,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, shape (n_samples, n_features)
+        X : sparse matrix CSC, shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
             needs to be semi-positive.
         """
@@ -2053,7 +2044,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         self : object
             Returns self
         """
-        X = self._validate_X(X)
+        X = check_array(X, accept_sparse='csc')
+        # we only accept positive sparse matrix
+        if sparse.issparse(X) and np.any(X.data < 0):
+            raise ValueError('QuantileNormalizer only accepts non-negative'
+                             ' sparse matrices')
 
         if sparse.issparse(X):
             self._sparse_fit(X)
@@ -2097,7 +2092,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : sparse matrix, shape (n_samples, n_features)
+        X : sparse matrix CSC, shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
             needs to be semi-positive.
 
@@ -2107,7 +2102,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : sparse matrix, shape (n_samples, n_features)
+        Xt : sparse matrix CSC, shape (n_samples, n_features)
             Projected data.
         """
         Xt = X.copy()
@@ -2117,8 +2112,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             func_transform = self.f_inverse_transform_
 
         for feat_idx, f in enumerate(func_transform):
-            Xt.data[Xt.indptr[feat_idx]:Xt.indptr[feat_idx + 1]] = f(
-                Xt.data[Xt.indptr[feat_idx]:Xt.indptr[feat_idx + 1]])
+            column_slice = slice(Xt.indptr[feat_idx]:Xt.indptr[feat_idx + 1])
+            Xt.data[column_slice] = f(Xt.data[column_slice])
 
         return Xt
 
@@ -2138,7 +2133,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = self._validate_X(X)
+        X = check_array(X, accept_sparse='csc')
+        # we only accept positive sparse matrix
+        if sparse.issparse(X) and np.any(X.data < 0):
+            raise ValueError('QuantileNormalizer only accepts non-negative'
+                             ' sparse matrices')
         check_is_fitted(self, 'f_transform_')
         if sparse.issparse(X):
             return self._sparse_transform(X, True)
@@ -2159,7 +2158,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = self._validate_X(X)
+        X = check_array(X, accept_sparse='csc')
+        # we only accept positive sparse matrix
+        if sparse.issparse(X) and np.any(X.data < 0):
+            raise ValueError('QuantileNormalizer only accepts non-negative'
+                             ' sparse matrices')
         check_is_fitted(self, 'f_inverse_transform_')
         if sparse.issparse(X):
             return self._sparse_transform(X, False)
