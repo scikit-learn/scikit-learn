@@ -74,9 +74,11 @@ def test_samme_proba():
     assert_array_equal(np.argmax(samme_proba, axis=1), [0, 1, 1, 1])
 
 
-def test_oneclass_proba():
-    # Test `predict_proba` robustness for one class label input.
-    y_t = np.ones((len(X),))
+def test_oneclass_adaboost_proba():
+    # Test predict_proba robustness for one class label input.
+    # In response to issue #7501
+    # https://github.com/scikit-learn/scikit-learn/issues/7501
+    y_t = np.ones(len(X))
     clf = AdaBoostClassifier().fit(X, y_t)
     assert_array_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 

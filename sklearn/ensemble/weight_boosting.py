@@ -756,6 +756,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
 
+        if n_classes == 1:
+            return np.ones((X.shape[0], 1))
+
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
             proba = sum(_samme_proba(estimator, n_classes, X)
@@ -765,14 +768,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                         for estimator, w in zip(self.estimators_,
                                                 self.estimator_weights_))
 
-        if n_classes > 1:
-            proba /= self.estimator_weights_.sum()
-            proba = np.exp((1. / (n_classes - 1)) * proba)
-            normalizer = proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba /= normalizer
-        else:
-            proba = np.ones(proba.shape)
+        proba /= self.estimator_weights_.sum()
+        proba = np.exp((1. / (n_classes - 1)) * proba)
+        normalizer = proba.sum(axis=1)[:, np.newaxis]
+        normalizer[normalizer == 0.0] = 1.0
+        proba /= normalizer
         return proba
 
     def staged_predict_proba(self, X):
