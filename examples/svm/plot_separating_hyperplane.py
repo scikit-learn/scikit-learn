@@ -15,8 +15,7 @@ from sklearn import svm
 from sklearn.datasets import make_classification
 # we create 40 separable points
 np.random.seed(0)
-#X = np.r_[np.random.randn(20, 2) - [2, 2], np.random.randn(20, 2) + [2, 2]]
-#Y = [0] * 20 + [1] * 20
+
 X, Y = make_classification(n_features=2, n_redundant=0, n_informative=1,
                            n_clusters_per_class=1)
 # fit the model
