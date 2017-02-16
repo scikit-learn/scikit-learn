@@ -1909,40 +1909,47 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
 
 class QuantileNormalizer(BaseEstimator, TransformerMixin):
-    """Rank-standardize features to a percentile, in the range [0, 1].
+    """Normalize features using quantiles information.
 
-    Rank-scaling happens independently on each feature, by determining
-    the percentile of the feature value.
-    A feature value that is smaller than observed during fitting
-    will scale to 0.
-    A feature value that is larger than observed during fitting
-    will scale to 1.
-    A feature value that is the median will scale to 0.5.
+    This Normalizer scales the features between 0 and 1, equalizing the
+    distribution of each feature to a uniform distribution. Therefore,
+    for a given feature, this normalization tends to spread out the most
+    frequent values.
 
-    Standardization of a dataset is a common requirement for many
-    machine learning estimators. Rank-scaling is useful when
-    estimators perform badly on StandardScalar features. Rank-scaling
-    is more robust than StandardScaler, because outliers can't have
-    large values post scaling. It is an empirical question whether
-    you want outliers to be given high importance (StandardScaler)
-    or not (RankScaler).
+    The normalization is applied on each feature independently.
+    The cumulative density function of a feature is used to project the
+    original values.
 
     Parameters
     ----------
-    n_ranks : int, 1000 by default
-        The number of different ranks possible.
-        i.e. The number of indices in the compressed ranking matrix
-        `sort_X_`.
-        This is an approximation, to save memory and transform
-        computation time.
-        e.g. if 1000, transformed values will have resolution 0.001.
-        If `None`, we store the full size matrix, comparable
-        in size to the initial fit `X`.
+    n_quantiles : int, optional (default=1000)
+        Number of quantiles to be computed. It corresponds to the number
+        of landmarks used to discretize the cumulative density function.
+
+    subsample : int, optional (default=1e5)
+        Maximum number of samples used to estimate the quantiles.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by np.random.
+
 
     Attributes
     ----------
-    `sort_X_` : array of ints, shape (n_samples, n_features)
-        The rank-index of every feature in the fit X.
+    references_ : ndarray, shape (n_quantiles,)
+        The quantiles of reference.
+
+    quantiles_ : ndarray, shape (n_quantiles, n_features)
+        The values corresponding the quantiles of reference.
+
+    f_transform_ : list of callable, shape (n_quantiles,)
+        The cumulative density function used to project the data.
+
+    f_inverse_transform_ : list of callable, shape (n_quantiles,)
+        The inverse of the cumulative density function used to project the
+        data.
 
     See also
     --------
@@ -1955,6 +1962,15 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         self.n_quantiles = n_quantiles
         self.subsample = subsample
         self.random_state = random_state
+
+    def _validate_X(self, X):
+        """Private function to validate X."""
+        X = check_array(X, accept_sparse='csc')
+        # we only accept positive sparse matrix
+        if sparse.issparse(X) and X.min() < 0:
+            raise ValueError('QuantileNormalizer only accepts semi-positive'
+                             ' sparse matrices')
+        return X
 
     def _build_f(self):
         """Build the transform functions."""
@@ -1979,13 +1995,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : ndarray, shape (n_samples, n_features)
             The data used to scale along the features axis.
-
-        Returns
-        -------
-        Xt : array-like, shape (n_samples, n_features)
-            Projected data.
         """
         rng = check_random_state(self.random_state)
 
@@ -2001,19 +2012,53 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         self.quantiles_ = np.percentile(X[subsample_idx, :],
                                         self.references_ * 100, axis=0)
 
+    def _sparse_fit(self, X):
+        """Compute percentiles for sparse matrices.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape (n_samples, n_features)
+            The data used to scale along the features axis. The sparse matrix
+            needs to be semi-positive.
+        """
+        rng = check_random_state(self.random_state)
+
+        n_samples, n_feat = X.get_shape()
+        if self.subsample < n_samples:
+            subsample_idx = rng.choice(n_samples, self.subsample,
+                                       replace=False)
+            X_csr = X.tocsr()[subsample_idx]
+            X = X_csr.tocsc()
+
+        self.references_ = np.linspace(0, 1, self.n_quantiles,
+                                       endpoint=True)
+        # FIXME: it does not take into account the zero in the computation
+        self.quantiles_ = np.array([np.percentile(
+            X.data[X.indptr[feat]:X.indptr[feat + 1]], self.references_ * 100)
+                                    for feat in range(n_feat)]).T
+
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            The data used to compute the quantiles.
-        """
-        X_ = check_array(X)
+        X : ndarray or sparse matrix, shape (n_samples, n_features)
+            The data used to scale along the features axis. If a sparse
+            matrix is provided, it will be converted into a sparse
+            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            semi-positive.
 
-        # FIXME: remove not and put sparse first
-        if not sparse.issparse(X_):
-            self._dense_fit(X_)
+        Returns
+        -------
+        self : object
+            Returns self
+        """
+        X = self._validate_X(X)
+
+        if sparse.issparse(X):
+            self._sparse_fit(X)
+        else:
+            self._dense_fit(X)
 
         self._build_f()
 
@@ -2024,7 +2069,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : ndarray, shape (n_samples, n_features)
             The data used to scale along the features axis.
 
         direction : bool, optional (default=True)
@@ -2033,7 +2078,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : array-like, shape (n_samples, n_features)
+        Xt : ndarray, shape (n_samples, n_features)
             Projected data.
         """
         Xt = X.copy()
@@ -2047,42 +2092,78 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         return Xt
 
+    def _sparse_transform(self, X, direction=True):
+        """Forward and inverse transform for sparse matrices.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape (n_samples, n_features)
+            The data used to scale along the features axis. The sparse matrix
+            needs to be semi-positive.
+
+        direction : bool, optional (default=True)
+            If True, apply forward transform. If False, apply
+            inverse transform.
+
+        Returns
+        -------
+        Xt : sparse matrix, shape (n_samples, n_features)
+            Projected data.
+        """
+        Xt = X.copy()
+        if direction:
+            func_transform = self.f_transform_
+        else:
+            func_transform = self.f_inverse_transform_
+
+        for feat_idx, f in enumerate(func_transform):
+            Xt.data[Xt.indptr[feat_idx]:Xt.indptr[feat_idx + 1]] = f(
+                Xt.data[Xt.indptr[feat_idx]:Xt.indptr[feat_idx + 1]])
+
+        return Xt
+
     def transform(self, X):
         """Feature-wise normalization of the data.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            The data used to scale along the features axis.
+        X : ndarray or sparse matrix, shape (n_samples, n_features)
+            The data to be normalized along the features axis. If a sparse
+            matrix is provided, it will be converted into a sparse
+            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            semi-positive.
 
         Returns
         -------
-        Xt : array-like, shape (n_samples, n_features)
-            Projected data.
+        Xt : ndarray or sparse matrix, shape (n_samples, n_features)
+            The projected data.
         """
-        X = check_array(X)
+        X = self._validate_X(X)
         check_is_fitted(self, 'f_transform_')
-        # FIXME: remove not and put sparse first
-        if not sparse.issparse(X):
+        if sparse.issparse(X):
+            return self._sparse_transform(X, True)
+        else:
             return self._dense_transform(X, True)
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
 
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            The data used to scale along the features axis.
+        X : ndarray or sparse matrix, shape (n_samples, n_features)
+            The data to be normalized along the features axis. If a sparse
+            matrix is provided, it will be converted into a sparse
+            ``csc_matrix``. Additionally, the sparse matrix needs to be
+            semi-positive.
 
         Returns
         -------
-        Xt : array-like, shape (n_samples, n_features)
-            Projected data.
+        Xt : ndarray or sparse matrix, shape (n_samples, n_features)
+            The projected data.
         """
-        X = check_array(X)
+        X = self._validate_X(X)
         check_is_fitted(self, 'f_inverse_transform_')
-        # FIXME: remove not and put sparse first
-        if not sparse.issparse(X):
+        if sparse.issparse(X):
+            return self._sparse_transform(X, False)
+        else:
             return self._dense_transform(X, False)
 
     def __getstate__(self):
