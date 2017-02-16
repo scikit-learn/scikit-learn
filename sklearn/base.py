@@ -3,7 +3,7 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
-import copy
+from copy import deepcopy
 import warnings
 import functools
 
@@ -52,7 +52,7 @@ def clone(estimator, safe=True):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params'):
         if not safe:
-            return copy.deepcopy(estimator)
+            return deepcopy(estimator)
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
                             "it does not seem to be a scikit-learn estimator "
@@ -564,7 +564,7 @@ def freeze(estimator, copy=False):
     Only works on estimators with ``__dict__``.
     """
     if copy:
-        estimator = copy.deepcopy(estimator)
+        estimator = deepcopy(estimator)
     estimator.fit = _FrozenFit(estimator)
     if hasattr(estimator, 'fit_transform'):
         estimator.fit_transform = functools.partial(_frozen_fit_method,
