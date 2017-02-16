@@ -5,6 +5,7 @@
 
 import copy
 import warnings
+import functools
 
 import numpy as np
 from scipy import sparse
@@ -45,6 +46,8 @@ def clone(estimator, safe=True):
     """
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
+    if isinstance(getattr(estimator, 'fit'), _FrozenFit):
+        return estimator
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params'):
@@ -523,3 +526,35 @@ def is_classifier(estimator):
 def is_regressor(estimator):
     """Returns True if the given estimator is (probably) a regressor."""
     return getattr(estimator, "_estimator_type", None) == "regressor"
+
+
+class _FrozenFit(object):
+    # We use a class as this allows isinstance check in clone
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __call__(self, *args, **kwargs):
+        return self.obj
+
+
+def _frozen_fit_method(obj, method, X, *args, **kwargs):
+    return getattr(obj, method)(args[0])
+
+
+def freeze(estimator):
+    """Copies estimator and freezes it
+
+    Frozen estimators:
+        * have ``fit(self, *args, **kwargs)`` merely return ``self``
+        * have ``fit_transform`` merely perform ``transform``
+
+    Parameters
+    ----------
+    estimator : estimator
+    """
+    estimator = copy.deepcopy(estimator)
+    estimator.fit = _FrozenFit(estimator)
+    if hasattr(estimator, 'fit_transform'):
+        estimator.fit_transform = functools.partial(_frozen_fit_method,
+                                                    'transform')
+    return estimator

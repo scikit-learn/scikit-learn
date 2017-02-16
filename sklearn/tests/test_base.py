@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import sys
+import pickle
 
 import numpy as np
 import scipy.sparse as sp
@@ -23,12 +24,13 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
 from sklearn.utils import deprecated
 
 from sklearn.base import TransformerMixin
+from sklearn.base import freeze
 from sklearn.utils.mocking import MockDataFrame
-import pickle
 
 
 #############################################################################
@@ -359,3 +361,21 @@ def test_pickle_version_warning():
     # check that no warning is raised for external estimators
     TreeNoVersion.__module__ = "notsklearn"
     assert_no_warnings(pickle.loads, tree_pickle_noversion)
+
+
+def test_freeze():
+    X, y = datasets.load_iris(return_X_y=True)
+    est = LogisticRegression().fit(X, y)
+    frozen_est = freeze(est)
+
+    assert_false(est is frozen_est)
+    assert_array_equal(est.coef_, frozen_est.coef_)
+    assert_true(isinstance(frozen_est, LogisticRegression))
+
+    dumped = pickle.dumps(frozen_est)
+    frozen_est2 = pickle.loads(dumped)
+    assert_false(frozen_est is frozen_est2)
+    assert_array_equal(est.coef_, frozen_est2.coef_)
+
+    assert_true(frozen_est2.fit() is frozen_est2)
+    assert_array_equal(est.coef_, frozen_est2.coef_)
