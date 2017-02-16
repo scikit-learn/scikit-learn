@@ -2005,7 +2005,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             subsample_idx = range(n_samples)
 
         # for compatibility issue with numpy<=1.8.X, references_
-        # need to be a list
+        # need to be a list scaled between 0 and 100
         self.references_ = np.linspace(0, 1, self.n_quantiles,
                                        endpoint=True).tolist()
         # references_ is a list that we need to scale between
@@ -2041,6 +2041,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             if len(column_nnz_data) > self.subsample:
                 column_subsample = (self.subsample * len(column_nnz_data) //
                                     n_samples)
+                # choice is not available in numpy <= 1.7
+                # used permutation instead.
                 column_idx = rng.permutation(range(len(column_nnz_data)))
                 column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
                 column_data[:column_subsample] = column_nnz_data[
