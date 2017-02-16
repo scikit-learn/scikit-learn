@@ -56,6 +56,11 @@ New features
      multinomial logistic loss, and behaves marginally better than 'sag'
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
+   - Added :class:`preprocessing.QuantileNormalizer` class for features
+     normalization based on quantiles.
+     :issue:`8363` by :user:`Denis Engemann <dengemann>`,
+     :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_,
+     `Raghav RV`_, and :user:`Thierry Guillemot <tguillemot>`.
 
 Enhancements
 ............

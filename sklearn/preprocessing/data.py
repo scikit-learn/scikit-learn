@@ -1977,15 +1977,13 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         self.f_transform_ = tuple([
             interp1d(quantiles_feature, self.references_,
                      bounds_error=False,
-                     fill_value=(min(self.references_),
-                                 max(self.references_)))
+                     fill_value=0.)
             for quantiles_feature in self.quantiles_])
 
         self.f_inverse_transform_ = tuple([
             interp1d(self.references_, quantiles_feature,
                      bounds_error=False,
-                     fill_value=(min(quantiles_feature),
-                                 max(quantiles_feature)))
+                     fill_value=0.)
             for quantiles_feature in self.quantiles_])
 
     def _dense_fit(self, X):
@@ -2101,7 +2099,19 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             func_transform = self.f_inverse_transform_
 
         for feature_idx, f in enumerate(func_transform):
+            # older version of scipy do not handle tuple as fill_value
+            # clipping the value before transform solve the issue
+            if not direction:
+                np.clip(Xt[:, feature_idx], min(self.references_),
+                        max(self.references_), out=Xt[:, feature_idx])
+            else:
+                np.clip(Xt[:, feature_idx], min(self.quantiles_[feature_idx]),
+                        max(self.quantiles_[feature_idx]),
+                        out=Xt[:, feature_idx])
             Xt[:, feature_idx] = f(Xt[:, feature_idx])
+            # FIXME: earlier version of scipy through nan when x_min is passed
+            # New one just has float precision problem
+            Xt[:, feature_idx][np.isnan(Xt[:, feature_idx])] = 0.0
 
         return Xt
 
@@ -2132,7 +2142,20 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         for feature_idx, f in enumerate(func_transform):
             column_slice = slice(Xt.indptr[feature_idx],
                                  Xt.indptr[feature_idx + 1])
+            # older version of scipy do not handle tuple as fill_value
+            # clipping the value before transform solve the issue
+            if not direction:
+                np.clip(Xt.data[column_slice], min(self.references_),
+                        max(self.references_), out=Xt.data[column_slice])
+            else:
+                np.clip(Xt.data[column_slice],
+                        min(self.quantiles_[feature_idx]),
+                        max(self.quantiles_[feature_idx]),
+                        out=Xt.data[column_slice])
             Xt.data[column_slice] = f(Xt.data[column_slice])
+            # FIXME: earlier version of scipy through nan when x_min is passed
+            # New one just has float precision problem
+            Xt.data[column_slice][np.isnan(Xt.data[column_slice])] = 0.0
 
         return Xt
 
