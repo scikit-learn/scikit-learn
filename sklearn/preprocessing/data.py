@@ -2114,12 +2114,10 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             else:
                 np.clip(X[:, feature_idx], min(self.references_),
                         max(self.references_), out=X[:, feature_idx])
-            print(X[:, feature_idx])
             X[:, feature_idx] = f(X[:, feature_idx])
-            print(X[:, feature_idx])
             # FIXME: earlier version of scipy through nan when x_min is passed
             # New one just has float precision problem
-            # X[:, feature_idx][np.isnan(X[:, feature_idx])] = 0.0
+            X[:, feature_idx][np.isnan(X[:, feature_idx])] = 0.0
 
         return X
 
