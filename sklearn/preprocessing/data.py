@@ -1975,18 +1975,18 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'quantiles_')
 
         self.f_transform_ = tuple([
-            interp1d(quantiles_feat, self.references_,
+            interp1d(quantiles_feature, self.references_,
                      bounds_error=False,
                      fill_value=(min(self.references_),
                                  max(self.references_)))
-            for quantiles_feat in self.quantiles_.T])
+            for quantiles_feature in self.quantiles_.T])
 
         self.f_inverse_transform_ = tuple([
-            interp1d(self.references_, quantiles_feat,
+            interp1d(self.references_, quantiles_feature,
                      bounds_error=False,
-                     fill_value=(min(quantiles_feat),
-                                 max(quantiles_feat)))
-            for quantiles_feat in self.quantiles_.T])
+                     fill_value=(min(quantiles_feature),
+                                 max(quantiles_feature)))
+            for quantiles_feature in self.quantiles_.T])
 
     def _dense_fit(self, X):
         """Compute percentiles for dense matrices.
@@ -2021,7 +2021,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         """
         rng = check_random_state(self.random_state)
 
-        n_samples, n_feat = X.get_shape()
+        n_samples, n_features = X.get_shape()
         if self.subsample < n_samples:
             subsample_idx = rng.choice(n_samples, self.subsample,
                                        replace=False)
@@ -2032,8 +2032,9 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                                        endpoint=True)
         # FIXME: it does not take into account the zero in the computation
         self.quantiles_ = np.array([np.percentile(
-            X.data[X.indptr[feat]:X.indptr[feat + 1]], self.references_ * 100)
-                                    for feat in range(n_feat)]).T
+            X.data[X.indptr[feature_idx]:X.indptr[feature_idx + 1]],
+            self.references_ * 100)
+                                    for feature_idx in range(n_features)]).T
 
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
@@ -2089,8 +2090,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         else:
             func_transform = self.f_inverse_transform_
 
-        for feat_idx, f in enumerate(func_transform):
-            Xt[:, feat_idx] = f(Xt[:, feat_idx])
+        for feature_idx, f in enumerate(func_transform):
+            Xt[:, feature_idx] = f(Xt[:, feature_idx])
 
         return Xt
 
@@ -2118,8 +2119,9 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         else:
             func_transform = self.f_inverse_transform_
 
-        for feat_idx, f in enumerate(func_transform):
-            column_slice = slice(Xt.indptr[feat_idx], Xt.indptr[feat_idx + 1])
+        for feature_idx, f in enumerate(func_transform):
+            column_slice = slice(Xt.indptr[feature_idx],
+                                 Xt.indptr[feature_idx + 1])
             Xt.data[column_slice] = f(Xt.data[column_slice])
 
         return Xt
