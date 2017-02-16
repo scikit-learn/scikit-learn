@@ -1914,15 +1914,16 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
     This Normalizer scales the features between 0 and 1, equalizing the
     distribution of each feature to a uniform distribution. Therefore,
     for a given feature, this normalization tends to spread out the most
-    frequent values.
+    frequent values. It also reduces the impact of (marginal) outliers:
+    this is therefore a robust preprocessing scheme.
 
     The normalization is applied on each feature independently.
     The cumulative density function of a feature is used to project the
     original values. Features values of new/unseen data that fall below
     or above the fitted range will be mapped to 0 and 1, respectively.
-    Note that this transform is non-linear. It may remove correlations between
-    variables measured at the same scale but renders variables measured at
-    different scales more directly comparable.
+    Note that this transform is non-linear. It may distort linear correlations
+    between variables measured at the same scale but renders variables measured
+    at different scales more directly comparable.
 
     Parameters
     ----------
