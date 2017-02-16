@@ -2112,7 +2112,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             func_transform = self.f_inverse_transform_
 
         for feat_idx, f in enumerate(func_transform):
-            column_slice = slice(Xt.indptr[feat_idx]:Xt.indptr[feat_idx + 1])
+            column_slice = slice(Xt.indptr[feat_idx], Xt.indptr[feat_idx + 1])
             Xt.data[column_slice] = f(Xt.data[column_slice])
 
         return Xt
