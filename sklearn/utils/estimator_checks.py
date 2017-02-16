@@ -1729,9 +1729,12 @@ def check_decision_proba_consistency(name, Estimator):
     # Check whether an estimator having both decision_function and
     # predict_proba methods has outputs with perfect rank correlation.
 
-    rnd = np.random.RandomState(0)
-    X_train = rnd.randint(2, size=(10, 4))
-    y = rnd.randint(2, size=10)
+    centers = [(2, 2), (4, 4)]
+    X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
+                      centers=centers, cluster_std=1.0, shuffle=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
+                                                        random_state=0)
+
     estimator = Estimator()
 
     set_testing_parameters(estimator)
@@ -1739,8 +1742,7 @@ def check_decision_proba_consistency(name, Estimator):
     if (hasattr(estimator, "decision_function") and
             hasattr(estimator, "predict_proba")):
 
-        estimator.fit(X_train, y)
-        X_test = rnd.randint(2, size=(10, 4))
+        estimator.fit(X_train, y_train)
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
