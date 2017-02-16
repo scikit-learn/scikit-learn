@@ -2026,11 +2026,6 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         rng = check_random_state(self.random_state)
 
         n_samples, n_features = X.get_shape()
-        if self.subsample < n_samples:
-            subsample_idx = rng.choice(n_samples, self.subsample,
-                                       replace=False)
-            X_csr = X.tocsr()[subsample_idx]
-            X = X_csr.tocsc()
 
         # for compatibility issue with numpy<=1.8.X, references_
         # need to be a list
@@ -2038,11 +2033,23 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                                        endpoint=True).tolist()
         # FIXME: it does not take into account the zero in the computation
         # references_ is a list that we need to scale between
-        # 0 and 100. `map` is used for that purpose.
-        self.quantiles_ = [np.percentile(
-            X.data[X.indptr[feature_idx]:X.indptr[feature_idx + 1]],
-            [x * 100 for x in self.references_])
-                                    for feature_idx in range(n_features)]
+        # 0 and 100.
+        self.quantiles_ = []
+        for feature_idx in range(n_features):
+            column_nnz_data = X.data[X.indptr[feature_idx]:
+                                     X.indptr[feature_idx + 1]]
+            if len(column_nnz_data) > self.subsample:
+                column_subsample = (self.subsample * len(column_nnz_data) //
+                                    n_samples)
+                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_data[:column_subsample] = rng.choice(column_nnz_data,
+                                                            column_subsample,
+                                                            replace=False)
+            else:
+                column_data = column_nnz_data
+            self.quantiles_.append(
+                np.percentile(column_data,
+                              [x * 100 for x in self.references_]))
 
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
