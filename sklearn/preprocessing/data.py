@@ -1979,14 +1979,14 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                      bounds_error=False,
                      fill_value=(min(self.references_),
                                  max(self.references_)))
-            for quantiles_feature in self.quantiles_.T])
+            for quantiles_feature in self.quantiles_])
 
         self.f_inverse_transform_ = tuple([
             interp1d(self.references_, quantiles_feature,
                      bounds_error=False,
                      fill_value=(min(quantiles_feature),
                                  max(quantiles_feature)))
-            for quantiles_feature in self.quantiles_.T])
+            for quantiles_feature in self.quantiles_])
 
     def _dense_fit(self, X):
         """Compute percentiles for dense matrices.
@@ -1999,16 +1999,22 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         rng = check_random_state(self.random_state)
 
         # subsample the matrix X if necessary
-        if self.subsample < X.shape[0]:
-            subsample_idx = rng.choice(X.shape[0], self.subsample,
+        n_samples, n_features = X.shape
+        if self.subsample < n_samples:
+            subsample_idx = rng.choice(n_samples, self.subsample,
                                        replace=False)
         else:
-            subsample_idx = range(X.shape[0])
+            subsample_idx = range(n_samples)
 
+        # for compatibility issue with numpy<=1.8.X, references_
+        # need to be a list
         self.references_ = np.linspace(0, 1, self.n_quantiles,
-                                       endpoint=True)
-        self.quantiles_ = np.percentile(X[subsample_idx, :],
-                                        self.references_ * 100, axis=0)
+                                       endpoint=True).tolist()
+        # references_ is a list that we need to scale between
+        # 0 and 100.
+        self.quantiles_ = [np.percentile(X[subsample_idx, feature_idx],
+                                         [x * 100 for x in self.references_])
+                           for feature_idx in range(n_features)]
 
     def _sparse_fit(self, X):
         """Compute percentiles for sparse matrices.
@@ -2028,13 +2034,17 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             X_csr = X.tocsr()[subsample_idx]
             X = X_csr.tocsc()
 
+        # for compatibility issue with numpy<=1.8.X, references_
+        # need to be a list
         self.references_ = np.linspace(0, 1, self.n_quantiles,
-                                       endpoint=True)
+                                       endpoint=True).tolist()
         # FIXME: it does not take into account the zero in the computation
-        self.quantiles_ = np.array([np.percentile(
+        # references_ is a list that we need to scale between
+        # 0 and 100. `map` is used for that purpose.
+        self.quantiles_ = [np.percentile(
             X.data[X.indptr[feature_idx]:X.indptr[feature_idx + 1]],
-            self.references_ * 100)
-                                    for feature_idx in range(n_features)]).T
+            [x * 100 for x in self.references_])
+                                    for feature_idx in range(n_features)]
 
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
