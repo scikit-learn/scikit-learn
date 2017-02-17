@@ -79,11 +79,13 @@ class MockClassifier(object):
     def predict(self, T):
         return T.shape[0]
 
+    def inverse_transform(self, X):
+        return X
+
     predict_proba = predict
     predict_log_proba = predict
     decision_function = predict
     transform = predict
-    inverse_transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -1305,3 +1307,12 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2],
                                   per_param_scores[3])
+
+
+def test_inverse_transform():
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+
+    grid_search.fit(X, y)
+    inverse_transform = grid_search.inverse_transform(X)
+    assert_array_equal(X, inverse_transform)
