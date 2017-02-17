@@ -1311,10 +1311,10 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[3])
 
 
-def test_inverse_transform():
+def test_transform_inverse_transform_round_trip():
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
 
     grid_search.fit(X, y)
-    inverse_transform = grid_search.inverse_transform(grid_search.transform(X))
-    assert_array_equal(X, inverse_transform)
+    X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
+    assert_array_equal(X, X_round_trip)
