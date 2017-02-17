@@ -1003,6 +1003,7 @@ def test_qunatile_normalzer_bounds():
     X_trans = qn.transform(X1)
     assert_array_almost_equal(X_trans, X1)
 
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
