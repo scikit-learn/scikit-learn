@@ -530,7 +530,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         self._check_is_fitted('inverse_transform')
-        return self.best_estimator_.transform(Xt)
+        return self.best_estimator_.inverse_transform(Xt)
 
     @property
     def classes_(self):
