@@ -9,22 +9,11 @@ from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils.testing import SkipTest, assert_raises_regex
+from sklearn.utils.version import parse_version
 
 
 def dist_func(x1, x2, p):
     return np.sum((x1 - x2) ** p) ** (1. / p)
-
-
-def cmp_version(version1, version2):
-    version1 = tuple(map(int, version1.split('.')[:2]))
-    version2 = tuple(map(int, version2.split('.')[:2]))
-
-    if version1 < version2:
-        return -1
-    elif version1 > version2:
-        return 1
-    else:
-        return 0
 
 
 class TestMetrics:
@@ -70,7 +59,7 @@ class TestMetrics:
             yield self.check_cdist_bool, metric, D_true
 
     def check_cdist(self, metric, kwargs, D_true):
-        if metric == 'canberra' and cmp_version(scipy.__version__, '0.9') <= 0:
+        if metric == 'canberra' and parse_version(scipy.__version__) <= '0.9':
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1, self.X2)
@@ -94,7 +83,7 @@ class TestMetrics:
             yield self.check_pdist_bool, metric, D_true
 
     def check_pdist(self, metric, kwargs, D_true):
-        if metric == 'canberra' and cmp_version(scipy.__version__, '0.9') <= 0:
+        if metric == 'canberra' and parse_version(scipy.__version__) <= '0.9':
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1)

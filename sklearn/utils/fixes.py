@@ -20,6 +20,8 @@ import numpy as np
 import scipy.sparse as sp
 import scipy
 
+from .version import parse_version
+
 try:
     from inspect import signature
 except ImportError:
@@ -37,8 +39,8 @@ def _parse_version(version_string):
     return tuple(version)
 
 
-np_version = _parse_version(np.__version__)
-sp_version = _parse_version(scipy.__version__)
+np_version = parse_version(np.__version__)
+sp_version = parse_version(scipy.__version__)
 
 
 try:
