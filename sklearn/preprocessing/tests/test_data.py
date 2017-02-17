@@ -986,13 +986,22 @@ def test_qunatile_normalzer_bounds():
                         [1, 0]])
     X_sparse = sparse.csc_matrix(X_dense)
 
+    # check sparse and dense are consistent
     X_trans = QuantileNormalizer().fit_transform(X_dense)
     assert_array_almost_equal(X_trans, X_dense)
-
     X_trans_sp = QuantileNormalizer().fit_transform(X_sparse)
     assert_array_almost_equal(X_trans_sp.A, X_dense)
-
     assert_array_almost_equal(X_trans, X_trans_sp.A)
+
+    # check the consistency of the bounds by learning on 1 matrix
+    # and transforming another
+    X = np.array([[0, 0,  1],
+                  [1, 0.5, 0]]).T
+    X1 = np.array([[0, 0, 1],
+                   [0.1, 0.5, 0.1]]).T
+    qn = QuantileNormalizer().fit(X)
+    X_trans = qn.transform(X1)
+    assert_array_almost_equal(X_trans, X1)
 
 def test_robust_scaler_invalid_range():
     for range_ in [

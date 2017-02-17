@@ -2118,28 +2118,25 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
             if direction:
-                np.clip(X[:, feature_idx],
-                        self.quantiles_[0, feature_idx],
-                        self.quantiles_[-1, feature_idx],
-                        out=X[:, feature_idx])
+                lower_bound_x = self.quantiles_[0, feature_idx]
+                upper_bound_x = self.quantiles_[-1, feature_idx]
+                lower_bound_y = references[0]
+                upper_bound_y = references[-1]
             else:
-                np.clip(X[:, feature_idx], references[0],
-                        references[-1], out=X[:, feature_idx])
+                lower_bound_x = references[0]
+                upper_bound_x = references[-1]
+                lower_bound_y = self.quantiles_[0, feature_idx]
+                upper_bound_y = self.quantiles_[-1, feature_idx]
             # Avoid computing for bounds due to numerical error of interp1d
             lower_bounds_idx = (X[:, feature_idx] - BOUNDS_THRESHOLD <
-                                min(X[:, feature_idx]))
+                                lower_bound_x)
             upper_bounds_idx = (X[:, feature_idx] + BOUNDS_THRESHOLD >
-                                max(X[:, feature_idx]))
+                                upper_bound_x)
             bounds_idx = np.bitwise_or(lower_bounds_idx, upper_bounds_idx)
             X[~bounds_idx, feature_idx] = f(X[~bounds_idx, feature_idx])
-            if direction:
-                X[upper_bounds_idx, feature_idx] = references[-1]
-                X[lower_bounds_idx, feature_idx] = references[0]
-            else:
-                X[upper_bounds_idx, feature_idx] = self.quantiles_[
-                    -1, feature_idx]
-                X[lower_bounds_idx, feature_idx] = self.quantiles_[
-                    0, feature_idx]
+            X[upper_bounds_idx, feature_idx] = upper_bound_y
+            X[lower_bounds_idx, feature_idx] = lower_bound_y
+
         return X
 
     def _sparse_transform(self, X, direction=True):
@@ -2173,25 +2170,20 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
             if direction:
-                np.clip(X.data[column_slice],
-                        self.quantiles_[0, feature_idx],
-                        self.quantiles_[-1, feature_idx],
-                        out=X.data[column_slice])
+                upper_bound_x = self.quantiles_[-1, feature_idx]
+                upper_bound_y = references[-1]
             else:
-                np.clip(X.data[column_slice], references[0],
-                        references[-1], out=X.data[column_slice])
+                upper_bound_x = references[-1]
+                upper_bound_y = self.quantiles_[-1, feature_idx]
             # Avoid computing for bounds due to numerical error of interp1d
             # Check that there is value
             if X.data[column_slice].size:
                 upper_bounds_idx = (X.data[column_slice] + BOUNDS_THRESHOLD >
-                                    max(X.data[column_slice]))
+                                    upper_bound_x)
                 X.data[column_slice][~upper_bounds_idx] = f(
                     X.data[column_slice][~upper_bounds_idx])
-                if direction:
-                    X.data[column_slice][upper_bounds_idx] = references[-1]
-                else:
-                    X.data[column_slice][upper_bounds_idx] = self.quantiles_[
-                        -1, feature_idx]
+                X.data[column_slice][upper_bounds_idx] = upper_bound_y
+
         return X
 
     def transform(self, X):
