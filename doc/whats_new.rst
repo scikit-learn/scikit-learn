@@ -153,6 +153,10 @@ Enhancements
 Bug fixes
 .........
 
+   - Fixed a bug where :class:`sklearn.ensemble.AdaBoostClassifier` throws
+     `ZeroDivisionError` while fitting data with single class labels.
+     :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
+
    - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
      :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
      sparse input.

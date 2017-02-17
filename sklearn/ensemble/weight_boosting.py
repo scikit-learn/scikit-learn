@@ -773,6 +773,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         normalizer = proba.sum(axis=1)[:, np.newaxis]
         normalizer[normalizer == 0.0] = 1.0
         proba /= normalizer
+
         return proba
 
     def staged_predict_proba(self, X):
