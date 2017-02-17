@@ -1187,7 +1187,11 @@ def test_time_series_max_train_size():
     assert_array_equal(train, [1, 2, 3])
     assert_array_equal(test, [4])
 
-    # Test for the case where the first split is less than the max_train_size
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4])
+    assert_array_equal(test, [5])
+
+    # Test for the case where the size of a fold is greater than max_train_size
     splits = TimeSeriesSplit(n_splits=3, max_train_size=2).split(X)
     train, test = next(splits)
     assert_array_equal(train, [1, 2])
@@ -1196,6 +1200,20 @@ def test_time_series_max_train_size():
     train, test = next(splits)
     assert_array_equal(train, [2, 3])
     assert_array_equal(test, [4])
+
+    # Test for the case where the size of each fold is less than max_train_size
+    splits = TimeSeriesSplit(n_splits=3, max_train_size=5).split(X)
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [5])
 
 
 def test_nested_cv():

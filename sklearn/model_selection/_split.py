@@ -674,7 +674,7 @@ class TimeSeriesSplit(_BaseKFold):
     >>> y = np.array([1, 2, 3, 4])
     >>> tscv = TimeSeriesSplit(n_splits=3)
     >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-    TimeSeriesSplit(max_train_size=0, n_splits=3)
+    TimeSeriesSplit(max_train_size=None, n_splits=3)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -690,7 +690,7 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=3, max_train_size=0):
+    def __init__(self, n_splits=3, max_train_size=None):
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
                                               random_state=None)
@@ -733,7 +733,7 @@ class TimeSeriesSplit(_BaseKFold):
         test_starts = range(test_size + n_samples % n_folds,
                             n_samples, test_size)
         for test_start in test_starts:
-            if self.max_train_size > 0 and self.max_train_size < test_start:
+            if self.max_train_size and self.max_train_size < test_start:
                 yield (indices[test_start - self.max_train_size:test_start],
                        indices[test_start:test_start + test_size])
             else:
