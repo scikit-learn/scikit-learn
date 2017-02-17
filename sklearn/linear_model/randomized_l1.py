@@ -355,8 +355,8 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
 
     C = np.atleast_1d(np.asarray(C, dtype=np.float64))
     if C.ndim > 1:
-        raise ValueError("C should be 1-dim array, \
-            but got %d-dimentional array instead." % C.ndim)
+        raise ValueError("C should be 1-dimensional array, "
+            "but got %d-dimensional array instead." % C.ndim)
 
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
 
