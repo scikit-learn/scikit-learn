@@ -56,6 +56,9 @@ Enhancements
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
+   - :class:`pipeline.Pipeline` allows to cache transformers
+     within a pipeline by using the ``memory`` constructor parameter.
+     By :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
 
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
      :class:`decomposition.TruncatedSVD` now expose the singular values
@@ -154,6 +157,13 @@ Bug fixes
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>` 
 
+
+   - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
+     :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
+     sparse input.
+     :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
+
+
    - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
@@ -207,6 +217,10 @@ Bug fixes
    - Fix a bug where :func:`sklearn.linear_model.LassoLars.fit` sometimes
      left `coef_` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
+
+   - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
+     raising an exception if instability is identified.  :issue:`7376` and
+     :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
 
 API changes summary
 -------------------
@@ -2296,7 +2310,7 @@ Enhancements
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
 
    - Vector and matrix multiplications have been optimised throughout the
-     library by :user:`Denis Engemann <dengemann>`, and `Alexandre Gramfort`_.
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
      In particular, they should take less memory with older NumPy versions
      (prior to 1.7.2).
 
@@ -2309,7 +2323,7 @@ Enhancements
 
    - Added svd_method option with default value to "randomized" to
      :class:`decomposition.FactorAnalysis` to save memory and
-     significantly speedup computation by :user:`Denis Engemann <dengemann>`, and
+     significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
 
    - Changed :class:`cross_validation.StratifiedKFold` to try and
@@ -2832,7 +2846,7 @@ Changelog
      faster on sparse data (the speedup depends on the sparsity). By
      `Lars Buitinck`_.
 
-   - Reduce memory footprint of FastICA by :user:`Denis Engemann <dengemann>` and
+   - Reduce memory footprint of FastICA by `Denis Engemann`_ and
      `Alexandre Gramfort`_.
 
    - Verbose output in :mod:`sklearn.ensemble.gradient_boosting` now uses
@@ -4978,3 +4992,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Kathleen Chen: https://github.com/kchen17
 
 .. _Vincent Pham: https://github.com/vincentpham1991
+
+.. _Denis Engemann: http://denis-engemann.de
