@@ -388,7 +388,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         The regularization parameter C in the LogisticRegression.
         When C is an array, fit will take each regularization parameter in C
         one by one for LogisticRegression and store results for each one
-        in all_scores_, where columns and rows represent corresponding
+        in ``all_scores_``, where columns and rows represent corresponding
         reg_parameters and features.
 
     scaling : float, optional, default=0.5
