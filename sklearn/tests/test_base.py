@@ -377,10 +377,10 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     assert_no_warnings(pickle.loads, tree_pickle_noversion)
 
 
-class DontPickleCacheMixin(object):
+class DontPickleAttributeMixin(object):
     def __getstate__(self):
         data = self.__dict__.copy()
-        data["_cache"] = None
+        data["_attribute_not_pickled"] = None
         return data
 
     def __setstate__(self, state):
@@ -388,57 +388,57 @@ class DontPickleCacheMixin(object):
         self.__dict__.update(state)
 
 
-class MultiInheritanceEstimator(BaseEstimator, DontPickleCacheMixin):
-    def __init__(self, b=5):
-        self.b = b
-        self._cache = None
+class MultiInheritanceEstimator(BaseEstimator, DontPickleAttributeMixin):
+    def __init__(self, attribute_pickled=5):
+        self.attribute_pickled = attribute_pickled
+        self._attribute_not_pickled = None
 
 
 def test_pickling_when_getstate_is_overwritten_by_mixin():
     estimator = MultiInheritanceEstimator()
-    estimator._cache = "this attribute should not be pickled"
+    estimator._attribute_not_pickled = "this attribute should not be pickled"
 
     serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
-    assert_equal(estimator_restored.b, 5)
-    assert_equal(estimator_restored._cache, None)
+    assert_equal(estimator_restored.attribute_pickled, 5)
+    assert_equal(estimator_restored._attribute_not_pickled, None)
     assert_true(estimator_restored._restored)
 
 
 def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
     try:
         estimator = MultiInheritanceEstimator()
-        estimator._cache = "this attribute should not be pickled"
+        estimator._attribute_not_pickled = "this attribute should not be pickled"
         old_mod = type(estimator).__module__
         type(estimator).__module__ = "notsklearn"
 
         serialized = estimator.__getstate__()
-        assert_dict_equal(serialized, {'_cache': None, 'b': 5})
+        assert_dict_equal(serialized, {'_attribute_not_pickled': None, 'attribute_pickled': 5})
 
-        serialized['b'] = 4
+        serialized['attribute_pickled'] = 4
         estimator.__setstate__(serialized)
-        assert_equal(estimator.b, 4)
+        assert_equal(estimator.attribute_pickled, 4)
         assert_true(estimator._restored)
     finally:
         type(estimator).__module__ = old_mod
 
 
 class SingleInheritanceEstimator(BaseEstimator):
-    def __init__(self, b=5):
-        self.b = b
-        self._cache = None
+    def __init__(self, attribute_pickled=5):
+        self.attribute_pickled = attribute_pickled
+        self._attribute_not_pickled = None
 
     def __getstate__(self):
         data = self.__dict__.copy()
-        data["_cache"] = None
+        data["_attribute_not_pickled"] = None
         return data
 
 
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
-    estimator._cache = "this attribute should not be pickled"
+    estimator._attribute_not_pickled = "this attribute should not be pickled"
 
     serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
-    assert_equal(estimator_restored.b, 5)
-    assert_equal(estimator_restored._cache, None)
+    assert_equal(estimator_restored.attribute_pickled, 5)
+    assert_equal(estimator_restored._attribute_not_pickled, None)
