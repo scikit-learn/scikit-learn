@@ -859,8 +859,8 @@ def test_quantile_normalizer_iris():
     X_trans = normalizer.fit_transform(X)
     # FIXME: one of those will drive to precision error
     # in the interpolation
-    # assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
-    # assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
+    assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
+    assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
     X_trans_inv = normalizer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
@@ -979,6 +979,20 @@ def test_quantile_normalize_axis1():
     X_trans_a1 = quantile_normalize(X, axis=1)
     assert_array_almost_equal(X_trans_a0, X_trans_a1.T)
 
+
+def test_qunatile_normalzer_bounds():
+    X_dense = np.array([[0, 0],
+                        [0, 0],
+                        [1, 0]])
+    X_sparse = sparse.csc_matrix(X_dense)
+
+    X_trans = QuantileNormalizer().fit_transform(X_dense)
+    assert_array_almost_equal(X_trans, X_dense)
+
+    X_trans_sp = QuantileNormalizer().fit_transform(X_sparse)
+    assert_array_almost_equal(X_trans_sp.A, X_dense)
+
+    assert_array_almost_equal(X_trans, X_trans_sp.A)
 
 def test_robust_scaler_invalid_range():
     for range_ in [

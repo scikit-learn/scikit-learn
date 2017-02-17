@@ -31,6 +31,8 @@ from ..utils.sparsefuncs import (inplace_column_scale,
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
 
+BOUNDS_THRESHOLD = 1e-7
+
 
 zip = six.moves.zip
 map = six.moves.map
@@ -2117,17 +2119,27 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             # clipping the value before transform solve the issue
             if direction:
                 np.clip(X[:, feature_idx],
-                        min(self.quantiles_[:, feature_idx]),
-                        max(self.quantiles_[:, feature_idx]),
+                        self.quantiles_[0, feature_idx],
+                        self.quantiles_[-1, feature_idx],
                         out=X[:, feature_idx])
             else:
-                np.clip(X[:, feature_idx], min(references),
-                        max(references), out=X[:, feature_idx])
-            X[:, feature_idx] = f(X[:, feature_idx])
-            # FIXME: earlier version of scipy through nan when x_min is passed
-            # New one just has float precision problem
-            X[:, feature_idx][np.isnan(X[:, feature_idx])] = 0.0
-
+                np.clip(X[:, feature_idx], references[0],
+                        references[-1], out=X[:, feature_idx])
+            # Avoid computing for bounds due to numerical error of interp1d
+            lower_bounds_idx = (X[:, feature_idx] - BOUNDS_THRESHOLD <
+                                min(X[:, feature_idx]))
+            upper_bounds_idx = (X[:, feature_idx] + BOUNDS_THRESHOLD >
+                                max(X[:, feature_idx]))
+            bounds_idx = np.bitwise_or(lower_bounds_idx, upper_bounds_idx)
+            X[~bounds_idx, feature_idx] = f(X[~bounds_idx, feature_idx])
+            if direction:
+                X[upper_bounds_idx, feature_idx] = references[-1]
+                X[lower_bounds_idx, feature_idx] = references[0]
+            else:
+                X[upper_bounds_idx, feature_idx] = self.quantiles_[
+                    -1, feature_idx]
+                X[lower_bounds_idx, feature_idx] = self.quantiles_[
+                    0, feature_idx]
         return X
 
     def _sparse_transform(self, X, direction=True):
@@ -2160,19 +2172,26 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                                  X.indptr[feature_idx + 1])
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
-            if not direction:
-                np.clip(X.data[column_slice], min(references),
-                        max(references), out=X.data[column_slice])
-            else:
+            if direction:
                 np.clip(X.data[column_slice],
-                        min(self.quantiles_[:, feature_idx]),
-                        max(self.quantiles_[:, feature_idx]),
+                        self.quantiles_[0, feature_idx],
+                        self.quantiles_[-1, feature_idx],
                         out=X.data[column_slice])
-            X.data[column_slice] = f(X.data[column_slice])
-            # FIXME: earlier version of scipy through nan when x_min is passed
-            # New one just has float precision problem
-            X.data[column_slice][np.isnan(X.data[column_slice])] = 0.0
-
+            else:
+                np.clip(X.data[column_slice], references[0],
+                        references[-1], out=X.data[column_slice])
+            # Avoid computing for bounds due to numerical error of interp1d
+            # Check that there is value
+            if X.data[column_slice].size:
+                upper_bounds_idx = (X.data[column_slice] + BOUNDS_THRESHOLD >
+                                    max(X.data[column_slice]))
+                X.data[column_slice][~upper_bounds_idx] = f(
+                    X.data[column_slice][~upper_bounds_idx])
+                if direction:
+                    X.data[column_slice][upper_bounds_idx] = references[-1]
+                else:
+                    X.data[column_slice][upper_bounds_idx] = self.quantiles_[
+                        -1, feature_idx]
         return X
 
     def transform(self, X):
