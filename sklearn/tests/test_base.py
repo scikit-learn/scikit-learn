@@ -412,12 +412,14 @@ def test_pickling_when_getstate_is_overwritten_by_mixin():
 def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
     try:
         estimator = MultiInheritanceEstimator()
-        estimator._attribute_not_pickled = "this attribute should not be pickled"
+        text = "this attribute should not be pickled"
+        estimator._attribute_not_pickled = text
         old_mod = type(estimator).__module__
         type(estimator).__module__ = "notsklearn"
 
         serialized = estimator.__getstate__()
-        assert_dict_equal(serialized, {'_attribute_not_pickled': None, 'attribute_pickled': 5})
+        assert_dict_equal(serialized, {'_attribute_not_pickled': None,
+                                       'attribute_pickled': 5})
 
         serialized['attribute_pickled'] = 4
         estimator.__setstate__(serialized)
