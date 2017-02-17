@@ -691,7 +691,7 @@ def test_classification_report_multiclass_with_unicode_label():
 
 avg / total       0.51      0.53      0.47        75
 """
-    if np_version[:3] < (1, 7, 0):
+    if np_version < (1, 7, 0):
         expected_message = ("NumPy < 1.7.0 does not implement"
                             " searchsorted on unicode data correctly.")
         assert_raise_message(RuntimeError, expected_message,

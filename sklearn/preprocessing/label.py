@@ -47,7 +47,7 @@ def _check_numpy_unicode_bug(labels):
       https://github.com/numpy/numpy/pull/243
 
     """
-    if np_version[:3] < (1, 7, 0) and labels.dtype.kind == 'U':
+    if np_version < (1, 7, 0) and labels.dtype.kind == 'U':
         raise RuntimeError("NumPy < 1.7.0 does not implement searchsorted"
                            " on unicode data correctly. Please upgrade"
                            " NumPy to use LabelEncoder with unicode inputs.")
