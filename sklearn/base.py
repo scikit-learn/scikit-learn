@@ -538,7 +538,7 @@ class _FrozenFit(object):
 
 
 def _frozen_fit_method(obj, method, X, *args, **kwargs):
-    return getattr(obj, method)(args[0])
+    return getattr(obj, method)(X)
 
 
 def freeze(estimator, copy=False):
@@ -547,6 +547,7 @@ def freeze(estimator, copy=False):
     Frozen estimators:
         * have ``fit(self, *args, **kwargs)`` merely return ``self``
         * have ``fit_transform`` merely perform ``transform``
+        * have ``fit_predict`` merely perform ``predict``
 
     Parameters
     ----------
@@ -568,5 +569,8 @@ def freeze(estimator, copy=False):
     estimator.fit = _FrozenFit(estimator)
     if hasattr(estimator, 'fit_transform'):
         estimator.fit_transform = functools.partial(_frozen_fit_method,
-                                                    'transform')
+                                                    estimator, 'transform')
+    if hasattr(estimator, 'fit_predict'):
+        estimator.fit_predict = functools.partial(_frozen_fit_method,
+                                                  estimator, 'predict')
     return estimator

@@ -24,7 +24,7 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.linear_model import LogisticRegression
+from sklearn.feature_selection import SelectKBest
 from sklearn import datasets
 from sklearn.utils import deprecated
 
@@ -365,22 +365,37 @@ def test_pickle_version_warning():
 
 def test_freeze():
     X, y = datasets.load_iris(return_X_y=True)
-    est = LogisticRegression().fit(X, y)
 
-    frozen_est = freeze(est, copy=True)
-    assert_false(est is frozen_est)
-    assert_array_equal(est.coef_, frozen_est.coef_)
-    assert_true(isinstance(frozen_est, LogisticRegression))
+    for copy in [False, True]:
+        est = SelectKBest(k=1).fit(X, y)
 
+        frozen_est = freeze(est, copy=copy)
+        if copy:
+            assert_false(est is frozen_est)
+        else:
+            assert_true(est is frozen_est)
+        assert_array_equal(est.scores_, frozen_est.scores_)
+        assert_true(isinstance(frozen_est, SelectKBest))
+
+        dumped = pickle.dumps(frozen_est)
+        frozen_est2 = pickle.loads(dumped)
+        assert_false(frozen_est is frozen_est2)
+        assert_array_equal(est.scores_, frozen_est2.scores_)
+
+        # scores should be unaffected by new fit
+        assert_true(frozen_est2.fit() is frozen_est2)
+        assert_array_equal(est.scores_, frozen_est2.scores_)
+
+    # Test fit_transform where expected
+    assert_true(hasattr(est, 'fit_transform'))
+    assert_true(hasattr(frozen_est, 'fit_transform'))
+    assert_false(est.fit_transform is frozen_est.fit_transform)
+    frozen_est.fit_transform([np.arange(X.shape[1])], [0])
+    # scores should be unaffected by new fit_transform
+    assert_array_equal(est.scores_, frozen_est.scores_)
+
+    # Test fit_transform not set when not needed
+    est = DecisionTreeClassifier().fit(X, y)
     frozen_est = freeze(est)
-    assert_true(est is frozen_est)
-    assert_array_equal(est.coef_, frozen_est.coef_)
-    assert_true(isinstance(frozen_est, LogisticRegression))
-
-    dumped = pickle.dumps(frozen_est)
-    frozen_est2 = pickle.loads(dumped)
-    assert_false(frozen_est is frozen_est2)
-    assert_array_equal(est.coef_, frozen_est2.coef_)
-
-    assert_true(frozen_est2.fit() is frozen_est2)
-    assert_array_equal(est.coef_, frozen_est2.coef_)
+    assert_false(hasattr(est, 'fit_transform'))
+    assert_false(hasattr(frozen_est, 'fit_transform'))
