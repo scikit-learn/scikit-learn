@@ -1004,6 +1004,21 @@ def test_qunatile_normalzer_bounds():
     assert_array_almost_equal(X_trans, X1)
 
 
+def test_quantile_normalizer_pickling():
+    qn = QuantileNormalizer(n_quantiles=100)
+
+    qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
+    qn2 = pickle.loads(qn_ser)
+    assert_false(hasattr(qn2, 'f_transform_'))
+    assert_false(hasattr(qn2, 'f_inverse_transform_'))
+
+    qn.fit(iris.data)
+    qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
+    qn2 = pickle.loads(qn_ser)
+    assert_array_almost_equal(qn.transform(iris.data),
+                              qn2.transform(iris.data))
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
@@ -1796,16 +1811,13 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
-def test_quantile_normalizer_pickling():
-    qn = QuantileNormalizer(n_quantiles=100)
+def test_function_valid_axis():
+    X = np.array([[0, 25, 50, 75, 100],
+                  [2, 4, 6, 8, 10],
+                  [2.6, 4.1, 2.3, 9.5, 0.1]])
 
-    qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
-    qn2 = pickle.loads(qn_ser)
-    assert_false(hasattr(qn2, 'f_transform_'))
-    assert_false(hasattr(qn2, 'f_inverse_transform_'))
+    func_list = [quantile_normalize]
 
-    qn.fit(iris.data)
-    qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
-    qn2 = pickle.loads(qn_ser)
-    assert_array_almost_equal(qn.transform(iris.data),
-                              qn2.transform(iris.data))
+    for func in func_list:
+        assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
+                            ". Got axis=2", func, X.T, axis=2)
