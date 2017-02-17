@@ -2063,6 +2063,17 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             Returns self
         """
         X = check_array(X, accept_sparse='csc')
+
+        if self.n_quantiles <= 0:
+            raise ValueError("Invalid value for 'n_quantiles': %d. "
+                             "The number of quantiles must be at least one."
+                             % self.n_quantiles)
+
+        if self.subsample <= 0:
+            raise ValueError("Invalid value for 'subsample': %d. "
+                             "The number of quantiles must be at least one."
+                             % self.subsample)
+
         # we only accept positive sparse matrix
         if sparse.issparse(X) and np.any(X.data < 0):
             raise ValueError('QuantileNormalizer only accepts non-negative'

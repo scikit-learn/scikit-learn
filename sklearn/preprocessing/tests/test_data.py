@@ -875,6 +875,11 @@ def test_quantile_normalizer_check_error():
                       [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
     X_neg = sparse.csc_matrix(X_neg)
 
+    assert_raises_regex(ValueError, "Invalid value for 'n_quantiles'",
+                        QuantileNormalizer(n_quantiles=0).fit, X_neg)
+    assert_raises_regex(ValueError, "Invalid value for 'subsample'",
+                        QuantileNormalizer(subsample=0).fit, X_neg)
+
     normalizer = QuantileNormalizer()
     assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
                         "non-negative sparse matrices", normalizer.fit, X_neg)
