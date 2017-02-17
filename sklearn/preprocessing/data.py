@@ -2277,4 +2277,4 @@ def quantile_normalize(X, axis=0, n_quantiles=1000, subsample=int(1e5),
         return n.fit_transform(X.T).T
     else:
         raise ValueError("axis should be either equal to 0 or 1. Got"
-                         " axis={}".format( axis))
+                         " axis={}".format(axis))
