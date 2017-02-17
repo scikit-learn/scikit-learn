@@ -712,6 +712,9 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fwe': SelectFwe}
 
     def __init__(self, score_func=f_classif, mode='percentile', param=10):
+        if param != 10:
+            warnings.warn("param default value of 1e-5 was changed to a "
+                          "value of 10 in Version 0.19.", DeprecationWarning)
         super(GenericUnivariateSelect, self).__init__(score_func)
         self.mode = mode
         self.param = param
