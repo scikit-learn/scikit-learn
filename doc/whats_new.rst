@@ -163,7 +163,6 @@ Bug fixes
      sparse input.
      :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
 
-
    - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
