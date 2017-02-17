@@ -278,7 +278,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         Parameters
         ----------
 
-        X: array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
             Data matrix or, if affinity is ``precomputed``, matrix of
             similarities / affinities.
         """

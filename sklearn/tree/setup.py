@@ -10,22 +10,22 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         libraries.append('m')
     config.add_extension("_tree",
-                         sources=["_tree.c"],
+                         sources=["_tree.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])
     config.add_extension("_splitter",
-                         sources=["_splitter.c"],
+                         sources=["_splitter.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])
     config.add_extension("_criterion",
-                         sources=["_criterion.c"],
+                         sources=["_criterion.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])
     config.add_extension("_utils",
-                         sources=["_utils.c"],
+                         sources=["_utils.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])

@@ -77,6 +77,7 @@ Scoring                         Function                                      Co
 **Regression**
 'neg_mean_absolute_error'       :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'        :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
 'r2'                            :func:`metrics.r2_score`
 ===========================     =========================================     ==================================
@@ -93,7 +94,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'completeness_score', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
 .. note::
 
@@ -1133,6 +1134,12 @@ are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
 of this metrics is thus the average number of true labels.
 
+.. note::
+
+    Our implementation's score is 1 greater than the one given in Tsoumakas
+    et al., 2010. This extends it to handle the degenerate case in which an
+    instance has 0 true labels.
+
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
 score associated with each label
@@ -1235,6 +1242,12 @@ Here is a small example of usage of this function::
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
     >>> label_ranking_loss(y_true, y_score)
     0.0
+
+
+.. topic:: References:
+
+  * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
+    Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
 
 .. _regression_metrics:
 
@@ -1348,7 +1361,7 @@ Mean squared error
 
 The :func:`mean_squared_error` function computes `mean square
 error <https://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
-metric corresponding to the expected value of the squared (quadratic) error loss or
+metric corresponding to the expected value of the squared (quadratic) error or
 loss.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
@@ -1377,6 +1390,43 @@ function::
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
+
+.. _mean_squared_log_error:
+
+Mean squared logarithmic error
+------------------------------
+
+The :func:`mean_squared_log_error` function computes a risk metric
+corresponding to the expected value of the squared logarithmic (quadratic)
+error or loss.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean squared
+logarithmic error (MSLE) estimated over :math:`n_{\text{samples}}` is
+defined as
+
+.. math::
+
+  \text{MSLE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (\log_e (1 + y_i) - \log_e (1 + \hat{y}_i) )^2.
+
+Where :math:`\log_e (x)` means the natural logarithm of :math:`x`. This metric
+is best to use when targets having exponential growth, such as population
+counts, average sales of a commodity over a span of years etc. Note that this
+metric penalizes an under-predicted estimate greater than an over-predicted
+estimate.
+
+Here is a small example of usage of the :func:`mean_squared_log_error`
+function::
+
+  >>> from sklearn.metrics import mean_squared_log_error
+  >>> y_true = [3, 5, 2.5, 7]
+  >>> y_pred = [2.5, 5, 4, 8]
+  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.039...
+  >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
+  >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
+  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.044...
 
 .. _median_absolute_error:
 

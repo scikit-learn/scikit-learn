@@ -226,6 +226,8 @@ def test_sparse_output_multilabel_binarizer():
             got = mlb.fit_transform(inp())
             assert_equal(issparse(got), sparse_output)
             if sparse_output:
+                # verify CSR assumption that indices and indptr have same dtype
+                assert_equal(got.indices.dtype, got.indptr.dtype)
                 got = got.toarray()
             assert_array_equal(indicator_mat, got)
             assert_array_equal([1, 2, 3], mlb.classes_)
@@ -236,6 +238,8 @@ def test_sparse_output_multilabel_binarizer():
             got = mlb.fit(inp()).transform(inp())
             assert_equal(issparse(got), sparse_output)
             if sparse_output:
+                # verify CSR assumption that indices and indptr have same dtype
+                assert_equal(got.indices.dtype, got.indptr.dtype)
                 got = got.toarray()
             assert_array_equal(indicator_mat, got)
             assert_array_equal([1, 2, 3], mlb.classes_)

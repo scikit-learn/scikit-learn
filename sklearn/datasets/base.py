@@ -149,7 +149,7 @@ def load_files(container_path, description=None, categories=None,
     container_path : string or unicode
         Path to the main folder holding one subfolder per category
 
-    description: string or unicode, optional (default=None)
+    description : string or unicode, optional (default=None)
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 
@@ -169,7 +169,7 @@ def load_files(container_path, description=None, categories=None,
         If not None, encoding to use to decode text files to Unicode if
         load_content is True.
 
-    decode_error: {'strict', 'ignore', 'replace'}, optional
+    decode_error : {'strict', 'ignore', 'replace'}, optional
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
@@ -242,6 +242,122 @@ def load_files(container_path, description=None, categories=None,
                  DESCR=description)
 
 
+def load_data(module_path, data_file_name):
+    """Loads data from module_path/data/data_file_name.
+
+    Parameters
+    ----------
+    data_file_name : String. Name of csv file to be loaded from
+    module_path/data/data_file_name. For example 'wine_data.csv'.
+
+    Returns
+    -------
+    data : Numpy Array
+        A 2D array with each row representing one sample and each column
+        representing the features of a given sample.
+
+    target : Numpy Array
+        A 1D array holding target variables for all the samples in `data.
+        For example target[0] is the target varible for data[0].
+
+    target_names : Numpy Array
+        A 1D array containing the names of the classifications. For example
+        target_names[0] is the name of the target[0] class.
+    """
+    with open(join(module_path, 'data', data_file_name)) as csv_file:
+        data_file = csv.reader(csv_file)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        target_names = np.array(temp[2:])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
+
+        for i, ir in enumerate(data_file):
+            data[i] = np.asarray(ir[:-1], dtype=np.float64)
+            target[i] = np.asarray(ir[-1], dtype=np.int)
+
+    return data, target, target_names
+
+
+def load_wine(return_X_y=False):
+    """Load and return the wine dataset (classification).
+
+    .. versionadded:: 0.18
+
+    The wine dataset is a classic and very easy multi-class classification
+    dataset.
+
+    =================   ==============
+    Classes                          3
+    Samples per class        [59,71,48]
+    Samples total                  178
+    Dimensionality                  13
+    Features            real, positive
+    =================   ==============
+
+    Read more in the :ref:`User Guide <datasets>`.
+
+    Parameters
+    ----------
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
+        full description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+    The copy of UCI ML Wine Data Set dataset is
+    downloaded and modified to fit standard format from:
+    https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
+
+    Examples
+    --------
+    Let's say you are interested in the samples 10, 80, and 140, and want to
+    know their class name.
+
+    >>> from sklearn.datasets import load_wine
+    >>> data = load_wine()
+    >>> data.target[[10, 80, 140]]
+    array([0, 1, 2])
+    >>> list(data.target_names)
+    ['class_0', 'class_1', 'class_2']
+    """
+    module_path = dirname(__file__)
+    data, target, target_names = load_data(module_path, 'wine_data.csv')
+
+    with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    if return_X_y:
+        return data, target
+
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 DESCR=fdescr,
+                 feature_names=['alcohol',
+                                'malic_acid',
+                                'ash',
+                                'alcalinity_of_ash',
+                                'magnesium',
+                                'total_phenols',
+                                'flavanoids',
+                                'nonflavanoid_phenols',
+                                'proanthocyanins',
+                                'color_intensity',
+                                'hue',
+                                'od280/od315_of_diluted_wines',
+                                'proline'])
+
+
 def load_iris(return_X_y=False):
     """Load and return the iris dataset (classification).
 
@@ -292,18 +408,7 @@ def load_iris(return_X_y=False):
     ['setosa', 'versicolor', 'virginica']
     """
     module_path = dirname(__file__)
-    with open(join(module_path, 'data', 'iris.csv')) as csv_file:
-        data_file = csv.reader(csv_file)
-        temp = next(data_file)
-        n_samples = int(temp[0])
-        n_features = int(temp[1])
-        target_names = np.array(temp[2:])
-        data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,), dtype=np.int)
-
-        for i, ir in enumerate(data_file):
-            data[i] = np.asarray(ir[:-1], dtype=np.float64)
-            target[i] = np.asarray(ir[-1], dtype=np.int)
+    data, target, target_names = load_data(module_path, 'iris.csv')
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -370,18 +475,7 @@ def load_breast_cancer(return_X_y=False):
     ['malignant', 'benign']
     """
     module_path = dirname(__file__)
-    with open(join(module_path, 'data', 'breast_cancer.csv')) as csv_file:
-        data_file = csv.reader(csv_file)
-        first_line = next(data_file)
-        n_samples = int(first_line[0])
-        n_features = int(first_line[1])
-        target_names = np.array(first_line[2:4])
-        data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,), dtype=np.int)
-
-        for count, value in enumerate(data_file):
-            data[count] = np.asarray(value[:-1], dtype=np.float64)
-            target[count] = np.asarray(value[-1], dtype=np.int)
+    data, target, target_names = load_data(module_path, 'breast_cancer.csv')
 
     with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -517,12 +611,12 @@ def load_diabetes(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.18    
+        .. versionadded:: 0.18
     """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
-    
+
     if return_X_y:
         return data, target
 
@@ -554,7 +648,7 @@ def load_linnerud(return_X_y=False):
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
-    
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -608,7 +702,7 @@ def load_boston(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-        .. versionadded:: 0.18    
+        .. versionadded:: 0.18
 
     Examples
     --------
@@ -703,12 +797,12 @@ def load_sample_image(image_name):
 
     Parameters
     -----------
-    image_name: {`china.jpg`, `flower.jpg`}
+    image_name : {`china.jpg`, `flower.jpg`}
         The name of the sample image loaded
 
     Returns
     -------
-    img: 3D array
+    img : 3D array
         The image as a numpy array: height x width x color
 
     Examples

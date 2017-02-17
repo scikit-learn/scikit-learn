@@ -39,12 +39,9 @@ run_tests() {
         nosetests -s --with-timer --timer-top-n 20 sklearn
     fi
 
-    # Is directory still empty ?
-    ls -ltra
-
     # Test doc
-    cd $CACHED_BUILD_DIR/scikit-learn
-    make test-doc test-sphinxext
+    cd $OLDPWD
+    make test-doc
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

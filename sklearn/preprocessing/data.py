@@ -9,6 +9,7 @@
 from itertools import chain, combinations
 import numbers
 import warnings
+from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
@@ -16,10 +17,8 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
-from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
@@ -50,13 +49,6 @@ __all__ = [
     'maxabs_scale',
     'minmax_scale',
 ]
-
-DEPRECATION_MSG_1D = (
-    "Passing 1d arrays as data is deprecated in 0.17 and will "
-    "raise ValueError in 0.19. Reshape your data either using "
-    "X.reshape(-1, 1) if your data has a single feature or "
-    "X.reshape(1, -1) if it contains a single sample."
-)
 
 
 def _handle_zeros_in_scale(scale, copy=True):
@@ -226,19 +218,19 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Per feature minimum seen in the data
 
         .. versionadded:: 0.17
-           *data_min_* instead of deprecated *data_min*.
+           *data_min_*
 
     data_max_ : ndarray, shape (n_features,)
         Per feature maximum seen in the data
 
         .. versionadded:: 0.17
-           *data_max_* instead of deprecated *data_max*.
+           *data_max_*
 
     data_range_ : ndarray, shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
 
         .. versionadded:: 0.17
-           *data_range_* instead of deprecated *data_range*.
+           *data_range_*
 
     See also
     --------
@@ -248,18 +240,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     def __init__(self, feature_range=(0, 1), copy=True):
         self.feature_range = feature_range
         self.copy = copy
-
-    @property
-    @deprecated("Attribute data_range will be removed in "
-                "0.19. Use ``data_range_`` instead")
-    def data_range(self):
-        return self.data_range_
-
-    @property
-    @deprecated("Attribute data_min will be removed in "
-                "0.19. Use ``data_min_`` instead")
-    def data_min(self):
-        return self.data_min_
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -314,11 +294,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, copy=self.copy, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         data_min = np.min(X, axis=0)
         data_max = np.max(X, axis=0)
@@ -351,9 +328,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
         X *= self.scale_
         X += self.min_
@@ -369,9 +344,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
 
-        X = check_array(X, copy=self.copy, ensure_2d=False, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+        X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES)
 
         X -= self.min_
         X /= self.scale_
@@ -419,13 +392,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    # To allow retro-compatibility, we handle here the case of 1D-input
-    # From 0.17, 1D-input are deprecated in scaler objects
-    # Although, we want to allow the users to keep calling this function
-    # with 1D-input.
-
-    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
-    # done inside the scaler object fit_transform.
+    # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
                     dtype=FLOAT_DTYPES)
@@ -497,7 +464,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         Per feature relative scaling of the data.
 
         .. versionadded:: 0.17
-           *scale_* is recommended instead of deprecated *std_*.
+           *scale_*
 
     mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
@@ -523,12 +490,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.with_std = with_std
         self.copy = copy
 
-    @property
-    @deprecated("Attribute ``std_`` will be removed in 0.19. "
-                "Use ``scale_`` instead")
-    def std_(self):
-        return self.scale_
-
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
 
@@ -552,7 +513,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
 
         # Reset internal state before fitting
@@ -576,14 +537,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, warn_on_dtype=True,
-                        estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES)
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -641,12 +598,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy,
-                        ensure_2d=False, warn_on_dtype=True,
+        X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=True,
                         estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -776,13 +729,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y: Passthrough for ``Pipeline`` compatibility.
+        y : Passthrough for ``Pipeline`` compatibility.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             mins, maxs = min_max_axis(X, axis=0)
@@ -812,10 +762,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             inplace_column_scale(X, 1.0 / self.scale_)
@@ -833,9 +780,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             inplace_column_scale(X, self.scale_)
@@ -868,13 +813,8 @@ def maxabs_scale(X, axis=0, copy=True):
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """  # noqa
-    # To allow retro-compatibility, we handle here the case of 1D-input
-    # From 0.17, 1D-input are deprecated in scaler objects
-    # Although, we want to allow the users to keep calling this function
-    # with 1D-input.
+    # Unlike the scaler object, this function allows 1d input.
 
-    # Cast input to array, as we need to check ndim. Prior to 0.17, that was
-    # done inside the scaler object fit_transform.
     # If copy is required, it will be done inside the scaler object.
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                     ensure_2d=False, dtype=FLOAT_DTYPES)
@@ -980,10 +920,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     def _check_array(self, X, copy):
         """Makes sure centering is not enabled for sparse matrices."""
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        ensure_2d=False, estimator=self, dtype=FLOAT_DTYPES)
-
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
+                        estimator=self, dtype=FLOAT_DTYPES)
 
         if sparse.issparse(X):
             if self.with_centering:
@@ -1004,8 +941,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             raise TypeError("RobustScaler cannot be fitted on sparse inputs")
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
         if self.with_centering:
             self.center_ = np.median(X, axis=0)
 
@@ -1033,8 +968,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1059,8 +992,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_scaling:
             check_is_fitted(self, 'scale_')
         X = self._check_array(X, self.copy)
-        if X.ndim == 1:
-            warnings.warn(DEPRECATION_MSG_1D, DeprecationWarning)
 
         if sparse.issparse(X):
             if self.with_scaling:
@@ -1325,6 +1256,16 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     return_norm : boolean, default False
         whether to return the computed norms
 
+    Returns
+    -------
+    X : {array-like, sparse matrix}, shape [n_samples, n_features]
+        Normalized input X.
+
+    norms : array, shape [n_samples] if axis=1 else [n_features]
+        An array of norms along given axis for X.
+        When X is sparse, a NotImplementedError will be raised
+        for norm 'l1' or 'l2'.
+
     See also
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
@@ -1346,15 +1287,19 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         X = X.T
 
     if sparse.issparse(X):
+        if return_norm and norm in ('l1', 'l2'):
+            raise NotImplementedError("return_norm=True is not implemented "
+                                      "for sparse matrices with norm 'l1' "
+                                      "or norm 'l2'")
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
             inplace_csr_row_normalize_l2(X)
         elif norm == 'max':
             _, norms = min_max_axis(X, 1)
-            norms = norms.repeat(np.diff(X.indptr))
-            mask = norms != 0
-            X.data[mask] /= norms[mask]
+            norms_elementwise = norms.repeat(np.diff(X.indptr))
+            mask = norms_elementwise != 0
+            X.data[mask] /= norms_elementwise[mask]
     else:
         if norm == 'l1':
             norms = np.abs(X).sum(axis=1)
@@ -1790,7 +1735,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    Given a dataset with three features and two samples, we let the encoder
+    Given a dataset with three features and four samples, we let the encoder
     find the maximum value per feature and transform the data to a binary
     one-hot encoding.
 

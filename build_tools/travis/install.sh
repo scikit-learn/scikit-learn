@@ -52,14 +52,14 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # provided versions
     if [[ "$INSTALL_MKL" == "true" ]]; then
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
-            cython=$CYTHON_VERSION libgfortran mkl flake8 \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-            libgfortran nomkl \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
     fi
     source activate testenv
@@ -95,21 +95,12 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
+    pip install coverage codecov
 fi
 
 if [[ "$SKIP_TESTS" == "true" ]]; then
     echo "No need to build scikit-learn when not running the tests"
 else
-    if [ ! -d "$CACHED_BUILD_DIR" ]; then
-        mkdir -p $CACHED_BUILD_DIR
-    fi
-
-    rsync -av --exclude '.git/' --exclude='testvenv/' \
-          $TRAVIS_BUILD_DIR $CACHED_BUILD_DIR
-
-    cd $CACHED_BUILD_DIR/scikit-learn
-
     # Build scikit-learn in the install.sh script to collapse the verbose
     # build output in the travis output when it succeeds.
     python --version
@@ -127,5 +118,8 @@ except ImportError:
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    conda install flake8
+    # flake8 version is temporarily set to 2.5.1 because the next
+    # version available on conda (3.3.0) has a bug that checks non
+    # python files and cause non meaningful flake8 errors
+    conda install --yes flake8=2.5.1
 fi

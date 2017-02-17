@@ -285,7 +285,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape (n_samples,) or (n_samples, n_classes)
+        y : array of shape [n_samples,] or [n_samples, n_classes]
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification.
 
@@ -304,18 +304,41 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.classes_ = unique_labels(y)
         return self
 
-    def transform(self, y):
-        """Transform multi-class labels to binary labels
+    def fit_transform(self, y):
+        """Fit label binarizer and transform multi-class labels to binary
+        labels.
 
-        The output of transform is sometimes referred to by some authors as the
-        1-of-K coding scheme.
+        The output of transform is sometimes referred to    as
+        the 1-of-K coding scheme.
 
         Parameters
         ----------
-        y : numpy array or sparse matrix of shape (n_samples,) or
-            (n_samples, n_classes) Target values. The 2-d matrix should only
-            contain 0 and 1, represents multilabel classification. Sparse
-            matrix can be CSR, CSC, COO, DOK, or LIL.
+        y : array or sparse matrix of shape [n_samples,] or \
+            [n_samples, n_classes]
+            Target values. The 2-d matrix should only contain 0 and 1,
+            represents multilabel classification. Sparse matrix can be
+            CSR, CSC, COO, DOK, or LIL.
+
+        Returns
+        -------
+        Y : array or CSR matrix of shape [n_samples, n_classes]
+            Shape will be [n_samples, 1] for binary problems.
+        """
+        return self.fit(y).transform(y)
+
+    def transform(self, y):
+        """Transform multi-class labels to binary labels
+
+        The output of transform is sometimes referred to by some authors as
+        the 1-of-K coding scheme.
+
+        Parameters
+        ----------
+        y : array or sparse matrix of shape [n_samples,] or \
+            [n_samples, n_classes]
+            Target values. The 2-d matrix should only contain 0 and 1,
+            represents multilabel classification. Sparse matrix can be
+            CSR, CSC, COO, DOK, or LIL.
 
         Returns
         -------
@@ -732,7 +755,9 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         class_mapping = np.empty(len(tmp), dtype=dtype)
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
-        yt.indices = np.take(inverse, yt.indices)
+        # ensure yt.indices keeps its current dtype
+        yt.indices = np.array(inverse[yt.indices], dtype=yt.indices.dtype,
+                              copy=False)
 
         if not self.sparse_output:
             yt = yt.toarray()
