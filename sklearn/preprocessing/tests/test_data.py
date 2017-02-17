@@ -92,6 +92,16 @@ def assert_correct_incr(i, batch_start, batch_stop, n, chunk_size,
                      n_samples_seen)
 
 
+def test_polynomial_features_sparse_X():
+    X = rng.randint(0, 2, (100, 1)).astype(np.float64)
+    X_sparse = sparse.csr_matrix(X)
+    P = np.hstack([np.ones_like(X), X, X ** 2, X ** 3])
+    deg = 3
+
+    P_test = PolynomialFeatures(deg, include_bias=True).fit_transform(X_sparse)
+    assert_array_almost_equal(P_test, P)
+
+
 def test_polynomial_features():
     # Test Polynomial Features
     X1 = np.arange(6)[:, np.newaxis]

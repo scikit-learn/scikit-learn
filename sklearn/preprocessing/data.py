@@ -13,6 +13,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -1186,7 +1187,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         Compute number of output features.
         """
-        n_samples, n_features = check_array(X).shape
+        n_samples, n_features = check_array(X, accept_sparse='csr').shape
         combinations = self._combinations(n_features, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
@@ -1210,7 +1211,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
 
         if n_features != self.n_input_features_:
@@ -1223,7 +1224,10 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                                           self.interaction_only,
                                           self.include_bias)
         for i, c in enumerate(combinations):
-            XP[:, i] = X[:, c].prod(1)
+            if issparse(X):
+                XP[:, i] = X[:, c].toarray().prod(1)
+            else:
+                XP[:, i] = X[:, c].prod(1)
 
         return XP
 
