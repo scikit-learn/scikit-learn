@@ -398,7 +398,7 @@ def test_pickling_when_getstate_is_overwritten_by_mixin():
     estimator = MultiInheritanceEstimator()
     estimator._cache = "this attribute should not be pickled"
 
-    serialized = pickle.dumps(estimator, protocol=2)
+    serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
     assert_equal(estimator_restored.b, 5)
     assert_equal(estimator_restored._cache, None)
@@ -438,7 +438,7 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
     estimator._cache = "this attribute should not be pickled"
 
-    serialized = pickle.dumps(estimator, protocol=2)
+    serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
     assert_equal(estimator_restored.b, 5)
     assert_equal(estimator_restored._cache, None)
