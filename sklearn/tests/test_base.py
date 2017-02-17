@@ -373,8 +373,12 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
     iris = datasets.load_iris()
     tree = TreeNoVersion().fit(iris.data, iris.target)
     tree_pickle_noversion = pickle.dumps(tree)
-    TreeNoVersion.__module__ = "notsklearn"
-    assert_no_warnings(pickle.loads, tree_pickle_noversion)
+    try:
+        module_backup = TreeNoVersion.__module__
+        TreeNoVersion.__module__ = "notsklearn"
+        assert_no_warnings(pickle.loads, tree_pickle_noversion)
+    finally:
+        TreeNoVersion.__module__ = module_backup
 
 
 class DontPickleAttributeMixin(object):
