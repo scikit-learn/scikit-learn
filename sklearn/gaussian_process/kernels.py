@@ -1910,7 +1910,8 @@ class SelectDimensionKernel(Kernel):
 
         active_dims = np.asarray(self.active_dims)
 
-        if (np.issubdtype(active_dims.dtype, np.bool) & (active_dims.shape==X.shape[1])):
+        if (np.issubdtype(active_dims.dtype, np.bool) &
+           (active_dims.shape == X.shape[1])):
             active_dims = np.where(active_dims)[0]
         else:
             active_dims = active_dims.astype(int)
@@ -1919,8 +1920,8 @@ class SelectDimensionKernel(Kernel):
                               element, current size: %d " % active_dims.size)
 
         return self.kernel_(X[:, active_dims],
-                    None if Y is None else Y[:, active_dims],
-                    eval_gradient)
+                            None if Y is None else Y[:, active_dims],
+                            eval_gradient)
 
     def get_params(self, deep=True):
         """Get parameters of this kernel.
