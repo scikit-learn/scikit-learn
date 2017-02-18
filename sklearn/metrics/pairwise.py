@@ -13,6 +13,7 @@ import itertools
 from functools import partial
 
 import numpy as np
+from scipy import sparse
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -52,6 +53,108 @@ def _return_float_dtype(X, Y):
         dtype = np.float
 
     return X, Y, dtype
+
+
+def flexible_concatenate(it, final_len=None):
+    """Concatenate the elements of an iterable
+    Supports generators of arrays, lists, sparse matrices or tuples thereof
+    >>> import numpy as np
+    >>> from scipy import sparse
+    >>>
+    >>> def make_example(typ):
+    ...     yield typ([1, 2])
+    ...     yield typ([3])
+    ...     yield typ([4, 5, 6])
+    ...
+    >>> flexible_concatenate(make_example(list))
+    [1, 2, 3, 4, 5, 6]
+    >>> flexible_concatenate(make_example(np.array))
+    array([1, 2, 3, 4, 5, 6])
+    >>> flexible_concatenate(zip(make_example(list), make_example(np.array)))
+    ([1, 2, 3, 4, 5, 6], array([1, 2, 3, 4, 5, 6]))
+    >>> flexible_concatenate(make_example(np.array))
+    array([1, 2, 3, 4, 5, 6])
+    >>> flexible_concatenate(make_example(np.array), final_len=6)
+    array([1, 2, 3, 4, 5, 6])
+    >>> flexible_concatenate(make_example(
+    ...     lambda x: np.array(x).reshape(-1, 1)))
+    ...     # doctest: +NORMALIZE_WHITESPACE
+    array([[1], [2], [3], [4], [5], [6]])
+    >>> M = flexible_concatenate(make_example(
+    ...     lambda x: sparse.csr_matrix(np.array(x).reshape(-1, 1))))
+    ...     # doctest: +NORMALIZE_WHITESPACE
+    >>> M.format
+    'csr'
+    >>> M.A                          # doctest: +NORMALIZE_WHITESPACE
+    array([[1], [2], [3], [4], [5], [6]], dtype=int64)
+    >>> M = flexible_concatenate(make_example(
+    ...     lambda x: sparse.csc_matrix(np.array(x).reshape(-1, 1))))
+    ...     # doctest: +NORMALIZE_WHITESPACE
+    >>> M.format
+    'csc'
+    >>> M.A                          # doctest: +NORMALIZE_WHITESPACE
+    array([[1], [2], [3], [4], [5], [6]], dtype=int64)
+    """
+
+    def make_accumulator(prototype):
+        if isinstance(prototype, tuple):
+            return tuple(make_accumulator(y_proto) for y_proto in prototype)
+        if isinstance(prototype, np.ndarray) and final_len is not None:
+            return np.empty((final_len,) + prototype.shape[1:],
+                            dtype=prototype.dtype)
+        else:
+            return []
+
+    def accumulate(x, accumulator, prototype):
+        if isinstance(prototype, tuple):
+            for y, y_acc, y_prototype in zip(x, accumulator, prototype):
+                n_rows = accumulate(y, y_acc, y_prototype)
+                # XXX: could assert all n_rows are identical
+            return n_rows
+        elif isinstance(prototype, np.ndarray) and final_len is not None:
+            accumulator[offset:offset + len(x)] = x
+            return len(x)
+        elif isinstance(prototype, list):
+            accumulator.extend(x)
+            return len(x)
+        else:
+            accumulator.append(x)
+            if hasattr(x, 'shape'):
+                return x.shape[0]
+            return len(x)
+
+    def finalize(accumulator, prototype):
+        if isinstance(prototype, tuple):
+            return tuple(finalize(y_acc, y_prototype)
+                         for y_acc, y_prototype in zip(accumulator, prototype))
+        elif isinstance(prototype, list):
+            return accumulator
+        elif isinstance(prototype, np.ndarray) and final_len is not None:
+            return accumulator
+        elif isinstance(prototype, np.ndarray):
+            return np.concatenate(accumulator, axis=0)
+        elif sparse.isspmatrix(prototype):
+            return sparse.vstack(accumulator).asformat(prototype.format)
+        else:
+            raise NotImplementedError('No finalizing for accumulation of %s'
+                                      % type(prototype))
+
+    it = iter(it)
+    try:
+        first = next(it)
+    except StopIteration:
+        raise ValueError('Require at least one output from the iterator')
+
+    accumulator = make_accumulator(first)
+    offset = 0
+    offset = accumulate(first, accumulator, first)
+    for x in it:
+        offset += accumulate(x, accumulator, first)
+
+    if final_len is not None:
+        assert offset == final_len, 'Expected %d, got %d' % (final_len, offset)
+
+    return finalize(accumulator, first)
 
 
 def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
@@ -1182,11 +1285,88 @@ def _generate_pairwise_distances_blockwise(X, Y=None, metric='euclidean',
         yield pairwise_distances(X[start:stop], Y, metric, n_jobs, **kwds)
 
 
-def pairwise_distances_reduce(X, Y=None, metric='euclidean', reduce_func=None,
+def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
                               n_jobs=1, block_size=DEFAULT_BLOCK_SIZE, **kwds):
+    """Compute the distance matrix from a vector array X and optional Y.
 
-    return [reduce_func(dist=D) for D in pairwise_distances_blockwise(X,
-            Y, metric, n_jobs, block_size, **kwds)]
+    This method takes either a vector array or a distance matrix, and a
+    reducing function to reduce each block of the distance matrix produced,
+    as per the block_size parameter. If the input is a vector array, the
+    distances are computed. If the input is a distances matrix, it is reduced
+    in size and returned instead.
+
+    This is equivalent to calling:
+
+        pairwise_distances(X, y, metric, n_jobs)
+
+    but should use less memory.
+
+    Parameters
+    ----------
+    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or,
+        [n_samples_a, n_features] otherwise
+        Array of pairwise distances between samples, or a feature array.
+
+    Y : array [n_samples_b, n_features], optional
+        An optional second feature array. Only allowed if
+        metric != "precomputed".
+
+    reduce_func : function, callable
+        The function which is applied on each block of the distance matrix
+        reducing its size. It reduces the size of each block from
+        [n_block_samples, n_samples_a] or [n_block_samples, n_samples] to
+        [n_block_samples, n_reduced] where n_block_samples is the number of
+        samples in each block and n_reduced depends on the reduce_func defined
+        by the user.
+
+    metric : string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+        If metric is "precomputed", X is assumed to be a distance matrix.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+    n_jobs : int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debugging. For n_jobs below -1,
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
+    block_size : int, default=64
+        The maximum number of mebibytes (MiB) of memory per job (see``n_jobs``)
+        to use at a time for calculating pairwise distances.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+        If using a scipy.spatial.distance metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
+
+    Returns
+    -------
+    D : array [n_samples_a, n_reduced]
+        A distance matrix D such that D_{i, j} is the distance between the
+        ith and jth vectors of the given matrix X, if Y is None.
+        If Y is not None, then D_{i, j} is the distance between the ith array
+        from X and the jth array from Y. Here n_reduced depends on the
+        reduce_func.
+
+    """
+
+    if not reduce_func:
+        raise ValueError("'reduce_func' needs to be passed as an argument.")
+
+    reduced_distances = [reduce_func(dist=D) for D in
+                         pairwise_distances_blockwise(X, Y, metric, n_jobs,
+                                                      block_size, **kwds)]
+    return flexible_concatenate(reduced_distances)
 
 
 def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,

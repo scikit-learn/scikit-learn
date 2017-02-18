@@ -268,6 +268,22 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
+    def _kneighbors_reduce_func(self, dist, n_neighbors, return_distance):
+        sample_range = np.arange(dist.shape[0])[:, None]
+        neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
+        neigh_ind = neigh_ind[:, :n_neighbors]
+        # argpartition doesn't guarantee sorted order, so we sort again
+        neigh_ind = neigh_ind[
+            sample_range, np.argsort(dist[sample_range, neigh_ind])]
+        if return_distance:
+            if self.effective_metric_ == 'euclidean':
+                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+            else:
+                result = dist[sample_range, neigh_ind], neigh_ind
+        else:
+            result = neigh_ind
+        return result
+
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
         Returns indices of and distances to the neighbors of each point.
@@ -364,13 +380,6 @@ class KNeighborsMixin(object):
                     reduce_func=reduce_func, block_size=1,
                     **self.effective_metric_params_)
 
-            if return_distance:
-                result = np.hstack(result)
-                dist, neigh_ind = result[0], result[1].astype(np.int)
-                result = dist, neigh_ind
-            else:
-                result = np.vstack(result)
-
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -417,22 +426,6 @@ class KNeighborsMixin(object):
                     dist[sample_mask], (n_samples, n_neighbors - 1))
                 return dist, neigh_ind
             return neigh_ind
-
-    def _kneighbors_reduce_func(self, dist, n_neighbors, return_distance):
-        sample_range = np.arange(dist.shape[0])[:, None]
-        neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
-        neigh_ind = neigh_ind[:, :n_neighbors]
-        # argpartition doesn't guarantee sorted order, so we sort again
-        neigh_ind = neigh_ind[
-            sample_range, np.argsort(dist[sample_range, neigh_ind])]
-        if return_distance:
-            if self.effective_metric_ == 'euclidean':
-                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
-            else:
-                result = dist[sample_range, neigh_ind], neigh_ind
-        else:
-            result = neigh_ind
-        return result
 
     def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
@@ -638,8 +631,6 @@ class RadiusNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=self.n_jobs,
                     reduce_func=reduce_func, block_size=1,
                     **self.effective_metric_params_)
-
-            results = np.hstack(results)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
