@@ -2070,7 +2070,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         else:
             self.transformed_features_ = np.copy(self.transformed_features)
             if self.transformed_features_.dtype == np.bool:
-                self.transformed_features_ = np.where(self.transformed_features_)[0]
+                self.transformed_features_ = \
+                    np.where(self.transformed_features_)[0]
         if any(np.any(X[:, self.transformed_features_] <= 0, axis=0)):
             raise ValueError("BoxCox transform can only be applied "
                              "on positive data")
@@ -2099,7 +2100,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
                              "on positive data")
         if X.shape[1] != self.n_features_:
             raise ValueError("X has a different shape than during fitting.")
-        X_tr = _transform_selected(X, self._transform, self.transformed_features_,
+        X_tr = _transform_selected(X, self._transform,
+                                   self.transformed_features_,
                                    copy=False, order=True)
         return X_tr
 
@@ -2122,8 +2124,16 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         -------
         X_inv : array-like, shape (n_samples, n_features)
             The original data.
+
+        Notes
+        -----
+        The inverse Box-Cox transform is given by::
+
+        y = log(x * lmbda + 1.) / lmbda,  for lmbda > 0
+            exp(x),                       for lmbda = 0
+
         """
-        
+
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
         if X.shape[1] != self.n_features_:
             raise ValueError("X has a different shape than during fitting.")
@@ -2133,6 +2143,17 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         return X_inv
 
     def _inverse_transform(self, X):
-        for i in range(len(self.transformed_features_)):
-            X[:, i] = special.inv_boxcox(X[:, i], self.lambdas_[i])    
-        return X
+        X_inv = X.copy()
+
+        mask = self.lambdas_ != 0
+        mask_lambdas = self.lambdas_[mask]
+        Xinv_mask = X_inv[:, mask]
+        Xinv_mask *= mask_lambdas
+        np.log1p(Xinv_mask, out=Xinv_mask)
+        Xinv_mask /= mask_lambdas
+        np.exp(Xinv_mask, out=Xinv_mask)
+        X_inv[:, mask] = Xinv_mask
+
+        mask = self.lambdas_ == 0
+        X_inv[:, mask] = np.exp(X_inv[:, mask])
+        return X_inv

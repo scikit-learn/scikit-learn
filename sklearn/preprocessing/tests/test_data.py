@@ -1689,7 +1689,7 @@ def test_boxcox_transformer():
     assert_true(np.min(X_tr[:, 1]) > 0.)
     X_or = bct.inverse_transform(X_tr)
     assert_array_almost_equal(X_or, X, 10)
-    
+
     bct.set_params(transformed_features=np.array([False, True]))
     bct.fit(X)
     assert_true(len(bct.lambdas_), 1)
