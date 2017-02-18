@@ -89,8 +89,7 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo'],
-                                variable_name='y').shape[1]
+            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
                     for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")

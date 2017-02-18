@@ -44,7 +44,7 @@ def trace_dot(X, Y):
 
 
 def _check_init(A, shape, whom):
-    A = check_array(A, variable_name='A')
+    A = check_array(A, variable_name=whom)
     if np.shape(A) != shape:
         raise ValueError('Array with wrong shape passed to %s. Expected %s, '
                          'but got %s ' % (whom, shape, np.shape(A)))

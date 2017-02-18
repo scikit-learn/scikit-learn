@@ -34,7 +34,7 @@ def _check_weights(weights, n_components):
     weights : array, shape (n_components,)
     """
     weights = check_array(weights, dtype=[np.float64, np.float32],
-                          ensure_2d=False, variable_name='weights')
+                          ensure_2d=False, variable_name='weights_init')
     _check_shape(weights, (n_components,), 'weights')
 
     # check range
@@ -70,7 +70,7 @@ def _check_means(means, n_components, n_features):
     means : array, (n_components, n_features)
     """
     means = check_array(means, dtype=[np.float64, np.float32], ensure_2d=False,
-                        variable_name='means')
+                        variable_name='means_init')
     _check_shape(means, (n_components, n_features), 'means')
     return means
 
@@ -122,7 +122,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
     precisions = check_array(precisions, dtype=[np.float64, np.float32],
                              ensure_2d=False,
                              allow_nd=covariance_type == 'full',
-                             variable_name='precisions')
+                             variable_name='precisions_init')
 
     precisions_shape = {'full': (n_components, n_features, n_features),
                         'tied': (n_features, n_features),

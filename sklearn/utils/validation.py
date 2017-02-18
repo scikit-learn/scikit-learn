@@ -218,7 +218,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         Whether to raise an error on np.inf and np.nan in X.
 
     variable_name : str (default='X')
-        placeholder for the variable name in error messages.
+        Placeholder for the variable name in error messages.
 
     Returns
     -------
@@ -336,7 +336,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         If passed, include the name of the estimator in warning messages.
 
     variable_name : str (default='X')
-        placeholder for the variable name in error messages.
+        Placeholder for the variable name in error messages.
 
     Returns
     -------
