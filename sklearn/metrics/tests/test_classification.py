@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils.version import parse_version
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score

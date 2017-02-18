@@ -26,6 +26,7 @@ from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from ..exceptions import NonBLASDotWarning
+from .version import parse_version
 
 
 def norm(x):

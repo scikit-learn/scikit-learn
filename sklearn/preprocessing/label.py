@@ -19,7 +19,7 @@ from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
 from ..utils.fixes import astype
 from ..utils.fixes import in1d
-from ..utils import column_or_1d
+from ..utils import column_or_1d, parse_version
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _num_samples

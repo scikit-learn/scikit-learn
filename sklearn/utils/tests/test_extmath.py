@@ -36,6 +36,7 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.version import parse_version
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
