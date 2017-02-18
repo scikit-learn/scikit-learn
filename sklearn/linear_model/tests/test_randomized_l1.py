@@ -100,6 +100,9 @@ def test_randomized_logistic():
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(np.argsort(F), np.argsort(feature_scores))
 
+    clf = RandomizedLogisticRegression(verbose=False, C=[[1., 0.5]])
+    assert_raises(ValueError, clf.fit, X, y)
+
 
 def test_randomized_logistic_sparse():
     # Check randomized sparse logistic regression on sparse data
