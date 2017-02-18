@@ -40,7 +40,7 @@ def norm(x):
 
 
 # Newer NumPy has a ravel that needs less copying.
-if np_version < (1, 7, 1):
+if np_version < parse_version('1.7.1'):
     _ravel = np.ravel
 else:
     _ravel = partial(np.ravel, order='K')
@@ -131,7 +131,7 @@ def _have_blas_gemm():
 
 
 # Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
-if np_version < (1, 7, 2) and _have_blas_gemm():
+if np_version < parse_version('1.7.2') and _have_blas_gemm():
     def fast_dot(A, B):
         """Compute fast dot products directly calling BLAS.
 
@@ -860,7 +860,7 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         Absolute tolerance, see ``np.allclose``
     """
     # sum is as unstable as cumsum for numpy < 1.9
-    if np_version < (1, 9):
+    if np_version < parse_version('1.9'):
         return np.cumsum(arr, axis=axis, dtype=np.float64)
 
     out = np.cumsum(arr, axis=axis, dtype=np.float64)

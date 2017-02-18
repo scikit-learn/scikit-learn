@@ -274,7 +274,7 @@ def parallel_helper(obj, methodname, *args, **kwargs):
     return getattr(obj, methodname)(*args, **kwargs)
 
 
-if np_version < (1, 6, 2):
+if np_version < parse_version('1.6.2'):
     # Allow bincount to accept empty arrays
     # https://github.com/numpy/numpy/commit/40f0844846a9d7665616b142407a3d74cb65a040
     def bincount(x, weights=None, minlength=None):
@@ -312,7 +312,7 @@ else:
                 raise
 
 
-if np_version < (1, 8, 1):
+if np_version < parse_version('1.8.1'):
     def array_equal(a1, a2):
         # copy-paste from numpy 1.8.1
         try:
@@ -362,7 +362,7 @@ else:
     from scipy.stats import rankdata
 
 
-if np_version < (1, 12):
+if np_version < parse_version('1.12'):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
         # This fix is needed to make our model_selection.GridSearchCV
