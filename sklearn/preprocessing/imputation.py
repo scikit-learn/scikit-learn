@@ -401,6 +401,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         The features with missing values.
         Note that this is only stored if features == 'train
 
+    n_features_ : int
+        The number of features during fit time.
+
     Example
     -------
     >>> from sklearn.preprocessing import MissingIndicator
@@ -432,7 +435,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self.features = features
         self.sparse = sparse
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the transformer on X.
 
         Parameters
@@ -459,8 +462,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("sparse can only use be boolean or 'auto'"
                              " got {0}".format(self.sparse))
 
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64,
-                        force_all_finite=False)
+        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64)
+        self.n_features_ = X.shape[1]
 
         if self.features == "train":
             _, self.feat_with_missing_ = self._get_missing_features_info(X)
@@ -484,14 +487,16 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         if self.features == "train":
             check_is_fitted(self, "feat_with_missing_")
 
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64,
-                        force_all_finite=False)
+        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64)
+        if X.shape[1] != self.n_features_:
+            raise ValueError("X has a different shape than during fitting.")
+
         imputer_mask, feat_with_missing = self._get_missing_features_info(X)
 
         if self.features == "train":
             features = np.setdiff1d(feat_with_missing,
                                     self.feat_with_missing_)
-            if features.size:
+            if features.size > 0:
                 warnings.warn("The features %s have missing values "
                               "in transform but have no missing values "
                               "in fit " % features, RuntimeWarning,
