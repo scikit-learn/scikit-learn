@@ -1154,7 +1154,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     length_scale_bounds : pair of floats >= 0 or the string "fixed", default: (1e-5, 1e5)
         The lower and upper bound on length_scale. This should be set to "fixed" 
-        If the length scale is fixed or does not change during training.
+        if the length scale is fixed or does not change during training.
 
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
