@@ -538,12 +538,13 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, optional (default: 1000)
-        The learning rate can be a critical parameter. It should be
-        between 100 and 1000. If the cost function increases during initial
-        optimization, the early exaggeration factor or the learning rate
-        might be too high. If the cost function gets stuck in a bad local
-        minimum increasing the learning rate helps sometimes.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers. If the cost function gets stuck in a bad local
+        minimum increasing the learning rate may help.
 
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
@@ -652,7 +653,7 @@ class TSNE(BaseEstimator):
     """
 
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
+                 early_exaggeration=4.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
