@@ -1361,9 +1361,9 @@ def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
     """
 
     if not reduce_func:
-        raise ValueError("'reduce_func' needs to be passed as an argument.")
+        raise ValueError("reduce_func needs to be passed as an argument.")
 
-    reduced_distances = [reduce_func(dist=D) for D in
+    reduced_distances = [reduce_func(D) for D in
                          pairwise_distances_blockwise(X, Y, metric, n_jobs,
                                                       block_size, **kwds)]
     return flexible_concatenate(reduced_distances)

@@ -29,6 +29,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_distances_blockwise
+from sklearn.metrics.pairwise import pairwise_distances_reduce
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
@@ -370,6 +371,28 @@ def test_pairwise_distances_argmin_min():
         X, Y, axis=0, metric="manhattan", batch_size=50)
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+
+
+def test_pairwise_distances_reduce_invalid_reduce_func():
+    X = np.empty((400, 4))
+    y = np.empty((200, 4))
+    assert_raise_message(ValueError, 'reduce_func needs to be passed as an '
+                         'argument', pairwise_distances_reduce, X, y,
+                         block_size=0, metric='euclidean')
+
+
+def _reduce_func(dist):
+    return dist[:, :100]
+
+
+def test_pairwise_distances_reduce():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((400, 4))
+    # Reduced Euclidean distance
+    S = pairwise_distances(X)[:, :100]
+    S2 = pairwise_distances_reduce(X, None, reduce_func=_reduce_func,
+                                   block_size=1)
+    assert_array_almost_equal(S, S2)
 
 
 def test_pairwise_distances_blockwise_invalid_block_size():

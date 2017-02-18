@@ -372,12 +372,13 @@ class KNeighborsMixin(object):
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 result = pairwise_distances_reduce(
-                    X, self._fit_X, 'euclidean', n_jobs=n_jobs,
-                    reduce_func=reduce_func, block_size=1, squared=True)
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric='euclidean', n_jobs=n_jobs,
+                    block_size=1, squared=True)
             else:
                 result = pairwise_distances_reduce(
-                    X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
-                    reduce_func=reduce_func, block_size=1,
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric=self.effective_metric_, n_jobs=n_jobs, block_size=1,
                     **self.effective_metric_params_)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
@@ -620,17 +621,18 @@ class RadiusNeighborsMixin(object):
                                       return_distance=return_distance)
 
                 results = pairwise_distances_reduce(
-                    X, self._fit_X, 'euclidean', n_jobs=self.n_jobs,
-                    reduce_func=reduce_func, block_size=1, squared=True)
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric='euclidean', n_jobs=self.n_jobs, block_size=1,
+                    squared=True)
             else:
                 reduce_func = partial(self._radius_neighbors_reduce_func,
                                       radius=radius,
                                       return_distance=return_distance)
 
                 results = pairwise_distances_reduce(
-                    X, self._fit_X, self.effective_metric_, n_jobs=self.n_jobs,
-                    reduce_func=reduce_func, block_size=1,
-                    **self.effective_metric_params_)
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric=self.effective_metric_, n_jobs=self.n_jobs,
+                    block_size=1, **self.effective_metric_params_)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
