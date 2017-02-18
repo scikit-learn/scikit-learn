@@ -1225,7 +1225,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                                           self.include_bias)
         for i, c in enumerate(combinations):
             if issparse(X):
-                if X[:, c].shape[1] == 0:
+                if not X[:, c].size:
                     XP[:, i] = np.ones(X.shape[0])
                 else:
                     cols, rows, values = sparse.find(X[:, c].T)
