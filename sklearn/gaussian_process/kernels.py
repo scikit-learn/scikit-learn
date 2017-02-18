@@ -44,6 +44,19 @@ def _check_length_scale(X, length_scale):
     return length_scale
 
 
+def _check_offset(X, c):
+    c = np.squeeze(c).astype(float)
+    if np.ndim(c) > 1:
+        raise ValueError("c cannot be of dimension greater than 1")
+    if np.ndim(c) == 1 and length_scale.shape[0] == 1:
+        c = np.array([c[0]] * X.shape[1], dtype=float)
+    if np.ndim(c) == 1 and X.shape[1] != c.shape[0]:
+        raise ValueError("LinearKernel must have the same number of "
+                         "dimensions as data (%d!=%d)"
+                         % (c.shape[0], X.shape[1]))
+    return c
+
+
 class Hyperparameter(namedtuple('Hyperparameter',
                                 ('name', 'value_type', 'bounds',
                                  'n_elements', 'fixed'))):
@@ -1621,11 +1634,12 @@ class LinearKernel(Kernel):
 
     The Linear kernel is non-stationary and can be obtained from Bayesian
     linear regression by putting N(0, \sigma_v^2) priors on the coefficients of
-    x_d (d = 1, . . . , D) and a prior of N(0, \sigma_b^2) on the bias. It is
-    parameterized by parameters sigma_v and sigma_0. The parameters of the
-    Linear kernel are about specifying the origin. The kernel is given by:
+    x_d (d = 1, . . . , D) and a prior of N(0, \sigma_b^2) on the bias, with
+    the origin being shifted by c. It is parameterized by parameters sigma_v,
+    sigma_0 and c. The parameters of the Linear kernel are about specifying the
+    origin. The kernel is given by:
 
-    k(x_i, x_j) = sigma_b ^ 2 + sigma_v ^ 2 * (x_i \cdot x_j)
+    k(x_i, x_j) = sigma_b ^ 2 + sigma_v ^ 2 * ((x_i - c) \cdot (x_j - c))
 
     The Linear kernel can be combined with other kernels, more commonly with
     periodic kernels.
@@ -1638,20 +1652,35 @@ class LinearKernel(Kernel):
     sigma_v : float >= 0, default: 1.0
         Parameter adding an uncertainty offset to the kernel.
 
+    c : float or array with shape (n_features,), default: 0.0
+        The offset for the origin. If a float, the same offset is used
+        throughout all dimensions. If an array, each dimension of c defines the
+        offset of the respective feature dimension.
+
     sigma_b_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on sigma_b
 
     sigma_v_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on sigma_v
 
+    c_bounds : pair of floats >= 0, default: (1e-5, 1e5)
+        The lower and upper bound on c
+
     """
 
-    def __init__(self, sigma_b=1.0, sigma_v=1.0, sigma_b_bounds=(1e-5, 1e5),
-                 sigma_v_bounds=(1e-5, 1e5)):
+    def __init__(self, sigma_b=1.0, sigma_v=1.0, c=0.0,
+                 sigma_b_bounds=(1e-5, 1e5), sigma_v_bounds=(1e-5, 1e5),
+                 c_bounds=(1e-5, 1e5)):
         self.sigma_b = sigma_b
         self.sigma_v = sigma_v
+        self.c = c
         self.sigma_b_bounds = sigma_b_bounds
         self.sigma_v_bounds = sigma_v_bounds
+        self.c_bounds = c_bounds
+
+    @property
+    def non_uniform_offset(self):
+        return np.iterable(self.c) and len(self.c) > 1
 
     @property
     def hyperparameter_sigma_b(self):
@@ -1660,6 +1689,13 @@ class LinearKernel(Kernel):
     @property
     def hyperparameter_sigma_v(self):
         return Hyperparameter("sigma_v", "numeric", self.sigma_v_bounds)
+
+    @property
+    def hyperparameter_c(self):
+        if self.non_uniform_offset:
+            return Hyperparameter("c", "numeric", self.c_bounds, len(self.c))
+        else:
+            return Hyperparameter("c", "numeric", self.c_bounds)
 
     def __call__(self, X, Y=None, eval_gradient=False):
         """Return the kernel k(X, Y) and optionally its gradient.
@@ -1688,13 +1724,16 @@ class LinearKernel(Kernel):
             is True.
         """
         X = np.atleast_2d(X)
+        self.c = _check_offset(X, self.c)
         if Y is None:
-            K = (self.sigma_v ** 2) * np.inner(X, X) + (self.sigma_b ** 2)
+            K = (self.sigma_v ** 2) * np.inner(X - self.c, X - self.c) + \
+                self.sigma_b ** 2
         else:
             if eval_gradient:
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
-            K = (self.sigma_v ** 2) * np.inner(X, Y) + (self.sigma_b ** 2)
+            K = (self.sigma_v ** 2) * np.inner(X - self.c, Y - self.c) + \
+                self.sigma_b ** 2
 
         if eval_gradient:
             # gradient with respect to sigma_b
@@ -1709,7 +1748,15 @@ class LinearKernel(Kernel):
                 sigma_v_gradient = sigma_v_gradient[:, :, np.newaxis]
             else:
                 sigma_v_gradient = np.empty((X.shape[0], X.shape[0], 0))
-            return K, np.dstack((sigma_b_gradient, sigma_v_gradient))
+            # gradient with respect to c
+            if self.hyperparameter_c.fixed:
+                c_gradient = np.empty((X.shape[0], X.shape[0], 0))
+            else:
+                c_gradient = - 2 * self.sigma_v ** 2 * \
+                     np.inner(np.ones(X.shape), X - self.c) * self.c
+                c_gradient = c_gradient[:, :, np.newaxis]
+            return K, np.dstack((sigma_b_gradient, sigma_v_gradient,
+                                 c_gradient))
         else:
             return K
 
@@ -1730,16 +1777,16 @@ class LinearKernel(Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return (self.sigma_v ** 2) * np.einsum('ij,ij->i', X, X) + \
-            self.sigma_b ** 2
+        return (self.sigma_v ** 2) * \
+            np.einsum('ij,ij->i', X - self.c, X - self.c) + self.sigma_b ** 2
 
     def is_stationary(self):
         """Returns whether the kernel is stationary."""
         return False
 
     def __repr__(self):
-        return "{0}(sigma_b={1:.3g}, sigma_v={2:.3g})".format(
-            self.__class__.__name__, self.sigma_b, self.sigma_v)
+        return "{0}(sigma_b={1:.3g}, sigma_v={2:.3g}, c={3:.3g})".format(
+            self.__class__.__name__, self.sigma_b, self.sigma_v, self.c)
 
 
 class DotProduct(Kernel):
