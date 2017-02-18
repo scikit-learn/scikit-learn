@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import assert_dictionary_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
@@ -608,7 +609,7 @@ avg / total       0.51      0.53      0.47        75
 avg / total       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
-    assert_equal(report, expected_report)
+    assert_dictionary_equal(report, expected_report)
 
 
 def test_classification_report_dictionary_output():

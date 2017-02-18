@@ -375,6 +375,23 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
                              (names, function.__name__))
 
 
+def assert_dictionary_equal(dict1,dict2):
+    """Helper function to test if two dictionaries are equal.
+
+    Parameters
+    ----------
+    dict1 : The first dictionary to be compared.
+
+    dict2 : The second dictionary used for comparison.
+    """
+    for key,v1 in dict1.iteritems():
+        if key not in dict2.keys():
+            raise ValueError('%s not present in %s'%(key,dict2))
+
+        v2 = dict2[key]
+        assert_equal(v1,v2)
+
+
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
 
