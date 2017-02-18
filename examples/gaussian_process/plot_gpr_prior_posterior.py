@@ -67,7 +67,7 @@ for fig_index, kernel in enumerate(kernels):
 
     y_samples = gp.sample_y(X_[:, np.newaxis], 10)
     plt.plot(X_, y_samples, lw=1)
-    plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
+    plt.scatter(X[:, 0], y, c='r', s=50, zorder=10, edgecolors=(0, 0, 0))
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
     plt.title("Posterior (kernel: %s)\n Log-Likelihood: %.3f"
