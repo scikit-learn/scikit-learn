@@ -341,7 +341,7 @@ application of Occam's razor: *prefer simpler models*.
     solves the lasso regression problem using a
     `coordinate descent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
-    provides the :class:`LassoLars` object using the *LARS* algorthm,
+    provides the :class:`LassoLars` object using the *LARS* algorithm,
     which is very efficient for problems in which the weight vector estimated
     is very sparse (i.e. problems with very few observations).
 
