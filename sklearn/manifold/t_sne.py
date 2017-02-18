@@ -297,7 +297,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
                       n_iter_check=1, n_iter_without_progress=50,
-                      momentum=0.5, learning_rate=1000.0, min_gain=0.01,
+                      momentum=0.5, learning_rate=200.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
     """Batch gradient descent with momentum and individual gains.
@@ -336,9 +336,12 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 1000.0)
-        The learning rate should be extremely high for t-SNE! Values in the
-        range [100.0, 1000.0] are common.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers.
 
     min_gain : float, optional (default: 0.01)
         Minimum individual gain for each parameter.
