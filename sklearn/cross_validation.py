@@ -1159,7 +1159,8 @@ class PredefinedSplit(_PartitionIterator):
     def __init__(self, test_fold):
         super(PredefinedSplit, self).__init__(len(test_fold))
         self.test_fold = np.array(test_fold, dtype=np.int)
-        self.test_fold = column_or_1d(self.test_fold)
+        self.test_fold = column_or_1d(self.test_fold,
+                                      variable_name='test_fold')
         self.unique_folds = np.unique(self.test_fold)
         self.unique_folds = self.unique_folds[self.unique_folds != -1]
 

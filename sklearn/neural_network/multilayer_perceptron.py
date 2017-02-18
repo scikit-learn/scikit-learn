@@ -902,7 +902,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
-            y = column_or_1d(y, warn=True)
+            y = column_or_1d(y, warn=True, variable_name='y')
 
         if not incremental:
             self._label_binarizer = LabelBinarizer()
@@ -1290,5 +1290,5 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          multi_output=True, y_numeric=True)
         if y.ndim == 2 and y.shape[1] == 1:
-            y = column_or_1d(y, warn=True)
+            y = column_or_1d(y, warn=True, variable_name='y')
         return X, y

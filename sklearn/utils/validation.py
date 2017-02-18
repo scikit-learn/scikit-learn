@@ -529,7 +529,7 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
                         dtype=None, variable_name='y')
     else:
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, warn=True, variable_name='y')
         _assert_all_finite(y)
     if y_numeric and y.dtype.kind == 'O':
         y = y.astype(np.float64)
@@ -539,7 +539,7 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
     return X, y
 
 
-def column_or_1d(y, warn=False):
+def column_or_1d(y, warn=False, variable_name='y'):
     """ Ravel column or 1d numpy array, else raises an error
 
     Parameters
@@ -548,6 +548,9 @@ def column_or_1d(y, warn=False):
 
     warn : boolean, default False
        To control display of warnings.
+
+    variable_name : str (default='y')
+        Placeholder for the variable name in warnings.
 
     Returns
     -------
@@ -559,9 +562,10 @@ def column_or_1d(y, warn=False):
         return np.ravel(y)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
-            warnings.warn("A column-vector y was passed when a 1d array was"
-                          " expected. Please change the shape of y to "
-                          "(n_samples, ), for example using ravel().",
+            warnings.warn("A column-vector %(v)s was passed when a 1d array "
+                          "was expected. Please change the shape of %(v)s to "
+                          "(n_samples, ), for example using ravel()."
+                          % {'v': variable_name},
                           DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 

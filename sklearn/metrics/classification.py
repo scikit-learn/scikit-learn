@@ -89,8 +89,8 @@ def _check_targets(y_true, y_pred):
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
-        y_true = column_or_1d(y_true)
-        y_pred = column_or_1d(y_pred)
+        y_true = column_or_1d(y_true, variable_name='y_true')
+        y_pred = column_or_1d(y_pred, variable_name='y_pred')
 
     if y_type.startswith('multilabel'):
         y_true = csr_matrix(y_true)
@@ -1759,7 +1759,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
-    y_true = column_or_1d(y_true)
+    y_true = column_or_1d(y_true, variable_name='y_true')
     y_true_unique = np.unique(y_true)
     if y_true_unique.size > 2:
         if (labels is None and pred_decision.ndim > 1 and
@@ -1781,7 +1781,8 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
         # Handles binary class case
         # this code assumes that positive and negative labels
         # are encoded as +1 and -1 respectively
-        pred_decision = column_or_1d(pred_decision)
+        pred_decision = column_or_1d(pred_decision,
+                                     variable_name='pred_decision')
         pred_decision = np.ravel(pred_decision)
 
         lbin = LabelBinarizer(neg_label=-1)
@@ -1883,8 +1884,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     .. [1] `Wikipedia entry for the Brier score.
             <https://en.wikipedia.org/wiki/Brier_score>`_
     """
-    y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
+    y_true = column_or_1d(y_true, variable_name='y_true')
+    y_prob = column_or_1d(y_prob, variable_name='y_prob')
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
 

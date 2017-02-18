@@ -531,7 +531,8 @@ def r2_score(y_true, y_pred, sample_weight=None,
         y_true, y_pred, multioutput)
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
+        sample_weight = column_or_1d(sample_weight,
+                                     variable_name='sample_weight')
         weight = sample_weight[:, np.newaxis]
     else:
         weight = 1.

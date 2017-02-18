@@ -109,7 +109,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, warn=True, variable_name='y')
         _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
         return self
@@ -126,7 +126,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, warn=True, variable_name='y')
         _check_numpy_unicode_bug(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         return y
@@ -144,7 +144,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, warn=True, variable_name='y')
 
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
@@ -518,7 +518,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
                          "found in the data".format(classes, unique_labels(y)))
 
     if y_type in ("binary", "multiclass"):
-        y = column_or_1d(y)
+        y = column_or_1d(y, variable_name='y')
 
         # pick out the known labels from y
         y_in_classes = in1d(y, classes)

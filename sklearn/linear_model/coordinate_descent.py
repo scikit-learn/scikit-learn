@@ -1065,7 +1065,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
                                  "MultiTask%sCV" % (model_str))
-            y = column_or_1d(y, warn=True)
+            y = column_or_1d(y, warn=True, variable_name='y')
         else:
             if sparse.isspmatrix(X):
                 raise TypeError("X should be dense but a sparse matrix was"

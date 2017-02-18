@@ -416,8 +416,8 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     ----------
     Platt, "Probabilistic Outputs for Support Vector Machines"
     """
-    df = column_or_1d(df)
-    y = column_or_1d(y)
+    df = column_or_1d(df, variable_name='X')
+    y = column_or_1d(y, variable_name='y')
 
     F = df  # F follows Platt's notations
     tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
@@ -486,8 +486,8 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         self : object
             Returns an instance of self.
         """
-        X = column_or_1d(X)
-        y = column_or_1d(y)
+        X = column_or_1d(X, variable_name='X')
+        y = column_or_1d(y, variable_name='y')
         X, y = indexable(X, y)
 
         self.a_, self.b_ = _sigmoid_calibration(X, y, sample_weight)
@@ -506,7 +506,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         T_ : array, shape (n_samples,)
             The predicted data.
         """
-        T = column_or_1d(T)
+        T = column_or_1d(T, variable_name='T')
         return 1. / (1. + np.exp(self.a_ * T + self.b_))
 
 
@@ -546,8 +546,8 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
     International Conference on Machine Learning (ICML).
     See section 4 (Qualitative Analysis of Predictions).
     """
-    y_true = column_or_1d(y_true)
-    y_prob = column_or_1d(y_prob)
+    y_true = column_or_1d(y_true, variable_name='y_true')
+    y_prob = column_or_1d(y_prob, variable_name='y_prob')
 
     if normalize:  # Normalize predicted values into interval [0, 1]
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
