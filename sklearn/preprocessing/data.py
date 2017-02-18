@@ -1225,7 +1225,13 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                                           self.include_bias)
         for i, c in enumerate(combinations):
             if issparse(X):
-                XP[:, i] = X[:, c].toarray().prod(1)
+                if X[:, c].shape[1] == 0:
+                    XP[:, i] = np.ones(X.shape[0])
+                else:
+                    cols, rows, values = sparse.find(X[:, c].T)
+                    unique_rows, indptr = np.unique(rows, return_index=True)
+                    XP[:, i] = np.zeros(X.shape[0], dtype=X.dtype)
+                    XP[unique_rows, i] = np.multiply.reduceat(values, indptr)
             else:
                 XP[:, i] = X[:, c].prod(1)
 
