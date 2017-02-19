@@ -597,7 +597,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         check_is_fitted(self, 'scale_')
@@ -767,7 +767,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         check_is_fitted(self, 'scale_')
@@ -975,7 +975,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         if self.with_centering:
@@ -1225,7 +1225,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
@@ -1402,7 +1402,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         copy = copy if copy is not None else self.copy
@@ -1519,7 +1519,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         copy = copy if copy is not None else self.copy
@@ -1573,7 +1573,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         check_is_fitted(self, 'K_fit_all_')

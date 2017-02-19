@@ -293,7 +293,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
         if self.sparse:
             return self._transform(X, fitting=False)

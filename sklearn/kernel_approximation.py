@@ -101,7 +101,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         check_is_fitted(self, 'random_weights_')
@@ -194,7 +194,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         check_is_fitted(self, 'random_weights_')
@@ -298,7 +298,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"

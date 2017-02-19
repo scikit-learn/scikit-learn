@@ -404,7 +404,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         X = check_array(X, accept_sparse=['csr', 'csc'])

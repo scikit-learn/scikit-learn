@@ -7,7 +7,7 @@ from __future__ import print_function
 import time
 import sys
 import itertools
-import warnings
+import war
 
 from math import sqrt, ceil
 
@@ -812,7 +812,7 @@ class SparseCodingMixin(TransformerMixin):
         """
         if y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
 
         check_is_fitted(self, 'components_')
