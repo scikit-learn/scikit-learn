@@ -67,12 +67,12 @@ class NoTrans(NoFit):
 
 
 class NoInvTransf(NoTrans):
-    def transform(self, X):
+    def transform(self, X, y='deprecated'):
         return X
 
 
 class Transf(NoInvTransf):
-    def transform(self, X):
+    def transform(self, X, y='deprecated'):
         return X
 
     def inverse_transform(self, X):

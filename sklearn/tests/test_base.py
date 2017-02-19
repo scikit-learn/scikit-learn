@@ -300,7 +300,7 @@ def test_clone_pandas_dataframe():
         def fit(self, X, y=None):
             pass
 
-        def transform(self, X):
+        def transform(self, X, y='deprecated'):
             pass
 
     # build and clone estimator
