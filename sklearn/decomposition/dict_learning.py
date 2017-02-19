@@ -7,7 +7,7 @@ from __future__ import print_function
 import time
 import sys
 import itertools
-import war
+import warnings
 
 from math import sqrt, ceil
 

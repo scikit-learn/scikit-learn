@@ -98,7 +98,6 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
             Returns the instance itself.
         """
 
-
     def transform(self, X, y='deprecated'):
         """Apply dimensionality reduction to X.
 
