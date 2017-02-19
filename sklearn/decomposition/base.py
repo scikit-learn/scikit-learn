@@ -96,7 +96,6 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
             Returns the instance itself.
         """
 
-
     def transform(self, X):
         """Apply dimensionality reduction to X.
 

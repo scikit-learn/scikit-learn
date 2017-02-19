@@ -404,7 +404,6 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         X_new : numpy array or scipy sparse of shape [n_samples, n_components]
             Projected array.
-
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
