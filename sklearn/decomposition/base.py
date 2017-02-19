@@ -8,6 +8,7 @@
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -98,7 +99,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         """
 
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply dimensionality reduction to X.
 
         X is projected on the first principal components previously extracted
@@ -125,6 +126,11 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         IncrementalPCA(batch_size=3, copy=True, n_components=2, whiten=False)
         >>> ipca.transform(X) # doctest: +SKIP
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)
 
         X = check_array(X)

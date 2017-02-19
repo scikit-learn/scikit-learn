@@ -569,7 +569,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         reduced_distance += self._subcluster_norms
         return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """
         Transform X into subcluster centroids dimension.
 
@@ -586,6 +586,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
         check_is_fitted(self, 'subcluster_centers_')
         return euclidean_distances(X, self.subcluster_centers_)
 

@@ -8,7 +8,9 @@ Independent Component Analysis, by  Hyvarinen et al.
 # Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
 #          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
 # License: BSD 3 clause
+
 import warnings
+
 import numpy as np
 from scipy import linalg
 
@@ -523,7 +525,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self._fit(X, compute_sources=False)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, y='deprecated', copy=True):
         """Recover the sources from X (apply the unmixing matrix).
 
         Parameters
@@ -539,6 +541,11 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)

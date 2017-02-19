@@ -85,7 +85,11 @@ class ProjectionToHashMixin(object):
         self.fit(X)
         return self.transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 

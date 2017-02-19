@@ -86,7 +86,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
                                                    size=self.n_components)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply the approximate feature map to X.
 
         Parameters
@@ -99,6 +99,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'random_weights_')
 
         X = check_array(X, accept_sparse='csr')
@@ -174,7 +179,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
                                                    size=self.n_components)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply the approximate feature map to X.
 
         Parameters
@@ -187,6 +192,11 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'random_weights_')
 
         X = as_float_array(X, copy=True)
@@ -272,7 +282,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             self.sample_interval_ = self.sample_interval
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply approximate feature map to X.
 
         Parameters
@@ -286,6 +296,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
         check_is_fitted(self, "sample_interval_", msg=msg)

@@ -386,7 +386,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Project the data by using matrix product with the random matrix
 
         Parameters
@@ -402,6 +402,11 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             Projected array.
 
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         check_is_fitted(self, 'components_')

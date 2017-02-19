@@ -13,6 +13,7 @@ build feature vectors from text documents.
 """
 from __future__ import unicode_literals
 
+import warnings
 import array
 from collections import Mapping, defaultdict
 import numbers
@@ -460,7 +461,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self._get_hasher().fit(X, y=y)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Transform a sequence of documents to a document-term matrix.
 
         Parameters
@@ -478,6 +479,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Document-term matrix.
 
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         if isinstance(X, six.string_types):
             raise ValueError(
                 "Iterable over raw text documents expected, "

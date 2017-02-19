@@ -7,6 +7,7 @@ from __future__ import print_function
 import time
 import sys
 import itertools
+import warnings
 
 from math import sqrt, ceil
 
@@ -791,7 +792,7 @@ class SparseCodingMixin(TransformerMixin):
         self.split_sign = split_sign
         self.n_jobs = n_jobs
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Encode the data as a sparse combination of the dictionary atoms.
 
         Coding method is determined by the object parameter
@@ -809,6 +810,11 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
+        if y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. ",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'components_')
 
         # XXX : kwargs is not documented
