@@ -66,7 +66,7 @@ for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'k'),
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
         ax.fill_between(X_axis, sample_score_mean - sample_score_std,
                         sample_score_mean + sample_score_std,
-                        alpha=0.3 if sample == 'test' else 0, color=color)
+                        alpha=0.1 if sample == 'test' else 0, color=color)
         ax.plot(X_axis, sample_score_mean, style, color=color,
                 alpha=1 if sample == 'test' else 0.7,
                 label="%s (%s)" % (scorer, sample))
