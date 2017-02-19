@@ -23,7 +23,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         n_bins[i] will be ignored.
 
     categorical_features : int array-like (default=None)
-        Column indexes of categorical features. Categorical features
+        Column indices of categorical features. Categorical features
         will not be discretized and will be ignored by the transformation.
 
     Attributes
@@ -87,21 +87,37 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if X.ndim == 1:
             raise ValueError("Reshape your data.")
 
-        self._check_categorical_features(self.categorical_features, X.shape[1])
-
         n_features = X.shape[1]
+        self._check_categorical_features(self.categorical_features, X.shape[1])
+        self._check_n_bins(self.n_bins, n_features)
 
-        if isinstance(self.n_bins, numbers.Number) and self.n_bins < 2:
-            raise ValueError("Discretizer received an invalid number "
-                             "of bins. Received {0}, expected at least 2."
-                             .format(self.n_bins))
-        else:
-            check_array(self.n_bins, dtype=int)
-
+        self.n_features_ = n_features
         self.mins_ = np.min(X, axis=0)
         self.maxes_ = np.max(X, axis=0)
-        self.n_features_ = n_features
         return self
+
+    @staticmethod
+    def _check_n_bins(n_bins, n_features):
+        if isinstance(n_bins, numbers.Number):
+            if n_bins < 2:
+                raise ValueError("Discretizer received an invalid number "
+                                 "of bins. Received {0}, expected at least 2."
+                                 .format(n_bins))
+            return
+
+        n_bins = check_array(n_bins, dtype=int, ensure_2d=False)
+
+        if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
+            raise ValueError("n_bins must be a scalar or array "
+                             "of shape (n_features_,).")
+
+        violating_indices = np.arange(n_features)[n_bins < 2]
+        if len(violating_indices) > 0:
+            indices = ", ".join(str(i) for i in violating_indices)
+            raise ValueError("Discretizer received an invalid number "
+                             "of bins at indices {}. Number of bins "
+                             "must be at least 2."
+                             .format(indices))
 
     @staticmethod
     def _check_categorical_features(cat_features, n_features):
@@ -112,7 +128,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         cat_features = column_or_1d(cat_features)
 
         if len(set(cat_features)) != cat_features.shape[0]:
-            raise ValueError("Duplicate categorical column indexes found.")
+            raise ValueError("Duplicate categorical column indices found.")
 
         if np.all(cat_features >= 0) and np.all(cat_features < n_features):
             return
@@ -153,7 +169,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         same_min_max = np.arange(self.n_features_)[self.maxes_ == self.mins_]
         if len(same_min_max) != 0:
             import warnings
-            warnings.warn("Fitted X contained continuous features at indexes "
+            warnings.warn("Fitted X contained continuous features at indices "
                           "{}. These features will be discretized to the "
                           "same value."
                           .format(", ".join(str(i) for i in same_min_max)))
@@ -169,7 +185,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if isinstance(self.n_bins, numbers.Number):
             n_bins = np.ones(self.n_features_) * self.n_bins
         else:
-            n_bins = self.n_bins.copy()
+            n_bins = check_array(self.n_bins, dtype=int, ensure_2d=False,
+                                 copy=True)
         n_bins[ignored_features] = 1
 
         X_t = (X - mins) * n_bins // (maxes - mins)
@@ -181,7 +198,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         clip_min[numeric_features] = 0
 
         clip_max = np.repeat(np.inf, self.n_features_)
-        clip_max[numeric_features] = self.n_bins - 1
+        clip_max[numeric_features] = n_bins[numeric_features] - 1
 
         np.clip(X_t, clip_min, clip_max, out=X_t)
 

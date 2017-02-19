@@ -30,6 +30,28 @@ def test_invalid_n_bins():
     assert_raises(ValueError, dis.fit_transform, X)
 
 
+def test_invalid_n_bins_array():
+
+    # Bad shape
+    n_bins = np.ones((2, 4)) * 2
+    dis = KBinsDiscretizer(n_bins=n_bins)
+    assert_raises(ValueError, dis.fit_transform, X)
+
+    # Bad values
+    n_bins = [1, 2, 2, 2]
+    dis = KBinsDiscretizer(n_bins=n_bins)
+    assert_raises(ValueError, dis.fit_transform, X)
+
+
+def test_fit_transform_n_bins_array():
+    dis = KBinsDiscretizer(n_bins=[2, 3, 3, 3]).fit(X)
+    expected = [[0, 0, 0, 0],
+                [0, 1, 1, 0],
+                [1, 2, 2, 1],
+                [1, 2, 2, 2]]
+    assert_array_equal(expected, dis.transform(X))
+
+
 def test_invalid_n_features():
     dis = KBinsDiscretizer(n_bins=3).fit(X)
     bad_X = np.arange(25).reshape(5, -1)
