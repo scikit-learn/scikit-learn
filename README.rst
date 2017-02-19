@@ -158,7 +158,7 @@ Communication
 ~~~~~~~~~~~~~
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
-- IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
+- IRC channel: ``#scikit-learn`` at ``webchat.freenode.net``
 - Stack Overflow: http://stackoverflow.com/questions/tagged/scikit-learn
 - Website: http://scikit-learn.org
 
