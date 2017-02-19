@@ -45,6 +45,8 @@ def clone(estimator, safe=True):
     """
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
+    if isinstance(estimator, _FrozenMixin):
+        return estimator
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params'):
@@ -523,3 +525,59 @@ def is_classifier(estimator):
 def is_regressor(estimator):
     """Returns True if the given estimator is (probably) a regressor."""
     return getattr(estimator, "_estimator_type", None) == "regressor"
+
+
+class _FrozenMixin():
+    def fit(self, *args, **kwargs):
+        return self
+
+    @property
+    def fit_transform(self):
+        transform = self.transform
+
+        def _transform(*args, **kwargs):
+            return transform(args[0])
+
+        return _transform
+
+
+class _FreezeRestorer(object):
+    def __init__(self, constructor, cls):
+        self.constructor = constructor
+        self.cls = cls
+
+    def __call__(self, *args, **kwargs):
+        obj = self.constructor(*args, **kwargs)
+        obj.__class__ = _frozen_type(self.cls)
+        return obj
+
+
+def _frozen_type(cls):
+    class MyClass(_FrozenMixin, cls):
+        def __reduce__(self):
+            frozen_cls = type(self)
+            self.__class__ = cls
+            reduction = frozen_cls.__reduce__(self)
+            self.__class__ = frozen_cls
+            return (_FreezeRestorer(reduction[0], cls),) + reduction[1:]
+
+    MyClass.__name__ = '_Frozen' + cls.__name__
+    return MyClass
+
+
+def freeze(estimator):
+    """Copies estimator and freezes it
+
+    Frozen estimators:
+        * have ``fit(self, *args, **kwargs)`` merely return ``self``
+        * have ``fit_transform`` merely perform ``transform``
+
+    Parameters
+    ----------
+    estimator : estimator
+    """
+    cls = type(estimator)
+    estimator = copy.deepcopy(estimator)
+    frozen_cls = _frozen_type(cls)
+    estimator.__class__ = frozen_cls
+    return estimator
