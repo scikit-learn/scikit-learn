@@ -128,8 +128,8 @@ def test_kd_tree_kde(n_samples=100, n_features=3):
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
                     for breadth_first in (True, False):
-                        yield (check_results, kernel, h, atol, rtol,
-                               breadth_first)
+                        check_results(kernel, h, atol, rtol,
+                                      breadth_first)
 
 
 def test_gaussian_kde(n_samples=1000):

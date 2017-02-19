@@ -8,9 +8,10 @@ import unittest
 import copy
 import sys
 
+import pytest
+
 import numpy as np
-from numpy.testing import (assert_array_equal, assert_array_almost_equal,
-                           assert_raises)
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
@@ -157,12 +158,12 @@ def test_GMM_attributes():
     covars = (0.1 + 2 * rng.rand(n_components, n_features)) ** 2
     g.covars_ = covars
     assert_array_almost_equal(g.covars_, covars)
-    assert_raises(ValueError, g._set_covars, [])
-    assert_raises(ValueError, g._set_covars,
-                  np.zeros((n_components - 2, n_features)))
-
-    assert_raises(ValueError, mixture.GMM, n_components=20,
-                  covariance_type='badcovariance_type')
+    with pytest.raises(ValueError):
+        g._set_covars([])
+    with pytest.raises(ValueError):
+        g._set_covars( np.zeros((n_components - 2, n_features)))
+    with pytest.raises(ValueError):
+        mixture.GMM( n_components=20, covariance_type='badcovariance_type')
 
 
 class GMMTester():

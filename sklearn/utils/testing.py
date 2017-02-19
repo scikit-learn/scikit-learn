@@ -46,8 +46,13 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 
-from nose.tools import raises
-from nose import with_setup
+import pytest
+
+
+def raises(exception):
+    return pytest.mark.xfail(raises=exception)
+
+
 
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
@@ -61,7 +66,7 @@ from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
 from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "raises", "with_setup", "assert_true",
+           "assert_raises_regexp", "raises", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
@@ -74,7 +79,13 @@ assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
 assert_true = _dummy.assertTrue
 assert_false = _dummy.assertFalse
-assert_raises = _dummy.assertRaises
+
+
+def assert_raises(exception, fct, *args, **kwargs):
+    with pytest.raises(exception):
+        return fct(*args, **kwargs)
+
+
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
 assert_in = _dummy.assertIn
@@ -673,15 +684,15 @@ def clean_warning_registry():
             getattr(mod, reg).clear()
 
 
-def check_skip_network():
-    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
-        raise SkipTest("Text tutorial requires large dataset download")
+# def check_skip_network():
+    # if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
+        # raise SkipTest("Text tutorial requires large dataset download")
 
 
-def check_skip_travis():
-    """Skip test if being run on Travis."""
-    if os.environ.get('TRAVIS') == "true":
-        raise SkipTest("This test needs to be skipped on Travis")
+# def check_skip_travis():
+    # """Skip test if being run on Travis."""
+    # if os.environ.get('TRAVIS') == "true":
+        # raise SkipTest("This test needs to be skipped on Travis")
 
 
 def _delete_folder(folder_path, warn=False):
@@ -716,8 +727,8 @@ class TempMemmap(object):
         _delete_folder(self.temp_folder)
 
 
-with_network = with_setup(check_skip_network)
-with_travis = with_setup(check_skip_travis)
+with_network = pytest.mark.skipif(int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)), reason="skip_network tests")
+with_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true', reason='skip on travis')
 
 
 class _named_check(object):

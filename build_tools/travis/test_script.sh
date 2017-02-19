@@ -34,9 +34,9 @@ run_tests() {
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
     if [[ "$COVERAGE" == "true" ]]; then
-        nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
+        py.test -s --cov=sklearn --durations=20  $OLDPWD/sklearn
     else
-        nosetests -s --with-timer --timer-top-n 20 sklearn
+        py.test -s --durations=20 $OLDPWD/sklearn
     fi
 
     # Test doc

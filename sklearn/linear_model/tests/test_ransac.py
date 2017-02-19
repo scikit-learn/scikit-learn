@@ -3,7 +3,8 @@ from scipy import sparse
 import numpy as np
 from scipy import sparse
 
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_equal
+from sklearn.utils.testing import assert_raises
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 

@@ -1,5 +1,6 @@
 import pickle
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
                                          simultaneous_sort, kernel_norm,
@@ -60,9 +61,7 @@ def test_ball_tree_query():
         for k in (1, 3, 5):
             for dualtree in (True, False):
                 for breadth_first in (True, False):
-                    yield (check_neighbors,
-                           dualtree, breadth_first,
-                           k, metric, kwargs)
+                    check_neighbors(dualtree, breadth_first, k, metric, kwargs)
 
 
 def test_ball_tree_query_boolean_metrics():
@@ -78,7 +77,7 @@ def test_ball_tree_query_boolean_metrics():
         assert_array_almost_equal(dist1, dist2)
 
     for metric in BOOLEAN_METRICS:
-        yield check_neighbors, metric
+        check_neighbors(metric)
 
 
 def test_ball_tree_query_discrete_metrics():
@@ -94,7 +93,7 @@ def test_ball_tree_query_discrete_metrics():
         assert_array_almost_equal(dist1, dist2)
 
     for metric in DISCRETE_METRICS:
-        yield check_neighbors, metric
+        check_neighbors(metric)
 
 
 def test_ball_tree_query_radius(n_samples=100, n_features=10):
@@ -156,29 +155,26 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
-def test_ball_tree_kde(n_samples=100, n_features=3):
+@pytest.mark.parametrize("kernel", ['gaussian', 'tophat', 'epanechnikov',
+                                    'exponential', 'linear', 'cosine'])
+@pytest.mark.parametrize("h", [0.01, 0.1, 1])
+@pytest.mark.parametrize("rtol", [0, 1E-5])
+@pytest.mark.parametrize("atol", [1E-6, 1E-2])
+@pytest.mark.parametrize("breadth_first", [True, False])
+def test_ball_tree_kde(kernel, h, rtol, atol, breadth_first, n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
     Y = np.random.random((n_samples, n_features))
     bt = BallTree(X, leaf_size=10)
 
-    for kernel in ['gaussian', 'tophat', 'epanechnikov',
-                   'exponential', 'linear', 'cosine']:
-        for h in [0.01, 0.1, 1]:
-            dens_true = compute_kernel_slow(Y, X, kernel, h)
+    dens_true = compute_kernel_slow(Y, X, kernel, h)
 
-            def check_results(kernel, h, atol, rtol, breadth_first):
-                dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
-                                         kernel=kernel,
-                                         breadth_first=breadth_first)
-                assert_allclose(dens, dens_true,
-                                atol=atol, rtol=max(rtol, 1e-7))
+    dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
+                             kernel=kernel,
+                             breadth_first=breadth_first)
+    assert_allclose(dens, dens_true,
+                    atol=atol, rtol=max(rtol, 1e-7))
 
-            for rtol in [0, 1E-5]:
-                for atol in [1E-6, 1E-2]:
-                    for breadth_first in (True, False):
-                        yield (check_results, kernel, h, atol, rtol,
-                               breadth_first)
 
 
 def test_gaussian_kde(n_samples=1000):
@@ -217,7 +213,7 @@ def test_ball_tree_two_point(n_samples=100, n_features=3):
         assert_array_almost_equal(counts, counts_true)
 
     for dualtree in (True, False):
-        yield check_two_point, r, dualtree
+        check_two_point(r, dualtree)
 
 
 def test_ball_tree_pickle():
@@ -248,7 +244,7 @@ def test_ball_tree_pickle():
         assert_array_almost_equal(dist1_pyfunc, dist2_pyfunc)
 
     for protocol in (0, 1, 2):
-        yield check_pickle_protocol, protocol
+        check_pickle_protocol(protocol)
 
 
 def test_neighbors_heap(n_pts=5, n_nbrs=10):

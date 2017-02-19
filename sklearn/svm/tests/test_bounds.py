@@ -35,7 +35,7 @@ def test_l1_min_c():
                     check.description = ('Test l1_min_c loss=%r %s %s %s' %
                                          (loss, X_label, Y_label,
                                           intercept_label))
-                    yield check
+                    check()
 
     # loss='l2' should raise ValueError
     assert_raise_message(ValueError, "loss type not in",

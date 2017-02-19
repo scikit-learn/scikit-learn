@@ -7,6 +7,7 @@ from functools import partial
 from itertools import product
 import struct
 
+import pytest
 import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
@@ -695,14 +696,14 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
                 name, est.min_weight_fraction_leaf))
 
 
-def test_min_weight_fraction_leaf():
-    # Check on dense input
-    for name in ALL_TREES:
-        yield check_min_weight_fraction_leaf, name, "iris"
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_min_weight_fraction_leaf_on_dense_input(name):
+    check_min_weight_fraction_leaf(name, "iris")
 
-    # Check on sparse input
-    for name in SPARSE_TREES:
-        yield check_min_weight_fraction_leaf, name, "multilabel", True
+
+@pytest.mark.parametrize("name", SPARSE_TREES)
+def test_min_weight_fraction_leaf_on_sparse_input(name):
+    check_min_weight_fraction_leaf(name, "multilabel", True)
 
 
 def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
@@ -769,16 +770,14 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                                           est.min_samples_leaf))
 
 
-def test_min_weight_fraction_leaf_with_min_samples_leaf():
-    # Check on dense input
-    for name in ALL_TREES:
-        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
-               name, "iris")
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_min_weight_fraction_leaf_with_min_samples_leaf_on_dense_input(name):
+    check_min_weight_fraction_leaf_with_min_samples_leaf(name, "iris")
 
-    # Check on sparse input
-    for name in SPARSE_TREES:
-        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
-               name, "multilabel", True)
+
+@pytest.mark.parametrize("name", SPARSE_TREES)
+def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
+    check_min_weight_fraction_leaf_with_min_samples_leaf(name, "multilabel", True)
 
 
 def test_min_impurity_split():
@@ -1107,9 +1106,9 @@ def check_class_weights(name):
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
-def test_class_weights():
-    for name in CLF_TREES:
-        yield check_class_weights, name
+@pytest.mark.parametrize("name", CLF_TREES)
+def test_class_weights(name):
+    check_class_weights(name)
 
 
 def check_class_weight_errors(name):
@@ -1131,9 +1130,9 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
 
-def test_class_weight_errors():
-    for name in CLF_TREES:
-        yield check_class_weight_errors, name
+@pytest.mark.parametrize("name", CLF_TREES)
+def test_class_weight_errors(name):
+    check_class_weight_errors(name)
 
 
 def test_max_leaf_nodes():
@@ -1278,21 +1277,23 @@ def check_sparse_input(tree, dataset, max_depth=None):
                 assert_array_almost_equal(s.predict_log_proba(X_sparse_test),
                                           y_log_proba)
 
-
-def test_sparse_input():
-    for tree_type, dataset in product(SPARSE_TREES, ("clf_small", "toy",
+tree_type_dataset_combination = product(SPARSE_TREES, ("clf_small", "toy",
                                                      "digits", "multilabel",
                                                      "sparse-pos",
                                                      "sparse-neg",
-                                                     "sparse-mix", "zeros")):
-        max_depth = 3 if dataset == "digits" else None
-        yield (check_sparse_input, tree_type, dataset, max_depth)
+                                                     "sparse-mix", "zeros"))
+@pytest.mark.parametrize("tree_type, dataset", tree_type_dataset_combination)
+def test_sparse_input(tree_type, dataset):
+    max_depth = 3 if dataset == "digits" else None
+    check_sparse_input(tree_type, dataset, max_depth)
 
+
+@pytest.mark.parametrize("tree_type, dataset", product(SPARSE_TREES, ["boston", "reg_small"]))
+def test_sparse_input(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    for tree_type, dataset in product(SPARSE_TREES, ["boston", "reg_small"]):
-        if tree_type in REG_TREES:
-            yield (check_sparse_input, tree_type, dataset, 2)
+    if tree_type in REG_TREES:
+        check_sparse_input(tree_type, dataset, 2)
 
 
 def check_sparse_parameters(tree, dataset):
@@ -1339,11 +1340,12 @@ def check_sparse_parameters(tree, dataset):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
-def test_sparse_parameters():
-    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
-                                                     "sparse-neg",
-                                                     "sparse-mix", "zeros"]):
-        yield (check_sparse_parameters, tree_type, dataset)
+tree_type_dataset_combinations = product(SPARSE_TREES, ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
+
+
+@pytest.mark.parametrize("tree_type, dataset", tree_type_dataset_combinations)
+def test_sparse_parameters(tree_type, dataset):
+    check_sparse_parameters(tree_type, dataset)
 
 
 def check_sparse_criterion(tree, dataset):
@@ -1366,11 +1368,9 @@ def check_sparse_criterion(tree, dataset):
         assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
-def test_sparse_criterion():
-    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
-                                                     "sparse-neg",
-                                                     "sparse-mix", "zeros"]):
-        yield (check_sparse_criterion, tree_type, dataset)
+@pytest.mark.parametrize("tree_type, dataset", tree_type_dataset_combinations)
+def test_sparse_criterion(tree_type, dataset):
+    check_sparse_criterion(tree_type, dataset)
 
 
 def check_explicit_sparse_zeros(tree, max_depth=3,
@@ -1442,9 +1442,9 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
                                       d.predict_proba(X2))
 
 
-def test_explicit_sparse_zeros():
-    for tree_type in SPARSE_TREES:
-        yield (check_explicit_sparse_zeros, tree_type)
+@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+def test_explicit_sparse_zeros(tree_type):
+    check_explicit_sparse_zeros(tree_type)
 
 
 @ignore_warnings
@@ -1462,10 +1462,11 @@ def check_raise_error_on_1d_input(name):
     assert_raises(ValueError, est.predict, [X])
 
 
-@ignore_warnings
-def test_1d_input():
-    for name in ALL_TREES:
-        yield check_raise_error_on_1d_input, name
+# XXX
+# @ignore_warnings
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_1d_input(name):
+    check_raise_error_on_1d_input(name)
 
 
 def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
@@ -1492,9 +1493,9 @@ def check_min_weight_leaf_split_level(name):
                                            sample_weight)
 
 
-def test_min_weight_leaf_split_level():
-    for name in ALL_TREES:
-        yield check_min_weight_leaf_split_level, name
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_min_weight_leaf_split_level(name):
+    check_min_weight_leaf_split_level(name)
 
 
 def check_public_apply(name):
@@ -1515,12 +1516,14 @@ def check_public_apply_sparse(name):
                        est.tree_.apply(X_small32))
 
 
-def test_public_apply():
-    for name in ALL_TREES:
-        yield (check_public_apply, name)
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_public_apply_all_trees(name):
+    check_public_apply(name)
 
-    for name in SPARSE_TREES:
-        yield (check_public_apply_sparse, name)
+
+@pytest.mark.parametrize("name", SPARSE_TREES)
+def test_public_apply_all_trees(name):
+    check_public_apply_sparse(name)
 
 
 def check_presort_sparse(est, X, y):
@@ -1539,7 +1542,7 @@ def test_presort_sparse():
     y = y[:, 0]
 
     for est, sparse_matrix in product(ests, sparse_matrices):
-        yield check_presort_sparse, est, sparse_matrix(X), y
+        check_presort_sparse(est, sparse_matrix(X), y)
 
 
 def test_decision_path_hardcoded():
@@ -1578,9 +1581,9 @@ def check_decision_path(name):
     assert_less_equal(est.tree_.max_depth, max_depth)
 
 
-def test_decision_path():
-    for name in ALL_TREES:
-        yield (check_decision_path, name)
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_decision_path(name):
+    check_decision_path(name)
 
 
 def check_no_sparse_y_support(name):
@@ -1589,10 +1592,10 @@ def check_no_sparse_y_support(name):
     assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
 
 
-def test_no_sparse_y_support():
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_no_sparse_y_support(name):
     # Currently we don't support sparse y
-    for name in ALL_TREES:
-        yield (check_no_sparse_y_support, name)
+    check_no_sparse_y_support(name)
 
 
 def test_mae():

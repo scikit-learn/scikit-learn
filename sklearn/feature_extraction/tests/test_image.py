@@ -6,7 +6,7 @@ import numpy as np
 import scipy as sp
 from scipy import ndimage
 
-from numpy.testing import assert_raises
+from sklearn.utils.testing import assert_raises
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,

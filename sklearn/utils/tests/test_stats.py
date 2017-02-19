@@ -1,3 +1,4 @@
+import pytest
 from sklearn.utils.testing import assert_array_equal
 
 from sklearn.utils.stats import rankdata
@@ -13,11 +14,7 @@ _cases = (
 )
 
 
-def test_cases():
-
-    def check_case(values, method, expected):
-        r = rankdata(values, method=method)
-        assert_array_equal(r, expected)
-
-    for values, method, expected in _cases:
-        yield check_case, values, method, expected
+@pytest.mark.parametrize("values, method, expected", _cases)
+def test_cases_rankdata(values, method, expected):
+    r = rankdata(values, method=method)
+    assert_array_equal(r, expected)
