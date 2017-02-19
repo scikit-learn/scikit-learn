@@ -86,14 +86,24 @@ def flexible_concatenate(it, final_len=None):
     >>> M.format
     'csr'
     >>> M.A                          # doctest: +NORMALIZE_WHITESPACE
-    array([[1], [2], [3], [4], [5], [6]], dtype=int64)
+    array([[1],
+           [2],
+           [3],
+           [4],
+           [5],
+           [6]])
     >>> M = flexible_concatenate(make_example(
     ...     lambda x: sparse.csc_matrix(np.array(x).reshape(-1, 1))))
     ...     # doctest: +NORMALIZE_WHITESPACE
     >>> M.format
     'csc'
     >>> M.A                          # doctest: +NORMALIZE_WHITESPACE
-    array([[1], [2], [3], [4], [5], [6]], dtype=int64)
+    array([[1],
+           [2],
+           [3],
+           [4],
+           [5],
+           [6]])
     """
 
     def make_accumulator(prototype):
