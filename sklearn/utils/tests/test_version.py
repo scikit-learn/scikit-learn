@@ -4,7 +4,7 @@ from sklearn.utils.version import parse_version
 
 def test_pre_release():
     assert_true(parse_version('1.12b1') < parse_version('1.12'))
-    assert_true(parse_version('1.12.0b1') < parse_version('1, 12'))
+    assert_true(parse_version('1.12.0b1') < parse_version('1.12'))
 
 
 def test_cmp():

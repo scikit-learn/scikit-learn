@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import compute_class_weight
 from sklearn.utils.fixes import sp_version
+from sklearn.utils.version import parse_version
 
 from sklearn.linear_model.logistic import (
     LogisticRegression,

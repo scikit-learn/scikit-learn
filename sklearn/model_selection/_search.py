@@ -27,7 +27,7 @@ from ._validation import _fit_and_score
 from ..exceptions import NotFittedError
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..utils import check_random_state
+from ..utils import check_random_state, parse_version
 from ..utils.fixes import sp_version
 from ..utils.fixes import rankdata
 from ..utils.fixes import MaskedArray
