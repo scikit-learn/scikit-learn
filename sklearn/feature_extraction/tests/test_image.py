@@ -15,7 +15,7 @@ from sklearn.utils.graph import connected_components
 from sklearn.utils.testing import SkipTest, assert_equal, assert_true
 from sklearn.utils.fixes import sp_version
 
-if sp_version < (0, 12):
+if sp_version < parse_version('0.12'):
     raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
                    "thus does not include the scipy.misc.face() image.")
 

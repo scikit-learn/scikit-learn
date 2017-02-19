@@ -899,7 +899,7 @@ def test_max_iter():
 
     solvers = ['newton-cg', 'liblinear', 'sag']
     # old scipy doesn't have maxiter
-    if sp_version >= (0, 12):
+    if sp_version >= parse_version('0.12'):
         solvers.append('lbfgs')
 
     for max_iter in range(1, 5):
@@ -969,7 +969,7 @@ def test_warm_start():
 
     solvers = ['newton-cg', 'sag']
     # old scipy doesn't have maxiter
-    if sp_version >= (0, 12):
+    if sp_version >= parse_version('0.12'):
         solvers.append('lbfgs')
 
     for warm_start in [True, False]:
