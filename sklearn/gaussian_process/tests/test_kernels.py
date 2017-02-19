@@ -42,7 +42,8 @@ kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            ExpSineSquared(length_scale=0.5, periodicity=1.5),
            DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
            RBF(length_scale=[2.0]), Matern(length_scale=[2.0]),
-           LinearKernel(sigma_b=2.0, sigma_v=3.0, c=1.0)]
+           LinearKernel(sigma_b=2.0, sigma_v=3.0, c=1.0),
+           LinearKernel(sigma_b=2.0, sigma_v=2.0, c=[2.0, 3.0])]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
@@ -107,7 +108,7 @@ def test_kernel_theta():
             assert_equal(theta.shape[0], new_kernel.theta.shape[0] + 1)
             assert_equal(K_gradient.shape[2], K_gradient_new.shape[2] + 1)
             if i > 0:
-                assert_equal(theta[:i], new_kernel.theta[:i])
+                assert_array_equal(theta[:i], new_kernel.theta[:i])
                 assert_array_equal(K_gradient[..., :i],
                                    K_gradient_new[..., :i])
             if i + 1 < len(kernel.hyperparameters):

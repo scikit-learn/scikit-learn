@@ -48,8 +48,6 @@ def _check_offset(X, c):
     c = np.squeeze(c).astype(float)
     if np.ndim(c) > 1:
         raise ValueError("c cannot be of dimension greater than 1")
-    if np.ndim(c) == 1 and length_scale.shape[0] == 1:
-        c = np.array([c[0]] * X.shape[1], dtype=float)
     if np.ndim(c) == 1 and X.shape[1] != c.shape[0]:
         raise ValueError("LinearKernel must have the same number of "
                          "dimensions as data (%d!=%d)"
@@ -1744,7 +1742,8 @@ class LinearKernel(Kernel):
                 sigma_b_gradient = np.empty((X.shape[0], X.shape[0], 0))
             # gradient with respect to sigma_v
             if not self.hyperparameter_sigma_v.fixed:
-                sigma_v_gradient = 2 * self.sigma_v ** 2 * np.inner(X, X)
+                sigma_v_gradient = 2 * self.sigma_v ** 2 * \
+                    np.inner(X - self.c, X - self.c)
                 sigma_v_gradient = sigma_v_gradient[:, :, np.newaxis]
             else:
                 sigma_v_gradient = np.empty((X.shape[0], X.shape[0], 0))
@@ -1752,11 +1751,18 @@ class LinearKernel(Kernel):
             if self.hyperparameter_c.fixed:
                 c_gradient = np.empty((X.shape[0], X.shape[0], 0))
             else:
-                c_gradient = - 2 * self.sigma_v ** 2 * \
-                     np.inner(np.ones(X.shape), X - self.c) * self.c
+                if not self.non_uniform_offset:
+                    c_gradient = - self.c * self.sigma_v ** 2 * \
+                        (np.inner(np.ones(X.shape), X - self.c) +
+                         np.inner(X - self.c, np.ones(X.shape)))
+                else:
+                    print(self.c)
+                    c_gradient = - self.c * self.sigma_v ** 2 * \
+                        (np.inner(np.ones(X.shape), X - self.c) +
+                         np.inner(X - self.c, np.ones(X.shape)))
                 c_gradient = c_gradient[:, :, np.newaxis]
-            return K, np.dstack((sigma_b_gradient, sigma_v_gradient,
-                                 c_gradient))
+            return K, np.dstack((c_gradient, sigma_b_gradient,
+                                 sigma_v_gradient))
         else:
             return K
 
