@@ -1752,15 +1752,18 @@ class LinearKernel(Kernel):
                 c_gradient = np.empty((X.shape[0], X.shape[0], 0))
             else:
                 if not self.non_uniform_offset:
+                    gradient_mat = np.inner(np.ones(X.shape), X - self.c)
                     c_gradient = - self.c * self.sigma_v ** 2 * \
-                        (np.inner(np.ones(X.shape), X - self.c) +
-                         np.inner(X - self.c, np.ones(X.shape)))
+                        (gradient_mat + gradient_mat.T)
+                    c_gradient = c_gradient[:, :, np.newaxis]
                 else:
-                    print(self.c)
-                    c_gradient = - self.c * self.sigma_v ** 2 * \
-                        (np.inner(np.ones(X.shape), X - self.c) +
-                         np.inner(X - self.c, np.ones(X.shape)))
-                c_gradient = c_gradient[:, :, np.newaxis]
+                    c_gradient = []
+                    for i, c in enumerate(self.c):
+                        gradient_mat = np.vstack(
+                            [(X - self.c)[:, i]] * X.shape[0])
+                        c_gradient.append(c * (gradient_mat + gradient_mat.T))
+                    c_gradient = - (self.sigma_v ** 2) * np.array(c_gradient)
+                    c_gradient = np.rollaxis(c_gradient, 0, 3)
             return K, np.dstack((c_gradient, sigma_b_gradient,
                                  sigma_v_gradient))
         else:
@@ -1791,8 +1794,14 @@ class LinearKernel(Kernel):
         return False
 
     def __repr__(self):
-        return "{0}(sigma_b={1:.3g}, sigma_v={2:.3g}, c={3:.3g})".format(
-            self.__class__.__name__, self.sigma_b, self.sigma_v, self.c)
+        if self.non_uniform_offset:
+            return "{0}(sigma_b={1:.3g}, sigma_v={2:.3g}, c=[{3}])".format(
+                self.__class__.__name__, self.sigma_b, self.sigma_v,
+                ", ".join(map("{0:.3g}".format, self.c)))
+        else:
+            return "{0}(sigma_b={1:.3g}, sigma_v={2:.3g}, c={3:.3g})".format(
+                self.__class__.__name__, self.sigma_b, self.sigma_v,
+                np.ravel(self.c)[0])
 
 
 class DotProduct(Kernel):
