@@ -1,7 +1,14 @@
+from __future__ import absolute_import
+
 import numpy as np
+import warnings
 
 from sklearn.preprocessing import KBinsDiscretizer
-from sklearn.utils.testing import assert_array_equal, assert_raises
+from sklearn.utils.testing import (
+    assert_array_equal,
+    assert_raises,
+    assert_warns
+)
 
 X = np.array([[-2, 1, -4, -1],
               [-1, 2, -3, -0.5],
@@ -9,23 +16,8 @@ X = np.array([[-2, 1, -4, -1],
               [1, 4, -1, 2]])
 
 
-def setup_discretizer():
-    dis = KBinsDiscretizer(n_bins=3)
-    return dis.fit(X)
-
-
-def test_cut_points():
-    dis = setup_discretizer()
-
-    expected = [[-1., 2., -3., 0.],
-                [0., 3., -2., 1.]]
-
-    assert_array_equal(expected, dis.cut_points_)
-
-
-def test_transform():
-    dis = setup_discretizer()
-
+def test_fit_transform():
+    dis = KBinsDiscretizer(n_bins=3).fit(X)
     expected = [[0, 0, 0, 0],
                 [1, 1, 1, 0],
                 [2, 2, 2, 1],
@@ -39,29 +31,14 @@ def test_invalid_n_bins():
 
 
 def test_invalid_n_features():
-    dis = setup_discretizer()
+    dis = KBinsDiscretizer(n_bins=3).fit(X)
     bad_X = np.arange(25).reshape(5, -1)
     assert_raises(ValueError, dis.transform, bad_X)
 
 
-def setup_discretizer_categorical():
-    categorical = [1]
-    dis = KBinsDiscretizer(n_bins=3, categorical_features=categorical)
-    return dis.fit(X)
-
-
-def test_categorical_cut_points():
-    dis = setup_discretizer_categorical()
-    expected = [[-1., np.nan, -3., 0.],
-                [0., np.nan, -2., 1.]]
-
-    assert_array_equal(expected, dis.cut_points_)
-
-
 def test_categorical_transform():
     # Feature at col_idx=1 should not change
-
-    dis = setup_discretizer_categorical()
+    dis = KBinsDiscretizer(n_bins=3, categorical_features=[1]).fit(X)
 
     expected = [[0., 1, 0., 0.],
                 [1., 2, 1., 0.],
@@ -87,9 +64,19 @@ def test_categorical_invalid():
 
 
 def test_min_max_same():
-    X = np.ones(4).reshape(-1, 1)
-    dis = KBinsDiscretizer(n_bins=2)
-    assert_raises(ValueError, dis.fit, X)
+    warnings.simplefilter("always")
+    X = np.array([[1, -2],
+                  [1, -1],
+                  [1, 0],
+                  [1, 1]])
+    dis = KBinsDiscretizer(n_bins=3).fit(X)
+    X_t = assert_warns(UserWarning, dis.transform, X)
+
+    expected = [[0, 0],
+                [0, 1],
+                [0, 2],
+                [0, 2]]
+    assert_array_equal(expected, X_t)
 
 
 def test_transform_1d_behavior():

@@ -1,9 +1,9 @@
 # Author: Henry Lin <hlin117@gmail.com>
 
-from __future__ import division
+from __future__ import division, absolute_import
 
+import numbers
 import numpy as np
-from ..externals.six.moves import xrange
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_array, check_is_fitted, column_or_1d
@@ -14,31 +14,28 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_bins : int (default=2)
+    n_bins : int or array-like, shape (n_features_,) (default=2)
         The number of bins to produce. The intervals for the bins are
         determined by the minimum and maximum of the input data.
         Raises ValueError if n_bins < 2.
 
+        If n_bins is an array, and there is a categorical feature at index i,
+        n_bins[i] will be ignored.
+
     categorical_features : int array-like (default=None)
         Column indexes of categorical features. Categorical features
-        will not be discretized, and will remain as is after the transform.
+        will not be discretized and will be ignored by the transformation.
 
     Attributes
     ----------
     mins_ : float array, shape (n_features_,)
-        Minimum value per feature in the input data.
+        Minimum value per feature in X.
 
     maxes_ : float array, shape (n_features_,)
-        Maximum value per feature in the input data.
+        Maximum value per feature in X.
 
     n_features_ : int
         Number of features in X.
-
-    cut_points_ : int array, shape (n_bins - 1, n_features_)
-        Each column of cut_points_ is a set of cut points which describe
-        how the values of the corresponding feature are binned. For a pair
-        of adjacent values in a column, a, b, values between [a, b) will
-        have the same discretization value.
 
     Example
     -------
@@ -49,10 +46,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     >>> dis = KBinsDiscretizer(n_bins=3)
     >>> dis.fit(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
-    >>> dis.cut_points_ # doctest: +NORMALIZE_WHITESPACE
-    array([[-1., 2., -3., 0.],
-           [ 0., 3., -2., 1.]])
-    >>> dis.transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> dis.transform(X) # doctest: +SKIP
     array([[0, 0, 0, 0],
            [1, 1, 1, 0],
            [2, 2, 2, 1],
@@ -64,14 +58,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     >>> dis.fit(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
 
-    For each feature mentioned as a categorical feature, this feature
-    will be represented as nan values in the discretizer's cut points.
-    >>> dis.cut_points_ # doctest: +NORMALIZE_WHITESPACE
-    array([[ -1., nan, -3., 0.],
-           [  0., nan, -2., 1.]])
-
-    The discretization process will not touch any column marked as categorical.
-    >>> dis.transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Discretization will ignore categorical features.
+    >>> dis.transform(X) # doctest: +SKIP
     array([[ 0., 1., 0., 0.],
            [ 1., 2., 1., 0.],
            [ 2., 3., 2., 1.],
@@ -82,47 +70,41 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.n_bins = n_bins
         self.categorical_features = categorical_features
 
-        # Attributes
-        self.mins_ = None
-        self.maxes_ = None
-        self.n_features_ = None
-        self.cut_points_ = None
-        self.categorical_features_set_ = None
-
     def fit(self, X, y=None):
         """Fits the estimator.
 
         Parameters
         ----------
         X : numeric array-like, shape (n_samples, n_features)
-            The input data containing features to be discretized. Indexes
-            of categorical features are indicated by categorical_features
-            from the constructor.
+            Data to be discretized.
 
         Returns
         -------
         self
         """
-
-        if self.n_bins < 2:
-            raise ValueError("Discretizer received an invalid number "
-                             "of bins. Received {0}, expected at least 2."
-                             .format(self.n_bins))
-
         X = check_array(X, dtype=float, ensure_2d=False)
 
         if X.ndim == 1:
-            raise ValueError("Input array must be 2D shape.")
+            raise ValueError("Reshape your data.")
 
         self._check_categorical_features(self.categorical_features, X.shape[1])
 
-        self._fit(X)
+        n_features = X.shape[1]
+
+        if isinstance(self.n_bins, numbers.Number) and self.n_bins < 2:
+            raise ValueError("Discretizer received an invalid number "
+                             "of bins. Received {0}, expected at least 2."
+                             .format(self.n_bins))
+        else:
+            check_array(self.n_bins, dtype=int)
+
+        self.mins_ = np.min(X, axis=0)
+        self.maxes_ = np.max(X, axis=0)
+        self.n_features_ = n_features
         return self
 
     @staticmethod
     def _check_categorical_features(cat_features, n_features):
-        """Only allow integer indices, or None.
-        """
         if cat_features is None:
             return
 
@@ -137,42 +119,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         raise ValueError("Invalid categorical feature index.")
 
-    def _cut_points_from_index(self, col_idx):
-        """Determines the cut points of a feature based on the column index.
-        """
-        n_bins = self.n_bins
-        if col_idx in self.categorical_features_set_:
-            return [np.nan] * (self.n_bins - 1)
-
-        _min = self.mins_[col_idx]
-        _max = self.maxes_[col_idx]
-        spacing = (_max - _min) / n_bins
-        return np.linspace(_min + spacing, _max - spacing, num=n_bins - 1)
-
-    def _fit(self, X):
-        """Fits the attributes of the discretizer.
-        """
-        n_features = X.shape[1]
-        if self.categorical_features:
-            self.categorical_features_set_ = set(self.categorical_features)
-        else:
-            self.categorical_features_set_ = {}
-
-        self.mins_ = np.min(X, axis=0)
-        self.maxes_ = np.max(X, axis=0)
-
-        if np.any(self.mins_ - self.maxes_ == 0):
-            raise ValueError("Array contained features which contained the "
-                             "same min and max values.")
-
-        cut_points = [self._cut_points_from_index(i)
-                      for i in xrange(n_features)]
-
-        self.cut_points_ = np.array(cut_points).T
-        self.n_features_ = n_features
-
     def transform(self, X, y=None):
-        """Discretizes the data. Leaves any categorical features as is.
+        """Discretizes the data, ignoring any categorical features.
 
         Parameters
         ----------
@@ -181,37 +129,61 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        T : numeric array-like, shape (n_samples, n_features)
-            Categorical features will not be transformed. If all features
-            are continuous, T will be an int array. Otherwise T will be
-            a float array.
-
+        T : float array-like, shape (n_samples, n_features)
+            Categorical features will not be transformed.
         """
-        check_is_fitted(self, ["mins_", "maxes_", "n_features_",
-                               "cut_points_"])
-
+        check_is_fitted(self, ["mins_", "maxes_", "n_features_"])
         X = check_array(X, dtype=float, ensure_2d=False)
 
         if X.ndim == 1:
-            raise ValueError("Input array must be 2D shape.")
+            raise ValueError("Reshape your data.")
 
         if X.shape[1] != self.n_features_:
             raise ValueError("Transformed array does not have correct number "
-                             "of features. Expecting {0}, received {1}."
+                             "of features. Expecting {}, received {}."
                              .format(self.n_features_, X.shape[1]))
 
-        return self._transform(X)
+        if self.categorical_features:
+            cat_features = np.asarray(sorted(self.categorical_features))
+        else:
+            cat_features = np.array([], dtype='int64')
 
-    def _transform_from_index(self, X, col_idx):
-        X_col = X[:, col_idx]
-        if col_idx in self.categorical_features_set_:
-            return X_col
-        return np.digitize(X_col, self.cut_points_[:, col_idx])
+        # Manipulate the input attributes so categorical features can be
+        # ignored in transformation process. Also avoid divide by zero errors.
+        same_min_max = np.arange(self.n_features_)[self.maxes_ == self.mins_]
+        if len(same_min_max) != 0:
+            import warnings
+            warnings.warn("Fitted X contained continuous features at indexes "
+                          "{}. These features will be discretized to the "
+                          "same value."
+                          .format(", ".join(str(i) for i in same_min_max)))
 
-    def _transform(self, X):
-        """Discretizes the continuous features into k integers.
-        """
-        discretized = [self._transform_from_index(X, col_idx)
-                       for col_idx in xrange(self.n_features_)]
+        ignored_features = np.concatenate((cat_features, same_min_max))
 
-        return np.array(discretized).T
+        mins = self.mins_.copy()
+        mins[ignored_features] = 0
+
+        maxes = self.maxes_.copy()
+        maxes[ignored_features] = 1
+
+        if isinstance(self.n_bins, numbers.Number):
+            n_bins = np.ones(self.n_features_) * self.n_bins
+        else:
+            n_bins = self.n_bins.copy()
+        n_bins[ignored_features] = 1
+
+        X_t = (X - mins) * n_bins // (maxes - mins)
+
+        # Need to make sure outliers are within boundary, but also make sure
+        # categorical features can be ignored.
+        numeric_features = np.delete(np.arange(self.n_features_), cat_features)
+        clip_min = np.repeat(-np.inf, self.n_features_)
+        clip_min[numeric_features] = 0
+
+        clip_max = np.repeat(np.inf, self.n_features_)
+        clip_max[numeric_features] = self.n_bins - 1
+
+        np.clip(X_t, clip_min, clip_max, out=X_t)
+
+        X_t[:, same_min_max] = 0
+        return X_t
