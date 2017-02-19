@@ -361,7 +361,7 @@ depends on a number of factors:
 * number of samples :math:`N` (i.e. ``n_samples``) and dimensionality
   :math:`D` (i.e. ``n_features``).
 
-  * *Brute force* query time grows as :math:`O[D N]`
+  * *Brute force* query time grows as :math:`O[D N^2]`
   * *Ball tree* query time grows as approximately :math:`O[D \log(N)]`
   * *KD tree* query time changes with :math:`D` in a way that is difficult
     to precisely characterise.  For small :math:`D` (less than 20 or so)
