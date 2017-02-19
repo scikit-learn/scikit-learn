@@ -480,6 +480,8 @@ and Misclassification
 
     H(X_m) = 1 - \max(p_{mk})
 
+where :math:`X_m` is the training data in node :math:`m`
+
 Regression criteria
 -------------------
 
@@ -493,6 +495,7 @@ criterion to minimise is the Mean Squared Error
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
 
+where :math:`X_m` is the training data in node :math:`m`
 
 .. topic:: References:
 
