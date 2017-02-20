@@ -24,20 +24,21 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
+def check_neighbors(dualtree, breadth_first, k, metric, X, Y, kwargs):
+    kdt = KDTree(X, leaf_size=1, metric=metric, **kwargs)
+    dist1, ind1 = kdt.query(Y, k, dualtree=dualtree,
+                            breadth_first=breadth_first)
+    dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
+
+    # don't check indices here: if there are any duplicate distances,
+    # the indices may not match.  Distances should not have this problem.
+    assert_array_almost_equal(dist1, dist2)
+
+
 def test_kd_tree_query():
     np.random.seed(0)
     X = np.random.random((40, DIMENSION))
     Y = np.random.random((10, DIMENSION))
-
-    def check_neighbors(dualtree, breadth_first, k, metric, kwargs):
-        kdt = KDTree(X, leaf_size=1, metric=metric, **kwargs)
-        dist1, ind1 = kdt.query(Y, k, dualtree=dualtree,
-                                breadth_first=breadth_first)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
-
-        # don't check indices here: if there are any duplicate distances,
-        # the indices may not match.  Distances should not have this problem.
-        assert_array_almost_equal(dist1, dist2)
 
     for (metric, kwargs) in METRICS.items():
         for k in (1, 3, 5):
@@ -45,7 +46,7 @@ def test_kd_tree_query():
                 for breadth_first in (True, False):
                     yield (check_neighbors,
                            dualtree, breadth_first,
-                           k, metric, kwargs)
+                           k, metric, X, Y, kwargs)
 
 
 def test_kd_tree_query_radius(n_samples=100, n_features=10):
@@ -107,6 +108,14 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
+def check_results(kernel, h, atol, rtol, breadth_first, Y, kdt, dens_true):
+    dens = kdt.kernel_density(Y, h, atol=atol, rtol=rtol,
+                              kernel=kernel,
+                              breadth_first=breadth_first)
+    assert_allclose(dens, dens_true, atol=atol,
+                    rtol=max(rtol, 1e-7))
+
+
 def test_kd_tree_kde(n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
@@ -118,18 +127,11 @@ def test_kd_tree_kde(n_samples=100, n_features=3):
         for h in [0.01, 0.1, 1]:
             dens_true = compute_kernel_slow(Y, X, kernel, h)
 
-            def check_results(kernel, h, atol, rtol, breadth_first):
-                dens = kdt.kernel_density(Y, h, atol=atol, rtol=rtol,
-                                          kernel=kernel,
-                                          breadth_first=breadth_first)
-                assert_allclose(dens, dens_true, atol=atol,
-                                rtol=max(rtol, 1e-7))
-
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
                     for breadth_first in (True, False):
                         yield (check_results, kernel, h, atol, rtol,
-                               breadth_first)
+                               breadth_first, Y, kdt, dens_true)
 
 
 def test_gaussian_kde(n_samples=1000):

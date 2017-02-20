@@ -51,13 +51,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
