@@ -40,22 +40,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X.max(axis=0) - X.min(axis=0). A categorical feature at index i will
         have ptp_[i] == 1.
 
-    clip_min_ : float array, shape (n_features_,)
-        Ensures that continuous features achieve a minimum value of 0 after
-        discretization. A categorical feature at index i will have
-        clip_min_[i] == -np.inf.
-
-    clip_max_ : float array, shape (n_features_,)
-        Ensures that continuous features achieve a maximum value of n_bins - 1
-        after discretization. A categorical feature at index i will have
-        clip_max_[i] == np.inf.
-
     n_bins_ : int array, shape (n_features_,)
         Number of bins per feature. A categorical feature at index i will
         have n_bins_[i] == 1.
-
-    n_features_ : int
-        Number of features in X.
 
     Example
     -------
@@ -110,7 +97,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         n_features = X.shape[1]
         self._check_categorical_features(self.categorical_features, X.shape[1])
         self._check_n_bins(self.n_bins, n_features)
-        self.n_features_ = n_features
 
         if self.categorical_features:
             self.categorical_features_ = np.asarray(self.categorical_features)
@@ -130,7 +116,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         # Set n_bins_ so categorical data can be ignored by transformation.
         if isinstance(self.n_bins, numbers.Number):
-            n_bins = np.ones(self.n_features_) * self.n_bins
+            n_bins = np.ones(n_features) * self.n_bins
         else:
             n_bins = check_array(self.n_bins, dtype=int, ensure_2d=False,
                                  copy=True)
@@ -140,16 +126,16 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         # Clipping features ensures outliers are within boundary after
         # transformation, but also ensures categorical features can be ignored.
-        numeric_features = np.delete(np.arange(self.n_features_),
+        numeric_features = np.delete(np.arange(n_features),
                                      self.categorical_features_)
-        clip_min = np.repeat(-np.inf, self.n_features_)
+        clip_min = np.repeat(-np.inf, n_features)
         clip_min[numeric_features] = 0
 
-        clip_max = np.repeat(np.inf, self.n_features_)
+        clip_max = np.repeat(np.inf, n_features)
         clip_max[numeric_features] = self.n_bins_[numeric_features] - 1
 
-        self.clip_min_ = clip_min
-        self.clip_max_ = clip_max
+        self._clip_min = clip_min
+        self._clip_max = clip_max
 
         same_min_max = np.where(self.ptp_ == 0)[0]
         if len(same_min_max) > 0:
@@ -213,20 +199,21 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         T : numeric array-like, shape (n_samples, n_features)
             Categorical features will not be transformed.
         """
-        check_is_fitted(self, ["min_", "ptp_", "clip_min_", "clip_max_"])
+        check_is_fitted(self, ["min_", "ptp_", "_clip_min", "_clip_max"])
         X = check_array(X, dtype=float, ensure_2d=False)
 
         if X.ndim == 1:
             raise ValueError("Reshape your data.")
 
-        if X.shape[1] != self.n_features_:
+        n_features = self.n_bins_.shape[0]
+        if X.shape[1] != n_features:
             raise ValueError("Transformed array does not have correct number "
                              "of features. Expecting {}, received {}."
-                             .format(self.n_features_, X.shape[1]))
+                             .format(n_features, X.shape[1]))
 
         with np.errstate(divide='ignore', invalid='ignore'):
             X_t = (X - self.min_) * self.n_bins_ // self.ptp_
             X_t[~np.isfinite(X_t)] = 0
 
-        np.clip(X_t, self.clip_min_, self.clip_max_, out=X_t)
+        np.clip(X_t, self._clip_min, self._clip_max, out=X_t)
         return X_t
