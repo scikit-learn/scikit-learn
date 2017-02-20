@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import sparse
 
+
 def flexible_vstack(it, final_len=None):
     """Helper that concatenates the elements of an iterable along axis=0.
 

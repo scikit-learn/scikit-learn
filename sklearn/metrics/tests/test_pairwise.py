@@ -401,7 +401,7 @@ def check_pairwise_distances_blockwise(X, Y, block_size, metric='euclidean'):
     gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
                                        metric=metric)
     blockwise_distances = list(gen)
-    min_block_mib = X.shape[0] * BYTES_PER_FLOAT * 2  ** -20
+    min_block_mib = X.shape[0] * BYTES_PER_FLOAT * 2 ** -20
     if block_size < min_block_mib:
         block_size = min_block_mib
 
@@ -417,8 +417,8 @@ def check_pairwise_distances_blockwise(X, Y, block_size, metric='euclidean'):
 def test_pairwise_distances_blockwise_invalid_block_size():
     X = np.empty((400, 4))
     y = np.empty((200, 4))
-    assert_warns_message(UserWarning, 'block_size should be at least n_samples '
-                         '* 8 bytes = 1 MiB, got 0',
+    assert_warns_message(UserWarning, 'block_size should be at least '
+                         'n_samples * 8 bytes = 1 MiB, got 0',
                          pairwise_distances_blockwise, X, y, block_size=0,
                          metric='euclidean')
     check_pairwise_distances_blockwise(X, y, block_size=0)

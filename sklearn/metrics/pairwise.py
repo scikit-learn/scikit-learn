@@ -14,7 +14,6 @@ from functools import partial
 import warnings
 
 import numpy as np
-from scipy import sparse
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -1261,12 +1260,13 @@ def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
     """
 
     if reduce_func is not None:
-        reduced_distances = (reduce_func(D) for D in \
+        reduced_distances = (reduce_func(D) for D in
                              pairwise_distances_blockwise(X, Y, metric, n_jobs,
                                                           block_size, **kwds))
         return flexible_vstack(reduced_distances)
     else:
         raise ValueError("reduce_func needs to be passed as an argument.")
+
 
 def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
                                  block_size=DEFAULT_BLOCK_SIZE, **kwds):
