@@ -194,7 +194,6 @@ def check_hyperparameters_equal(kernel1, kernel2):
 
 def test_kernel_clone():
     # Test that sklearn's clone works correctly on kernels.
-    bounds = (1e-5, 1e5)
     for kernel in kernels:
         kernel_cloned = clone(kernel)
 
@@ -209,12 +208,17 @@ def test_kernel_clone():
         # Check that all hyperparameters are equal.
         yield check_hyperparameters_equal, kernel, kernel_cloned
 
-        # This test is to verify that using set_params does not
-        # break clone on kernels.
-        # This used to break because in kernels such as the RBF, non-trivial
-        # logic that modified the length scale used to be in the constructor
-        # See https://github.com/scikit-learn/scikit-learn/issues/6961
-        # for more details.
+
+def test_kernel_clone_after_set_params():
+    # This test is to verify that using set_params does not
+    # break clone on kernels.
+    # This used to break because in kernels such as the RBF, non-trivial
+    # logic that modified the length scale used to be in the constructor
+    # See https://github.com/scikit-learn/scikit-learn/issues/6961
+    # for more details.
+    bounds = (1e-5, 1e5)
+    for kernel in kernels:
+        kernel_cloned = clone(kernel)
         params = kernel.get_params()
         # RationalQuadratic kernel is isotropic.
         isotropic_kernels = (ExpSineSquared, RationalQuadratic)
