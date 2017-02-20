@@ -80,7 +80,7 @@ following rules before you submit a pull request:
 -  Please prefix the title of your pull request with `[MRG]` (Ready for
    Merge), if the contribution is complete and ready for a detailed review.
    Two core developers will review your code and change the prefix of the pull
-   request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
+   request to `[MRG + 1]` and `[MRG + 2]` on approval, making it eligible
    for merging. An incomplete contribution -- where you expect to do more work before
    receiving a full review -- should be prefixed `[WIP]` (to indicate a work
    in progress) and changed to `[MRG]` when it matures. WIPs may be useful
