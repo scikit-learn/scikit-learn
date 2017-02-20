@@ -415,8 +415,9 @@ def check_pairwise_distances_blockwise(X, Y, block_size, metric='euclidean'):
 
 
 def test_pairwise_distances_blockwise_invalid_block_size():
-    X = np.empty((400, 4))
-    y = np.empty((200, 4))
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((400, 4))
+    y = rng.random_sample((200, 4))
     assert_warns_message(UserWarning, 'block_size should be at least '
                          'n_samples * 8 bytes = 1 MiB, got 0',
                          pairwise_distances_blockwise, X, y, block_size=0,
