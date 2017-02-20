@@ -756,6 +756,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
 
+        if n_classes == 1:
+            return np.ones((X.shape[0], 1))
+
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
             proba = sum(_samme_proba(estimator, n_classes, X)
