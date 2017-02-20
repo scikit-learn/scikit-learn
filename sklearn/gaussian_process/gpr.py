@@ -47,13 +47,14 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     alpha : float or array-like, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting. If an array is
-        passed, it must have the same number of entries as the data used for
-        fitting and is used as datapoint-dependent noise level. Note that this
-        is equivalent to adding a WhiteKernel with c=alpha. Allowing to specify
-        the noise level directly as a parameter is mainly for convenience and
-        for consistency with Ridge.
+        Larger values correspond to increased noise level in the observations.
+        This can also prevent a potential numerical issue during fitting, by
+        ensuring that the calculated values form a positive definite matrix.
+        If an array is passed, it must have the same number of entries as the
+        data used for fitting and is used as datapoint-dependent noise level.
+        Note that this is equivalent to adding a WhiteKernel with c=alpha.
+        Allowing to specify the noise level directly as a parameter is mainly
+        for convenience and for consistency with Ridge.
 
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
