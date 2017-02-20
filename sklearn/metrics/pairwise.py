@@ -1194,12 +1194,6 @@ def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
     distances are computed. If the input is a distances matrix, it is reduced
     in size and returned instead.
 
-    This is equivalent to calling:
-
-        pairwise_distances(X, y, metric, n_jobs)
-
-    but should use less memory.
-
     Parameters
     ----------
     X : array [n_samples_a, n_samples_a] if metric == "precomputed", or,
@@ -1212,11 +1206,7 @@ def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
 
     reduce_func : function, callable
         The function which is applied on each block of the distance matrix
-        reducing its size. It reduces the size of each block from
-        [n_block_samples, n_samples_a] or [n_block_samples, n_samples] to
-        [n_block_samples, n_reduced] where n_block_samples is the number of
-        samples in each block and n_reduced depends on the reduce_func defined
-        by the user.
+        reducing its size.
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -1250,12 +1240,11 @@ def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
 
     Returns
     -------
-    D : array [n_samples_a, n_reduced]
+    D : array-like or sparse matrix or tuple
         A distance matrix D such that D_{i, j} is the distance between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then D_{i, j} is the distance between the ith array
-        from X and the jth array from Y. Here n_reduced depends on the
-        reduce_func.
+        from X and the jth array from Y.
 
     """
 
