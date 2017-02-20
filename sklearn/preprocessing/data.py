@@ -16,6 +16,7 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
+from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
@@ -594,8 +595,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -764,8 +768,11 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}
             The data that should be scaled.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -972,8 +979,11 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
             The data used to scale along the specified axis.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -1216,14 +1226,16 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data to transform, row by row.
-
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         Returns
         -------
         XP : np.ndarray shape [n_samples, NP]
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -1399,8 +1411,11 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -1516,8 +1531,11 @@ class Binarizer(BaseEstimator, TransformerMixin):
             The data to binarize, element by element.
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -1563,7 +1581,9 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         ----------
         K : numpy array of shape [n_samples1, n_samples2]
             Kernel matrix.
-
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         copy : boolean, optional, default True
             Set to False to perform inplace computation.
 
@@ -1571,7 +1591,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

@@ -30,6 +30,7 @@ from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.arpack import svds
+from ..externals.six import string_types
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -732,13 +733,16 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

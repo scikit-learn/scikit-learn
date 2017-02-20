@@ -573,6 +573,22 @@ def test_deprecation_randomized_pca():
     Y_pca = PCA(svd_solver='randomized', random_state=0).fit_transform(X)
     assert_array_almost_equal(Y, Y_pca)
 
+def test_deprecation_transform():
+    depr_message = "The parameter y on transform() is deprecated"
+
+    # PCA on iris data
+    X = iris.data
+
+    pca = PCA(n_components=2)
+    X_r = pca.fit(X)
+
+    # Tests that deprecated Y parameter throws warning
+    assert_warns_message(DeprecationWarning, depr_message, X_r.transform,
+                         X, y=1)
+    assert_warns_message(DeprecationWarning, depr_message, X_r.transform,
+                         X, y=[1])
+    assert_warns_message(DeprecationWarning, depr_message, X_r.transform,
+                         X, y=None)
 
 def test_pca_spase_input():
 

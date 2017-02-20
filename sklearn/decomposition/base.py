@@ -109,6 +109,9 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples is the number of samples
             and n_features is the number of features.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
@@ -125,7 +128,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         IncrementalPCA(batch_size=3, copy=True, n_components=2, whiten=False)
         >>> ipca.transform(X) # doctest: +SKIP
         """
-        if y != 'deprecated':
+        if isinstance(y, np.ndarray) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

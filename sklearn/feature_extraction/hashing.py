@@ -10,6 +10,7 @@ import scipy.sparse as sp
 
 from . import _hashing
 from ..base import BaseEstimator, TransformerMixin
+from ..externals.six import string_types
 
 
 def _iteritems(d):
@@ -128,14 +129,15 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raw_X need not support the len function, so it can be the result
             of a generator; n_samples is determined on the fly.
         y : (ignored)
-
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         Returns
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Feature matrix, for use with estimators or further transformers.
 
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

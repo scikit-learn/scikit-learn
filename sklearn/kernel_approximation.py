@@ -19,7 +19,7 @@ from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels
-
+from .externals.six import string_types
 
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
@@ -94,12 +94,14 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
-
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -187,12 +189,14 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
-
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
@@ -295,8 +299,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
                shape = (n_samples, n_features * (2*sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

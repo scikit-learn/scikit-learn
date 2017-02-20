@@ -285,13 +285,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
         y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        if y != 'deprecated':
+        if isinstance(y, np.ndarray) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

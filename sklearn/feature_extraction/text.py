@@ -27,6 +27,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
+from ..externals.six import string_types
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
@@ -470,8 +471,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Samples. Each sample must be a text document (either bytes or
             unicode strings, file name or file object depending on the
             constructor argument) which will be tokenized and hashed.
-
         y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
@@ -479,7 +481,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Document-term matrix.
 
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

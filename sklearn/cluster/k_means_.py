@@ -922,13 +922,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
         X_new : array, shape [n_samples, k]
             X transformed in the new space.
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)

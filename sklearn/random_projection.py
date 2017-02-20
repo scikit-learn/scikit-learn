@@ -37,6 +37,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
 from .externals import six
+from .externals.six import string_types
 from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
@@ -395,6 +396,8 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             The input data to project into a smaller dimensional space.
 
         y : is not used: placeholder to allow for usage in a Pipeline.
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
@@ -402,7 +405,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             Projected array.
 
         """
-        if y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
