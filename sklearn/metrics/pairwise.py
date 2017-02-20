@@ -160,7 +160,7 @@ def check_paired_arrays(X, Y):
 
 # Pairwise distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
-                        X_norm_squared=None):
+                        X_norm_squared=None, check_input=True):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -198,6 +198,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
@@ -219,10 +222,15 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     --------
     paired_distances : distances betweens pairs of elements of X and Y.
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
 
     if X_norm_squared is not None:
-        XX = check_array(X_norm_squared)
+        XX = X_norm_squared
+        if check_input:
+            XX = check_array(XX)
+
+        XX = np.atleast_2d(XX)
         if XX.shape == (1, X.shape[0]):
             XX = XX.T
         elif XX.shape != (X.shape[0], 1):
@@ -236,7 +244,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     elif Y_norm_squared is not None:
         YY = np.atleast_2d(Y_norm_squared)
 
-        if YY.shape != (1, Y.shape[0]):
+        if YY.shape == (Y.shape[0], 1):
+            YY = YY.T
+        elif YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
     else:
@@ -257,7 +267,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=500, metric_kwargs=None):
+                                  batch_size=500, metric_kwargs=None,
+                                  check_input=True):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -316,6 +327,9 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     axis : int, optional, default 1
         Axis along which the argmin and distances are to be computed.
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     argmin : numpy.ndarray
@@ -336,7 +350,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     elif not callable(metric) and not isinstance(metric, str):
         raise ValueError("'metric' must be a string or a callable")
 
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
 
     if metric_kwargs is None:
         metric_kwargs = {}
@@ -384,7 +399,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
 
 def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=500, metric_kwargs=None):
+                              batch_size=500, metric_kwargs=None,
+                              check_input=True):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -447,6 +463,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     axis : int, optional, default 1
         Axis along which the argmin and distances are to be computed.
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     argmin : numpy.ndarray
@@ -461,11 +480,11 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         metric_kwargs = {}
 
     return pairwise_distances_argmin_min(X, Y, axis, metric, batch_size,
-                                         metric_kwargs)[0]
+                                         metric_kwargs, check_input)[0]
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
-                        size_threshold=5e8):
+                        size_threshold=5e8, check_input=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -488,6 +507,9 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
 
     size_threshold : int, default=5e8
         Unused parameter.
+
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
 
     Returns
     -------
@@ -518,7 +540,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
         if not sum_over_features:
@@ -541,7 +564,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     return D.reshape((-1, X.shape[1]))
 
 
-def cosine_distances(X, Y=None):
+def cosine_distances(X, Y=None, check_input=True):
     """Compute cosine distance between samples in X and Y.
 
     Cosine distance is defined as 1.0 minus the cosine similarity.
@@ -556,6 +579,9 @@ def cosine_distances(X, Y=None):
     Y : array_like, sparse matrix (optional)
         with shape (n_samples_Y, n_features).
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     distance matrix : array
@@ -567,7 +593,7 @@ def cosine_distances(X, Y=None):
     scipy.spatial.distance.cosine (dense matrices only)
     """
     # 1.0 - cosine_similarity(X, Y) without copy
-    S = cosine_similarity(X, Y)
+    S = cosine_similarity(X, Y, check_input)
     S *= -1
     S += 1
     np.clip(S, 0, 2, out=S)
@@ -579,7 +605,7 @@ def cosine_distances(X, Y=None):
 
 
 # Paired distances
-def paired_euclidean_distances(X, Y):
+def paired_euclidean_distances(X, Y, check_input=True):
     """
     Computes the paired euclidean distances between X and Y
 
@@ -591,15 +617,19 @@ def paired_euclidean_distances(X, Y):
 
     Y : array-like, shape (n_samples, n_features)
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     distances : ndarray (n_samples, )
     """
-    X, Y = check_paired_arrays(X, Y)
+    if check_input:
+        X, Y = check_paired_arrays(X, Y)
     return row_norms(X - Y)
 
 
-def paired_manhattan_distances(X, Y):
+def paired_manhattan_distances(X, Y, check_input=True):
     """Compute the L1 distances between the vectors in X and Y.
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -610,11 +640,15 @@ def paired_manhattan_distances(X, Y):
 
     Y : array-like, shape (n_samples, n_features)
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     distances : ndarray (n_samples, )
     """
-    X, Y = check_paired_arrays(X, Y)
+    if check_input:
+        X, Y = check_paired_arrays(X, Y)
     diff = X - Y
     if issparse(diff):
         diff.data = np.abs(diff.data)
@@ -623,7 +657,7 @@ def paired_manhattan_distances(X, Y):
         return np.abs(diff).sum(axis=-1)
 
 
-def paired_cosine_distances(X, Y):
+def paired_cosine_distances(X, Y, check_input=True):
     """
     Computes the paired cosine distances between X and Y
 
@@ -635,6 +669,9 @@ def paired_cosine_distances(X, Y):
 
     Y : array-like, shape (n_samples, n_features)
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     distances : ndarray, shape (n_samples, )
@@ -644,7 +681,8 @@ def paired_cosine_distances(X, Y):
     The cosine distance is equivalent to the half the squared
     euclidean distance if each sample is normalized to unit norm
     """
-    X, Y = check_paired_arrays(X, Y)
+    if check_input:
+        X, Y = check_paired_arrays(X, Y)
     return .5 * row_norms(normalize(X) - normalize(Y), squared=True)
 
 
@@ -715,7 +753,7 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
 
 # Kernels
-def linear_kernel(X, Y=None):
+def linear_kernel(X, Y=None, check_input=True):
     """
     Compute the linear kernel between X and Y.
 
@@ -727,15 +765,20 @@ def linear_kernel(X, Y=None):
 
     Y : array of shape (n_samples_2, n_features)
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
-def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
+def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1,
+                      check_input=True):
     """
     Compute the polynomial kernel between X and Y::
 
@@ -756,11 +799,15 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
     coef0 : int, default 1
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
@@ -771,7 +818,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     return K
 
 
-def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
+def sigmoid_kernel(X, Y=None, gamma=None, coef0=1, check_input=True):
     """
     Compute the sigmoid kernel between X and Y::
 
@@ -790,11 +837,15 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
     coef0 : int, default 1
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
@@ -805,7 +856,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     return K
 
 
-def rbf_kernel(X, Y=None, gamma=None):
+def rbf_kernel(X, Y=None, gamma=None, check_input=True):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
@@ -824,21 +875,25 @@ def rbf_kernel(X, Y=None, gamma=None):
     gamma : float, default None
         If None, defaults to 1.0 / n_features
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    K = euclidean_distances(X, Y, squared=True)
+    K = euclidean_distances(X, Y, squared=True, check_input=False)
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
     return K
 
 
-def laplacian_kernel(X, Y=None, gamma=None):
+def laplacian_kernel(X, Y=None, gamma=None, check_input=True):
     """Compute the laplacian kernel between X and Y.
 
     The laplacian kernel is defined as::
@@ -859,20 +914,24 @@ def laplacian_kernel(X, Y=None, gamma=None):
     gamma : float, default None
         If None, defaults to 1.0 / n_features
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    K = -gamma * manhattan_distances(X, Y)
+    K = -gamma * manhattan_distances(X, Y, check_input=False)
     np.exp(K, K)    # exponentiate K in-place
     return K
 
 
-def cosine_similarity(X, Y=None, dense_output=True):
+def cosine_similarity(X, Y=None, dense_output=True, check_input=True):
     """Compute cosine similarity between samples in X and Y.
 
     Cosine similarity, or the cosine kernel, computes similarity as the
@@ -900,6 +959,9 @@ def cosine_similarity(X, Y=None, dense_output=True):
         .. versionadded:: 0.17
            parameter ``dense_output`` for dense output.
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     kernel matrix : array
@@ -907,7 +969,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
     """
     # to avoid recursive import
 
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
     if X is Y:
@@ -920,7 +983,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
     return K
 
 
-def additive_chi2_kernel(X, Y=None):
+def additive_chi2_kernel(X, Y=None, check_input=True):
     """Computes the additive chi-squared kernel between observations in X and Y
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
@@ -947,6 +1010,9 @@ def additive_chi2_kernel(X, Y=None):
 
     Y : array of shape (n_samples_Y, n_features)
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
@@ -970,7 +1036,8 @@ def additive_chi2_kernel(X, Y=None):
     """
     if issparse(X) or issparse(Y):
         raise ValueError("additive_chi2 does not support sparse matrices.")
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_input:
+        X, Y = check_pairwise_arrays(X, Y)
     if (X < 0).any():
         raise ValueError("X contains negative values.")
     if Y is not X and (Y < 0).any():
@@ -981,7 +1048,7 @@ def additive_chi2_kernel(X, Y=None):
     return result
 
 
-def chi2_kernel(X, Y=None, gamma=1.):
+def chi2_kernel(X, Y=None, gamma=1., check_input=True):
     """Computes the exponential chi-squared kernel X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
@@ -1005,6 +1072,9 @@ def chi2_kernel(X, Y=None, gamma=1.):
     gamma : float, default=1.
         Scaling parameter of the chi2 kernel.
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
@@ -1024,7 +1094,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to the additive version of this kernel.
     """
-    K = additive_chi2_kernel(X, Y)
+    K = additive_chi2_kernel(X, Y, check_input)
     K *= gamma
     return np.exp(K, K)
 
@@ -1196,6 +1266,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.  Can only be used
+        as a keyword argument with known sklearn.pairwise metrics.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -1217,7 +1291,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                          "callable" % (metric, _VALID_METRICS))
 
     if metric == "precomputed":
-        X, _ = check_pairwise_arrays(X, Y, precomputed=True)
+        if kwds.get('check_input', True):
+            X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
@@ -1230,7 +1305,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
-        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+        if kwds.get('check_input', True):
+            X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
         if n_jobs == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
@@ -1362,6 +1438,10 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     filter_params : boolean
         Whether to filter invalid parameters or not.
 
+    check_input : boolean (default=True)
+        Whether to check if inputs are finite and floats.  Can only be used
+        as a keyword argument with known sklearn.pairwise kernels.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the kernel function.
 
@@ -1382,7 +1462,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     from ..gaussian_process.kernels import Kernel as GPKernel
 
     if metric == "precomputed":
-        X, _ = check_pairwise_arrays(X, Y, precomputed=True)
+        if kwds.get('check_input', True):
+            X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
     elif isinstance(metric, GPKernel):
         func = metric.__call__

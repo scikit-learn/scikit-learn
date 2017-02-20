@@ -41,7 +41,6 @@ from ._k_means_elkan import k_means_elkan
 ###############################################################################
 # Initialization heuristic
 
-
 def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
@@ -99,7 +98,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
-        squared=True)
+        squared=True, check_input=False)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -112,7 +111,9 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
-            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
+            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True,
+            check_input=False,
+        )
 
         # Decide which candidate is the best
         best_candidate = None
@@ -558,9 +559,9 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
 
     # Breakup nearest neighbor distance computation into batches to prevent
     # memory blowup in the case of a large number of samples and clusters.
-    # TODO: Once PR #7383 is merged use check_inputs=False in metric_kwargs.
     labels, mindist = pairwise_distances_argmin_min(
-        X=X, Y=centers, metric='euclidean', metric_kwargs={'squared': True})
+        X=X, Y=centers, metric='euclidean',
+        metric_kwargs={'squared': True, 'check_input': False})
     # cython k-means code assumes int32 inputs
     labels = labels.astype(np.int32)
     if n_samples == distances.shape[0]:
@@ -884,9 +885,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
                 X, n_clusters=self.n_clusters, init=self.init,
-                n_init=self.n_init, max_iter=self.max_iter, verbose=self.verbose,
-                precompute_distances=self.precompute_distances,
-                tol=self.tol, random_state=random_state, copy_x=self.copy_x,
+                n_init=self.n_init, max_iter=self.max_iter,
+                verbose=self.verbose,
+                precompute_distances=self.precompute_distances, tol=self.tol,
+                random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs, algorithm=self.algorithm,
                 return_n_iter=True)
         return self
@@ -1166,8 +1168,8 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     else:
         no_improvement += 1
 
-    if (model.max_no_improvement is not None
-            and no_improvement >= model.max_no_improvement):
+    if (model.max_no_improvement is not None and
+            no_improvement >= model.max_no_improvement):
         if verbose:
             print('Converged (lack of improvement in inertia)'
                   ' at iteration %d/%d'
@@ -1488,8 +1490,8 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
-        if (not hasattr(self, 'counts_')
-                or not hasattr(self, 'cluster_centers_')):
+        if (not hasattr(self, 'counts_') or
+                not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
