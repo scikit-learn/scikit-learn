@@ -223,6 +223,10 @@ Bug fixes
    - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
      raising an exception if instability is identified.  :issue:`7376` and
      :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
+   - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
+     obstructed pickling customizations of child-classes, when used in a
+     multiple inheritance context.
+     :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
 
 API changes summary
 -------------------
