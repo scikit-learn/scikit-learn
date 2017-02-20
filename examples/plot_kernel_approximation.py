@@ -205,7 +205,8 @@ for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
     plt.axis('off')
 
     # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired,
+                edgecolors=(0, 0, 0))
 
     plt.title(titles[i])
 plt.tight_layout()
