@@ -472,8 +472,8 @@ class CompoundKernel(Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined.
 
         Returns
         -------
@@ -482,8 +482,8 @@ class CompoundKernel(Kernel):
 
         K_gradient : array, shape (n_samples_X, n_samples_X, n_dims, n_kernels)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         if eval_gradient:
             K = []
@@ -662,8 +662,8 @@ class Sum(KernelOperator):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined.
 
         Returns
         -------
@@ -672,8 +672,8 @@ class Sum(KernelOperator):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         if eval_gradient:
             K1, K1_gradient = self.k1(X, Y, eval_gradient=True)
@@ -736,8 +736,8 @@ class Product(KernelOperator):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined.
 
         Returns
         -------
@@ -746,8 +746,8 @@ class Product(KernelOperator):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         if eval_gradient:
             K1, K1_gradient = self.k1(X, Y, eval_gradient=True)
@@ -888,8 +888,8 @@ class Exponentiation(Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined.
 
         Returns
         -------
@@ -898,8 +898,8 @@ class Exponentiation(Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         if eval_gradient:
             K, K_gradient = self.kernel(X, Y, eval_gradient=True)
@@ -980,8 +980,8 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -990,8 +990,8 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         X = np.atleast_2d(X)
         if Y is None:
@@ -1002,6 +1002,9 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
         K = self.constant_value * np.ones((X.shape[0], Y.shape[0]))
         if eval_gradient:
             if not self.hyperparameter_constant_value.fixed:
+                # gradient with respect to log-transformed constant_value
+                # K_gradient is evaluated with respect to self.theta using
+                # self.constant_value = exp(self.theta)
                 return (K, self.constant_value
                         * np.ones((X.shape[0], X.shape[0], 1)))
             else:
@@ -1074,8 +1077,8 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -1084,8 +1087,8 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         X = np.atleast_2d(X)
         if Y is not None and eval_gradient:
@@ -1095,6 +1098,9 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
             K = self.noise_level * np.eye(X.shape[0])
             if eval_gradient:
                 if not self.hyperparameter_noise_level.fixed:
+                    # gradient with respect to log-transformed noise_level
+                    # K_gradient is evaluated with respect to self.theta using
+                    # self.noise_level = exp(self.theta)
                     return (K, self.noise_level
                             * np.eye(X.shape[0])[:, :, np.newaxis])
                 else:
@@ -1186,8 +1192,8 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -1196,8 +1202,8 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         X = np.atleast_2d(X)
         length_scale = _check_length_scale(X, self.length_scale)
@@ -1216,15 +1222,22 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             K = np.exp(-.5 * dists)
 
         if eval_gradient:
+            # gradient with respect to log-transformed length_scale
             if self.hyperparameter_length_scale.fixed:
                 # Hyperparameter l kept fixed
                 return K, np.empty((X.shape[0], X.shape[0], 0))
             elif not self.anisotropic or length_scale.shape[0] == 1:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.length_scale = exp(self.theta), with self.theta and
+                # self.length_scale being scalars
                 K_gradient = \
                     (K * squareform(dists))[:, :, np.newaxis]
                 return K, K_gradient
             elif self.anisotropic:
                 # We need to recompute the pairwise dimension-wise distances
+                # K_gradient is evaluated with respect to self.theta using
+                # self.length_scale = exp(self.theta), with self.theta and
+                # self.length_scale being vectors
                 K_gradient = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 \
                     / (length_scale ** 2)
                 K_gradient *= K[..., np.newaxis]
@@ -1299,8 +1312,8 @@ class Matern(RBF):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -1309,8 +1322,8 @@ class Matern(RBF):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         X = np.atleast_2d(X)
         length_scale = _check_length_scale(X, self.length_scale)
@@ -1345,6 +1358,7 @@ class Matern(RBF):
             np.fill_diagonal(K, 1)
 
         if eval_gradient:
+            # gradient with respect to log-transformed length_scale
             if self.hyperparameter_length_scale.fixed:
                 # Hyperparameter l kept fixed
                 K_gradient = np.empty((X.shape[0], X.shape[0], 0))
@@ -1352,11 +1366,18 @@ class Matern(RBF):
 
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.length_scale = exp(self.theta), with self.theta and
+                # self.length_scale being vectors
                 D = (X[:, np.newaxis, :] - X[np.newaxis, :, :])**2 \
                     / (length_scale ** 2)
             else:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.length_scale = exp(self.theta), with self.theta and
+                # self.length_scale being scalars
                 D = squareform(dists**2)[:, :, np.newaxis]
 
+            # gradient with respect to log-transformed nu
             if self.nu == 0.5:
                 K_gradient = K[..., np.newaxis] * D \
                     / np.sqrt(D.sum(2))[:, :, np.newaxis]
@@ -1449,8 +1470,8 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -1459,8 +1480,8 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         X = np.atleast_2d(X)
         if Y is None:
@@ -1478,16 +1499,20 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                 ** -self.alpha
 
         if eval_gradient:
-            # gradient with respect to length_scale
+            # gradient with respect to log-transformed length_scale
             if not self.hyperparameter_length_scale.fixed:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.length_scale = exp(self.theta)
                 length_scale_gradient = \
                     dists * K / (self.length_scale ** 2 * base)
                 length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
             else:  # l is kept fixed
                 length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
 
-            # gradient with respect to alpha
+            # gradient with respect to log-transformed alpha
             if not self.hyperparameter_alpha.fixed:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.alpha = exp(self.theta)
                 alpha_gradient = \
                     K * (-self.alpha * np.log(base)
                          + dists / (2 * self.length_scale ** 2 * base))
@@ -1562,8 +1587,8 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -1572,8 +1597,8 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         X = np.atleast_2d(X)
         if Y is None:
@@ -1591,15 +1616,19 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         if eval_gradient:
             cos_of_arg = np.cos(arg)
-            # gradient with respect to length_scale
+            # gradient with respect to log-transformed length_scale
             if not self.hyperparameter_length_scale.fixed:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.length_scale = exp(self.theta)
                 length_scale_gradient = \
                     4 / self.length_scale**2 * sin_of_arg**2 * K
                 length_scale_gradient = length_scale_gradient[:, :, np.newaxis]
             else:  # length_scale is kept fixed
                 length_scale_gradient = np.empty((K.shape[0], K.shape[1], 0))
-            # gradient with respect to p
+            # gradient with respect to log-transformed p
             if not self.hyperparameter_periodicity.fixed:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.periodicity = exp(self.theta)
                 periodicity_gradient = \
                     4 * arg / self.length_scale**2 * cos_of_arg \
                     * sin_of_arg * K
@@ -1665,8 +1694,8 @@ class DotProduct(Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -1675,8 +1704,8 @@ class DotProduct(Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         X = np.atleast_2d(X)
         if Y is None:
@@ -1688,7 +1717,10 @@ class DotProduct(Kernel):
             K = np.inner(X, Y) + self.sigma_0 ** 2
 
         if eval_gradient:
+            # gradient with respect to log-transformed sigma_0
             if not self.hyperparameter_sigma_0.fixed:
+                # K_gradient is evaluated with respect to self.theta using
+                # self.sigma_0 = exp(self.theta)
                 K_gradient = np.empty((K.shape[0], K.shape[1], 1))
                 K_gradient[..., 0] = 2 * self.sigma_0 ** 2
                 return K, K_gradient
@@ -1800,8 +1832,8 @@ class PairwiseKernel(Kernel):
             if evaluated instead.
 
         eval_gradient : bool (optional, default=False)
-            Determines whether the gradient with respect to the kernel
-            hyperparameter is determined. Only supported when Y is None.
+            Determines whether the gradient with respect to the log-transformed
+            kernel hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
@@ -1810,8 +1842,8 @@ class PairwiseKernel(Kernel):
 
         K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
-            is True.
+            log-transformed hyperparameter of the kernel. Only returned when
+            eval_gradient is True.
         """
         pairwise_kernels_kwargs = self.pairwise_kernels_kwargs
         if self.pairwise_kernels_kwargs is None:
@@ -1822,6 +1854,7 @@ class PairwiseKernel(Kernel):
                              filter_params=True,
                              **pairwise_kernels_kwargs)
         if eval_gradient:
+            # gradient with respect to log-transformed gamma
             if self.hyperparameter_gamma.fixed:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
             else:
