@@ -21,6 +21,11 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        TEST_CMD="pytest --showlocals --pyargs"
+    else
+        TEST_CMD="nosetests --with-coverage" # --with-timer --timer-top-n 20"
+    fi
     # Get into a temp directory to run test from the installed scikit learn and
     # check if we do not leave artifacts
     mkdir -p $TEST_DIR
@@ -34,10 +39,9 @@ run_tests() {
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
     if [[ "$COVERAGE" == "true" ]]; then
-        nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
-    else
-        nosetests -s --with-timer --timer-top-n 20 sklearn
+        TEST_CMD="$TEST_CMD --with-coverage"
     fi
+    $TEST_CMD sklearn
 
     # Test doc
     cd $OLDPWD
