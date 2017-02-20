@@ -611,23 +611,18 @@ References
 Select Dimension Kernel
 ------------------
 
-The :class:`SelectDimensionKernel` is thin wrapper around a given kernel. It
-applies the underlying kernel on a set of specific features of data.
+The :class:`SelectDimensionKernel` is thin wrapper around any given kernel. It
+applies the underlying kernel on a set of specific features of data. This can
+be useful when different kernels, e.g. periodic and RBF, are needed to model
+the dataset.
 
-We can use :class:`SelectDimensionKernel` to recreate anisotropic :class:`RBF`
-kernel using product of several RBF kernels each applied only on one feature.
-This is demonstrated in following figures:
+By combining two different kinds of kernels we can construct new kernels that
+may better explain data, following example uses two kernels, :class:`ExpSineSquared`
+and :class:`RBF`, for first and second dimensions of data:
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_dim_selection_001.png
+.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_dim_selection.png
    :target: ../auto_examples/gaussian_process/plot_gpr_dim_selection.html
    :align: center
-
-.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_dim_selection_002.png
-   :target: ../auto_examples/gaussian_process/plot_gpr_dim_selection.html
-   :align: center
-
-.. currentmodule:: sklearn.gaussian_process
-
 
 Legacy Gaussian Processes
 =========================
