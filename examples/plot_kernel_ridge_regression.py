@@ -101,8 +101,9 @@ print("KRR prediction for %d inputs in %.3f s"
 # look at the results
 sv_ind = svr.best_estimator_.support_
 plt.scatter(X[sv_ind], y[sv_ind], c='r', s=50, label='SVR support vectors',
-            zorder=2)
-plt.scatter(X[:100], y[:100], c='k', label='data', zorder=1)
+            zorder=2, edgecolors=(0, 0, 0))
+plt.scatter(X[:100], y[:100], c='k', label='data', zorder=1,
+            edgecolors=(0, 0, 0))
 plt.hold('on')
 plt.plot(X_plot, y_svr, c='r',
          label='SVR (fit: %.3fs, predict: %.3fs)' % (svr_fit, svr_predict))
@@ -136,9 +137,9 @@ for name, estimator in {"KRR": KernelRidge(kernel='rbf', alpha=0.1,
         test_time.append(time.time() - t0)
 
     plt.plot(sizes, train_time, 'o-', color="r" if name == "SVR" else "g",
-             label="%s (train)" % name)
+             markeredgecolor=(0, 0, 0), label="%s (train)" % name)
     plt.plot(sizes, test_time, 'o--', color="r" if name == "SVR" else "g",
-             label="%s (test)" % name)
+             markeredgecolor=(0, 0, 0), label="%s (test)" % name)
 
 plt.xscale("log")
 plt.yscale("log")
@@ -160,9 +161,9 @@ train_sizes_abs, train_scores_kr, test_scores_kr = \
                    scoring="neg_mean_squared_error", cv=10)
 
 plt.plot(train_sizes, -test_scores_svr.mean(1), 'o-', color="r",
-         label="SVR")
+         label="SVR", markeredgecolor=(0, 0, 0))
 plt.plot(train_sizes, -test_scores_kr.mean(1), 'o-', color="g",
-         label="KRR")
+         label="KRR", markeredgecolor=(0, 0, 0))
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")
 plt.title('Learning curves')
