@@ -47,7 +47,7 @@ for count in np.arange(min_count, max_count, 10):
         SelectDimensionKernel(ExpSineSquared(), [1])
 
     gp_mix_kernel = GaussianProcessRegressor(kernel=kernel)
-    gp_rbf = GaussianProcessRegressor(kernel=RBF())
+    gp_rbf = GaussianProcessRegressor(kernel=RBF([1.0, 1.0]))
 
     shuffle_ind = np.arange(count)
     np.random.shuffle(shuffle_ind)
@@ -76,4 +76,5 @@ plt.plot((np.arange(min_count, max_count, 10)*training_ratio).astype(int),
 plt.xlabel("Training Set size")
 plt.ylabel("Mean Absolute Error on Test Set")
 plt.legend()
+plt.savefig("./plot_gpr_dim_selection.png")
 plt.show()
