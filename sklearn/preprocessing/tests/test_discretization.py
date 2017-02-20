@@ -85,14 +85,14 @@ def test_categorical_invalid():
         assert_raises(ValueError, dis.fit, X)
 
 
-def test_min_max_same():
+def test_same_min_max():
     warnings.simplefilter("always")
     X = np.array([[1, -2],
                   [1, -1],
                   [1, 0],
                   [1, 1]])
-    dis = KBinsDiscretizer(n_bins=3).fit(X)
-    X_t = assert_warns(UserWarning, dis.transform, X)
+    dis = assert_warns(UserWarning, KBinsDiscretizer(n_bins=3).fit, X)
+    X_t = dis.transform(X)
 
     expected = [[0, 0],
                 [0, 1],
