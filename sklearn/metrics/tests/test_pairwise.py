@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.externals.six import iteritems
 
@@ -395,21 +396,25 @@ def test_pairwise_distances_reduce():
     assert_array_almost_equal(S, S2)
 
 
+def check_pairwise_distances_blockwise(X, Y, block_size, metric='euclidean'):
+    gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
+                                       metric=metric)
+    blockwise_distances = list(gen)
+    for block in blockwise_distances:
+
+    blockwise_distances = np.vstack(blockwise_distances)
+    S = pairwise_distances(X, Y, metric=metric)
+    assert_array_almost_equal(blockwise_distances, S)
+
+
 def test_pairwise_distances_blockwise_invalid_block_size():
     X = np.empty((400, 4))
     y = np.empty((200, 4))
-    assert_raise_message(ValueError, 'block_size should be at least n_samples '
+    assert_warns_message(UserWarning, 'block_size should be at least n_samples '
                          '* 8 bytes = 1 MiB, got 0',
                          pairwise_distances_blockwise, X, y, block_size=0,
                          metric='euclidean')
-
-
-def check_pairwise_distances_blockwise(X, Y, block_size, metric):
-    gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
-                                       metric=metric)
-    blockwise_distances = np.vstack(list(gen))
-    S = pairwise_distances(X, Y, metric=metric)
-    assert_array_almost_equal(blockwise_distances, S)
+    check_pairwise_distances_blockwise(X, y, block_size=0)
 
 
 def test_pairwise_distances_blockwise():

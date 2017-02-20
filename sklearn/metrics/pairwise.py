@@ -11,6 +11,7 @@
 
 import itertools
 from functools import partial
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -1343,9 +1344,11 @@ def pairwise_distances_blockwise(X, Y=None, metric='euclidean', n_jobs=1,
         block_n_rows = min(block_n_rows, n_samples)
     if block_n_rows < 1:
         min_block_mib = np.ceil(n_samples * BYTES_PER_FLOAT * 2 ** -20)
-        raise ValueError('block_size should be at least n_samples * %d bytes '
-                         '= %.0f MiB, got %r' % (BYTES_PER_FLOAT,
-                                                 min_block_mib, block_size))
+        warnings.warn('block_size should be at least n_samples * %d bytes '
+                      '= %.0f MiB, got %r' % (BYTES_PER_FLOAT,
+                                              min_block_mib, block_size))
+        block_size = min_block_mib
+        block_n_rows = 1
 
     return _generate_pairwise_distances_blockwise(X, Y, metric=metric,
                                                   n_jobs=n_jobs,
