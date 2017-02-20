@@ -84,7 +84,7 @@ class TestMetrics:
             yield self.check_pdist_bool, metric, D_true
 
     def check_pdist(self, metric, kwargs, D_true):
-        if metric == 'canberra'  \
+        if metric == 'canberra' and \
                 parse_version(scipy.__version__) <= parse_version('0.9'):
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
