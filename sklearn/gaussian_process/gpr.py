@@ -243,12 +243,12 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         K[np.diag_indices_from(K)] += self.alpha
         try:
             self.L_ = cholesky(K, lower=True)  # Line 2
-            self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
         except np.linalg.LinAlgError:
             raise ValueError("The DotProduct kernel isn't returning a "
                              "positive definite matrix. Try increasing alpha "
                              "gradually.")
 
+        self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
