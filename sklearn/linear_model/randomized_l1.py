@@ -354,6 +354,11 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
         X *= (1 - weights)
 
     C = np.atleast_1d(np.asarray(C, dtype=np.float64))
+    if C.ndim > 1:
+        raise ValueError("C should be 1-dimensional array-like, "
+                         "but got a {}-dimensional array-like instead: {}."
+                         .format(C.ndim, C))
+
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
 
     for this_C, this_scores in zip(C, scores.T):
@@ -381,8 +386,12 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    C : float, optional, default=1
+    C : float or array-like of shape [n_reg_parameter], optional, default=1
         The regularization parameter C in the LogisticRegression.
+        When C is an array, fit will take each regularization parameter in C
+        one by one for LogisticRegression and store results for each one
+        in ``all_scores_``, where columns and rows represent corresponding
+        reg_parameters and features.
 
     scaling : float, optional, default=0.5
         The s parameter used to randomly scale the penalty of different

@@ -157,6 +157,10 @@ Bug fixes
      `ZeroDivisionError` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
+   - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
+     returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
+     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>` 
+
    - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
      :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
      sparse input.
@@ -215,6 +219,10 @@ Bug fixes
    - Fix a bug where :func:`sklearn.linear_model.LassoLars.fit` sometimes
      left `coef_` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
+
+   - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
+     raising an exception if instability is identified.  :issue:`7376` and
+     :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
 
 API changes summary
 -------------------
@@ -2304,7 +2312,7 @@ Enhancements
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
 
    - Vector and matrix multiplications have been optimised throughout the
-     library by :user:`Denis Engemann <dengemann>`, and `Alexandre Gramfort`_.
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
      In particular, they should take less memory with older NumPy versions
      (prior to 1.7.2).
 
@@ -2317,7 +2325,7 @@ Enhancements
 
    - Added svd_method option with default value to "randomized" to
      :class:`decomposition.FactorAnalysis` to save memory and
-     significantly speedup computation by :user:`Denis Engemann <dengemann>`, and
+     significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
 
    - Changed :class:`cross_validation.StratifiedKFold` to try and
@@ -2840,7 +2848,7 @@ Changelog
      faster on sparse data (the speedup depends on the sparsity). By
      `Lars Buitinck`_.
 
-   - Reduce memory footprint of FastICA by :user:`Denis Engemann <dengemann>` and
+   - Reduce memory footprint of FastICA by `Denis Engemann`_ and
      `Alexandre Gramfort`_.
 
    - Verbose output in :mod:`sklearn.ensemble.gradient_boosting` now uses
@@ -4986,3 +4994,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Kathleen Chen: https://github.com/kchen17
 
 .. _Vincent Pham: https://github.com/vincentpham1991
+
+.. _Denis Engemann: http://denis-engemann.de
