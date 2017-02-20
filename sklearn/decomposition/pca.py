@@ -10,6 +10,7 @@
 #
 # License: BSD 3 clause
 
+import warnings
 from math import log, sqrt
 
 import numpy as np
@@ -105,6 +106,7 @@ def _infer_dimension_(spectrum, n_samples, n_features):
 
 
 class PCA(_BasePCA):
+
     """Principal component analysis (PCA)
 
     Linear dimensionality reduction using Singular Value Decomposition of the
@@ -558,6 +560,7 @@ class PCA(_BasePCA):
             "DOES NOT store whiten ``components_``. Apply transform to get "
             "them.")
 class RandomizedPCA(BaseEstimator, TransformerMixin):
+
     """Principal component analysis (PCA) using randomized SVD
 
     .. deprecated:: 0.18
@@ -736,6 +739,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'mean_')
 
         X = check_array(X)

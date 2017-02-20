@@ -402,6 +402,11 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             Projected array.
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         check_is_fitted(self, 'components_')

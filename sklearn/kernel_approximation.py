@@ -22,6 +22,7 @@ from .metrics.pairwise import pairwise_kernels
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
+
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 
@@ -99,6 +100,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version.',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'random_weights_')
 
         X = check_array(X, accept_sparse='csr')
@@ -110,6 +116,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
 
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
+
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
 
@@ -187,6 +194,11 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version.',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'random_weights_')
 
         X = as_float_array(X, copy=True)
@@ -204,6 +216,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
+
     """Approximate feature map for additive chi2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
@@ -286,6 +299,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version.',
+                          DeprecationWarning)
+
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
         check_is_fitted(self, "sample_interval_", msg=msg)
@@ -359,6 +377,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
 
 class Nystroem(BaseEstimator, TransformerMixin):
+
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel
@@ -431,6 +450,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
+
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel

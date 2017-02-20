@@ -2,6 +2,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 
 
+
 def _identity(X):
     """The identity function.
     """
@@ -9,6 +10,7 @@ def _identity(X):
 
 
 class FunctionTransformer(BaseEstimator, TransformerMixin):
+
     """Constructs a transformer from an arbitrary callable.
 
     A FunctionTransformer forwards its X (and optionally y) arguments to a
@@ -61,6 +63,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Dictionary of additional keyword arguments to pass to inverse_func.
 
     """
+
     def __init__(self, func=None, inverse_func=None, validate=True,
                  accept_sparse=False, pass_y=False,
                  kw_args=None, inv_kw_args=None):

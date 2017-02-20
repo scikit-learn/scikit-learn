@@ -8,6 +8,8 @@
 #
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 from scipy import linalg
 
@@ -20,11 +22,13 @@ from abc import ABCMeta, abstractmethod
 
 
 class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
     def get_covariance(self):
         """Compute data covariance with the generative model.
 
@@ -97,7 +101,6 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
             Returns the instance itself.
         """
 
-
     def transform(self, X, y=None):
         """Apply dimensionality reduction to X.
 
@@ -125,6 +128,11 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         IncrementalPCA(batch_size=3, copy=True, n_components=2, whiten=False)
         >>> ipca.transform(X) # doctest: +SKIP
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)
 
         X = check_array(X)

@@ -13,6 +13,7 @@ build feature vectors from text documents.
 """
 from __future__ import unicode_literals
 
+import warnings
 import array
 from collections import Mapping, defaultdict
 import numbers
@@ -98,6 +99,7 @@ def _check_stop_list(stop):
 
 
 class VectorizerMixin(object):
+
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -282,6 +284,7 @@ class VectorizerMixin(object):
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
+
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -416,6 +419,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     CountVectorizer, TfidfVectorizer
 
     """
+
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -478,6 +482,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Document-term matrix.
 
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         if isinstance(X, six.string_types):
             raise ValueError(
                 "Iterable over raw text documents expected, "
@@ -509,6 +518,7 @@ def _document_frequency(X):
 
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
+
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
@@ -939,6 +949,7 @@ def _make_int_array():
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
+
     """Transform a count matrix to a normalized tf or tf-idf representation
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1035,7 +1046,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self
@@ -1094,6 +1105,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
 
 class TfidfVectorizer(CountVectorizer):
+
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.

@@ -704,6 +704,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
 
 class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
+
     """K-Means clustering
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -928,8 +929,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : array, shape [n_samples, k]
             X transformed in the new space.
         """
-        check_is_fitted(self, 'cluster_centers_')
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
 
+        check_is_fitted(self, 'cluster_centers_')
         X = self._check_test_data(X)
         return self._transform(X)
 
@@ -1183,6 +1188,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
 
 
 class MiniBatchKMeans(KMeans):
+
     """Mini-Batch K-Means clustering
 
     Read more in the :ref:`User Guide <mini_batch_kmeans>`.

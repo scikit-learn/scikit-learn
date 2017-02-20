@@ -176,6 +176,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(BaseEstimator, TransformerMixin):
+
     """Transforms features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -414,6 +415,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
 
 class StandardScaler(BaseEstimator, TransformerMixin):
+
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen independently on each feature by computing
@@ -595,6 +597,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version.',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
@@ -650,6 +657,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
+
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -760,6 +768,11 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}
             The data that should be scaled.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'scale_')
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES)
@@ -836,6 +849,7 @@ def maxabs_scale(X, axis=0, copy=True):
 
 
 class RobustScaler(BaseEstimator, TransformerMixin):
+
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -963,6 +977,11 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : array-like
             The data used to scale along the specified axis.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         if self.with_centering:
             check_is_fitted(self, 'center_')
         if self.with_scaling:
@@ -1068,6 +1087,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
+
     """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
@@ -1130,6 +1150,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
+
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1208,6 +1229,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
 
         X = check_array(X, dtype=FLOAT_DTYPES)
@@ -1320,6 +1346,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
 
 class Normalizer(BaseEstimator, TransformerMixin):
+
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1380,6 +1407,11 @@ class Normalizer(BaseEstimator, TransformerMixin):
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
@@ -1430,6 +1462,7 @@ def binarize(X, threshold=0.0, copy=True):
 
 
 class Binarizer(BaseEstimator, TransformerMixin):
+
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     Values greater than the threshold map to 1, while values less than
@@ -1492,11 +1525,17 @@ class Binarizer(BaseEstimator, TransformerMixin):
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
+
     """Center a kernel matrix
 
     Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
@@ -1541,6 +1580,11 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         check_is_fitted(self, 'K_fit_all_')
 
         K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
@@ -1671,6 +1715,7 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
+
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
     The input to this transformer should be a matrix of integers, denoting
@@ -1766,6 +1811,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
+
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values

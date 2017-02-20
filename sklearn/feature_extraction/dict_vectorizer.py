@@ -2,6 +2,7 @@
 #          Dan Blanchard <dblanchard@ets.org>
 # License: BSD 3 clause
 
+import warnings
 from array import array
 from collections import Mapping
 from operator import itemgetter
@@ -25,6 +26,7 @@ def _tosequence(X):
 
 
 class DictVectorizer(BaseEstimator, TransformerMixin):
+
     """Transforms lists of feature-value mappings to vectors.
 
     This transformer turns lists of mappings (dict-like objects) of feature
@@ -289,6 +291,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        if y is not None:
+            warnings.warn('y is deprecated and will be'
+                          ' removed in a future version',
+                          DeprecationWarning)
+
         if self.sparse:
             return self._transform(X, fitting=False)
 
