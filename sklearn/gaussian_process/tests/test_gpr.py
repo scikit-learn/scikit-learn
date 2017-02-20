@@ -292,19 +292,15 @@ def test_custom_optimizer():
 
 
 def test_gpr_correct_error_message():
-    import urllib2
-    import csv
-    f = urllib2.urlopen('http://pims.structuralbiology.eu/X.csv')
-    X = [[float(i) for i in row] for row in csv.reader(f, delimiter=',')]
-    y = [0.0] * len(X)
-    f.close()
-    gpr = GaussianProcessRegressor(kernel=DotProduct(),
-                                   optimizer='fmin_l_bfgs_b',
-                                   random_state=None,
-                                   alpha=0)
-    assert_raise_message(ValueError, "The DotProduct kernel isn't "
-                         "returning a positive definite matrix. Try "
-                         "increasing alpha gradually.", gpr.fit, X, y)
+    X = np.arange(12).reshape(6, -1)
+    y = np.ones(6)
+    kernel = DotProduct()
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0)
+    assert_raise_message(ValueError, "The kernel, %s, isn't returning a "
+                         "positive definite matrix. Try gradually increasing "
+                         "the 'alpha' parameter of your "
+                         "GaussianProcessRegressor estimator."
+                         % kernel, gpr.fit, X, y)
 
 
 def test_duplicate_input():
