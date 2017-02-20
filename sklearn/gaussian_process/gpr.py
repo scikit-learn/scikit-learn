@@ -250,7 +250,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                              "increasing the 'alpha' parameter of your "
                              "GaussianProcessRegressor estimator."
                              % self.kernel_)
-
         self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
         return self
 

@@ -295,7 +295,7 @@ def test_gpr_correct_error_message():
     X = np.arange(12).reshape(6, -1)
     y = np.ones(6)
     kernel = DotProduct()
-    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0)
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
     assert_raise_message(ValueError, "The kernel, %s, isn't returning a "
                          "positive definite matrix. Try gradually increasing "
                          "the 'alpha' parameter of your "
