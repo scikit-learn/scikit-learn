@@ -154,7 +154,7 @@ Bug fixes
 .........
 
    - Fixed a bug where :class:`sklearn.ensemble.AdaBoostClassifier` throws
-     `ZeroDivisionError` while fitting data with single class labels.
+     ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
