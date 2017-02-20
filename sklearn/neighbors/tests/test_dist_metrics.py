@@ -60,7 +60,7 @@ class TestMetrics:
 
     def check_cdist(self, metric, kwargs, D_true):
         if metric == 'canberra' and \
-            parse_version(scipy.__version__) <= parse_version('0.9'):
+                parse_version(scipy.__version__) <= parse_version('0.9'):
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1, self.X2)
@@ -84,8 +84,8 @@ class TestMetrics:
             yield self.check_pdist_bool, metric, D_true
 
     def check_pdist(self, metric, kwargs, D_true):
-        if metric == 'canberra' and \
-            parse_version(scipy.__version__) <= parse_version('0.9'):
+        if metric == 'canberra'  \
+                parse_version(scipy.__version__) <= parse_version('0.9'):
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1)
