@@ -634,10 +634,10 @@ class TSNE(BaseEstimator):
     >>> model = TSNE(n_components=2, random_state=0)
     >>> np.set_printoptions(suppress=True)
     >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[ 0.00017619,  0.00004014],
-           [ 0.00010268,  0.00020546],
-           [ 0.00018298, -0.00008335],
-           [ 0.00009501, -0.00001388]])
+    array([[ 0.00017634,  0.0000401 ],
+           [ 0.00009807,  0.00022288],
+           [ 0.00018649, -0.00009689],
+           [ 0.00009507, -0.00001492]])
 
     References
     ----------
