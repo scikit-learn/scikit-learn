@@ -397,9 +397,14 @@ def test_pairwise_distances_reduce():
 
 
 def check_pairwise_distances_blockwise(X, Y, block_size, metric='euclidean'):
+    from sklearn.metrics.pairwise import BYTES_PER_FLOAT
     gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
                                        metric=metric)
     blockwise_distances = list(gen)
+    min_block_mib = X.shape[0] * BYTES_PER_FLOAT * 2  ** -20
+    if block_size < min_block_mib:
+        block_size = min_block_mib
+
     for block in blockwise_distances:
         memory_used = len(block) * BYTES_PER_FLOAT
         assert_true(memory_used <= block_size * 2 ** 20)
