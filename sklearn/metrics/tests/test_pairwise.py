@@ -401,6 +401,8 @@ def check_pairwise_distances_blockwise(X, Y, block_size, metric='euclidean'):
                                        metric=metric)
     blockwise_distances = list(gen)
     for block in blockwise_distances:
+        memory_used = len(block) * BYTES_PER_FLOAT
+        assert_true(memory_used <= block_size * 2 ** 20)
 
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
