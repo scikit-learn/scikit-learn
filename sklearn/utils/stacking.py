@@ -1,3 +1,6 @@
+import numpy as np
+from scipy import sparse
+
 def flexible_vstack(it, final_len=None):
     """Helper that concatenates the elements of an iterable along axis=0.
 
@@ -93,4 +96,4 @@ def flexible_vstack(it, final_len=None):
     if final_len is not None:
         assert offset == final_len, 'Expected %d, got %d' % (final_len, offset)
 
-return finalize(accumulator, first)
+    return finalize(accumulator, first)
