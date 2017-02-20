@@ -1260,9 +1260,9 @@ def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
     """
 
     if reduce_func is not None:
-        reduced_distances = [reduce_func(D) for D in
+        reduced_distances = (reduce_func(D) for D in \
                              pairwise_distances_blockwise(X, Y, metric, n_jobs,
-                                                          block_size, **kwds)]
+                                                          block_size, **kwds))
         return flexible_vstack(reduced_distances)
     else:
         raise ValueError("reduce_func needs to be passed as an argument.")
