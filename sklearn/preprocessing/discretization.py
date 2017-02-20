@@ -66,7 +66,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     >>> dis = KBinsDiscretizer(n_bins=3)
     >>> dis.fit(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
-    >>> dis.transform(X) # doctest: +NORMALIZE_WHITESPACE
+    >>> dis.transform(X) # doctest: +SKIP
     array([[ 0., 0., 0., 0.],
            [ 1., 1., 1., 0.],
            [ 2., 2., 2., 1.],
@@ -79,7 +79,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     KBinsDiscretizer(...)
 
     Discretization will ignore categorical features.
-    >>> dis.transform(X) # doctest: +NORMALIZE_WHITESPACE
+    >>> dis.transform(X) # doctest: +SKIP
     array([[ 0., 1., 0., 0.],
            [ 1., 2., 1., 0.],
            [ 2., 3., 2., 1.],
