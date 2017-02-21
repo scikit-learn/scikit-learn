@@ -245,7 +245,7 @@ API changes summary
      (``n_samples``, ``n_classes``) for that particular output.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
-    - Deprecate the ``fit_params`` constructor input to the
+   - Deprecate the ``fit_params`` constructor input to the
       :class:`sklearn.model_selection.GridSearchCV` and
       :class:`sklearn.model_selection.RandomizedSearchCV` in favor
       of passing keyword parameters to the ``fit`` methods
@@ -255,6 +255,12 @@ API changes summary
       selection classes to be used with tools such as
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+
+   - Deprecate the ``Y`` parameter from ``transform`` method signature in 
+      :class:`sklearn.cluster.birch` :class:`sklearn.cluster.k_means_` :class:`sklearn.decomposition.base` :class:`sklearn.decomposition.dict_learning` :class:`sklearn.decomposition.fastica_` :class:`sklearn.decomposition.pca` :class:`sklearn.feature_extraction.dict_vectorizer` :class:`sklearn.feature_extraction.hashing` :class:`sklearn.feature_extraction.text` :class:`sklearn.kernel_approximation` :class:`sklearn.neighbors.approximate` :class:`sklearn.preprocessing._function_transformer` :class:`sklearn.preprocessing.data` :class:`sklearn.random_projection`
+      The method  should not accept y, as ``transform`` is used at predict time. ``Y`` parameter is deprecated on this version and will be removed in 0.21.
+      :issue:`8174` by :user:`Tahar <https://github.com/tzano>`.
+
 
 .. _changes_0_18_1:
 
