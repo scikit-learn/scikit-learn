@@ -443,7 +443,7 @@ The *kernel function* can be any of the following:
   * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
     :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
+  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
   * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
