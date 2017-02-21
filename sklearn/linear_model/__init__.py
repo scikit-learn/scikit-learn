@@ -34,6 +34,7 @@ from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
 from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
+from .nnls_ import NNLS
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -57,6 +58,7 @@ __all__ = ['ARDRegression',
            'MultiTaskElasticNetCV',
            'MultiTaskLasso',
            'MultiTaskLassoCV',
+           'NNLS',
            'OrthogonalMatchingPursuit',
            'OrthogonalMatchingPursuitCV',
            'PassiveAggressiveClassifier',
