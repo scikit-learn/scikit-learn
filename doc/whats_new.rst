@@ -256,6 +256,10 @@ API changes summary
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+    - Change the default value for ``learning_rate`` in the
+      `sklearn.manifold.TSNE` constructor from 1000 to 200. This fixes
+      :issue:`6204` by :user:`John Joseph Valletta <jjvalletta>`.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
