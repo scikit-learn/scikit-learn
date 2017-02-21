@@ -16,6 +16,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 import numpy as np
 from scipy import sparse
 from scipy.interpolate import interp1d
+from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -1941,6 +1942,10 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         matrix are discarded to compute the quantile statistics. If false,
         these entries are accounting for zeros.
 
+    output_pdf : scipy.stats.rv_continuous, optional (default=uniform)
+        Probability density function of the normalized data. It should be a
+        subclass of ``scipy.stats.rv_continuous``.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -1963,10 +1968,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_quantiles=1000, subsample=int(1e5),
-                 ignore_implicit_zeros=False, random_state=None):
+                 ignore_implicit_zeros=False, output_pdf=stats.uniform,
+                 random_state=None):
         self.n_quantiles = n_quantiles
         self.subsample = subsample
         self.ignore_implicit_zeros = ignore_implicit_zeros
+        self.output_pdf = output_pdf
         self.random_state = random_state
 
     def _build_f(self):
@@ -2150,6 +2157,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                 upper_bound_x = references[-1]
                 lower_bound_y = self.quantiles_[0, feature_idx]
                 upper_bound_y = self.quantiles_[-1, feature_idx]
+            if not direction:
+                #  for inverse transform, match a uniform PDF
+                for i in range(X.shape[0]):
+                    X[i, feature_idx] = self.output_pdf.cdf(
+                        X[i, feature_idx])
             # Avoid computing for bounds due to numerical error of interp1d
             lower_bounds_idx = (X[:, feature_idx] - BOUNDS_THRESHOLD <
                                 lower_bound_x)
@@ -2159,6 +2171,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             X[~bounds_idx, feature_idx] = f(X[~bounds_idx, feature_idx])
             X[upper_bounds_idx, feature_idx] = upper_bound_y
             X[lower_bounds_idx, feature_idx] = lower_bound_y
+            # for forward transform, match the output PDF
+            if direction:
+                for i in range(X.shape[0]):
+                    X[i, feature_idx] = self.output_pdf.ppf(
+                        X[i, feature_idx])
 
         return X
 
@@ -2202,6 +2219,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                 upper_bound_x = references[-1]
                 lower_bound_y = self.quantiles_[0, feature_idx]
                 upper_bound_y = self.quantiles_[-1, feature_idx]
+            # for inverse transform, match a uniform PDF
+            if not direction:
+                for i in range(X.data[column_slice].size):
+                    X.data[column_slice][i] = self.output_pdf.cdf(
+                        X.data[column_slice][i])
+
             # Avoid computing for bounds due to numerical error of interp1d
             # Check that there is value
             if X.data[column_slice].size:
@@ -2213,6 +2236,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                     X.data[column_slice][~upper_bounds_idx])
                 X.data[column_slice][upper_bounds_idx] = upper_bound_y
                 X.data[column_slice][lower_bounds_idx] = lower_bound_y
+                # for forward transform, match the output PDF
+                if direction:
+                    for i in range(X.data[column_slice].size):
+                        X.data[column_slice][i] = self.output_pdf.ppf(
+                            X.data[column_slice][i])
 
         return X
 
@@ -2244,6 +2272,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             raise ValueError('X does not have the same number of feature than'
                              ' the previously fitted data. Got {} instead of'
                              ' {}'.format(X.shape[1], len(self._f_transform)))
+        # check the output object
+        if not issubclass(type(self.output_pdf), stats.rv_continuous):
+            raise ValueError('output_pdf has to be a subclass of '
+                             'scipy.stats.rv_continuous. Got {} '
+                             ' instead'.format(type(self.output_pdf)))
         if sparse.issparse(X):
             return self._sparse_transform(X, True)
         else:
