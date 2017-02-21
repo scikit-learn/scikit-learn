@@ -66,7 +66,7 @@ def compute_class_weight(class_weight, classes, y):
         for c in class_weight:
             i = np.searchsorted(classes, c)
             if i >= len(classes) or classes[i] != c:
-                raise ValueError("Class label %d not present." % c)
+                raise ValueError("Class label {} not present.".format(c))
             else:
                 weight[i] = class_weight[c]
 
