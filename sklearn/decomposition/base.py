@@ -17,6 +17,7 @@ from ..utils import check_array
 from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted
 from ..externals import six
+from ..externals.six import string_types
 from abc import ABCMeta, abstractmethod
 
 
@@ -128,7 +129,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         IncrementalPCA(batch_size=3, copy=True, n_components=2, whiten=False)
         >>> ipca.transform(X) # doctest: +SKIP
         """
-        if isinstance(y, np.ndarray) or y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
