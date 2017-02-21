@@ -501,8 +501,12 @@ def test_check_consistent_length():
     # Despite ensembles having __len__ they must raise TypeError
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
+    # XXX: We should have a test with a string, but what is correct behaviour?
 
+
+def test_check_dataframe_fit_attribute():
     # check pandas dataframe with 'fit' column does not raise error
+    # https://github.com/scikit-learn/scikit-learn/issues/8415
     try:
         import pandas as pd
         X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
@@ -510,4 +514,3 @@ def test_check_consistent_length():
         check_consistent_length(X_df)
     except ImportError:
         raise SkipTest("Pandas not found")
-    # XXX: We should have a test with a string, but what is correct behaviour?
