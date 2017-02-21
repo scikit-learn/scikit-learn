@@ -501,14 +501,13 @@ def test_check_consistent_length():
     # Despite ensembles having __len__ they must raise TypeError
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
-    
-    #check pandas dataframe with 'fit' column does not raise error
+
+    # check pandas dataframe with 'fit' column does not raise error
     try:
         import pandas as pd
         X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        X_df = pd.DataFrame(X,columns=['a','b','fit'])
+        X_df = pd.DataFrame(X, columns=['a', 'b', 'fit'])
         check_consistent_length(X_df)
     except ImportError:
         raise SkipTest("Pandas not found")
-    
     # XXX: We should have a test with a string, but what is correct behaviour?
