@@ -31,6 +31,12 @@ def test_compute_class_weight_not_present():
     classes = np.arange(4)
     y = np.asarray([0, 0, 0, 1, 1, 2])
     assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
+    # Fix exception in error message formatting when missing label is a string
+    # https://github.com/scikit-learn/scikit-learn/issues/8312
+    assert_raise_message(ValueError,
+                         'Class label label_not_present not present',
+                         compute_class_weight,
+                         {'label_not_present': 1.}, classes, y)
     # Raise error when y has items not in classes
     classes = np.arange(2)
     assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
@@ -116,20 +122,6 @@ def test_compute_class_weight_balanced_unordered():
     class_counts = np.bincount(y)[classes]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
     assert_array_almost_equal(cw, [2., 1., 2. / 3])
-
-
-def test_class_weight_with_string_label():
-    # Fix exception in error message formatting when missing label is a string
-    # https://github.com/scikit-learn/scikit-learn/issues/8312
-    y = np.asarray(["A", "A", "A", "B", "B", "C"])
-    classes = np.unique(y)
-    class_weights = {c: 1.0 for c in classes}
-    class_weights['D'] = 1.0  # This should produce a ValueError
-    assert_raise_message(ValueError,
-                         'Class label D not present',
-                         compute_class_weight,
-                         class_weights, classes, y)
-    return
 
 
 def test_compute_sample_weight():
