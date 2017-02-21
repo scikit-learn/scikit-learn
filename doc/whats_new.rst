@@ -478,6 +478,9 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
 
+    - Change the default value for ``learning_rate`` in the
+      `sklearn.manifold.TSNE` constructor from 1000 to 200. This fixes
+      :issue:`6204` by :user:`John Joseph Valletta <jjvalletta>`.
 
 .. _changes_0_18_1:
 
