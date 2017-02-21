@@ -2176,7 +2176,13 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                 for i in range(X.shape[0]):
                     X[i, feature_idx] = self.output_pdf.ppf(
                         X[i, feature_idx])
-
+                # find the value to clip the data to avoid mapping to
+                # infinity. Clip such that the inverse transform will be
+                # consistent
+                clip_min = self.output_pdf.ppf(BOUNDS_THRESHOLD / 10)
+                clip_max = self.output_pdf.ppf(1 - (BOUNDS_THRESHOLD / 10))
+                X[:, feature_idx] = np.clip(X[:, feature_idx], clip_min,
+                                            clip_max)
         return X
 
     def _sparse_transform(self, X, direction=True):
@@ -2238,10 +2244,18 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                 X.data[column_slice][lower_bounds_idx] = lower_bound_y
                 # for forward transform, match the output PDF
                 if direction:
+                    # find the value to clip the data to avoid mapping to
+                    # infinity. Clip such that the inverse transform will be
+                    # consistent.
+                    clip_min = self.output_pdf.ppf(BOUNDS_THRESHOLD / 10)
+                    clip_max = self.output_pdf.ppf(1 - (BOUNDS_THRESHOLD / 10))
                     for i in range(X.data[column_slice].size):
                         X.data[column_slice][i] = self.output_pdf.ppf(
                             X.data[column_slice][i])
-
+                        if X.data[column_slice][i] > clip_max:
+                            X.data[column_slice][i] = clip_max
+                        elif X.data[column_slice][i] < clip_min:
+                            X.data[column_slice][i] = clip_min
         return X
 
     def transform(self, X):
