@@ -14,6 +14,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
+from ..externals.six import string_types
 from ..utils import check_array, tosequence
 from ..utils.fixes import frombuffer_empty
 
@@ -293,7 +294,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        if isinstance(y, np.ndarray) or y != 'deprecated':
+        if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
                           "deprecated since 0.19 and will be removed in 0.21",
                           DeprecationWarning)
