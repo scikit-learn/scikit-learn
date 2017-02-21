@@ -857,8 +857,6 @@ def test_quantile_normalizer_iris():
     X = iris.data
     normalizer = QuantileNormalizer()
     X_trans = normalizer.fit_transform(X)
-    # FIXME: one of those will drive to precision error
-    # in the interpolation
     assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
     assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
     X_trans_inv = normalizer.inverse_transform(X_trans)
@@ -899,6 +897,41 @@ def test_quantile_normalizer_check_error():
     assert_raises_regex(ValueError, "X does not have the same number of "
                         "feature than the previously fitted data.",
                         normalizer.inverse_transform, X_bad_feat)
+
+
+def test_quantile_normalizer_ignore_zeros():
+    X = np.array([[0, 0, 0, 0, 0],
+                  [1, 0, 2, 2, 1]]).T
+    X_sparse = sparse.csc_matrix(X)
+    nq = QuantileNormalizer(ignore_implicit_zeros=True, n_quantiles=5)
+
+    # dense case -> warning raise
+    assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
+                         " only with sparse matrix. This parameter has no"
+                         " effect.", nq.fit, X)
+
+    X_gt = np.array([[0, 0, 0, 0, 0],
+                     [0, 0, 1, 1, 0]]).T
+    X_trans = nq.fit_transform(X_sparse)
+    assert_almost_equal(X_gt, X_trans.A)
+
+    # consider the case where sparse entries are missing values and user-given
+    # zeros are to be considered
+    X_data = np.array([0, 0, 1, 0, 2, 2, 1, 0, 1, 2, 0])
+    X_col = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8])
+    X_sparse = sparse.csc_matrix((X_data, (X_row, X_col)))
+    X_trans = nq.fit_transform(X_sparse)
+    X_gt = np.array([[0., 0.5],
+                     [0., 0.],
+                     [0., 1.],
+                     [0., 1.],
+                     [0., 0.5],
+                     [0., 0.],
+                     [0., 0.5],
+                     [0., 1.],
+                     [0., 0.]])
+    assert_almost_equal(X_gt, X_trans.A)
 
 
 def test_quantile_normalizer_dense_toy():

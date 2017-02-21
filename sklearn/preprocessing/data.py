@@ -1936,6 +1936,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
     subsample : int, optional (default=1e5)
         Maximum number of samples used to estimate the quantiles.
 
+    ignore_implicit_zeros : bool, optional (default=False)
+        Apply only for sparse matrices. If True, the sparse entries of the
+        matrix are discarded to compute the quantile statistics. If false,
+        these entries are accounting for zeros.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -1958,14 +1963,19 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_quantiles=1000, subsample=int(1e5),
-                 random_state=None):
+                 ignore_implicit_zeros=False, random_state=None):
         self.n_quantiles = n_quantiles
         self.subsample = subsample
+        self.ignore_implicit_zeros = ignore_implicit_zeros
         self.random_state = random_state
 
     def _build_f(self):
         """Build the transform functions."""
         check_is_fitted(self, 'quantiles_')
+
+        if self.ignore_implicit_zeros:
+            warnings.warn("'ignore_implicit_zeros' takes effect only with"
+                          " sparse matrix. This parameter has no effect.")
 
         references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
 
@@ -2037,15 +2047,28 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                 # choice is not available in numpy <= 1.7
                 # used permutation instead.
                 column_idx = rng.permutation(range(len(column_nnz_data)))
-                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                if self.ignore_implicit_zeros:
+                    column_data = np.zeros(shape=column_subsample,
+                                           dtype=X.dtype)
+                else:
+                    column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
                 column_data[:column_subsample] = column_nnz_data[
                     column_idx[:column_subsample]]
             else:
-                column_data = np.zeros(shape=n_samples, dtype=X.dtype)
+                if self.ignore_implicit_zeros:
+                    column_data = np.zeros(shape=len(column_nnz_data),
+                                           dtype=X.dtype)
+                else:
+                    column_data = np.zeros(shape=n_samples, dtype=X.dtype)
                 column_data[:len(column_nnz_data)] = column_nnz_data
-            self.quantiles_.append(
-                np.percentile(column_data,
-                              [x * 100 for x in references]))
+            if not column_data.size:
+                # if no nnz, an error will be raised for computing the
+                # quantiles. Force the quantiles to be zeros.
+                self.quantiles_.append([0] * len(references))
+            else:
+                self.quantiles_.append(
+                    np.percentile(column_data,
+                                  [x * 100 for x in references]))
         self.quantiles_ = np.array(self.quantiles_).T
 
     def fit(self, X, y=None):
@@ -2170,19 +2193,26 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
             if direction:
+                lower_bound_x = self.quantiles_[0, feature_idx]
                 upper_bound_x = self.quantiles_[-1, feature_idx]
+                lower_bound_y = references[0]
                 upper_bound_y = references[-1]
             else:
+                lower_bound_x = references[0]
                 upper_bound_x = references[-1]
+                lower_bound_y = self.quantiles_[0, feature_idx]
                 upper_bound_y = self.quantiles_[-1, feature_idx]
             # Avoid computing for bounds due to numerical error of interp1d
             # Check that there is value
             if X.data[column_slice].size:
+                lower_bounds_idx = (X.data[column_slice] - BOUNDS_THRESHOLD <
+                                    lower_bound_x)
                 upper_bounds_idx = (X.data[column_slice] + BOUNDS_THRESHOLD >
                                     upper_bound_x)
                 X.data[column_slice][~upper_bounds_idx] = f(
                     X.data[column_slice][~upper_bounds_idx])
                 X.data[column_slice][upper_bounds_idx] = upper_bound_y
+                X.data[column_slice][lower_bounds_idx] = lower_bound_y
 
         return X
 
@@ -2268,8 +2298,9 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
 
 def quantile_normalize(X, axis=0, n_quantiles=1000, subsample=int(1e5),
-                       random_state=None):
+                       ignore_implicit_zeros=False, random_state=None):
     n = QuantileNormalizer(n_quantiles=n_quantiles, subsample=subsample,
+                           ignore_implicit_zeros=ignore_implicit_zeros,
                            random_state=random_state)
     if axis == 0:
         return n.fit_transform(X)
