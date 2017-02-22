@@ -113,9 +113,10 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
+    if (name not in
+        ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
         # TODO some complication with -1 label
-        and name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+       name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
 
