@@ -1180,9 +1180,7 @@ def _check_time_series_max_train_size(splits, check_splits, max_train_size):
     for (train, test), (check_train, check_test) in zip(splits, check_splits):
         assert_array_equal(test, check_test)
         assert_true(len(check_train) <= max_train_size)
-        suffix_start = 0
-        if len(train) > max_train_size:
-            suffix_start = len(train) - max_train_size
+        suffix_start = max(len(train) - max_train_size, 0)
         assert_array_equal(check_train, train[suffix_start:])
 
 
