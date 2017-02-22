@@ -32,20 +32,12 @@ class NNLS(base.LinearModel):
 
         Attributes
         ----------
-        coef_ : array, shape (n_features, ) or (n_targets, n_features)
+        coef_ : array, shape (n_features, )
             Estimated coefficients for the linear regression problem.
-            If multiple targets are passed during the fit (y 2D), this
-            is a 2D array of shape (n_targets, n_features), while if only
-            one target is passed, this is a 1D array of length n_features.
 
-        residues_ : array, shape (n_targets,) or (1,) or empty
+        residues_ : array,  (1,) or empty
             Sum of residuals. Squared Euclidean 2-norm for each target passed
-            during the fit. If the linear regression problem is
-            under-determined (the number of linearly independent rows of the
-            training matrix is less than its number of linearly independent
-            columns), this is an empty array. If the target vector passed
-            during the fit is 1-dimensional, this is a (1,) shape array.
-
+            during the fit.
         """
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -86,7 +78,7 @@ class NNLS(base.LinearModel):
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
-        self.coef_, self.residues_ = optimize.nnls(X, y)
+        self.coef_, _ = optimize.nnls(X, y)
         self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
