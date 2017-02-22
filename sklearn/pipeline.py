@@ -7,6 +7,8 @@ estimator, as a chain of transforms and estimators.
 #         Virgile Fritsch
 #         Alexandre Gramfort
 #         Lars Buitinck
+#         Joel Nothman
+#         Guillaume Lemaitre
 # License: BSD
 
 from collections import defaultdict
@@ -232,6 +234,41 @@ class Pipeline(_BasePipeline):
     @property
     def _final_estimator(self):
         return self.steps[-1][1]
+
+    def get_subsequence(self, start=None, stop=None):
+        """Extract a Pipeline consisting of a subsequence of steps
+
+        Parameters
+        ----------
+        start : int or str, optional
+            The index (0-based) or name of the step where the extracted
+            subsequence begins (inclusive bound).  By default, get from the
+            beginning.  Negative integers are intpreted as subtracted from the
+            number of steps in the Pipeline.
+        stop : int or str, optional
+            The index (0-based) or name of the step before which the extracted
+            subsequence ends (exclusive bound).  By default, get until the end.
+            Negative integers are intpreted as subtracted from the number of
+            steps in the Pipeline.
+
+        Returns
+        -------
+        sub_pipeline : Pipeline instance
+            The steps of this pipeline range from the start step to the stop
+            step specified.  The constituent estimators are not copied: if the
+            Pipeline had been fit, so will be the returned Pipeline.
+
+            The return type will be of the same type as self, if a subclass
+            is used and if its constructor is compatible.
+        """
+        if isinstance(start, six.string_types):
+            start = [name for name, _ in self.steps].index(start)
+        if isinstance(stop, six.string_types):
+            stop = [name for name, _ in self.steps].index(stop)
+
+        kwargs = self.get_params(deep=False)
+        kwargs['steps'] = self.steps[start:stop]
+        return type(self)(**kwargs)
 
     # Estimator interface
 

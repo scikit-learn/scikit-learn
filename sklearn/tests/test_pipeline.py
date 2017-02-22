@@ -894,3 +894,55 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)
+
+
+class MyPipeline(Pipeline):
+    pass
+
+
+class MyPipelineNoMemory(Pipeline):
+    def __init__(self, steps, other_param):
+        super(MyPipelineNoMemory, self).__init__(steps)
+        self.other_param = other_param
+
+
+def test_pipeline_get_subsequence():
+    pipe = Pipeline([('transf1', Transf()),
+                     ('transf2', Transf()),
+                     ('predict', Mult())])
+    pipe.fit(np.arange(5)[:, None], np.arange(5))
+
+    for start, stop, expected_slice in [
+        (None, None, slice(None, None)),
+        ('transf2', None, slice(1, None)),
+        (None, 'predict', slice(None, 2)),
+        (1, 'predict', slice(1, 2)),
+        (1, -1, slice(1, -1)),
+        (-1, None, slice(-1, None)),
+    ]:
+        new_pipe = pipe.get_subsequence(start, stop)
+        expected_steps = pipe.steps[expected_slice]
+        assert_equal(new_pipe.steps, expected_steps)
+        assert_dict_equal(new_pipe.named_steps, dict(expected_steps))
+        for name in new_pipe.named_steps:
+            assert_true(new_pipe.named_steps[name] is pipe.named_steps[name])
+
+    # invalid step name
+    assert_raise_message(ValueError, "'foo' is not in list",
+                         pipe.get_subsequence, 'foo')
+
+    # test subtype is maintained by get_subsequence
+    for memory in [None, '/path/to/somewhere']:
+        pipe = MyPipeline([('transf1', Transf()),
+                           ('predict', Mult())],
+                          memory=memory)
+        new_pipe = pipe.get_subsequence(1)
+        assert_equal(new_pipe.steps, pipe.steps[1:])
+        assert_equal(pipe.memory, new_pipe.memory)
+
+    pipe = MyPipelineNoMemory([('transf1', Transf()),
+                               ('predict', Mult())],
+                              other_param='blah')
+    new_pipe = pipe.get_subsequence(1)
+    assert_equal(new_pipe.steps, pipe.steps[1:])
+    assert_equal(pipe.other_param, new_pipe.other_param)
