@@ -898,6 +898,14 @@ def test_quantile_normalizer_check_error():
                         "feature than the previously fitted data.",
                         normalizer.inverse_transform, X_bad_feat)
 
+    assert_raises_regex(ValueError, "'output_pdf' has to be either 'norm' or"
+                        " 'uniform'. Got rnd instead.",
+                        QuantileNormalizer(output_pdf='rnd').fit_transform, X)
+    assert_raises_regex(ValueError, "'output_pdf' has to be either 'norm' or"
+                        " 'uniform'. Got rnd instead.",
+                        QuantileNormalizer(output_pdf='rnd').fit(
+                            X).inverse_transform, X)
+
 
 def test_quantile_normalizer_ignore_zeros():
     X = np.array([[0, 0, 0, 0, 0],
