@@ -59,7 +59,8 @@ cdef class Tree:
                                  SIZE_t right_child, double threshold,
                                  double impurity, SIZE_t feature,
                                  SIZE_t n_node_samples,
-                                 double weighted_n_node_samples)
+                                 double weighted_n_node_samples,
+                                 double node_value)
     cpdef SIZE_t _add_node_py(self, SIZE_t parent, bint is_left, bint is_leaf,
                               SIZE_t feature, double threshold, double impurity,
                               SIZE_t n_node_samples,
