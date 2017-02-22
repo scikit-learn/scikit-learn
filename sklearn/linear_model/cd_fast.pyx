@@ -153,31 +153,35 @@ cdef extern from "cblas.h":
 
 
 # Function to compute the duality gap
-cdef inline floating enet_duality_gap( # Data
-                                      unsigned int n_samples,
-                                      unsigned int n_features,
-                                      unsigned int n_tasks,
-                                      floating * X_data,
-                                      floating * y_data,
-                                      floating * R_data,
-                                      floating * w_data,
-                                      # Variables intended to be modified
-                                      floating * XtA_data,
-                                      floating * dual_scaling,
-                                      # Parameters
-                                      floating alpha,
-                                      floating beta,
-                                      bint positive,
-                                      # active set for improved performance
-                                      np.int32_t* disabled_data = NULL,
-                                      unsigned int n_disabled = 0
-                                      ) nogil:
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef inline floating enet_duality_gap(
+            # Data
+            unsigned int n_samples,
+            unsigned int n_features,
+            unsigned int n_tasks,
+            floating* X_data,
+            floating* y_data,
+            floating* R_data,
+            floating* w_data,
+            # Variables intended to be modified
+            floating* XtA_data,
+            floating* dual_scaling,
+            # Parameters
+            floating alpha,
+            floating beta,
+            bint positive,
+            # active set for improved performance
+            int[:] disabled,
+            unsigned int n_disabled = 0
+            ) nogil:
 
     cdef floating R_norm2
     cdef floating w_norm2
     cdef floating y_norm2
     cdef floating l1_norm
-    cdef floating const
+    cdef floating cst
     cdef floating gap
     cdef floating yTA
     cdef floating dual_norm_XtA
@@ -196,7 +200,7 @@ cdef inline floating enet_duality_gap( # Data
 
     # XtA = np.dot(X.T, R) - beta * w
     for i in range(n_features):
-        if (n_disabled == 0 or disabled_data[i] == 0):
+        if (n_disabled == 0 or disabled[i] == 0):
             XtA_data[i] = dot(n_samples, &X_data[i * n_samples],
                               1, R_data, 1) - beta * w_data[i]
         else:
@@ -235,27 +239,31 @@ cdef inline floating enet_duality_gap( # Data
     # w_norm2 = np.dot(w, w)
     w_norm2 = dot(n_features, w_data, 1, w_data, 1)
 
-    const = alpha / dual_scaling[0]
-    gap = 0.5 * (1 + const ** 2) * R_norm2
-
     l1_norm = asum(n_features, w_data, 1)
 
     # np.dot(R.T, y)
-    gap += (alpha * l1_norm - const * yTA +
-            0.5 * beta * (1. + const ** 2) * (w_norm2))
+    cst = alpha / dual_scaling[0]
+    gap = (alpha * l1_norm - cst * yTA +
+           0.5 * (1. + cst ** 2) * (R_norm2 + beta * w_norm2))
 
     return gap
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
-                            floating alpha, floating beta,
-                            np.ndarray[floating, ndim=2, mode='fortran'] X,
-                            np.ndarray[floating, ndim=1, mode='c'] y,
-                            int max_iter, floating tol,
-                            object rng, bint random=0,
-                            bint positive=0, int screening=5):
+def enet_coordinate_descent(
+    np.ndarray[floating, ndim=1] w,
+    floating alpha,
+    floating beta,
+    np.ndarray[floating, ndim=2, mode='fortran'] X,
+    np.ndarray[floating, ndim=1, mode='c'] y,
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0,
+    bint positive=0,
+    int screening=5):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -288,20 +296,17 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
 
     # compute norms of the columns of X
-    cdef np.ndarray[floating, ndim=1] norm2_cols_X = (X**2).sum(axis=0)
-    cdef np.ndarray[floating, ndim=1] norm_cols_X = np.sqrt(norm2_cols_X)
+    cdef floating[:] norm2_cols_X = (X**2).sum(axis=0)
+    cdef floating[:] norm_cols_X = np.sqrt(norm2_cols_X)
 
     # initial value of the residuals
     cdef np.ndarray[floating, ndim=1] R = np.empty(n_samples, dtype=dtype)
     cdef np.ndarray[floating, ndim=1] XtA = np.empty(n_features, dtype=dtype)
-    cdef np.ndarray[floating, ndim=1] Xty = np.empty(n_features, dtype=dtype)
 
     # compute the active set
-    cdef np.ndarray[np.int32_t, ndim=1] active_set = np.empty(n_features,
-                                                              dtype=np.intc)
-    cdef np.ndarray[np.int32_t, ndim=1] disabled = np.zeros(n_features,
-                                                            dtype=np.intc)
-    cdef np.ndarray[floating, ndim=1] dual_scaling = np.empty(1, dtype=dtype)
+    cdef int[:] active_set = np.empty(n_features, dtype=np.intc)
+    cdef int[:] disabled = np.zeros(n_features, dtype=np.intc)
+    cdef floating dual_scaling
 
     cdef floating tmp
     cdef floating w_ii
@@ -326,7 +331,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef floating *w_data = <floating*> w.data
     cdef floating *R_data = <floating*> R.data
     cdef floating *XtA_data = <floating*> XtA.data
-    cdef floating *dual_scaling_data = <floating*> dual_scaling.data
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -335,7 +339,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     with nogil:
         # R = y - np.dot(X, w)
         for i in range(n_samples):
-            R[i] = y[i] - dot(n_features, &X_data[i], n_samples, w_data, 1)
+            R[i] = y[i] - dot(n_features, X_data + i, n_samples, w_data, 1)
 
         # tol *= np.dot(y, y)
         tol *= dot(n_samples, y_data, n_tasks, y_data, n_tasks)
@@ -367,11 +371,11 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
                 if w_ii != 0.0:
                     # R += w_ii * X[:,ii]
-                    axpy(n_samples, w_ii, &X_data[ii * n_samples], 1,
+                    axpy(n_samples, w_ii, X_data + ii * n_samples, 1,
                          R_data, 1)
 
                 # tmp = (X[:,ii]*R).sum()
-                tmp = dot(n_samples, &X_data[ii * n_samples], 1, R_data, 1)
+                tmp = dot(n_samples, X_data + ii * n_samples, 1, R_data, 1)
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -381,7 +385,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
-                    axpy(n_samples, -w[ii], &X_data[ii * n_samples], 1,
+                    axpy(n_samples, -w[ii], X_data + ii * n_samples, 1,
                          R_data, 1)
 
                 # update the maximum absolute coefficient update
@@ -403,9 +407,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
                 gap = enet_duality_gap(n_samples, n_features, n_tasks,
                                        X_data, y_data, R_data, w_data, XtA_data,
-                                       dual_scaling_data, alpha, beta, positive,
-                                       <np.int32_t*>disabled.data,
-                                       n_features - n_active)
+                                       &dual_scaling, alpha, beta, positive,
+                                       disabled, n_features - n_active)
 
                 # Break if we reached desired tolerance
                 if gap < tol:
@@ -422,7 +425,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                         if disabled[ii] == 1:
                              continue
 
-                        tmp = XtA[ii] / dual_scaling[0]
+                        tmp = XtA[ii] / dual_scaling
                         if not positive:
                             tmp = fabs(tmp)
 
@@ -440,34 +443,39 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef inline floating sparse_enet_duality_gap(unsigned int n_samples,
-                                             unsigned int n_features,
-                                             floating* X_data,
-                                             int* X_indices,
-                                             int* X_indptr,
-                                             floating[:] X_mean,
-                                             floating* y,
-                                             floating y_sum,
-                                             floating[:] R,
-                                             floating R_shift,
-                                             floating[:] w,
-                                             floating[:] XtA,
-                                             floating[:] X_T_R,
-                                             floating[:] dual_scaling,
-                                             floating alpha,
-                                             floating beta,
-                                             bint positive,
-                                             bint center,
-                                             int[:] disabled,
-                                             unsigned int n_disabled=0
-                                             ) nogil:
+cdef inline floating sparse_enet_duality_gap(
+            # Data
+            unsigned int n_samples,
+            unsigned int n_features,
+            floating* X_data,
+            int* X_indices,
+            int* X_indptr,
+            floating[:] X_mean,
+            floating* y,
+            floating y_sum,
+            floating[:] R,
+            floating R_shift,
+            floating[:] w,
+            # Variables intended to be modified
+            floating[:] XtA,
+            floating[:] X_T_R,
+            floating[:] dual_scaling,
+            # Parameters
+            floating alpha,
+            floating beta,
+            bint positive,
+            bint center,
+            # active set for improved performance
+            int[:] disabled,
+            unsigned int n_disabled=0
+            ) nogil:
 
     cdef floating R_norm2
     cdef floating R_sum = 0.
     cdef floating w_norm2
     cdef floating y_norm2
     cdef floating l1_norm
-    cdef floating const
+    cdef floating cst
     cdef floating gap
     cdef unsigned int ii
     cdef unsigned int jj
@@ -541,11 +549,12 @@ cdef inline floating sparse_enet_duality_gap(unsigned int n_samples,
     else:
         w_norm2 = 0.
 
-    const = alpha / dual_scaling[0]
     l1_norm = asum(n_features, &w[0], 1)
-    gap = 0.5 * (1 + const ** 2) * R_norm2
-    gap += (alpha * l1_norm - const * yTA
-            + 0.5 * beta * (1. + const ** 2) * (w_norm2))
+
+    cst = alpha / dual_scaling[0]
+
+    gap = (alpha * l1_norm - cst * yTA
+           + 0.5 * (1. + cst ** 2) * (R_norm2 + beta * w_norm2))
 
     return gap
 
@@ -553,15 +562,21 @@ cdef inline floating sparse_enet_duality_gap(unsigned int n_samples,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def sparse_enet_coordinate_descent(floating[:] w,
-                            floating alpha, floating beta,
-                            np.ndarray[floating, ndim=1, mode='c'] X_data,
-                            np.ndarray[int, ndim=1, mode='c'] X_indices,
-                            np.ndarray[int, ndim=1, mode='c'] X_indptr,
-                            np.ndarray[floating, ndim=1] y,
-                            floating[:] X_mean, int max_iter,
-                            floating tol, object rng, bint random=0,
-                            bint positive=0, int screening=5):
+def sparse_enet_coordinate_descent(
+    floating[:] w,
+    floating alpha,
+    floating beta,
+    np.ndarray[floating, ndim=1, mode='c'] X_data,
+    np.ndarray[int, ndim=1, mode='c'] X_indices,
+    np.ndarray[int, ndim=1, mode='c'] X_indptr,
+    np.ndarray[floating, ndim=1] y,
+    floating[:] X_mean,
+    int max_iter,
+    floating tol,
+    object rng,
+    bint random=0,
+    bint positive=0,
+    int screening=5):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
