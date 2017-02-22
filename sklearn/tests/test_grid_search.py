@@ -141,6 +141,16 @@ def test_parameter_grid():
     assert_grid_iter_equals_getitem(has_empty)
 
 
+def test_grid_search_no_sparse_y_support():
+    X, y = make_multilabel_classification(n_samples=200, return_indicator=True,
+                                          random_state=0)
+    y_sparse = sp.csr_matrix(y)
+    clf = DecisionTreeClassifier()
+    cv = GridSearchCV(clf, {"max_depth": [1, 2, 3, 4]})
+    assert_raise_message(ValueError, "GridSearchCV doesn't support sparse y",
+                         cv.fit, X, y_sparse)
+
+
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
