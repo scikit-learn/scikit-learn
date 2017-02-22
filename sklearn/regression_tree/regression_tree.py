@@ -378,8 +378,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
         # create the root node statistics
         root_stats = StatsNode(
-            sum_residuals=np.sum(y * sample_weight),
-            sum_sq_residuals=np.sum((y ** 2) * sample_weight),
+            sum_residuals=np.sum(np.ravel(y) * sample_weight),
+            sum_sq_residuals=np.sum(np.ravel(y ** 2) * sample_weight),
             n_samples=n_samples,
             sum_weighted_samples=weighted_n_samples)
         # create the parent split record
@@ -397,12 +397,13 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             threshold=TREE_UNDEFINED,
             impurity=parent_split_record.impurity,
             n_node_samples=n_samples,
-            weighted_n_node_samples=weighted_n_samples)
+            weighted_n_node_samples=weighted_n_samples,
+            node_value=(root_stats.sum_residuals /
+                        root_stats.sum_weighted_samples))
 
         # Create a dictionary to store the parents split overtime
         parent_split_map = {parent_split_record.nid: parent_split_record}
         # find the node to be extended
-        # expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
         expandable_nids = list(parent_split_map.keys())
 
         current_depth = 0
@@ -487,7 +488,9 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         threshold=TREE_UNDEFINED,
                         impurity=left_sr.impurity,
                         n_node_samples=left_sr.c_stats.n_samples,
-                        weighted_n_node_samples=left_sr.c_stats.sum_weighted_samples)
+                        weighted_n_node_samples=left_sr.c_stats.sum_weighted_samples,
+                        node_value=(left_sr.c_stats.sum_residuals /
+                                    left_sr.c_stats.sum_weighted_samples))
 
                     # add a node for the right child
                     right_nid = self.tree_._add_node_py(
@@ -498,7 +501,9 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         threshold=TREE_UNDEFINED,
                         impurity=right_sr.impurity,
                         n_node_samples=right_sr.c_stats.n_samples,
-                        weighted_n_node_samples=right_sr.c_stats.sum_weighted_samples)
+                        weighted_n_node_samples=right_sr.c_stats.sum_weighted_samples,
+                        node_value=(right_sr.c_stats.sum_residuals /
+                                    right_sr.c_stats.sum_weighted_samples))
 
                     # Update the parent node with the found best split
                     self.tree_._update_node_py(
@@ -509,9 +514,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         impurity=best_split.impurity,
                         feature=best_split.feature,
                         n_node_samples=best_split.c_stats.n_samples,
-                        weighted_n_node_samples=best_split.c_stats.sum_weighted_samples,
-                        node_value=best_split.c_stats.sum_residuals /
-                                   best_split.c_stats.sum_weighted_samples)
+                        weighted_n_node_samples=best_split.c_stats.sum_weighted_samples)
 
                     # update the dictionary with the new record
                     # add only the record if the impurity at the node is large
