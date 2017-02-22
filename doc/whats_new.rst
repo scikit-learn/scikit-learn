@@ -56,6 +56,7 @@ Enhancements
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
+
    - :class:`pipeline.Pipeline` allows to cache transformers
      within a pipeline by using the ``memory`` constructor parameter.
      By :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -250,6 +251,12 @@ API changes summary
       selection classes to be used with tools such as
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+
+    - In :class:`pipeline.Pipeline`, ``steps`` has been changed by ``steps`` and
+     ``steps_`` to not mutate the argument given by the users. Additionally,
+     ``named_step`` and ``named_steps_`` have to be used to access ``steps``
+      and ``steps_``, respectively.
+      :issue:`8350` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_0_18_1:
 
