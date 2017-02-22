@@ -527,7 +527,13 @@ class Ridge(_BaseRidge, RegressorMixin):
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
+        If True, the regressors X will be normalized before regression by
+        scaling them (dividing them by their standard deviation). This process
+        is incorporated in the model and no manual normalization of X is
+        required before using the model at the time of prediction. Note that
+        centering (subtracting the mean of the regressors) is always performed
+        on X and incorporated in the model for prediction, even with
+        normalize=False.
         This parameter is ignored when `fit_intercept` is set to False.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
