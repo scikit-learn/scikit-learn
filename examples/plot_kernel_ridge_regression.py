@@ -137,9 +137,9 @@ for name, estimator in {"KRR": KernelRidge(kernel='rbf', alpha=0.1,
         test_time.append(time.time() - t0)
 
     plt.plot(sizes, train_time, 'o-', color="r" if name == "SVR" else "g",
-             markeredgecolor=(0, 0, 0), label="%s (train)" % name)
+             label="%s (train)" % name)
     plt.plot(sizes, test_time, 'o--', color="r" if name == "SVR" else "g",
-             markeredgecolor=(0, 0, 0), label="%s (test)" % name)
+             label="%s (test)" % name)
 
 plt.xscale("log")
 plt.yscale("log")
@@ -161,9 +161,9 @@ train_sizes_abs, train_scores_kr, test_scores_kr = \
                    scoring="neg_mean_squared_error", cv=10)
 
 plt.plot(train_sizes, -test_scores_svr.mean(1), 'o-', color="r",
-         label="SVR", markeredgecolor=(0, 0, 0))
+         label="SVR")
 plt.plot(train_sizes, -test_scores_kr.mean(1), 'o-', color="g",
-         label="KRR", markeredgecolor=(0, 0, 0))
+         label="KRR")
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")
 plt.title('Learning curves')
