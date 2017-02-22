@@ -11,10 +11,10 @@ from sklearn.utils.testing import (
     assert_warns_message
 )
 
-X = np.array([[-2, 1, -4, -1],
-              [-1, 2, -3, -0.5],
-              [0, 3, -2, 0.5],
-              [1, 4, -1, 2]])
+X = np.array([[-2, 1.5, -4, -1],
+              [-1, 2.5, -3, -0.5],
+              [0, 3.5, -2, 0.5],
+              [1, 4.5, -1, 2]])
 
 
 def test_fit_transform():
@@ -40,21 +40,21 @@ def test_invalid_n_bins_array():
     est = KBinsDiscretizer(n_bins=n_bins)
     assert_raise_message(ValueError,
                          "n_bins must be a scalar or array of shape "
-                         "(n_features_,).", est.fit_transform, X)
+                         "(n_features,).", est.fit_transform, X)
 
     # Incorrect number of features
     n_bins = [1, 2, 2]
     est = KBinsDiscretizer(n_bins=n_bins)
     assert_raise_message(ValueError,
                          "n_bins must be a scalar or array of shape "
-                         "(n_features_,).", est.fit_transform, X)
+                         "(n_features,).", est.fit_transform, X)
 
     # Bad bin values
-    n_bins = [1, 2, 2, 2]
+    n_bins = [1, 2, 2, 1]
     est = KBinsDiscretizer(n_bins=n_bins)
     assert_raise_message(ValueError,
                          "Discretizer received an invalid number of bins at "
-                         "indices 0. Number of bins must be at least 2.",
+                         "indices 0, 3. Number of bins must be at least 2.",
                          est.fit_transform, X)
 
 
@@ -79,10 +79,10 @@ def test_ignored_transform():
     # Feature at col_idx=1 should not change
     est = KBinsDiscretizer(n_bins=3, ignored_features=[1]).fit(X)
 
-    expected = [[0., 1, 0., 0.],
-                [1., 2, 1., 0.],
-                [2., 3, 2., 1.],
-                [2., 4, 2., 2.]]
+    expected = [[0., 1.5, 0., 0.],
+                [1., 2.5, 1., 0.],
+                [2., 3.5, 2., 1.],
+                [2., 4.5, 2., 2.]]
 
     assert_array_equal(expected, est.transform(X))
 
@@ -135,3 +135,19 @@ def test_transform_1d_behavior():
     est = KBinsDiscretizer(n_bins=2)
     est.fit(X.reshape(-1, 1))
     assert_raises(ValueError, est.transform, X)
+
+
+def test_inverse_transform_with_ignored():
+    est = KBinsDiscretizer(n_bins=[2, 3, 0, 3], ignored_features=[1, 2]).fit(X)
+    Xt = [[0, 1, -4.5, 0],
+          [0, 2, -3.5, 0],
+          [1, 3, -2.5, 1],
+          [1, 3, -1.5, 2]]
+
+    Xinv = est.inverse_transform(Xt)
+    expected = [[-1.25, 1, -4.5, -0.5],
+                [-1.25, 2, -3.5, -0.5],
+                [0.25, 3, -2.5, 0.5],
+                [0.25, 3, -1.5, 1.5]]
+
+    assert_array_equal(expected, Xinv)

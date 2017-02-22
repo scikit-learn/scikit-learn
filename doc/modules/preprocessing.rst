@@ -426,6 +426,47 @@ features, one has to explicitly set ``n_values``. For example,
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
 
+.. _discretization:
+
+Discretization
+==============
+
+`Discretization <https://en.wikipedia.org/wiki/Discretization_of_continuous_features>`_
+provides a way to quantize continuous features into discrete values. Certain
+datasets with many continuous features may benefit from discretization, because
+discretization can transform the dataset of continuous attributes to one with
+only nominal attributes.
+
+Scikit-learn provides a mechanism way for users to discretize a feature into
+``k`` equal length bins using a :class:`KBinsDiscretizer`::
+
+  >>> X = np.array([[ -3., 5., 15 ],
+  ...               [  0., 6., 14 ],
+  ...               [  6., 3., 11 ]])
+  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 3, 2]).fit(X)
+
+In this example, the "bin edges" (boundaries for the discretization criteria)
+for each of the three features are as follows:
+
+ - ``0`` and ``3``
+ - ``4`` and ``5``
+ - ``13``
+
+Based on these bin edges, we transform `X` as follows::
+
+  >>> est.transform(X)                      # doctest: +NORMALIZE_WHITESPACE
+  array([[ 0., 2., 1.],
+         [ 1., 2., 1.],
+         [ 2., 0., 0.]])
+
+The resulting dataset contains nominal attributes which can be further used
+in a pipeline.
+
+Discretization is similar to constructing histograms for continuous data.
+However, histograms focus on counting features which fall into particular
+bins, whereas discretization focuses on assigning features to these bins.
+
+
 .. _imputation:
 
 Imputation of missing values

@@ -15,31 +15,34 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_bins : int or array-like, shape (n_features_,) (default=2)
+    n_bins : int or array-like, shape (n_features,) (default=2)
         The number of bins to produce. The intervals for the bins are
         determined by the minimum and maximum of the input data.
-        Raises ValueError if n_bins < 2.
+        Raises ValueError if ``n_bins < 2``.
 
-        If n_bins is an array, and there is a categorical feature at index i,
-        n_bins[i] will be ignored.
+        If ``n_bins`` is an array, and there is a ignored feature at
+        index ``i``, ``n_bins[i]`` will be ignored.
 
     ignored_features : int array-like (default=None)
         Column indices of ignored features. (Example: Categorical features.)
-        If None, all features will be discretized.
+        If ``None``, all features will be discretized.
 
     Attributes
     ----------
-    min_ : float array, shape (n_features_,)
-        Minimum value per feature in X. An ignored feature at index i will
-        have min_[i] == 0.
+    offset_ : float array, shape (n_features,)
+        Minimum value per feature in ``X``. An ignored feature at index
+        ``i`` will have ``offset_[i] == 0``. Used for the transformation
+        process.
 
-    ptp_ : float array, shape (n_features_,)
-        X.max(axis=0) - X.min(axis=0). An ignored feature at index i will
-        have ptp_[i] == 1.
+    transformed_features_ : int array, shape (n_features,)
+        Features which are transformed.
 
-    n_bins_ : int array, shape (n_features_,)
-        Number of bins per feature. An ignored feature at index i will
-        have n_bins_[i] == 1.
+    n_bins_ : int array, shape (n_features,)
+        Number of bins per feature. An ignored feature at index ``i``
+        will have ``n_bins_[i] == 0``.
+
+    bin_width_ : float array, shape (n_features,)
+        The width of each bin. Ignored features will have width ``0``.
 
     Example
     -------
@@ -50,11 +53,25 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     >>> est = KBinsDiscretizer(n_bins=3)
     >>> est.fit(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
-    >>> est.transform(X) # doctest: +SKIP
+    >>> Xt = est.transform(X)
+    >>> Xt # doctest: +SKIP
     array([[ 0., 0., 0., 0.],
            [ 1., 1., 1., 0.],
            [ 2., 2., 2., 1.],
            [ 2., 2., 2., 2.]])
+
+    Sometimes it may be useful to convert the data back into the original
+    feature space. The ``inverse_transform`` function converts the binned
+    data into the original feature space. Each value will be a distance
+    of ``bin_width_ / 2`` from the nearest bin edge.
+
+    >>> est.bin_width_
+    array([ 1.,  1.,  1.,  1.])
+    >>> est.inverse_transform(Xt)
+    array([[-1.5,  1.5, -3.5, -0.5],
+           [-0.5,  2.5, -2.5, -0.5],
+           [ 0.5,  3.5, -1.5,  0.5],
+           [ 0.5,  3.5, -1.5,  1.5]])
     """
 
     def __init__(self, n_bins=2, ignored_features=None):
@@ -78,47 +95,34 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype=float)
 
         n_features = X.shape[1]
-        ignored_features = self._check_ignored_features(self.ignored_features,
-                                                        X.shape[1])
+        ignored = self._check_ignored_features(self.ignored_features,
+                                               X.shape[1])
+        self.transformed_features_ = np.delete(np.arange(n_features), ignored)
 
-        # Manipulating min and max so categorical data is not affected by
-        # transformation.
         min = np.min(X, axis=0)
-        max = np.max(X, axis=0)
+        min[ignored] = 0
+        self.offset_ = min
 
-        min[ignored_features] = 0
-        max[ignored_features] = 1
-
-        self.min_ = min
-        self.ptp_ = max - min
-
-        n_bins = self._check_n_bins(self.n_bins, n_features)
-        n_bins[ignored_features] = 1
+        n_bins = self._check_n_bins(self.n_bins, n_features, ignored)
+        n_bins[ignored] = 0
         self.n_bins_ = n_bins
 
-        # Clipping features ensures outliers are within boundary after
-        # transformation, but also ensures categorical features can be ignored.
-        numeric_features = np.delete(np.arange(n_features), ignored_features)
-        clip_min = np.repeat(-np.inf, n_features)
-        clip_min[numeric_features] = 0
-
-        clip_max = np.repeat(np.inf, n_features)
-        clip_max[numeric_features] = self.n_bins_[numeric_features] - 1
-
-        self._clip_min = clip_min
-        self._clip_max = clip_max
-
-        same_min_max = np.where(self.ptp_ == 0)[0]
+        ptp = np.ptp(X, axis=0)
+        same_min_max = np.where(ptp == 0)[0]
         if len(same_min_max) > 0:
             warnings.warn("Fitted X contained constant features at indices "
                           "{}. All of these features will be discretized to "
                           "the value 0."
                           .format(", ".join(str(i) for i in same_min_max)))
 
+        with np.errstate(divide='ignore', invalid='ignore'):
+            bin_widths = ptp / self.n_bins_
+        bin_widths[ignored] = 0
+        self.bin_width_ = bin_widths
         return self
 
     @staticmethod
-    def _check_n_bins(n_bins, n_features):
+    def _check_n_bins(n_bins, n_features, ignored):
         if isinstance(n_bins, numbers.Number):
             if n_bins < 2:
                 raise ValueError("Discretizer received an invalid number "
@@ -130,10 +134,14 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
             raise ValueError("n_bins must be a scalar or array "
-                             "of shape (n_features_,).")
+                             "of shape (n_features,).")
 
-        violating_indices = np.arange(n_features)[n_bins < 2]
-        if len(violating_indices) > 0:
+        bad_nbins_value = n_bins < 2
+        is_ignored = np.zeros(n_features).astype(bool)
+        is_ignored[ignored] = True
+
+        violating_indices = np.where(~is_ignored & bad_nbins_value)[0]
+        if violating_indices.shape[0] > 0:
             indices = ", ".join(str(i) for i in violating_indices)
             raise ValueError("Discretizer received an invalid number "
                              "of bins at indices {}. Number of bins "
@@ -142,46 +150,77 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         return n_bins
 
     @staticmethod
-    def _check_ignored_features(ignored_features, n_features):
-        if ignored_features is None:
+    def _check_ignored_features(ignored, n_features):
+        if ignored is None:
             return np.array([], dtype='int64')
 
-        ignored_features = check_array(ignored_features, ensure_2d=False,
-                                       dtype=int)
-        ignored_features = column_or_1d(ignored_features)
+        ignored = check_array(ignored, ensure_2d=False,
+                              dtype=int)
+        ignored = column_or_1d(ignored)
 
-        if len(set(ignored_features)) != ignored_features.shape[0]:
+        if len(set(ignored)) != ignored.shape[0]:
             raise ValueError("Duplicate ignored column indices found.")
 
-        if np.all(ignored_features >= 0) and \
-                np.all(ignored_features < n_features):
-            return ignored_features
+        if np.all(ignored >= 0) and np.all(ignored < n_features):
+            return ignored
 
         raise ValueError("Invalid ignored feature index.")
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Discretizes the data.
 
         Parameters
         ----------
         X : numeric array-like, shape (n_samples, n_features)
-            Data containing features to be discretized.
+            Data to be discretized.
 
         Returns
         -------
         Xt : numeric array-like, shape (n_samples, n_features)
+            Data in the binned space.
         """
-        check_is_fitted(self, ["min_", "ptp_", "_clip_min", "_clip_max"])
+        X = self._check_X_post_fit(X)
+        trans = self.transformed_features_
+        Xt = X.copy()
+
+        Xt[:, trans] -= self.offset_[trans]
+        with np.errstate(divide='ignore', invalid='ignore'):
+            Xt[:, trans] = Xt[:, trans] // self.bin_width_[trans]
+
+        Xt[~np.isfinite(Xt)] = 0
+        Xt[:, trans] = np.clip(Xt[:, trans], 0, self.n_bins_[trans] - 1)
+        return Xt
+
+    def inverse_transform(self, Xt):
+        """Given transformed (binned) data, returns a representation of
+        the data in the original feature space.
+
+        Parameters
+        ----------
+        Xt : numeric array-like, shape (n_sample, n_features)
+            Transformed data in the binned space.
+
+        Returns
+        -------
+        Xinv : numeric array-like
+            Data in the original feature space.
+
+        """
+        Xt = self._check_X_post_fit(Xt)
+        trans = self.transformed_features_
+        Xinv = Xt.copy()
+
+        Xinv[:, trans] = Xinv[:, trans] * self.bin_width_[trans]
+        Xinv[:, trans] += self.offset_[trans]
+        Xinv[:, trans] += self.bin_width_[trans] / 2
+        return Xinv
+
+    def _check_X_post_fit(self, X):
+        check_is_fitted(self, ["offset_", "bin_width_"])
         X = check_array(X, dtype=float)
 
         n_features = self.n_bins_.shape[0]
         if X.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
                              "received {}.".format(n_features, X.shape[1]))
-
-        with np.errstate(divide='ignore', invalid='ignore'):
-            Xt = (X - self.min_) * self.n_bins_ // self.ptp_
-            Xt[~np.isfinite(Xt)] = 0
-
-        np.clip(Xt, self._clip_min, self._clip_max, out=Xt)
-        return Xt
+        return X

@@ -1186,6 +1186,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
    preprocessing.Imputer
+   preprocessing.KBinsDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
