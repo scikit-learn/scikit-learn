@@ -113,12 +113,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
 
     Attributes
     ----------
-    `estimator_`: an estimator
+    estimator_ : an estimator
         The base estimator from which the transformer is built.
         This is stored only when a non-fitted estimator is passed to the
         ``SelectFromModel``, i.e when prefit is False.
 
-    `threshold_`: float
+    threshold_ : float
         The threshold value used for feature selection.
     """
 
