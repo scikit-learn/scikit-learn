@@ -1730,7 +1730,7 @@ def check_decision_proba_consistency(name, Estimator):
     centers = [(2, 2), (4, 4)]
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
-    X_test = np.random.randn(20, 2)+4
+    X_test = np.random.randn(20, 2) + 4
     estimator = Estimator()
 
     set_testing_parameters(estimator)
