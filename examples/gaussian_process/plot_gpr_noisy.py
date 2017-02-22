@@ -83,9 +83,9 @@ LML = np.array(LML).T
 
 vmin, vmax = (-LML).min(), (-LML).max()
 vmax = 50
+level = np.around(np.logspace(np.log10(vmin), np.log10(vmax), 50), decimals=1)
 plt.contour(Theta0, Theta1, -LML,
-            levels=np.logspace(np.log10(vmin), np.log10(vmax), 50),
-            norm=LogNorm(vmin=vmin, vmax=vmax))
+            levels=level, norm=LogNorm(vmin=vmin, vmax=vmax))
 plt.colorbar()
 plt.xscale("log")
 plt.yscale("log")
