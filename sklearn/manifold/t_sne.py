@@ -677,6 +677,12 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
 
+        # TODO sklearn 0.20: remove this warning
+        if learning_rate == 200.0:
+            import warnings
+            warnings.warn("The default learning rate of TSNE has changes " +
+                          "from 1000 to 200 in sklearn 0.19")
+
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
 
