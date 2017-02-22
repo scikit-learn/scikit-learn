@@ -403,7 +403,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         parent_split_map = {parent_split_record.nid: parent_split_record}
         # find the node to be extended
         # expandable_nids = np.array(np.unique(X_nid[X_nid != -1]))
-        expandable_nids = parent_split_map.keys()
+        expandable_nids = list(parent_split_map.keys())
 
         current_depth = 0
         while current_depth < max_depth:
@@ -509,7 +509,9 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         impurity=best_split.impurity,
                         feature=best_split.feature,
                         n_node_samples=best_split.c_stats.n_samples,
-                        weighted_n_node_samples=best_split.c_stats.sum_weighted_samples)
+                        weighted_n_node_samples=best_split.c_stats.sum_weighted_samples,
+                        node_value=best_split.c_stats.sum_residuals /
+                                   best_split.c_stats.sum_weighted_samples)
 
                     # update the dictionary with the new record
                     # add only the record if the impurity at the node is large
@@ -527,7 +529,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                 del parent_split_map[nid]
 
             # update of the expandable nodes
-            expandable_nids = parent_split_map.keys()
+            expandable_nids = list(parent_split_map.keys())
 
             # remove redundant index of feature to visit when updating X_nid
             feature_update_X_nid = np.unique(feature_update_X_nid)

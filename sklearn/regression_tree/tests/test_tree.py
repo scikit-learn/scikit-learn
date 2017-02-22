@@ -4,12 +4,10 @@ from sklearn.tree.tree import DecisionTreeRegressor
 from sklearn.tree import export_graphviz
 
 data = load_diabetes()
+X, y = data.data, data.target
+X, y = X[:20], y[:20]
 
-reg_tree = RegressionTree(max_depth=4)
-reg_tree.fit(data.data, data.target)
-reg_tree.predict(data.data)
+reg_tree = RegressionTree()
+reg_tree.fit(X, y)
+reg_tree.predict(X)
 export_graphviz(reg_tree, out_file='reg_tree.dot')
-
-dec_tree = DecisionTreeRegressor(max_depth=4)
-dec_tree.fit(data.data, data.target)
-export_graphviz(dec_tree, out_file='dec_tree.dot')
