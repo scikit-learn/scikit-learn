@@ -1738,7 +1738,7 @@ def check_decision_proba_consistency(name, Estimator):
     if (hasattr(estimator, "decision_function") and
             hasattr(estimator, "predict_proba")):
 
-        estimator.fit(X_train, y_train)
+        estimator.fit(X, y)
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
