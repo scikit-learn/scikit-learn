@@ -56,9 +56,8 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-MULTI_OUTPUT = ['CCA',  'DecisionTreeClassifier', 'DecisionTreeRegressor',
-                'ElasticNet', 'ExtraTreeClassifier', 'ExtraTreeRegressor',
-                'ExtraTreesRegressor', 'GaussianProcess',
+MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
+                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
                 'GaussianProcessRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
@@ -114,12 +113,11 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]:
+    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
         # TODO some complication with -1 label
-        if name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]:
+        and name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
-            pass
 
         yield check_supervised_y_2d
     # test if NotFittedError is raised
@@ -1732,9 +1730,7 @@ def check_decision_proba_consistency(name, Estimator):
     centers = [(2, 2), (4, 4)]
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
-                                                        random_state=0)
-
+    X_test = np.random.randn(20, 2)+4
     estimator = Estimator()
 
     set_testing_parameters(estimator)
@@ -1743,6 +1739,6 @@ def check_decision_proba_consistency(name, Estimator):
             hasattr(estimator, "predict_proba")):
 
         estimator.fit(X_train, y_train)
-        a = np.around(estimator.predict_proba(X_test)[:, 1], decimals=7)
-        b = np.around(estimator.decision_function(X_test), decimals=7)
+        a = estimator.predict_proba(X_test)[:, 1]
+        b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
