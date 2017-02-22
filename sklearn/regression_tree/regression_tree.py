@@ -378,8 +378,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
         # create the root node statistics
         root_stats = StatsNode(
-            sum_residuals=np.sum(np.ravel(y) * sample_weight),
-            sum_sq_residuals=np.sum(np.ravel(y ** 2) * sample_weight),
+            sum_y=np.sum(np.ravel(y) * sample_weight),
+            sum_sq_y=np.sum(np.ravel(y ** 2) * sample_weight),
             n_samples=n_samples,
             sum_weighted_samples=weighted_n_samples)
         # create the parent split record
@@ -398,7 +398,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             impurity=parent_split_record.impurity,
             n_node_samples=n_samples,
             weighted_n_node_samples=weighted_n_samples,
-            node_value=(root_stats.sum_residuals /
+            node_value=(root_stats.sum_y /
                         root_stats.sum_weighted_samples))
 
         # Create a dictionary to store the parents split overtime
@@ -489,7 +489,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         impurity=left_sr.impurity,
                         n_node_samples=left_sr.c_stats.n_samples,
                         weighted_n_node_samples=left_sr.c_stats.sum_weighted_samples,
-                        node_value=(left_sr.c_stats.sum_residuals /
+                        node_value=(left_sr.c_stats.sum_y /
                                     left_sr.c_stats.sum_weighted_samples))
 
                     # add a node for the right child
@@ -502,7 +502,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         impurity=right_sr.impurity,
                         n_node_samples=right_sr.c_stats.n_samples,
                         weighted_n_node_samples=right_sr.c_stats.sum_weighted_samples,
-                        node_value=(right_sr.c_stats.sum_residuals /
+                        node_value=(right_sr.c_stats.sum_y /
                                     right_sr.c_stats.sum_weighted_samples))
 
                     # Update the parent node with the found best split

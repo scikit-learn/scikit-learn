@@ -14,9 +14,9 @@ def _impurity_mse(stats_node):
     impurity: float,
         The impurity.
     """
-    impurity = (stats_node.sum_sq_residuals /
+    impurity = (stats_node.sum_sq_y /
                 stats_node.sum_weighted_samples)
-    impurity -= ((stats_node.sum_residuals /
+    impurity -= ((stats_node.sum_y /
                   stats_node.sum_weighted_samples) ** 2.0)
 
     return impurity

@@ -88,8 +88,8 @@ class NewSplitter(object):
         # make an update of the statistics
         # collect the statistics to add to the left node
         stats_samples = StatsNode(
-            sum_residuals=self.y[sample_idx] * self.sample_weight[sample_idx],
-            sum_sq_residuals=(self.y[sample_idx] ** 2.0 *
+            sum_y=self.y[sample_idx] * self.sample_weight[sample_idx],
+            sum_sq_y=(self.y[sample_idx] ** 2.0 *
                               self.sample_weight[sample_idx]),
             n_samples=1,
             sum_weighted_samples=self.sample_weight[sample_idx])

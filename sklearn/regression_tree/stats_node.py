@@ -23,11 +23,11 @@ class StatsNode(object):
 
     Attributes
     ----------
-    sum_residuals: float,
-        Sum of the residuals.
+    sum_y: float,
+        Sum of the y.
 
-    sum_sq_residuals: float,
-        Sum of the squared residuals.
+    sum_sq_y: float,
+        Sum of the squared y.
 
     n_samples: int,
         Number of samples.
@@ -36,34 +36,34 @@ class StatsNode(object):
         Sum of the weights associated to samples.
     """
 
-    def __init__(self, sum_residuals, sum_sq_residuals, n_samples,
+    def __init__(self, sum_y, sum_sq_y, n_samples,
                  sum_weighted_samples):
-        self.sum_residuals = float(sum_residuals)
-        self.sum_sq_residuals = float(sum_sq_residuals)
+        self.sum_y = float(sum_y)
+        self.sum_sq_y = float(sum_sq_y)
         self.n_samples = int(n_samples)
         self.sum_weighted_samples = float(sum_weighted_samples)
 
-    def reset(self, sum_residuals, sum_sq_residuals, n_samples,
+    def reset(self, sum_y, sum_sq_y, n_samples,
               sum_weighted_samples):
         """Reset the different stats"""
-        self.sum_residuals = float(sum_residuals)
-        self.sum_sq_residuals = float(sum_sq_residuals)
+        self.sum_y = float(sum_y)
+        self.sum_sq_y = float(sum_sq_y)
         self.n_samples = int(n_samples)
         self.sum_weighted_samples = float(sum_weighted_samples)
 
     def clear(self):
         """Clear the stats"""
-        self.sum_residuals = 0
-        self.sum_sq_residuals = 0
-        self.n_samples = 0
-        self.sum_weighted_samples = 0
+        self.sum_y = float(0.)
+        self.sum_sq_y = float(0.)
+        self.n_samples = int(0)
+        self.sum_weighted_samples = float(0.)
 
     def __iadd__(self, val):
         """In place add to StatsNodes together."""
         if isinstance(val, StatsNode):
             return StatsNode(
-                self.sum_residuals + val.sum_residuals,
-                self.sum_sq_residuals + val.sum_sq_residuals,
+                self.sum_y + val.sum_y,
+                self.sum_sq_y + val.sum_sq_y,
                 self.n_samples + val.n_samples,
                 self.sum_weighted_samples + val.sum_weighted_samples)
         else:
@@ -73,8 +73,8 @@ class StatsNode(object):
         """Add to StatsNodes together."""
         if isinstance(val, StatsNode):
             return StatsNode(
-                self.sum_residuals + val.sum_residuals,
-                self.sum_sq_residuals + val.sum_sq_residuals,
+                self.sum_y + val.sum_y,
+                self.sum_sq_y + val.sum_sq_y,
                 self.n_samples + val.n_samples,
                 self.sum_weighted_samples + val.sum_weighted_samples)
         else:
@@ -84,8 +84,8 @@ class StatsNode(object):
         """In place subtract to StatsNodes together."""
         if isinstance(val, StatsNode):
             return StatsNode(
-                self.sum_residuals - val.sum_residuals,
-                self.sum_sq_residuals - val.sum_sq_residuals,
+                self.sum_y - val.sum_y,
+                self.sum_sq_y - val.sum_sq_y,
                 self.n_samples - val.n_samples,
                 self.sum_weighted_samples - val.sum_weighted_samples)
         else:
@@ -95,20 +95,20 @@ class StatsNode(object):
         """Subtract to StatsNodes together."""
         if isinstance(val, StatsNode):
             return StatsNode(
-                self.sum_residuals - val.sum_residuals,
-                self.sum_sq_residuals - val.sum_sq_residuals,
+                self.sum_y - val.sum_y,
+                self.sum_sq_y - val.sum_sq_y,
                 self.n_samples - val.n_samples,
                 self.sum_weighted_samples - val.sum_weighted_samples)
         else:
             return NotImplemented
 
     def __str__(self):
-        info = ("Sum of residuals: {}\n"
-                "Sum of the squared residuals: {}\n"
+        info = ("Sum of y: {}\n"
+                "Sum of the squared y: {}\n"
                 "Number of samples: {}\n"
                 "Sum of weights associated to samples: {}\n".format(
-                    self.sum_residuals,
-                    self.sum_sq_residuals,
+                    self.sum_y,
+                    self.sum_sq_y,
                     self.n_samples,
                     self.sum_weighted_samples))
 
