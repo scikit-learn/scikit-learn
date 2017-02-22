@@ -68,8 +68,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     base_estimator : object, optional
         Base estimator object which implements the following methods:
 
-         * fit(X, y) : Fit model to given training data and target values.
-         * score(X, y) : Returns the mean accuracy on the given test data,
+         * `fit(X, y)`: Fit model to given training data and target values.
+         * `score(X, y)`: Returns the mean accuracy on the given test data,
            which is used for the stop criterion defined by `stop_score`.
            Additionally, the score is used to decide which of two equally
            large consensus sets is chosen as the better one.
