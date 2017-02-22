@@ -665,7 +665,7 @@ class TimeSeriesSplit(_BaseKFold):
         Number of splits. Must be at least 1.
 
     max_train_size : int, optional
-        Maximum size for a single training fold.
+        Maximum size for a single training set.
 
     Examples
     --------
