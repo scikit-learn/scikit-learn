@@ -13,7 +13,6 @@ import warnings
 
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
-from copy import deepcopy
 
 import numpy as np
 from scipy import sparse
