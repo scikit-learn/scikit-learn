@@ -26,7 +26,6 @@ print(__doc__)
 from collections import OrderedDict
 
 import numpy as np
-import scipy
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
