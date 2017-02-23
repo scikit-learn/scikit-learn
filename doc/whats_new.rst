@@ -152,6 +152,10 @@ Enhancements
 
 Bug fixes
 .........
+   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect 
+     result when input is a precomputed sparse matrix with initial
+     rows all zero.
+     :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
 
    - Fixed a bug where :class:`sklearn.ensemble.AdaBoostClassifier` throws
      ``ZeroDivisionError`` while fitting data with single class labels.
