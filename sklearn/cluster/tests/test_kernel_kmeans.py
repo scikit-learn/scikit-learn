@@ -46,6 +46,17 @@ def test_predict():
     pred = clf.fit_predict(X)
     assert_array_equal(pred, clf.labels_)
 
+    centers_test = np.array([
+        [0.0, 5.0, 0.0, 0.0, 3.0],
+        [0.0, 1.0, 4.0, 1.0, 0.0],
+        [4.0, 0.0, 0.0, 5.0, 1.0],
+    ])
+    n_samples_test = 100
+    X_test, _ = make_blobs(n_samples=n_samples_test, centers=centers_test,
+                           cluster_std=1., random_state=51)
+    pred = clf.predict(X_test)
+    assert_raises(AssertionError, assert_array_equal, pred, clf.labels_)
+
 
 def test_kernels():
     def check_kernel(kernel):

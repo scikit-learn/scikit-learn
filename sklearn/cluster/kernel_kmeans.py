@@ -1,16 +1,15 @@
-"""
-    Kernel K-means clustering
+"""Kernel K-means clustering
 
-    Reference
-    ---------
-    Kernel k-means, Spectral Clustering and Normalized Cuts.
-    Inderjit S. Dhillon, Yuqiang Guan, Brian Kulis.
-    KDD 2004.
+Reference
+---------
+Kernel k-means, Spectral Clustering and Normalized Cuts.
+Inderjit S. Dhillon, Yuqiang Guan, Brian Kulis.
+KDD 2004.
 
-    Author: Mathieu Blondel <mathieu@mblondel.org>
-            Ishank Gulati <gulati.ishank@gmail.com>
+Author: Mathieu Blondel <mathieu@mblondel.org>,
+        Ishank Gulati <gulati.ishank@gmail.com>
 
-    License: BSD 3 clause
+License: BSD 3 clause
 """
 from __future__ import print_function
 from __future__ import division
@@ -29,7 +28,6 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
     """
     Parameters
     ----------
-
     n_clusters : int, optional (default=3)
         The number of clusters to be formed as well as number of centroids
         to be generated.
@@ -76,11 +74,10 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-
     sample_weight_ : array-like, shape=(n_samples,)
 
     labels_ : shape=(n_samples,)
-        Labels of each point.
+        Labels of each training sample.
 
     within_distances_ : array, shape=(n_clusters,)
         Distance update.
@@ -89,6 +86,25 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
         Data used in clustering.
 
     n_iter_ : Iteration in which algorithm converged
+
+    Examples
+    --------
+    >>> from sklearn.cluster import KernelKMeans
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> ker_kmeans = KernelKMeans(n_clusters=2, random_state=0,
+    ...                           kernel='rbf').fit(X)
+    >>> ker_kmeans.labels_
+    array([0, 1, 1, 0, 0, 1])
+    >>> ker_kmeans.predict(np.array([[0, 0], [4, 4]]))
+    array([1, 0])
+
+    References
+    ----------
+    * Inderjit S. Dhillon, Yuqiang Guan, Brian Kulis
+      Kernel k-means, Spectral Clustering and Normalized Cuts
+      http://www.cs.utexas.edu/users/inderjit/public_papers/kdd_spectral_kernelkmeans.pdf
     """
 
     def __init__(self, n_clusters=3, max_iter=300, tol=1e-3, n_init=10,
@@ -232,12 +248,12 @@ class KernelKMeans(BaseEstimator, ClusterMixin):
         K : Kernel matrix
 
         dist : array-like, shape=(n_samples, n_clusters)
-            Distance of each sample from cluster centers.
+            List with all elements initialized to zero.
 
         within_distances : array, shape=(n_clusters,)
             Distance update.
 
-        update_within : {true, false}
+        update_within : bool
             To update within_distances or not.
         """
         sw = np.array(self.sample_weight_)
