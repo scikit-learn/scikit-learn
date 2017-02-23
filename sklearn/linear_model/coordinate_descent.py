@@ -1658,7 +1658,7 @@ class MultiTaskElasticNet(Lasso):
         self.selection = selection
 
     def fit(self, X, y):
-        """Fit MultiTaskLasso model with coordinate descent
+        """Fit MultiTaskElasticNet model with coordinate descent
 
         Parameters
         -----------
