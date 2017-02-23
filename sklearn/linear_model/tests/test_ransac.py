@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_true
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 
@@ -88,13 +89,13 @@ def test_ransac_max_trials():
                                        random_state=0)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
 
-    for i in range(400):
+    for i in range(50):
         ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                            random_state=i)
-        assert getattr(ransac_estimator, 'n_trials_', None) is None
+        assert_true(getattr(ransac_estimator, 'n_trials_', None) is None)
         ransac_estimator.fit(X, y)
-        #there is a 1e9 chance it will take thise many trials. No good reason
-        #1e2 isn't enough, can still happen
+        # there is a 1e9 chance it will take these many trials. No good reason
+        # 1e2 isn't enough, can still happen
         max_trials = _dynamic_max_trials(
             len(X) - len(outliers), X.shape[0], X.shape[1] + 1, 1 - 1e9)
         assert_less(ransac_estimator.n_trials_, max_trials + 1)
@@ -526,4 +527,3 @@ def test_ransac_fit_sample_weight():
     base_estimator = Lasso()
     ransac_estimator = RANSACRegressor(base_estimator)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
-

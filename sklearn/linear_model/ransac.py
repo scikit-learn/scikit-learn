@@ -424,8 +424,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                                     min_samples, self.stop_probability))
 
             # break if sufficient number of inliers or score is reached
-            if (n_inliers_best >= self.stop_n_inliers \
-                        or score_best >= self.stop_score):
+            if n_inliers_best >= self.stop_n_inliers or \
+                            score_best >= self.stop_score:
                 break
 
         # if none of the iterations met the required criteria
