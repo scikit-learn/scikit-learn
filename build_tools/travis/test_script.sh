@@ -24,7 +24,7 @@ run_tests() {
     if [[ "$USE_PYTEST" == "true" ]]; then
         TEST_CMD="pytest --showlocals --pyargs"
     else
-        TEST_CMD="nosetests --with-coverage" # --with-timer --timer-top-n 20"
+        TEST_CMD="nosetests --with-timer --timer-top-n 20"
     fi
     # Get into a temp directory to run test from the installed scikit learn and
     # check if we do not leave artifacts
@@ -43,9 +43,12 @@ run_tests() {
     fi
     $TEST_CMD sklearn
 
-    # Test doc
-    cd $OLDPWD
-    make test-doc
+    # Test doc (only with nose until we switch completely to pytest)
+    if [[ "$USE_PYTEST" != "true" ]]; then
+        # Going back to git checkout folder needed for make test-doc
+        cd $OLDPWD
+        make test-doc
+    fi
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
