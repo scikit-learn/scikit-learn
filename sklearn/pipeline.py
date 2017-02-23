@@ -126,7 +126,7 @@ class Pipeline(_BasePipeline):
     Attributes
     ----------
     named_steps : dict
-        Read-only attribute to access any unfitted step parameter by user
+        Read-only attribute to access any unfitted step parameter by its
         given name. Keys are step names and values are steps parameters.
 
     named_steps_ : dict
@@ -227,7 +227,13 @@ class Pipeline(_BasePipeline):
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
-        return deepcopy(self._steps)
+        # in version 0.21, we need to return:
+        # [(name, clone(est)) if est is not None else (name, None)
+        #  for name, est in self._steps]
+        # instead of:
+        # self._steps
+        # return self._steps
+        return self._steps
 
     @property
     def _estimator_type(self):
@@ -236,9 +242,10 @@ class Pipeline(_BasePipeline):
     @property
     def steps(self):
         if hasattr(self, 'steps_'):
-            warnings.warn("In the future, 'steps' will be the steps used to"
-                          " instantiate the pipeline. To get the fitted"
-                          " steps, use 'steps_' instead.", FutureWarning)
+            warnings.warn("In the future, 'steps' will contain the estimator"
+                          " used to instantiate the pipeline. To get the"
+                          " fitted steps, use 'steps_' instead.",
+                          FutureWarning)
             return self.steps_
         else:
             return self._steps
@@ -257,7 +264,7 @@ class Pipeline(_BasePipeline):
     @property
     def named_steps(self):
         if hasattr(self, 'steps_'):
-            warnings.warn("In the future, 'named_steps' will returned the"
+            warnings.warn("In the future, 'named_steps' will return the"
                           " unfitted estimator. To get the fitted estimator,"
                           " use 'name_steps_' instead.", FutureWarning)
             return dict(self.steps_)

@@ -252,10 +252,10 @@ API changes summary
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
-    - In :class:`pipeline.Pipeline`, ``steps`` has been changed by ``steps`` and
-     ``steps_`` to not mutate the argument given by the users. Additionally,
-     ``named_step`` and ``named_steps_`` have to be used to access ``steps``
-      and ``steps_``, respectively.
+    - In the future, the estimators in the ``steps`` and ``named_steps``
+      attributes will no longer have their ``fit()`` methods called directly.
+      Users will have to access fitted Pipeline steps in ``steps_``
+      and ``named_steps_``.
       :issue:`8350` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_0_18_1:

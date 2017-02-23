@@ -307,6 +307,10 @@ def test_pipeline_methods_pca_svm():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
+    # in version 0.21, we need to change assert_true by assert_false
+    # for the moment _steps and steps_ are the same object for back-
+    # compatibility
+    assert_true(pipe._steps is pipe.steps_)
 
 
 def test_pipeline_methods_preprocessing_svm():
