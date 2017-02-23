@@ -1866,13 +1866,16 @@ class PairwiseKernel(Kernel):
 class SelectDimensionKernel(Kernel):
     """Wrapper for applying kernels on selected active dimensions of input data.
 
-
     Parameters
     ----------
     kernel : a kernel object.
         an instantiation of kernel object.
 
-    active_dims : array-like, shape (n_active_dims,)
+    active_dims: array-like, shape (n_active_dims,) or (n_features,)
+         If `active_dims` is a boolean array, then it should be of size
+         `n_features` marked as True for an active index.
+         If `active_dims` is an integer array, then it should be size of
+         `n_active_dims` denoting the indices of the active dimensions.
 
     """
 
