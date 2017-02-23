@@ -109,12 +109,12 @@ def test_mcd_issue3367():
     data = np.hstack((data, np.zeros((data.shape[0], 1))))
 
     # The below line of code should raise an exception if the covariance matrix
-    # is singular As a further test, since we have points in XYZ, the principle
-    # components (Eigenvectors) of these directly relate to the geometry of the
-    # points. Since it's a plane, we should be able to test that the
-    # Eigenvector that corresponds to the smallest Eigenvalue is the plane
-    # normal, specifically [0, 0, 1], since everything is in the XY plane (as
-    # I've set it up above). To do this one would start by:
+    # is singular. As a further test, since we have points in XYZ, the
+    # principle components (Eigenvectors) of these directly relate to the
+    # geometry of the points. Since it's a plane, we should be able to test
+    # that the Eigenvector that corresponds to the smallest Eigenvalue is the
+    # plane normal, specifically [0, 0, 1], since everything is in the XY plane
+    # (as I've set it up above). To do this one would start by:
     #
     #     evals, evecs = np.linalg.eigh(mcd_fit.covariance_)
     #     normal = evecs[:, np.argmin(evals)]

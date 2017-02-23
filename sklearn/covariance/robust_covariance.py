@@ -115,10 +115,14 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
     X_support = X[support]
     location = X_support.mean(0)
     covariance = cov_computation_method(X_support)
-    precision = pinvh(covariance)
 
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
+    # If the data already has singular covariance, calculate the precision,
+    # as the loop below will not be entered.
+    if np.isinf(det):
+        precision = pinvh(covariance)
+
     previous_det = np.inf
     while (det < previous_det and remaining_iterations > 0
             and not np.isinf(det)):
