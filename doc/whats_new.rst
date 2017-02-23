@@ -152,7 +152,12 @@ Enhancements
 
 Bug fixes
 .........
-   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect 
+   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
+     that produced a singular covariance matrix would cause the helper method
+     `_c_step` to throw an exception.
+     :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
+
+   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect
      result when input is a precomputed sparse matrix with initial
      rows all zero.
      :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
@@ -163,7 +168,7 @@ Bug fixes
 
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
-     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>` 
+     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
 
    - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
      :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
