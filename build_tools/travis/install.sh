@@ -51,13 +51,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Configure the conda environment and put it in the path using the
     # provided versions
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
@@ -118,5 +118,8 @@ except ImportError:
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    conda install --yes flake8
+    # flake8 version is temporarily set to 2.5.1 because the next
+    # version available on conda (3.3.0) has a bug that checks non
+    # python files and cause non meaningful flake8 errors
+    conda install --yes flake8=2.5.1
 fi

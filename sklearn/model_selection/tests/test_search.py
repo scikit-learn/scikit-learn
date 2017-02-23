@@ -59,7 +59,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -73,16 +73,21 @@ class MockClassifier(object):
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
+        self.classes_ = np.unique(Y)
         return self
 
     def predict(self, T):
         return T.shape[0]
 
+    def transform(self, X):
+        return X + self.foo_param
+
+    def inverse_transform(self, X):
+        return X - self.foo_param
+
     predict_proba = predict
     predict_log_proba = predict
     decision_function = predict
-    transform = predict
-    inverse_transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -321,6 +326,33 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+def test_classes__property():
+    # Test that classes_ property matches best_estimator_.classes_
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    Cs = [.1, 1, 10]
+
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    grid_search.fit(X, y)
+    assert_array_equal(grid_search.best_estimator_.classes_,
+                       grid_search.classes_)
+
+    # Test that regressors do not have a classes_ attribute
+    grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
+
+    # Test that the grid searcher has no classes_ attribute before it's fit
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    assert_false(hasattr(grid_search, 'classes_'))
+
+    # Test that the grid searcher has no classes_ attribute without a refit
+    grid_search = GridSearchCV(LinearSVC(random_state=0),
+                               {'C': Cs}, refit=False)
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
 
 
 def test_trivial_cv_results_attr():
@@ -1277,3 +1309,12 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2],
                                   per_param_scores[3])
+
+
+def test_transform_inverse_transform_round_trip():
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+
+    grid_search.fit(X, y)
+    X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
+    assert_array_equal(X, X_round_trip)
