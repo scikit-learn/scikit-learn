@@ -64,13 +64,13 @@ distributions = OrderedDict((
     ('Data after sample-wise L2 normalizing',
         Normalizer().fit_transform(X)),
     ('Data after quantile normalizing (uniform pdf)',
-        QuantileNormalizer(output_pdf=scipy.stats.uniform)
+        QuantileNormalizer(output_pdf='uniform')
         .fit_transform(X)),
     ('Data after quantile normalizing (gaussian pdf)',
-        QuantileNormalizer(output_pdf=scipy.stats.norm)
+        QuantileNormalizer(output_pdf='norm')
         .fit_transform(X))))
 
-y = minmax_scale(y_full)  # To make colors corresponding to the targe),
+y = minmax_scale(y_full)  # To make colors corresponding to the target),
 
 
 def plot_distribution(axes, X, y, hist_nbins=50, plot_title="", size=(15, 10),
@@ -134,7 +134,8 @@ for i, (title, X) in enumerate(distributions.items()):
         np.all(X > [cutoffs_X0[0], cutoffs_X1[0]], axis=1) &
         np.all(X < [cutoffs_X0[1], cutoffs_X1[1]], axis=1))
     axes = subplots[offset + 3:offset + 5] + subplots[offset + 8:offset + 10]
-    plot_distribution(axes, X[non_outliers_mask], y[non_outliers_mask], hist_nbins=50,
+    plot_distribution(axes, X[non_outliers_mask], y[non_outliers_mask],
+                      hist_nbins=50,
                       plot_title=(title +
                                   "\nZoomed-in at percentile range %s"
                                   % str(zoom_in_percentile_range)),
