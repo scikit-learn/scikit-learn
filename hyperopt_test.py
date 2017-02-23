@@ -1,6 +1,11 @@
-import sys
-sys.path.insert(0,'C:/Users/a457953/PycharmProjects/scikit-learn')
 from sklearn.model_selection._search import HyperoptSearchCV
-a=HyperoptSearchCV()
 
 
+def main():
+    a = HyperoptSearchCV(None, {})
+    a.
+    return 0
+
+
+if __name__ == '__main__':
+    main()

@@ -10,7 +10,9 @@
 numpy==1.9.3
 scipy==0.16.0
 cython
+hyperopt==0.1
 nose
 nose-timer
 wheel
 wheelhouse_uploader
+

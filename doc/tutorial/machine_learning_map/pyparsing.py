@@ -2075,6 +2075,7 @@ class ParseExpression(ParserElement):
         return self.exprs[i]
 
     def append( self, other ):
+        # type: (object) -> object
         self.exprs.append( other )
         self.strRepr = None
         return self
