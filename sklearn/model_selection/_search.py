@@ -19,6 +19,7 @@ import operator
 import warnings
 
 import numpy as np
+from hyperopt import fmin
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
@@ -1182,3 +1183,28 @@ class RandomizedSearchCV(BaseSearchCV):
         return ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state)
+
+
+class HyperoptSearchCV(BaseSearchCV):
+    """Description
+    Integration of hyperopt library in scikit-learn
+
+    Parameters
+    ----------
+    """
+    def __init__(self, estimator, space, scoring=None, fit_params=None,
+                 n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise',
+                 return_train_score=True):
+        super(HyperoptSearchCV, self).__init__(
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
+        self.space = space
+
+    def fit(self, X, y=None, groups=None, **fit_params):
+
+        return self
+
+
