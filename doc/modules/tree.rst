@@ -486,14 +486,24 @@ Regression criteria
 -------------------
 
 If the target is a continuous value, then for node :math:`m`,
-representing a region :math:`R_m` with :math:`N_m` observations, a common
-criterion to minimise is the Mean Squared Error
+representing a region :math:`R_m` with :math:`N_m` observations, common
+criteria to minimise are
+
+Mean Squared Error:
 
 .. math::
 
     c_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
+
+Mean Absolute Error:
+
+.. math::
+
+    \bar{y_m} = \frac{1}{N_m} \sum_{i \in N_m} y_i
+
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y_m}|
 
 where :math:`X_m` is the training data in node :math:`m`
 
