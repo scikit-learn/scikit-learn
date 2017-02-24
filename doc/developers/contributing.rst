@@ -961,7 +961,8 @@ interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
 
-For this to work, you need to implement the interface described below.
+Before detailing the required interface below, we describe two ways to achieve
+the correct interface more easily.
 
 .. topic:: Project template:
 
@@ -987,8 +988,9 @@ For this to work, you need to implement the interface described below.
     you can prevent a lot of boilerplate code
     by deriving a class from ``BaseEstimator``
     and optionally the mixin classes in ``sklearn.base``.
-    E.g., below is a custom classifier.
-    `scikit-learn-contrib <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_::
+    For example, below is a custom classifier, with more examples included
+    in the scikit-learn-contrib
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_.
 
       >>> import numpy as np
       >>> from sklearn.base import BaseEstimator, ClassifierMixin
