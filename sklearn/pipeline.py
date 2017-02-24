@@ -13,6 +13,7 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
+import copy
 
 import numpy as np
 from scipy import sparse
@@ -235,40 +236,42 @@ class Pipeline(_BasePipeline):
     def _final_estimator(self):
         return self.steps[-1][1]
 
-    def get_subsequence(self, start=None, stop=None):
-        """Extract a Pipeline consisting of a subsequence of steps
+    def pop(self, pos=-1):
+        """Return the pipeline without a given step, and that step's estimator
+
+        This is most often used to extract a pipeline consisting of the fitted
+        transformers preceding the last step, as well as the last step, to aid
+        model inspection.
 
         Parameters
         ----------
-        start : int or str, optional
-            The index (0-based) or name of the step where the extracted
-            subsequence begins (inclusive bound).  By default, get from the
-            beginning.  Negative integers are intpreted as subtracted from the
-            number of steps in the Pipeline.
-        stop : int or str, optional
-            The index (0-based) or name of the step before which the extracted
-            subsequence ends (exclusive bound).  By default, get until the end.
-            Negative integers are intpreted as subtracted from the number of
-            steps in the Pipeline.
+        pos : int or str, optional
+            The index (0-based) or name of the step to be popped. Defaults to
+            the final step.
 
         Returns
         -------
         sub_pipeline : Pipeline instance
-            The steps of this pipeline range from the start step to the stop
-            step specified.  The constituent estimators are not copied: if the
+            This pipeline is a copy of ``self``, with the step at ``pos``
+            removed. The constituent estimators are not copied: if the
             Pipeline had been fit, so will be the returned Pipeline.
 
             The return type will be of the same type as self, if a subclass
             is used and if its constructor is compatible.
-        """
-        if isinstance(start, six.string_types):
-            start = [name for name, _ in self.steps].index(start)
-        if isinstance(stop, six.string_types):
-            stop = [name for name, _ in self.steps].index(stop)
 
-        kwargs = self.get_params(deep=False)
-        kwargs['steps'] = self.steps[start:stop]
-        return type(self)(**kwargs)
+        estimator : estimator instance
+            The estimator found at ``pos`` within this Pipeline's steps.
+            This is not copied and remains fitted if it was previously.
+        """
+        if isinstance(pos, six.string_types):  # retrieve index for name ...
+            pos = [name for name, _ in self.steps].index(pos)
+        elif pos < 0:
+            pos = len(self.steps) + pos
+
+        # shallow copy of pipeline instance
+        out = copy.copy(self)
+        out.steps = self.steps[:pos] + self.steps[pos + 1:]
+        return out, self.steps[pos][1]
 
     # Estimator interface
 
