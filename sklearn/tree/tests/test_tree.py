@@ -811,7 +811,7 @@ def test_min_impurity_split():
             pass
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
-                est.tree_.children_right[node] == TREE_LEAF):
+                    est.tree_.children_right[node] == TREE_LEAF):
                 assert_equal(est.tree_.impurity[node], 0.,
                              "Failed with {0} "
                              "min_impurity_split={1}".format(
@@ -828,7 +828,7 @@ def test_min_impurity_split():
                              est.fit, X, y)
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
-                est.tree_.children_right[node] == TREE_LEAF):
+                    est.tree_.children_right[node] == TREE_LEAF):
                 assert_greater_equal(est.tree_.impurity[node], 0,
                                      "Failed with {0}, "
                                      "min_impurity_split={1}".format(
@@ -854,15 +854,15 @@ def test_min_impurity_decrease():
 
         # Check default value of min_impurity_decrease, 1e-7
         est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                            random_state=0)
+                             random_state=0)
         # Check with explicit value of 0.05
         est2 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                            min_impurity_decrease=0.05,
-                            random_state=0)
+                             min_impurity_decrease=0.05,
+                             random_state=0)
         # Check with a much lower value of 0.00001
         est3 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                            min_impurity_decrease=0.00001,
-                            random_state=0)
+                             min_impurity_decrease=0.00001,
+                             random_state=0)
 
         for est, expected_decrease in ((est1, 1e-7), (est2, 0.05),
                                        (est3, 0.00001)):
@@ -1665,7 +1665,8 @@ def test_mae():
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
-    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3], [0.6,0.3,0.1,1.0,0.3])
+    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3],
+               [0.6, 0.3, 0.1, 1.0, 0.3])
     assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
     assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
 
