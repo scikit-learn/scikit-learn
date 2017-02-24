@@ -280,10 +280,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                           " will be removed in version 0.21. "
                           "Use the min_impurity_decrease parameter instead.",
                           DeprecationWarning)
+            min_impurity_split = self.min_impurity_split
         else:
-            self.min_impurity_split = 1e-7
+            min_impurity_split = 1e-7
 
-        if self.min_impurity_split < 0.:
+        if min_impurity_split < 0.:
             raise ValueError("min_impurity_split must be greater than "
                              "or equal to 0")
 
@@ -348,7 +349,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                             min_weight_leaf,
                                             max_depth,
                                             self.min_impurity_decrease,
-                                            self.min_impurity_split)
+                                            min_impurity_split)
         else:
             builder = BestFirstTreeBuilder(splitter, min_samples_split,
                                            min_samples_leaf,
@@ -356,7 +357,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                            max_depth,
                                            max_leaf_nodes,
                                            self.min_impurity_decrease,
-                                           self.min_impurity_split)
+                                           min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
