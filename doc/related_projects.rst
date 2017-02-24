@@ -4,6 +4,13 @@
 Related Projects
 =====================================
 
+Projects implementing the scikit-learn estimator API are encouraged to use
+the `scikit-learn-contrib template <https://github.com/scikit-learn-contrib/project-template>`_
+which facilitates best practices for testing and documenting estimators.
+The `scikit-learn-contrib GitHub organisation <https://github.com/scikit-learn-contrib/scikit-learn-contrib>`_
+also accepts high-quality contributions of repositories conforming to this
+template.
+
 Below is a list of sister-projects, extensions and domain specific packages.
 
 Interoperability and framework enhancements
