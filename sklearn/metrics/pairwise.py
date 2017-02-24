@@ -20,7 +20,6 @@ from scipy.sparse import issparse
 
 from ..utils import check_array
 from ..utils import gen_even_slices
-from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils import flexible_vstack
 from ..preprocessing import normalize
@@ -258,8 +257,19 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
+def _argmin_min_reduce_min(dist):
+    indices = dist.argmin(axis=1)
+    values = dist[np.arange(dist.shape[0]), indices]
+    return indices, values
+
+
+BYTES_PER_FLOAT = 8
+DEFAULT_BLOCK_SIZE = 64
+
+
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=500, metric_kwargs=None):
+                                  block_size=DEFAULT_BLOCK_SIZE,
+                                  metric_kwargs=None, batch_size=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -279,12 +289,9 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         Arrays containing points. Respective shapes (n_samples1, n_features)
         and (n_samples2, n_features)
 
-    batch_size : integer
-        To reduce memory consumption over the naive solution, data are
-        processed in batches, comprising batch_size rows of X and
-        batch_size rows of Y. The default value is quite conservative, but
-        can be changed for fine-tuning. The larger the number, the larger the
-        memory usage.
+    block_size : int, default=64
+        The maximum number of mebibytes (MiB) of memory per job to use at a
+        time for calculating pairwise distances.
 
     metric : string or callable, default 'euclidean'
         metric to use for distance computation. Any metric from scikit-learn
@@ -332,12 +339,9 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
     """
-    dist_func = None
-    if metric in PAIRWISE_DISTANCE_FUNCTIONS:
-        dist_func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
-    elif not callable(metric) and not isinstance(metric, str):
-        raise ValueError("'metric' must be a string or a callable")
-
+    if batch_size is not None:
+        warnings.warn("'batch_size' was deprecated in version 0.19 and will "
+                      "be removed in version 0.21.", DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if metric_kwargs is None:
@@ -346,47 +350,18 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     if axis == 0:
         X, Y = Y, X
 
-    # Allocate output arrays
-    indices = np.empty(X.shape[0], dtype=np.intp)
-    values = np.empty(X.shape[0])
-    values.fill(np.infty)
-
-    for chunk_x in gen_batches(X.shape[0], batch_size):
-        X_chunk = X[chunk_x, :]
-
-        for chunk_y in gen_batches(Y.shape[0], batch_size):
-            Y_chunk = Y[chunk_y, :]
-
-            if dist_func is not None:
-                if metric == 'euclidean':  # special case, for speed
-                    d_chunk = safe_sparse_dot(X_chunk, Y_chunk.T,
-                                              dense_output=True)
-                    d_chunk *= -2
-                    d_chunk += row_norms(X_chunk, squared=True)[:, np.newaxis]
-                    d_chunk += row_norms(Y_chunk, squared=True)[np.newaxis, :]
-                    np.maximum(d_chunk, 0, d_chunk)
-                else:
-                    d_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
-            else:
-                d_chunk = pairwise_distances(X_chunk, Y_chunk,
-                                             metric=metric, **metric_kwargs)
-
-            # Update indices and minimum values using chunk
-            min_indices = d_chunk.argmin(axis=1)
-            min_values = d_chunk[np.arange(chunk_x.stop - chunk_x.start),
-                                 min_indices]
-
-            flags = values[chunk_x] > min_values
-            indices[chunk_x][flags] = min_indices[flags] + chunk_y.start
-            values[chunk_x][flags] = min_values[flags]
+    indices, values = \
+        pairwise_distances_reduce(X, Y, reduce_func=_argmin_min_reduce_min,
+                                  metric=metric, block_size=block_size,
+                                  **metric_kwargs)
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
         np.sqrt(values, values)
     return indices, values
 
 
-def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=500, metric_kwargs=None):
+def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean", block_size=500,
+                              metric_kwargs=None, batch_size=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -410,12 +385,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         Arrays containing points. Respective shapes (n_samples1, n_features)
         and (n_samples2, n_features)
 
-    batch_size : integer
-        To reduce memory consumption over the naive solution, data are
-        processed in batches, comprising batch_size rows of X and
-        batch_size rows of Y. The default value is quite conservative, but
-        can be changed for fine-tuning. The larger the number, the larger the
-        memory usage.
+    block_size : int, default=64
+        The maximum number of mebibytes (MiB) of memory per job to use at a
+        time for calculating pairwise distances.
 
     metric : string or callable
         metric to use for distance computation. Any metric from scikit-learn
@@ -459,10 +431,13 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin_min
     """
+    if batch_size is not None:
+        warnings.warn("'batch_size' was deprecated in version 0.19 and will "
+                      "be removed in version 0.21.", DeprecationWarning)
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    return pairwise_distances_argmin_min(X, Y, axis, metric, batch_size,
+    return pairwise_distances_argmin_min(X, Y, axis, metric, block_size,
                                          metric_kwargs)[0]
 
 
@@ -1133,9 +1108,6 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'russellrao', 'seuclidean', 'sokalmichener',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
 
-DEFAULT_BLOCK_SIZE = 64
-BYTES_PER_FLOAT = 8
-
 
 def _generate_pairwise_distances_blockwise(X, Y=None, metric='euclidean',
                                            n_jobs=1,
@@ -1247,7 +1219,6 @@ def pairwise_distances_reduce(X, Y=None, reduce_func=None, metric='euclidean',
         from X and the jth array from Y.
 
     """
-
     if reduce_func is not None:
         reduced_distances = (reduce_func(D) for D in
                              pairwise_distances_blockwise(X, Y, metric, n_jobs,

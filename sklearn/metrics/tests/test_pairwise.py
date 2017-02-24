@@ -369,9 +369,15 @@ def test_pairwise_distances_argmin_min():
     dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
 
     dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin_min(
-        X, Y, axis=0, metric="manhattan", batch_size=50)
+        X, Y, axis=0, metric="manhattan", block_size=50)
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+
+    # Test batch_size deprecation warning
+    assert_warns_message(DeprecationWarning, "'batch_size' was deprecated in "
+                         "version 0.19 and will be removed in version 0.21.",
+                         pairwise_distances_argmin_min, X, Y, batch_size=500,
+                         metric='euclidean')
 
 
 def test_pairwise_distances_reduce_invalid_reduce_func():
