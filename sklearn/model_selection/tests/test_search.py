@@ -647,8 +647,13 @@ def test_pandas_input():
     for InputFeatureType, TargetType in types:
         # X dataframe, y series
         X_df, y_ser = InputFeatureType(X), TargetType(y)
-        check_df = lambda x: isinstance(x, InputFeatureType)
-        check_series = lambda x: isinstance(x, TargetType)
+
+        def check_df(x):
+            return isinstance(x, InputFeatureType)
+
+        def check_series(x):
+            return isinstance(x, TargetType)
+
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
 
         # Default scoring
