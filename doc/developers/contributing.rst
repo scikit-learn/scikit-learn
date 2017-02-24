@@ -957,49 +957,73 @@ adheres to the scikit-learn interface and standards by running
   >>> check_estimator(LinearSVC)  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
-interface might be that you want to use it together with model assessment and
-selection tools such as :class:`model_selection.GridSearchCV`.
+interface might be that you want to use it together with model evaluation and
+selection tools such as :class:`model_selection.GridSearchCV` and
+:class:`pipeline.Pipeline`.
 
-For this to work, you need to implement the following interface.
-If a dependency on scikit-learn is okay for your code,
-you can prevent a lot of boilerplate code
-by deriving a class from ``BaseEstimator``
-and optionally the mixin classes in ``sklearn.base``.
-E.g., below is a custom classifier. For more information on this example, see
-`scikit-learn-contrib <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_::
+Before detailing the required interface below, we describe two ways to achieve
+the correct interface more easily.
 
-  >>> import numpy as np
-  >>> from sklearn.base import BaseEstimator, ClassifierMixin
-  >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-  >>> from sklearn.utils.multiclass import unique_labels
-  >>> from sklearn.metrics import euclidean_distances
-  >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
-  ...
-  ...     def __init__(self, demo_param='demo'):
-  ...         self.demo_param = demo_param
-  ...
-  ...     def fit(self, X, y):
-  ...
-  ...         # Check that X and y have correct shape
-  ...         X, y = check_X_y(X, y)
-  ...         # Store the classes seen during fit
-  ...         self.classes_ = unique_labels(y)
-  ...
-  ...         self.X_ = X
-  ...         self.y_ = y
-  ...         # Return the classifier
-  ...         return self
-  ...
-  ...     def predict(self, X):
-  ...
-  ...         # Check is fit had been called
-  ...         check_is_fitted(self, ['X_', 'y_'])
-  ...
-  ...         # Input validation
-  ...         X = check_array(X)
-  ...
-  ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
-  ...         return self.y_[closest]
+.. topic:: Project template:
+
+    We provide a `project template <https://github.com/scikit-learn-contrib/project-template/>`_
+    which helps in the creation of Python packages containing scikit-learn compatible estimators.
+    It provides:
+
+    * an initial git repository with Python package directory structure
+    * a template of a scikit-learn estimator
+    * an initial test suite including use of ``check_estimator``
+    * directory structures and scripts to compile documentation and example
+      galleries
+    * scripts to manage continuous integration (testing on Linux and Windows)
+    * instructions from getting started to publishing on `PyPi <https://pypi.python.org/pypi>`_
+
+.. topic:: ``BaseEstimator`` and mixins:
+
+    We tend to use use "duck typing", so building an estimator which follows
+    the API suffices for compatibility, without needing to inherit from or
+    even import any scikit-learn classes.
+
+    However, if a dependency on scikit-learn is acceptable in your code,
+    you can prevent a lot of boilerplate code
+    by deriving a class from ``BaseEstimator``
+    and optionally the mixin classes in ``sklearn.base``.
+    For example, below is a custom classifier, with more examples included
+    in the scikit-learn-contrib
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_.
+
+      >>> import numpy as np
+      >>> from sklearn.base import BaseEstimator, ClassifierMixin
+      >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+      >>> from sklearn.utils.multiclass import unique_labels
+      >>> from sklearn.metrics import euclidean_distances
+      >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+      ...
+      ...     def __init__(self, demo_param='demo'):
+      ...         self.demo_param = demo_param
+      ...
+      ...     def fit(self, X, y):
+      ...
+      ...         # Check that X and y have correct shape
+      ...         X, y = check_X_y(X, y)
+      ...         # Store the classes seen during fit
+      ...         self.classes_ = unique_labels(y)
+      ...
+      ...         self.X_ = X
+      ...         self.y_ = y
+      ...         # Return the classifier
+      ...         return self
+      ...
+      ...     def predict(self, X):
+      ...
+      ...         # Check is fit had been called
+      ...         check_is_fitted(self, ['X_', 'y_'])
+      ...
+      ...         # Input validation
+      ...         X = check_array(X)
+      ...
+      ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
+      ...         return self.y_[closest]
 
 
 get_params and set_params
