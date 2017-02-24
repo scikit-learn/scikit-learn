@@ -807,7 +807,7 @@ class RandomForestClassifier(ForestClassifier):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, optional (default=1e-7)
+    min_impurity_decrease : float, optional (default=0.)
         Threshold for early stopping in tree growth. A node will be split
         if the impurity decrease due to the splitting, is greater than or equal
         to this value. If not, the node is marked as a leaf.
@@ -915,8 +915,8 @@ class RandomForestClassifier(ForestClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -1030,7 +1030,7 @@ class RandomForestRegressor(ForestRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, optional (default=1e-7)
+    min_impurity_decrease : float, optional (default=0.)
         Threshold for early stopping in tree growth. A node will be split
         if the impurity decrease due to the splitting, is greater than or equal
         to this value. If not, the node is marked as a leaf.
@@ -1107,8 +1107,8 @@ class RandomForestRegressor(ForestRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -1213,7 +1213,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, optional (default=1e-7)
+    min_impurity_decrease : float, optional (default=0.)
         Threshold for early stopping in tree growth. A node will be split
         if the impurity decrease due to the splitting, is greater than or equal
         to this value. If not, the node is marked as a leaf.
@@ -1322,8 +1322,8 @@ class ExtraTreesClassifier(ForestClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1435,7 +1435,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, optional (default=1e-7)
+    min_impurity_decrease : float, optional (default=0.)
         Threshold for early stopping in tree growth. A node will be split
         if the impurity decrease due to the splitting, is greater than or equal
         to this value. If not, the node is marked as a leaf.
@@ -1513,8 +1513,8 @@ class ExtraTreesRegressor(ForestRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1604,7 +1604,7 @@ class RandomTreesEmbedding(BaseForest):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, optional (default=1e-7)
+    min_impurity_decrease : float, optional (default=0.)
         Threshold for early stopping in tree growth. A node will be split
         if the impurity decrease due to the splitting, is greater than or equal
         to this value. If not, the node is marked as a leaf.
@@ -1665,8 +1665,8 @@ class RandomTreesEmbedding(BaseForest):
                  min_samples_leaf=1,
                  min_weight_fraction_leaf=0.,
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  sparse_output=True,
                  n_jobs=1,
                  random_state=None,

@@ -275,11 +275,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
 
-        if self.min_impurity_split != 1e-7:
+        if self.min_impurity_split is not None:
             warnings.warn("The min_impurity_split parameter is deprecated and"
                           " will be removed in version 0.21. "
                           "Use the min_impurity_decrease parameter instead.",
                           DeprecationWarning)
+        else:
+            self.min_impurity_split = 1e-7
 
         if self.min_impurity_split < 0.:
             raise ValueError("min_impurity_split must be greater than "
@@ -603,7 +605,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    min_impurity_decrease : float, optional (default=1e-7)
+    min_impurity_decrease : float, optional (default=0.)
         Threshold for early stopping in tree growth. A node will be split
         if the impurity decrease due to the splitting, is greater than or equal
         to this value. If not, the node is marked as a leaf.
@@ -694,8 +696,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  class_weight=None,
                  presort=False):
         super(DecisionTreeClassifier, self).__init__(
@@ -914,7 +916,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    min_impurity_decrease : float, optional (default=1e-7)
+    min_impurity_decrease : float, optional (default=0.)
         Threshold for early stopping in tree growth. A node will be split
         if the impurity decrease due to the splitting, is greater than or equal
         to this value. If not, the node is marked as a leaf.
@@ -997,8 +999,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  presort=False):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
@@ -1092,8 +1094,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  class_weight=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
@@ -1143,8 +1145,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 min_impurity_decrease=1e-7,
-                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  max_leaf_nodes=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,

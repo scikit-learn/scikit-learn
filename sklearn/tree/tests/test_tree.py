@@ -28,6 +28,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
@@ -61,7 +62,6 @@ CLF_TREES = {
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
-    "MAE-RegressionTree": partial(DecisionTreeRegressor, criterion='mae'),
     "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
                                              presort=True),
     "ExtraTreeRegressor": ExtraTreeRegressor,
@@ -802,13 +802,11 @@ def test_min_impurity_split():
         # impurity 1e-7
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert_less_equal(est.min_impurity_split, 1e-7,
-                     "Failed, min_impurity_split = {0} > 1e-7".format(
-                         est.min_impurity_split))
+        assert_true(est.min_impurity_split is None,
+                    "Failed, min_impurity_split = {0} > 1e-7".format(
+                        est.min_impurity_split))
         try:
-            assert_warns_message(DeprecationWarning,
-                                 "Use the min_impurity_decrease",
-                                 est.fit, X, y)
+            assert_warns(DeprecationWarning, est.fit, X, y)
         except AssertionError:
             pass
         for node in range(est.tree_.node_count):
@@ -854,7 +852,7 @@ def test_min_impurity_decrease():
     for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
         TreeEstimator = ALL_TREES[name]
 
-        # Check default value of min_impurity_decrease, 0.
+        # Check default value of min_impurity_decrease, 1e-7
         est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
         # Check with explicit value of 0.05
@@ -866,7 +864,7 @@ def test_min_impurity_decrease():
                             min_impurity_decrease=0.00001,
                             random_state=0)
 
-        for est, expected_decrease in ((est1, 0.), (est2, 0.05),
+        for est, expected_decrease in ((est1, 1e-7), (est2, 0.05),
                                        (est3, 0.00001)):
             assert_less_equal(est.min_impurity_decrease, expected_decrease,
                               "Failed, min_impurity_decrease = {0} > {1}"

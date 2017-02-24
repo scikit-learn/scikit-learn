@@ -52,6 +52,7 @@ from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
 
 cdef double INFINITY = np.inf
+cdef double EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
@@ -234,7 +235,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
                     is_leaf = (is_leaf or split.pos >= end or
-                               fabs(split.improvement) < min_impurity_decrease)
+                               split.improvement + EPSILON < min_impurity_decrease)
+                    with gil:
+                        print(fabs(split.improvement - min_impurity_decrease), EPSILON)
+                        print(fabs(split.improvement - min_impurity_decrease) < EPSILON)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
@@ -454,7 +458,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
             is_leaf = (is_leaf or split.pos >= end or
-                       fabs(split.improvement) < min_impurity_decrease)
+                       split.improvement + EPSILON < min_impurity_decrease)
 
         node_id = tree._add_node(parent - tree.nodes
                                  if parent != NULL
