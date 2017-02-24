@@ -19,6 +19,7 @@
 from cpython cimport Py_INCREF, PyObject
 
 from libc.stdlib cimport free
+from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
 
@@ -233,8 +234,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
                     is_leaf = (is_leaf or split.pos >= end or
-                               split.improvement < (min_impurity_decrease +
-                                                    EPSILON))
+                               fabs(split.improvement) < min_impurity_decrease)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
@@ -454,7 +454,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
             is_leaf = (is_leaf or split.pos >= end or
-                       split.improvement < min_impurity_decrease)
+                       fabs(split.improvement) < min_impurity_decrease)
 
         node_id = tree._add_node(parent - tree.nodes
                                  if parent != NULL
