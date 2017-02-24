@@ -28,6 +28,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 
@@ -60,6 +61,7 @@ CLF_TREES = {
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
+    "MAE-RegressionTree": partial(DecisionTreeRegressor, criterion='mae'),
     "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
                                              presort=True),
     "ExtraTreeRegressor": ExtraTreeRegressor,
@@ -525,6 +527,8 @@ def test_error():
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit,
                       X, y)
+        assert_raises(ValueError,
+                      TreeEstimator(min_impurity_decrease=-1.0).fit, X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -801,7 +805,12 @@ def test_min_impurity_split():
         assert_less_equal(est.min_impurity_split, 1e-7,
                      "Failed, min_impurity_split = {0} > 1e-7".format(
                          est.min_impurity_split))
-        est.fit(X, y)
+        try:
+            assert_warns_message(DeprecationWarning,
+                                 "Use the min_impurity_decrease",
+                                 est.fit, X, y)
+        except AssertionError:
+            pass
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
                 est.tree_.children_right[node] == TREE_LEAF):
@@ -811,11 +820,14 @@ def test_min_impurity_split():
                                  est.tree_.impurity[node],
                                  est.min_impurity_split))
 
-        # verify leaf nodes have impurity [0,min_impurity_split] when using min_impurity_split
+        # verify leaf nodes have impurity [0,min_impurity_split] when using
+        # min_impurity_split
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             min_impurity_split=min_impurity_split,
                             random_state=0)
-        est.fit(X, y)
+        assert_warns_message(DeprecationWarning,
+                             "Use the min_impurity_decrease",
+                             est.fit, X, y)
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
                 est.tree_.children_right[node] == TREE_LEAF):
@@ -831,7 +843,58 @@ def test_min_impurity_split():
                                       est.min_impurity_split))
 
 
-def test_pickle():
+def test_min_impurity_decrease():
+    # test if min_impurity_decrease ensure that a split is made only if
+    # if the impurity decrease is atleast that value
+    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    y = iris.target
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
+        TreeEstimator = ALL_TREES[name]
+
+        # Check default value of min_impurity_decrease, 0.
+        est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        # Check with explicit value of 0.05
+        est2 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                            min_impurity_decrease=0.05,
+                            random_state=0)
+        # Check with a much lower value of 0.00001
+        est3 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                            min_impurity_decrease=0.00001,
+                            random_state=0)
+
+        for est, expected_decrease in ((est1, 0.), (est2, 0.05),
+                                       (est3, 0.00001)):
+            assert_less_equal(est.min_impurity_decrease, expected_decrease,
+                              "Failed, min_impurity_decrease = {0} > {1}"
+                              .format(est.min_impurity_decrease,
+                                      expected_decrease))
+            est.fit(X, y)
+            for node in range(est.tree_.node_count):
+                # If current node is a not leaf node, check if the split was
+                # justified w.r.t the min_impurity_decrease
+                if est.tree_.children_left[node] != TREE_LEAF:
+                    left = est.tree_.children_left[node]
+                    imp_left = est.tree_.impurity[left]
+                    weighted_n_left = est.tree_.weighted_n_node_samples[left]
+
+                    right = est.tree_.children_right[node]
+                    imp_right = est.tree_.impurity[right]
+                    weighted_n_right = est.tree_.weighted_n_node_samples[right]
+
+                    actual_decrease = (est.tree_.impurity[node] -
+                                       (weighted_n_left * imp_left +
+                                        weighted_n_right * imp_right) /
+                                       (weighted_n_left + weighted_n_right))
+
+                    assert_greater_equal(actual_decrease, expected_decrease,
+                                         "Failed with {0} "
+                                         "expected min_impurity_decrease={1}"
+                                         .format(actual_decrease,
+                                                 expected_decrease))
 
     for name, TreeEstimator in ALL_TREES.items():
         if "Classifier" in name:
@@ -1600,7 +1663,7 @@ def test_mae():
     # on small toy dataset
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
-    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3])
+    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
