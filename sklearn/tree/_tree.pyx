@@ -236,9 +236,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     splitter.node_split(impurity, &split, &n_constant_features)
                     is_leaf = (is_leaf or split.pos >= end or
                                split.improvement + EPSILON < min_impurity_decrease)
-                    with gil:
-                        print(fabs(split.improvement - min_impurity_decrease), EPSILON)
-                        print(fabs(split.improvement - min_impurity_decrease) < EPSILON)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
