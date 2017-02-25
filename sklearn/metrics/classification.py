@@ -1365,9 +1365,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     Returns
     -------
-    report : string/dictionary
+    report : string/dict
         Text summary of the precision, recall, F1 score for each class.
-        Dictionary returned if output_dict is true.
+        Dictionary returned if output_dict is true. The keys include the class
+        names while the values are of float type.
 
         The reported averages are a prevalence-weighted macro-average across
         classes (equivalent to :func:`precision_recall_fscore_support` with
@@ -1438,7 +1439,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                              np.sum(s),
                              width=width, digits=digits)
 
-    if output_dict is not False:
+    if output_dict :
 
         headers = headers[1:]
 
@@ -1450,10 +1451,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
             report_dict[t] = {}
             for header,score_name in zip(headers,scores):
                 if header == "support":
-                    report_dict[t][header] = "{0}".format(score_name[i])
+                    report_dict[t][header] = float("{0}".format(score_name[i]))
 
                 else:
-                    report_dict[t][header] = "{0:0.{1}f}".format(score_name[i], digits)
+                    report_dict[t][header] = float("{0:0.{1}f}".format(score_name[i], digits))
 
             i+=1
 
@@ -1463,9 +1464,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                                     np.average(r, weights=s),
                                     np.average(f1, weights=s))):
 
-            report_dict[last_line_heading][header] = "{0:0.{1}f}".format(v, digits)
+            report_dict[last_line_heading][header] = float("{0:0.{1}f}".format(v, digits))
 
-        report_dict[last_line_heading]['support'] = '{0}'.format(np.sum(s))
+        report_dict[last_line_heading]['support'] = float("{0}".format(np.sum(s)))
 
         report = report_dict
 
