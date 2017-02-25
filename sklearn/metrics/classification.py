@@ -1813,6 +1813,10 @@ def _check_binary_probabilistic_predictions(y_true, y_prob):
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
+    if ((labels == 0) | (labels == 1)).all():
+        # Return if labels are already binary
+        return y_true
+
     return label_binarize(y_true, labels)[:, 0]
 
 
