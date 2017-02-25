@@ -519,7 +519,7 @@ And the L2-normalized tf-idf changes to
 = [0.8515, 0, 0.5243]`::
 
   >>> transformer = TfidfTransformer()
-  >>> transformer.fit_transform(counts).toarray()
+  >>> transformer.fit_transform(counts)
   array([[ 0.85151335,  0.        ,  0.52433293],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
