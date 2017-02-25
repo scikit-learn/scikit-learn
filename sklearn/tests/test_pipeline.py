@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -646,6 +647,17 @@ def test_pipeline_steps():
     # check that the estimators have been fitted in steps_
     check_is_fitted(pipe.named_steps_['pca'], 'n_components_')
     check_is_fitted(pipe.named_steps_['svc'], 'support_vectors_')
+
+
+def test_pipeline_deprecation_warnings():
+    # TODO remove in 0.22
+    iris = load_iris()
+    X = iris.data
+    pca = PCA(n_components=2, svd_solver='full')
+    pipeline = Pipeline([('pca', pca)])
+    pipeline.fit(X)
+    assert_warns(FutureWarning, getattr, pipeline, 'steps')
+    assert_warns(FutureWarning, getattr, pipeline, 'named_steps')
 
 def test_make_pipeline():
     t1 = Transf()
