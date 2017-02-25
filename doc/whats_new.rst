@@ -255,7 +255,8 @@ API changes summary
     - In the future, the estimators in the ``steps`` and ``named_steps``
       attributes will no longer have their ``fit()`` methods called directly.
       Users will have to access fitted Pipeline steps in ``steps_``
-      and ``named_steps_``.
+      and ``named_steps_`. The warning was introduced in 0.19 and will take
+      effect in 0.22.
       :issue:`8350` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_0_18_1:

@@ -243,7 +243,9 @@ class Pipeline(_BasePipeline):
         if hasattr(self, 'steps_'):
             warnings.warn("In the future, 'steps' will contain the estimator"
                           " used to instantiate the pipeline. To get the"
-                          " fitted steps, use 'steps_' instead.",
+                          " fitted steps, use 'steps_' instead. The warning"
+                          " was introduced in 0.19 and will take effect in "
+                          " 0.22.",
                           FutureWarning)
             return self.steps_
         else:
@@ -255,7 +257,10 @@ class Pipeline(_BasePipeline):
         if hasattr(self, 'steps_'):
             warnings.warn("In the future, 'steps' will be the steps used to"
                           " instantiate the pipeline. To set the fitted"
-                          " steps, use 'steps_' instead.", FutureWarning)
+                          " steps, use 'steps_' instead. The warning"
+                          " was introduced in 0.19 and will take effect in "
+                          " 0.22.",
+                          FutureWarning)
             self.steps_ = val
         # set the user argument
         self._steps = val
@@ -265,7 +270,10 @@ class Pipeline(_BasePipeline):
         if hasattr(self, 'steps_'):
             warnings.warn("In the future, 'named_steps' will return the"
                           " unfitted estimator. To get the fitted estimator,"
-                          " use 'name_steps_' instead.", FutureWarning)
+                          " use 'name_steps_' instead. The warning"
+                          " was introduced in 0.19 and will take effect in "
+                          " 0.22.",
+                          FutureWarning)
             return dict(self.steps_)
         else:
             return dict(self._steps)
