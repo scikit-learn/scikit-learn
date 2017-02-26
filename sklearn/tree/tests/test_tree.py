@@ -886,11 +886,12 @@ def test_min_impurity_decrease():
                         est.tree_.weighted_n_node_samples[node] /
                         est.tree_.weighted_n_node_samples[0])
 
-                    actual_decrease = (fractional_node_weight *
-                        (est.tree_.impurity[node] -
-                         (weighted_n_left * imp_left +
-                          weighted_n_right * imp_right) /
-                         (weighted_n_left + weighted_n_right)))
+                    actual_decrease = (
+                        fractional_node_weight * (
+                            est.tree_.impurity[node] -
+                            (weighted_n_left * imp_left +
+                             weighted_n_right * imp_right) /
+                            (weighted_n_left + weighted_n_right)))
 
                     assert_greater_equal(actual_decrease, expected_decrease,
                                          "Failed with {0} "
