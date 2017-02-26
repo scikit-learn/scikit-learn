@@ -893,7 +893,7 @@ class RandomForestClassifier(ForestClassifier):
     -----
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
-    ``max_feature=n_features`` and ``bootstrap=False``, if the improvement
+    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
     of the criterion is identical for several splits enumerated during the
     search of the best split. To obtain a deterministic behaviour during
     fitting, ``random_state`` has to be fixed.
@@ -1083,7 +1083,7 @@ class RandomForestRegressor(ForestRegressor):
     -----
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
-    ``max_feature=n_features`` and ``bootstrap=False``, if the improvement
+    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
     of the criterion is identical for several splits enumerated during the
     search of the best split. To obtain a deterministic behaviour during
     fitting, ``random_state`` has to be fixed.
