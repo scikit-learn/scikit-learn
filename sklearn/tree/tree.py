@@ -629,6 +629,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     tree_ : Tree object
         The underlying Tree object.
 
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
+
     See also
     --------
     DecisionTreeRegressor
@@ -921,6 +930,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     tree_ : Tree object
         The underlying Tree object.
+
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
