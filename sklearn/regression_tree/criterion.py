@@ -47,6 +47,17 @@ def impurity_improvement(c_split_record, sum_total_weighted_samples,
     else:
         raise NotImplementedError
 
+    # check that there is more sample in the root nodes than
+    # in the current nodes
+    if ((sum_total_weighted_samples <
+         c_split_record.c_stats.sum_weighted_samples) or
+        (sum_total_weighted_samples <
+         c_split_record.l_stats.sum_weighted_samples) or
+        (sum_total_weighted_samples <
+         c_split_record.r_stats.sum_weighted_samples)):
+        raise ValueError('The number of samples in the root nodes is'
+                         ' less than in the current children node.')
+
     # impurity current node
     c_impurity = _impurity_func(c_split_record.c_stats)
     # impurity left child
