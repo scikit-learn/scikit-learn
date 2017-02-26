@@ -96,7 +96,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         n_features = X.shape[1]
         ignored = self._check_ignored_features(self.ignored_features,
-                                               X.shape[1])
+                                               n_features)
         self.transformed_features_ = np.delete(np.arange(n_features), ignored)
 
         min = np.min(X, axis=0)
@@ -154,8 +154,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if ignored is None:
             return np.array([], dtype='int64')
 
-        ignored = check_array(ignored, ensure_2d=False,
-                              dtype=int)
+        ignored = check_array(ignored, ensure_2d=False, dtype=int)
         ignored = column_or_1d(ignored)
 
         if len(set(ignored)) != ignored.shape[0]:
