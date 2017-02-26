@@ -1,5 +1,7 @@
 from __future__ import division, print_function
 
+from numpy import all
+
 
 class StatsNode(object):
     """Container of the statistic for a specific node.
@@ -99,6 +101,18 @@ class StatsNode(object):
                 self.sum_sq_y - val.sum_sq_y,
                 self.n_samples - val.n_samples,
                 self.sum_weighted_samples - val.sum_weighted_samples)
+        else:
+            return NotImplemented
+
+    def __eq__(self, val):
+        """Compare to StatsNode."""
+        if isinstance(val, StatsNode):
+            return all([
+                self.sum_y == val.sum_y,
+                self.sum_sq_y == val.sum_sq_y,
+                self.n_samples == val.n_samples,
+                self.sum_weighted_samples == val.sum_weighted_samples
+            ])
         else:
             return NotImplemented
 

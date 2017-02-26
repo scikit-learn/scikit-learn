@@ -101,6 +101,12 @@ def test_stats_node_sub():
     assert_equal(sn.__sub__((1, 2, 3, 4)), NotImplemented)
 
 
+def test_stats_node_eq():
+    assert_true(StatsNode(10, 10, 10, 10), StatsNode(10., 10., 10., 10.))
+    sn = StatsNode(4, 4, 4, 4)
+    assert_equal(sn.__eq__((1, 2, 3, 4)), NotImplemented)
+
+
 def test_stats_node_repr():
     sn = StatsNode(1, 2, 3, 4)
     assert_equal(sn.__str__(), 'Sum of y: 1.0\nSum of the squared y:'

@@ -38,12 +38,12 @@ class SplitRecord(object):
     """
 
     def __init__(self):
-        self.feature = 0
-        self.pos = 0
+        self.feature = int(0)
+        self.pos = int(0)
         self.threshold = nan
         self.impurity = inf
         self.impurity_improvement = -inf
-        self.nid = 0
+        self.nid = int(0)
 
         # statistics related to current and children node
         self.c_stats = StatsNode(0., 0., 0, 0.)
@@ -54,7 +54,7 @@ class SplitRecord(object):
               impurity_improvement, nid, c_stats, l_stats, r_stats):
         """Reset the split record"""
         self.feature = int(feature)
-        self.pos = (pos)
+        self.pos = int(pos)
         self.threshold = float(threshold)
         self.impurity = float(impurity)
         self.impurity_improvement = float(impurity_improvement)
@@ -65,12 +65,12 @@ class SplitRecord(object):
 
     def clear(self):
         """Clear the split record"""
-        self.feature = 0
-        self.pos = 0
+        self.feature = int(0)
+        self.pos = int(0)
         self.threshold = nan
         self.impurity = inf
         self.impurity_improvement = -inf
-        self.nid = 0
+        self.nid = int(0)
         self.c_stats.clear()
         self.l_stats.clear()
         self.r_stats.clear()
