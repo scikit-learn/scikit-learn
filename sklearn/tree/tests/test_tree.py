@@ -844,8 +844,7 @@ def test_min_impurity_split():
 def test_min_impurity_decrease():
     # test if min_impurity_decrease ensure that a split is made only if
     # if the impurity decrease is atleast that value
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
-    y = iris.target
+    X, y = datasets.make_classification(n_samples=10000, random_state=42)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
@@ -853,19 +852,19 @@ def test_min_impurity_decrease():
         TreeEstimator = ALL_TREES[name]
 
         # Check default value of min_impurity_decrease, 1e-7
-        est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                             random_state=0)
+        est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes, random_state=0)
         # Check with explicit value of 0.05
         est2 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                             min_impurity_decrease=0.05,
-                             random_state=0)
-        # Check with a much lower value of 0.00001
+                             min_impurity_decrease=0.05, random_state=0)
+        # Check with a much lower value of 0.0001
         est3 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                             min_impurity_decrease=0.00001,
-                             random_state=0)
+                             min_impurity_decrease=0.0001, random_state=0)
+        # Check with a much lower value of 0.1
+        est4 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                             min_impurity_decrease=0.1, random_state=0)
 
         for est, expected_decrease in ((est1, 1e-7), (est2, 0.05),
-                                       (est3, 0.00001)):
+                                       (est3, 0.0001), (est4, 0.1)):
             assert_less_equal(est.min_impurity_decrease, expected_decrease,
                               "Failed, min_impurity_decrease = {0} > {1}"
                               .format(est.min_impurity_decrease,
