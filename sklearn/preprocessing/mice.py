@@ -27,8 +27,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     missing_values : integer or "NaN", optional (default="NaN")
-        The placeholder for the missing values. All occurrences of 
-        missing_values will be imputed. For missing values encoded as 
+        The placeholder for the missing values. All occurrences of
+        missing_values will be imputed. For missing values encoded as
         np.nan, use the string value "NaN".
 
     imputation_order : str, optional, default="monotone"
@@ -50,11 +50,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
     model : predictor function, optional.
         Default is sklearn.linear_model.BayesianRidge.
         A model that has fit and predict methods, with the predict method
-        supporting a return_std option. 
+        supporting a return_std option.
 
     n_nearest_columns : int, optional, default = np.infty.
-        Number of other columns to use to estimate the missing values of 
-        the current column. Can provide significant speed-up 
+        Number of other columns to use to estimate the missing values of
+        the current column. Can provide significant speed-up
         when the number of columns is huge.
 
     initial_fill_method : str, optional, default = "mean"
@@ -72,8 +72,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    - Columns which only contain missing values at `fit` are discarded upon `transform`.
-    
+    - Columns which only contain missing values at `fit` are discarded upon
+        `transform`.
+
     References
     ----------
 
@@ -141,12 +142,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                            abs_correlation_matrix):
         """
         Get a list of other columns to predict this_column.
-        
-        If self.n_nearest_columns is less than or equal to the total 
+
+        If self.n_nearest_columns is less than or equal to the total
         number of columns, then use a probability proportional to the absolute
         correlation between this_column and each other column to randomly
         choose a subsample of the other columns (without replacement).
-        
+
         Parameters
         ----------
         n_features : integer
@@ -196,13 +197,13 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         As a homage to the MICE R package, we will have 4 main options of
         how to order the updates, and use a random order if anything else
         is specified.
-        
+
         Also, this function filters out columns which have no missing values.
 
         Parameters
         ----------
         mask_missing_values : array-like, shape (n_samples, n_features)
-            Input data's missing indicator matrix, where "n_samples" is the 
+            Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
         """
         n_samples, n_features = mask_missing_values.shape
@@ -262,7 +263,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         X = X[:, self.val_inds]
         mask_missing_values = mask_missing_values[:, self.val_inds]
 
-        # perform imputations        
+        # perform imputations
         n_samples, n_features = X_filled.shape
         total_rounds = self.n_burn_in + self.n_imputations
         results_list = []
@@ -274,7 +275,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             # order in which to impute
             ordered_indices = self._get_ordered_indices(mask_missing_values)
 
-            # abs_correlation matrix is used to choose a subset of other 
+            # abs_correlation matrix is used to choose a subset of other
             # features to impute from
             abs_corr_mat = self._get_abs_correlation_matrix(X_filled)
 
@@ -306,7 +307,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """
         Impute all missing values in X.
-        
+
         Parameters
         ----------
         X : array-like}, shape = [n_samples, n_features]
