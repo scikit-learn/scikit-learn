@@ -147,9 +147,10 @@ class DummyTransf(Transf):
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
+    # data required for later test in 0.22
+    # iris = load_iris()
+    # X = iris.data
+    # y = iris.target
     # Check that we can't instantiate pipelines with objects without fit
     # method
     assert_raises_regex(TypeError,
@@ -669,6 +670,7 @@ def test_pipeline_deprecation_warnings():
     assert_warns(FutureWarning, getattr, pipeline, 'steps')
     assert_warns(FutureWarning, getattr, pipeline, 'named_steps')
 
+
 def test_make_pipeline():
     t1 = Transf()
     t2 = Transf()
@@ -850,9 +852,10 @@ def test_set_feature_union_step_none():
 
 
 def test_step_name_validation_pipeline():
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
+    # data required for 0.22
+    # iris = load_iris()
+    # X = iris.data
+    # y = iris.target
 
     bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
     bad_steps2 = [('a', Mult(2)), ('a', Mult(3))]
