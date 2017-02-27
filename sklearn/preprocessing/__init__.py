@@ -39,7 +39,7 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
-    'MICEImputer'
+    'MICEImputer',
     'MultiLabelBinarizer',
     'MinMaxScaler',
     'MaxAbsScaler',
