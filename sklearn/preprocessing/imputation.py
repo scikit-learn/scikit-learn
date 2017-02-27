@@ -343,6 +343,10 @@ class Imputer(BaseEstimator, TransformerMixin):
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
+<<<<<<< HEAD
+=======
+        self._valid_statistics_indexes = np.where(valid_mask)[0]
+>>>>>>> 4d4d92a... initial commit
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():

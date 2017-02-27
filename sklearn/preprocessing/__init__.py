@@ -39,7 +39,11 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
+<<<<<<< HEAD
     'MICEImputer',
+=======
+    'MICEImputer'
+>>>>>>> 4d4d92a... initial commit
     'MultiLabelBinarizer',
     'MinMaxScaler',
     'MaxAbsScaler',
