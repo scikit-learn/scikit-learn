@@ -416,11 +416,11 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             # add splitters
             if n_splitters - curr_n_splitters > 0:
                 splitter_list += [Splitter(X, y, sample_weight,
-                                              weighted_n_samples,
-                                              FEAT_UNKNOWN, TREE_UNDEFINED,
-                                              parent_split_map[nid],
-                                              min_samples_leaf,
-                                              min_weight_leaf)
+                                           weighted_n_samples,
+                                           FEAT_UNKNOWN, TREE_UNDEFINED,
+                                           parent_split_map[nid],
+                                           min_samples_leaf,
+                                           min_weight_leaf)
                                   for nid in expandable_nids[
                                           curr_n_splitters:]]
 
