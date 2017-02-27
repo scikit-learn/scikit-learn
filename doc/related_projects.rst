@@ -207,6 +207,23 @@ Other packages useful for data analysis and machine learning.
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
 
+Recommendation Engine packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- `Faster Implicit Matrix Factorization <http://www.benfrederickson.com/fast-implicit-matrix-factorization/>`_ This is a pretty good implementation of the ALS algorithm for implicit matrix factorization.
+
+- `mrec recommender systems library <http://mendeley.github.io/mrec/>`_ Library developed by Mendeley that has a few important methods such as SLIM or a learning-to-rank approach to matrix factorization.
+
+- `lightfm <https://github.com/lyst/lightfm>`_ A Python implementation of a hybrid content/collaborative recommender system
+
+- `logistic-mf <https://github.com/lyst/lightfm>`_ A basic Python implementation of logistic matrix factorization
+
+- `Surprise Lib <http://surpriselib.com/>`_ Library that provides several of the typical algorithms (SVD++, kNN…) as well as tools for data handling and evaluation
+
+- `Python-recsys <https://github.com/ocelma/python-recsys>`_ Library developed some time ago by Oscar Celma
+
+- `crab <https://github.com/muricoca/crab>`_ A more or less complete library of different algorithms. Note though that it hasn’t been updated in a long time
+
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
