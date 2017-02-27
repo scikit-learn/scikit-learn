@@ -1,24 +1,23 @@
 # Authors: Sergey Feldman <sergeyfeldman@gmail.com>
 # License: BSD 3 clause
 
-import warnings
-
-from time import time
 from copy import deepcopy
+from time import time
+
 import numpy as np
 
 from .imputation import _get_mask, Imputer
-
 from ..base import BaseEstimator, TransformerMixin
 from ..dummy import DummyRegressor
 from ..linear_model import BayesianRidge
 from ..preprocessing import normalize
-from ..utils.validation import check_is_fitted
 from ..utils import check_array
+from ..utils.validation import check_is_fitted
 
 __all__ = [
     'MICEImputer',
 ]
+
 
 class MICEImputer(BaseEstimator, TransformerMixin):
     """
@@ -108,10 +107,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.trained_model_triplets = []
 
-    def _fill_in_one_column(self, 
-                            X_filled, 
-                            mask_missing_values, 
-                            this_column, 
+    def _fill_in_one_column(self,
+                            X_filled,
+                            mask_missing_values,
+                            this_column,
                             other_columns,
                             model=None,
                             min_std=1e-6):
@@ -136,7 +135,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         X_filled[missing_row_mask, this_column] = imputed_values
         return X_filled, model
 
-    def _get_other_columns(self, 
+    def _get_other_columns(self,
                            n_features,
                            this_column,
                            abs_correlation_matrix):
@@ -170,7 +169,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                              p=p)
         else:
             other_columns = np.concatenate([ordered_columns[:this_column],
-                                ordered_columns[this_column + 1:]])
+                                            ordered_columns[this_column + 1:]])
         return other_columns
 
     def _clip(self, X):
@@ -236,7 +235,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # np.corrcoef is not defined for constant columns
         abs_correlation_matrix[np.isnan(abs_correlation_matrix)] = eps
         np.fill_diagonal(abs_correlation_matrix, 0)
-        abs_correlation_matrix = normalize(abs_correlation_matrix, norm='l1', 
+        abs_correlation_matrix = normalize(abs_correlation_matrix, norm='l1',
                                            axis=0)
         return abs_correlation_matrix
 
@@ -271,14 +270,14 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
             start_t = time()
             mice_msg = '[MICE] Ending imputation round '
-        for m in range(total_rounds):           
+        for m in range(total_rounds):
             # order in which to impute
             ordered_indices = self._get_ordered_indices(mask_missing_values)
 
             # abs_correlation matrix is used to choose a subset of other 
             # features to impute from
             abs_corr_mat = self._get_abs_correlation_matrix(X_filled)
-    
+
             # Fill in each column in the order of ordered_indices
             for this_column in ordered_indices:
                 other_columns = self._get_other_columns(n_features,
@@ -303,7 +302,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             X[mask_missing_values] = X_filled[mask_missing_values]
 
         return X
-        
+
     def transform(self, X):
         """
         Impute all missing values in X.
