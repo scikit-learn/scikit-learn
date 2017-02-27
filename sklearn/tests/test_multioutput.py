@@ -419,7 +419,7 @@ def test_classifier_chain_random_order():
     classifier_chain = ClassifierChain(LogisticRegression(),
                                        order='random')
     classifier_chain.fit(X, Y)
-    assert_not_equal(classifier_chain.order, list(range(10)))
+    assert_not_equal(list(classifier_chain.order), list(range(10)))
     assert (len(classifier_chain.order) == 10)
     assert (len(set(classifier_chain.order)) == 10)
 

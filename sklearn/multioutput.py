@@ -15,6 +15,7 @@ extends single output estimators to multioutput estimators.
 # License: BSD 3 clause
 
 import numpy as np
+import scipy.sparse as sp
 
 from abc import ABCMeta
 from .base import BaseEstimator, clone
@@ -26,7 +27,6 @@ from .utils.metaestimators import if_delegate_has_method
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
-import scipy.sparse as sp
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain"]
 
@@ -364,10 +364,11 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
 
 class ClassifierChain(BaseEstimator):
-    """A multi-label model that arranges binary classifiers into a chain. Each
-    model makes a prediction in the order specified by the chain using all
-    of the available features provided to the model plus the predictions of
-    models that are earlier in the chain.
+    """A multi-label model that arranges binary classifiers into a chain.
+
+    Each model makes a prediction in the order specified by the chain using
+    all of the available features provided to the model plus the predictions
+    of models that are earlier in the chain.
 
     Parameters
     ----------
@@ -435,8 +436,7 @@ class ClassifierChain(BaseEstimator):
         if self.order is None:
             self.order = list(range(Y.shape[1]))
         elif self.order == 'random':
-            self.order = list(range(Y.shape[1]))
-            random_state.shuffle(self.order)
+            self.order = random_state.permutation(Y.shape[1])
         elif sorted(self.order) != list(range(Y.shape[1])):
                 raise ValueError("invalid order")
 
