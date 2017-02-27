@@ -172,6 +172,8 @@ class Pipeline(_BasePipeline):
         # shallow copy of steps
         self._steps = tosequence(steps)
         self.memory = memory
+        # to be removed in 0.22 - allows back-compatibility
+        self.steps_ = self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

@@ -152,11 +152,16 @@ def test_pipeline_init():
     y = iris.target
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = Pipeline([('clf', NoFit())])
     assert_raises_regex(TypeError,
                         'Last step of Pipeline should implement fit. '
                         '.*NoFit.*',
-                        pipe.fit, X, y)
+                        Pipeline, [('clf', NoFit())])
+    # test which will replace the previous one from 0.22
+    # pipe = Pipeline([('clf', NoFit())])
+    # assert_raises_regex(TypeError,
+    #                     'Last step of Pipeline should implement fit. '
+    #                     '.*NoFit.*',
+    #                     pipe.fit, X, y)
     # Smoke test with only an estimator
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
@@ -178,11 +183,16 @@ def test_pipeline_init():
 
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
-    pipe_no_transf = Pipeline([('t', NoTrans()), ('svc', clf)])
     assert_raises_regex(TypeError,
                         'All intermediate steps should be transformers'
                         '.*\\bNoTrans\\b.*',
-                        pipe_no_transf.fit, X, y)
+                        Pipeline, [('t', NoTrans()), ('svc', clf)])
+    # test which will replace the previous one from 0.22
+    # pipe_no_transf = Pipeline([('t', NoTrans()), ('svc', clf)])
+    # assert_raises_regex(TypeError,
+    #                     'All intermediate steps should be transformers'
+    #                     '.*\\bNoTrans\\b.*',
+    #                     pipe_no_transf.fit, X, y)
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -857,8 +867,11 @@ def test_step_name_validation_pipeline():
     ]:
         # three ways to make invalid:
         # - construction
-        pipe = cls(bad_steps)
-        assert_raise_message(ValueError, message, pipe.fit, X, y)
+        assert_raise_message(ValueError, message, cls,
+                             **{param: bad_steps})
+        # test which will replace the previous one from 0.22
+        # pipe = cls(bad_steps)
+        # assert_raise_message(ValueError, message, pipe.fit, X, y)
 
         # - setattr
         est = cls(**{param: [('a', Mult(1))]})
