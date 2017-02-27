@@ -166,6 +166,10 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.missing_values,
                                                    self.axis)
 
+        invalid_mask = np.isnan(self.statistics_)
+        valid_mask = np.logical_not(invalid_mask)
+        self._valid_statistics_indexes = np.where(valid_mask)[0]
+
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, axis):
@@ -339,7 +343,6 @@ class Imputer(BaseEstimator, TransformerMixin):
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
-        self._valid_statistics_indexes = np.where(valid_mask)[0]
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():
