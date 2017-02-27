@@ -1942,9 +1942,9 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         matrix are discarded to compute the quantile statistics. If false,
         these entries are accounting for zeros.
 
-    output_pdf : str, optional (default='norm')
-        Probability density function of the normalized data. The choices are
-        'norm' (default) or 'uniform'.
+    output_distribution : str, optional (default='uniform')
+        Marginal distribution for the transformed data. The choices are
+        'uniform' (default) or 'norm'.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1968,12 +1968,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_quantiles=1000, subsample=int(1e5),
-                 ignore_implicit_zeros=False, output_pdf='uniform',
+                 ignore_implicit_zeros=False, output_distribution='uniform',
                  random_state=None):
         self.n_quantiles = n_quantiles
         self.subsample = subsample
         self.ignore_implicit_zeros = ignore_implicit_zeros
-        self.output_pdf = output_pdf
+        self.output_distribution = output_distribution
         self.random_state = random_state
 
     def _build_f(self):
@@ -2141,7 +2141,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             func_transform = self._f_transform
         else:
             func_transform = self._f_inverse_transform
-        class_pdf = getattr(stats, self.output_pdf)
+        output_distribution = getattr(stats, self.output_distribution)
 
         references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
 
@@ -2161,7 +2161,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             if not direction:
                 #  for inverse transform, match a uniform PDF
                 for i in range(X.shape[0]):
-                    X[i, feature_idx] = class_pdf.cdf(
+                    X[i, feature_idx] = output_distribution.cdf(
                         X[i, feature_idx])
             # Avoid computing for bounds due to numerical error of interp1d
             lower_bounds_idx = (X[:, feature_idx] - BOUNDS_THRESHOLD <
@@ -2175,13 +2175,13 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             # for forward transform, match the output PDF
             if direction:
                 for i in range(X.shape[0]):
-                    X[i, feature_idx] = class_pdf.ppf(
+                    X[i, feature_idx] = output_distribution.ppf(
                         X[i, feature_idx])
                 # find the value to clip the data to avoid mapping to
                 # infinity. Clip such that the inverse transform will be
                 # consistent
-                clip_min = class_pdf.ppf(BOUNDS_THRESHOLD / 10)
-                clip_max = class_pdf.ppf(1 - (BOUNDS_THRESHOLD / 10))
+                clip_min = output_distribution.ppf(BOUNDS_THRESHOLD / 10)
+                clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD / 10))
                 X[:, feature_idx] = np.clip(X[:, feature_idx], clip_min,
                                             clip_max)
         return X
@@ -2208,7 +2208,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             func_transform = self._f_transform
         else:
             func_transform = self._f_inverse_transform
-        class_pdf = getattr(stats, self.output_pdf)
+        output_distribution = getattr(stats, self.output_distribution)
 
         references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
 
@@ -2230,7 +2230,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             # for inverse transform, match a uniform PDF
             if not direction:
                 for i in range(X.data[column_slice].size):
-                    X.data[column_slice][i] = class_pdf.cdf(
+                    X.data[column_slice][i] = output_distribution.cdf(
                         X.data[column_slice][i])
 
             # Avoid computing for bounds due to numerical error of interp1d
@@ -2249,10 +2249,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                     # find the value to clip the data to avoid mapping to
                     # infinity. Clip such that the inverse transform will be
                     # consistent.
-                    clip_min = class_pdf.ppf(BOUNDS_THRESHOLD / 10)
-                    clip_max = class_pdf.ppf(1 - (BOUNDS_THRESHOLD / 10))
+                    clip_min = output_distribution.ppf(BOUNDS_THRESHOLD / 10)
+                    clip_max = output_distribution.ppf(1 - (
+                        BOUNDS_THRESHOLD / 10))
                     for i in range(X.data[column_slice].size):
-                        X.data[column_slice][i] = class_pdf.ppf(
+                        X.data[column_slice][i] = output_distribution.ppf(
                             X.data[column_slice][i])
                         if X.data[column_slice][i] > clip_max:
                             X.data[column_slice][i] = clip_max
@@ -2289,10 +2290,10 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                              ' the previously fitted data. Got {} instead of'
                              ' {}'.format(X.shape[1], len(self._f_transform)))
         # check the output PDF
-        if self.output_pdf not in ('norm', 'uniform'):
-            raise ValueError("'output_pdf' has to be either 'norm' or"
+        if self.output_distribution not in ('norm', 'uniform'):
+            raise ValueError("'output_distribution' has to be either 'norm' or"
                              " 'uniform'. Got {} instead.".format(
-                                 self.output_pdf))
+                                 self.output_distribution))
 
         if sparse.issparse(X):
             return self._sparse_transform(X, True)
@@ -2326,10 +2327,10 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                              ' {}'.format(X.shape[1],
                                           len(self._f_inverse_transform)))
         # check the output PDF
-        if self.output_pdf not in ('norm', 'uniform'):
-            raise ValueError("'output_pdf' has to be either 'norm' or"
+        if self.output_distribution not in ('norm', 'uniform'):
+            raise ValueError("'output_distribution' has to be either 'norm' or"
                              " 'uniform'. Got {} instead.".format(
-                                 self.output_pdf))
+                                 self.output_distribution))
         if sparse.issparse(X):
             return self._sparse_transform(X, False)
         else:
