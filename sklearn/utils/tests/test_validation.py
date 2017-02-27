@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import SkipTest
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils.mocking import MockDataFrame
@@ -501,3 +502,15 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+def test_check_dataframe_fit_attribute():
+    # check pandas dataframe with 'fit' column does not raise error
+    # https://github.com/scikit-learn/scikit-learn/issues/8415
+    try:
+        import pandas as pd
+        X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        X_df = pd.DataFrame(X, columns=['a', 'b', 'fit'])
+        check_consistent_length(X_df)
+    except ImportError:
+        raise SkipTest("Pandas not found")

@@ -888,6 +888,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     y_test = y[test]
 
     if sample_weight is not None:
+        sample_weight = check_array(sample_weight, ensure_2d=False)
+        check_consistent_length(y, sample_weight)
+
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = logistic_regression_path(
@@ -1374,7 +1377,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The
-        default scoring option used is accuracy_score.
+        default scoring option used is 'accuracy'.
 
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}

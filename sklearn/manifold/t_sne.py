@@ -24,6 +24,7 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..utils.fixes import astype
 from ..externals.six import string_types
+from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -616,6 +617,9 @@ class TSNE(BaseEstimator):
     kl_divergence_ : float
         Kullback-Leibler divergence after optimization.
 
+    n_iter_ : int
+        Number of iterations run.
+
     Examples
     --------
 
@@ -787,6 +791,12 @@ class TSNE(BaseEstimator):
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
 
+    @property
+    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'n_iter_' instead")
+    def n_iter_final(self):
+        return self.n_iter_
+
     def _tsne(self, P, degrees_of_freedom, n_samples, random_state,
               X_embedded=None, neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
@@ -848,7 +858,7 @@ class TSNE(BaseEstimator):
             print("[t-SNE] KL divergence after %d iterations with early "
                   "exaggeration: %f" % (it + 1, kl_divergence))
         # Save the final number of iterations
-        self.n_iter_final = it
+        self.n_iter_ = it
 
         # Final optimization
         P /= self.early_exaggeration
