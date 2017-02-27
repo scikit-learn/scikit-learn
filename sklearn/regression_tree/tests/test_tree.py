@@ -7,7 +7,14 @@ data = load_diabetes()
 X, y = data.data, data.target
 X, y = X[:20], y[:20]
 
-reg_tree = RegressionTree()
+reg_tree = RegressionTree(random_state=42)
 reg_tree.fit(X, y)
 reg_tree.predict(X)
 export_graphviz(reg_tree, out_file='reg_tree.dot')
+print('Score regression tree: {}'.format(reg_tree.score(X, y)))
+
+dec_tree = DecisionTreeRegressor(random_state=42)
+dec_tree.fit(X, y)
+dec_tree.predict(X)
+export_graphviz(dec_tree, out_file='dec_tree.dot')
+print('Score regression tree: {}'.format(dec_tree.score(X, y)))

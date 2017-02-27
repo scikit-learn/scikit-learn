@@ -719,13 +719,15 @@ cdef class Tree:
         node.weighted_n_node_samples = weighted_n_node_samples
 
     cpdef SIZE_t _add_node_py(self, SIZE_t parent, bint is_left, bint is_leaf,
-                              SIZE_t feature, double threshold, double impurity,
+                              SIZE_t feature, double threshold,
+                              double impurity,
                               SIZE_t n_node_samples,
                               double weighted_n_node_samples,
                               # FIXME must be an array for multioutput
                               double node_value):
         node_id = self._add_node(parent, is_left, is_leaf, feature, threshold,
-                                 impurity, n_node_samples, weighted_n_node_samples)
+                                 impurity, n_node_samples,
+                                 weighted_n_node_samples)
         self.value[node_id * self.value_stride] = node_value
         return node_id
 

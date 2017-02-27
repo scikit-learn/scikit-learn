@@ -17,7 +17,7 @@ from ..base import RegressorMixin
 from ..utils.validation import check_array, check_random_state
 from ..externals import six
 
-from .splitter import NewSplitter
+from .splitter import Splitter
 from .split_record import SplitRecord
 from .stats_node import StatsNode
 from .criterion import _impurity_mse
@@ -214,7 +214,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         """
         random_state = check_random_state(self.random_state)
         if check_input:
-            X = check_array(X, dtype=DTYPE, accept_sparse="csc")
+            # FIXME do not accept sparse data for the moment
+            X = check_array(X, dtype=DTYPE)
             y = check_array(y, ensure_2d=False, dtype=None)
 
         # Determine output settings
@@ -414,7 +415,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
             # add splitters
             if n_splitters - curr_n_splitters > 0:
-                splitter_list += [NewSplitter(X, y, sample_weight,
+                splitter_list += [Splitter(X, y, sample_weight,
                                               weighted_n_samples,
                                               FEAT_UNKNOWN, TREE_UNDEFINED,
                                               parent_split_map[nid],

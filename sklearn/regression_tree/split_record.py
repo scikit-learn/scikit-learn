@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 from numpy import nan
 from numpy import inf
+from numpy import all
 
 from .stats_node import StatsNode
 from .criterion import _impurity_mse
@@ -91,6 +92,7 @@ class SplitRecord(object):
 
         return left_sr, right_sr
 
+    # FIXME for debugging purpose
     def __str__(self):
         info = ("feature: {}\n"
                 "position: {}\n"

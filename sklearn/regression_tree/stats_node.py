@@ -116,6 +116,7 @@ class StatsNode(object):
         else:
             return NotImplemented
 
+    # FIXME for debugging purpose
     def __str__(self):
         info = ("Sum of y: {}\n"
                 "Sum of the squared y: {}\n"

@@ -8,7 +8,7 @@ from .criterion import impurity_improvement
 FEATURE_THRESHOLD = 1e-7
 
 
-class NewSplitter(object):
+class Splitter(object):
     """New type of splitter driven by data
 
     Parameters
@@ -53,7 +53,8 @@ class NewSplitter(object):
         # information about the feature and first sampled
         self.feature_idx = feature_idx
         self.start_idx = start_idx
-        self.prev_idx = start_idx
+
+        self.found_bsplit = False
 
         # split record to work with
         # make a deepcopy to not change the orignal object
@@ -74,7 +75,8 @@ class NewSplitter(object):
         # information about the feature and first sampled
         self.feature_idx = feature_idx
         self.start_idx = start_idx
-        self.prev_idx = start_idx
+
+        self.found_bsplit = False
 
         # split record to work with
         # make a deepcopy to not change the original object
@@ -84,13 +86,18 @@ class NewSplitter(object):
         # split to store the best split record
         self.best_split_record = deepcopy(split_record)
 
-    def update_stats(self, sample_idx):
+    def node_evaluate_split(self, sample_idx):
+        """Update the impurity and check the corresponding split should be
+        kept.
+        """
+        feat_i = self.feature_idx
+
         # make an update of the statistics
         # collect the statistics to add to the left node
         stats_samples = StatsNode(
             sum_y=self.y[sample_idx] * self.sample_weight[sample_idx],
             sum_sq_y=(self.y[sample_idx] ** 2.0 *
-                              self.sample_weight[sample_idx]),
+                      self.sample_weight[sample_idx]),
             n_samples=1,
             sum_weighted_samples=self.sample_weight[sample_idx])
 
@@ -100,13 +107,15 @@ class NewSplitter(object):
         self.split_record.r_stats = (self.split_record.c_stats -
                                      self.split_record.l_stats)
 
-    def node_evaluate_split(self, sample_idx):
-        """Update the impurity and check the corresponding split should be
-        kept.
-        """
-        feat_i = self.feature_idx
-
-        self.update_stats(sample_idx)
+        # if we found a best split previously, we need to update the threshold
+        # considering the next sample which we don't know in advance.
+        if self.found_bsplit:
+            if not (self.best_split_record.threshold ==
+                    self.X[sample_idx, feat_i]):
+                self.best_split_record.threshold = ((
+                    self.best_split_record.threshold +
+                    self.X[sample_idx, feat_i]) / 2.)
+            self.found_bsplit = False
 
         # check that the sample value are different enough
         change = abs(self.X[sample_idx, feat_i] -
@@ -138,8 +147,11 @@ class NewSplitter(object):
             if (c_impurity_improvement >
                     self.best_split_record.impurity_improvement):
                 # reset the best split record
-                threshold = (self.X[sample_idx, feat_i] +
-                             self.X[self.prev_idx, feat_i]) / 2
+                # The original version was computing the average of the current
+                # sample and the next one. For the moment, only the current
+                # value is stored in the statistics. It will be updated at the
+                # next round.
+                threshold = self.X[sample_idx, feat_i]
                 # update the best splitter
                 self.best_split_record.reset(
                     feature=feat_i,
@@ -151,5 +163,4 @@ class NewSplitter(object):
                     c_stats=self.split_record.c_stats,
                     l_stats=self.split_record.l_stats,
                     r_stats=self.split_record.r_stats)
-
-        self.prev_idx = sample_idx
+                self.found_bsplit = True
