@@ -74,6 +74,7 @@ def test_split_record():
 
     for i in range(y.size):
         sp.node_evaluate_split(i)
+        print(sp.best_split_record)
 
     assert_equal(sp.best_split_record.pos, 4)
     assert_equal(sp.best_split_record.feature, 0)

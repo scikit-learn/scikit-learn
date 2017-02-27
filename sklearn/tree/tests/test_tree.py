@@ -39,6 +39,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
+from sklearn.regression_tree import RegressionTree
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF
@@ -63,6 +64,7 @@ REG_TREES = {
     "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
                                              presort=True),
     "ExtraTreeRegressor": ExtraTreeRegressor,
+    "RegressionTree": RegressionTree,
 }
 
 ALL_TREES = dict()
@@ -1580,7 +1582,8 @@ def check_decision_path(name):
 
 def test_decision_path():
     for name in ALL_TREES:
-        yield (check_decision_path, name)
+        if name != 'RegressionTree':
+            yield (check_decision_path, name)
 
 
 def check_no_sparse_y_support(name):

@@ -1,9 +1,11 @@
 from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_boston
 from sklearn.regression_tree import RegressionTree
 from sklearn.tree.tree import DecisionTreeRegressor
 from sklearn.tree import export_graphviz
 
-data = load_diabetes()
+# data = load_diabetes()
+data = load_boston()
 X, y = data.data, data.target
 X, y = X[:20], y[:20]
 

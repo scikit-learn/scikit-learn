@@ -2,6 +2,8 @@ from __future__ import division, print_function
 
 from copy import deepcopy
 
+from numpy import isnan
+
 from .stats_node import StatsNode
 from .criterion import impurity_improvement
 
@@ -53,8 +55,7 @@ class Splitter(object):
         # information about the feature and first sampled
         self.feature_idx = feature_idx
         self.start_idx = start_idx
-
-        self.found_bsplit = False
+        self.prev_idx = start_idx
 
         # split record to work with
         # make a deepcopy to not change the orignal object
@@ -75,8 +76,7 @@ class Splitter(object):
         # information about the feature and first sampled
         self.feature_idx = feature_idx
         self.start_idx = start_idx
-
-        self.found_bsplit = False
+        self.prev_idx = start_idx
 
         # split record to work with
         # make a deepcopy to not change the original object
@@ -86,11 +86,7 @@ class Splitter(object):
         # split to store the best split record
         self.best_split_record = deepcopy(split_record)
 
-    def node_evaluate_split(self, sample_idx):
-        """Update the impurity and check the corresponding split should be
-        kept.
-        """
-        feat_i = self.feature_idx
+    def update_stats(self, sample_idx):
 
         # make an update of the statistics
         # collect the statistics to add to the left node
@@ -107,35 +103,33 @@ class Splitter(object):
         self.split_record.r_stats = (self.split_record.c_stats -
                                      self.split_record.l_stats)
 
-        # if we found a best split previously, we need to update the threshold
-        # considering the next sample which we don't know in advance.
-        if self.found_bsplit:
-            if not (self.best_split_record.threshold ==
-                    self.X[sample_idx, feat_i]):
-                self.best_split_record.threshold = ((
-                    self.best_split_record.threshold +
-                    self.X[sample_idx, feat_i]) / 2.)
-            self.found_bsplit = False
+    def node_evaluate_split(self, sample_idx):
+        """Update the impurity and check the corresponding split should be
+        kept.
+        """
+        feat_i = self.feature_idx
 
-        # check that the sample value are different enough
-        change = abs(self.X[sample_idx, feat_i] -
-                     self.X[self.split_record.pos, self.split_record.feature])
-        if change > FEATURE_THRESHOLD:
+        # check that the two consecutive samples are not the same
+        b_samples_var =  (abs(self.X[sample_idx, feat_i] -
+                              self.X[self.prev_idx, feat_i]) >
+                          FEATURE_THRESHOLD)
 
-            # check that there is enough samples to make the proper split
-            if (self.split_record.l_stats.n_samples < self.min_samples_leaf or
-                (self.split_record.r_stats.n_samples <
-                 self.min_samples_leaf)):
-                # early stopping
-                return
+        # check that there is enough samples to make a split
+        b_n_samples = not (
+            self.split_record.l_stats.n_samples <
+            self.min_samples_leaf or
+            (self.split_record.r_stats.n_samples <
+             self.min_samples_leaf))
 
-            # check that the weight are enough important to make a proper split
-            if ((self.split_record.l_stats.sum_weighted_samples <
-                 self.min_weight_leaf) or
-                (self.split_record.r_stats.sum_weighted_samples <
-                 self.min_weight_leaf)):
-                # early stopping
-                return
+        # check that the weights corresponding to samples is great enough
+        b_weight_samples = not(
+            self.split_record.l_stats.sum_weighted_samples <
+            self.min_weight_leaf or
+            self.split_record.r_stats.sum_weighted_samples <
+            self.min_weight_leaf)
+
+        # try to split if necessary
+        if b_samples_var and b_n_samples and b_weight_samples:
 
             # compute the impurity improvement
             # FIXME we use the mse impurity for the moment
@@ -146,21 +140,18 @@ class Splitter(object):
             # check the impurity improved
             if (c_impurity_improvement >
                     self.best_split_record.impurity_improvement):
-                # reset the best split record
-                # The original version was computing the average of the current
-                # sample and the next one. For the moment, only the current
-                # value is stored in the statistics. It will be updated at the
-                # next round.
-                threshold = self.X[sample_idx, feat_i]
-                # update the best splitter
+                # update the best split
                 self.best_split_record.reset(
                     feature=feat_i,
-                    pos=sample_idx,
-                    threshold=threshold,
+                    pos=self.prev_idx,
+                    threshold=((self.X[sample_idx, feat_i] +
+                                self.X[self.prev_idx, feat_i]) / 2.),
                     impurity=self.split_record.impurity,
                     impurity_improvement=c_impurity_improvement,
                     nid=self.split_record.nid,
                     c_stats=self.split_record.c_stats,
                     l_stats=self.split_record.l_stats,
                     r_stats=self.split_record.r_stats)
-                self.found_bsplit = True
+
+        self.update_stats(sample_idx)
+        self.prev_idx = sample_idx
