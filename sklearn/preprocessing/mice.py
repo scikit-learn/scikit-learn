@@ -47,11 +47,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Number of initial MICE rounds to perform the results of which
         will not be returned.
 
-    model : predictor function, optional.
-        Default is sklearn.linear_model.BayesianRidge.
-        A model that has fit and predict methods, with the predict method
-        supporting a return_std option.
-
     n_nearest_columns : int, optional, default = np.infty.
         Number of other columns to use to estimate the missing values of
         the current column. Can provide significant speed-up
@@ -90,7 +85,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             imputation_order='monotone',
             n_imputations=100,
             n_burn_in=10,
-            model=BayesianRidge(),
             n_nearest_columns=np.infty,
             initial_fill_method="mean",
             min_value=None,
@@ -100,7 +94,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         self.imputation_order = imputation_order
         self.n_imputations = n_imputations
         self.n_burn_in = n_burn_in
-        self.model = model
+        self.model = BayesianRidge()
         self.n_nearest_columns = n_nearest_columns
         self.initial_fill_method = initial_fill_method
         self.min_value = min_value
@@ -259,9 +253,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                         strategy=self.initial_fill_method,
                                         axis=0)
         X_filled = self.initial_imputer_.fit_transform(X)
-        self.val_inds = self.initial_imputer_._valid_statistics_indexes
-        X = X[:, self.val_inds]
-        mask_missing_values = mask_missing_values[:, self.val_inds]
+        self._val_inds = self.initial_imputer_._valid_statistics_indexes
+        X = X[:, self._val_inds]
+        mask_missing_values = mask_missing_values[:, self._val_inds]
 
         # perform imputations
         n_samples, n_features = X_filled.shape
@@ -276,7 +270,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             ordered_indices = self._get_ordered_indices(mask_missing_values)
 
             # abs_correlation matrix is used to choose a subset of other
-            # features to impute from
+            # features to impute from  f
             abs_corr_mat = self._get_abs_correlation_matrix(X_filled)
 
             # Fill in each column in the order of ordered_indices
@@ -320,8 +314,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         # initial imputation
         X_filled = self.initial_imputer_.transform(X)
-        X = X[:, self.val_inds]
-        mask_missing_values = mask_missing_values[:, self.val_inds]
+        X = X[:, self._val_inds]
+        mask_missing_values = mask_missing_values[:, self._val_inds]
 
         # perform imputations
         n_samples, n_features = X_filled.shape
