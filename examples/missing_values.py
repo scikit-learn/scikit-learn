@@ -3,9 +3,10 @@
 Imputing missing values before building an estimator
 ====================================================
 
-This example shows that imputing the missing values can give better results
-than discarding the samples containing any missing value.
-Imputing does not always improve the predictions, so please check via cross-validation.
+This example shows that imputing the missing values can give
+better results than discarding the samples containing any missing value.
+Imputing does not always improve the predictions,
+so please check via cross-validation.
 Sometimes dropping rows or using marker values is more effective.
 
 Missing values can be replaced by the mean, the median or the most frequent
@@ -28,8 +29,8 @@ Script output:
 In this case, imputing helps the classifier match the original score.
 
 Note that MICE will not always be better than, e.g., simple mean imputation.
-To see an example of this, swap out ``load_diabetes()`` for ``load_boston``.
-  
+To see an example of this, swap in ``diabetes`` for ``boston``.
+
 """
 import numpy as np
 
@@ -41,7 +42,11 @@ from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 
-dataset = load_diabetes() # load_boston() for another example
+dataset_name = 'boston'  # 'diabetes' for another examples
+if dataset_name == 'boston':
+    dataset = load_boston()
+elif dataset_name == 'diabetes':
+    dataset = load_diabetes()
 X_full, y_full = dataset.data, dataset.target
 n_samples = X_full.shape[0]
 n_features = X_full.shape[1]
