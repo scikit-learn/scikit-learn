@@ -46,14 +46,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Number of initial MICE rounds to perform the results of which
         will not be returned.
 
-<<<<<<< HEAD
-=======
-    model : predictor function, optional.
-        Default is sklearn.linear_model.BayesianRidge.
-        A model that has fit and predict methods, with the predict method
-        supporting a return_std option.
-
->>>>>>> d9037cd... fixing pep8 errors
     n_nearest_columns : int, optional, default = np.infty.
         Number of other columns to use to estimate the missing values of
         the current column. Can provide significant speed-up
@@ -278,7 +270,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             ordered_indices = self._get_ordered_indices(mask_missing_values)
 
             # abs_correlation matrix is used to choose a subset of other
-            # features to impute from
+            # features to impute from  f
             abs_corr_mat = self._get_abs_correlation_matrix(X_filled)
 
             # Fill in each column in the order of ordered_indices
