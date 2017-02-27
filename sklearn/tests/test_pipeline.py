@@ -147,22 +147,16 @@ class DummyTransf(Transf):
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
-    # data required for later test in 0.22
-    # iris = load_iris()
-    # X = iris.data
-    # y = iris.target
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
     # Check that we can't instantiate pipelines with objects without fit
     # method
+    pipe = Pipeline([('clf', NoFit())])
     assert_raises_regex(TypeError,
                         'Last step of Pipeline should implement fit. '
                         '.*NoFit.*',
-                        Pipeline, [('clf', NoFit())])
-    # test which will replace the previous one from 0.22
-    # pipe = Pipeline([('clf', NoFit())])
-    # assert_raises_regex(TypeError,
-    #                     'Last step of Pipeline should implement fit. '
-    #                     '.*NoFit.*',
-    #                     pipe.fit, X, y)
+                        pipe.fit, X, y)
     # Smoke test with only an estimator
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
@@ -184,16 +178,11 @@ def test_pipeline_init():
 
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
+    pipe_no_transf = Pipeline([('t', NoTrans()), ('svc', clf)])
     assert_raises_regex(TypeError,
                         'All intermediate steps should be transformers'
                         '.*\\bNoTrans\\b.*',
-                        Pipeline, [('t', NoTrans()), ('svc', clf)])
-    # test which will replace the previous one from 0.22
-    # pipe_no_transf = Pipeline([('t', NoTrans()), ('svc', clf)])
-    # assert_raises_regex(TypeError,
-    #                     'All intermediate steps should be transformers'
-    #                     '.*\\bNoTrans\\b.*',
-    #                     pipe_no_transf.fit, X, y)
+                        pipe_no_transf.fit, X, y)
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -664,11 +653,42 @@ def test_pipeline_deprecation_warnings():
     # TODO remove in 0.22
     iris = load_iris()
     X = iris.data
+    y = iris.target
     pca = PCA(n_components=2, svd_solver='full')
-    pipeline = Pipeline([('pca', pca)])
-    pipeline.fit(X)
+    svc = SVC(probability=True)
+    pipeline = Pipeline([('pca', pca), ('svc', svc)])
+    pipeline.fit(X, y)
     assert_warns(FutureWarning, getattr, pipeline, 'steps')
     assert_warns(FutureWarning, getattr, pipeline, 'named_steps')
+    steps = pipeline.steps[:]
+    func_list = [
+        'predict',
+        'predict_proba',
+        'decision_function',
+        'predict_log_proba'
+    ]
+    for func in func_list:
+        pipe_fitted = Pipeline(steps)
+        assert_warns(FutureWarning,
+                     getattr(pipe_fitted, func),
+                     X)
+    # score
+    pipe_fitted = Pipeline(steps)
+    assert_warns(FutureWarning,
+                 pipe_fitted.score,
+                 X, y)
+    # transform and inverse_transform
+    pipeline = Pipeline(pipeline.steps[:-1])
+    pipeline.fit(X)
+    steps = pipeline.steps[:]
+    pipe_fitted = Pipeline(steps)
+    X_tran = assert_warns(FutureWarning,
+                          pipe_fitted.transform,
+                          X)
+    pipe_fitted = Pipeline(steps)
+    assert_warns(FutureWarning,
+                 pipe_fitted.inverse_transform,
+                 X_tran)
 
 
 def test_make_pipeline():
@@ -852,10 +872,9 @@ def test_set_feature_union_step_none():
 
 
 def test_step_name_validation_pipeline():
-    # data required for 0.22
-    # iris = load_iris()
-    # X = iris.data
-    # y = iris.target
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
 
     bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
     bad_steps2 = [('a', Mult(2)), ('a', Mult(3))]
@@ -870,11 +889,8 @@ def test_step_name_validation_pipeline():
     ]:
         # three ways to make invalid:
         # - construction
-        assert_raise_message(ValueError, message, cls,
-                             **{param: bad_steps})
-        # test which will replace the previous one from 0.22
-        # pipe = cls(bad_steps)
-        # assert_raise_message(ValueError, message, pipe.fit, X, y)
+        pipe = cls(bad_steps)
+        assert_raise_message(ValueError, message, pipe.fit, X, y)
 
         # - setattr
         est = cls(**{param: [('a', Mult(1))]})
