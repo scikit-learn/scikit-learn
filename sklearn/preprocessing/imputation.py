@@ -166,9 +166,9 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.missing_values,
                                                    self.axis)
 
-        invalid_mask = np.isnan(self.statistics_)
-        valid_mask = np.logical_not(invalid_mask)
-        self._valid_statistics_indexes = np.where(valid_mask)[0]
+            invalid_mask = np.isnan(self.statistics_)
+            valid_mask = np.logical_not(invalid_mask)
+            self._valid_statistics_indexes = np.where(valid_mask)[0]
 
         return self
 
