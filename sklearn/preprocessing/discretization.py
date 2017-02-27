@@ -181,13 +181,16 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = self._check_X_post_fit(X)
         trans = self.transformed_features_
         Xt = X.copy()
+        Xt_sel = Xt[:, trans]
 
-        Xt[:, trans] -= self.offset_[trans]
+        Xt_sel -= self.offset_[trans]
         with np.errstate(divide='ignore', invalid='ignore'):
-            Xt[:, trans] = Xt[:, trans] // self.bin_width_[trans]
+            Xt_sel //= self.bin_width_[trans]
 
-        Xt[~np.isfinite(Xt)] = 0
-        Xt[:, trans] = np.clip(Xt[:, trans], 0, self.n_bins_[trans] - 1)
+        Xt_sel[~np.isfinite(Xt_sel)] = 0
+        np.clip(Xt_sel, 0, self.n_bins_[trans] - 1, out=Xt_sel)
+
+        Xt[:, trans] = Xt_sel
         return Xt
 
     def inverse_transform(self, Xt):
@@ -208,10 +211,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt = self._check_X_post_fit(Xt)
         trans = self.transformed_features_
         Xinv = Xt.copy()
+        Xinv_sel = Xinv[:, trans]
 
-        Xinv[:, trans] = Xinv[:, trans] * self.bin_width_[trans]
-        Xinv[:, trans] += self.offset_[trans]
-        Xinv[:, trans] += self.bin_width_[trans] / 2
+        Xinv_sel *= self.bin_width_[trans]
+        Xinv_sel += self.offset_[trans]
+        Xinv_sel += self.bin_width_[trans] / 2
+
+        Xinv[:, trans] = Xinv_sel
         return Xinv
 
     def _check_X_post_fit(self, X):
