@@ -63,10 +63,10 @@ distributions = OrderedDict((
     ('Data after sample-wise L2 normalizing',
         Normalizer().fit_transform(X)),
     ('Data after quantile normalizing (uniform pdf)',
-        QuantileNormalizer(output_pdf='uniform')
+        QuantileNormalizer(output_distribution='uniform')
         .fit_transform(X)),
     ('Data after quantile normalizing (gaussian pdf)',
-        QuantileNormalizer(output_pdf='norm')
+        QuantileNormalizer(output_distribution='norm')
         .fit_transform(X))))
 
 y = minmax_scale(y_full)  # To make colors corresponding to the target),
