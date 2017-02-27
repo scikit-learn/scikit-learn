@@ -29,6 +29,7 @@ from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
+from .mice import MICEImputer
 
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
+    'MICEImputer'
     'MultiLabelBinarizer',
     'MinMaxScaler',
     'MaxAbsScaler',
