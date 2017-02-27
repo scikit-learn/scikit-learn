@@ -225,7 +225,7 @@ cdef inline floating enet_duality_gap(
             if R_norm2 == 0:
                 dual_scaling[0] = 1. / alpha
             else:
-                dual_scaling[0] = yTA / R_norm2 / alpha
+                dual_scaling[0] = yTA / (R_norm2 * alpha)
         elif positive:
             dual_scaling[0] = fmin(yTA / (alpha * R_norm2),
                                    1. / dual_norm_XtA)
