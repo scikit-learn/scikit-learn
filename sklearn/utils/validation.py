@@ -794,7 +794,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
-def check_non_negative(X, whom):
+def check_non_negative(X, whom, accept_nan=False):
     """
     Check if there is any negative value in an array.
 
@@ -807,5 +807,7 @@ def check_non_negative(X, whom):
         Who passed X to this function.
     """
     X = X.data if sp.issparse(X) else X
+    if accept_nan:
+        X = X[~np.isnan(X)]
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)

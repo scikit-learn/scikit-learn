@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 import scipy.sparse as sp
 import numbers
@@ -241,79 +243,129 @@ def _beta_divergence_dense(X, W, H, beta):
         H = np.array([[H]])
         X = np.array([[X]])
 
+    if sp.issparse(X):
+        X = X.toarray()
+
     WH = np.dot(W, H)
+    mask_nan = np.isnan(X)
 
     if beta == 2:
-        return squared_norm(X - WH) / 2
+        return squared_norm((X - WH)[~mask_nan]) / 2
 
-    WH_Xnonzero = WH[X != 0]
-    X_nonzero = X[X != 0]
-    np.maximum(WH_Xnonzero, 1e-9, out=WH_Xnonzero)
+    np.maximum(WH, 1e-9, out=WH)
+    mask = np.logical_and(X != 0, ~mask_nan)
+    WH_Xnonzero = WH[mask]
+    X_nonzero = X[mask]
 
     if beta == 1:
         res = np.sum(X_nonzero * np.log(X_nonzero / WH_Xnonzero))
-        res += WH.sum() - X.sum()
-
+        res += WH[~mask_nan].sum() - X[~mask_nan].sum()
     elif beta == 0:
         div = X_nonzero / WH_Xnonzero
-        res = np.sum(div) - X.size - np.sum(np.log(div))
+        res = np.sum(div) - X[~mask_nan].size - np.sum(np.log(div))
     else:
         res = (X_nonzero ** beta).sum()
-        res += (beta - 1) * (WH ** beta).sum()
+        res += (beta - 1) * (WH[~mask_nan] ** beta).sum()
         res -= beta * (X_nonzero * (WH_Xnonzero ** (beta - 1))).sum()
         res /= beta * (beta - 1)
 
     return res
 
 
-def test_beta_divergence():
+def _compare_beta_divergence_with_ref(X, W, H):
     # Compare _beta_divergence with the reference _beta_divergence_dense
+    beta_losses = [0., 0.5, 1., 1.5, 2.]
+    for beta in beta_losses:
+        ref = _beta_divergence_dense(X, W, H, beta)
+        loss = nmf._beta_divergence(X, W, H, beta)
+        assert_almost_equal(ref, loss, decimal=7)
+
+
+def test_beta_divergence():
+    # Compare _beta_divergence with the reference, with and without NaN
     n_samples = 20
     n_features = 10
     n_components = 5
-    beta_losses = [0., 0.5, 1., 1.5, 2.]
 
     # initialization
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     X[X < 0] = 0.
-    X_csr = sp.csr_matrix(X)
     W, H = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
 
-    for beta in beta_losses:
-        ref = _beta_divergence_dense(X, W, H, beta)
-        loss = nmf._beta_divergence(X, W, H, beta)
-        loss_csr = nmf._beta_divergence(X_csr, W, H, beta)
+    # with dense X
+    _compare_beta_divergence_with_ref(X, W, H)
+    # with sparse X
+    _compare_beta_divergence_with_ref(sp.csr_matrix(X), W, H)
+    # with dense X and missing values
+    X[rng.randn(n_samples, n_features) > 0] = np.nan
+    _compare_beta_divergence_with_ref(X, W, H)
 
-        assert_almost_equal(ref, loss, decimal=7)
-        assert_almost_equal(ref, loss_csr, decimal=7)
+
+def test_beta_divergence_nan():
+    # Test that beta_divergence with a missing value and a zero are identical
+    n_samples = 10
+    n_features = 5
+    n_components = 2
+    rng = np.random.mtrand.RandomState(42)
+    X = rng.randn(n_samples, n_features)
+    W = rng.randn(n_samples, n_components)
+    H = rng.randn(n_components, n_features)
+    np.abs(X, X)
+    np.abs(H, H)
+    np.abs(W, W)
+    # W and H are modified to give WH[0, 0] = 0
+    W[0, 0] = 0
+    H[1, 0] = 0
+
+    for beta_loss in (1., 2.):
+        X[0, 0] = np.nan
+        loss_0 = nmf._beta_divergence(X, W, H, beta_loss)
+        X[0, 0] = 0
+        loss_1 = nmf._beta_divergence(X, W, H, beta_loss)
+
+        assert_almost_equal(loss_0, loss_1)
 
 
-def test_special_sparse_dot():
+def test_special_dot_X():
     # Test the function that computes np.dot(W, H), only where X is non zero.
     n_samples = 10
     n_features = 5
     n_components = 3
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0.
-    X_csr = sp.csr_matrix(X)
+
+    # create masked array and sparse matrix
+    mask = rng.randint(2, size=(n_samples, n_features)) > 0
+    X[mask] = 0.
+    X_sparse = sp.csr_matrix(X)
+    X_masked = np.ma.masked_array(X, mask=mask)
 
     W = np.abs(rng.randn(n_samples, n_components))
     H = np.abs(rng.randn(n_components, n_features))
 
-    WH_safe = nmf._special_sparse_dot(W, H, X_csr)
-    WH = nmf._special_sparse_dot(W, H, X)
+    WH_sparse = nmf._special_dot_X(W, H, X_sparse)
+    WH_dense = nmf._special_dot_X(W, H, X)
+    WH_masked = nmf._special_dot_X(W, H, X_masked)
+    WH_ref = np.dot(W, H)
 
-    # test that both results have same values, in X_csr nonzero elements
-    ii, jj = X_csr.nonzero()
-    WH_safe_data = np.asarray(WH_safe[ii, jj]).ravel()
-    assert_array_almost_equal(WH_safe_data, WH[ii, jj], decimal=10)
+    # test that the dense case is correct
+    assert_array_equal(WH_dense, WH_ref)
 
-    # test that WH_safe and X_csr have the same sparse structure
-    assert_array_equal(WH_safe.indices, X_csr.indices)
-    assert_array_equal(WH_safe.indptr, X_csr.indptr)
-    assert_array_equal(WH_safe.shape, X_csr.shape)
+    # test that WH_sparse, WH_sparse, and WH_dense have same values
+    # in X_sparse nonzero elements
+    ii, jj = X_sparse.nonzero()
+    WH_sparse_data = np.asarray(WH_sparse[ii, jj]).ravel()
+    assert_array_almost_equal(WH_sparse_data, WH_ref[ii, jj], decimal=10)
+    assert_array_almost_equal(WH_masked[ii, jj], WH_ref[ii, jj], decimal=10)
+
+    # test that WH_sparse and X_sparse have the same sparse structure
+    assert_array_equal(WH_sparse.indices, X_sparse.indices)
+    assert_array_equal(WH_sparse.indptr, X_sparse.indptr)
+    assert_array_equal(WH_sparse.shape, X_sparse.shape)
+
+    # test that WH_masked and X_masked have the same mask
+    assert_array_equal(WH_masked.mask, X_masked.mask)
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -455,27 +507,84 @@ def test_nmf_decreasing():
 
     # initialization
     rng = np.random.mtrand.RandomState(42)
-    X = rng.randn(n_samples, n_features)
-    np.abs(X, X)
-    W0, H0 = nmf._initialize_nmf(X, n_components, init='random',
+    X_full = rng.randn(n_samples, n_features)
+    np.abs(X_full, X_full)
+
+    # add missing values
+    X_nan = X_full.copy()
+    X_nan[rng.randint(2, size=(n_samples, n_features)) > 0] = np.nan
+
+    W0, H0 = nmf._initialize_nmf(X_full, n_components, init='random',
                                  random_state=42)
 
-    for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
-        for solver in ('cd', 'mu'):
-            if solver != 'mu' and beta_loss != 2:
-                # not implemented
-                continue
-            W, H = W0.copy(), H0.copy()
-            previous_loss = None
-            for _ in range(30):
-                # one more iteration starting from the previous results
-                W, H, _ = non_negative_factorization(
-                    X, W, H, beta_loss=beta_loss, init='custom',
-                    n_components=n_components, max_iter=1, alpha=alpha,
-                    solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
-                    regularization='both', random_state=0, update_H=True)
+    for X in [X_full, X_nan]:
+        for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
+            for solver in ('cd', 'mu'):
+                if X is X_nan and solver != 'mu':
+                    # not implemented
+                    continue
+                if solver != 'mu' and beta_loss != 2:
+                    # not implemented
+                    continue
+                W, H = W0.copy(), H0.copy()
+                previous_loss = None
+                for _ in range(30):
+                    # one more iteration starting from the previous results
+                    W, H, _ = non_negative_factorization(
+                        X, W, H, beta_loss=beta_loss, init='custom',
+                        n_components=n_components, max_iter=1, alpha=alpha,
+                        solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
+                        regularization='both', random_state=0, update_H=True)
 
-                loss = nmf._beta_divergence(X, W, H, beta_loss)
-                if previous_loss is not None:
-                    assert_greater(previous_loss, loss)
-                previous_loss = loss
+                    loss = nmf._beta_divergence(X, W, H, beta_loss)
+                    if previous_loss is not None:
+                        assert_greater(previous_loss, loss)
+                    previous_loss = loss
+
+
+def test_nmf_check_missing_values():
+    # Test that different configurations throw appropriate errors
+    X = [[2, 0], [np.nan, 2]]
+    nnmf = non_negative_factorization
+    X_csr = sp.csr_matrix(X)
+
+    msg = "initializations with NNDSVD are not available with missing values"
+    nnmf = partial(non_negative_factorization, init='nndsvdar', solver='mu')
+    assert_raise_message(ValueError, msg, nnmf, X)
+
+    nnmf = partial(non_negative_factorization, init='random', solver='cd')
+    msg = "NMF solver 'cd' cannot handle missing values"
+    assert_raise_message(ValueError, msg, nnmf, X)
+
+    nnmf = partial(non_negative_factorization, init='random', solver='mu')
+    msg = "NMF with missing values is not implemented for sparse matrices"
+    assert_raise_message(ValueError, msg, nnmf, X_csr)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_nmf_imputation():
+    # Test that we can use NMF to impute missing values in X
+    n_samples = 20
+    n_features = 10
+    n_components = 3
+    missing_rate = 0.1
+
+    # initialization
+    rng = np.random.mtrand.RandomState(42)
+    W0 = rng.randn(n_samples, n_components)
+    H0 = rng.randn(n_components, n_features)
+    np.abs(W0, W0)
+    np.abs(H0, H0)
+    X0 = np.dot(W0, H0)
+    X = X0.copy()
+
+    # add missing values
+    X[rng.rand(n_samples, n_features) < missing_rate] = np.nan
+
+    for beta_loss in (0, 1, 2,):
+        W, H, _ = non_negative_factorization(
+            X=X, W=None, H=None, beta_loss=beta_loss, init='random',
+            max_iter=200, tol=1e-3,
+            n_components=n_components, solver='mu', random_state=0)
+
+        assert_almost_equal(X0, np.dot(W, H), decimal=1)
