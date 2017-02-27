@@ -185,7 +185,8 @@ def test_enet_screening():
         clf_no_screening = ElasticNet(screening=0, l1_ratio=1, tol=1e-8,
                                       alpha=0.05, max_iter=max_iter,
                                       precompute=precompute,).fit(X, y)
-        assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
+        assert_array_almost_equal(clf_no_screening.coef_,
+                                  clf_screening.coef_, 4)
         assert_true(clf_no_screening.dual_gap_ < 1e-5)
         assert_true(clf_screening.dual_gap_ < 1e-5)
 
@@ -195,7 +196,8 @@ def test_enet_screening():
         clf_no_screening = ElasticNet(screening=0, l1_ratio=0.5, tol=1e-8,
                                       alpha=0.05, max_iter=max_iter,
                                       precompute=precompute).fit(X, y)
-        assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
+        assert_array_almost_equal(clf_no_screening.coef_,
+                                  clf_screening.coef_, 4)
         assert_true(clf_no_screening.dual_gap_ < 1e-5)
         assert_true(clf_screening.dual_gap_ < 1e-5)
 
@@ -672,6 +674,22 @@ def test_enet_path_positive():
         assert_true(np.all(pos_path_coef >= 0))
 
 
+def test_enet_path_screening():
+    # Test that values are equal with and without screening
+    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    csr = sparse.csr_matrix(X)
+
+    for data in [X, csr]:
+        for precompute in [True, False]:
+            for path in [enet_path, lasso_path]:
+                _, coefs_orig, _ = path(data, y, fit_intercept=False,
+                                        tol=1e-10, screening=0,
+                                        precompute=precompute)
+                _, coefs_screening, _ = path(data, y, fit_intercept=False,
+                                             tol=1e-10)
+                assert_array_almost_equal(coefs_orig, coefs_screening)
+
+
 def test_sparse_dense_descent_paths():
     # Test that dense and sparse input give the same input for descent paths.
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
@@ -737,48 +755,54 @@ def test_enet_float_precision():
         for fit_intercept in [True, False]:
             coef = {}
             intercept = {}
-            for dtype in [np.float64, np.float32]:
-                clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
-                                 fit_intercept=fit_intercept,
-                                 normalize=normalize)
+            for screening in [0, 11]:
+                for dtype in [np.float64, np.float32]:
+                    clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
+                                     fit_intercept=fit_intercept,
+                                     normalize=normalize, screening=screening)
 
-                X = dtype(X)
-                y = dtype(y)
-                ignore_warnings(clf.fit)(X, y)
+                    X = dtype(X)
+                    y = dtype(y)
+                    ignore_warnings(clf.fit)(X, y)
 
-                coef[('simple', dtype)] = clf.coef_
-                intercept[('simple', dtype)] = clf.intercept_
+                    coef[('simple', dtype, screening)] = clf.coef_
+                    intercept[('simple', dtype, screening)] = clf.intercept_
 
-                assert_equal(clf.coef_.dtype, dtype)
+                    assert_equal(clf.coef_.dtype, dtype)
 
-                # test precompute Gram array
-                Gram = X.T.dot(X)
-                clf_precompute = ElasticNet(alpha=0.5, max_iter=100,
-                                            precompute=Gram,
-                                            fit_intercept=fit_intercept,
-                                            normalize=normalize)
-                ignore_warnings(clf_precompute.fit)(X, y)
-                assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
-                assert_array_almost_equal(clf.intercept_,
-                                          clf_precompute.intercept_)
+                    # test precompute Gram array
+                    Gram = X.T.dot(X)
+                    clf_precompute = ElasticNet(alpha=0.5, max_iter=100,
+                                                precompute=Gram,
+                                                fit_intercept=fit_intercept,
+                                                normalize=normalize)
+                    ignore_warnings(clf_precompute.fit)(X, y)
+                    assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
+                    assert_array_almost_equal(clf.intercept_,
+                                              clf_precompute.intercept_)
 
-                # test multi task enet
-                multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
-                clf_multioutput = MultiTaskElasticNet(
-                    alpha=0.5, max_iter=100, fit_intercept=fit_intercept,
-                    normalize=normalize)
-                clf_multioutput.fit(X, multi_y)
-                coef[('multi', dtype)] = clf_multioutput.coef_
-                intercept[('multi', dtype)] = clf_multioutput.intercept_
-                assert_equal(clf.coef_.dtype, dtype)
+                    # test multi task enet
+                    multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
+                    clf_multioutput = MultiTaskElasticNet(
+                        alpha=0.5, max_iter=100, fit_intercept=fit_intercept,
+                        normalize=normalize, screening=screening)
+                    clf_multioutput.fit(X, multi_y)
+                    coef[('multi', dtype, screening)] = clf_multioutput.coef_
+                    intercept[('multi', dtype, screening)] = (
+                        clf_multioutput.intercept_)
+                    assert_equal(clf.coef_.dtype, dtype)
 
             for v in ['simple', 'multi']:
-                assert_array_almost_equal(coef[(v, np.float32)],
-                                          coef[(v, np.float64)],
+                assert_array_almost_equal(coef[(v, np.float32, 0)],
+                                          coef[(v, np.float64, 0)],
                                           decimal=4)
-                assert_array_almost_equal(intercept[(v, np.float32)],
-                                          intercept[(v, np.float64)],
+                assert_array_almost_equal(intercept[(v, np.float32, 0)],
+                                          intercept[(v, np.float64, 0)],
                                           decimal=4)
+                assert_array_almost_equal(coef[(v, np.float64, 0)],
+                                          coef[(v, np.float64, 11)])
+                assert_array_almost_equal(intercept[(v, np.float64, 0)],
+                                          intercept[(v, np.float64, 11)])
 
 
 def test_enet_l1_ratio():
