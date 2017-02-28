@@ -2115,6 +2115,49 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
+    def _transform_col(self, X_col, feature_idx, inverse):
+        """Private function to transform a single feature"""
+
+        if not inverse:
+            func_transform = self._f_transform[feature_idx]
+        else:
+            func_transform = self._f_inverse_transform[feature_idx]
+        output_distribution = getattr(stats, self.output_distribution)
+        # older version of scipy do not handle tuple as fill_value
+        # clipping the value before transform solve the issue
+        if not inverse:
+            lower_bound_x = self.quantiles_[0, feature_idx]
+            upper_bound_x = self.quantiles_[-1, feature_idx]
+            lower_bound_y = 0
+            upper_bound_y = 1
+        else:
+            lower_bound_x = 0
+            upper_bound_x = 1
+            lower_bound_y = self.quantiles_[0, feature_idx]
+            upper_bound_y = self.quantiles_[-1, feature_idx]
+            #  for inverse transform, match a uniform PDF
+            X_col = output_distribution.cdf(X_col)
+        # find index for lower and higher bounds
+        lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
+                            lower_bound_x)
+        upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
+                            upper_bound_x)
+        X_col = func_transform(X_col)
+        X_col[upper_bounds_idx] = upper_bound_y
+        X_col[lower_bounds_idx] = lower_bound_y
+        # for forward transform, match the output PDF
+        if not inverse:
+            X_col = output_distribution.ppf(X_col)
+            # find the value to clip the data to avoid mapping to
+            # infinity. Clip such that the inverse transform will be
+            # consistent
+            clip_min = output_distribution.ppf(BOUNDS_THRESHOLD / 10)
+            clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD / 10))
+            X_col = np.clip(X_col, clip_min, clip_max)
+
+        return X_col
+
+
     def _dense_transform(self, X, inverse=False):
         """Forward and inverse transform for dense matrices.
 
@@ -2132,53 +2175,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray, shape (n_samples, n_features)
             Projected data.
         """
-        if not inverse:
-            func_transform = self._f_transform
-        else:
-            func_transform = self._f_inverse_transform
-        output_distribution = getattr(stats, self.output_distribution)
 
-        references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
+        for feature_idx in range(X.shape[1]):
+            X[:, feature_idx] = self._transform_col(X[:, feature_idx],
+                                                    feature_idx, inverse)
 
-        for feature_idx, f in enumerate(func_transform):
-            # older version of scipy do not handle tuple as fill_value
-            # clipping the value before transform solve the issue
-            if not inverse:
-                lower_bound_x = self.quantiles_[0, feature_idx]
-                upper_bound_x = self.quantiles_[-1, feature_idx]
-                lower_bound_y = references[0]
-                upper_bound_y = references[-1]
-            else:
-                lower_bound_x = references[0]
-                upper_bound_x = references[-1]
-                lower_bound_y = self.quantiles_[0, feature_idx]
-                upper_bound_y = self.quantiles_[-1, feature_idx]
-            if inverse:
-                #  for inverse transform, match a uniform PDF
-                for i in range(X.shape[0]):
-                    X[i, feature_idx] = output_distribution.cdf(
-                        X[i, feature_idx])
-            # Avoid computing for bounds due to numerical error of interp1d
-            lower_bounds_idx = (X[:, feature_idx] - BOUNDS_THRESHOLD <
-                                lower_bound_x)
-            upper_bounds_idx = (X[:, feature_idx] + BOUNDS_THRESHOLD >
-                                upper_bound_x)
-            bounds_idx = np.bitwise_or(lower_bounds_idx, upper_bounds_idx)
-            X[~bounds_idx, feature_idx] = f(X[~bounds_idx, feature_idx])
-            X[upper_bounds_idx, feature_idx] = upper_bound_y
-            X[lower_bounds_idx, feature_idx] = lower_bound_y
-            # for forward transform, match the output PDF
-            if not inverse:
-                for i in range(X.shape[0]):
-                    X[i, feature_idx] = output_distribution.ppf(
-                        X[i, feature_idx])
-                # find the value to clip the data to avoid mapping to
-                # infinity. Clip such that the inverse transform will be
-                # consistent
-                clip_min = output_distribution.ppf(BOUNDS_THRESHOLD / 10)
-                clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD / 10))
-                X[:, feature_idx] = np.clip(X[:, feature_idx], clip_min,
-                                            clip_max)
         return X
 
     def _sparse_transform(self, X, inverse=False):
@@ -2199,61 +2200,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix CSC, shape (n_samples, n_features)
             Projected data.
         """
-        if not inverse:
-            func_transform = self._f_transform
-        else:
-            func_transform = self._f_inverse_transform
-        output_distribution = getattr(stats, self.output_distribution)
 
-        references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
-
-        for feature_idx, f in enumerate(func_transform):
+        for feature_idx in range(X.shape[1]):
             column_slice = slice(X.indptr[feature_idx],
                                  X.indptr[feature_idx + 1])
-            # older version of scipy do not handle tuple as fill_value
-            # clipping the value before transform solve the issue
-            if not inverse:
-                lower_bound_x = self.quantiles_[0, feature_idx]
-                upper_bound_x = self.quantiles_[-1, feature_idx]
-                lower_bound_y = references[0]
-                upper_bound_y = references[-1]
-            else:
-                lower_bound_x = references[0]
-                upper_bound_x = references[-1]
-                lower_bound_y = self.quantiles_[0, feature_idx]
-                upper_bound_y = self.quantiles_[-1, feature_idx]
-            # for inverse transform, match a uniform PDF
-            if inverse:
-                for i in range(X.data[column_slice].size):
-                    X.data[column_slice][i] = output_distribution.cdf(
-                        X.data[column_slice][i])
+            X.data[column_slice] = self._transform_col(X.data[column_slice],
+                                                       feature_idx, inverse)
 
-            # Avoid computing for bounds due to numerical error of interp1d
-            # Check that there is value
-            if X.data[column_slice].size:
-                lower_bounds_idx = (X.data[column_slice] - BOUNDS_THRESHOLD <
-                                    lower_bound_x)
-                upper_bounds_idx = (X.data[column_slice] + BOUNDS_THRESHOLD >
-                                    upper_bound_x)
-                X.data[column_slice][~upper_bounds_idx] = f(
-                    X.data[column_slice][~upper_bounds_idx])
-                X.data[column_slice][upper_bounds_idx] = upper_bound_y
-                X.data[column_slice][lower_bounds_idx] = lower_bound_y
-                # for forward transform, match the output PDF
-                if not inverse:
-                    # find the value to clip the data to avoid mapping to
-                    # infinity. Clip such that the inverse transform will be
-                    # consistent.
-                    clip_min = output_distribution.ppf(BOUNDS_THRESHOLD / 10)
-                    clip_max = output_distribution.ppf(1 - (
-                        BOUNDS_THRESHOLD / 10))
-                    for i in range(X.data[column_slice].size):
-                        X.data[column_slice][i] = output_distribution.ppf(
-                            X.data[column_slice][i])
-                        if X.data[column_slice][i] > clip_max:
-                            X.data[column_slice][i] = clip_max
-                        elif X.data[column_slice][i] < clip_min:
-                            X.data[column_slice][i] = clip_min
         return X
 
     def transform(self, X):
