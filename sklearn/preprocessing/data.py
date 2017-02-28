@@ -15,7 +15,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
-from scipy.interpolate import interp1d
+# from scipy.interpolate import interp1d
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
@@ -23,7 +23,7 @@ from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import bincount
+from ..utils.fixes import bincount, interp1d
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1989,14 +1989,18 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         self._f_transform = tuple([
             interp1d(quantiles_feature, references,
+                     copy=False,
                      bounds_error=False,
-                     fill_value=0.)
+                     fill_value=0.,
+                     assume_sorted=True)
             for quantiles_feature in self.quantiles_.T])
 
         self._f_inverse_transform = tuple([
             interp1d(references, quantiles_feature,
+                     copy=False,
                      bounds_error=False,
-                     fill_value=0.)
+                     fill_value=0.,
+                     assume_sorted=True)
             for quantiles_feature in self.quantiles_.T])
 
     def _dense_fit(self, X):
