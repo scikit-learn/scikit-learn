@@ -22,7 +22,6 @@ from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
-from .utils.validation import check_is_fitted
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
