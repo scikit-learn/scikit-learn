@@ -42,8 +42,8 @@ from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
 from sklearn.preprocessing.data import minmax_scale
-from sklearn.preprocessing.data import QuantileNormalizer
-from sklearn.preprocessing.data import quantile_normalize
+from sklearn.preprocessing.data import QuantileTransformer
+from sklearn.preprocessing.data import quantile_transform
 from sklearn.preprocessing.data import MaxAbsScaler
 from sklearn.preprocessing.data import maxabs_scale
 from sklearn.preprocessing.data import RobustScaler
@@ -853,9 +853,9 @@ def test_robust_scaler_iris_quantiles():
     assert_array_almost_equal(q_range, 1)
 
 
-def test_quantile_normalizer_iris():
+def test_quantile_transformr_iris():
     X = iris.data
-    normalizer = QuantileNormalizer()
+    normalizer = QuantileTransformer()
     X_trans = normalizer.fit_transform(X)
     assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
     assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
@@ -863,7 +863,7 @@ def test_quantile_normalizer_iris():
     assert_array_almost_equal(X, X_trans_inv)
 
 
-def test_quantile_normalizer_check_error():
+def test_quantile_transformr_check_error():
     X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                   [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
                   [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
@@ -874,18 +874,18 @@ def test_quantile_normalizer_check_error():
     X_neg = sparse.csc_matrix(X_neg)
 
     assert_raises_regex(ValueError, "Invalid value for 'n_quantiles'",
-                        QuantileNormalizer(n_quantiles=0).fit, X_neg)
+                        QuantileTransformer(n_quantiles=0).fit, X_neg)
     assert_raises_regex(ValueError, "Invalid value for 'subsample'",
-                        QuantileNormalizer(subsample=0).fit, X_neg)
+                        QuantileTransformer(subsample=0).fit, X_neg)
 
-    normalizer = QuantileNormalizer()
-    assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
+    normalizer = QuantileTransformer()
+    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
                         "non-negative sparse matrices", normalizer.fit, X_neg)
     normalizer.fit(X)
-    assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
+    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
                         "non-negative sparse matrices",
                         normalizer.transform, X_neg)
-    assert_raises_regex(ValueError, "QuantileNormalizer only accepts "
+    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
                         "non-negative sparse matrices",
                         normalizer.inverse_transform, X_neg)
 
@@ -900,19 +900,19 @@ def test_quantile_normalizer_check_error():
 
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
                         " 'norm' or 'uniform'. Got rnd instead.",
-                        QuantileNormalizer(
+                        QuantileTransformer(
                             output_distribution='rnd').fit_transform, X)
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
                         " 'norm' or 'uniform'. Got rnd instead.",
-                        QuantileNormalizer(output_distribution='rnd').fit(
+                        QuantileTransformer(output_distribution='rnd').fit(
                             X).inverse_transform, X)
 
 
-def test_quantile_normalizer_ignore_zeros():
+def test_quantile_transformr_ignore_zeros():
     X = np.array([[0, 0, 0, 0, 0],
                   [1, 0, 2, 2, 1]]).T
     X_sparse = sparse.csc_matrix(X)
-    nq = QuantileNormalizer(ignore_implicit_zeros=True, n_quantiles=5)
+    nq = QuantileTransformer(ignore_implicit_zeros=True, n_quantiles=5)
 
     # dense case -> warning raise
     assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
@@ -943,12 +943,12 @@ def test_quantile_normalizer_ignore_zeros():
     assert_almost_equal(X_gt, X_trans.A)
 
 
-def test_quantile_normalizer_dense_toy():
+def test_quantile_transformr_dense_toy():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
                   [2.6, 4.1, 2.3, 9.5, 0.1]]).T
 
-    normalizer = QuantileNormalizer()
+    normalizer = QuantileTransformer()
     normalizer.fit(X)
 
     X_trans = normalizer.fit_transform(X)
@@ -977,14 +977,14 @@ def test_quantile_normalizer_dense_toy():
     X_trans = normalizer.fit_transform(X)
 
 
-def test_quantile_normalizer_sparse_toy():
+def test_quantile_transformr_sparse_toy():
     X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                   [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
                   [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
 
     X = sparse.csc_matrix(X)
 
-    normalizer = QuantileNormalizer()
+    normalizer = QuantileTransformer()
     normalizer.fit(X)
 
     X_trans = normalizer.fit_transform(X)
@@ -994,7 +994,7 @@ def test_quantile_normalizer_sparse_toy():
     X_trans_inv = normalizer.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
-    normalizer_dense = QuantileNormalizer().fit(X.toarray())
+    normalizer_dense = QuantileTransformer().fit(X.toarray())
 
     X_trans = normalizer_dense.transform(X)
     assert_array_almost_equal(np.min(X_trans.toarray(), axis=0), 0.)
@@ -1012,13 +1012,13 @@ def test_quantile_normalizer_sparse_toy():
     X_trans = normalizer.fit_transform(X)
 
 
-def test_quantile_normalize_axis1():
+def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
                   [2.6, 4.1, 2.3, 9.5, 0.1]])
 
-    X_trans_a0 = quantile_normalize(X.T, axis=0)
-    X_trans_a1 = quantile_normalize(X, axis=1)
+    X_trans_a0 = quantile_transform(X.T, axis=0)
+    X_trans_a1 = quantile_transform(X, axis=1)
     assert_array_almost_equal(X_trans_a0, X_trans_a1.T)
 
 
@@ -1029,9 +1029,9 @@ def test_qunatile_normalzer_bounds():
     X_sparse = sparse.csc_matrix(X_dense)
 
     # check sparse and dense are consistent
-    X_trans = QuantileNormalizer().fit_transform(X_dense)
+    X_trans = QuantileTransformer().fit_transform(X_dense)
     assert_array_almost_equal(X_trans, X_dense)
-    X_trans_sp = QuantileNormalizer().fit_transform(X_sparse)
+    X_trans_sp = QuantileTransformer().fit_transform(X_sparse)
     assert_array_almost_equal(X_trans_sp.A, X_dense)
     assert_array_almost_equal(X_trans, X_trans_sp.A)
 
@@ -1041,13 +1041,13 @@ def test_qunatile_normalzer_bounds():
                   [1, 0.5, 0]]).T
     X1 = np.array([[0, 0, 1],
                    [0.1, 0.5, 0.1]]).T
-    qn = QuantileNormalizer().fit(X)
+    qn = QuantileTransformer().fit(X)
     X_trans = qn.transform(X1)
     assert_array_almost_equal(X_trans, X1)
 
 
-def test_quantile_normalizer_pickling():
-    qn = QuantileNormalizer(n_quantiles=100)
+def test_quantile_transformr_pickling():
+    qn = QuantileTransformer(n_quantiles=100)
 
     qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
     qn2 = pickle.loads(qn_ser)
@@ -1858,7 +1858,7 @@ def test_function_valid_axis():
                   [2, 4, 6, 8, 10],
                   [2.6, 4.1, 2.3, 9.5, 0.1]])
 
-    func_list = [quantile_normalize]
+    func_list = [quantile_transform]
 
     for func in func_list:
         assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"

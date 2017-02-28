@@ -49,7 +49,7 @@ __all__ = [
     'OneHotEncoder',
     'RobustScaler',
     'StandardScaler',
-    'QuantileNormalizer',
+    'QuantileTransformer',
     'add_dummy_feature',
     'binarize',
     'normalize',
@@ -57,6 +57,7 @@ __all__ = [
     'robust_scale',
     'maxabs_scale',
     'minmax_scale',
+    'quantile_transform',
 ]
 
 
@@ -1912,16 +1913,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
 
-class QuantileNormalizer(BaseEstimator, TransformerMixin):
-    """Normalize features using quantiles information.
+class QuantileTransformer(BaseEstimator, TransformerMixin):
+    """Transform features using quantiles information.
 
-    This Normalizer scales the features between 0 and 1, equalizing the
-    distribution of each feature to a uniform distribution. Therefore,
-    for a given feature, this normalization tends to spread out the most
-    frequent values. It also reduces the impact of (marginal) outliers:
-    this is therefore a robust preprocessing scheme.
+    This method scales the features to follow a uniform or a normal
+    distribution. Therefore, for a given feature, this transformation tends
+    to spread out the most frequent values. It also reduces the impact of
+    (marginal) outliers: this is therefore a robust preprocessing scheme.
 
-    The normalization is applied on each feature independently.
+    The transformation is applied on each feature independently.
     The cumulative density function of a feature is used to project the
     original values. Features values of new/unseen data that fall below
     or above the fitted range will be mapped to 0 and 1, respectively.
@@ -1960,12 +1960,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    :class:`sklearn.preprocessing.StandardScaler` to perform standardization
-    that is faster, but less robust to outliers.
 
-    :class:`sklearn.preprocessing.RobustScaler` to perform robust
-    standardization that removes the influence of outliers but does not put
-    outliers and inliers on the same scale.
+    StandardScaler : perform standardization that is faster, but less robust
+    to outliers.
+
+    RobustScaler : perform robust standardization that removes the influence
+    of outliers but does not put outliers and inliers on the same scale.
     """
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
@@ -2014,15 +2014,15 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         if self.subsample < n_samples:
             subsample_idx = rng.permutation(range(n_samples))[:self.subsample]
         else:
-            subsample_idx = range(n_samples)
+            subsample_idx = slice(None)
 
         # for compatibility issue with numpy<=1.8.X, references
         # need to be a list scaled between 0 and 100
         references = np.linspace(0, 100, self.n_quantiles,
                                  endpoint=True).tolist()
-        self.quantiles_ = np.transpose([np.percentile(
-            X[subsample_idx, feature_idx], references)
-                                    for feature_idx in range(n_features)])
+        self.quantiles_ = np.transpose(
+            [np.percentile(X[subsample_idx, feature_idx], references)
+             for feature_idx in range(n_features)])
 
     def _sparse_fit(self, X):
         """Compute percentiles for sparse matrices.
@@ -2074,7 +2074,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
-        """Compute the quantiles used for normalizing.
+        """Compute the quantiles used for transforming.
 
         Parameters
         ----------
@@ -2103,7 +2103,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         # we only accept positive sparse matrix
         if sparse.issparse(X) and np.any(X.data < 0):
-            raise ValueError('QuantileNormalizer only accepts non-negative'
+            raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
 
         if sparse.issparse(X):
@@ -2257,7 +2257,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         return X
 
     def transform(self, X):
-        """Feature-wise normalization of the data.
+        """Feature-wise transformation of the data.
 
         Parameters
         ----------
@@ -2276,7 +2276,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                         dtype=[np.float64, np.float32])
         # we only accept positive sparse matrix
         if sparse.issparse(X) and np.any(X.data < 0):
-            raise ValueError('QuantileNormalizer only accepts non-negative'
+            raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
         check_is_fitted(self, '_f_transform')
         # check that the dimension of X are adequate with the fitted data
@@ -2312,7 +2312,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csc')
         # we only accept positive sparse matrix
         if sparse.issparse(X) and np.any(X.data < 0):
-            raise ValueError('QuantileNormalizer only accepts non-negative'
+            raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
         check_is_fitted(self, '_f_inverse_transform')
         # check that the dimension of X are adequate with the fitted data
@@ -2333,7 +2333,7 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator. """
-        state = super(QuantileNormalizer, self).__getstate__()
+        state = super(QuantileTransformer, self).__getstate__()
         # remove interpolation method
         state.pop('_f_transform', None)
         state.pop('_f_inverse_transform', None)
@@ -2343,16 +2343,16 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         """Pickle-protocol - set state of the estimator.
         We need to rebuild the interpolation function.
         """
-        super(QuantileNormalizer, self).__setstate__(state)
+        super(QuantileTransformer, self).__setstate__(state)
         if hasattr(self, 'quantiles_'):
             self._build_f()
 
 
-def quantile_normalize(X, axis=0, n_quantiles=1000, subsample=int(1e5),
+def quantile_transform(X, axis=0, n_quantiles=1000, subsample=int(1e5),
                        ignore_implicit_zeros=False, random_state=None):
-    n = QuantileNormalizer(n_quantiles=n_quantiles, subsample=subsample,
-                           ignore_implicit_zeros=ignore_implicit_zeros,
-                           random_state=random_state)
+    n = QuantileTransformer(n_quantiles=n_quantiles, subsample=subsample,
+                            ignore_implicit_zeros=ignore_implicit_zeros,
+                            random_state=random_state)
     if axis == 0:
         return n.fit_transform(X)
     elif axis == 1:

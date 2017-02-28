@@ -16,12 +16,12 @@ have all the features on the same scale.
 This example uses different scalers and normalizers to bring the data within a
 smaller range.
 """
-from __future__ import print_function
-print(__doc__)
 
 # Author:  Raghav RV <rvraghav93@gmail.com>
 #          Thomas Unterthiner
 # License: BSD 3 clause
+
+from __future__ import print_function
 
 from collections import OrderedDict
 
@@ -37,9 +37,11 @@ from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing.data import QuantileNormalizer
+from sklearn.preprocessing.data import QuantileTransformer
 
 from sklearn.datasets import fetch_california_housing
+
+print(__doc__)
 
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target
@@ -62,11 +64,11 @@ distributions = OrderedDict((
         StandardScaler().fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
         Normalizer().fit_transform(X)),
-    ('Data after quantile normalizing (uniform pdf)',
-        QuantileNormalizer(output_distribution='uniform')
+    ('Data after quantile transformation (uniform pdf)',
+        QuantileTransformer(output_distribution='uniform')
         .fit_transform(X)),
-    ('Data after quantile normalizing (gaussian pdf)',
-        QuantileNormalizer(output_distribution='norm')
+    ('Data after quantile transformation (gaussian pdf)',
+        QuantileTransformer(output_distribution='norm')
         .fit_transform(X))))
 
 y = minmax_scale(y_full)  # To make colors corresponding to the target),
