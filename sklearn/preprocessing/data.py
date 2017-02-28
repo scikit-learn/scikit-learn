@@ -31,6 +31,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
+from ..utils.random import choice
 
 BOUNDS_THRESHOLD = 1e-7
 
@@ -1934,17 +1935,17 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative density function.
 
-    subsample : int, optional (default=1e5)
-        Maximum number of samples used to estimate the quantiles.
+    output_distribution : str, optional (default='uniform')
+        Marginal distribution for the transformed data. The choices are
+        'uniform' (default) or 'norm'.
 
     ignore_implicit_zeros : bool, optional (default=False)
         Apply only for sparse matrices. If True, the sparse entries of the
         matrix are discarded to compute the quantile statistics. If false,
         these entries are accounting for zeros.
 
-    output_distribution : str, optional (default='uniform')
-        Marginal distribution for the transformed data. The choices are
-        'uniform' (default) or 'norm'.
+    subsample : int, optional (default=1e5)
+        Maximum number of samples used to estimate the quantiles.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1967,13 +1968,13 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
     outliers and inliers on the same scale.
     """
 
-    def __init__(self, n_quantiles=1000, subsample=int(1e5),
-                 ignore_implicit_zeros=False, output_distribution='uniform',
+    def __init__(self, n_quantiles=1000, output_distribution='uniform',
+                 ignore_implicit_zeros=False, subsample=int(1e5),
                  random_state=None):
         self.n_quantiles = n_quantiles
-        self.subsample = subsample
-        self.ignore_implicit_zeros = ignore_implicit_zeros
         self.output_distribution = output_distribution
+        self.ignore_implicit_zeros = ignore_implicit_zeros
+        self.subsample = subsample
         self.random_state = random_state
 
     def _build_f(self):
@@ -2017,13 +2018,11 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
 
         # for compatibility issue with numpy<=1.8.X, references
         # need to be a list scaled between 0 and 100
-        references = np.linspace(0, 1, self.n_quantiles,
+        references = np.linspace(0, 100, self.n_quantiles,
                                  endpoint=True).tolist()
-        # references is a list that we need to scale between
-        # 0 and 100.
-        self.quantiles_ = np.array([np.percentile(
-            X[subsample_idx, feature_idx], [x * 100 for x in references])
-                                    for feature_idx in range(n_features)]).T
+        self.quantiles_ = np.transpose([np.percentile(
+            X[subsample_idx, feature_idx], references)
+                                    for feature_idx in range(n_features)])
 
     def _sparse_fit(self, X):
         """Compute percentiles for sparse matrices.
@@ -2036,14 +2035,12 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
         """
         rng = check_random_state(self.random_state)
 
-        n_samples, n_features = X.get_shape()
+        n_samples, n_features = X.shape
 
         # for compatibility issue with numpy<=1.8.X, references
         # need to be a list
-        references = np.linspace(0, 1, self.n_quantiles,
+        references = np.linspace(0, 100, self.n_quantiles,
                                  endpoint=True).tolist()
-        # references is a list that we need to scale between
-        # 0 and 100.
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx]:
@@ -2051,16 +2048,15 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
             if len(column_nnz_data) > self.subsample:
                 column_subsample = (self.subsample * len(column_nnz_data) //
                                     n_samples)
-                # choice is not available in numpy <= 1.7
-                # used permutation instead.
-                column_idx = rng.permutation(range(len(column_nnz_data)))
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=column_subsample,
                                            dtype=X.dtype)
                 else:
                     column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_data[:column_subsample] = column_nnz_data[
-                    column_idx[:column_subsample]]
+                column_data[:column_subsample] = choice(column_nnz_data,
+                                                        size=column_subsample,
+                                                        replace=False,
+                                                        random_state=rng)
             else:
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=len(column_nnz_data),
@@ -2074,9 +2070,8 @@ class QuantileNormalizer(BaseEstimator, TransformerMixin):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    np.percentile(column_data,
-                                  [x * 100 for x in references]))
-        self.quantiles_ = np.array(self.quantiles_).T
+                    np.percentile(column_data, references))
+        self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
         """Compute the quantiles used for normalizing.
