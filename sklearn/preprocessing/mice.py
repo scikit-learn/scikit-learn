@@ -89,7 +89,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             min_value=None,
             max_value=None,
             verbose=False):
-        from ..linear_model import BayesianRidge  # avoiding circular import issue
+        from ..linear_model import BayesianRidge  # avoiding circular import
         self.model = BayesianRidge()
         self.missing_values = missing_values
         self.imputation_order = imputation_order
