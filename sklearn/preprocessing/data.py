@@ -2115,7 +2115,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _dense_transform(self, X, direction=True):
+    def _dense_transform(self, X, inverse=False):
         """Forward and inverse transform for dense matrices.
 
         Parameters
@@ -2123,8 +2123,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray, shape (n_samples, n_features)
             The data used to scale along the features axis.
 
-        direction : bool, optional (default=True)
-            If True, apply forward transform. If False, apply
+        inverse : bool, optional (default=False)
+            If False, apply forward transform. If True, apply
             inverse transform.
 
         Returns
@@ -2132,7 +2132,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray, shape (n_samples, n_features)
             Projected data.
         """
-        if direction:
+        if not inverse:
             func_transform = self._f_transform
         else:
             func_transform = self._f_inverse_transform
@@ -2143,7 +2143,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         for feature_idx, f in enumerate(func_transform):
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
-            if direction:
+            if not inverse:
                 lower_bound_x = self.quantiles_[0, feature_idx]
                 upper_bound_x = self.quantiles_[-1, feature_idx]
                 lower_bound_y = references[0]
@@ -2153,7 +2153,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 upper_bound_x = references[-1]
                 lower_bound_y = self.quantiles_[0, feature_idx]
                 upper_bound_y = self.quantiles_[-1, feature_idx]
-            if not direction:
+            if inverse:
                 #  for inverse transform, match a uniform PDF
                 for i in range(X.shape[0]):
                     X[i, feature_idx] = output_distribution.cdf(
@@ -2168,7 +2168,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             X[upper_bounds_idx, feature_idx] = upper_bound_y
             X[lower_bounds_idx, feature_idx] = lower_bound_y
             # for forward transform, match the output PDF
-            if direction:
+            if not inverse:
                 for i in range(X.shape[0]):
                     X[i, feature_idx] = output_distribution.ppf(
                         X[i, feature_idx])
@@ -2181,7 +2181,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                             clip_max)
         return X
 
-    def _sparse_transform(self, X, direction=True):
+    def _sparse_transform(self, X, inverse=False):
         """Forward and inverse transform for sparse matrices.
 
         Parameters
@@ -2190,8 +2190,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis. The sparse matrix
             needs to be semi-positive.
 
-        direction : bool, optional (default=True)
-            If True, apply forward transform. If False, apply
+        inverse : bool, optional (default=False)
+            If False, apply forward transform. If True, apply
             inverse transform.
 
         Returns
@@ -2199,7 +2199,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix CSC, shape (n_samples, n_features)
             Projected data.
         """
-        if direction:
+        if not inverse:
             func_transform = self._f_transform
         else:
             func_transform = self._f_inverse_transform
@@ -2212,7 +2212,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                  X.indptr[feature_idx + 1])
             # older version of scipy do not handle tuple as fill_value
             # clipping the value before transform solve the issue
-            if direction:
+            if not inverse:
                 lower_bound_x = self.quantiles_[0, feature_idx]
                 upper_bound_x = self.quantiles_[-1, feature_idx]
                 lower_bound_y = references[0]
@@ -2223,7 +2223,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 lower_bound_y = self.quantiles_[0, feature_idx]
                 upper_bound_y = self.quantiles_[-1, feature_idx]
             # for inverse transform, match a uniform PDF
-            if not direction:
+            if inverse:
                 for i in range(X.data[column_slice].size):
                     X.data[column_slice][i] = output_distribution.cdf(
                         X.data[column_slice][i])
@@ -2240,7 +2240,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 X.data[column_slice][upper_bounds_idx] = upper_bound_y
                 X.data[column_slice][lower_bounds_idx] = lower_bound_y
                 # for forward transform, match the output PDF
-                if direction:
+                if not inverse:
                     # find the value to clip the data to avoid mapping to
                     # infinity. Clip such that the inverse transform will be
                     # consistent.
@@ -2291,9 +2291,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                  self.output_distribution))
 
         if sparse.issparse(X):
-            return self._sparse_transform(X, True)
+            return self._sparse_transform(X, inverse=False)
         else:
-            return self._dense_transform(X, True)
+            return self._dense_transform(X, inverse=False)
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
@@ -2327,9 +2327,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                              " 'uniform'. Got {} instead.".format(
                                  self.output_distribution))
         if sparse.issparse(X):
-            return self._sparse_transform(X, False)
+            return self._sparse_transform(X, inverse=True)
         else:
-            return self._dense_transform(X, False)
+            return self._dense_transform(X, inverse=True)
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator. """
