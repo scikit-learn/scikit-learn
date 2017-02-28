@@ -243,8 +243,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> # Use lasso_path to compute a coefficient path
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5])
     >>> print(coef_path)
-    [[ 0.          0.          0.46874778]
-     [ 0.2159048   0.4425765   0.23689075]]
+    [[ 0.          0.          0.46534797]
+     [ 0.2159048   0.4425765   0.23858808]]
 
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
@@ -1731,12 +1731,12 @@ class MultiTaskElasticNet(Lasso):
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
             l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
-            selection='cyclic', tol=0.0001, warm_start=False)
+            screening=5, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
-    [[ 0.45663524  0.45612256]
-     [ 0.45663524  0.45612256]]
+    [[ 0.45767349  0.45515674]
+     [ 0.45767349  0.45515674]]
     >>> print(clf.intercept_)
-    [ 0.0872422  0.0872422]
+    [ 0.08716976  0.08716976]
 
     See also
     --------
@@ -1922,8 +1922,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-            normalize=False, random_state=None, selection='cyclic', tol=0.0001,
-            warm_start=False)
+            normalize=False, random_state=None, screening=5,
+            selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)  # doctest: +ELLIPSIS
     [[  8.939...e-01   4...e-16]
      [  8.939...e-01   4...e-16]]
@@ -2096,10 +2096,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
            n_jobs=1, normalize=False, random_state=None, selection='cyclic',
            tol=0.0001, verbose=0)
     >>> print(clf.coef_)
-    [[ 0.52875032  0.46958558]
-     [ 0.52875032  0.46958558]]
+    [[ 0.56157807  0.4368042 ]
+     [ 0.56157807  0.4368042 ]]
     >>> print(clf.intercept_)
-    [ 0.00166409  0.00166409]
+    [ 0.00161773  0.00161773]
 
     See also
     --------
