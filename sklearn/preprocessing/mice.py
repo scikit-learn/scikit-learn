@@ -9,7 +9,6 @@ import numpy as np
 from .imputation import _get_mask, Imputer
 from ..base import BaseEstimator, TransformerMixin
 from ..dummy import DummyRegressor
-from ..linear_model import BayesianRidge
 from ..preprocessing import normalize
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
@@ -90,11 +89,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             min_value=None,
             max_value=None,
             verbose=False):
+        from ..linear_model import BayesianRidge  # avoiding circular import issue
+        self.model = BayesianRidge()
         self.missing_values = missing_values
         self.imputation_order = imputation_order
         self.n_imputations = n_imputations
         self.n_burn_in = n_burn_in
-        self.model = BayesianRidge()
         self.n_nearest_columns = n_nearest_columns
         self.initial_fill_method = initial_fill_method
         self.min_value = min_value
