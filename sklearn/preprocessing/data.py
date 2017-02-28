@@ -2157,7 +2157,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X_col
 
-
     def _dense_transform(self, X, inverse=False):
         """Forward and inverse transform for dense matrices.
 
