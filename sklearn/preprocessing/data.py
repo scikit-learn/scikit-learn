@@ -2105,8 +2105,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                              "The number of quantiles must be at least one."
                              % self.subsample)
 
-        # we only accept positive sparse matrix
-        if sparse.issparse(X) and np.any(X.data < 0):
+        # we only accept positive sparse matrix when ignore_implicit_zeros is
+        # false
+        if (not self.ignore_implicit_zeros and
+                (sparse.issparse(X) and np.any(X.data < 0))):
             raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
 
@@ -2177,9 +2179,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X : ndarray, shape (n_samples, n_features)
-            Projected data.
-        """
+      X : ndarray, shape (n_samples, n_features)
+            Projected data        """
 
         for feature_idx in range(X.shape[1]):
             X[:, feature_idx] = self._transform_col(X[:, feature_idx],
@@ -2232,8 +2233,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, accept_sparse='csc', copy=True,
                         dtype=[np.float64, np.float32])
-        # we only accept positive sparse matrix
-        if sparse.issparse(X) and np.any(X.data < 0):
+        # we only accept positive sparse matrix when ignore_implicit_zeros is
+        # false
+        if (not self.ignore_implicit_zeros and
+                (sparse.issparse(X) and np.any(X.data < 0))):
             raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
         check_is_fitted(self, '_f_transform')
@@ -2268,8 +2271,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             The projected data.
         """
         X = check_array(X, accept_sparse='csc')
-        # we only accept positive sparse matrix
-        if sparse.issparse(X) and np.any(X.data < 0):
+        # we only accept positive sparse matrix when ignore_implicit_zeros is
+        # false
+        if (not self.ignore_implicit_zeros and
+                (sparse.issparse(X) and np.any(X.data < 0))):
             raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
         check_is_fitted(self, '_f_inverse_transform')

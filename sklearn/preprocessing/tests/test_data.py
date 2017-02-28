@@ -942,6 +942,22 @@ def test_quantile_transformr_ignore_zeros():
                      [0., 0.]])
     assert_almost_equal(X_gt, X_trans.A)
 
+    nq = QuantileTransformer(ignore_implicit_zeros=True, n_quantiles=5)
+    X_data = np.array([-1, -1, 1, 0, 0, 0, 1, -1, 1])
+    X_col = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1])
+    X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6])
+    X_sparse = sparse.csc_matrix((X_data, (X_row, X_col)))
+    X_trans = nq.fit_transform(X_sparse)
+    X_gt = np.array([[0, 1],
+                     [0, 0.5],
+                     [0, 0.5],
+                     [0, 0.5],
+                     [0, 1],
+                     [0, 0],
+                     [0, 1]])
+    assert_almost_equal(X_gt, X_trans.A)
+    assert_almost_equal(X_sparse.A, nq.inverse_transform(X_trans).A)
+
 
 def test_quantile_transformr_dense_toy():
     X = np.array([[0, 25, 50, 75, 100],

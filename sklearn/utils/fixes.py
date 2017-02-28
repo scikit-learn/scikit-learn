@@ -363,6 +363,8 @@ else:
 
 
 if sp_version < (0, 14, 0):
+    # Before scipy 0.14.0, interp1d does not accept any assume_sorted
+    # argument.
     def interp1d(x, y, kind='linear', axis=-1,
                  copy=True, bounds_error=True,
                  fill_value=np.nan, assume_sorted=False):
