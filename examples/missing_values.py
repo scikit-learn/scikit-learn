@@ -17,32 +17,34 @@ which could dominate results (otherwise known as a 'long tail').
 Another option is the MICE imputer. This uses round-robin linear regression,
 treating every variable as an output in turn. The simple version implemented
 assumes Gaussian output variables. If your output variables are obviously
-non-Gaussian, consider transforming them for improve performance.
+non-Gaussian, consider transforming them to improve performance.
 
 Script output:
 
   MSE with the entire dataset = 3354.15
   MSE without the samples containing missing values = 2968.98
   MSE after mean imputation of the missing values = 3507.77
-  MSE after MICE imputation of the missing values = 3349.35
+  MSE after MICE imputation of the missing values = 3340.39
 
 In this case, imputing helps the classifier match the original score.
 
 Note that MICE will not always be better than, e.g., simple mean imputation.
-To see an example of this, swap in ``diabetes`` for ``boston``.
+To see an example of this, swap in ``boston`` for ``diabetes``.
 
 """
 import numpy as np
 
-from sklearn.datasets import load_diabetes, load_boston
+from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer, MICEImputer
+from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import MICEImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 
-dataset_name = 'boston'  # 'diabetes' for another examples
+dataset_name = 'diabetes'  # 'boston' for another examples
 if dataset_name == 'boston':
     dataset = load_boston()
 elif dataset_name == 'diabetes':
