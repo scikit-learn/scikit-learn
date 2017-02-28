@@ -17,7 +17,7 @@ which could dominate results (otherwise known as a 'long tail').
 Another option is the MICE imputer. This uses round-robin linear regression,
 treating every variable as an output in turn. The simple version implemented
 assumes Gaussian output variables. If your output variables are obviously
-non-Gaussian, consider transforming them for improve performance.
+non-Gaussian, consider transforming them to improve performance.
 
 Script output:
 
@@ -34,10 +34,12 @@ To see an example of this, swap in ``boston`` for ``diabetes``.
 """
 import numpy as np
 
-from sklearn.datasets import load_diabetes, load_boston
+from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer, MICEImputer
+from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import MICEImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
