@@ -44,7 +44,7 @@ from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 
-dataset_name = 'diabetes'  # 'diabetes' for another examples
+dataset_name = 'diabetes'  # 'boston' for another examples
 if dataset_name == 'boston':
     dataset = load_boston()
 elif dataset_name == 'diabetes':
