@@ -47,7 +47,7 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
 kernels += [SelectDimensionKernel(RBF(length_scale=2.0),
                                   active_dims=[0]),
             SelectDimensionKernel(RBF(length_scale=[2.0, 1.0]),
-                                  active_dims=[0, 1]),
+                                  active_dims=[True, True]),
             SelectDimensionKernel(Matern(length_scale=0.5, nu=0.5),
                                   active_dims=[1])]
 

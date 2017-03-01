@@ -2,7 +2,8 @@
 =========================================================
 Illustration of SelectDimensionKernel
 =========================================================
-A simple two-dimensional regression example computed in using two
+
+A simple two-dimensional regression example computed using two
 different kernels:
 1. With a product of an RBF kernel and ExpSineSquared, where each is applied
    to one feature.
@@ -72,7 +73,7 @@ plt.hold('on')
 plt.plot((param_range * training_ratio).astype(int),
          rbf_only_err, lw=3, label="RBF only")
 plt.plot((param_range * training_ratio).astype(int),
-         rbf_sin_err, lw=3, label="RBF+ExpSineSquared mixture")
+         rbf_sin_err, lw=3, label="RBF[0]*ExpSineSquared[1]")
 
 plt.xlabel("Training Set size")
 plt.ylabel("Mean Absolute Error on Test Set")

@@ -1912,10 +1912,16 @@ class SelectDimensionKernel(Kernel):
         """
 
         active_dims = np.asarray(self.active_dims)
-
-        if (np.issubdtype(active_dims.dtype, np.bool) &
-           (active_dims.shape == X.shape[1])):
-            active_dims = np.where(active_dims)[0]
+        if np.issubdtype(active_dims.dtype, np.bool):
+            if active_dims.shape[0] == X.shape[1]:
+                active_dims = np.where(active_dims)[0]
+            elif active_dims.dtype == np.bool:
+                raise ValueError("A boolean active_dims should have the same"
+                                 "number of feature dimension size as"
+                                 "input data, active_dims shape: "
+                                 "%d, X shape (%d,%d)" % (active_dims.size,
+                                                          X.shape[0],
+                                                          X.shape[1]))
         else:
             active_dims = active_dims.astype(int)
         if active_dims.size == 0:

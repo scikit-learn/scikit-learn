@@ -616,9 +616,9 @@ applies the underlying kernel on a set of specific features of data. This can
 be useful when different kernels, e.g. periodic and RBF, are needed to model
 the dataset.
 
-By combining two different kinds of kernels we can construct new kernels that
-might model the data better. Following example uses two kernels, :class:`ExpSineSquared`
-and :class:`RBF`, for first and second features of data:
+By combining two or more different kinds of kernels we can construct new kernels that
+might model the data better. The following example uses two kernels, :class:`ExpSineSquared`
+and :class:`RBF`, for first and second feature dimensions of data:
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpr_dim_selection.png
    :target: ../auto_examples/gaussian_process/plot_gpr_dim_selection.html
