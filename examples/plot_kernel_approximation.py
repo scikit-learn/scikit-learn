@@ -92,8 +92,12 @@ def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
     return artists
 
 def flat_grid_from_pca(pca, multiples):
-    # Generate grid along first two principal components
-    # steps along first component
+    """Generate grid along first two principal components
+    steps along first component
+
+    pca: a fitted PCA object.
+    multiples: a range of steps to make through components
+    """
     first = multiples[:, np.newaxis] * pca.components_[0, :]
     # steps along second component
     second = multiples[:, np.newaxis] * pca.components_[1, :]
@@ -138,10 +142,10 @@ split_index = int(n_samples / 2)
 data_train, targets_train = data[:split_index], digits.target[:split_index]
 
 
-# Now predict the value of the digit on the second half:
+# We will predict the value of the digit on the second half:
 data_test, targets_test = data[split_index:], digits.target[split_index:]
 
-# Create a classifier: a support vector classifier
+# Create support vector classifier
 svms = {'linear svm': svm.LinearSVC(),
         'rbf svm': svm.SVC(gamma=.2)}
 
@@ -160,13 +164,13 @@ approx_svm = {label: pipeline.Pipeline([('feature_map', approx_kernel),
 # fit and predict using linear and kernel svm:
 svm_times, svm_scores = {}, {}
 for kernel, clf in svms.items():
-    score, _time = timing(fit_score, clf, (data_train, targets_train),
+    score, svm_performance = timing(fit_score, clf, (data_train, targets_train),
                           (data_test, targets_test))
     svm_scores[kernel] = score
-    svm_times[kernel] = _time
+    svm_times[kernel] = svm_performance
 
 
-# create timing, accuracy data for feature mapped models
+# create timing, accuracy data for approximate kernel models
 sample_sizes = 30 * np.arange(1, 10)
 scores, times = defaultdict(list), defaultdict(list)
 for D in sample_sizes:
@@ -177,7 +181,7 @@ for D in sample_sizes:
         score = fitted_clf.score(data_test, targets_test)
         scores[feature_map].append(score)
 
-# layout figure
+# figure layout
 fig, subplots = plt.subplots(2, 1, figsize=(8, 8))
 # zip together information for creating plots.
 plot_layout = zip(subplots,
@@ -185,10 +189,10 @@ plot_layout = zip(subplots,
                   (svm_scores, svm_times),
                   ({'linestyle': 'solid'}, {'linestyle': 'dashed'}))
 
+#Plot performance for svms, and approximate kernel models
 for ax, performance, svm_data, lineargs in plot_layout:
     plot_svm_data(ax, sample_sizes, performance, **lineargs)
     plot_svm_data(ax, sample_sizes, svm_data, **lineargs)
-    ax.legend(loc='best')
         
 #Make fine-grained tweaks to plots.
 accuracy, timescale = subplots
@@ -202,10 +206,13 @@ accuracy.set_xlim(sample_sizes[0], sample_sizes[-1])
 accuracy.set_xticks(())
 accuracy.set_ylim(np.min(scores[approximate_kernel_labels[1]]), 1)
 accuracy.set_ylabel("Classification accuracy")
+accuracy.legend(loc='best')
 
 timescale.set_xlabel("Sampling steps = transformed feature dimension")
 timescale.set_title("Training times")
 timescale.set_ylabel("Training time in seconds")
+timescale.legend(loc='best')
+plt.tight_layout()
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
@@ -215,7 +222,6 @@ X = pca.transform(data_train)
 
 flat_grid = flat_grid_from_pca(pca, multiples)
 
-plt.tight_layout()
 fig, subplots = plt.subplots(1, 3, figsize=(12, 5))
 
 # title for the plots
