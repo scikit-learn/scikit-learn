@@ -128,3 +128,9 @@ class StatsNode(object):
                     self.sum_weighted_samples))
 
         return info
+
+    def copy_to(self, dest_stats_node):
+        dest_stats_node.sum_y = self.sum_y
+        dest_stats_node.sum_sq_y = self.sum_sq_y
+        dest_stats_node.n_samples = self.n_samples
+        dest_stats_node.sum_weighted_samples = self.sum_weighted_samples

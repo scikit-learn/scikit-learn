@@ -1,10 +1,9 @@
 from __future__ import division, print_function
 
-from copy import deepcopy
-
 from numpy import isnan
 
 from .stats_node import StatsNode
+from .split_record import SplitRecord
 from .criterion import impurity_improvement
 
 FEATURE_THRESHOLD = 1e-7
@@ -58,12 +57,15 @@ class Splitter(object):
         self.prev_idx = start_idx
 
         # split record to work with
-        # make a deepcopy to not change the orignal object
-        self.split_record = deepcopy(split_record)
+        self.split_record = SplitRecord()
+
+        split_record.copy_to(self.split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
+
+        self.best_split_record = SplitRecord()
         # split to store the best split record
-        self.best_split_record = deepcopy(split_record)
+        split_record.copy_to(self.best_split_record)
 
         # parameters for early stop of split
         self.min_samples_leaf = min_samples_leaf
@@ -79,12 +81,11 @@ class Splitter(object):
         self.prev_idx = start_idx
 
         # split record to work with
-        # make a deepcopy to not change the original object
-        self.split_record = deepcopy(split_record)
+        split_record.copy_to(self.split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
         # split to store the best split record
-        self.best_split_record = deepcopy(split_record)
+        split_record.copy_to(self.best_split_record)
 
     def update_stats(self, sample_idx):
 

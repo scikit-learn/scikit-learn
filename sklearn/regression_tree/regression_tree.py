@@ -7,7 +7,6 @@ from __future__ import division, print_function
 import numbers
 
 from collections import defaultdict
-from copy import deepcopy
 from math import ceil
 
 import numpy as np
@@ -460,10 +459,10 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                 # copy the split_record if the improvement is better
                 for nid in expandable_nids:
                     if ((split_record_map[nid] is None) or
-                        (splitter_map[nid].best_split_record.impurity_improvement >
-                         split_record_map[nid].impurity_improvement)):
-                        split_record_map[nid] = deepcopy(
-                            splitter_map[nid].best_split_record)
+                            (splitter_map[nid].best_split_record.impurity_improvement >
+                             split_record_map[nid].impurity_improvement)):
+                        split_record_map[nid] = SplitRecord()
+                        splitter_map[nid].best_split_record.copy_to(split_record_map[nid])
 
             feature_update_X_nid = []
             for nid in expandable_nids:

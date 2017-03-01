@@ -112,3 +112,15 @@ class SplitRecord(object):
                                            self.l_stats,
                                            self.r_stats))
         return info
+
+    def copy_to(self, dest_split_record):
+        self.c_stats.copy_to(dest_split_record.c_stats)
+        self.l_stats.copy_to(dest_split_record.l_stats)
+        self.r_stats.copy_to(dest_split_record.r_stats)
+
+        dest_split_record.feature = self.feature
+        dest_split_record.pos = self.pos
+        dest_split_record.threshold = self.threshold
+        dest_split_record.impurity = self.impurity
+        dest_split_record.impurity_improvement = self.impurity_improvement
+        dest_split_record.nid = self.nid
