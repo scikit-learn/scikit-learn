@@ -7,7 +7,13 @@ import numpy as np
 import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils.validation import check_array, check_is_fitted, column_or_1d
+from sklearn.preprocessing.data import _transform_selected
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    column_or_1d,
+    FLOAT_DTYPES
+)
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
@@ -92,7 +98,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, dtype=float)
+        X = check_array(X, dtype=FLOAT_DTYPES)
 
         n_features = X.shape[1]
         ignored = self._check_ignored_features(self.ignored_features,
@@ -179,19 +185,22 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             Data in the binned space.
         """
         X = self._check_X_post_fit(X)
+
+        return _transform_selected(X, self._transform,
+                                   self.transformed_features_, copy=True,
+                                   retain_order=True)
+
+    def _transform(self, X):
+        """Performs transformation on X, with no ignored features."""
         trans = self.transformed_features_
-        Xt = X.copy()
-        Xt_sel = Xt[:, trans]
 
-        Xt_sel -= self.offset_[trans]
+        X -= self.offset_[trans]
         with np.errstate(divide='ignore', invalid='ignore'):
-            Xt_sel //= self.bin_width_[trans]
+            X //= self.bin_width_[trans]
 
-        Xt_sel[~np.isfinite(Xt_sel)] = 0
-        np.clip(Xt_sel, 0, self.n_bins_[trans] - 1, out=Xt_sel)
-
-        Xt[:, trans] = Xt_sel
-        return Xt
+        X[~np.isfinite(X)] = 0
+        np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
+        return X
 
     def inverse_transform(self, Xt):
         """Given transformed (binned) data, returns a representation of
@@ -222,7 +231,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     def _check_X_post_fit(self, X):
         check_is_fitted(self, ["offset_", "bin_width_"])
-        X = check_array(X, dtype=float)
+        X = check_array(X, dtype=FLOAT_DTYPES)
 
         n_features = self.n_bins_.shape[0]
         if X.shape[1] != n_features:
