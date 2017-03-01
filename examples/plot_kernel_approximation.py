@@ -85,7 +85,7 @@ def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
     """
     artists = []
     for label, y_values in y_vals_dict.items():
-        if isinstance(y_values, float):
+        if not hasattr(y_values, '__len__'):
             y_values = [y_values]*len(x_values)
         line = ax.plot(x_values, y_values, label=label, **lineargs)
         artists.append(line)
