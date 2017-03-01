@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation)
+            Exponentiation, Gabor)
 from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
@@ -40,6 +40,7 @@ kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            4.0 * Matern(length_scale=[0.5, 0.5], nu=2.5),
            RationalQuadratic(length_scale=0.5, alpha=1.5),
            ExpSineSquared(length_scale=0.5, periodicity=1.5),
+           Gabor(length_scale=0.5, periodicity=1.5),
            DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
            RBF(length_scale=[2.0]), Matern(length_scale=[2.0])]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
@@ -221,7 +222,7 @@ def test_kernel_clone_after_set_params():
         kernel_cloned = clone(kernel)
         params = kernel.get_params()
         # RationalQuadratic kernel is isotropic.
-        isotropic_kernels = (ExpSineSquared, RationalQuadratic)
+        isotropic_kernels = (ExpSineSquared, RationalQuadratic, Gabor)
         if 'length_scale' in params and not isinstance(kernel,
                                                        isotropic_kernels):
             length_scale = params['length_scale']
