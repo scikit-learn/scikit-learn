@@ -1528,10 +1528,9 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
-def _check_transform_selected(X, X_expected, sel, retain_order=False):
+def _check_transform_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _transform_selected(M, Binarizer().transform, selected=sel,
-                                  retain_order=retain_order)
+        Xtr = _transform_selected(M, Binarizer().transform, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
 
