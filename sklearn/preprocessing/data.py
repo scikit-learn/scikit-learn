@@ -1676,7 +1676,8 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True, order=False):
+def _transform_selected(X, transform, selected="all", copy=True,
+                        retain_ordering=False):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -1690,10 +1691,10 @@ def _transform_selected(X, transform, selected="all", copy=True, order=False):
     copy : boolean, optional
         Copy X even if it could be avoided.
 
-    selected: "all" or array of indices or mask
+    selected : "all" or array of indices or mask
         Specify which features to apply the transform to.
 
-    order: boolean, default False
+    retain_ordering : boolean, default False
         Specify whether the initial order of features has
         to be maintained in the output
 
@@ -1726,15 +1727,14 @@ def _transform_selected(X, transform, selected="all", copy=True, order=False):
         X_sel = transform(X[:, ind[sel]])
         X_not_sel = X[:, ind[not_sel]]
 
-        if order:
+        if retain_ordering:
             # As of now, X is expected to be dense array
             X[:, ind[sel]] = X_sel
             return X
+        if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
+            return sparse.hstack((X_sel, X_not_sel))
         else:
-            if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
-                return sparse.hstack((X_sel, X_not_sel))
-            else:
-                return np.hstack((X_sel, X_not_sel))
+            return np.hstack((X_sel, X_not_sel))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
@@ -1981,8 +1981,8 @@ def boxcox(X, copy=True):
     X : array-like, shape (n_samples, n_features)
         The data to be transformed. Should contain only positive data.
 
-    copy : boolean, optional, default is True
-        set to False to perform inplace transformation and avoid a
+    copy : boolean, optional, default=True
+        Set to False to perform inplace transformation and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
@@ -1997,7 +1997,7 @@ def boxcox(X, copy=True):
     Royal Statistical Society B, 26, 211-252 (1964).
     """
     X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=copy)
-    if any(np.any(X <= 0, axis=0)):
+    if np.any(X <= 0):
         raise ValueError("BoxCox transform can only be applied "
                          "on positive data")
     n_features = X.shape[1]
@@ -2022,7 +2022,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         - array of int: Array of feature indices to be transformed..
         - mask: Array of length n_features and with dtype=bool.
 
-    copy : boolean, optional, default True
+    copy : boolean, optional, default=True
         Set to False to perform inplace computation.
 
     Attributes
@@ -2058,6 +2058,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             The data to fit by apply boxcox transform,
             to each of the features and learn the lambda.
 
+        y : ignored
+
         Returns
         -------
         self : object
@@ -2072,7 +2074,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             if self.transformed_features_.dtype == np.bool:
                 self.transformed_features_ = \
                     np.where(self.transformed_features_)[0]
-        if any(np.any(X[:, self.transformed_features_] <= 0, axis=0)):
+        if np.any(X[:, self.transformed_features_] <= 0):
             raise ValueError("BoxCox transform can only be applied "
                              "on positive data")
         out = Parallel(n_jobs=self.n_jobs)(delayed(_boxcox)(X, i,
@@ -2081,7 +2083,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         self.lambdas_ = np.array([o[1] for o in out])
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform each feature using the lambdas evaluated during fit time
 
         Parameters
@@ -2102,7 +2104,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             raise ValueError("X has a different shape than during fitting.")
         X_tr = _transform_selected(X, self._transform,
                                    self.transformed_features_,
-                                   copy=False, order=True)
+                                   copy=False, retain_ordering=True)
         return X_tr
 
     def _transform(self, X):
@@ -2112,8 +2114,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         output = np.concatenate([o[..., np.newaxis] for o in outputs], axis=1)
         return output
 
-    def inverse_transform(self, X, y=None):
-        """Invere transform each feature using the lambdas evaluated during fit time
+    def inverse_transform(self, X):
+        """Inverse transform each feature using the lambdas evaluated during fit time
 
         Parameters
         ----------
@@ -2139,7 +2141,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             raise ValueError("X has a different shape than during fitting.")
         X_inv = _transform_selected(X, self._inverse_transform,
                                     self.transformed_features_, copy=False,
-                                    order=True)
+                                    retain_ordering=True)
         return X_inv
 
     def _inverse_transform(self, X):
