@@ -57,6 +57,76 @@ from sklearn import datasets, svm, pipeline
 from sklearn.kernel_approximation import (RBFSampler,
                                           Nystroem)
 from sklearn.decomposition import PCA
+from collections import defaultdict
+
+
+def timing(callable, *args, **kwargs):
+    """Time the call of a function and return time and
+    result. Passing args and kwargs to function.
+    """
+    init_time = time()
+    result = callable(*args, **kwargs)
+    return result, time() - init_time
+
+def fit_score(clf, train, test):
+    """Call fit and score on a classifier."""
+    clf.fit(*train)
+    return clf.score(*test)
+
+def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
+    """Plot several lines in a dict on an axis, using the key of the 
+    dict as the label.
+
+    ax: a matplotlib Axes object.
+    x_values: iterable of values to plot along x-axis.
+    y_values_dict: dict of label:data pairs to plot.
+                   plotted as horizontal line if data is scalar.
+    lineargs: kwargs to pass to plot call(s)
+    """
+    artists = []
+    for label, y_values in y_vals_dict.items():
+        if isinstance(y_values, float):
+            y_values = [y_values]*len(x_values)
+        line = ax.plot(x_values, y_values, label=label, **lineargs)
+        artists.append(line)
+    return artists
+
+def flat_grid_from_pca(pca, multiples):
+    """Generate grid along first two principal components
+    steps along first component
+
+    pca: a fitted PCA object.
+    multiples: a range of steps to make through components
+    """
+    first = multiples[:, np.newaxis] * pca.components_[0, :]
+    # steps along second component
+    second = multiples[:, np.newaxis] * pca.components_[1, :]
+    # combine
+    grid = first[np.newaxis, :, :] + second[:, np.newaxis, :]
+    flat_grid = grid.reshape(-1, grid.shape[-1])
+    return flat_grid
+
+def plot_projected_decision_surface(ax, clf, X, multiples, flat_grid):
+    """Plot the projected decision surface.
+
+    Parameters
+    ----------
+    ax: matplotlib axes object
+    clf: a fitted classifier
+    X: an array whose first two columns should be axes of plot.
+    multiples: 
+    """
+
+    # Plot the decision boundary. For that, we will assign a color to each
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
+    Z = clf.predict(flat_grid)
+
+    # Put the result into a color plot
+    s = int(np.sqrt(flat_grid.shape[0]))
+    Z = Z.reshape((s, s))
+    contour = ax.contourf(multiples, multiples, Z, cmap=plt.cm.Paired)
+    return contour
+
 
 # The digits dataset
 digits = datasets.load_digits(n_class=9)
@@ -68,118 +138,91 @@ data = digits.data / 16.
 data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
-data_train, targets_train = (data[:n_samples // 2],
-                             digits.target[:n_samples // 2])
+split_index = int(n_samples / 2)
+data_train, targets_train = data[:split_index], digits.target[:split_index]
 
 
-# Now predict the value of the digit on the second half:
-data_test, targets_test = (data[n_samples // 2:],
-                           digits.target[n_samples // 2:])
-# data_test = scaler.transform(data_test)
+# We will predict the value of the digit on the second half:
+data_test, targets_test = data[split_index:], digits.target[split_index:]
 
-# Create a classifier: a support vector classifier
-kernel_svm = svm.SVC(gamma=.2)
-linear_svm = svm.LinearSVC()
+# Create support vector classifier
+svms = {'linear svm': svm.LinearSVC(),
+        'rbf svm': svm.SVC(gamma=.2)}
 
 # create pipeline from kernel approximation
 # and linear svm
-feature_map_fourier = RBFSampler(gamma=.2, random_state=1)
-feature_map_nystroem = Nystroem(gamma=.2, random_state=1)
-fourier_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fourier),
-                                        ("svm", svm.LinearSVC())])
+approximate_kernel_labels = ("Nystroem approx. kernel",
+                             "Fourier approx. kernel")
+approximate_kernels = dict(zip(approximate_kernel_labels,
+                               (Nystroem(gamma=.2, random_state=1),
+                                RBFSampler(gamma=.2, random_state=1))))
+approx_svm = {label: pipeline.Pipeline([('feature_map', approx_kernel),
+                                        ('svm', svm.LinearSVC())])
+              for label, approx_kernel in approximate_kernels.items()}
 
-nystroem_approx_svm = pipeline.Pipeline([("feature_map", feature_map_nystroem),
-                                        ("svm", svm.LinearSVC())])
 
 # fit and predict using linear and kernel svm:
+svm_times, svm_scores = {}, {}
+for kernel, clf in svms.items():
+    score, svm_performance = timing(fit_score, clf, (data_train, targets_train),
+                          (data_test, targets_test))
+    svm_scores[kernel] = score
+    svm_times[kernel] = svm_performance
 
-kernel_svm_time = time()
-kernel_svm.fit(data_train, targets_train)
-kernel_svm_score = kernel_svm.score(data_test, targets_test)
-kernel_svm_time = time() - kernel_svm_time
 
-linear_svm_time = time()
-linear_svm.fit(data_train, targets_train)
-linear_svm_score = linear_svm.score(data_test, targets_test)
-linear_svm_time = time() - linear_svm_time
-
+# create timing, accuracy data for approximate kernel models
 sample_sizes = 30 * np.arange(1, 10)
-fourier_scores = []
-nystroem_scores = []
-fourier_times = []
-nystroem_times = []
-
+scores, times = defaultdict(list), defaultdict(list)
 for D in sample_sizes:
-    fourier_approx_svm.set_params(feature_map__n_components=D)
-    nystroem_approx_svm.set_params(feature_map__n_components=D)
-    start = time()
-    nystroem_approx_svm.fit(data_train, targets_train)
-    nystroem_times.append(time() - start)
+    for feature_map, clf in approx_svm.items():
+        clf.set_params(feature_map__n_components=D)
+        fitted_clf, _time = timing(clf.fit, data_train, targets_train)
+        times[feature_map].append(_time)
+        score = fitted_clf.score(data_test, targets_test)
+        scores[feature_map].append(score)
 
-    start = time()
-    fourier_approx_svm.fit(data_train, targets_train)
-    fourier_times.append(time() - start)
+# figure layout
+fig, subplots = plt.subplots(2, 1, figsize=(8, 8))
+# zip together information for creating plots.
+plot_layout = zip(subplots,
+                  (scores, times),
+                  (svm_scores, svm_times),
+                  ({'linestyle': 'solid'}, {'linestyle': 'dashed'}))
 
-    fourier_score = fourier_approx_svm.score(data_test, targets_test)
-    nystroem_score = nystroem_approx_svm.score(data_test, targets_test)
-    nystroem_scores.append(nystroem_score)
-    fourier_scores.append(fourier_score)
+#Plot performance for svms, and approximate kernel models
+for ax, performance, svm_data, lineargs in plot_layout:
+    plot_svm_data(ax, sample_sizes, performance, **lineargs)
+    plot_svm_data(ax, sample_sizes, svm_data, **lineargs)
+        
+#Make fine-grained tweaks to plots.
+accuracy, timescale = subplots
 
-# plot the results:
-plt.figure(figsize=(8, 8))
-accuracy = plt.subplot(211)
-# second y axis for timeings
-timescale = plt.subplot(212)
+# plot verticle line.
+accuracy.plot([data.shape[1]]*2, [0.7, 1], label="n_features")
 
-accuracy.plot(sample_sizes, nystroem_scores, label="Nystroem approx. kernel")
-timescale.plot(sample_sizes, nystroem_times, '--',
-               label='Nystroem approx. kernel')
-
-accuracy.plot(sample_sizes, fourier_scores, label="Fourier approx. kernel")
-timescale.plot(sample_sizes, fourier_times, '--',
-               label='Fourier approx. kernel')
-
-# horizontal lines for exact rbf and linear kernels:
-accuracy.plot([sample_sizes[0], sample_sizes[-1]],
-              [linear_svm_score, linear_svm_score], label="linear svm")
-timescale.plot([sample_sizes[0], sample_sizes[-1]],
-               [linear_svm_time, linear_svm_time], '--', label='linear svm')
-
-accuracy.plot([sample_sizes[0], sample_sizes[-1]],
-              [kernel_svm_score, kernel_svm_score], label="rbf svm")
-timescale.plot([sample_sizes[0], sample_sizes[-1]],
-               [kernel_svm_time, kernel_svm_time], '--', label='rbf svm')
-
-# vertical line for dataset dimensionality = 64
-accuracy.plot([64, 64], [0.7, 1], label="n_features")
-
-# legends and labels
+# format legends and axes
 accuracy.set_title("Classification accuracy")
-timescale.set_title("Training times")
 accuracy.set_xlim(sample_sizes[0], sample_sizes[-1])
 accuracy.set_xticks(())
-accuracy.set_ylim(np.min(fourier_scores), 1)
-timescale.set_xlabel("Sampling steps = transformed feature dimension")
+accuracy.set_ylim(np.min(scores[approximate_kernel_labels[1]]), 1)
 accuracy.set_ylabel("Classification accuracy")
-timescale.set_ylabel("Training time in seconds")
 accuracy.legend(loc='best')
+
+timescale.set_xlabel("Sampling steps = transformed feature dimension")
+timescale.set_title("Training times")
+timescale.set_ylabel("Training time in seconds")
 timescale.legend(loc='best')
+plt.tight_layout()
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
-pca = PCA(n_components=8).fit(data_train)
-
+pca = PCA(n_components=8, random_state=1).fit(data_train)
+multiples = np.arange(-2, 2, 0.1)
 X = pca.transform(data_train)
 
-# Generate grid along first two principal components
-multiples = np.arange(-2, 2, 0.1)
-# steps along first component
-first = multiples[:, np.newaxis] * pca.components_[0, :]
-# steps along second component
-second = multiples[:, np.newaxis] * pca.components_[1, :]
-# combine
-grid = first[np.newaxis, :, :] + second[:, np.newaxis, :]
-flat_grid = grid.reshape(-1, data.shape[1])
+flat_grid = flat_grid_from_pca(pca, multiples)
+
+fig, subplots = plt.subplots(1, 3, figsize=(12, 5))
 
 # title for the plots
 titles = ['SVC with rbf kernel',
@@ -188,25 +231,14 @@ titles = ['SVC with rbf kernel',
           'SVC (linear kernel)\n with Nystroem rbf feature map\n'
           'n_components=100']
 
-plt.tight_layout()
-plt.figure(figsize=(12, 5))
-
 # predict and plot
-for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
-                         fourier_approx_svm)):
-    # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, x_max]x[y_min, y_max].
-    plt.subplot(1, 3, i + 1)
-    Z = clf.predict(flat_grid)
-
-    # Put the result into a color plot
-    Z = Z.reshape(grid.shape[:-1])
-    plt.contourf(multiples, multiples, Z, cmap=plt.cm.Paired)
-    plt.axis('off')
-
-    # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired)
-
-    plt.title(titles[i])
+classifiers = [svms['rbf svm'], approx_svm[approximate_kernel_labels[0]],
+               approx_svm[approximate_kernel_labels[1]]]
+for ax, title, clf in zip(subplots.flatten(), titles, classifiers):
+    plot_projected_decision_surface(ax, clf, X, multiples, flat_grid)
+    ax.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired, s=20,
+               edgecolors='k')
+    ax.set_title(title)
+    ax.axis('off')
 plt.tight_layout()
 plt.show()
