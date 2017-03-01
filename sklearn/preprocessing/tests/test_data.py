@@ -853,7 +853,7 @@ def test_robust_scaler_iris_quantiles():
     assert_array_almost_equal(q_range, 1)
 
 
-def test_quantile_transformr_iris():
+def test_quantile_transform_iris():
     X = iris.data
     normalizer = QuantileTransformer()
     X_trans = normalizer.fit_transform(X)
@@ -863,7 +863,7 @@ def test_quantile_transformr_iris():
     assert_array_almost_equal(X, X_trans_inv)
 
 
-def test_quantile_transformr_check_error():
+def test_quantile_transform_check_error():
     X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                   [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
                   [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
@@ -908,7 +908,7 @@ def test_quantile_transformr_check_error():
                             X).inverse_transform, X)
 
 
-def test_quantile_transformr_ignore_zeros():
+def test_quantile_transform_ignore_zeros():
     X = np.array([[0, 0, 0, 0, 0],
                   [1, 0, 2, 2, 1]]).T
     X_sparse = sparse.csc_matrix(X)
@@ -959,7 +959,7 @@ def test_quantile_transformr_ignore_zeros():
     assert_almost_equal(X_sparse.A, nq.inverse_transform(X_trans).A)
 
 
-def test_quantile_transformr_dense_toy():
+def test_quantile_transform_dense_toy():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
                   [2.6, 4.1, 2.3, 9.5, 0.1]]).T
@@ -993,7 +993,7 @@ def test_quantile_transformr_dense_toy():
     X_trans = normalizer.fit_transform(X)
 
 
-def test_quantile_transformr_sparse_toy():
+def test_quantile_transform_sparse_toy():
     X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                   [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
                   [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
@@ -1062,7 +1062,7 @@ def test_qunatile_normalzer_bounds():
     assert_array_almost_equal(X_trans, X1)
 
 
-def test_quantile_transformr_pickling():
+def test_quantile_transform_pickling():
     qn = QuantileTransformer(n_quantiles=100)
 
     qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)

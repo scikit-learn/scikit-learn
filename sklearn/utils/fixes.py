@@ -362,19 +362,6 @@ else:
     from scipy.stats import rankdata
 
 
-if sp_version < (0, 14, 0):
-    # Before scipy 0.14.0, interp1d does not accept any assume_sorted
-    # argument.
-    def interp1d(x, y, kind='linear', axis=-1,
-                 copy=True, bounds_error=True,
-                 fill_value=np.nan, assume_sorted=False):
-
-        return scipy.interpolate.interp1d(x, y, kind, axis, copy,
-                                          bounds_error, fill_value)
-else:
-    from scipy.interpolate import interp1d
-
-
 if np_version < (1, 12):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable

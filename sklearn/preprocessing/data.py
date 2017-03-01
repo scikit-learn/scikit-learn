@@ -15,7 +15,6 @@ from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
 from scipy import sparse
-# from scipy.interpolate import interp1d
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
@@ -23,7 +22,7 @@ from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import bincount, interp1d
+from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1977,32 +1976,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.subsample = subsample
         self.random_state = random_state
 
-    def _build_f(self):
-        """Build the transform functions."""
-        check_is_fitted(self, 'quantiles_')
-
-        if self.ignore_implicit_zeros:
-            warnings.warn("'ignore_implicit_zeros' takes effect only with"
-                          " sparse matrix. This parameter has no effect.")
-
-        references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
-
-        self._f_transform = tuple([
-            interp1d(quantiles_feature, references,
-                     copy=False,
-                     bounds_error=False,
-                     fill_value=0.,
-                     assume_sorted=True)
-            for quantiles_feature in self.quantiles_.T])
-
-        self._f_inverse_transform = tuple([
-            interp1d(references, quantiles_feature,
-                     copy=False,
-                     bounds_error=False,
-                     fill_value=0.,
-                     assume_sorted=True)
-            for quantiles_feature in self.quantiles_.T])
-
     def _dense_fit(self, X):
         """Compute percentiles for dense matrices.
 
@@ -2011,6 +1984,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : ndarray, shape (n_samples, n_features)
             The data used to scale along the features axis.
         """
+        if self.ignore_implicit_zeros:
+            warnings.warn("'ignore_implicit_zeros' takes effect only with"
+                          " sparse matrix. This parameter has no effect.")
+
         rng = check_random_state(self.random_state)
 
         # subsample the matrix X if necessary
@@ -2117,17 +2094,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         else:
             self._dense_fit(X)
 
-        self._build_f()
-
         return self
 
     def _transform_col(self, X_col, feature_idx, inverse):
         """Private function to transform a single feature"""
 
-        if not inverse:
-            func_transform = self._f_transform[feature_idx]
-        else:
-            func_transform = self._f_inverse_transform[feature_idx]
         output_distribution = getattr(stats, self.output_distribution)
         # older version of scipy do not handle tuple as fill_value
         # clipping the value before transform solve the issue
@@ -2148,7 +2119,15 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                             lower_bound_x)
         upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
                             upper_bound_x)
-        X_col = func_transform(X_col)
+
+        references = np.linspace(0, 1, self.n_quantiles, endpoint=True)
+        if not inverse:
+            X_col = np.interp(X_col, self.quantiles_[:, feature_idx],
+                              references)
+        else:
+            X_col = np.interp(X_col, references,
+                              self.quantiles_[:, feature_idx])
+
         X_col[upper_bounds_idx] = upper_bound_y
         X_col[lower_bounds_idx] = lower_bound_y
         # for forward transform, match the output PDF
@@ -2215,6 +2194,31 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X
 
+    def _check_inputs_transform(self, X):
+        """Private function to check the inputs before transforming"""
+        X = check_array(X, accept_sparse='csc', copy=True,
+                        dtype=[np.float64, np.float32])
+        # we only accept positive sparse matrix when ignore_implicit_zeros is
+        # false
+        if (not self.ignore_implicit_zeros and
+                (sparse.issparse(X) and np.any(X.data < 0))):
+            raise ValueError('QuantileTransformer only accepts non-negative'
+                             ' sparse matrices')
+        check_is_fitted(self, 'quantiles_')
+        # check that the dimension of X are adequate with the fitted data
+        if X.shape[1] != self.quantiles_.shape[1]:
+            raise ValueError('X does not have the same number of feature than'
+                             ' the previously fitted data. Got {} instead of'
+                             ' {}'.format(X.shape[1],
+                                          self.quantiles_.shape[1]))
+        # check the output PDF
+        if self.output_distribution not in ('norm', 'uniform'):
+            raise ValueError("'output_distribution' has to be either 'norm' or"
+                             " 'uniform'. Got {} instead.".format(
+                                 self.output_distribution))
+
+        return X
+
     def transform(self, X):
         """Feature-wise transformation of the data.
 
@@ -2231,25 +2235,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = check_array(X, accept_sparse='csc', copy=True,
-                        dtype=[np.float64, np.float32])
-        # we only accept positive sparse matrix when ignore_implicit_zeros is
-        # false
-        if (not self.ignore_implicit_zeros and
-                (sparse.issparse(X) and np.any(X.data < 0))):
-            raise ValueError('QuantileTransformer only accepts non-negative'
-                             ' sparse matrices')
-        check_is_fitted(self, '_f_transform')
-        # check that the dimension of X are adequate with the fitted data
-        if X.shape[1] != len(self._f_transform):
-            raise ValueError('X does not have the same number of feature than'
-                             ' the previously fitted data. Got {} instead of'
-                             ' {}'.format(X.shape[1], len(self._f_transform)))
-        # check the output PDF
-        if self.output_distribution not in ('norm', 'uniform'):
-            raise ValueError("'output_distribution' has to be either 'norm' or"
-                             " 'uniform'. Got {} instead.".format(
-                                 self.output_distribution))
+        X = self._check_inputs_transform(X)
 
         if sparse.issparse(X):
             return self._sparse_transform(X, inverse=False)
@@ -2270,45 +2256,12 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = check_array(X, accept_sparse='csc')
-        # we only accept positive sparse matrix when ignore_implicit_zeros is
-        # false
-        if (not self.ignore_implicit_zeros and
-                (sparse.issparse(X) and np.any(X.data < 0))):
-            raise ValueError('QuantileTransformer only accepts non-negative'
-                             ' sparse matrices')
-        check_is_fitted(self, '_f_inverse_transform')
-        # check that the dimension of X are adequate with the fitted data
-        if X.shape[1] != len(self._f_inverse_transform):
-            raise ValueError('X does not have the same number of feature than'
-                             ' the previously fitted data. Got {} instead of'
-                             ' {}'.format(X.shape[1],
-                                          len(self._f_inverse_transform)))
-        # check the output PDF
-        if self.output_distribution not in ('norm', 'uniform'):
-            raise ValueError("'output_distribution' has to be either 'norm' or"
-                             " 'uniform'. Got {} instead.".format(
-                                 self.output_distribution))
+        X = self._check_inputs_transform(X)
+
         if sparse.issparse(X):
             return self._sparse_transform(X, inverse=True)
         else:
             return self._dense_transform(X, inverse=True)
-
-    def __getstate__(self):
-        """Pickle-protocol - return state of the estimator. """
-        state = super(QuantileTransformer, self).__getstate__()
-        # remove interpolation method
-        state.pop('_f_transform', None)
-        state.pop('_f_inverse_transform', None)
-        return state
-
-    def __setstate__(self, state):
-        """Pickle-protocol - set state of the estimator.
-        We need to rebuild the interpolation function.
-        """
-        super(QuantileTransformer, self).__setstate__(state)
-        if hasattr(self, 'quantiles_'):
-            self._build_f()
 
 
 def quantile_transform(X, axis=0, n_quantiles=1000, subsample=int(1e5),
