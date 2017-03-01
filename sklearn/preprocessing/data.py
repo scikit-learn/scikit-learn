@@ -1993,7 +1993,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         # subsample the matrix X if necessary
         n_samples, n_features = X.shape
         if self.subsample < n_samples:
-            subsample_idx = rng.permutation(range(n_samples))[:self.subsample]
+            subsample_idx = choice(range(n_samples), size=self.subsample,
+                                   replace=False, random_state=rng)
         else:
             subsample_idx = slice(None)
 
@@ -2089,10 +2090,31 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
 
+        # check the number of quantiles is less than the number of samples used
+        # in fitting
+        if (self.n_quantiles > min(X.shape[0], self.subsample)):
+            raise ValueError('The number of quantiles is less than either the'
+                             ' number which will be used during fitting. Got'
+                             ' {} quantiles for {} samples.'.format(
+                                 self.n_quantiles, min(X.shape[0],
+                                                       self.subsample)))
+
         if sparse.issparse(X):
             self._sparse_fit(X)
         else:
             self._dense_fit(X)
+
+        # check that the quantiles are strictly monotonically increasing
+        for feature_idx, quantile in enumerate(self.quantiles_):
+            if not np.all(np.diff(quantile) > 0):
+                warnings.warn('The feature values corresponding to the'
+                              ' quantiles computed are not strictly'
+                              ' monotonically increasing for the feature #'
+                              '{}. This configuration is ill-posed for the'
+                              ' QuantileTransformer. If this feature is'
+                              ' a categorical feature, be aware that this'
+                              ' transformation will not work.'.format(
+                                  feature_idx))
 
         return self
 

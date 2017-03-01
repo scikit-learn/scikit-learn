@@ -57,6 +57,7 @@ New features
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
    - Added :class:`preprocessing.QuantileNormalizer` class for features
+   - Added :class:`preprocessing.QuantileTransformer` class for features
      normalization based on quantiles.
      :issue:`8363` by :user:`Denis Engemann <dengemann>`,
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_,
