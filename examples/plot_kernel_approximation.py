@@ -68,13 +68,15 @@ def timing(callable, *args, **kwargs):
     result = callable(*args, **kwargs)
     return result, time() - init_time
 
+
 def fit_score(clf, train, test):
     """Call fit and score on a classifier."""
     clf.fit(*train)
     return clf.score(*test)
 
+
 def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
-    """Plot several lines in a dict on an axis, using the key of the 
+    """Plot several lines in a dict on an axis, using the key of the
     dict as the label.
 
     ax: a matplotlib Axes object.
@@ -91,6 +93,7 @@ def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
         artists.append(line)
     return artists
 
+
 def flat_grid_from_pca(pca, multiples):
     """Generate grid along first two principal components
     steps along first component
@@ -106,6 +109,7 @@ def flat_grid_from_pca(pca, multiples):
     flat_grid = grid.reshape(-1, grid.shape[-1])
     return flat_grid
 
+
 def plot_projected_decision_surface(ax, clf, X, multiples, flat_grid):
     """Plot the projected decision surface.
 
@@ -114,7 +118,7 @@ def plot_projected_decision_surface(ax, clf, X, multiples, flat_grid):
     ax: matplotlib axes object
     clf: a fitted classifier
     X: an array whose first two columns should be axes of plot.
-    multiples: 
+    multiples:
     """
 
     # Plot the decision boundary. For that, we will assign a color to each
@@ -164,8 +168,9 @@ approx_svm = {label: pipeline.Pipeline([('feature_map', approx_kernel),
 # fit and predict using linear and kernel svm:
 svm_times, svm_scores = {}, {}
 for kernel, clf in svms.items():
-    score, svm_performance = timing(fit_score, clf, (data_train, targets_train),
-                          (data_test, targets_test))
+    score, svm_performance = timing(fit_score, clf,
+                                    (data_train, targets_train),
+                                    (data_test, targets_test))
     svm_scores[kernel] = score
     svm_times[kernel] = svm_performance
 
@@ -189,12 +194,12 @@ plot_layout = zip(subplots,
                   (svm_scores, svm_times),
                   ({'linestyle': 'solid'}, {'linestyle': 'dashed'}))
 
-#Plot performance for svms, and approximate kernel models
+# Plot performance for svms, and approximate kernel models
 for ax, performance, svm_data, lineargs in plot_layout:
     plot_svm_data(ax, sample_sizes, performance, **lineargs)
     plot_svm_data(ax, sample_sizes, svm_data, **lineargs)
-        
-#Make fine-grained tweaks to plots.
+
+# Make fine-grained tweaks to plots.
 accuracy, timescale = subplots
 
 # plot verticle line.
