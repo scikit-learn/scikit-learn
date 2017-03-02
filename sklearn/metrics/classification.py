@@ -236,6 +236,11 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
            [0, 0, 1],
            [1, 0, 2]])
 
+    In the binary case, we can extract true positives, etc as follows:
+    >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
+    >>> (tn, fp, fn, tp)
+    (0, 2, 1, 1)
+
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
