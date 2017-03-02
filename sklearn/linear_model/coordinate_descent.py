@@ -1611,7 +1611,8 @@ class MultiTaskElasticNet(Lasso):
 
     coef_ : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula). If a 1D y is \
-        passed in at fit (non multi-task usage), ``coef_`` is then a 1D array
+        passed in at fit (non multi-task usage), ``coef_`` is then a 1D array.
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
@@ -1792,7 +1793,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     Attributes
     ----------
     coef_ : array, shape (n_tasks, n_features)
-        parameter vector (W in the cost function formula)
+        Parameter vector (W in the cost function formula).
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     intercept_ : array, shape (n_tasks,)
         independent term in decision function.
@@ -1950,6 +1952,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     coef_ : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula).
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     alpha_ : float
         The amount of penalization chosen by cross validation
@@ -2115,6 +2118,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     coef_ : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula).
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     alpha_ : float
         The amount of penalization chosen by cross validation
