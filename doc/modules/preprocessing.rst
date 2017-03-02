@@ -248,6 +248,40 @@ a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
 defined by :math:`phi` followed by removal of the mean in that space.
 
+.. _preprocessing_transformer:
+
+Non-linear transformation
+=========================
+
+In the contrary of scaling, data can be non-linearly transformed to reduce the
+influence of marginal outliers present in a dataset. Additionally, reducing the
+influence of those outliers allows for a more direct comparison between
+features, at the cost of distorting correlations between them.
+
+:class:`QuantileTransformer` and :func:`quantile_transform` provide a
+non-parametric transformation based the quantile function to map the data to a
+uniform distribution::
+
+  >>> from sklearn.datasets import load_iris
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> quantile_transformer = preprocessing.QuantileTransformer()
+  >>> X_trans = quantile_transformer.fit_transform(iris.data)
+
+It is also possible to map the transformed data to a normal distribution by
+setting ``output_distribution='norm'``::
+
+  >>> X_trans = preprocessing.quantile_transform(X, output_distribution='norm')
+
+.. topic:: Sparse input
+
+   :class:`QuantileTransformer` and :func:`quantile_transform` accept **both
+   dense array-like and sparse matrices from scipy.sparse as input**.
+
+   For sparse input the data is **converted to the Compressed Sparse Columns
+   representation** (see ``scipy.sparse.csc_matrix``). To avoid unnecessary
+   memory copies, it is recommended to choose the CSC representation upstream.
+
 .. _preprocessing_normalization:
 
 Normalization

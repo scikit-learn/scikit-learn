@@ -1923,10 +1923,12 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     The transformation is applied on each feature independently.
     The cumulative density function of a feature is used to project the
     original values. Features values of new/unseen data that fall below
-    or above the fitted range will be mapped to 0 and 1, respectively.
-    Note that this transform is non-linear. It may distort linear correlations
-    between variables measured at the same scale but renders variables measured
-    at different scales more directly comparable.
+    or above the fitted range will be mapped to the bounds of the output
+    distribution. Note that this transform is non-linear. It may distort linear
+    correlations between variables measured at the same scale but renders
+    variables measured at different scales more directly comparable.
+
+     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     Parameters
     ----------
@@ -1957,8 +1959,16 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     quantiles_ : ndarray, shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.preprocessing import QuantileTransformer
+    >>> iris = load_iris()
+    >>> X_trans = QuantileTransformer(n_quantiles=20).fit_transform(iris.data)
+
     See also
     --------
+    quantile_transform : Equivalent function without the object oriented API.
 
     StandardScaler : perform standardization that is faster, but less robust
     to outliers.
@@ -2064,7 +2074,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
-            semi-positive.
+            semi-positive if `ignore_implicit_zeros` is False.
 
         Returns
         -------
@@ -2247,10 +2257,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : ndarray or sparse matrix, shape (n_samples, n_features)
-            The data to be normalized along the features axis. If a sparse
+            The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
-            semi-positive.
+            semi-positive if `ignore_implicit_zeros` is False.
 
         Returns
         -------
@@ -2268,10 +2278,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         """Back-projection to the original space.
 
         X : ndarray or sparse matrix, shape (n_samples, n_features)
-            The data to be normalized along the features axis. If a sparse
+            The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
-            semi-positive.
+            semi-positive if `ignore_implicit_zeros` is False.
 
         Returns
         -------
@@ -2286,8 +2296,86 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             return self._dense_transform(X, inverse=True)
 
 
-def quantile_transform(X, axis=0, n_quantiles=1000, subsample=int(1e5),
-                       ignore_implicit_zeros=False, random_state=None):
+def quantile_transform(X, axis=0, n_quantiles=1000,
+                       output_distribution='uniform',
+                       ignore_implicit_zeros=False,
+                       subsample=int(1e5),
+                       random_state=None):
+    """Transform features using quantiles information.
+
+    This method scales the features to follow a uniform or a normal
+    distribution. Therefore, for a given feature, this transformation tends
+    to spread out the most frequent values. It also reduces the impact of
+    (marginal) outliers: this is therefore a robust preprocessing scheme.
+
+    The transformation is applied on each feature independently.
+    The cumulative density function of a feature is used to project the
+    original values. Features values of new/unseen data that fall below
+    or above the fitted range will be mapped to the bounds of the output
+    distribution. Note that this transform is non-linear. It may distort linear
+    correlations between variables measured at the same scale but renders
+    variables measured at different scales more directly comparable.
+
+     Read more in the :ref:`User Guide <preprocessing_transformer>`.
+
+    Parameters
+    ----------
+    X : ndarray or sparse matrix, shape (n_samples, n_features)
+        The data used to scale along the features axis. If a sparse
+        matrix is provided, it will be converted into a sparse
+        ``csc_matrix``. Additionally, the sparse matrix needs to be
+        semi-positive if `ignore_implicit_zeros` is False.
+
+    axis : 0 or 1, optional (0 by default)
+        axis used to normalize the data along. If 1, independently normalize
+        each sample, otherwise (if 0) normalize each feature.
+
+    n_quantiles : int, optional (default=1000)
+        Number of quantiles to be computed. It corresponds to the number
+        of landmarks used to discretize the cumulative density function.
+
+    output_distribution : str, optional (default='uniform')
+        Marginal distribution for the transformed data. The choices are
+        'uniform' (default) or 'norm'.
+
+    ignore_implicit_zeros : bool, optional (default=False)
+        Apply only for sparse matrices. If True, the sparse entries of the
+        matrix are discarded to compute the quantile statistics. If false,
+        these entries are accounting for zeros.
+
+    subsample : int, optional (default=1e5)
+        Maximum number of samples used to estimate the quantiles.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by np.random.
+
+    Attributes
+    ----------
+    quantiles_ : ndarray, shape (n_quantiles, n_features)
+        The values corresponding the quantiles of reference.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.preprocessing import quantile_transform
+    >>> iris = load_iris()
+    >>> X_trans = quantile_transform(iris.data, n_quantiles=20)
+
+    See also
+    --------
+    QuantileTransformer : Performs quantile-based scaling using the
+    ``Transformer`` API (e.g. as part of a preprocessing
+    :class:`sklearn.pipeline.Pipeline`).
+
+    scale : perform standardization that is faster, but less robust
+    to outliers.
+
+    robust_scale : perform robust standardization that removes the influence
+    of outliers but does not put outliers and inliers on the same scale.
+    """
     n = QuantileTransformer(n_quantiles=n_quantiles, subsample=subsample,
                             ignore_implicit_zeros=ignore_implicit_zeros,
                             random_state=random_state)
