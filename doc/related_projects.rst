@@ -64,6 +64,9 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
+- `scikit-plot <https://github.com/reiinakano/scikit-plot>`_ A visualization library
+  for quick and easy generation of common plots in data analysis and machine learning.
+
 
 **Model export for production**
 
