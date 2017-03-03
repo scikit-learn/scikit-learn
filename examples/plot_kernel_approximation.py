@@ -88,7 +88,7 @@ def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
     artists = []
     for label, y_values in y_vals_dict.items():
         if not hasattr(y_values, '__len__'):
-            y_values = [y_values]*len(x_values)
+            y_values = [y_values] * len(x_values)
         line = ax.plot(x_values, y_values, label=label, **lineargs)
         artists.append(line)
     return artists
@@ -203,7 +203,7 @@ for ax, performance, svm_data, lineargs in plot_layout:
 accuracy, timescale = subplots
 
 # plot verticle line.
-accuracy.plot([data.shape[1]]*2, [0.7, 1], label="n_features")
+accuracy.plot([data.shape[1]] * 2, [0.7, 1], label="n_features")
 
 # format legends and axes
 accuracy.set_title("Classification accuracy")
