@@ -212,9 +212,14 @@ def test_graphviz_errors():
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
     clf.fit(X, y)
 
-    # Check feature_names error
+    # Check feature_names less than number of features error
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, feature_names=[])
+
+    # Check feature_names more than number of features error
+    out = StringIO()
+    assert_raises(ValueError, export_graphviz, clf, out,
+                  feature_names=["a", "b", "c"])
 
     # Check class_names error
     out = StringIO()

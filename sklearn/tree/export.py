@@ -8,6 +8,7 @@ This module defines export functions for decision trees.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Trevor Stephens <trev.stephens@gmail.com>
+#          Li Li <aiki.nogard@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -216,6 +217,12 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
         if tree.children_left[node_id] != _tree.TREE_LEAF:
             # Always write node decision criteria, except for leaves
             if feature_names is not None:
+                # Check length of feature_names
+                if len(feature_names) > tree.n_features:
+                    raise ValueError("Length of feature_names=%d "
+                                     "should not be larger than "
+                                     "number of features=%d"
+                                     % (len(feature_names), tree.n_features))
                 feature = feature_names[tree.feature[node_id]]
             else:
                 feature = "X%s%s%s" % (characters[1],
