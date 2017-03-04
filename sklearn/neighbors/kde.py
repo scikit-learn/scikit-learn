@@ -54,7 +54,7 @@ class KernelDensity(BaseEstimator):
 
     rtol : float
         The desired relative tolerance of the result.  A larger tolerance will
-        generally lead to faster execution.  Default is 1E-8.
+        generally lead to faster execution.  Default is 0.
 
     breadth_first : boolean
         If true (default), use a breadth-first approach to the problem.
