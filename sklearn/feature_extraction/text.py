@@ -1256,6 +1256,33 @@ class TfidfVectorizer(CountVectorizer):
     be safely removed using delattr or set to None before pickling.
     """
 
+// add code here //
+##Reference Issue
+##Example: Fixes Issue 3846 for class TfidfVectorizer -->
+
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np
+import pandas as pd
+
+#create test document
+doc_test = ['Every summer our family gathers on the beach.',
+            'Everytime our family has a gathering someone is late.',
+            'Every winter our family goes to a ski resort in Colorado.',
+            'This fall everyone in the family will run the Pumpkin 10K run.']
+#call class TfidfVectorizer
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(doc_test)
+print(type(X))
+vectorizer.get_feature_names()
+
+
+#### This code provides as an example of how to implement class TfidfVectorizer.
+
+//end of added code //
+
+
+
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
