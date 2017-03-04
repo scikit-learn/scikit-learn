@@ -218,11 +218,18 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             # Always write node decision criteria, except for leaves
             if feature_names is not None:
                 # Check length of feature_names
-                if len(feature_names) > tree.n_features:
+                # raise error for too few feature_names
+                if len(feature_names) < tree.n_features:
                     raise ValueError("Length of feature_names=%d "
-                                     "should not be larger than "
-                                     "number of features=%d"
+                                     "does not match number of features=%d"
                                      % (len(feature_names), tree.n_features))
+                # for too much feature_names, will use the first n_features
+                # raise an warning for users
+                if len(feature_names) > tree.n_features:
+                    warnings.warn("Length of feature_names=%d "
+                                  "does not match number of features=%d"
+                                  % (len(feature_names), tree.n_features),
+                                  UserWarning)
                 feature = feature_names[tree.feature[node_id]]
             else:
                 feature = "X%s%s%s" % (characters[1],

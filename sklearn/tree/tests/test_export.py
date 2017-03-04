@@ -9,6 +9,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import assert_in, assert_equal, assert_raises
+from sklearn.utils.testing import assert_warns_message, assert_raise_message
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -213,13 +214,18 @@ def test_graphviz_errors():
     clf.fit(X, y)
 
     # Check feature_names less than number of features error
-    out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, feature_names=[])
+    out = None
+    message = "Length of feature_names=1 does not " + \
+              "match number of features=2"
+    assert_raise_message(ValueError, message, export_graphviz, clf, out,
+                         feature_names=["a"])
 
-    # Check feature_names more than number of features error
-    out = StringIO()
-    assert_raises(ValueError, export_graphviz, clf, out,
-                  feature_names=["a", "b", "c"])
+    # Check feature_names greater than number of features warning
+    out = None
+    message = "Length of feature_names=3 does not " + \
+              "match number of features=2"
+    assert_warns_message(UserWarning, message, export_graphviz, clf, out,
+                         feature_names=["a", "b", "c"])
 
     # Check class_names error
     out = StringIO()
