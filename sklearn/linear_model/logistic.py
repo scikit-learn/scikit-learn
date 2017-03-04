@@ -1542,6 +1542,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self : object
             Returns self.
         """
+
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
 
@@ -1725,3 +1726,29 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         self.C_ = np.asarray(self.C_)
         return self
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the mean accuracy on given test data and labels.
+
+        Due to a bug in scikit-learn this method always returns mean accuracy.
+        This will be fixed in version 0.20. For now you can externally call the
+        required score function.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+        ""
+
+        warnings.warn('The score function always returns mean accuracy due to'
+        ' a bug in scikit-learn. Refer the documentation for more details.')
+
+        return super(LogisticRegressionCV, self).score(X, y, sample_weight)
