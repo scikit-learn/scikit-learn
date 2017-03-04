@@ -15,7 +15,7 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 
 # License: BSD3
 

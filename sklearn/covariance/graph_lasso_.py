@@ -19,6 +19,7 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
+from ..utils import deprecated
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
@@ -525,7 +526,7 @@ class GraphLassoCV(GraphLasso):
     cv_alphas_ : list of float
         All penalization parameters explored.
 
-    `grid_scores`: 2D numpy.ndarray (n_alphas, n_folds)
+    grid_scores_ : 2D numpy.ndarray (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
     n_iter_ : int
@@ -563,6 +564,12 @@ class GraphLassoCV(GraphLasso):
         self.assume_centered = assume_centered
         # The base class needs this for the score method
         self.store_precision = True
+
+    @property
+    @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'grid_scores_' instead")
+    def grid_scores(self):
+        return self.grid_scores_
 
     def fit(self, X, y=None):
         """Fits the GraphLasso covariance model to X.
@@ -680,7 +687,7 @@ class GraphLassoCV(GraphLasso):
         grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
                                            cv=cv, n_jobs=self.n_jobs,
                                            verbose=inner_verbose))
-        self.grid_scores = np.array(grid_scores)
+        self.grid_scores_ = np.array(grid_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
         self.cv_alphas_ = alphas

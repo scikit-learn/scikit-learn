@@ -57,6 +57,7 @@ from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
 from ..utils.fixes import expit
 from ..utils.fixes import bincount
+from ..utils import deprecated
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
@@ -418,10 +419,10 @@ class QuantileLossFunction(RegressionLossFunction):
 
         mask = y > pred
         if sample_weight is None:
-            loss = (alpha * diff[mask].sum() +
+            loss = (alpha * diff[mask].sum() -
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
-            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) +
+            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
                     (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
                     sample_weight.sum())
         return loss
@@ -846,25 +847,26 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if self.max_features == "auto":
                 # if is_classification
                 if self.n_classes_ > 1:
-                    max_features = max(1, int(np.sqrt(self.n_features)))
+                    max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
                     # is regression
-                    max_features = self.n_features
+                    max_features = self.n_features_
             elif self.max_features == "sqrt":
-                max_features = max(1, int(np.sqrt(self.n_features)))
+                max_features = max(1, int(np.sqrt(self.n_features_)))
             elif self.max_features == "log2":
-                max_features = max(1, int(np.log2(self.n_features)))
+                max_features = max(1, int(np.log2(self.n_features_)))
             else:
                 raise ValueError("Invalid value for max_features: %r. "
                                  "Allowed string values are 'auto', 'sqrt' "
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
-            max_features = self.n_features
+            max_features = self.n_features_
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
-                max_features = max(int(self.max_features * self.n_features), 1)
+                max_features = max(int(self.max_features *
+                                       self.n_features_), 1)
             else:
                 raise ValueError("max_features must be in (0, n_features]")
 
@@ -924,6 +926,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self, 'estimators_')
 
+    @property
+    @deprecated("Attribute n_features was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def n_features(self):
+        return self.n_features_
+
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -965,7 +973,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Check input
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
-        n_samples, self.n_features = X.shape
+        n_samples, self.n_features_ = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
@@ -1106,9 +1114,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """Check input and compute prediction of ``init``. """
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
-        if X.shape[1] != self.n_features:
+        if X.shape[1] != self.n_features_:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
-                self.n_features, X.shape[1]))
+                self.n_features_, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
         return score
 
@@ -1158,7 +1166,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         self._check_initialized()
 
-        total_sum = np.zeros((self.n_features, ), dtype=np.float64)
+        total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
         for stage in self.estimators_:
             stage_sum = sum(tree.feature_importances_
                             for tree in stage) / len(stage)
@@ -1376,6 +1384,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
@@ -1719,7 +1735,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution.
+        p
+revious solution.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1755,12 +1772,21 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    `init` : BaseEstimator
+    init : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
     estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, 1]
         The collection of fitted sub-estimators.
+
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------

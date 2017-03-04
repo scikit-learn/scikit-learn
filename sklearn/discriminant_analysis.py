@@ -534,8 +534,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
 
 class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
-    """
-    Quadratic Discriminant Analysis
+    """Quadratic Discriminant Analysis
 
     A classifier with a quadratic decision boundary, generated
     by fitting class conditional densities to the data
