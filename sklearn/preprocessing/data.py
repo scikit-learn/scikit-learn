@@ -6,6 +6,7 @@
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
+import functools
 from itertools import chain, combinations
 from collections import defaultdict
 import numbers
@@ -1904,30 +1905,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
 
-def _get_count_dict_3():
-    """Gets the outer count dictionary."""
-
-    # get_count_dict() is an optimization on key-value access
-    # where we have multi-layer dicts for accessing dict[X][y] instead of
-    # using dict[(X, y)], because using dict[(X, y)] is inefficient
-    # Using external helper methods is also required to avoid a picking
-    # error involving lambda expressions in defaultdict
-    return defaultdict(_get_count_dict_2)
-
-
-def _get_count_dict_2():
-    """Gets the inner count dictionary."""
-    return defaultdict(_get_count_dict_1)
-
-
-def _get_count_dict_1():
-    """Gets the inner count dictionary."""
-    return defaultdict(_get_count_dict_0)
-
-
-def _get_count_dict_0():
-    """Gets the innermost count dictionary."""
-    return defaultdict(int)
+def _get_nested_counter(remaining, y_dim, inclusion_size):
+    "A nested dictionary with 'remaining' layers and a 2D array at the end"
+    if remaining == 1:
+        return np.zeros((y_dim, inclusion_size))
+    return defaultdict(
+        functools.partial(
+            _get_nested_counter, remaining - 1, y_dim, inclusion_size))
 
 
 class CountFeaturizer(BaseEstimator, TransformerMixin):
@@ -2064,14 +2048,15 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             X = check_array(X)
             self.col_num_Y_ = 1
 
-        len_data = len(X)
         self.col_num_X_ = len(X[0])
-        self.count_cache_ = _get_count_dict_3()
+        inclusion_used = self._get_inclusion_used()
+        len_data = len(X)
+        len_inclusion = len(inclusion_used)
+        self.count_cache_ = \
+            _get_nested_counter(3, self.col_num_Y_, len_inclusion)
         self.classes_ = [set() for i in range(self.col_num_Y_)]
 
-        inclusion_used = self._get_inclusion_used()
-
-        for inclusion_i in range(len(inclusion_used)):
+        for inclusion_i in range(len_inclusion):
             if y is not None:
                 for i in range(len_data):
                     for j in range(self.col_num_Y_):
@@ -2081,13 +2066,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                             y_key = tuple([y[i]])
                         else:
                             y_key = tuple(y[i].take([j]))
-                        self.count_cache_[X_key][j][y_key][inclusion_i] += 1
+                        self.count_cache_[X_key][y_key][j, inclusion_i] += 1
                         self.classes_[j].add(y_key)
             else:
                 self.classes_[0].add(0)
                 for i in range(len_data):
                     X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
-                    self.count_cache_[X_key][0][0][inclusion_i] += 1
+                    self.count_cache_[X_key][0][0, inclusion_i] += 1
         self.classes_ = [list(enumerate(sorted(ys))) for ys in self.classes_]
 
         return self
@@ -2144,7 +2129,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
                         X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
                         transformed[i, num_features + y_ind +
                                     col_offset_y + col_offset_inclusion] = \
-                            self.count_cache_[X_key][j][y_key][inclusion_i]
+                            self.count_cache_[X_key][y_key][j, inclusion_i]
                 col_offset_y += len(self.classes_[j])
 
         return transformed

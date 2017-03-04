@@ -3,11 +3,6 @@
 #
 #          Giorgio Patrini
 #
-# Li
-# Authors:
-#
-#          Giorgio Patrini
-#
 # License: BSD 3 clause
 
 import warnings
