@@ -28,7 +28,8 @@ The advantages of support vector machines are:
 The disadvantages of support vector machines include:
 
     - If the number of features is much greater than the number of
-      samples, the method is likely to give poor performances.
+      samples, avoid over-fitting in choosing :ref:`svm_kernels` and regularization
+      term is crucial.
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
