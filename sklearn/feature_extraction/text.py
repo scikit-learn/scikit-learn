@@ -998,7 +998,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    idf_ : numpy array of shape [n_features,1]
+    idf_ : numpy array of shape [n_features, 1]
         returns None unless use_idf=True, then
         returns 1-D matrix containing idf(d,t).
 
