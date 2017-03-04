@@ -24,7 +24,7 @@ if "%1" == "help" (
 	echo.  changes   to make an overview over all changed/added/deprecated items
 	echo.  linkcheck to check all external links for integrity
 	echo.  doctest   to run all doctests embedded in the documentation if enabled
-        echo.  html-noplot   to make HTML files using Windows
+	echo.  html-noplot   to make HTML files using Windows
 	goto end
 )
 
