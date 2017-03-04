@@ -43,7 +43,7 @@ New features
 
    - Added the :class:`sklearn.model_selection.RepeatedKFold` and
      :class:`sklearn.model_selection.RepeatedStratifiedKFold`.
-     :issue:`8120`.
+     :issue:`8120` by `Neeraj Gangwar`_.
 
    - Added :func:`metrics.mean_squared_log_error`, which computes
      the mean square error of the logarithmic transformation of targets,
@@ -5008,3 +5008,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vincent Pham: https://github.com/vincentpham1991
 
 .. _Denis Engemann: http://denis-engemann.de
+.. _Neeraj Gangwar: http://neerajgangwar.in
