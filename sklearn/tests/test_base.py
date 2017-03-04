@@ -436,6 +436,7 @@ class SingleInheritanceEstimator(BaseEstimator):
 
     def __getstate__(self):
         data = self.__dict__.copy()
+        data["_sklearn_version"] = sklearn.__version__
         data["_attribute_not_pickled"] = None
         return data
 
