@@ -3,7 +3,8 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises)
+                                   assert_raises, assert_false,
+                                   assert_no_warnings)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -11,7 +12,6 @@ from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
-
 
 def test_kernel_pca():
     rng = np.random.RandomState(0)
@@ -220,3 +220,32 @@ def test_nested_circles():
     # The data is perfectly linearly separable in that space
     train_score = Perceptron().fit(X_kpca, y).score(X_kpca, y)
     assert_equal(train_score, 1.0)
+
+
+def test_nan_fit_transform():
+
+    data = np.array([[0.766655, 0.682869, 0.390646, 0.760579, 0.420476],
+                 [0.228259, 0.215964, 0.850258, 0.586082, 0.772744],
+                 [0.844907, 0.622898, 0.590107, 0.0109604, 0.368699],
+                 [0.107109, 0.237776, 0.319929, 0.870119, 0.972007],
+                 [0.494486, 0.373545, 0.887394, 0.185106, 0.189797],
+                 [0.391528, 0.80944, 0.100942, 0.981701, 0.169761]])
+
+    kernel_type = 'sigmoid'
+    settings_degree = 10
+    settings_gamma = 4
+    settings_coef0 = 0
+    
+    kpca = KernelPCA(n_components=data.shape[1],
+                     kernel=kernel_type,
+                     degree=settings_degree,
+                     gamma=settings_gamma,
+                     coef0=settings_coef0)
+    
+    # kpca_transform = kpca.fit_transform(data)
+    # print(kpca_transform)
+
+    
+    output = assert_no_warnings(kpca.fit_transform, data)
+
+    assert_false(np.isnan(output).any())
