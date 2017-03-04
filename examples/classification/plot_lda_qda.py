@@ -76,15 +76,15 @@ def plot_data(lda, X, y, y_pred, fig_index):
 
     # class 0: dots
     plt.plot(X0_tp[:, 0], X0_tp[:, 1], 'o', alpha=alpha,
-             color='red')
+             color='red', markeredgecolor='k')
     plt.plot(X0_fp[:, 0], X0_fp[:, 1], '*', alpha=alpha,
-             color='#990000')  # dark red
+             color='#990000', markeredgecolor='k')  # dark red
 
     # class 1: dots
     plt.plot(X1_tp[:, 0], X1_tp[:, 1], 'o', alpha=alpha,
-             color='blue')
+             color='blue', markeredgecolor='k')
     plt.plot(X1_fp[:, 0], X1_fp[:, 1], '*', alpha=alpha,
-             color='#000099')  # dark blue
+             color='#000099', markeredgecolor='k')  # dark blue
 
     # class 0 and 1 : areas
     nx, ny = 200, 100
