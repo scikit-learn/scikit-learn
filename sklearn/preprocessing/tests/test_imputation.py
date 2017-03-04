@@ -398,17 +398,16 @@ def test_missing_indicator():
     ])
 
     def assert_type(actual, is_sparse, sp, missing_values):
-        if sp is True :
+        if sp is True:
             assert_equal(actual, sparse.csc_matrix)
-        elif (sp is "auto" and missing_values == 0 ) \
-            or sp is False:
+        elif ((sp is "auto" and missing_values == 0) or sp is False):
             assert_equal(actual, np.ndarray)
         else:
             if is_sparse:
                 assert_equal(actual, sparse.csc_matrix)
             else:
                 assert_equal(actual, np.ndarray)
-    
+
     def assert_mask(actual, expected, features):
         if hasattr(actual, 'toarray'):
             assert_array_equal(actual.toarray(), expected[:, features])
@@ -423,13 +422,13 @@ def test_missing_indicator():
         X2_in = retype(X2)
         # features = "train":
         MI = MissingIndicator(missing_values=missing_values,
-                              sparse = sp)
+                              sparse=sp)
 
         MI.fit(X1_in)
         X2_tr = MI.transform(X2_in)
         features = MI.feat_with_missing_
         assert_array_equal(expect_feat_missing, features)
-        assert_type(type(X2_tr),sparse.issparse(X2_in), sp, missing_values)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sp, missing_values)
         assert_mask(X2_tr, mask, features)
 
         # features = "all"

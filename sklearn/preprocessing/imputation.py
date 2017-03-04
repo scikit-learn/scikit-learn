@@ -450,7 +450,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             Returns self.
         """
         if (isinstance(self.features, six.string_types) and
-            self.features not in ["train", "all"]):
+                self.features not in ["train", "all"]):
             raise ValueError("Can only use these options: 'train', 'all'"
                              " got {0}".format(self.features))
         elif (isinstance(self.features, np.ndarray) and
