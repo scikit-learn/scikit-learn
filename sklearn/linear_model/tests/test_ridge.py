@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_not_equal
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -33,12 +34,10 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
-<<<<<<< HEAD
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
-=======
 from sklearn.grid_search import GridSearchCV
->>>>>>> add a comparison between RidgeCV and GridSearchCV
+
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -794,21 +793,20 @@ def test_ridge_classifier_no_support_multilabel():
 
 
 def test_best_score_():
+    reg = RidgeCV(fit_intercept=False, cv=5,
+                   scoring='mean_absolute_error')
+    reg.fit(X_diabetes, y_diabetes) 
+    assert_equal(type(reg.best_score_), np.float64)
 
-    def fit_and_get_best_score_(reg):
-        reg.fit(X_diabetes,y_diabetes)
-        assert_equal(type(reg.best_score_), np.float64)
-        
-    reg = RidgeCV()
-    reg2 = RidgeCV(scoring='mean_absolute_error')
-    reg3 = RidgeCV(fit_intercept=False, cv=5, scoring='mean_absolute_error')
-    reg4 = RidgeCV(fit_intercept=False, cv=5, scoring='median_absolute_error')
-    reg5 = GridSearchCV(Ridge(fit_intercept=False), {'alpha': reg3.alphas},
+def test_ridgeCV_when_scoring_is_used_():
+    # test when scoring and cv are provided, scoring is passed to GridSearchCV
+    alphas = [0.5, 1.0, 2.0] 
+    reg1 = RidgeCV(alphas, fit_intercept=False, cv=5,
+                  scoring='mean_absolute_error')
+    reg2 = GridSearchCV(Ridge(fit_intercept=False), {'alpha': alphas},
                         fit_params={}, cv=5, scoring='mean_absolute_error')
-    
-    for i in (reg, reg2, reg3, reg4, reg5):
-        fit_and_get_best_score_(i)
 
-    assert_true(reg3.best_score_ is not reg4.best_score_, True)
-    assert_equal(reg3.alpha_, reg5.best_estimator_.alpha)
+    reg1.fit(X_diabetes, y_diabetes)
+    reg2.fit(X_diabetes, y_diabetes)
 
+    assert_equal(reg1.alpha_, reg2.best_estimator_.alpha)

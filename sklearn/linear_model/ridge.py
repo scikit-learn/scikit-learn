@@ -1013,8 +1013,9 @@ class _RidgeGCV(LinearModel):
             C.append(c)
 
         if error:
-            best = cv_values.mean(axis=0).argmin()
-            best_score = cv_values.mean(axis=0)[best]
+            cv_values_mean = cv_values.mean(axis=0)
+            best = cv_values_mean.argmin()
+            best_score = cv_values_mean[best]
         else:
             # The scorer want an object that will make the predictions but
             # they are already computed efficiently by _RidgeGCV. This
@@ -1201,7 +1202,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Estimated regularization parameter.
 
     best_score_ : float
-        Score of best_estimator on the left out data.
+        Score of best_estimator_ on the hold out data.
 
 
     See also
@@ -1292,7 +1293,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Estimated regularization parameter
 
     best_score_ : float
-        Score of best_estimator on the left out data.
+        Score of best_estimator_ on the hold out data.
 
     See also
     --------
