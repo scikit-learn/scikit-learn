@@ -426,7 +426,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     >>> X2_tr
     array([[0, 1],
            [1, 0],
-           [0, 0]], dtype=int32)
+           [0, 0]])
 
     """
 
@@ -526,7 +526,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 X = X.toarray()
             imputer_mask = _get_mask(X, self.missing_values)
-            imputer_mask = imputer_mask.astype(np.int32, copy=False)
+            imputer_mask = astype(imputer_mask, int, copy=False)
             feat_with_missing = np.where(np.any(imputer_mask, axis=0))[0]
 
         if self.sparse is True:

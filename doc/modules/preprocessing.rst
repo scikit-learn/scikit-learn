@@ -626,7 +626,7 @@ estimator by adding features that indicate which elements have been imputed.
     >>> X2_tr
     array([[0, 0, 1],
            [1, 1, 0],
-           [0, 0, 0]], dtype=int32)
+           [0, 0, 0]])
 
 
 .. _polynomial_features:
