@@ -858,7 +858,7 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None, error_score=...,
+    GridSearchCV(cv=None, diagnostic_func=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
@@ -1111,6 +1111,45 @@ class RandomizedSearchCV(BaseSearchCV):
     return_train_score : boolean, default=True
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
+
+    diagnostic_func : callable(dict) -> object, optional
+        After fitting and scoring, this will be called, and its return value
+        stored in ``cv_results_['split<K>_diagnostic']`` for split index K.
+        The single parameter passed to ``diagnostic_func`` is a dict with the
+        following keys:
+
+            "estimator"
+                The fitted estimator
+            "split_idx"
+                The index of the current split generated from ``cv``,
+                ranging ``0..n_splits``
+            "X_train"
+                The features used to train the estimator
+            "y_train"
+                The targets used to train the estimator
+            "train_score"
+                The score on training data (where ``return_train_score=True``)
+            "X_test"
+                The features used to train the estimator
+            "y_test"
+                The targets used to train the estimator
+            "test_score"
+                The score on test data
+            "fit_time"
+                Time spent fitting in seconds
+            "score_time"
+                Time spent scoring in seconds
+            "parameters"
+                Parameters being set on the estimator for grid search.
+            "fit_params"
+                Parameters passed to ``fit``
+            "exception"
+                The exception raised when ``fit`` was called, or ``None``.
+
+        New keys may be added to this dict in future versions without notice.
+
+        Note that in order to use parallelism or pickling, this callable must
+        be picklable, e.g. a named function imported from a module.
 
     Attributes
     ----------
