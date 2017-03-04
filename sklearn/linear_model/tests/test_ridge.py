@@ -36,8 +36,8 @@ from sklearn.model_selection import KFold
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import GridSearchCV
 
+from sklearn.grid_search import GridSearchCV
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
