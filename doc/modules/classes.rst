@@ -170,6 +170,8 @@ Splitter Classes
    model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
+   model_selection.RepeatedKFold
+   model_selection.RepeatedStratifiedKFold
    model_selection.ShuffleSplit
    model_selection.GroupShuffleSplit
    model_selection.StratifiedShuffleSplit
