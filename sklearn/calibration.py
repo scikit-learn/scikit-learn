@@ -511,8 +511,9 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
 
 def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
-    """Compute true and predicted probabilities for a calibration curve also
-    referred to as the reliability diagram.
+    """Compute true and predicted probabilities for a calibration curve.
+
+     Calibration curves may also be referred to as reliability diagrams.
 
     Read more in the :ref:`User Guide <calibration>`.
 
