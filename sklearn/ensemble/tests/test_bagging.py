@@ -68,7 +68,7 @@ def test_classification():
                            Perceptron(),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
-                           SVC()]:
+                           SVC(gamma="scale")]:
         for params in grid:
             BaggingClassifier(base_estimator=base_estimator,
                               random_state=rng,
@@ -309,7 +309,7 @@ def test_oob_score_classification():
                                                         iris.target,
                                                         random_state=rng)
 
-    for base_estimator in [DecisionTreeClassifier(), SVC()]:
+    for base_estimator in [DecisionTreeClassifier(), SVC(gamma="scale")]:
         clf = BaggingClassifier(base_estimator=base_estimator,
                                 n_estimators=100,
                                 bootstrap=True,
@@ -493,7 +493,7 @@ def test_gridsearch():
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__C': (1, 2)}
 
-    GridSearchCV(BaggingClassifier(SVC()),
+    GridSearchCV(BaggingClassifier(SVC(gamma="scale")),
                  parameters,
                  scoring="roc_auc").fit(X, y)
 

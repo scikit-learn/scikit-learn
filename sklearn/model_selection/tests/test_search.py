@@ -399,7 +399,7 @@ def test_grid_search_one_grid_point():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
 
-    clf = SVC()
+    clf = SVC(gamma="scale")
     cv = GridSearchCV(clf, param_dict)
     cv.fit(X_, y_)
 
@@ -423,7 +423,7 @@ def test_grid_search_when_param_grid_includes_range():
 
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
-    clf = SVC()
+    clf = SVC(gamma="scale")
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -431,14 +431,14 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
-    clf = SVC()
+    clf = SVC(gamma="scale")
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a non-empty sequence.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": "1,2,3"}
-    clf = SVC()
+    clf = SVC(gamma="scale")
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -446,7 +446,7 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones(6).reshape(3, 2)}
-    clf = SVC()
+    clf = SVC(gamma="scale")
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
@@ -742,10 +742,10 @@ def test_grid_search_cv_results():
     n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
+    grid_search = GridSearchCV(SVC(gamma="scale"), cv=n_splits, iid=False,
                                param_grid=params)
     grid_search.fit(X, y)
-    grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
+    grid_search_iid = GridSearchCV(SVC(gamma="scale"), cv=n_splits, iid=True,
                                    param_grid=params)
     grid_search_iid.fit(X, y)
 
@@ -802,11 +802,11 @@ def test_random_search_cv_results():
     n_splits = 3
     n_search_iter = 30
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=n_search_iter,
                                        cv=n_splits, iid=False,
                                        param_distributions=params)
     random_search.fit(X, y)
-    random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+    random_search_iid = RandomizedSearchCV(SVC(gamma="scale"), n_iter=n_search_iter,
                                            cv=n_splits, iid=True,
                                            param_distributions=params)
     random_search_iid.fit(X, y)
@@ -850,8 +850,8 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv)
-    random_search = RandomizedSearchCV(SVC(), n_iter=2,
+    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid={'C': [1, 10]}, cv=cv)
+    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv)
     for search in (grid_search, random_search):
@@ -893,10 +893,10 @@ def test_search_iid_param():
         assert_almost_equal(train_std, 0)
 
     # once with iid=False
-    grid_search = GridSearchCV(SVC(),
+    grid_search = GridSearchCV(SVC(gamma="scale"),
                                param_grid={'C': [1, 10]},
                                cv=cv, iid=False)
-    random_search = RandomizedSearchCV(SVC(), n_iter=2,
+    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv, iid=False)
 
@@ -936,8 +936,8 @@ def test_search_cv_results_rank_tie_breaking():
     # which would result in a tie of their mean cv-scores
     param_grid = {'C': [1, 1.001, 0.001]}
 
-    grid_search = GridSearchCV(SVC(), param_grid=param_grid)
-    random_search = RandomizedSearchCV(SVC(), n_iter=3,
+    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid=param_grid)
+    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=3,
                                        param_distributions=param_grid)
 
     for search in (grid_search, random_search):

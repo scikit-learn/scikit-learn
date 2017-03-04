@@ -168,9 +168,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
-                             % (sample_weight.shape, X.shape))
+                             % (sample_weight.shape, X.shape))        
 
-        if self.gamma == 'auto':
+        if self.gamma == 'scale':
+            self._gamma = 1.0 / (X.shape[1] * X.std())
+        elif self.gamma == 'auto':
+            warnings.warn("The default gamma parameter value 'auto', calculated as 1 / n_features,"
+                " is depreciated in version 0.19 and will be replaced by 'scale'," 
+                " calculated as 1 / (n_features * X.std()) in version 0.21.", DeprecationWarning)
             self._gamma = 1.0 / X.shape[1]
         else:
             self._gamma = self.gamma

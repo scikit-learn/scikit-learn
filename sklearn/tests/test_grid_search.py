@@ -296,7 +296,7 @@ def test_grid_search_one_grid_point():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
 
-    clf = SVC()
+    clf = SVC(gamma="scale")
     cv = GridSearchCV(clf, param_dict)
     cv.fit(X_, y_)
 
@@ -568,7 +568,7 @@ def test_randomized_search_grid_scores():
                   gamma=expon(scale=0.1))
     n_cv_iter = 3
     n_search_iter = 30
-    search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_cv_iter,
+    search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=n_search_iter, cv=n_cv_iter,
                                 param_distributions=params, iid=False)
     search.fit(X, y)
     assert_equal(len(search.grid_scores_), n_search_iter)

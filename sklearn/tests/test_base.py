@@ -232,7 +232,7 @@ def test_get_params_deprecated():
 
 
 def test_is_classifier():
-    svc = SVC()
+    svc = SVC(gamma="scale")
     assert_true(is_classifier(svc))
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
@@ -242,7 +242,7 @@ def test_is_classifier():
 
 def test_set_params():
     # test nested estimator parameter setting
-    clf = Pipeline([("svc", SVC())])
+    clf = Pipeline([("svc", SVC(gamma="scale"))])
     # non-existing parameter in svc
     assert_raises(ValueError, clf.set_params, svc__stupid_param=True)
     # non-existing parameter of pipeline
