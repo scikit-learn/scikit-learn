@@ -41,6 +41,10 @@ New features
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      By `Tom Dupre la Tour`_.
 
+   - Added the :class:`sklearn.model_selection.RepeatedKFold` and
+     :class:`sklearn.model_selection.RepeatedStratifiedKFold`.
+     :issue:`8120`.
+
 Enhancements
 ............
 

@@ -929,9 +929,9 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
     Parameters
     ----------
     cv : callable
-        Constructor of cross-validator.
+        Cross-validator class.
 
-    n_repeats : int, default=5
+    n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
     random_state : None, int or RandomState, default=None
@@ -942,7 +942,7 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
-    def __init__(self, cv, n_repeats=5, random_state=None, **cvargs):
+    def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
         if not isinstance(n_repeats, (np.integer, numbers.Integral)):
             raise ValueError("Number of repetitions must be of Integral type.")
 
@@ -1001,10 +1001,10 @@ class RepeatedKFold(_RepeatedSplits):
 
     Parameters
     ----------
-    n_splits : int, default=3
+    n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-    n_repeats : int, default=5
+    n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
     random_state : None, int or RandomState, default=None
@@ -1032,7 +1032,7 @@ class RepeatedKFold(_RepeatedSplits):
     --------
     RepeatedStratifiedKFold: Repeates Stratified K-Fold n times.
     """
-    def __init__(self, n_splits=3, n_repeats=5, random_state=None):
+    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
         super(RepeatedKFold, self).__init__(
             KFold, n_repeats, random_state, n_splits=n_splits)
 
@@ -1047,10 +1047,10 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 
     Parameters
     ----------
-    n_splits : int, default=3
+    n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-    n_repeats : int, default=5
+    n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
     random_state : None, int or RandomState, default=None
@@ -1079,7 +1079,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     --------
     RepeatedKFold: Repeats K-Fold n times.
     """
-    def __init__(self, n_splits=3, n_repeats=5, random_state=None):
+    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
         super(RepeatedStratifiedKFold, self).__init__(
             StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
