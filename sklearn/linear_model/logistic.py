@@ -1542,7 +1542,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self : object
             Returns self.
         """
-
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
 
@@ -1746,9 +1745,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
-        ""
+        """
 
         warnings.warn('The score function always returns mean accuracy due to'
-        ' a bug in scikit-learn. Refer the documentation for more details.')
+                      ' a bug in scikit-learn. Refer the documentation for '
+                      'more details.')
 
         return super(LogisticRegressionCV, self).score(X, y, sample_weight)
