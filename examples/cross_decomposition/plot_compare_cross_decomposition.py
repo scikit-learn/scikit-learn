@@ -53,8 +53,8 @@ print(np.round(np.corrcoef(Y.T), 2))
 # ~~~~~~~~~~~~~~
 plsca = PLSCanonical(n_components=2)
 plsca.fit(X_train, Y_train)
-X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
-X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
+X_train_r, Y_train_r = cca.transform(X_train, Y_train)
+X_test_r, Y_test_r = cca.transform(X_test, Y_test)
 
 # Scatter plot of scores
 # ~~~~~~~~~~~~~~~~~~~~~~
@@ -144,5 +144,5 @@ print(np.round(pls1.coef_, 1))
 
 cca = CCA(n_components=2)
 cca.fit(X_train, Y_train)
-X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
-X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
+X_train_r, Y_train_r = cca.transform(X_train, Y_train)
+X_test_r, Y_test_r = cca.transform(X_test, Y_test)
