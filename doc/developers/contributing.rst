@@ -731,7 +731,7 @@ and the old behavior will be removed in version 0.20.
 
 .. currentmodule:: sklearn
 
-Python 3.x support
+Python support
 ------------------
 
 All scikit-learn code should work unchanged in both Python 2.[67]
