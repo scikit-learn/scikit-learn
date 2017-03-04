@@ -259,7 +259,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
-        X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
+        # All eigenvalues of Covariance matrix are >= 0
+        # Ensure root of zero is not evaluated as nan
+        try:
+            err_mgt = np.seterr(all='ignore')
+            X_transformed = self.alphas_ * np.nan_to_num(np.sqrt(self.lambdas_))
+        finally:
+            np.seterr(**err_mgt)
 
         if self.fit_inverse_transform:
             self._fit_inverse_transform(X_transformed, X)
