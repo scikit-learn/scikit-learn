@@ -1251,24 +1251,7 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
-
-    Examples
-    --------
-    >>> from sklearn.feature_extraction.text import TfidfVectorizer
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> #create document
-    >>> doc_test = ['Every summer our family gathers on the beach.',
-                    'Everytime our family has a gathering someone is late.',
-                    'Every winter our family goes to a ski resort.',
-                    'This fall everyone will run the Pumpkin 10K run.']
-    >>> vectorizer = TfidfVectorizer()
-    >>> X = vectorizer.fit_transform(doc_test)
-    >>> print(type(X))
-    >>> vectorizer.get_feature_names()
-
-
-
+        
     See also
     --------
     CountVectorizer
