@@ -942,9 +942,13 @@ Optional Arguments
 In iterative algorithms, the number of iterations should be specified by
 an integer called ``n_iter``.
 
-In some estimators such as those in :mod:`sklearn.svm` and 
-:class:`kernel_ridge.KernelRidge`, there is a ``_pairwise`` attribute that allows 
-cross-validation of dataset X with shape [N,N], where N is the number of samples 
+
+Pairwise Attributes
+^^^^^^^^^^^^^^^^^^^
+
+For estimators, such as those in :mod:`sklearn.svm` and 
+:class:`kernel_ridge.KernelRidge`, that use ``X`` with shape ``(n_samples, n_samples)``,
+there is a ``_pairwise`` attribute that allows cross-validation of the dataset.
 (e.g., when X is a precomputed kernel matrix).
 
 
