@@ -1021,11 +1021,11 @@ def test_sample_weight_invariance(n_samples=50):
         if name not in REGRESSION_METRICS:
             continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
-                 name in METRIC_UNDEFINED_BINARY):
-             continue
-         metric = ALL_METRICS[name]
-         yield _named_check(check_sample_weight_invariance, name), name,\
-               metric, y_true, y_pred
+                name in METRIC_UNDEFINED_BINARY):
+            continue
+        metric = ALL_METRICS[name]
+        yield _named_check(check_sample_weight_invariance, name), name,\
+            metric, y_true, y_pred
 
     # binary
     random_state = check_random_state(0)
