@@ -12,9 +12,10 @@ cache:
 addons:
   apt:
     packages:
-      # only required by the DISTRIB="ubuntu" build:
+      # these only required by the DISTRIB="ubuntu" builds:
       - python-scipy
-
+      - libatlas3gf-base
+      - libatlas-dev
 env:
   global:
     # Directory where tests are run from
