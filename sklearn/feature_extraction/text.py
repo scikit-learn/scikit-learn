@@ -646,7 +646,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     Examples
     --------
     >>> from sklearn.feature_extraction.text import CountVectorizer
-    >>> import numpy as np
     >>> #create document
     >>> doc_test = ['Every summer our family gathers on the beach.',
     ...             'Everytime our family has a gathering someone is late.',
