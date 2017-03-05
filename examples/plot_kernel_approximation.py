@@ -70,7 +70,7 @@ def timing(callable, *args):
 def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
     """Plot several lines in a dict on an axis, using the key of the
     dict as the label.
-s
+
     ax : a matplotlib Axes object.
     x_values : iterable of values to plot along x-axis.
     y_values_dict : dict of label:data pairs to plot.
@@ -228,11 +228,11 @@ flat_grid = flat_grid_from_pca(pca, multiples)
 
 # title for the plots
 titles = ['SVC with rbf kernel',
-          'SVC (linear kernel)\n with Fourier rbf feature map\n'
-          'n_components=100',
           'SVC (linear kernel)\n with Nystroem rbf feature map\n'
+          'n_components=100',
+          'SVC (linear kernel)\n with Fourier rbf feature map\n'
           'n_components=100']
-classifiers = [svms['rbf svm']] + [approx_svm[title] for title
+classifiers = [svms['rbf svm']] + [approx_svm[i] for i
                                    in approximate_kernel_labels]
 
 # predict and plot
