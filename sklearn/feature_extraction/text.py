@@ -654,6 +654,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> vectorizer = CountVectorizer(stop_words='english')
     >>> X = vectorizer.fit_transform(doc_test)
     >>> print(vectorizer.get_feature_names())
+    [u'10k', u'beach', u'colorado', u'everytime', u'fall',
+     u'family', u'gathering', u'gathers', u'goes', u'late',
+     u'pumpkin', u'resort', u'run', u'ski', u'summer', u'winter']
 
     See also
     --------
