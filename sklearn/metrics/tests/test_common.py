@@ -1016,12 +1016,10 @@ def test_sample_weight_invariance(n_samples=50):
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
     y_pred = random_state.random_sample(size=(n_samples,))
-    y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
         if name not in REGRESSION_METRICS:
             continue
-        if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
-                name in METRIC_UNDEFINED_BINARY):
+        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
             continue
         metric = ALL_METRICS[name]
         yield _named_check(check_sample_weight_invariance, name), name,\
