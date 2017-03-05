@@ -70,7 +70,7 @@ def timing(callable, *args):
 def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
     """Plot several lines in a dict on an axis, using the key of the
     dict as the label.
-
+s
     ax : a matplotlib Axes object.
     x_values : iterable of values to plot along x-axis.
     y_values_dict : dict of label:data pairs to plot.
@@ -92,8 +92,8 @@ def flat_grid_from_pca(pca, multiples):
 
     Parameters
     ----------
-    pca: a fitted PCA object.
-    multiples: a range of steps to make through components
+    pca : a fitted PCA object.
+    multiples : a range of steps to make through components
 
     Returns
     -------
@@ -108,14 +108,13 @@ def flat_grid_from_pca(pca, multiples):
     return flat_grid
 
 
-def plot_projected_decision_surface(ax, clf, X, multiples, flat_grid):
+def plot_projected_decision_surface(ax, clf, multiples, flat_grid):
     """Plot the projected decision surface.
 
     Parameters
     ----------
     ax : matplotlib axes object
     clf : a fitted classifier
-    X : an array whose first two columns should be axes of plot.
     multiples: a range of steps to make through components.
 
     Returns
@@ -233,12 +232,13 @@ titles = ['SVC with rbf kernel',
           'n_components=100',
           'SVC (linear kernel)\n with Nystroem rbf feature map\n'
           'n_components=100']
-classifiers = [svms['rbf svm']] + list(approx_svm.values())
+classifiers = [svms['rbf svm']] + [approx_svm[title] for title
+                                   in approximate_kernel_labels]
 
 # predict and plot
 fig, subplots = plt.subplots(1, len(classifiers), figsize=(12, 5))
 for ax, title, clf in zip(subplots.flatten(), titles, classifiers):
-    plot_projected_decision_surface(ax, clf, X, multiples, flat_grid)
+    plot_projected_decision_surface(ax, clf, multiples, flat_grid)
     ax.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired, s=20,
                edgecolors='k')
     ax.set_title(title)
