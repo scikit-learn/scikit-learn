@@ -60,28 +60,20 @@ from sklearn.decomposition import PCA
 from collections import defaultdict
 
 
-def timing(callable, *args, **kwargs):
-    """Time the call of a function and return time and
-    result. Passing args and kwargs to function.
-    """
+def timing(callable, *args):
+    """Return the execution time of callable, passing args."""
     init_time = time()
-    result = callable(*args, **kwargs)
-    return result, time() - init_time
-
-
-def fit_score(clf, train, test):
-    """Call fit and score on a classifier."""
-    clf.fit(*train)
-    return clf.score(*test)
+    callable(*args)
+    return time() - init_time
 
 
 def plot_svm_data(ax, x_values, y_vals_dict, **lineargs):
     """Plot several lines in a dict on an axis, using the key of the
     dict as the label.
 
-    ax: a matplotlib Axes object.
-    x_values: iterable of values to plot along x-axis.
-    y_values_dict: dict of label:data pairs to plot.
+    ax : a matplotlib Axes object.
+    x_values : iterable of values to plot along x-axis.
+    y_values_dict : dict of label:data pairs to plot.
                    plotted as horizontal line if data is scalar.
     lineargs: kwargs to pass to plot call(s)
     """
@@ -98,8 +90,14 @@ def flat_grid_from_pca(pca, multiples):
     """Generate grid along first two principal components
     steps along first component
 
+    Parameters
+    ----------
     pca: a fitted PCA object.
     multiples: a range of steps to make through components
+
+    Returns
+    -------
+    numpy array with shape (multiples.shape[0]**2, pca.components.shape[-1])
     """
     first = multiples[:, np.newaxis] * pca.components_[0, :]
     # steps along second component
@@ -115,10 +113,14 @@ def plot_projected_decision_surface(ax, clf, X, multiples, flat_grid):
 
     Parameters
     ----------
-    ax: matplotlib axes object
-    clf: a fitted classifier
-    X: an array whose first two columns should be axes of plot.
-    multiples:
+    ax : matplotlib axes object
+    clf : a fitted classifier
+    X : an array whose first two columns should be axes of plot.
+    multiples: a range of steps to make through components.
+
+    Returns
+    -------
+    A matplotlib CountourSet object.
     """
 
     # Plot the decision boundary. For that, we will assign a color to each
@@ -164,16 +166,13 @@ approx_svm = {label: pipeline.Pipeline([('feature_map', approx_kernel),
                                         ('svm', svm.LinearSVC())])
               for label, approx_kernel in approximate_kernels.items()}
 
-
 # fit and predict using linear and kernel svm:
 svm_times, svm_scores = {}, {}
 for kernel, clf in svms.items():
-    score, svm_performance = timing(fit_score, clf,
-                                    (data_train, targets_train),
-                                    (data_test, targets_test))
+    svm_performance = timing(clf.fit, data_train, targets_train)
+    score = clf.score(data_test, targets_test)
     svm_scores[kernel] = score
     svm_times[kernel] = svm_performance
-
 
 # create timing, accuracy data for approximate kernel models
 sample_sizes = 30 * np.arange(1, 10)
@@ -181,9 +180,9 @@ scores, times = defaultdict(list), defaultdict(list)
 for D in sample_sizes:
     for feature_map, clf in approx_svm.items():
         clf.set_params(feature_map__n_components=D)
-        fitted_clf, _time = timing(clf.fit, data_train, targets_train)
-        times[feature_map].append(_time)
-        score = fitted_clf.score(data_test, targets_test)
+        approx_svm_performance = timing(clf.fit, data_train, targets_train)
+        times[feature_map].append(approx_svm_performance)
+        score = clf.score(data_test, targets_test)
         scores[feature_map].append(score)
 
 # figure layout
@@ -227,7 +226,6 @@ X = pca.transform(data_train)
 
 flat_grid = flat_grid_from_pca(pca, multiples)
 
-fig, subplots = plt.subplots(1, 3, figsize=(12, 5))
 
 # title for the plots
 titles = ['SVC with rbf kernel',
@@ -235,10 +233,10 @@ titles = ['SVC with rbf kernel',
           'n_components=100',
           'SVC (linear kernel)\n with Nystroem rbf feature map\n'
           'n_components=100']
+classifiers = [svms['rbf svm']] + list(approx_svm.values())
 
 # predict and plot
-classifiers = [svms['rbf svm'], approx_svm[approximate_kernel_labels[0]],
-               approx_svm[approximate_kernel_labels[1]]]
+fig, subplots = plt.subplots(1, len(classifiers), figsize=(12, 5))
 for ax, title, clf in zip(subplots.flatten(), titles, classifiers):
     plot_projected_decision_surface(ax, clf, X, multiples, flat_grid)
     ax.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired, s=20,
