@@ -2004,7 +2004,12 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         elif isinstance(inclusion, str) and inclusion == "each":
             return np.array([[i] for i in range(n_input_features)])
         elif CountFeaturizer._valid_data_type(inclusion):
-            return inclusion
+            if len(inclusion) == 0:
+                raise ValueError("Inclusion size must not be 0")
+            if CountFeaturizer._valid_data_type(inclusion[0]):
+                return inclusion
+            else:
+                return [inclusion]
         else:
             raise ValueError("Illegal data type in inclusion")
 
