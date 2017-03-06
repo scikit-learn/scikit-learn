@@ -276,7 +276,7 @@ def test_lda_deprecation():
         assert_warns_message(DeprecationWarning, "from version 0.21 "
                              "'covariance_' will be stored only if "
                              "'store_covariance' is True",
-                             getattr, clf.fit(X, y), 'covariance_')
+                             getattr, clf, 'covariance_')
 
 
 def test_qda():
