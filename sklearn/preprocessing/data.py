@@ -1935,12 +1935,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     inclusion : 'all', 'each', list, or numpy.ndarray
         The inclusion criteria for counting
 
-        - 'all' (default) : Every feature given is counted
+        - 'all' (default) : Every feature is concatenated and counted
         - 'each' : Each feature will have its own set of counts
-        - 1D list of indices : Only the given list of features is
-        counted
-        - 2D list of indices : The given list of lists of features is counted,
-        but each list in the list of lists have its own set of counts
+        - list of indices : Only the given list of features is
+                               concatenated and counted
+        - list of lists of indices : The given list of lists of features is
+                               concatenated and counted, but each list in the
+                               list of lists has its own set of counts
 
     Attributes
     ----------
@@ -1950,12 +1951,12 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     classes_ : list of (index, y) tuples
         An enumerated set of all unique values 'y' can have
 
-    col_num_X_ : int
+    n_input_features_ : int
         The number of columns of 'X' learned during 'fit'
         We use this to compare to the number of columns of 'X'
         during transform to make sure that the transformation is compatible
 
-    col_num_Y_ : int
+    n_output_features_ : int
         The number of columns of 'y' learned during 'fit'
         If 0, then the fit is not conditional on the y given
 
@@ -1991,29 +1992,21 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         self.inclusion = inclusion
 
     @staticmethod
-    def _check_params(inclusion=None):
-        if inclusion is None:
-            raise ValueError("Inclusion cannot be none")
-        if (inclusion is not None and (type(inclusion) == str and
-            inclusion != "all" and inclusion != "each") and
-                not CountFeaturizer._valid_data_type(inclusion)):
-            raise ValueError("Illegal data type in inclusion")
+    def _valid_data_type(type_check):
+        return isinstance(type_check, (np.ndarray, list))
 
     @staticmethod
-    def _valid_data_type(type_check):
-        return type(type_check) == np.ndarray or type(type_check) == list
-
-    def _get_inclusion_used(self):
-        if type(self.inclusion) == str and self.inclusion == "all":
-            return np.array([range(self.col_num_X_)])
-        elif type(self.inclusion) == str and self.inclusion == "each":
-            return np.array([[i] for i in range(self.col_num_X_)])
-        elif CountFeaturizer._valid_data_type(self.inclusion):
-            inclusion_used = np.array(self.inclusion)
-            if len(inclusion_used.shape) == 1:
-                return np.array([inclusion_used])
-            else:
-                return inclusion_used
+    def _check_inclusion(inclusion, n_input_features=1):
+        if inclusion is None:
+            raise ValueError("Inclusion cannot be none")
+        if isinstance(inclusion, str) and inclusion == "all":
+            return np.array([range(n_input_features)])
+        elif isinstance(inclusion, str) and inclusion == "each":
+            return np.array([[i] for i in range(n_input_features)])
+        elif CountFeaturizer._valid_data_type(inclusion):
+            return inclusion
+        else:
+            raise ValueError("Illegal data type in inclusion")
 
     def fit(self, X, y=None):
         """Fits the CountFeaturizer to X, y
@@ -2036,44 +2029,38 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         self
         """
 
-        CountFeaturizer._check_params(inclusion=self.inclusion)
-
         if y is not None:
             X, y = check_X_y(X, y, multi_output=True)
             if len(y.shape) == 1:
-                self.col_num_Y_ = 1
+                self.n_output_features_ = 1
+                y = np.reshape(y, (-1, 1))
             else:
-                self.col_num_Y_ = len(y[0])
+                self.n_output_features_ = len(y[0])
         else:
             X = check_array(X)
-            self.col_num_Y_ = 1
+            y = np.zeros((len(X), 1))
+            self.n_output_features_ = 1
 
-        self.col_num_X_ = len(X[0])
-        inclusion_used = self._get_inclusion_used()
+        self.n_input_features_ = len(X[0])
+        inclusion_used = \
+            CountFeaturizer._check_inclusion(
+                self.inclusion, n_input_features=self.n_input_features_)
         len_data = len(X)
         len_inclusion = len(inclusion_used)
         self.count_cache_ = \
-            _get_nested_counter(3, self.col_num_Y_, len_inclusion)
-        self.classes_ = [set() for i in range(self.col_num_Y_)]
+            _get_nested_counter(3, self.n_output_features_, len_inclusion)
+        classes_unsorted = [set() for i in range(self.n_output_features_)]
 
         for inclusion_i in range(len_inclusion):
-            if y is not None:
-                for i in range(len_data):
-                    for j in range(self.col_num_Y_):
-                        X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
-                        if len(y.shape) == 1:
-                            # if y is 1D, y[i] is a scalar; not iterable
-                            y_key = tuple([y[i]])
-                        else:
-                            y_key = tuple(y[i].take([j]))
-                        self.count_cache_[X_key][y_key][j, inclusion_i] += 1
-                        self.classes_[j].add(y_key)
-            else:
-                self.classes_[0].add(0)
-                for i in range(len_data):
-                    X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
-                    self.count_cache_[X_key][0][0, inclusion_i] += 1
-        self.classes_ = [list(enumerate(sorted(ys))) for ys in self.classes_]
+            for i in range(len_data):
+                X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
+                for j in range(self.n_output_features_):
+                    y_key = y[i, j]
+                    self.count_cache_[X_key][y_key][j, inclusion_i] += 1
+                    classes_unsorted[j].add(y_key)
+
+        self.classes_ = \
+            [list(enumerate(sorted(ys))) for ys in classes_unsorted]
 
         return self
 
@@ -2100,7 +2087,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         numpy.ndarray
         """
 
-        check_is_fitted(self, ['count_cache_', 'col_num_X_'])
+        check_is_fitted(self, ['count_cache_', 'n_input_features_'])
 
         X = check_array(X)
         len_data = len(X)
@@ -2109,9 +2096,11 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             len_classes += len(ys)
 
         num_features = len(X[0])
-        if self.col_num_X_ != num_features:
+        if self.n_input_features_ != num_features:
             raise ValueError("Dimensions mismatch in X during transform")
-        inclusion_used = self._get_inclusion_used()
+        inclusion_used = \
+            CountFeaturizer._check_inclusion(
+                self.inclusion, n_input_features=self.n_input_features_)
 
         # the number of added cols is the number of unique y vals
         # multiplied by the number of different inclusion lists
@@ -2123,7 +2112,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         for inclusion_i in range(len(inclusion_used)):
             col_offset_y = 0
             col_offset_inclusion = inclusion_i * len_classes
-            for j in range(self.col_num_Y_):
+            for j in range(self.n_output_features_):
                 for y_ind, y_key in self.classes_[j]:
                     for i in range(len_data):
                         X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
