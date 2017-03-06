@@ -241,7 +241,7 @@ def f_regression(X, y, center=True):
        std(y)).
     2. It is converted to an F score then to a p-value.
 
-    For more on usage, read more in the :ref:`User Guide <univariate_feature_selection>`.
+    For more on usage, read the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -266,6 +266,11 @@ def f_regression(X, y, center=True):
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    SelectPercentile: Select features based on percentile of the highest scores.
     """
     X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
     n_samples = X.shape[0]
