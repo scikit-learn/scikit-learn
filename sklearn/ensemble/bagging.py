@@ -280,7 +280,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -390,8 +390,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """Calculate out of bag predictions and score."""
 
     def _validate_y(self, y):
-        # Default implementation
-        return column_or_1d(y, warn=True)
+        # Default implementation. We skip column_or_1d and similar checks
+        # in order to make the code support multi-output targets.
+        return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes

@@ -7,7 +7,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 import numpy as np
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
-from sklearn.linear_model import Perceptron, LogisticRegression
+from sklearn.linear_model import Perceptron, LogisticRegression, Ridge
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
@@ -740,3 +740,23 @@ def test_set_oob_score_label_encoding():
     x3 = BaggingClassifier(oob_score=True,
                            random_state=random_state).fit(X, Y3).oob_score_
     assert_equal([x1, x2], [x3, x3])
+
+
+def test_multi_output_regressor():
+    # Check singleton ensembles.
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    reg1 = BaggingRegressor(base_estimator=Ridge(), n_estimators=10,
+                            bootstrap=False, bootstrap_features=False,
+                            random_state=rng)
+    reg2 = clone(reg1)
+    reg1.fit(X_train, y_train)
+    for n_targets in [1, 2]:
+        y_train_ = np.ndarray((len(y_train), n_targets))
+        y_train_.T[:] = y_train.copy()
+        reg2.fit(X_train, y_train_)
+        assert_array_almost_equal(reg1.predict(X_test),
+                                  reg2.predict(X_test)[:, 0], decimal=10)
