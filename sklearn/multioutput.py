@@ -497,8 +497,6 @@ class ClassifierChain(BaseEstimator):
                         self.base_estimator, X, y=y, cv=self.cv)
                     self.classes_.append(estimator.classes_)
 
-
-
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.
 
