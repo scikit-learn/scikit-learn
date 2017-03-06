@@ -207,7 +207,7 @@ div.navbar div.nav-icon {
 }
 
 .search_form {
-    margin-top: -23px;
+    margin-top: -45px;
     /*The min-height is added here, to prevent the element from shrinking
     too much, while the scripts are still loading the search-bar.
     Without it, layout glitches occur, as the element keeps dynamically
@@ -217,10 +217,6 @@ div.navbar div.nav-icon {
 
 #cse .gsc-clear-button {
     width: 50px;
-}
-
-.gsc-branding {
-    display: none;
 }
 
 /*---------------------------------------------------------------*/
