@@ -229,7 +229,8 @@ def test_lda_store_covariance():
     # Test for slover 'lsqr' and 'eigen'
     for solver in ('lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver)
-        # The deprecated test will be asserted once the deprecation is complete.
+        # The deprecated test will be asserted once the deprecation
+        # is complete.
 
         # Test the actual attribute:
         clf = LinearDiscriminantAnalysis(solver=solver,
