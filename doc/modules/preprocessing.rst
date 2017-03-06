@@ -598,7 +598,7 @@ Tools for imputing missing values are discussed at :ref:`impute`.
 
 .. _missing_indicator:
 
-Transformer indicating missing values
+Imputation of missing values
 =====================================
 
 :class:`MissingIndicator` transformer is useful to transform a dataset into corresponding
@@ -606,9 +606,12 @@ binary matrix indicating the presence of missing values in the dataset.
 The knowledge of which features were imputed can be exploited by a downstream
 estimator by adding features that indicate which elements have been imputed.
 
+The ``features`` attribute is used to choose the features for which the mask is constructed.
+By default, the binary matrix has only features with at least one missing value.
+In case it mentioned as *all* the matrix has all the features in the input
+
     >>> from sklearn.preprocessing import MissingIndicator
     >>> import numpy as np
-    >>> a = MissingIndicator(missing_values = -1)
     >>> X1 = np.array([
     ...   [-1, -1,  1,  3],
     ...   [ 4, -1,  0, -1],
@@ -619,15 +622,18 @@ estimator by adding features that indicate which elements have been imputed.
     ...   [-1, -1,  2,  3],
     ...   [ 2,  3,  4,  0],
     ... ])
-    >>> MI = MissingIndicator(missing_values = -1)
-    >>> MI.fit(X1)
-    MissingIndicator(features='train', missing_values=-1, sparse='auto')
-    >>> X2_tr = MI.transform(X2)
-    >>> X2_tr
-    array([[0, 0, 1],
-           [1, 1, 0],
-           [0, 0, 0]])
-
+    >>> indicator = MissingIndicator(missing_values=-1)
+    >>> X1_tr = indicator.fit_transform(X1)
+    >>> X1_tr
+    array([[1, 1, 0],
+           [0, 1, 1],
+           [0, 1, 0]])
+    >>> indicator = MissingIndicator(missing_values=-1, features="all")
+    >>> X1_tr = indicator.fit_transform(X1)
+    >>> X1_tr
+    array([[1, 1, 0, 0],
+           [0, 1, 0, 1],
+           [0, 1, 0, 0]])
 
 .. _polynomial_features:
 

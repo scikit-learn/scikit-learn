@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.preprocessing.imputation import MissingIndicator
 
@@ -415,35 +415,44 @@ def test_missing_indicator():
             assert_array_equal(actual, expected[:, features])
 
     def _check_missing_indicator(X1, X2, retype, sp, missing_values):
-        mask = X2 == missing_values
+        mask_X2 = X2 == missing_values
+        mask_X1 = X1 == missing_values
+
         expect_feat_missing = np.where(np.any(X1 == missing_values, axis=0))[0]
 
         X1_in = retype(X1)
         X2_in = retype(X2)
         # features = "train":
-        MI = MissingIndicator(missing_values=missing_values,
-                              sparse=sp)
+        indicator = MissingIndicator(missing_values=missing_values, sparse=sp)
 
-        MI.fit(X1_in)
-        X2_tr = MI.transform(X2_in)
-        features = MI.feat_with_missing_
+        X1_tr = indicator.fit_transform(X1_in)
+        X2_tr = indicator.transform(X2_in)
+        features = indicator.feat_with_missing_
         assert_array_equal(expect_feat_missing, features)
         assert_type(type(X2_tr), sparse.issparse(X2_in), sp, missing_values)
-        assert_mask(X2_tr, mask, features)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sp, missing_values)
+        assert_mask(X2_tr, mask_X2, features)
+        assert_mask(X1_tr, mask_X1, features)
 
         # features = "all"
-        MI = clone(MI).set_params(features="all")
-        MI.fit(X1_in)
-        X2_tr = MI.transform(X2_in)
+        indicator = clone(indicator).set_params(features="all")
+        X1_tr = indicator.fit_transform(X1_in)
+        X2_tr = indicator.transform(X2_in)
         features = np.arange(X2.shape[1])
-        assert_mask(X2_tr, mask, features)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sp, missing_values)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sp, missing_values)
+        assert_mask(X2_tr, mask_X2, features)
+        assert_mask(X1_tr, mask_X1, features)
 
         # features = [1, 2]
         features = [1, 2]
-        MI = clone(MI).set_params(features=features)
-        MI.fit(X1_in)
-        X2_tr = MI.transform(X2_in)
-        assert_mask(X2_tr, mask, features)
+        indicator = clone(indicator).set_params(features=features)
+        X1_tr = indicator.fit_transform(X1_in)
+        X2_tr = indicator.transform(X2_in)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sp, missing_values)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sp, missing_values)
+        assert_mask(X2_tr, mask_X2, features)
+        assert_mask(X1_tr, mask_X1, features)
 
     for X1, X2, missing_values in [(X1_orig, X2_orig, -1),
                                    (X1_orig + 1, X2_orig + 1, 0)]:
@@ -464,12 +473,23 @@ def test_missing_indicator_warning():
           [-1,  2,  3],
           [2,  4,  0]
     ])
-    MI = MissingIndicator(missing_values=-1)
-    MI.fit(X1)
-    missing_features_fit = np.where(np.any(X1 == -1, axis=0))[0]
+    indicator = MissingIndicator(missing_values=-1)
+    indicator.fit(X1)
+    missing_features_fit = np.sum(X1 == -1, axis=0).nonzero()[0]
     missing_features_tr = np.where(np.any(X2 == -1, axis=0))[0]
     extra_missing_features = np.setdiff1d(missing_features_tr,
                                           missing_features_fit)
     warn_msg = "The features %s have missing values in transform " \
                "but have no missing values in fit" % extra_missing_features
-    assert_warns_message(RuntimeWarning, warn_msg, MI.transform, X2)
+    assert_warns_message(RuntimeWarning, warn_msg, indicator.transform, X2)
+
+    # features = "all"
+    indicator = clone(indicator).set_params(features="all")
+    indicator.fit(X1)
+    assert_no_warnings(indicator.transform, X2)
+
+    # features = [0, 2]
+    features = [0, 2]
+    indicator = clone(indicator).set_params(features=features)
+    indicator.fit(X1)
+    assert_no_warnings(indicator.transform, X2)
