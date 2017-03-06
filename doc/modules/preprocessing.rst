@@ -607,8 +607,8 @@ The knowledge of which features were imputed can be exploited by a downstream
 estimator by adding features that indicate which elements have been imputed.
 
 The ``features`` attribute is used to choose the features for which the mask is constructed.
-By default, the binary matrix has only features with at least one missing value.
-In case it mentioned as *all* the matrix has all the features in the input
+By default, it is *train* which means the binary matrix has features with missing values
+during fit time. In case it mentioned as *all* the matrix has all the features.
 
     >>> from sklearn.preprocessing import MissingIndicator
     >>> import numpy as np
