@@ -911,7 +911,7 @@ positives and false negatives, the MCC is defined as
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
 
 In the multiclass case, the Matthews correlation coefficient can be `defined
-<http://rk.kvl.dk/introduction/index.html>` in terms of a
+<http://rk.kvl.dk/introduction/index.html>`_ in terms of a
 :func:`confusion_matrix` :math:`C` for :math:`K` classes.  To simplify the
 definition consider the following intermediate variables:
 

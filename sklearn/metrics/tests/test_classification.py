@@ -445,7 +445,8 @@ def test_matthews_corrcoef_multiclass():
     # The minimum will be different for depending on the input
     y_true = [0, 0, 1, 1, 2, 2]
     y_pred_min = [1, 1, 0, 0, 0, 0]
-    assert_almost_equal(matthews_corrcoef(y_true, y_pred_min), -0.6123724)
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred_min),
+                        -12 / np.sqrt(24 * 16))
 
     # Zero variance will result in an mcc of zero and a Runtime Warning
     y_true = [0, 1, 2]
