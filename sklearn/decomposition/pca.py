@@ -468,14 +468,14 @@ class PCA(_BasePCA):
                              "min(n_samples, n_features)=%r with "
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
-                             svd_solver))
+                                svd_solver))
         elif svd_solver == 'arpack' and n_components == min(n_samples,
-        n_features):
+                                                            n_features):
             raise ValueError("n_components=%r must be stricly less than "
                              "min(n_samples, n_features)=%r with "
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
-                             svd_solver))
+                                svd_solver))
 
         random_state = check_random_state(self.random_state)
 
