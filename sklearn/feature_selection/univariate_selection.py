@@ -230,17 +230,18 @@ def chi2(X, y):
 def f_regression(X, y, center=True):
     """Univariate linear regression tests.
 
-    Quick linear model for testing the effect of a single regressor,
-    sequentially for many regressors.
-
+    Linear model for testing the individual effect of each of many regressors. 
+    This is a scoring function to be used in a feature seletion procedure, not 
+    a free standing feature selection procedure.
+    
     This is done in 2 steps:
 
-    1. The cross correlation between each regressor and the target is computed,
+    1. The correlation between each regressor and the target is computed,
        that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
        std(y)).
     2. It is converted to an F score then to a p-value.
 
-    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+    For more on usage, read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
