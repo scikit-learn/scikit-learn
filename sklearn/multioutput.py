@@ -26,6 +26,7 @@ from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.metaestimators import if_delegate_has_method
 from .externals.joblib import Parallel, delayed
 from .externals import six
+from .model_selection import cross_val_predict
 
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain"]
@@ -392,6 +393,15 @@ class ClassifierChain(BaseEstimator):
 
         If order is 'random' a random ordering will be used.
 
+    cv : int, cross-validation generator or an iterable, optional
+        Determines whether to use cross validated predictions or true
+        labels for the results of previous estimators in the chain.
+        If cv is None the true labels are used when fitting. Otherwise
+        possible inputs for cv are:
+            integer, to specify the number of folds in a (Stratified)KFold,
+            An object to be used as a cross-validation generator.
+            An iterable yielding train, test splits.
+
     Attributes
     ----------
     classes_ : list of arrays of length len(estimators_) containing the
@@ -412,10 +422,11 @@ class ClassifierChain(BaseEstimator):
 
     """
 
-    def __init__(self, base_estimator, random_state=None, order=None):
+    def __init__(self, base_estimator, random_state=None, order=None, cv=None):
         self.base_estimator = base_estimator
         self.random_state = random_state
         self.order = order
+        self.cv = cv
 
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
@@ -444,22 +455,49 @@ class ClassifierChain(BaseEstimator):
                             for _ in range(Y.shape[1])]
 
         self.classes_ = []
+
         if sp.issparse(X):
-            for chain_idx, estimator in enumerate(self.estimators_):
-                previous_labels = Y[:, self.order[:chain_idx]]
-                if chain_idx == 0:
-                    X_aug = X
-                else:
-                    X_aug = sp.hstack((X, previous_labels))
-                y = Y[:, self.order[chain_idx]]
-                estimator.fit(X_aug, y)
-                self.classes_.append(estimator.classes_)
+            if self.cv is None:
+                for chain_idx, estimator in enumerate(self.estimators_):
+                    if chain_idx == 0:
+                        X_aug = X
+                    else:
+                        X_aug = sp.hstack((X, Y[:, self.order[:chain_idx]]))
+                    y = Y[:, self.order[chain_idx]]
+                    estimator.fit(X_aug, y)
+                    self.classes_.append(estimator.classes_)
+            else:
+                Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
+                for chain_idx, estimator in enumerate(self.estimators_):
+                    if chain_idx == 0:
+                        X_aug = X
+                    else:
+                        X_aug = sp.hstack((X, Y[:, self.order[:chain_idx]]))
+                    y = Y[:, self.order[chain_idx]]
+                    estimator.fit(X_aug, y)
+                    Y_pred_chain[:, chain_idx] = cross_val_predict(
+                        self.base_estimator, X, y=y, cv=self.cv)
+                    self.classes_.append(estimator.classes_)
+
         else:
-            X_aug = np.hstack((X, Y[:, self.order]))
-            for chain_idx, estimator in enumerate(self.estimators_):
-                y = Y[:, self.order[chain_idx]]
-                estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
-                self.classes_.append(estimator.classes_)
+            if self.cv is None:
+                X_aug = np.hstack((X, Y[:, self.order]))
+                for chain_idx, estimator in enumerate(self.estimators_):
+                    y = Y[:, self.order[chain_idx]]
+                    estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
+                    self.classes_.append(estimator.classes_)
+
+            else:
+                Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
+                for chain_idx, estimator in enumerate(self.estimators_):
+                    X_aug = np.hstack((X, Y_pred_chain[:, :chain_idx]))
+                    y = Y[:, self.order[chain_idx]]
+                    estimator.fit(X_aug, y)
+                    Y_pred_chain[:, chain_idx] = cross_val_predict(
+                        self.base_estimator, X, y=y, cv=self.cv)
+                    self.classes_.append(estimator.classes_)
+
+
 
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.
@@ -477,7 +515,7 @@ class ClassifierChain(BaseEstimator):
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
             if sp.issparse(X):
-                if previous_predictions.shape[1] == 0:
+                if chain_idx == 0:
                     X_aug = X
                 else:
                     X_aug = sp.hstack((X, previous_predictions))
