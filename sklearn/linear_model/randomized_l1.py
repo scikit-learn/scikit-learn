@@ -16,11 +16,11 @@ from scipy import sparse
 from scipy.interpolate import interp1d
 
 from .base import _preprocess_data
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
-from ..utils import (as_float_array, check_random_state, check_X_y,
-                     check_array, safe_mask)
+from ..feature_selection.base import SelectorMixin
+from ..utils import (as_float_array, check_random_state, check_X_y, safe_mask)
 from ..utils.validation import check_is_fitted
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
@@ -59,7 +59,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
 
 
 class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
-                                                   TransformerMixin)):
+                                                   SelectorMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
@@ -87,7 +87,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         self : object
-            Returns an instance of self.
+               Returns an instance of self.
         """
         X, y = check_X_y(X, y, ['csr', 'csc'], y_numeric=True,
                          ensure_min_samples=2, estimator=self)
@@ -121,31 +121,17 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         """Return the parameters passed to the estimator"""
         raise NotImplementedError
 
-    def get_support(self, indices=False):
-        """Return a mask, or list, of the features/indices selected."""
+    def _get_support_mask(self):
+        """Get the boolean mask indicating which features are selected.
+
+        Returns
+        -------
+        support : boolean array of shape [# input features]
+                  An element is True iff its corresponding feature is selected
+                  for retention.
+        """
         check_is_fitted(self, 'scores_')
-
-        mask = self.scores_ > self.selection_threshold
-        return mask if not indices else np.where(mask)[0]
-
-    # XXX: the two function below are copy/pasted from feature_selection,
-    # Should we add an intermediate base class?
-    def transform(self, X):
-        """Transform a new matrix using the selected features"""
-        mask = self.get_support()
-        X = check_array(X)
-        if len(mask) != X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
-        return check_array(X)[:, safe_mask(X, mask)]
-
-    def inverse_transform(self, X):
-        """Transform a new matrix using the selected features"""
-        support = self.get_support()
-        if X.ndim == 1:
-            X = X[None, :]
-        Xt = np.zeros((X.shape[0], support.size))
-        Xt[:, support] = X
-        return Xt
+        return self.scores_ > self.selection_threshold
 
 
 ###############################################################################

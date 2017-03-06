@@ -268,14 +268,20 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     # also eliminate weights of eliminated items
     sample_weight = sample_weight[ind]
 
+    # Choose the accumulator dtype to always have high precision
+    if sample_weight.dtype.kind in {'i', 'u', 'b'}:
+        dtype = np.int64
+    else:
+        dtype = np.float64
+
     CM = coo_matrix((sample_weight, (y_true, y_pred)),
-                    shape=(n_labels, n_labels)
+                    shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
     return CM
 
 
-def cohen_kappa_score(y1, y2, labels=None, weights=None):
+def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -311,6 +317,9 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
         List of weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
     Returns
     -------
     kappa : float
@@ -328,7 +337,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
-    confusion = confusion_matrix(y1, y2, labels=labels)
+    confusion = confusion_matrix(y1, y2, labels=labels,
+                                 sample_weight=sample_weight)
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -508,7 +518,6 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_pred = lb.transform(y_pred)
 
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    C = C.astype(np.float64)
     t_sum = C.sum(axis=1)
     p_sum = C.sum(axis=0)
     n_correct = np.trace(C)
@@ -1402,6 +1411,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
+
+    if target_names is not None and len(labels) != len(target_names):
+        warnings.warn(
+            "labels size, {0}, does not match size of target_names, {1}"
+            .format(len(labels), len(target_names))
+        )
 
     last_line_heading = 'avg / total'
 
