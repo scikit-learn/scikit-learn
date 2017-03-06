@@ -261,9 +261,12 @@ def f_regression(X, y, center=True):
 
     pval : array, shape=(n_features,)
         p-values of F-scores.
-
+    
+    
+    
     See also
     --------
+    mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     SelectKBest: Select features based on the k highest scores.
