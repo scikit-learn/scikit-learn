@@ -959,6 +959,9 @@ Trees and ensembles
      :class:`ensemble.VotingClassifier` to fit underlying estimators in parallel.
      :issue:`5805` by :user:`Ibraim Ganiev <olologin>`.
 
+   - :class:`ensemble.BaggingRegressor` now supports multi-output targets.
+     By :user:`Elvis Dohmatob <dohmatob>`.
+	    
 Linear, kernelized and related models
 
    - In :class:`linear_model.LogisticRegression`, the SAG solver is now
