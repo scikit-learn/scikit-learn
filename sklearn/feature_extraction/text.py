@@ -648,15 +648,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> #create document
     >>> doc_test = ['Every summer our family gathers on the beach.',
-    ...             'Everytime our family has a gathering someone is late.',
-    ...             'Every winter our family goes to a ski resort.',
-    ...             'This fall everyone will run the Pumpkin 10K run.']
+    ...             'Every winter our family gathers on the beach.',
+    ...             'Our family gathers on the beach.']
     >>> vectorizer = CountVectorizer(stop_words='english')
     >>> X = vectorizer.fit_transform(doc_test)
     >>> print(vectorizer.get_feature_names())
-    [u'10k', u'beach', u'colorado', u'everytime', u'fall',
-     u'family', u'gathering', u'gathers', u'goes', u'late',
-     u'pumpkin', u'resort', u'run', u'ski', u'summer', u'winter']
+    [u'beach', u'family', u'gathers', u'summer', u'winter']
 
     See also
     --------
