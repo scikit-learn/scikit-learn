@@ -648,10 +648,16 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> from sklearn.feature_extraction.text import CountVectorizer
     >>> #create document
     >>> doc_test = ['Every summer our family gathers on the beach.',
-    ...             'Every winter our family gathers on the beach.',
-    ...             'Our family gathers on the beach.']
+    ...             'We gather beach chairs on the beach.',
+                    'Our family gathers on the beach.',
+    ...             'Summer after summer we play the same games.']
     >>> vectorizer = CountVectorizer(stop_words='english')
     >>> X = vectorizer.fit_transform(doc_test)
+    >>> X.toarray()
+    array([[1, 1, 1, 1],
+       [2, 0, 0, 0],
+       [1, 1, 1, 0],
+       [0, 0, 0, 2]])
     >>> print(vectorizer.get_feature_names())
     [u'beach', u'family', u'gathers', u'summer', u'winter']
 
@@ -1250,6 +1256,7 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
     See also
     --------
     CountVectorizer
@@ -1265,9 +1272,8 @@ class TfidfVectorizer(CountVectorizer):
     The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
-
-
     """
+
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
