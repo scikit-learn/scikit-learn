@@ -33,7 +33,7 @@ MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
 LICENSE = 'new BSD'
-DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
+DOWNLOAD_URL = 'https://github.com/scikit-learn/scikit-learn/releases'
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
