@@ -651,7 +651,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     ...             'We gather beach chairs on the beach.',
                     'Our family gathers on the beach.',
     ...             'Summer after summer we play the same games.']
-    >>> vectorizer = CountVectorizer(stop_words='english')
+    >>> vectorizer = CountVectorizer(min_df=2, stop_words='english')
     >>> X = vectorizer.fit_transform(doc_test)
     >>> X.toarray()
     array([[1, 1, 1, 1],
