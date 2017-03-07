@@ -645,17 +645,10 @@ def test_pandas_input():
 
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
 
-        # Default scoring
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
         grid_search.fit(X_df, y_ser).score(X_df, y_ser)
+        grid_search.predict(X_df)
         assert_true(hasattr(grid_search, "cv_results_"))
-
-        # Multi-metric scoring
-        for scoring in [['accuracy'], ['accuracy', 'precision']]:
-            grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
-                                       scoring=scoring, refit='accuracy')
-            grid_search.fit(X_df, y_ser).score(X_df, y_ser)
-            assert_true(hasattr(grid_search, "cv_results_"))
 
 
 def test_unsupervised_grid_search():
