@@ -728,7 +728,7 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     assert_true(all(cv_results[key].dtype == np.float64
                     for key in score_keys if not key.startswith('rank')))
 
-    scorer_keys = search.scorer_.keys() if search.multimetric_ else ('score',)
+    scorer_keys = search.scorer_.keys() if search.multimetric_ else ['score']
 
     for key in scorer_keys:
         assert_true(cv_results['rank_test_%s' % key].dtype == np.int32)
@@ -965,8 +965,7 @@ def test_grid_search_cv_results_multimetric():
             assert_equal(grid_search.iid, iid)
             grid_searches.append(grid_search)
 
-        compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-            *grid_searches, iid=iid)
+        compare_cv_results_multimetric_with_single(*grid_searches, iid=iid)
 
 
 def test_random_search_cv_results_multimetric():
@@ -994,14 +993,14 @@ def test_random_search_cv_results_multimetric():
                 random_search.fit(X, y)
                 random_searches.append(random_search)
 
-            compare_cv_results_multimetric_with_single_metric_accuracy_recall(
-                *random_searches, iid=iid)
+            compare_cv_results_multimetric_with_single(*random_searches,
+                                                       iid=iid)
             if refit:
                 compare_refit_methods_when_refit_with_acc(
                     random_searches[0], random_searches[1], refit)
 
 
-def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
+def compare_cv_results_multimetric_with_single(
         search_multi, search_acc, search_rec, iid):
     """Compare multi-metric cv_results with the ensemble of multiple
     single metric cv_results from single metric grid/random search"""
@@ -1023,7 +1022,7 @@ def compare_cv_results_multimetric_with_single_metric_accuracy_recall(
                     'mean_score_time', 'std_score_time', 'mean_fit_time',
                     'std_fit_time'))))
 
-    # Pop the time keys and compare the other keys among multi-metric and
+    # Compare the keys, other than time keys, among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
     # deep nested comparison of the two cv_results dicts
     np.testing.assert_equal({k: v for k, v in cv_results_multi.items()
