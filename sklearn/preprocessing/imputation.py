@@ -14,7 +14,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..base import clone
 from ..dummy import DummyRegressor
 from ..externals import six
-from ..externals.funcsigs import signature
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
 from ..utils.fixes import astype
@@ -355,7 +354,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
-            X = X[:, self._valid_statistics_indexes]
+            X = X[:, self._valid_statistics_inds]
         elif self.axis == 1 and invalid_mask.any():
             raise ValueError("Some rows only contain "
                              "missing values: %s" % missing)
@@ -462,7 +461,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             verbose=False,
             random_state=None):
         from ..linear_model import BayesianRidge  # avoiding circular import
-        self.model = BayesianRidge()  # TODO: need to move to fit_transform?
+        self.model = BayesianRidge()
         self.missing_values = missing_values
         self.imputation_order = imputation_order
         self.n_imputations = n_imputations
