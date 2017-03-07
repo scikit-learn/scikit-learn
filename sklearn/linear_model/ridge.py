@@ -213,7 +213,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as 
+        Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
@@ -508,7 +508,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as 
+        Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
@@ -653,7 +653,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as 
+        Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     class_weight : dict or 'balanced', optional
@@ -885,7 +885,7 @@ class _RidgeGCV(LinearModel):
         constant_column = np.var(Q, 0) < 1.e-12
         # detect constant columns
         w[constant_column] = 0  # cancel the regularization for the intercept
-        w[v == 0] = 0
+
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
@@ -957,6 +957,8 @@ class _RidgeGCV(LinearModel):
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
+        if sample_weight is not None and not isinstance(sample_weight, float):
+            sample_weight = check_array(sample_weight, ensure_2d=False)
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
@@ -1088,11 +1090,9 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            fit_params = {'sample_weight': sample_weight}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
-                              parameters, fit_params=fit_params, cv=self.cv,
-                              scoring=self.scoring)
-            gs.fit(X, y)
+                              parameters, cv=self.cv, scoring=self.scoring)
+            gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
 
@@ -1117,8 +1117,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as 
-        LogisticRegression or LinearSVC. 
+        Alpha corresponds to ``C^-1`` in other linear models such as
+        LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -1150,7 +1150,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used, else, 
+        :class:`sklearn.model_selection.StratifiedKFold` is used, else,
         :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1220,8 +1220,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
-        Alpha corresponds to ``C^-1`` in other linear models such as 
-        LogisticRegression or LinearSVC. 
+        Alpha corresponds to ``C^-1`` in other linear models such as
+        LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set

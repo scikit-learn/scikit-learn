@@ -229,7 +229,7 @@ For high-dimensional datasets with many collinear regressors,
 :class:`LassoCV` is most often preferable. However, :class:`LassoLarsCV` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
-observations, it is often faster than :class:`LassoCV`.
+features, it is often faster than :class:`LassoCV`.
 
 .. |lasso_cv_1| image:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_002.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
@@ -266,6 +266,13 @@ They also tend to break when the problem is badly conditioned
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
+Comparison with the regularization parameter of SVM
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The equivalence between ``alpha`` and the regularization parameter of SVM,
+``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
+depending on the estimator and the exact objective function optimized by the
+model.
 
 .. _multi_task_lasso:
 
@@ -391,7 +398,11 @@ Least Angle Regression
 
 Least-angle regression (LARS) is a regression algorithm for
 high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
-Johnstone and Robert Tibshirani.
+Johnstone and Robert Tibshirani. LARS is similar to forward stepwise
+regression. At each step, it finds the predictor most correlated with the
+response. When there are multiple predictors having equal correlation, instead
+of continuing along the same predictor, it proceeds in a direction equiangular
+between the predictors.
 
 The advantages of LARS are:
 

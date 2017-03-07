@@ -42,6 +42,8 @@ from sklearn.model_selection import PredefinedSplit
 from sklearn.model_selection import check_cv
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RepeatedKFold
+from sklearn.model_selection import RepeatedStratifiedKFold
 
 from sklearn.linear_model import Ridge
 
@@ -804,6 +806,76 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
 
+def test_repeated_cv_value_errors():
+    # n_repeats is not integer or <= 1
+    for cv in (RepeatedKFold, RepeatedStratifiedKFold):
+        assert_raises(ValueError, cv, n_repeats=1)
+        assert_raises(ValueError, cv, n_repeats=1.5)
+
+
+def test_repeated_kfold_determinstic_split():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    random_state = 258173307
+    rkf = RepeatedKFold(
+        n_splits=2,
+        n_repeats=2,
+        random_state=random_state)
+
+    # split should produce same and deterministic splits on
+    # each call
+    for _ in range(3):
+        splits = rkf.split(X)
+        train, test = next(splits)
+        assert_array_equal(train, [2, 4])
+        assert_array_equal(test, [0, 1, 3])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 3])
+        assert_array_equal(test, [2, 4])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1])
+        assert_array_equal(test, [2, 3, 4])
+
+        train, test = next(splits)
+        assert_array_equal(train, [2, 3, 4])
+        assert_array_equal(test, [0, 1])
+
+        assert_raises(StopIteration, next, splits)
+
+
+def test_repeated_stratified_kfold_determinstic_split():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+    y = [1, 1, 1, 0, 0]
+    random_state = 1944695409
+    rskf = RepeatedStratifiedKFold(
+        n_splits=2,
+        n_repeats=2,
+        random_state=random_state)
+
+    # split should produce same and deterministic splits on
+    # each call
+    for _ in range(3):
+        splits = rskf.split(X, y)
+        train, test = next(splits)
+        assert_array_equal(train, [1, 4])
+        assert_array_equal(test, [0, 2, 3])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 2, 3])
+        assert_array_equal(test, [1, 4])
+
+        train, test = next(splits)
+        assert_array_equal(train, [2, 3])
+        assert_array_equal(test, [0, 1, 4])
+
+        train, test = next(splits)
+        assert_array_equal(train, [0, 1, 4])
+        assert_array_equal(test, [2, 3])
+
+        assert_raises(StopIteration, next, splits)
+
+
 def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split)
     assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
@@ -1028,16 +1100,23 @@ def test_cv_iterable_wrapper():
     # Since the wrapped iterable is enlisted and stored,
     # split can be called any number of times to produce
     # consistent results.
-    assert_array_equal(list(kf_iter_wrapped.split(X, y)),
-                       list(kf_iter_wrapped.split(X, y)))
+    np.testing.assert_equal(list(kf_iter_wrapped.split(X, y)),
+                            list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
     kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
-    assert_array_equal(list(kf_randomized_iter_wrapped.split(X, y)),
-                       list(kf_randomized_iter_wrapped.split(X, y)))
-    assert_true(np.any(np.array(list(kf_iter_wrapped.split(X, y))) !=
-                       np.array(list(kf_randomized_iter_wrapped.split(X, y)))))
+    np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
+                            list(kf_randomized_iter_wrapped.split(X, y)))
+
+    try:
+        np.testing.assert_equal(list(kf_iter_wrapped.split(X, y)),
+                                list(kf_randomized_iter_wrapped.split(X, y)))
+        splits_are_equal = True
+    except AssertionError:
+        splits_are_equal = False
+    assert_false(splits_are_equal, "If the splits are randomized, "
+                 "successive calls to split should yield different results")
 
 
 def test_group_kfold():

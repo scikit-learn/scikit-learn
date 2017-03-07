@@ -7,6 +7,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_raises_regex, assert_true
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
+from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
@@ -42,6 +43,26 @@ class ChangesDict(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class SetsWrongAttribute(BaseEstimator):
+    def __init__(self):
+        self.acceptable_key = 0
+
+    def fit(self, X, y=None):
+        self.wrong_attribute = 0
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ChangesWrongAttribute(BaseEstimator):
+    def __init__(self):
+        self.wrong_attribute = 0
+
+    def fit(self, X, y=None):
+        self.wrong_attribute = 1
+        X, y = check_X_y(X, y)
+        return self
+
+
 class NoCheckinPredict(BaseBadClassifier):
     def fit(self, X, y):
         X, y = check_X_y(X, y)
@@ -73,6 +94,25 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return np.ones(X.shape[0])
 
 
+class NoSampleWeightPandasSeriesType(BaseEstimator):
+    def fit(self, X, y, sample_weight=None):
+        # Convert data
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
+                         y_numeric=True)
+        # Function is only called after we verify that pandas is installed
+        from pandas import Series
+        if isinstance(sample_weight, Series):
+            raise ValueError("Estimator does not accept 'sample_weight'"
+                             "of type pandas.Series")
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        return np.ones(X.shape[0])
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -86,6 +126,15 @@ def test_check_estimator():
     # check that fit does input validation
     msg = "TypeError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
+    # check that sample_weights in fit accepts pandas.Series type
+    try:
+        from pandas import Series  # noqa
+        msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
+               "'sample_weight' parameter is of type pandas.Series")
+        assert_raises_regex(
+            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+    except ImportError:
+        pass
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
@@ -93,7 +142,20 @@ def test_check_estimator():
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
     assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict)
-
+    # check that `fit` only changes attribures that
+    # are private (start with an _ or end with a _).
+    msg = ('Estimator changes public attribute\(s\) during the fit method.'
+           ' Estimators are only allowed to change attributes started'
+           ' or ended with _, but wrong_attribute changed')
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, ChangesWrongAttribute)
+    # check that `fit` doesn't add any public attribute
+    msg = ('Estimator adds public attribute\(s\) during the fit method.'
+           ' Estimators are only allowed to add private attributes'
+           ' either started with _ or ended'
+           ' with _ but wrong_attribute added')
+    assert_raises_regex(AssertionError, msg,
+                        check_estimator, SetsWrongAttribute)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator " + name + " doesn't seem to fail gracefully on sparse data"
@@ -126,3 +188,19 @@ def test_check_estimators_unfitted():
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
+
+
+def test_check_no_fit_attributes_set_in_init():
+    class NonConformantEstimator(object):
+        def __init__(self):
+            self.you_should_not_set_this_ = None
+
+    msg = ("By convention, attributes ending with '_'.+"
+           'should not be initialized in the constructor.+'
+           "Attribute 'you_should_not_set_this_' was found.+"
+           'in estimator estimator_name')
+
+    assert_raises_regex(AssertionError, msg,
+                        check_no_fit_attributes_set_in_init,
+                        'estimator_name',
+                        NonConformantEstimator)

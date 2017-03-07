@@ -22,6 +22,7 @@ from .base import RegressorMixin, ClassifierMixin
 from .utils import check_array, check_X_y
 from .utils.fixes import parallel_helper
 from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.metaestimators import if_delegate_has_method
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
@@ -37,11 +38,85 @@ def _fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
+def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
+                           first_time=True):
+    if first_time:
+        estimator = clone(estimator)
+
+    if sample_weight is not None:
+        if classes is not None:
+            estimator.partial_fit(X, y, classes=classes,
+                                  sample_weight=sample_weight)
+        else:
+            estimator.partial_fit(X, y, sample_weight=sample_weight)
+    else:
+        if classes is not None:
+            estimator.partial_fit(X, y, classes=classes)
+        else:
+            estimator.partial_fit(X, y)
+    return estimator
+
+
 class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
+
+    @if_delegate_has_method('estimator')
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        """Incrementally fit the model to data.
+        Fit a separate model for each output variable.
+
+        Parameters
+        ----------
+        X : (sparse) array-like, shape (n_samples, n_features)
+            Data.
+
+        y : (sparse) array-like, shape (n_samples, n_outputs)
+            Multi-output targets.
+
+        classes : list of numpy arrays, shape (n_outputs)
+            Each array is unique classes for one output in str/int
+            Can be obtained by via
+            ``[np.unique(y[:, i]) for i in range(y.shape[1])]``, where y is the
+            target matrix of the entire dataset.
+            This argument is required for the first call to partial_fit
+            and can be omitted in the subsequent calls.
+            Note that y doesn't need to contain all labels in `classes`.
+
+        sample_weight : array-like, shape = (n_samples) or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X, y = check_X_y(X, y,
+                         multi_output=True,
+                         accept_sparse=True)
+
+        if y.ndim == 1:
+            raise ValueError("y must have at least two dimensions for "
+                             "multi-output regression but has only one.")
+
+        if (sample_weight is not None and
+                not has_fit_parameter(self.estimator, 'sample_weight')):
+            raise ValueError("Underlying estimator does not support"
+                             " sample weights.")
+
+        first_time = not hasattr(self, 'estimators_')
+
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_estimator)(
+                self.estimators_[i] if not first_time else self.estimator,
+                X, y[:, i],
+                classes[i] if classes is not None else None,
+                sample_weight, first_time) for i in range(y.shape[1]))
+        return self
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the model to data.
@@ -76,15 +151,17 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
-                             "multi target regression but has only one.")
+                             "multi-output regression but has only one.")
 
         if (sample_weight is not None and
                 not has_fit_parameter(self.estimator, 'sample_weight')):
-            raise ValueError("Underlying regressor does not support"
+            raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_estimator)(
-            self.estimator, X, y[:, i], sample_weight) for i in range(y.shape[1]))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_estimator)(
+                self.estimator, X, y[:, i], sample_weight)
+            for i in range(y.shape[1]))
         return self
 
     def predict(self, X):
@@ -108,8 +185,9 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         X = check_array(X, accept_sparse=True)
 
-        y = Parallel(n_jobs=self.n_jobs)(delayed(parallel_helper)(e, 'predict', X)
-                                         for e in self.estimators_)
+        y = Parallel(n_jobs=self.n_jobs)(
+            delayed(parallel_helper)(e, 'predict', X)
+            for e in self.estimators_)
 
         return np.asarray(y).T
 
@@ -133,8 +211,34 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
     """
+
     def __init__(self, estimator, n_jobs=1):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
+
+    def partial_fit(self, X, y, sample_weight=None):
+        """Incrementally fit the model to data.
+        Fit a separate model for each output variable.
+
+        Parameters
+        ----------
+        X : (sparse) array-like, shape (n_samples, n_features)
+            Data.
+
+        y : (sparse) array-like, shape (n_samples, n_outputs)
+            Multi-output targets.
+
+        sample_weight : array-like, shape = (n_samples) or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        super(MultiOutputRegressor, self).partial_fit(
+            X, y, sample_weight=sample_weight)
 
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
@@ -214,16 +318,18 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
         Returns
         -------
-        T : (sparse) array-like, shape = (n_samples, n_classes, n_outputs)
-            The class probabilities of the samples for each of the outputs
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs \
+            such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimator, "predict_proba"):
             raise ValueError("The base estimator should implement"
                              "predict_proba method")
 
-        results = np.dstack([estimator.predict_proba(X) for estimator in
-                            self.estimators_])
+        results = [estimator.predict_proba(X) for estimator in
+                   self.estimators_]
         return results
 
     def score(self, X, y):

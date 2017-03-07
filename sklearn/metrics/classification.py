@@ -236,6 +236,11 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
            [0, 0, 1],
            [1, 0, 2]])
 
+    In the binary case, we can extract true positives, etc as follows:
+    >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
+    >>> (tn, fp, fn, tp)
+    (0, 2, 1, 1)
+
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -275,7 +280,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     return CM
 
 
-def cohen_kappa_score(y1, y2, labels=None, weights=None):
+def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -311,6 +316,9 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
         List of weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
     Returns
     -------
     kappa : float
@@ -328,7 +336,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
-    confusion = confusion_matrix(y1, y2, labels=labels)
+    confusion = confusion_matrix(y1, y2, labels=labels,
+                                 sample_weight=sample_weight)
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
@@ -1365,6 +1374,14 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report : string
         Text summary of the precision, recall, F1 score for each class.
 
+        The reported averages are a prevalence-weighted macro-average across
+        classes (equivalent to :func:`precision_recall_fscore_support` with
+        ``average='weighted'``).
+
+        Note that in binary classification, recall of the positive class
+        is also known as "sensitivity"; recall of the negative class is
+        "specificity".
+
     Examples
     --------
     >>> from sklearn.metrics import classification_report
@@ -1388,45 +1405,44 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     else:
         labels = np.asarray(labels)
 
+    if target_names is not None and len(labels) != len(target_names):
+        warnings.warn(
+            "labels size, {0}, does not match size of target_names, {1}"
+            .format(len(labels), len(target_names))
+        )
+
     last_line_heading = 'avg / total'
 
     if target_names is None:
-        target_names = ['%s' % l for l in labels]
+        target_names = [u'%s' % l for l in labels]
     name_width = max(len(cn) for cn in target_names)
     width = max(name_width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
-    fmt = '%% %ds' % width  # first column: class name
-    fmt += '  '
-    fmt += ' '.join(['% 9s' for _ in headers])
-    fmt += '\n'
-
-    headers = [""] + headers
-    report = fmt % tuple(headers)
-    report += '\n'
+    head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
+    report = head_fmt.format(u'', *headers, width=width)
+    report += u'\n\n'
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
                                                   sample_weight=sample_weight)
 
-    for i, label in enumerate(labels):
-        values = [target_names[i]]
-        for v in (p[i], r[i], f1[i]):
-            values += ["{0:0.{1}f}".format(v, digits)]
-        values += ["{0}".format(s[i])]
-        report += fmt % tuple(values)
+    row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
+    rows = zip(target_names, p, r, f1, s)
+    for row in rows:
+        report += row_fmt.format(*row, width=width, digits=digits)
 
-    report += '\n'
+    report += u'\n'
 
     # compute averages
-    values = [last_line_heading]
-    for v in (np.average(p, weights=s),
-              np.average(r, weights=s),
-              np.average(f1, weights=s)):
-        values += ["{0:0.{1}f}".format(v, digits)]
-    values += ['{0}'.format(np.sum(s))]
-    report += fmt % tuple(values)
+    report += row_fmt.format(last_line_heading,
+                             np.average(p, weights=s),
+                             np.average(r, weights=s),
+                             np.average(f1, weights=s),
+                             np.sum(s),
+                             width=width, digits=digits)
+
     return report
 
 

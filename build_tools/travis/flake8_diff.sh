@@ -58,8 +58,6 @@ if [[ "$TRAVIS" == "true" ]]; then
             COMMIT_RANGE=$TRAVIS_COMMIT_RANGE
         fi
     else
-        # We need to unshallow here too ...
-        git fetch --unshallow || echo "Unshallowing the git checkout failed"
         # We want to fetch the code as it is in the PR branch and not
         # the result of the merge into master. This way line numbers
         # reported by Travis will match with the local code.
@@ -122,14 +120,25 @@ echo '--------------------------------------------------------------------------
 # uses git 1.8.
 # We need the following command to exit with 0 hence the echo in case
 # there is no match
-MODIFIED_FILES=$(git diff --name-only $COMMIT_RANGE | grep -v 'sklearn/externals' | \
-                     grep -v 'doc/sphinxext/sphinx_gallery' || echo "no_match")
+MODIFIED_FILES="$(git diff --name-only $COMMIT_RANGE | grep -v 'sklearn/externals' | \
+                     grep -v 'doc/sphinxext/sphinx_gallery' || echo "no_match")"
+
+check_files() {
+    files="$1"
+    shift
+    options="$*"
+    if [ -n "$files" ]; then
+        # Conservative approach: diff without context (--unified=0) so that code
+        # that was not changed does not create failures
+        git diff --unified=0 $COMMIT_RANGE -- $files | flake8 --diff --show-source $options
+    fi
+}
 
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals and doc/sphinxext/sphinx_gallery has been modified"
 else
-    # Conservative approach: diff without context so that code that
-    # was not changed does not create failures
-    git diff --unified=0 $COMMIT -- $MODIFIED_FILES | flake8 --diff --show-source
+    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"
+    # Examples are allowed to not have imports at top of file
+    check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" --ignore=E402
 fi
 echo -e "No problem detected by flake8\n"

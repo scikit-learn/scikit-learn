@@ -116,6 +116,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             sample_weight = np.empty(X.shape[0], dtype=np.float64)
             sample_weight[:] = 1. / X.shape[0]
         else:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
             # Normalize existing weights
             sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
 
@@ -754,6 +755,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
+
+        if n_classes == 1:
+            return np.ones((X.shape[0], 1))
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R

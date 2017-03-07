@@ -339,9 +339,9 @@ application of Occam's razor: *prefer simpler models*.
     Different algorithms can be used to solve the same mathematical
     problem. For instance the ``Lasso`` object in scikit-learn
     solves the lasso regression problem using a
-    `coordinate decent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
+    `coordinate descent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
-    provides the :class:`LassoLars` object using the *LARS* algorthm,
+    provides the :class:`LassoLars` object using the *LARS* algorithm,
     which is very efficient for problems in which the weight vector estimated
     is very sparse (i.e. problems with very few observations).
 
@@ -455,7 +455,7 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto', kernel='linear',
+        decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
 

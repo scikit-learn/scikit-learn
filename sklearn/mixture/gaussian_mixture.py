@@ -463,7 +463,7 @@ class GaussianMixture(BaseMixture):
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
 
-    reg_covar : float, defaults to 0.
+    reg_covar : float, defaults to 1e-6.
         Non-negative regularization added to the diagonal of covariance.
         Allows to assure that the covariance matrices are all positive.
 
