@@ -12,7 +12,7 @@ from .numpy_pickle_utils import Unpickler
 
 def hex_str(an_int):
     """Convert an int to an hexadecimal string."""
-    return '{0:#x}'.format(an_int)
+    return '{:#x}'.format(an_int)
 
 if PY3_OR_LATER:
     def asbytes(s):
