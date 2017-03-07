@@ -14,6 +14,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..base import clone
 from ..dummy import DummyRegressor
 from ..externals import six
+from ..externals.funcsigs import signature
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
 from ..utils.fixes import astype
@@ -462,7 +463,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             verbose=False,
             random_state=None):
         from ..linear_model import BayesianRidge  # avoiding circular import
-        self.model = BayesianRidge()
+        self.model = BayesianRidge()  # TODO: need to move to fit_transform?
         self.missing_values = missing_values
         self.imputation_order = imputation_order
         self.n_imputations = n_imputations
@@ -609,6 +610,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             "n_features" is the number of features.
         """
         X = check_array(X, dtype=np.float64, force_all_finite=False)
+        # check that the model's predict method has return_std argument
+        if not ('return_std' in signature(self.model.predict).parameters):
+            raise Exception("The regression model is %s and its predict "
+                            "method does not support 'return_std=True'. "
+                            "This is required for MICE." % type(self.model))
         X = np.asarray(X, order="F")
         mask_missing_values = _get_mask(X, self.missing_values)
         self._trained_model_triplets = []
