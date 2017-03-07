@@ -14,6 +14,7 @@ import numpy as np
 from ..tree.tree import BaseDecisionTree
 from ..base import RegressorMixin
 from ..utils.validation import check_array, check_random_state
+from ..utils.random import choice
 from ..externals import six
 
 from .splitter import Splitter
@@ -432,9 +433,11 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                             for i, nid in enumerate(expandable_nids)}
 
             # Create an array from where to select randomly the feature
-            shuffled_feature_idx = random_state.choice(np.arange(X.shape[1]),
-                                                       size=self.max_features_,
-                                                       replace=False)
+            shuffled_feature_idx = choice(np.arange(X.shape[1]),
+                                          size=self.max_features_,
+                                          replace=False,
+                                          random_state=random_state)
+
             # get the feature
             for feat_i in shuffled_feature_idx:
                 # Get the sorted index
