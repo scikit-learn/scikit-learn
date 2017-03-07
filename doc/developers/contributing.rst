@@ -111,7 +111,8 @@ then submit a "pull request" (PR):
  2. Fork the `project repository
     <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button near the top of the page. This creates a copy of the code under your
-    account on the GitHub server.
+    account on the GitHub server. For more details on how to fork a
+    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
  3. Clone this copy to your local disk::
 
@@ -133,10 +134,11 @@ then submit a "pull request" (PR):
 
         $ git push -u origin my-feature
 
-Finally, go to the web page of the your fork of the scikit-learn repo,
-and click 'Pull request' to send your changes to the maintainers for review.
-You may want to consider sending an email to the mailing list for more
-visibility.
+Finally, follow `these
+<https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+instructions to create a pull request from your fork. This will send an
+email to the committers. You may want to consider sending an email to the
+mailing list for more visibility.
 
 .. note::
 
