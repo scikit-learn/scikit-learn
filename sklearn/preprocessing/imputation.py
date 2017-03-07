@@ -501,7 +501,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return imputer_mask
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Generate missing values indicator for X.
 
         Parameters
