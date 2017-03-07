@@ -262,7 +262,7 @@ def f_regression(X, y, center=True):
     pval : array, shape=(n_features,)
         p-values of F-scores.
 
-    
+
     See also
     --------
     mutual_info_regression: Mutual information for a continuous target.
