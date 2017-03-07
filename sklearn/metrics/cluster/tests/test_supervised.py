@@ -239,3 +239,26 @@ def test_fowlkes_mallows_score():
     worst_score = fowlkes_mallows_score([0, 0, 0, 0, 0, 0],
                                         [0, 1, 2, 3, 4, 5])
     assert_almost_equal(worst_score, 0.)
+
+
+def test_fowlkes_mallows_score_properties():
+    # handcrafted example
+    labels_a = np.array([0, 0, 0, 1, 1, 2])
+    labels_b = np.array([1, 1, 2, 2, 0, 0])
+    expected = 1. / np.sqrt((1. + 3.) * (1. + 2.))
+    # FMI = TP / sqrt((TP + FP) * (TP + FN))
+
+    score_original = fowlkes_mallows_score(labels_a, labels_b)
+    assert_almost_equal(score_original, expected)
+
+    # symetric property
+    score_symetric = fowlkes_mallows_score(labels_b, labels_a)
+    assert_almost_equal(score_symetric, expected)
+
+    # permutation property
+    score_permuted = fowlkes_mallows_score((labels_a + 1) % 3, labels_b)
+    assert_almost_equal(score_permuted, expected)
+
+    # symetric and permutation(both together)
+    score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
+    assert_almost_equal(score_both, expected)

@@ -185,14 +185,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
-                raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1.0], got %s"
+                raise ValueError("min_samples_split must be an integer "
+                                 "greater than 1 or a float in (0.0, 1.0]; "
+                                 "got the integer %s"
                                  % self.min_samples_split)
             min_samples_split = self.min_samples_split
         else:  # float
             if not 0. < self.min_samples_split <= 1.:
-                raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1.0], got %s"
+                raise ValueError("min_samples_split must be an integer "
+                                 "greater than 1 or a float in (0.0, 1.0]; "
+                                 "got the float %s"
                                  % self.min_samples_split)
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
@@ -627,6 +629,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     tree_ : Tree object
         The underlying Tree object.
 
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
+
     See also
     --------
     DecisionTreeRegressor
@@ -919,6 +930,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     tree_ : Tree object
         The underlying Tree object.
+
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------

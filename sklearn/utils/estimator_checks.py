@@ -6,9 +6,9 @@ import sys
 import traceback
 import pickle
 from copy import deepcopy
-
 import numpy as np
 from scipy import sparse
+from scipy.stats import rankdata
 import struct
 
 from sklearn.externals.six.moves import zip
@@ -72,6 +72,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_fit_score_takes_y
     yield check_dtype_object
     yield check_sample_weights_pandas_series
+    yield check_sample_weights_list
     yield check_estimators_fit_returns_self
 
     # Check that all estimator yield informative messages when
@@ -112,10 +113,10 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
+    if (name not in
+        ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
         # TODO some complication with -1 label
-            and name not in ["DecisionTreeClassifier",
-                             "ExtraTreeClassifier"]):
+       name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
 
@@ -126,6 +127,8 @@ def _yield_classifier_checks(name, Classifier):
         yield check_class_weight_classifiers
 
     yield check_non_transformer_estimators_n_iter
+    # test if predict_proba is a monotonic transformation of decision_function
+    yield check_decision_proba_consistency
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -223,6 +226,7 @@ def _yield_all_checks(name, Estimator):
     yield check_get_params_invariance
     yield check_dict_unchanged
     yield check_no_fit_attributes_set_in_init
+    yield check_dont_overwrite_parameters
 
 
 def check_estimator(Estimator):
@@ -267,8 +271,7 @@ def set_testing_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
     params = estimator.get_params()
-    if ("n_iter" in params
-            and estimator.__class__.__name__ != "TSNE"):
+    if ("n_iter" in params and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -395,6 +398,21 @@ def check_sample_weights_pandas_series(name, Estimator):
                            "input of type pandas.Series to class weight.")
 
 
+@ignore_warnings(category=DeprecationWarning)
+def check_sample_weights_list(name, Estimator):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type list in the 'fit' function.
+    estimator = Estimator()
+    if has_fit_parameter(estimator, "sample_weight"):
+        rnd = np.random.RandomState(0)
+        X = rnd.uniform(size=(10, 3))
+        y = np.arange(10) % 3
+        y = multioutput_estimator_convert_y_2d(name, y)
+        sample_weight = [3] * 10
+        # Test that estimators don't raise any exception
+        estimator.fit(X, y, sample_weight=sample_weight)
+
+
 @ignore_warnings(category=(DeprecationWarning, UserWarning))
 def check_dtype_object(name, Estimator):
     # check that estimators treat dtype object as numeric if possible
@@ -467,8 +485,62 @@ def check_dict_unchanged(name, Estimator):
                               'Estimator changes __dict__ during %s' % method)
 
 
+def is_public_parameter(attr):
+    return not (attr.startswith('_') or attr.endswith('_'))
+
+
+def check_dont_overwrite_parameters(name, Estimator):
+    # check that fit method only changes or sets private attributes
+    if hasattr(Estimator.__init__, "deprecated_original"):
+        # to not check deprecated classes
+        return
+    rnd = np.random.RandomState(0)
+    X = 3 * rnd.uniform(size=(20, 3))
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_testing_parameters(estimator)
+
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    set_random_state(estimator, 1)
+    dict_before_fit = estimator.__dict__.copy()
+    estimator.fit(X, y)
+
+    dict_after_fit = estimator.__dict__
+
+    public_keys_after_fit = [key for key in dict_after_fit.keys()
+                             if is_public_parameter(key)]
+
+    attrs_added_by_fit = [key for key in public_keys_after_fit
+                          if key not in dict_before_fit.keys()]
+
+    # check that fit doesn't add any public attribute
+    assert_true(not attrs_added_by_fit,
+                ('Estimator adds public attribute(s) during'
+                 ' the fit method.'
+                 ' Estimators are only allowed to add private attributes'
+                 ' either started with _ or ended'
+                 ' with _ but %s added' % ', '.join(attrs_added_by_fit)))
+
+    # check that fit doesn't change any public attribute
+    attrs_changed_by_fit = [key for key in public_keys_after_fit
+                            if (dict_before_fit[key]
+                                is not dict_after_fit[key])]
+
+    assert_true(not attrs_changed_by_fit,
+                ('Estimator changes public attribute(s) during'
+                 ' the fit method. Estimators are only allowed'
+                 ' to change attributes started'
+                 ' or ended with _, but'
+                 ' %s changed' % ', '.join(attrs_changed_by_fit)))
+
+
 def check_fit2d_predict1d(name, Estimator):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check by fitting a 2d array and predicting with a 1d array
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
@@ -1041,8 +1113,7 @@ def check_classifiers_train(name, Classifier):
                     assert_equal(decision.shape, (n_samples,))
                     dec_pred = (decision.ravel() > 0).astype(np.int)
                     assert_array_equal(dec_pred, y_pred)
-                if (n_classes is 3
-                        and not isinstance(classifier, BaseLibSVM)):
+                if (n_classes is 3 and not isinstance(classifier, BaseLibSVM)):
                     # 1on1 of LibSVM works differently
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
@@ -1503,9 +1574,9 @@ def check_parameters_default_constructible(name, Estimator):
         try:
             def param_filter(p):
                 """Identify hyper parameters of an estimator"""
-                return (p.name != 'self'
-                        and p.kind != p.VAR_KEYWORD
-                        and p.kind != p.VAR_POSITIONAL)
+                return (p.name != 'self' and
+                        p.kind != p.VAR_KEYWORD and
+                        p.kind != p.VAR_POSITIONAL)
 
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
@@ -1650,3 +1721,25 @@ def check_classifiers_regression_target(name, Estimator):
     e = Estimator()
     msg = 'Unknown label type: '
     assert_raises_regex(ValueError, msg, e.fit, X, y)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def check_decision_proba_consistency(name, Estimator):
+    # Check whether an estimator having both decision_function and
+    # predict_proba methods has outputs with perfect rank correlation.
+
+    centers = [(2, 2), (4, 4)]
+    X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
+                      centers=centers, cluster_std=1.0, shuffle=True)
+    X_test = np.random.randn(20, 2) + 4
+    estimator = Estimator()
+
+    set_testing_parameters(estimator)
+
+    if (hasattr(estimator, "decision_function") and
+            hasattr(estimator, "predict_proba")):
+
+        estimator.fit(X, y)
+        a = estimator.predict_proba(X_test)[:, 1]
+        b = estimator.decision_function(X_test)
+        assert_array_equal(rankdata(a), rankdata(b))

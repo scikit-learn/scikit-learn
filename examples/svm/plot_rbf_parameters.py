@@ -166,7 +166,8 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 
     # visualize parameter's effect on decision function
     plt.pcolormesh(xx, yy, -Z, cmap=plt.cm.RdBu)
-    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_2d, cmap=plt.cm.RdBu_r)
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_2d, cmap=plt.cm.RdBu_r,
+                edgecolors='k')
     plt.xticks(())
     plt.yticks(())
     plt.axis('tight')
