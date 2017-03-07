@@ -598,8 +598,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     # This will work for both dict / list (tuple)
                     self.refit not in self.scorer_):
                 raise ValueError("For multi-metric scoring, the parameter "
-                                 "refit must be set to a string "
-                                 "metric name to make the best_* attributes "
+                                 "refit must be set to a scorer key "
+                                 "to make the best_* attributes "
                                  "available for that metric. If the "
                                  "attributes are not to be made available, it "
                                  "should be set to False explicitly. %r was "
@@ -853,7 +853,7 @@ class GridSearchCV(BaseSearchCV):
         scorer that should be used for setting the ``best_estimator_``,
         ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
         If those attributes are not to be made available, ``refit`` must be set
-        to ``False``, explicitly otherwise an error will be raised.
+        to ``False`` explicitly otherwise an error will be raised.
 
         See ``scoring`` parameter.
 
@@ -960,10 +960,7 @@ class GridSearchCV(BaseSearchCV):
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if refit=False.
-
-        For multi-metric evaluation, this attribute is present only if
-        ``refit`` is specified.
+        on the left out data. Not available if ``refit=False``.
 
         See ``refit`` parameter for more information on allowed values.
 
@@ -1149,7 +1146,7 @@ class RandomizedSearchCV(BaseSearchCV):
         scorer that should be used for setting the ``best_estimator_``,
         ``best_index_``, ``best_score_`` and ``best_parameters_`` attributes.
         If those attributes are not to be made available, ``refit`` must be set
-        to ``False``, explicitly otherwise an error will be raised.
+        to ``False`` explicitly otherwise an error will be raised.
 
         See ``scoring`` parameter.
 
@@ -1230,7 +1227,7 @@ class RandomizedSearchCV(BaseSearchCV):
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if refit=False.
+        on the left out data. Not available if ``refit=False``.
 
         For multi-metric evaluation, this attribute is present only if
         ``refit`` is specified.
@@ -1238,16 +1235,16 @@ class RandomizedSearchCV(BaseSearchCV):
         See ``refit`` parameter for more information on allowed values.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator
+        Mean cross-validated score of the best_estimator.
 
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
+        For multi-metric evaluation, this is not available if ``refit`` is
+        ``False``. See ``refit`` parameter for more information.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
+        For multi-metric evaluation, this is not available if ``refit`` is
+        ``False``. See ``refit`` parameter for more information.
 
     best_index_ : int
         The index (of the ``cv_results_`` arrays) which corresponds to the best
@@ -1257,8 +1254,8 @@ class RandomizedSearchCV(BaseSearchCV):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
+        For multi-metric evaluation, this is not available if ``refit`` is
+        ``False``. See ``refit`` parameter for more information.
 
     scorer_ : function or a dict
         Scorer function used on the held out data to choose the best

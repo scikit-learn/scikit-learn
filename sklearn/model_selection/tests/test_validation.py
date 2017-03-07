@@ -320,36 +320,28 @@ def test_cross_val_score_multiple_metric():
     X, y = make_regression(n_samples=30, random_state=0)
     reg = Ridge(random_state=0)
 
-    # List scoring
+    mse_scores = cross_val_score(reg, X, y, cv=5,
+                                 scoring='neg_mean_squared_error')
+    r2_scores = cross_val_score(reg, X, y, cv=5, scoring='r2')
+
+    # Single metric passed as a list
+    r2_scores_dict = cross_val_score(reg, X, y, cv=5, scoring=['r2'])
+    assert_true(isinstance(r2_scores_dict, dict))
+    assert_equal(len(r2_scores_dict), 1)
+    assert_array_almost_equal(r2_scores_dict['r2'], r2_scores)
+
+    # Multimetric passed as a list / dict
     all_scoring = (('r2', 'neg_mean_squared_error'),
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
-
-    r2_scores = cross_val_score(reg, X, y, cv=5, scoring='r2')
-    mse_scores = cross_val_score(reg, X, y, cv=5,
-                                 scoring='neg_mean_squared_error')
-
     for scoring in all_scoring:
         multi_scores = cross_val_score(reg, X, y, cv=5, scoring=scoring)
+        assert_true(isinstance(multi_scores, dict))
+        print(multi_scores)
+        assert_equal(len(multi_scores), 2)
         assert_array_almost_equal(multi_scores['r2'], r2_scores)
         assert_array_almost_equal(multi_scores['neg_mean_squared_error'],
                                   mse_scores)
-
-    # Classification
-    X, y = make_classification(n_samples=30, random_state=0)
-    clf = SVC(kernel='linear', random_state=0)
-
-    all_scoring = (('precision', 'accuracy'),
-                   {'precision': make_scorer(precision_score),
-                    'accuracy': make_scorer(accuracy_score)})
-
-    prec_scores = cross_val_score(clf, X, y, cv=5, scoring='precision')
-    acc_scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
-
-    for scoring in all_scoring:
-        multi_scores = cross_val_score(clf, X, y, cv=5, scoring=scoring)
-        assert_array_almost_equal(multi_scores['precision'], prec_scores)
-        assert_array_almost_equal(multi_scores['accuracy'], acc_scores)
 
 
 def test_cross_val_score_predict_groups():

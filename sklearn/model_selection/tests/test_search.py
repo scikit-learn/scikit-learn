@@ -373,14 +373,15 @@ def test_trivial_cv_results_attr():
 def test_no_refit():
     # Test that GSCV can be used for model selection alone without refitting
     clf = MockClassifier()
-    for scoring in (None, ('accuracy', 'precision')):
+    for scoring in [None, ['accuracy', 'precision']]:
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
         grid_search.fit(X, y)
         assert_true(not hasattr(grid_search, "best_estimator_") and
                     hasattr(grid_search, "best_index_") and
                     hasattr(grid_search, "best_params_"))
 
-        # Make sure the predict/transform etc fns raise meaningfull error msg
+        # Make sure the functions predict/transform etc raise meaningful
+        # error messages
         for fn_name in ('predict', 'predict_proba', 'predict_log_proba',
                         'transform', 'inverse_transform'):
             assert_raise_message(NotFittedError,
@@ -389,9 +390,9 @@ def test_no_refit():
                                   % fn_name), getattr(grid_search, fn_name), X)
 
     # Test that an invalid refit param raises appropriate error messages
-    for refit in ("", 5, True, 'recall', 'accuracy'):
+    for refit in ["", 5, True, 'recall', 'accuracy']:
         assert_raise_message(ValueError, "For multi-metric scoring, the "
-                             "parameter refit must be set to a string metric",
+                             "parameter refit must be set to a scorer key",
                              GridSearchCV(clf, {}, refit=refit,
                                           scoring={'acc': 'accuracy',
                                                    'prec': 'precision'}).fit,
@@ -603,8 +604,8 @@ def test_X_as_list():
     clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
     cv = KFold(n_splits=3)
 
-    for scoring in (None, 'accuracy', ('accuracy', ),
-                    ('accuracy', 'recall')):
+    for scoring in [None, 'accuracy', ['accuracy'],
+                    ['accuracy', 'recall']]:
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
                                    scoring=scoring,
                                    refit='accuracy'
@@ -621,8 +622,8 @@ def test_y_as_list():
     clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
     cv = KFold(n_splits=3)
 
-    for scoring in (None, 'accuracy', ('accuracy', ),
-                    ('accuracy', 'recall')):
+    for scoring in [None, 'accuracy', ['accuracy'],
+                    ['accuracy', 'recall']]:
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
                                    scoring=scoring,
                                    refit='accuracy'
@@ -662,7 +663,7 @@ def test_pandas_input():
         assert_true(hasattr(grid_search, "cv_results_"))
 
         # Multi-metric scoring
-        for scoring in (('accuracy', ), ('accuracy', 'precision')):
+        for scoring in [['accuracy'], ['accuracy', 'precision']]:
             grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
                                        scoring=scoring, refit='accuracy')
             grid_search.fit(X_df, y_ser).score(X_df, y_ser)
