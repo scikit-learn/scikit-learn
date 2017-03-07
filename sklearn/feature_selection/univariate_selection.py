@@ -272,7 +272,8 @@ def f_regression(X, y, center=True):
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     """
     X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
     n_samples = X.shape[0]
