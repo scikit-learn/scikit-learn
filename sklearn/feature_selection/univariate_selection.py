@@ -233,7 +233,7 @@ def f_regression(X, y, center=True):
     Linear model for testing the individual effect of each of many regressors.
     This is a scoring function to be used in a feature seletion procedure, not
     a free standing feature selection procedure.
-    
+
     This is done in 2 steps:
 
     1. The correlation between each regressor and the target is computed,
@@ -261,8 +261,7 @@ def f_regression(X, y, center=True):
 
     pval : array, shape=(n_features,)
         p-values of F-scores.
-    
-    
+
     
     See also
     --------
