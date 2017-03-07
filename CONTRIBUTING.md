@@ -18,7 +18,8 @@ GitHub, clone, and develop on a branch. Steps:
 
 1. Fork the [project repository](https://github.com/scikit-learn/scikit-learn)
    by clicking on the 'Fork' button near the top right of the page. This creates
-   a copy of the code under your GitHub user account.
+   a copy of the code under your GitHub user account. For more details on
+   how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
 
 2. Clone your fork of the scikit-learn repo from your GitHub account to your local disk:
 
@@ -48,9 +49,8 @@ GitHub, clone, and develop on a branch. Steps:
    $ git push -u origin my-feature
    ```
 
-5. Go to the GitHub web page of your fork of the scikit-learn repo.
-Click the 'Pull request' button to send your changes to the project's maintainers for
-review. This will send an email to the committers.
+5. Follow [these instructions](https://help.github.com/articles/creating-a-pull-request-from-a-fork)
+to create a pull request from your fork. This will send an email to the committers.
 
 (If any of the above seems like magic to you, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
