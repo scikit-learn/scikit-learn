@@ -29,6 +29,7 @@ from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
+from .imputation import MICEImputer
 
 
 __all__ = [
