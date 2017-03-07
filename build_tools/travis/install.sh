@@ -86,11 +86,9 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     source ~/testvenv/bin/activate
     pip install --upgrade pip setuptools
 
-    # We use the default Python virtualenv provided by travis
-    echo "Installing numpy master wheel"
-    pip install --pre --upgrade --no-index --timeout=60 \
-        --trusted-host travis-dev-wheels.scipy.org \
-        -f https://travis-dev-wheels.scipy.org/ numpy scipy
+    echo "Installing numpy and scipy master wheels"
+    dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
+    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy
     pip install nose nose-timer cython
 fi
 

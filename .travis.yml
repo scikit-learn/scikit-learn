@@ -12,11 +12,10 @@ cache:
 addons:
   apt:
     packages:
+      # these only required by the DISTRIB="ubuntu" builds:
+      - python-scipy
       - libatlas3gf-base
       - libatlas-dev
-      # only required by the DISTRIB="ubuntu" build:
-      - python-scipy
-
 env:
   global:
     # Directory where tests are run from
@@ -58,15 +57,8 @@ matrix:
     # This environment tests scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    # Note: libatlas3gf-base is not allowed yet so we need 'sudo':
-    # https://github.com/travis-ci/apt-package-whitelist/issues/2407
-    # Once libatlas3gf-base is on the whitelist it will be possible to replace
-    # the before_install step with and addons/apt/packages declaration.
     -  python: 3.5
        env: DISTRIB="scipy-dev-wheels"
-       sudo: True
-       before_install: sudo apt-get install -yqq libatlas3gf-base libatlas-dev
-
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh
