@@ -270,6 +270,13 @@ API changes summary
       selection classes to be used with tools such as
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+      
+   - Estimators with both methods ``decision_function`` and ``predict_proba`` 
+     are now required to have a monotonic relation between them. The 
+     method ``check_decision_proba_consistency`` has been added in 
+     **sklearn.utils.estimator_checks** to check their consistency. 
+     :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
+      
 
 .. _changes_0_18_1:
 
