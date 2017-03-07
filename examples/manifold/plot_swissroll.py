@@ -34,10 +34,10 @@ print("Done. Reconstruction error: %g" % err)
 
 fig = plt.figure()
 try:
-    # compatibility matplotlib < 1.0
     ax = fig.add_subplot(211, projection='3d')
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
 except:
+    # compatibility matplotlib < 1.0
     ax = fig.add_subplot(211)
     ax.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.Spectral)
 
