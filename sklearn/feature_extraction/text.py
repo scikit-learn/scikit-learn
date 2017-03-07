@@ -649,7 +649,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> #create document
     >>> doc_test = ['Every summer our family gathers on the beach.',
     ...             'We gather beach chairs on the beach.',
-                    'Our family gathers on the beach.',
+    ...             'Our family gathers on the beach.',
     ...             'Summer after summer we play the same games.']
     >>> vectorizer = CountVectorizer(min_df=2, stop_words='english')
     >>> X = vectorizer.fit_transform(doc_test)
