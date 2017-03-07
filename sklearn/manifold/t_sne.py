@@ -143,10 +143,12 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     # Q is a heavy-tailed distribution: Student's t-distribution
     n = pdist(X_embedded, "sqeuclidean")
-    n += 1.
+    o = n + degrees_of_freedom
     n /= degrees_of_freedom
+    n += 1.
     n **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
+    o = (degrees_of_freedom + 1) / o
 
     # Optimization trick below: np.dot(x, y) is faster than
     # np.sum(x * y) because it calls BLAS
@@ -156,12 +158,11 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     # Gradient: dC/dY
     grad = np.ndarray((n_samples, n_components))
-    PQd = squareform((P - Q) * n)
+    PQd = squareform((P - Q) * o)
     for i in range(skip_num_points, n_samples):
         np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded, out=grad[i])
     grad = grad.ravel()
-    c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
-    grad *= c
+    grad *= 2
 
     return kl_divergence, grad
 
@@ -206,8 +207,8 @@ def _kl_divergence_error(params, P, neighbors, degrees_of_freedom, n_samples,
 
     # Q is a heavy-tailed distribution: Student's t-distribution
     n = pdist(X_embedded, "sqeuclidean")
-    n += 1.
     n /= degrees_of_freedom
+    n += 1.
     n **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
 
@@ -289,7 +290,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     error = _barnes_hut_tsne.gradient(sP, X_embedded, neighbors,
                                       grad, angle, n_components, verbose,
                                       dof=degrees_of_freedom)
-    c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
+    c = 2 * (degrees_of_freedom + 1) / degrees_of_freedom
     grad = grad.ravel()
     grad *= c
 
@@ -297,7 +298,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
 
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
-                      n_iter_check=1, n_iter_without_progress=50,
+                      n_iter_check=1, n_iter_without_progress=30,
                       momentum=0.5, learning_rate=1000.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
@@ -652,7 +653,8 @@ class TSNE(BaseEstimator):
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5):
+                 random_state=None, method='barnes_hut', angle=0.5,
+                 degrees_of_freedom=1, min_error_diff=1e-7):
         if not ((isinstance(init, string_types) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
@@ -671,6 +673,11 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
+        if degrees_of_freedom is None:
+            self.degrees_of_freedom = max(self.n_components - 1.0, 1)
+        else:
+            self.degrees_of_freedom = degrees_of_freedom
+        self.min_error_diff = min_error_diff
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -738,12 +745,8 @@ class TSNE(BaseEstimator):
             raise ValueError("All distances should be positive, either "
                              "the metric or precomputed distances given "
                              "as X are not correct")
-
-        # Degrees of freedom of the Student's t-distribution. The suggestion
-        # degrees_of_freedom = n_components - 1 comes from
-        # "Learning a Parametric Embedding by Preserving Local Structure"
-        # Laurens van der Maaten, 2009.
-        degrees_of_freedom = max(self.n_components - 1.0, 1)
+        # Degrees of freedom of the Student's t-distribution.
+        degrees_of_freedom = self.degrees_of_freedom
         n_samples = X.shape[0]
         # the number of nearest neighbors to find
         k = min(n_samples - 1, int(3. * self.perplexity + 1))
@@ -831,7 +834,7 @@ class TSNE(BaseEstimator):
                     self.n_components]
             opt_args['args'] = args
             opt_args['min_grad_norm'] = 1e-3
-            opt_args['n_iter_without_progress'] = 30
+            opt_args['n_iter_without_progress'] = self.n_iter_without_progress
             # Don't always calculate the cost since that calculation
             # can be nearly as expensive as the gradient
             opt_args['objective_error'] = objective_error
@@ -841,7 +844,7 @@ class TSNE(BaseEstimator):
             obj_func = _kl_divergence
             opt_args['args'] = [P, degrees_of_freedom, n_samples,
                                 self.n_components]
-            opt_args['min_error_diff'] = 0.0
+            opt_args['min_error_diff'] = self.min_error_diff
             opt_args['min_grad_norm'] = self.min_grad_norm
 
         # Early exaggeration

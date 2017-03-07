@@ -178,13 +178,15 @@ Bug fixes
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
 
+   - Fixed a bug where :class:`sklearn.manifold.t_sne` behaved incorrectly when running
+     with n_components > 2. by :user:`Arthur Goldberg <artcg>`.
+
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
      in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
-
 
    - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
      sparse array X and initial centroids, where X's means were unnecessarily

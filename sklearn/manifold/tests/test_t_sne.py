@@ -188,25 +188,25 @@ def test_gradient():
 
     n_samples = 50
     n_features = 2
-    n_components = 2
-    alpha = 1.0
+    for n_components in [2, 4]:
+        alpha = n_components - 1
+        distances = random_state.randn(n_samples,
+                                       n_features).astype(np.float32)
+        distances = distances.dot(distances.T)
+        np.fill_diagonal(distances, 0.0)
+        X_embedded = random_state.randn(n_samples, n_components)
 
-    distances = random_state.randn(n_samples, n_features).astype(np.float32)
-    distances = distances.dot(distances.T)
-    np.fill_diagonal(distances, 0.0)
-    X_embedded = random_state.randn(n_samples, n_components)
+        P = _joint_probabilities(distances, desired_perplexity=25.0,
+                                 verbose=0)
 
-    P = _joint_probabilities(distances, desired_perplexity=25.0,
-                             verbose=0)
+        def fun(params):
+            return _kl_divergence(params, P, alpha, n_samples, n_components)[0]
 
-    def fun(params):
-        return _kl_divergence(params, P, alpha, n_samples, n_components)[0]
+        def grad(params):
+            return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
 
-    def grad(params):
-        return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
-
-    assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0,
-                        decimal=5)
+        assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0,
+                            decimal=5)
 
 
 def test_trustworthiness():
