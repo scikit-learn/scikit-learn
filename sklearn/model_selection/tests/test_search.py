@@ -603,15 +603,9 @@ def test_X_as_list():
 
     clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
     cv = KFold(n_splits=3)
-
-    for scoring in [None, 'accuracy', ['accuracy'],
-                    ['accuracy', 'recall']]:
-        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
-                                   scoring=scoring,
-                                   refit='accuracy'
-                                   if scoring and len(scoring) > 0 else True)
-        grid_search.fit(X.tolist(), y).score(X.tolist(), y)
-        assert_true(hasattr(grid_search, "cv_results_"))
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X.tolist(), y).score(X, y)
+    assert_true(hasattr(grid_search, "cv_results_"))
 
 
 def test_y_as_list():
@@ -621,15 +615,9 @@ def test_y_as_list():
 
     clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
     cv = KFold(n_splits=3)
-
-    for scoring in [None, 'accuracy', ['accuracy'],
-                    ['accuracy', 'recall']]:
-        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv,
-                                   scoring=scoring,
-                                   refit='accuracy'
-                                   if scoring and len(scoring) > 0 else True)
-        grid_search.fit(X, y.tolist()).score(X, y.tolist())
-        assert_true(hasattr(grid_search, "cv_results_"))
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X, y.tolist()).score(X, y)
+    assert_true(hasattr(grid_search, "cv_results_"))
 
 
 @ignore_warnings
