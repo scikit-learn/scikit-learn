@@ -655,17 +655,20 @@ def test_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
-    for scoring in ('adjusted_rand_score', 'fowlkes_mallows_score'):
+
+    # Multi-metric evaluation unsupervised
+    scoring = ['adjusted_rand_score', 'fowlkes_mallows_score']
+    for refit in ['adjusted_rand_score', 'fowlkes_mallows_score']:
         grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
-                                   scoring=scoring)
+                                   scoring=scoring, refit=refit)
         grid_search.fit(X, y)
         # Both ARI and FMS can find the right number :)
         assert_equal(grid_search.best_params_["n_clusters"], 3)
 
+    # Single metric evaluation unsupervised
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
                                scoring='fowlkes_mallows_score')
     grid_search.fit(X, y)
-    # So can FMS ;)
     assert_equal(grid_search.best_params_["n_clusters"], 3)
 
     # Now without a score, and without y
