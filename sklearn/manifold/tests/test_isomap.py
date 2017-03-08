@@ -125,6 +125,7 @@ def test_isomap_clone_bug():
         assert_equal(model.nbrs_.n_neighbors,
                      n_neighbors)
 
+
 def test_sparse_input():
     X = sparse_rand(100, 3, density=0.1, format='csr')
 
