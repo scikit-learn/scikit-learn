@@ -369,6 +369,7 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
+    "cohen_kappa_score",
     "confusion_matrix", # Left this one here because the tests in this file do
                         # not work for confusion_matrix, as its output is a
                         # matrix instead of a number. Testing of
@@ -888,7 +889,7 @@ def test_averaging_multiclass(n_samples=50, n_classes=3):
 
     lb = LabelBinarizer().fit(y_true)
     y_true_binarize = lb.transform(y_true)
-    y_pred_binarize = lb.transform(y_pred)
+    y_pred_binarize = lb.transform(y_pred)   
 
     for name in METRICS_WITH_AVERAGING:
         yield (_named_check(check_averaging, name), name, y_true,
@@ -1011,19 +1012,9 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                   sample_weight=np.hstack([sample_weight, sample_weight]))
 
 
-def test_sample_weight_invariance(n_samples=50):
+def generate_sample_weight_invariance(n_samples=50):
+    #create generator function to go through each relevant metric
     random_state = check_random_state(0)
-    # regression
-    y_true = random_state.random_sample(size=(n_samples,))
-    y_pred = random_state.random_sample(size=(n_samples,))
-    for name in ALL_METRICS:
-        if name not in REGRESSION_METRICS:
-            continue
-        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
-            continue
-        metric = ALL_METRICS[name]
-        yield _named_check(check_sample_weight_invariance, name), name,\
-            metric, y_true, y_pred
 
     # binary
     random_state = check_random_state(0)
@@ -1031,8 +1022,6 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
-        if name in REGRESSION_METRICS:
-            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY):
             continue
@@ -1050,8 +1039,6 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 5, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
-        if name in REGRESSION_METRICS:
-            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY_MULTICLASS):
             continue
@@ -1087,6 +1074,10 @@ def test_sample_weight_invariance(n_samples=50):
             yield (_named_check(check_sample_weight_invariance, name), name,
                    metric, y_true, y_pred)
 
+def test_sample_weight_invariance(n_samples=50):
+    #iterate through each metric in generator function
+    for metrics in generate_sample_weight_invariance(n_samples):
+        pass
 
 @ignore_warnings
 def test_no_averaging_labels():
