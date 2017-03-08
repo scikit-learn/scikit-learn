@@ -242,10 +242,7 @@ def test_nan_fit_transform():
                      gamma=settings_gamma,
                      coef0=settings_coef0)
     
-    # kpca_transform = kpca.fit_transform(data)
-    # print(kpca_transform)
-
-    
     output = assert_no_warnings(kpca.fit_transform, data)
 
     assert_false(np.isnan(output).any())
+
