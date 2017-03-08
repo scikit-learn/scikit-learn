@@ -133,6 +133,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
                     self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
                 else:
                     self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+            elif self.metric == 'precomputed':
+                raise ValueError("Ambiguous metric.")
             else:
                 if self.metric != 'euclidean':
                     warnings.warn("Averaging for metrics other than "
