@@ -126,9 +126,8 @@ def test_isomap_clone_bug():
                      n_neighbors)
 
 def test_sparse_input():
-    rand = np.random.RandomState(0)
     X = sparse_rand(100, 3, density=0.1, format='csr',
-                    dtype=np.float, random_state=rand)
+                    dtype=np.float)
 
     # Should not error
     for eigen_solver in eigen_solvers:
