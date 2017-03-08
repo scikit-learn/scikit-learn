@@ -369,7 +369,10 @@ class PCA(_BasePCA):
 
         # Handle n_components==None
         if self.n_components is None:
-            n_components = min(X.shape)
+            if self.svd_solver is not 'arpack':
+                n_components = min(X.shape)
+            else:
+                n_components = min(X.shape) - 1
         else:
             n_components = self.n_components
 
