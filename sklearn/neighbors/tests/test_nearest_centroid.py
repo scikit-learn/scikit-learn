@@ -55,6 +55,12 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
 
 
+def test_precomputed():
+    clf = NearestCentroid(metric="precomputed")
+    clf.fit(X, y)
+    S = pairwise_distances(T, clf.centroids_)
+    assert_array_equal(clf.predict(S), true_result)
+
 
 def test_iris():
     # Check consistency on dataset iris.
