@@ -13,7 +13,7 @@ import numpy as np
 
 from ..tree.tree import BaseDecisionTree
 from ..base import RegressorMixin
-from ..utils.validation import check_array, check_random_state
+from ..utils.validation import check_array, check_random_state, check_X_y
 from ..utils.random import choice
 from ..externals import six
 
@@ -215,6 +215,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         random_state = check_random_state(self.random_state)
         if check_input:
             # FIXME do not accept sparse data for the moment
+            X, y = check_X_y(X, y)
             X = check_array(X, dtype=DTYPE)
             y = check_array(y, ensure_2d=False, dtype=None)
 
@@ -521,10 +522,25 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
                     # update the dictionary with the new record
                     # add only the record if the impurity at the node is large
-                    # enough
-                    if left_sr.impurity > self.min_impurity_split:
+                    # enough and that the number of samples in the leaf and for
+                    # the split is large enough.
+
+                    # left child
+                    b_impurity = left_sr.impurity > self.min_impurity_split
+                    b_samples_split = (left_sr.c_stats.n_samples >
+                                       min_samples_split)
+                    b_samples_lead = (left_sr.c_stats.n_samples >
+                                      min_samples_leaf)
+                    if (b_impurity and b_samples_split and b_samples_lead):
                         parent_split_map.update({left_nid: left_sr})
-                    if right_sr.impurity > self.min_impurity_split:
+
+                    # right child
+                    b_impurity = right_sr.impurity > self.min_impurity_split
+                    b_samples_split = (right_sr.c_stats.n_samples >
+                                       min_samples_split)
+                    b_samples_lead = (right_sr.c_stats.n_samples >
+                                      min_samples_leaf)
+                    if (b_impurity and b_samples_split and b_samples_lead):
                         parent_split_map.update({right_nid: right_sr})
 
                     self.counter_X_nid_labels_ = np.zeros(
