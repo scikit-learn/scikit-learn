@@ -124,6 +124,11 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         check_is_fitted(self, "components_")
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
+
+        if X.min() < 0 or X.max() > 1:
+            raise ValueError('Input data must be either '
+                             'binary or probability (range 0-1)')
+
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -238,6 +243,11 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The fitted model.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
+
+        if X.min() < 0 or X.max() > 1:
+            raise ValueError('Input data must be either '
+                             'binary or probability (range 0-1)')
+
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
@@ -341,6 +351,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The fitted model.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        if X.min() < 0 or X.max() > 1:
+            raise ValueError('Input data must be either '
+                             'binary or probability (range 0-1)')
+
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 

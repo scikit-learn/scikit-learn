@@ -4,7 +4,7 @@ import re
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
 from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
-                                   assert_true)
+                                   assert_true, assert_raises)
 
 from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -192,3 +192,19 @@ def test_transform():
     Xt2 = rbm1._mean_hiddens(X)
 
     assert_array_equal(Xt1, Xt2)
+
+
+def test_valid_input():
+    rbm1 = BernoulliRBM()
+    X = Xdigits[:100]
+
+    # test probability and test binary data
+    for Xin in [X, X > 0.5]:
+        rbm1.fit(X)
+        rbm1.fit_transform(X)
+        rbm1.transform(X)
+
+    X = np.random.uniform(low=1.1, high=100.0, size=(100, 64))
+    assert_raises(ValueError, rbm1.fit, X)
+    assert_raises(ValueError, rbm1.fit_transform, X)
+    assert_raises(ValueError, rbm1.transform, X)
