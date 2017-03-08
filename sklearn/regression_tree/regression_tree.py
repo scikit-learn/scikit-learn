@@ -367,6 +367,12 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
+        if max_depth <= 10:
+            init_capacity = (2 ** (max_depth + 1)) - 1
+        else:
+            init_capacity = 2047
+        self.tree_._resize_py(init_capacity)
+
         weighted_n_samples = np.sum(sample_weight)
 
         # initialize the number of splitter
@@ -527,18 +533,18 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
                     # left child
                     b_impurity = left_sr.impurity > self.min_impurity_split
-                    b_samples_split = (left_sr.c_stats.n_samples >
+                    b_samples_split = (left_sr.c_stats.n_samples >=
                                        min_samples_split)
-                    b_samples_lead = (left_sr.c_stats.n_samples >
+                    b_samples_lead = (left_sr.c_stats.n_samples >=
                                       min_samples_leaf)
                     if (b_impurity and b_samples_split and b_samples_lead):
                         parent_split_map.update({left_nid: left_sr})
 
                     # right child
                     b_impurity = right_sr.impurity > self.min_impurity_split
-                    b_samples_split = (right_sr.c_stats.n_samples >
+                    b_samples_split = (right_sr.c_stats.n_samples >=
                                        min_samples_split)
-                    b_samples_lead = (right_sr.c_stats.n_samples >
+                    b_samples_lead = (right_sr.c_stats.n_samples >=
                                       min_samples_leaf)
                     if (b_impurity and b_samples_split and b_samples_lead):
                         parent_split_map.update({right_nid: right_sr})
