@@ -112,7 +112,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} shape (n_samples, n_features)
-            The data to be transformed.
+            The data to be transformed. Data must be binary values or
+            values between 0 and 1, each encoding the probability
+            that the specific feature would be turned on.
 
         Returns
         -------
@@ -226,7 +228,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data.
+            Training data. Data must be binary values or
+            values between 0 and 1, each encoding the probability
+            that the specific feature would be turned on.
 
         Returns
         -------
@@ -327,7 +331,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} shape (n_samples, n_features)
-            Training data.
+            Training data. Data must be binary values or
+            values between 0 and 1, each encoding the probability
+            that the specific feature would be turned on.
 
         Returns
         -------
