@@ -671,6 +671,9 @@ cdef class Tree:
             with gil:
                 raise MemoryError()
 
+    cpdef int _resize_c_py(self, SIZE_t capacity=<SIZE_t>(-1)):
+        return self._resize_c(capacity)
+
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
     cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except -1:

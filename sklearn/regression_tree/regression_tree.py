@@ -612,4 +612,10 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
             current_depth += 1
 
+        # shrink the tree to the node count only
+        rc = self.tree_._resize_c_py(self.tree_.node_count)
+
+        if rc >= 0:
+            self.tree_.max_depth = current_depth
+
         return self

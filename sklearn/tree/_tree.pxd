@@ -71,6 +71,7 @@ cdef class Tree:
                           SIZE_t n_node_samples,
                           double weighted_n_samples) nogil except -1
     cdef int _resize(self, SIZE_t capacity) nogil except -1
+    cpdef int _resize_c_py(self, SIZE_t capacity=*)
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
     cdef np.ndarray _get_value_ndarray(self)
