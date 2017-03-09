@@ -7,7 +7,7 @@ documentation, testing, and filing issues.** Visit the [**Contributing
 page**](http://scikit-learn.org/stable/developers/index.html)
 for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
-likelihood of your contribution being merged.**
+likelihood of your contribution being merged.
 
 How to contribute
 -----------------
