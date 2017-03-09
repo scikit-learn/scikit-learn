@@ -369,11 +369,11 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
-    "confusion_matrix", # Left this one here because the tests in this file do
-                        # not work for confusion_matrix, as its output is a
-                        # matrix instead of a number. Testing of
-                        # confusion_matrix with sample_weight is in
-                        # test_classification.py
+    "confusion_matrix",  # Left this one here because the tests in this file do
+                         # not work for confusion_matrix, as its output is a
+                         # matrix instead of a number. Testing of
+                         # confusion_matrix with sample_weight is in
+                         # test_classification.py
     "median_absolute_error",
 ]
 
@@ -619,9 +619,9 @@ def test_invariance_string_vs_numbers_labels():
 
 
 def test_inf_nan_input():
-    invalids =[([0, 1], [np.inf, np.inf]),
-               ([0, 1], [np.nan, np.nan]),
-               ([0, 1], [np.nan, np.inf])]
+    invalids = [([0, 1], [np.inf, np.inf]),
+                ([0, 1], [np.nan, np.nan]),
+                ([0, 1], [np.nan, np.inf])]
 
     METRICS = dict()
     METRICS.update(THRESHOLDED_METRICS)
@@ -1088,11 +1088,12 @@ def generate_sample_weight_invariance(n_samples=50):
             yield (_named_check(check_sample_weight_invariance, name), name,
                    metric, y_true, y_pred)
 
+
 def test_sample_weight_invariance(n_samples=50):
     # iterate through each metric testing each case
-
     for metrics in generate_sample_weight_invariance(n_samples):
         pass
+
 
 @ignore_warnings
 def test_no_averaging_labels():
