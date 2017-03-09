@@ -38,7 +38,7 @@ def test_neighbors_accuracy_with_n_candidates():
     X = rng.rand(n_samples, n_features)
 
     for i, n_candidates in enumerate(n_candidates_values):
-        lshf = LSHForest(n_candidates=n_candidates)
+        lshf = LSHForest(n_candidates=n_candidates,random_state=42)
         ignore_warnings(lshf.fit)(X)
         for j in range(n_iter):
             query = X[rng.randint(0, n_samples)].reshape(1, -1)

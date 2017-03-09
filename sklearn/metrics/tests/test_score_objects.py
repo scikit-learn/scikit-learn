@@ -180,11 +180,11 @@ def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
+    grid = GridSearchCV(LinearSVC(random_state=42), param_grid={'C': [.1, 1]})
     scorer = check_scoring(grid, "f1")
     assert_true(isinstance(scorer, _PredictScorer))
 
-    pipe = make_pipeline(LinearSVC())
+    pipe = make_pipeline(LinearSVC(random_state=42))
     scorer = check_scoring(pipe, "f1")
     assert_true(isinstance(scorer, _PredictScorer))
 
@@ -252,7 +252,7 @@ def test_regression_scorers():
     diabetes = load_diabetes()
     X, y = diabetes.data, diabetes.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = Ridge()
+    clf = Ridge(random_state=42)
     clf.fit(X_train, y_train)
     score1 = get_scorer('r2')(clf, X_test, y_test)
     score2 = r2_score(y_test, clf.predict(X_test))
@@ -276,14 +276,14 @@ def test_thresholded_scorers():
     assert_almost_equal(-logscore, logloss)
 
     # same for an estimator without decision_function
-    clf = DecisionTreeClassifier()
+    clf = DecisionTreeClassifier(random_state=42)
     clf.fit(X_train, y_train)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
 
     # test with a regressor (no decision_function)
-    reg = DecisionTreeRegressor()
+    reg = DecisionTreeRegressor(random_state=42)
     reg.fit(X_train, y_train)
     score1 = get_scorer('roc_auc')(reg, X_test, y_test)
     score2 = roc_auc_score(y_test, reg.predict(X_test))
@@ -304,7 +304,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     # Multi-output multi-class predict_proba
-    clf = DecisionTreeClassifier()
+    clf = DecisionTreeClassifier(random_state=42)
     clf.fit(X_train, y_train)
     y_proba = clf.predict_proba(X_test)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
@@ -313,7 +313,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
     # Multi-output multi-class decision_function
     # TODO Is there any yet?
-    clf = DecisionTreeClassifier()
+    clf = DecisionTreeClassifier(random_state=42)
     clf.fit(X_train, y_train)
     clf._predict_proba = clf.predict_proba
     clf.predict_proba = None
@@ -325,7 +325,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
     # Multilabel predict_proba
-    clf = OneVsRestClassifier(DecisionTreeClassifier())
+    clf = OneVsRestClassifier(DecisionTreeClassifier(random_state=42))
     clf.fit(X_train, y_train)
     score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.predict_proba(X_test))
@@ -343,7 +343,7 @@ def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    km = KMeans(n_clusters=3)
+    km = KMeans(n_clusters=3,random_state=42)
     km.fit(X_train)
     for name in CLUSTER_SCORERS:
         score1 = get_scorer(name)(km, X_test, y_test)
@@ -356,7 +356,7 @@ def test_raises_on_score_list():
     # Test that when a list of scores is returned, we raise proper errors.
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
-    clf = DecisionTreeClassifier()
+    clf = DecisionTreeClassifier(random_state=42)
     assert_raises(ValueError, cross_val_score, clf, X, y,
                   scoring=f1_scorer_no_average)
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
@@ -448,10 +448,10 @@ def test_deprecated_names():
 
 def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         LogisticRegression(), f1_score)
+                         LogisticRegression(random_state=42), f1_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         LogisticRegression(), roc_auc_score)
+                         LogisticRegression(random_state=42), roc_auc_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         Ridge(), r2_score)
+                         Ridge(random_state=42), r2_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         KMeans(), cluster_module.adjusted_rand_score)
+                         KMeans(random_state=42), cluster_module.adjusted_rand_score)

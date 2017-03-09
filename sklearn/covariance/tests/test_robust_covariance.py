@@ -50,7 +50,7 @@ def test_fast_mcd_on_invalid_input():
 
 def test_mcd_class_on_invalid_input():
     X = np.arange(100)
-    mcd = MinCovDet()
+    mcd = MinCovDet(random_state=42)
     assert_raise_message(ValueError, 'Got X with X.ndim=1',
                          mcd.fit, X)
 
@@ -88,14 +88,14 @@ def test_mcd_issue1127():
     # (i.e. n_support = n_samples)
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(3, 1))
-    mcd = MinCovDet()
+    mcd = MinCovDet(random_state=42)
     mcd.fit(X)
 
 
 def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
-    clf = EllipticEnvelope(contamination=0.1)
+    clf = EllipticEnvelope(contamination=0.1,random_state=42)
     assert_raises(NotFittedError, clf.predict, X)
     assert_raises(NotFittedError, clf.decision_function, X)
     clf.fit(X)
