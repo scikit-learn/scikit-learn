@@ -1,32 +1,35 @@
 from __future__ import division
+
 import numpy as np
 import scipy.sparse as sp
-from sklearn.utils import shuffle
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.exceptions import NotFittedError
+
 from sklearn import datasets
 from sklearn.base import clone
+from sklearn.datasets import fetch_mldata
+from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
+from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import MultiOutputRegressor
-from sklearn.multioutput import MultiOutputClassifier
-from sklearn.multioutput import ClassifierChain
-
 from sklearn.metrics import jaccard_similarity_score
-from sklearn.datasets import make_classification
+from sklearn.model_selection import train_test_split
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multioutput import ClassifierChain
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.svm import LinearSVC
+from sklearn.utils import shuffle
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 
 
 def test_multi_target_regression():
@@ -473,3 +476,27 @@ def test_classifier_chain_crossval_fit_and_predict():
 
     assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv),
                      jaccard_similarity_score(Y, Y_pred))
+
+
+def test_classifier_chain_vs_independent_models():
+    """Verify that an ensemble of classifier chains (each of length
+    N) achieves a higher Jaccard similarity score than N independent models"""
+    yeast = fetch_mldata('yeast')
+    X = yeast['data']
+    Y = yeast['target'].transpose().toarray()
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.5)
+
+    ovr = OneVsRestClassifier(LogisticRegression())
+    ovr.fit(X_train, Y_train)
+    Y_pred_ovr = ovr.predict(X_test)
+
+    chains = [ClassifierChain(LogisticRegression(), order='random')
+              for _ in range(10)]
+
+    for chain in chains:
+        chain.fit(X_train, Y_train)
+
+    Y_pred_ensemble = np.array([chain.predict(X_test) for chain in
+                                chains]).mean(axis=0)
+    assert_greater(jaccard_similarity_score(Y_test, Y_pred_ensemble >= .5),
+                   jaccard_similarity_score(Y_test, Y_pred_ovr))
