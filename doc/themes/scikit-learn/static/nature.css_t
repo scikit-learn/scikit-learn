@@ -233,6 +233,16 @@ input.gsc-search-button {
     background-color: #ff9c34 !important;
 }
 
+a.gs-title, a.gs-title > b{
+    color: blue !important;
+}
+
+.gsc-results .gsc-cursor-box .gsc-cursor-current-page {
+    border-color: white !important;
+    background-color: #ff9c34 !important;
+    color: white !important;
+}
+
 /*---------------------------------------------------------------*/
 
 .quote {
