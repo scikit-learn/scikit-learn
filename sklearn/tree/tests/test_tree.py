@@ -334,7 +334,7 @@ def test_pure_set():
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(random_state=0)
         reg.fit(X, y)
-        assert_almost_equal(clf.predict(X), y,
+        assert_almost_equal(reg.predict(X), y,
                             err_msg="Failed with {0}".format(name))
 
 
