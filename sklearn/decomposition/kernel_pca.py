@@ -263,7 +263,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # Ensure root of zero is not evaluated as nan
 
         with np.errstate(all='ignore'):
-            X_transformed = self.alphas_ * np.nan_to_num(np.sqrt(self.lambdas_))
+            X_transformed = self.alphas_*np.nan_to_num(np.sqrt(self.lambdas_))
 
         if self.fit_inverse_transform:
             self._fit_inverse_transform(X_transformed, X)
