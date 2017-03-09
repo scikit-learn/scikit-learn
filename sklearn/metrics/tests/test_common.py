@@ -1012,7 +1012,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 
 def generate_sample_weight_invariance(n_samples=50):
-    #create generative function to iterate through each relevant metric 
+    # create generative function to iterate through each relevant metric
     random_state = check_random_state(0)
     # regression
     y_true = random_state.random_sample(size=(n_samples,))
@@ -1089,6 +1089,8 @@ def generate_sample_weight_invariance(n_samples=50):
                    metric, y_true, y_pred)
 
 def test_sample_weight_invariance(n_samples=50):
+    # iterate through each metric testing each case
+
     for metrics in generate_sample_weight_invariance(n_samples):
         pass
 
