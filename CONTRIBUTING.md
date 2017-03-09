@@ -4,7 +4,7 @@ Contributing to scikit-learn
 
 **Note: This document is a 'getting started' summary for contributing code,
 documentation, testing, and filing issues.** Visit the [**Contributing
-page**](http://scikit-learn.org/stable/developers/index.html)
+page**](http://scikit-learn.org/stable/developers/contributing.html)
 for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
 likelihood of your contribution being merged.
