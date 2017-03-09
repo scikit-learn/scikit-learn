@@ -213,6 +213,8 @@ div.navbar div.nav-icon {
 
 #cse .gsc-clear-button {
     width: 50px;
+    position: relative;
+    top: -2px;
 }
 
 .gsc-branding {
@@ -224,7 +226,10 @@ form.gsc-search-box {
 }
 
 input.gsc-search-button {
-    border-color: #336699 !important;
+    position: relative;
+    top: -4px;
+    border-radius: 5px !important;
+    border-color: #FFFFFF !important;
     background-color: #ff9c34 !important;
 }
 
