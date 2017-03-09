@@ -445,7 +445,7 @@ class ClassifierChain(BaseEstimator):
         random_state = check_random_state(self.random_state)
 
         if self.order is None:
-            self.order = list(range(Y.shape[1]))
+            self.order = np.array(range(Y.shape[1]))
         elif self.order == 'random':
             self.order = random_state.permutation(Y.shape[1])
         elif sorted(self.order) != list(range(Y.shape[1])):
@@ -462,7 +462,7 @@ class ClassifierChain(BaseEstimator):
             Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
 
         if sp.issparse(X):
-            X_aug = sp.hstack((X, Y_pred_chain), format='csr')
+            X_aug = sp.hstack((X, Y_pred_chain), format='lil')
         else:
             X_aug = np.hstack((X, Y_pred_chain))
 
@@ -470,8 +470,14 @@ class ClassifierChain(BaseEstimator):
             y = Y[:, self.order[chain_idx]]
             estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
             if self.cv is not None:
-                Y_pred_chain[:, chain_idx] = cross_val_predict(
-                    self.base_estimator, X, y=y, cv=self.cv)
+                col_idx = X.shape[1] + chain_idx
+                cv_result = cross_val_predict(
+                    self.base_estimator, X_aug[:, :col_idx],
+                    y=y, cv=self.cv)
+                if sp.issparse(X_aug):
+                    X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
+                else:
+                    X_aug[:, col_idx] = cv_result
 
             self.classes_.append(estimator.classes_)
 
@@ -498,7 +504,9 @@ class ClassifierChain(BaseEstimator):
             else:
                 X_aug = np.hstack((X, previous_predictions))
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-        chain_key = [self.order.index(i) for i in range(len(self.order))]
+        chain_key = [np.where(self.order == i)[0][0]
+                     for i in range(len(self.order))]
+
         Y_pred = Y_pred_chain[:, chain_key]
 
         return Y_pred
@@ -529,7 +537,8 @@ class ClassifierChain(BaseEstimator):
                 X_aug = np.hstack((X, previous_predictions))
             Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-        chain_key = [self.order.index(i) for i in range(len(self.order))]
+        chain_key = [np.where(self.order == i)[0][0]
+                     for i in range(len(self.order))]
         Y_prob = Y_prob_chain[:, chain_key]
 
         return Y_prob
@@ -562,7 +571,8 @@ class ClassifierChain(BaseEstimator):
                 X_aug = np.hstack((X, previous_predictions))
             Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-        chain_key = [self.order.index(i) for i in range(len(self.order))]
+        chain_key = [np.where(self.order == i)[0][0]
+                     for i in range(len(self.order))]
         Y_decision = Y_decision_chain[:, chain_key]
 
         return Y_decision

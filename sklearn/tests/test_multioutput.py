@@ -26,6 +26,7 @@ from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import ClassifierChain
 
 from sklearn.metrics import jaccard_similarity_score
+from sklearn.datasets import make_classification
 
 
 def test_multi_target_regression():
@@ -343,35 +344,43 @@ def test_multi_output_exceptions():
     assert_raises(ValueError, moc.score, X, y_new)
 
 
+def generate_multilabel_dataset_with_correlations():
+    """Generate a multilabel data set from a multiclass dataset as a way of
+    by representing the integer number of the original class using a binary
+    encoding."""
+    X, y = make_classification(n_samples=10000,
+                               n_features=100,
+                               n_classes=16,
+                               n_informative=10)
+
+    Y_multi = np.array([[int(yyy) for yyy in format(yy, '#06b')[2:]]
+                        for yy in y])
+    return X, Y_multi
+
+
 def test_classifier_chain_fit_and_predict():
     """Fit classifier chain and verify predict performance"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X, Y)
     Y_pred = classifier_chain.predict(X)
     assert_equal(Y_pred.shape, Y.shape)
-    assert_greater(jaccard_similarity_score(Y, Y_pred), 0.5)
+    assert_greater(jaccard_similarity_score(Y, Y_pred), 0.4)
 
 
 def test_classifier_chain_fit_and_predict_with_linear_svc():
     """Fit classifier chain and verify predict performance using LinearSVC"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(LinearSVC())
     classifier_chain.fit(X, Y)
     Y_pred = classifier_chain.predict(X)
     assert_equal(Y_pred.shape, Y.shape)
-    assert_greater(jaccard_similarity_score(Y, Y_pred), 0.5)
+    assert_greater(jaccard_similarity_score(Y, Y_pred), 0.4)
 
 
 def test_classifier_chain_fit_and_predict_proba():
     """Fit classifier chain and verify predict_proba performance"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X, Y)
 
@@ -379,28 +388,24 @@ def test_classifier_chain_fit_and_predict_proba():
     assert_equal(Y_prob.shape, Y.shape)
 
     Y_pred_binary = (Y_prob >= .5)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.4)
 
 
 def test_classifier_chain_fit_and_decision_function():
     """Fit classifier chain and verify decision_function performance"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(LinearSVC())
     classifier_chain.fit(X, Y)
     Y_decision = classifier_chain.decision_function(X)
     assert_equal(Y_decision.shape, Y.shape)
 
     Y_pred_binary = (Y_decision >= 0)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.5)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.4)
 
 
 def test_classifier_chain_fit_and_predict_with_sparse_data():
     """Fit classifier chain with sparse data"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
 
     X_sparse = sp.csr_matrix(X)
     classifier_chain = ClassifierChain(LogisticRegression())
@@ -411,10 +416,7 @@ def test_classifier_chain_fit_and_predict_with_sparse_data():
 
 def test_classifier_chain_fit_and_predict_with_sparse_data_and_cv():
     """Fit classifier chain with sparse data cross_val_predict"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
-
+    X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = sp.csr_matrix(X)
     classifier_chain = ClassifierChain(LogisticRegression(), cv=3)
     classifier_chain.fit(X_sparse, Y)
@@ -424,23 +426,19 @@ def test_classifier_chain_fit_and_predict_with_sparse_data_and_cv():
 
 def test_classifier_chain_random_order():
     """Fit classifier chain with random order"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(LogisticRegression(),
                                        order='random')
     classifier_chain.fit(X, Y)
-    assert_not_equal(list(classifier_chain.order), list(range(10)))
-    assert_equal(len(classifier_chain.order), 10)
-    assert_equal(len(set(classifier_chain.order)), 10)
+    assert_not_equal(list(classifier_chain.order), list(range(4)))
+    assert_equal(len(classifier_chain.order), 4)
+    assert_equal(len(set(classifier_chain.order)), 4)
 
 
 def test_classifier_chain_parameter_and_output_sizes():
     """Test classifier chain parameter and output sizes"""
 
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X, Y)
 
@@ -460,9 +458,7 @@ def test_classifier_chain_parameter_and_output_sizes():
 def test_classifier_chain_crossval_fit_and_predict():
     """Fit classifier chain with cross_val_predict and verify predict
     performance"""
-    X, Y = datasets.make_multilabel_classification(n_samples=10000,
-                                                   n_features=100,
-                                                   n_classes=10)
+    X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain_cv = ClassifierChain(LogisticRegression(), cv=3)
     classifier_chain_cv.fit(X, Y)
 
@@ -473,7 +469,7 @@ def test_classifier_chain_crossval_fit_and_predict():
     Y_pred = classifier_chain.predict(X)
 
     assert_equal(Y_pred_cv.shape, Y.shape)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_cv), 0.5)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_cv), 0.4)
 
     assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv),
                      jaccard_similarity_score(Y, Y_pred))

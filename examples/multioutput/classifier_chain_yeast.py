@@ -32,7 +32,8 @@ print("Independent models Jaccard similarity score:",
 
 # Fit an ensemble of logistic regression classifier chains and take the
 # take the average prediction of all the chains
-chains = [ClassifierChain(LogisticRegression()) for i in range(10)]
+chains = [ClassifierChain(LogisticRegression(), order='random')
+          for i in range(10)]
 for chain in chains:
     chain.fit(X_train, Y_train)
 Y_pred_ensemble = np.array([chain.predict(X_test) for chain in
