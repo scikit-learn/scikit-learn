@@ -14,20 +14,20 @@ extends single output estimators to multioutput estimators.
 #
 # License: BSD 3 clause
 
+from abc import ABCMeta
+
 import numpy as np
 import scipy.sparse as sp
 
-from abc import ABCMeta
 from .base import BaseEstimator, clone
 from .base import RegressorMixin, ClassifierMixin
+from .externals import six
+from .externals.joblib import Parallel, delayed
+from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
-from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.metaestimators import if_delegate_has_method
-from .externals.joblib import Parallel, delayed
-from .externals import six
-from .model_selection import cross_val_predict
-
+from .utils.validation import check_is_fitted, has_fit_parameter
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain"]
 
@@ -376,20 +376,17 @@ class ClassifierChain(BaseEstimator):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
+    order : array-like, shape=[n_outputs] or 'random', optional
+        By default the order will be determined by the order of columns in
+        the label matrix Y.
+            order = [0, 1, 2, ..., Y.shape[1] - 1]
 
-    order : list of integers, None, or 'random'
         The order of the chain can be explicitly set by providing a list of
         integers. For example, for a chain of length 5
             order = [1, 3, 2, 4, 0]
         means that the first model in the chain will make predictions for
         column 1 in the Y matrix, the second model will make predictions
         for column 3, etc.
-
-        If order is None the order will be determined by the
-        order of columns in the label matrix Y.
-            order = [0, 1, 2, ..., Y.shape[1] - 1]
 
         If order is 'random' a random ordering will be used.
 
@@ -401,6 +398,9 @@ class ClassifierChain(BaseEstimator):
             integer, to specify the number of folds in a (Stratified)KFold,
             An object to be used as a cross-validation generator.
             An iterable yielding train, test splits.
+
+    random_state : int or RandomState, optional, default None
+        State or seed for random number generator.
 
     Attributes
     ----------
@@ -422,11 +422,12 @@ class ClassifierChain(BaseEstimator):
 
     """
 
-    def __init__(self, base_estimator, random_state=None, order=None, cv=None):
+    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
-        self.random_state = random_state
         self.order = order
         self.cv = cv
+        self.random_state = random_state
+
 
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
@@ -441,6 +442,10 @@ class ClassifierChain(BaseEstimator):
         self : object
             Returns self.
         """
+
+        X, Y = check_X_y(X, Y,
+                         multi_output=True,
+                         accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
 
@@ -505,10 +510,11 @@ class ClassifierChain(BaseEstimator):
             else:
                 X_aug = np.hstack((X, previous_predictions))
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-        chain_key = [np.where(self.order == i)[0][0]
-                     for i in range(len(self.order))]
 
-        Y_pred = Y_pred_chain[:, chain_key]
+
+        inv_order = np.empty_like(self.order)
+        inv_order[self.order] = np.arange(len(self.order))
+        Y_pred = Y_pred_chain[:, inv_order]
 
         return Y_pred
 
@@ -538,9 +544,9 @@ class ClassifierChain(BaseEstimator):
                 X_aug = np.hstack((X, previous_predictions))
             Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-        chain_key = [np.where(self.order == i)[0][0]
-                     for i in range(len(self.order))]
-        Y_prob = Y_prob_chain[:, chain_key]
+        inv_order = np.empty_like(self.order)
+        inv_order[self.order] = np.arange(len(self.order))
+        Y_prob = Y_prob_chain[:, inv_order]
 
         return Y_prob
 
@@ -572,8 +578,9 @@ class ClassifierChain(BaseEstimator):
                 X_aug = np.hstack((X, previous_predictions))
             Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-        chain_key = [np.where(self.order == i)[0][0]
-                     for i in range(len(self.order))]
-        Y_decision = Y_decision_chain[:, chain_key]
+
+        inv_order = np.empty_like(self.order)
+        inv_order[self.order] = np.arange(len(self.order))
+        Y_decision = Y_decision_chain[:, inv_order]
 
         return Y_decision
