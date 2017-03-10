@@ -68,11 +68,7 @@ plt.suptitle("Manifold Learning with %i points, %i neighbors"
 
 ax = fig.add_subplot(251, projection='3d')
 ax.scatter(x, y, z, c=p[indices], cmap=plt.cm.rainbow)
-try:
-    # compatibility matplotlib < 1.0
-    ax.view_init(40, -10)
-except:
-    pass
+ax.view_init(40, -10)
 
 sphere_data = np.array([x, y, z]).T
 
