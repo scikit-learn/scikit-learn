@@ -400,7 +400,8 @@ class ClassifierChain(BaseEstimator):
             An iterable yielding train, test splits.
 
     random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
+        State or seed for random number generator used to generate random
+        chain orders.
 
     Attributes
     ----------
