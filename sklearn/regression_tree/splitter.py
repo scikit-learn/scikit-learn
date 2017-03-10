@@ -119,8 +119,8 @@ class Splitter(object):
         b_n_samples = not (
             self.split_record.l_stats.n_samples <
             self.min_samples_leaf or
-            (self.split_record.r_stats.n_samples <
-             self.min_samples_leaf))
+            self.split_record.r_stats.n_samples <
+            self.min_samples_leaf)
 
         # check that the weights corresponding to samples is great enough
         b_weight_samples = not(

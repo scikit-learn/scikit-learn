@@ -14,7 +14,6 @@ import numpy as np
 from ..tree.tree import BaseDecisionTree
 from ..base import RegressorMixin
 from ..utils.validation import check_array, check_random_state, check_X_y
-from ..utils.random import choice
 from ..externals import six
 
 from .splitter import Splitter
@@ -438,10 +437,6 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                             for i, nid in enumerate(expandable_nids)}
 
             # Create an array from where to select randomly the feature
-            # shuffled_feature_idx = choice(np.arange(X.shape[1]),
-            #                               size=self.max_features_,
-            #                               replace=False,
-            #                               random_state=random_state)
             shuffled_feature_idx = random_state.permutation(
                 np.arange(X.shape[1]))
 
@@ -494,6 +489,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                     n_visited_feature += 1
 
             feature_update_X_nid = []
+            b_grow = False
             for nid in expandable_nids:
                 # store the feature to visit for the update of X_nid
                 feature_update_X_nid.append(split_record_map[nid].feature)
@@ -533,6 +529,9 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         weighted_n_node_samples=right_sr.c_stats.sum_weighted_samples,
                         node_value=(right_sr.c_stats.sum_y /
                                     right_sr.c_stats.sum_weighted_samples))
+
+                    # the depth has changed
+                    b_grow = True
 
                     # Update the parent node with the found best split
                     self.tree_._update_node_py(
@@ -574,6 +573,10 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                 # we can flush the data from the parent_split_map for the
                 # current node
                 del parent_split_map[nid]
+
+            # the depth increased
+            if b_grow:
+                current_depth += 1
 
             # update of the expandable nodes
             expandable_nids = list(parent_split_map.keys())
@@ -634,8 +637,6 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                                         else:
                                             X_nid_tmp[X_idx] = -1
                 X_nid = X_nid_tmp
-
-            current_depth += 1
 
         # shrink the tree to the node count only
         rc = self.tree_._resize_c_py(self.tree_.node_count)

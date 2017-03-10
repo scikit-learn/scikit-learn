@@ -74,7 +74,6 @@ ALL_TREES.update(REG_TREES)
 SPARSE_TREES = ["DecisionTreeClassifier", "DecisionTreeRegressor",
                 "ExtraTreeClassifier", "ExtraTreeRegressor"]
 
-
 X_small = np.array([
     [0, 0, 4, 0, 0, 0, 1, -14, 0, -4, 0, 0, 0, 0, ],
     [0, 0, 5, 3, 0, -4, 0, 0, 1, -5, 0.2, 0, 4, 1, ],
@@ -336,7 +335,7 @@ def test_pure_set():
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(random_state=0)
         reg.fit(X, y)
-        assert_almost_equal(clf.predict(X), y,
+        assert_almost_equal(reg.predict(X), y,
                             err_msg="Failed with {0}".format(name))
 
 
@@ -913,10 +912,11 @@ def test_multioutput():
 
     # toy regression problem
     for name, TreeRegressor in REG_TREES.items():
-        reg = TreeRegressor(random_state=0)
-        y_hat = reg.fit(X, y).predict(T)
-        assert_almost_equal(y_hat, y_true)
-        assert_equal(y_hat.shape, (4, 2))
+        if name != 'RegressionTree':
+            reg = TreeRegressor(random_state=0)
+            y_hat = reg.fit(X, y).predict(T)
+            assert_almost_equal(y_hat, y_true)
+            assert_equal(y_hat.shape, (4, 2))
 
 
 def test_classes_shape():
@@ -1144,17 +1144,19 @@ def test_max_leaf_nodes():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-        tree = est.tree_
-        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
+        # RegressionTree does not have max_leaf_nodes option for the moment
+        if name != 'RegressionTree':
+            est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
+            tree = est.tree_
+            assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
 
-        # max_leaf_nodes in (0, 1) should raise ValueError
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
-        assert_raises(ValueError, est.fit, X, y)
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
-        assert_raises(ValueError, est.fit, X, y)
-        est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
-        assert_raises(ValueError, est.fit, X, y)
+            # max_leaf_nodes in (0, 1) should raise ValueError
+            est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
+            assert_raises(ValueError, est.fit, X, y)
+            est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
+            assert_raises(ValueError, est.fit, X, y)
+            est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
+            assert_raises(ValueError, est.fit, X, y)
 
 
 def test_max_leaf_nodes_max_depth():
@@ -1162,9 +1164,11 @@ def test_max_leaf_nodes_max_depth():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        tree = est.tree_
-        assert_greater(tree.max_depth, 1)
+        # RegressionTree does not have max_leaf_nodes option for the moment
+        if name != 'RegressionTree':
+            est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+            tree = est.tree_
+            assert_greater(tree.max_depth, 1)
 
 
 def test_arrays_persist():
@@ -1582,8 +1586,7 @@ def check_decision_path(name):
 
 def test_decision_path():
     for name in ALL_TREES:
-        if name != 'RegressionTree':
-            yield (check_decision_path, name)
+        yield (check_decision_path, name)
 
 
 def check_no_sparse_y_support(name):
@@ -1595,7 +1598,8 @@ def check_no_sparse_y_support(name):
 def test_no_sparse_y_support():
     # Currently we don't support sparse y
     for name in ALL_TREES:
-        yield (check_no_sparse_y_support, name)
+        if name != 'RegressionTree':
+            yield (check_no_sparse_y_support, name)
 
 
 def test_mae():
