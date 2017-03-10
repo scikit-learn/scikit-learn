@@ -27,6 +27,22 @@ from .utils.validation import check_memory
 __all__ = ['Pipeline', 'FeatureUnion']
 
 
+def _pretty_print(step_info):
+    """Helper method to print the information about execution of a particular
+    step of Pipeline / FeatureUnion (if verbosity is enabled). It receives a
+    string having information about current step and prints it in such a way
+    that its length is 70 characters.
+
+    Parameters
+    ----------
+    step_info : str
+        String of form '[ClassName] (step x of y) step_name ... time_elapsed'
+
+    """
+    name, elapsed = step_info.split('...')
+    print('%s%s%s' % (name, '.' * (70 - len(name + elapsed)), elapsed))
+
+
 class _BasePipeline(six.with_metaclass(ABCMeta, _BaseComposition)):
     """Handles parameter management for classifiers composed of named steps.
     """
@@ -231,13 +247,12 @@ class Pipeline(_BasePipeline):
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
-    def _print_final_step(self, start_time, time_elapsed_so_far):
-        time_elapsed = time.time() - start_time
-        time_elapsed_so_far += time_elapsed
-        print('[Pipeline] (step %d of %d) %s ... %.5fs' %
-              (len(self.steps), len(self.steps), self.steps[-1][0],
-               time_elapsed_so_far))
-        print('[Pipeline] Total time elapsed: %.5fs' % time_elapsed_so_far)
+    def _print_final_step(self, final_step_time_elapsed, time_elapsed_so_far):
+        _pretty_print('[Pipeline] (step %d of %d) %s ... %.5fs' %
+                      (len(self.steps), len(self.steps), self.steps[-1][0],
+                       final_step_time_elapsed))
+        _pretty_print('[Pipeline] Total time elapsed: ... %.5fs' %
+                      time_elapsed_so_far)
 
     @property
     def _estimator_type(self):
@@ -293,8 +308,9 @@ class Pipeline(_BasePipeline):
             time_elapsed_so_far += step_time_elapsed
             # Logging time elapsed for current step to stdout
             if self.verbose:
-                print('[Pipeline] (step %d of %d) %s ... %.5fs' %
-                      (step_idx + 1, len(self.steps), name, step_time_elapsed))
+                _pretty_print('[Pipeline] (step %d of %d) %s ... %.5fs' %
+                              (step_idx + 1, len(self.steps), name,
+                               step_time_elapsed))
         if self._final_estimator is None:
             return Xt, {}, time_elapsed_so_far
         return Xt, fit_params_steps[self.steps[-1][0]], time_elapsed_so_far
@@ -329,8 +345,11 @@ class Pipeline(_BasePipeline):
         final_step_start_time = time.time()
         if self._final_estimator is not None:
             self._final_estimator.fit(Xt, y, **fit_params)
+        final_step_time_elapsed = time.time() - final_step_start_time
+        time_elapsed_so_far += final_step_time_elapsed
         if self.verbose:
-            self._print_final_step(final_step_start_time, time_elapsed_so_far)
+            self._print_final_step(final_step_time_elapsed,
+                                   time_elapsed_so_far)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -365,16 +384,20 @@ class Pipeline(_BasePipeline):
         final_step_start_time = time.time()
         if last_step is None:
             if self.verbose:
-                print('[Pipeline] Step %s is NoneType.' % self.steps[-1][0])
-                print('[Pipeline] Total time elapsed: %.3fs' %
-                      time_elapsed_so_far)
+                _pretty_print('[Pipeline] Step %s is NoneType ...' %
+                              self.steps[-1][0])
+                _pretty_print('[Pipeline] Total time elapsed: ... %.5fs' %
+                              time_elapsed_so_far)
             return Xt
         elif hasattr(last_step, 'fit_transform'):
             Xt = last_step.fit_transform(Xt, y, **fit_params)
         else:
             Xt = last_step.fit(Xt, y, **fit_params).transform(Xt)
+        final_step_time_elapsed = time.time() - final_step_start_time
+        time_elapsed_so_far += final_step_time_elapsed
         if self.verbose:
-            self._print_final_step(final_step_start_time, time_elapsed_so_far)
+            self._print_final_step(final_step_time_elapsed,
+                                   time_elapsed_so_far)
         return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -427,8 +450,11 @@ class Pipeline(_BasePipeline):
         Xt, fit_params, time_elapsed_so_far = self._fit(X, y, **fit_params)
         final_step_start_time = time.time()
         y_pred = self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+        final_step_time_elapsed = time.time() - final_step_start_time
+        time_elapsed_so_far += final_step_time_elapsed
         if self.verbose:
-            self._print_final_step(final_step_start_time, time_elapsed_so_far)
+            self._print_final_step(final_step_time_elapsed,
+                                   time_elapsed_so_far)
         return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -663,8 +689,8 @@ def _fit_one_transformer(trans, X, y, verbose=False, idx=None,
     trans = trans.fit(X, y)
     step_time_elapsed = time.time() - step_start_time
     if verbose:
-        print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
-              (idx + 1, total_steps, name, step_time_elapsed))
+        _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
+                      (idx + 1, total_steps, name, step_time_elapsed))
     return trans
 
 
@@ -686,8 +712,8 @@ def _fit_transform_one(trans, weight, X, y, verbose=False, idx=None,
         res = trans.fit(X, y, **fit_params).transform(X)
     step_time_elapsed = time.time() - step_start_time
     if verbose:
-        print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
-              (idx + 1, total_steps, name, step_time_elapsed))
+        _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
+                      (idx + 1, total_steps, name, step_time_elapsed))
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res, trans
@@ -832,7 +858,8 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             for idx, (name, trans, _) in enumerate(all_transformers))
         time_elapsed = time.time() - start_time
         if self.verbose:
-            print('[FeatureUnion] Total time elapsed: %.5fs' % time_elapsed)
+            _pretty_print(
+                '[FeatureUnion] Total time elapsed: ... %.5fs' % time_elapsed)
         self._update_transformer_list(transformers)
         return self
 
@@ -865,7 +892,8 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             for idx, (name, trans, weight) in enumerate(all_transformers))
         time_elapsed = time.time() - start_time
         if self.verbose:
-            print('[FeatureUnion] Total time elapsed: %.5fs' % time_elapsed)
+            _pretty_print(
+                '[FeatureUnion] Total time elapsed: ... %.5fs' % time_elapsed)
 
         if not result:
             # All transformers are None
