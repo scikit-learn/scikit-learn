@@ -1022,3 +1022,28 @@ def test_pipeline_verbosity_fit_transform():
     pipe = Pipeline([('mult1', Mult(mult=1)), ('mult2', None)],
                     verbose=True)
     yield check_pipeline_verbosity_fit_transform, pipe.fit_transform, True
+
+
+def check_feature_union_verbosity(feature_union_method):
+    # Test that the verbosity of feature union is proper
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    feature_union_method(X=[[1, 2, 3], [4, 5, 6]], y=[[7], [8]])
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    lines = verbose_output.readlines()
+    assert_true('[FeatureUnion] (step 1 of 2) mult1 ... ' in lines[0])
+    assert_true('[FeatureUnion] (step 2 of 2) mult2 ... ' in lines[1])
+    assert_true('[FeatureUnion] Total time elapsed: ' in lines[2])
+
+
+def test_feature_union_verbosity():
+    union = FeatureUnion([('mult1', Mult(mult=1)), ('mult2', Mult(mult=2))],
+                         verbose=True)
+    yield check_feature_union_verbosity, union.fit
+    yield check_feature_union_verbosity, union.fit_transform
