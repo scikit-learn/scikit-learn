@@ -1061,7 +1061,7 @@ def test_non_uniform_weights_toy_edge_case_reg():
     sample_weight = [0, 0, 1, 1]
     for loss in ('huber', 'ls', 'lad', 'quantile'):
         gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2,
-                                       loss=loss,random_state=42)
+                                       loss=loss, random_state=42)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_greater(gb.predict([[1, 0]])[0], 0.5)
 

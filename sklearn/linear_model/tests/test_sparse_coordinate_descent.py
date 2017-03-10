@@ -28,7 +28,8 @@ def test_normalize_option():
     X = sp.csc_matrix([[-1], [0], [1]])
     y = [-1, 0, 1]
     clf_dense = ElasticNet(fit_intercept=True, normalize=True, random_state=42)
-    clf_sparse = ElasticNet(fit_intercept=True, normalize=True, random_state=42)
+    clf_sparse = ElasticNet(fit_intercept=True, normalize=True,
+                            random_state=42)
     clf_dense.fit(X, y)
     X = sp.csc_matrix(X)
     clf_sparse.fit(X, y)

@@ -836,7 +836,7 @@ def test_k_means_init_centers():
         X_test = dtype(X_small)
         init_centers_test = dtype(init_centers)
         assert_array_equal(init_centers, init_centers_test)
-        km = KMeans(init=init_centers_test, n_clusters=3, n_init=1, 
+        km = KMeans(init=init_centers_test, n_clusters=3, n_init=1,
                     random_state=42)
         km.fit(X_test)
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))

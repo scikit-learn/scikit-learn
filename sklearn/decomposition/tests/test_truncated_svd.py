@@ -46,7 +46,7 @@ def test_attributes():
 def test_too_many_components():
     for algorithm in ["arpack", "randomized"]:
         for n_components in (n_features, n_features + 1):
-            tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm, 
+            tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm,
                                 random_state=42)
             assert_raises(ValueError, tsvd.fit, X)
 

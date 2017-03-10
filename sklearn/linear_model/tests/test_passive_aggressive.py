@@ -214,7 +214,8 @@ def test_wrong_class_weight_format():
     clf = PassiveAggressiveClassifier(class_weight=[0.5], random_state=42)
     assert_raises(ValueError, clf.fit, X2, y2)
 
-    clf = PassiveAggressiveClassifier(class_weight="the larch", random_state=42)
+    clf = PassiveAggressiveClassifier(class_weight="the larch",
+                                      random_state=42)
     assert_raises(ValueError, clf.fit, X2, y2)
 
 

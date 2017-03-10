@@ -95,7 +95,7 @@ def test_mcd_issue1127():
 def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
-    clf = EllipticEnvelope(contamination=0.1,random_state=42)
+    clf = EllipticEnvelope(contamination=0.1, random_state=42)
     assert_raises(NotFittedError, clf.predict, X)
     assert_raises(NotFittedError, clf.decision_function, X)
     clf.fit(X)

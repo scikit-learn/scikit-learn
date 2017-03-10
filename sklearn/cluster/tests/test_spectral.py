@@ -171,7 +171,8 @@ def test_affinities():
     assert_equal((X.shape[0],), labels.shape)
 
     # raise error on unknown affinity
-    sp = SpectralClustering(n_clusters=2, affinity='<unknown>', random_state=42)
+    sp = SpectralClustering(n_clusters=2, affinity='<unknown>',
+                            random_state=42)
     assert_raises(ValueError, sp.fit, X)
 
 

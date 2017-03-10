@@ -292,7 +292,7 @@ def test_base_estimator():
     clf.fit(X, y_regr)
 
     clf = AdaBoostClassifier(SVC(random_state=42),
-                                 algorithm="SAMME", random_state=42)
+                             algorithm="SAMME", random_state=42)
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor

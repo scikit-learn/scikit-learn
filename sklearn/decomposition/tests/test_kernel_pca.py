@@ -116,7 +116,8 @@ def test_kernel_pca_n_components():
 
     for eigen_solver in ("dense", "arpack"):
         for c in [1, 2, 4]:
-            kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver, random_state=42)
+            kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver,
+                             random_state=42)
             shape = kpca.fit(X_fit).transform(X_pred).shape
 
             assert_equal(shape, (2, c))

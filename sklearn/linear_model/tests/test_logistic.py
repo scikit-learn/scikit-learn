@@ -74,7 +74,8 @@ def test_error():
     assert_raise_message(ValueError, msg,
                          LogisticRegression(C=-1, random_state=42).fit, X, Y1)
     assert_raise_message(ValueError, msg,
-                         LogisticRegression(C="test", random_state=42).fit, X, Y1)
+                         LogisticRegression(C="test",
+                                            random_state=42).fit, X, Y1)
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
@@ -584,7 +585,7 @@ def test_logistic_regression_solvers_multiclass():
                              random_state=42)
     lbf = LogisticRegression(solver='lbfgs', fit_intercept=False, tol=tol,
                              random_state=42)
-    lib = LogisticRegression(fit_intercept=False, tol=tol, 
+    lib = LogisticRegression(fit_intercept=False, tol=tol,
                              random_state=42)
     sag = LogisticRegression(solver='sag', fit_intercept=False, tol=tol,
                              max_iter=1000, random_state=42)
@@ -862,7 +863,7 @@ def test_liblinear_logregcv_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
 
     X, y = make_classification(n_samples=10, n_features=5, random_state=0)
-    clf = LogisticRegressionCV(solver='liblinear',random_state=42)
+    clf = LogisticRegressionCV(solver='liblinear', random_state=42)
     clf.fit(sparse.csr_matrix(X), y)
 
 
