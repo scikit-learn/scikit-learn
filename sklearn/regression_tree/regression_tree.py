@@ -97,11 +97,6 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_leaf_nodes : int or None, optional (default=None)
-        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
-        Best nodes are defined as relative reduction in impurity.
-        If None then unlimited number of leaf nodes.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -161,8 +156,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                  min_samples_leaf=1,
                  min_weight_fraction_leaf=0.,
                  max_features=None,
+                 max_leaf_nodes=None,  # this parameter is not active
                  random_state=None,
-                 max_leaf_nodes=None,
                  min_impurity_split=1e-7):
         super(RegressionTree, self).__init__(
             criterion=criterion,
@@ -172,7 +167,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes,
+            max_leaf_nodes=None,
             random_state=random_state,
             min_impurity_split=min_impurity_split,
             presort=True)
@@ -409,6 +404,9 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             node_value=(root_stats.sum_y /
                         root_stats.sum_weighted_samples))
 
+        # create a list to keep track of the constant features
+        constant_features = []
+
         # Create a dictionary to store the parents split overtime
         parent_split_map = {parent_split_record.nid: parent_split_record}
         # find the node to be extended
@@ -440,18 +438,29 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                             for i, nid in enumerate(expandable_nids)}
 
             # Create an array from where to select randomly the feature
-            shuffled_feature_idx = choice(np.arange(X.shape[1]),
-                                          size=self.max_features_,
-                                          replace=False,
-                                          random_state=random_state)
+            # shuffled_feature_idx = choice(np.arange(X.shape[1]),
+            #                               size=self.max_features_,
+            #                               replace=False,
+            #                               random_state=random_state)
+            shuffled_feature_idx = random_state.permutation(
+                np.arange(X.shape[1]))
 
             # get the feature
+            n_visited_feature = 0
             for feat_i in shuffled_feature_idx:
+
+                # do not evaluate the feature if it was declared constant
+                if feat_i in constant_features:
+                    continue
+
+                # break the loop when enough features have been seen
+                if n_visited_feature >= self.max_features_:
+                    break
+
                 # Get the sorted index
                 X_col = X_idx_sorted[:, feat_i]
 
                 # reset the splitter
-
                 for i, nid in enumerate(expandable_nids):
                     splitter_map[nid].reset(feat_i, X_col[0],
                                             parent_split_map[nid])
@@ -466,6 +475,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                             sample_idx_sorted]].node_evaluate_split(
                                 sample_idx_sorted)
 
+                b_constant = False
                 # copy the split_record if the improvement is better
                 for nid in expandable_nids:
                     if ((split_record_map[nid] is None) or
@@ -473,6 +483,15 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                              split_record_map[nid].impurity_improvement)):
                         split_record_map[nid] = SplitRecord()
                         splitter_map[nid].best_split_record.copy_to(split_record_map[nid])
+                    # declare the feature as constant if no best split was
+                    # found
+                    if np.isnan(
+                            splitter_map[nid].best_split_record.threshold):
+                        constant_features.append(feat_i)
+                        b_constant = True
+
+                if not b_constant:
+                    n_visited_feature += 1
 
             feature_update_X_nid = []
             for nid in expandable_nids:
