@@ -8,9 +8,10 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.linear_model import Ridge
 from sklearn import datasets
 
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal, assert_almost_equal
 
 
 def test_bayesian_on_diabetes():
@@ -41,9 +42,10 @@ def test_bayesian_ridge_parameter():
 
     # A Ridge regression model using an alpha value equal to the ratio of lambda_ and alpha_ from 
     # the Bayesian Ridge model must be identical
-    brModel = BayesianRidge(compute_score=True).fit(X, y)
-    rrModel = Ridge(alpha=brModel.lambda_ / brModel.alpha_).fit(X, y)
-    assert_almost_equal(rrModel.intercept_, brModel.intercept_)
+    br_model = BayesianRidge(compute_score=True).fit(X, y)
+    rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(X, y)
+    assert_array_almost_equal(rr_model.coef_, br_model.coef_)
+    assert_almost_equal(rr_model.intercept_, br_model.intercept_)
     # Results before fix
     # ACTUAL: 2.422446078010811
     # DESIRED: 2.4224997161532529
