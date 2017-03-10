@@ -14,7 +14,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import jaccard_similarity_score
-from sklearn.model_selection import train_test_split
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain
 from sklearn.multioutput import MultiOutputClassifier
@@ -488,7 +487,6 @@ def test_classifier_chain_vs_independent_models():
     X_test = X[2000:, :]
     Y_train = Y[:2000, :]
     Y_test = Y[2000:, :]
-    # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.5)
 
     ovr = OneVsRestClassifier(LogisticRegression())
     ovr.fit(X_train, Y_train)
