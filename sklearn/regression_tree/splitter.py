@@ -1,7 +1,5 @@
 from __future__ import division, print_function
 
-from numpy import isnan
-
 from .stats_node import StatsNode
 from .split_record import SplitRecord
 from .criterion import impurity_improvement
@@ -111,9 +109,9 @@ class Splitter(object):
         feat_i = self.feature_idx
 
         # check that the two consecutive samples are not the same
-        b_samples_var =  (abs(self.X[sample_idx, feat_i] -
-                              self.X[self.prev_idx, feat_i]) >
-                          FEATURE_THRESHOLD)
+        b_samples_var = (abs(self.X[sample_idx, feat_i] -
+                             self.X[self.prev_idx, feat_i]) >
+                         FEATURE_THRESHOLD)
 
         # check that there is enough samples to make a split
         b_n_samples = not (

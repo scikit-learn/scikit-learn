@@ -1,6 +1,5 @@
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
 
 from sklearn.regression_tree.stats_node import StatsNode
 

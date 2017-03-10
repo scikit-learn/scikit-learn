@@ -474,10 +474,12 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                 # copy the split_record if the improvement is better
                 for nid in expandable_nids:
                     if ((split_record_map[nid] is None) or
-                            (splitter_map[nid].best_split_record.impurity_improvement >
+                            (splitter_map[
+                                nid].best_split_record.impurity_improvement >
                              split_record_map[nid].impurity_improvement)):
                         split_record_map[nid] = SplitRecord()
-                        splitter_map[nid].best_split_record.copy_to(split_record_map[nid])
+                        splitter_map[nid].best_split_record.copy_to(
+                            split_record_map[nid])
                     # declare the feature as constant if no best split was
                     # found
                     if np.isnan(
@@ -487,6 +489,13 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
                 if not b_constant:
                     n_visited_feature += 1
+
+            # all features have been marked as constant and we need to clean
+            # the list of nodes which should have grown
+            if not n_visited_feature:
+                for nid in expandable_nids:
+                    del parent_split_map[nid]
+                expandable_nids = []
 
             feature_update_X_nid = []
             b_grow = False
@@ -505,6 +514,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                     # the statistics for the children are not computed yet
                     # add a node for left child
                     # find out if the next node will be a lead or not
+                    l_stats = left_sr.c_stats
                     left_nid = self.tree_._add_node_py(
                         parent=nid,
                         is_left=1,
@@ -512,12 +522,13 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
                         impurity=left_sr.impurity,
-                        n_node_samples=left_sr.c_stats.n_samples,
-                        weighted_n_node_samples=left_sr.c_stats.sum_weighted_samples,
-                        node_value=(left_sr.c_stats.sum_y /
-                                    left_sr.c_stats.sum_weighted_samples))
+                        n_node_samples=l_stats.n_samples,
+                        weighted_n_node_samples=l_stats.sum_weighted_samples,
+                        node_value=(l_stats.sum_y /
+                                    l_stats.sum_weighted_samples))
 
                     # add a node for the right child
+                    r_stats = right_sr.c_stats
                     right_nid = self.tree_._add_node_py(
                         parent=nid,
                         is_left=0,
@@ -525,15 +536,16 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         feature=FEAT_UNKNOWN,
                         threshold=TREE_UNDEFINED,
                         impurity=right_sr.impurity,
-                        n_node_samples=right_sr.c_stats.n_samples,
-                        weighted_n_node_samples=right_sr.c_stats.sum_weighted_samples,
-                        node_value=(right_sr.c_stats.sum_y /
-                                    right_sr.c_stats.sum_weighted_samples))
+                        n_node_samples=r_stats.n_samples,
+                        weighted_n_node_samples=r_stats.sum_weighted_samples,
+                        node_value=(r_stats.sum_y /
+                                    r_stats.sum_weighted_samples))
 
                     # the depth has changed
                     b_grow = True
 
                     # Update the parent node with the found best split
+                    c_stats = best_split.c_stats
                     self.tree_._update_node_py(
                         node_id=nid,
                         left_child=left_nid,
@@ -541,8 +553,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         threshold=best_split.threshold,
                         impurity=best_split.impurity,
                         feature=best_split.feature,
-                        n_node_samples=best_split.c_stats.n_samples,
-                        weighted_n_node_samples=best_split.c_stats.sum_weighted_samples)
+                        n_node_samples=c_stats.n_samples,
+                        weighted_n_node_samples=c_stats.sum_weighted_samples)
 
                     # update the dictionary with the new record
                     # add only the record if the impurity at the node is large
@@ -623,7 +635,10 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                                         if (self.tree_.children_left[
                                                 parent_nid] in
                                                 expandable_nids):
-                                            X_nid_tmp[X_idx] = self.tree_.children_left[
+                                            # FIXME -> PEP8
+                                            x = X_idx
+                                            X_nid_tmp[
+                                                x] = self.tree_.children_left[
                                                 parent_nid]
                                         else:
                                             X_nid_tmp[X_idx] = -1
@@ -632,7 +647,10 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                                         if (self.tree_.children_right[
                                                 parent_nid] in
                                                 expandable_nids):
-                                            X_nid_tmp[X_idx] = self.tree_.children_right[
+                                            # FIXME -> PEP8
+                                            x = X_idx
+                                            X_nid_tmp[
+                                                x] = self.tree_.children_right[
                                                 parent_nid]
                                         else:
                                             X_nid_tmp[X_idx] = -1

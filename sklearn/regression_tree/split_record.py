@@ -2,7 +2,6 @@ from __future__ import division, print_function
 
 from numpy import nan
 from numpy import inf
-from numpy import all
 
 from .stats_node import StatsNode
 from .criterion import _impurity_mse
