@@ -247,7 +247,7 @@ and ``value`` is an estimator object::
     FeatureUnion(n_jobs=1,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
-                 transformer_weights=None)
+                 transformer_weights=None, verbose=False)
 
 
 Like pipelines, feature unions have a shorthand constructor called
@@ -262,7 +262,7 @@ and ignored by setting to ``None``::
     FeatureUnion(n_jobs=1,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', None)],
-                 transformer_weights=None)
+                 transformer_weights=None, verbose=False)
 
 .. topic:: Examples:
 
