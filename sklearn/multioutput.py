@@ -433,7 +433,6 @@ class ClassifierChain(BaseEstimator):
         self.cv = cv
         self.random_state = random_state
 
-
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
 
@@ -515,7 +514,6 @@ class ClassifierChain(BaseEstimator):
             else:
                 X_aug = np.hstack((X, previous_predictions))
             Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-
 
         inv_order = np.empty_like(self.order)
         inv_order[self.order] = np.arange(len(self.order))
