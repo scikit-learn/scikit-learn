@@ -70,7 +70,6 @@ ax = fig.add_subplot(251, projection='3d')
 ax.scatter(x, y, z, c=p[indices], cmap=plt.cm.rainbow)
 ax.view_init(40, -10)
 
-
 sphere_data = np.array([x, y, z]).T
 
 # Perform Locally Linear Embedding Manifold learning
