@@ -201,8 +201,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 
-            # Preserve the alpha and lambda values that were used to calculate the final
-            # coefficients
+            # Preserve the alpha and lambda values that were used to
+            # calculate the final coefficients
             self.alpha_ = alpha_
             self.lambda_ = lambda_
 
