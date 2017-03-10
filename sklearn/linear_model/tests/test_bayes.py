@@ -34,6 +34,21 @@ def test_bayesian_on_diabetes():
     assert_array_equal(np.diff(clf.scores_) > 0, True)
 
 
+def test_bayesian_ridge_parameter():
+    # Test correctness of lambda_ and alpha_ parameters (Github issue #8224)
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+
+    # A Ridge regression model using an alpha value equal to the ratio of lambda_ and alpha_ from 
+    # the Bayesian Ridge model must be identical
+    brModel = BayesianRidge(compute_score=True).fit(X, y)
+    rrModel = Ridge(alpha=brModel.lambda_ / brModel.alpha_).fit(X, y)
+    assert_almost_equal(rrModel.intercept_, brModel.intercept_)
+    # Results before fix
+    # ACTUAL: 2.422446078010811
+    # DESIRED: 2.4224997161532529
+
+
 def test_toy_bayesian_ridge_object():
     # Test BayesianRidge on toy
     X = np.array([[1], [2], [6], [8], [10]])
