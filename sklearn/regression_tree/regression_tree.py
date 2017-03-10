@@ -404,7 +404,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                         root_stats.sum_weighted_samples))
 
         # create a list to keep track of the constant features
-        constant_features = []
+        # constant_features = []
+        constant_features = defaultdict(list)
 
         # Create a dictionary to store the parents split overtime
         parent_split_map = {parent_split_record.nid: parent_split_record}
@@ -444,10 +445,6 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             n_visited_feature = 0
             for feat_i in shuffled_feature_idx:
 
-                # do not evaluate the feature if it was declared constant
-                if feat_i in constant_features:
-                    continue
-
                 # break the loop when enough features have been seen
                 if n_visited_feature >= self.max_features_:
                     break
@@ -465,12 +462,15 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                 for sample_idx_sorted in X_col:
                     # Samples which are not in a leaf
                     if X_nid[sample_idx_sorted] != -1:
-                        # check that the sample value are different enough
-                        splitter_map[X_nid[
-                            sample_idx_sorted]].node_evaluate_split(
-                                sample_idx_sorted)
+                        # check that the feature is not consider as constant
+                        if feat_i not in constant_features[
+                                X_nid[sample_idx_sorted]]:
+                            # check that the sample value are different enough
+                            splitter_map[X_nid[
+                                sample_idx_sorted]].node_evaluate_split(
+                                    sample_idx_sorted)
 
-                b_constant = False
+                b_constant = []
                 # copy the split_record if the improvement is better
                 for nid in expandable_nids:
                     if ((split_record_map[nid] is None) or
@@ -484,10 +484,12 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                     # found
                     if np.isnan(
                             splitter_map[nid].best_split_record.threshold):
-                        constant_features.append(feat_i)
-                        b_constant = True
+                        constant_features[nid].append(feat_i)
+                        b_constant.append(True)
+                    else:
+                        b_constant.append(False)
 
-                if not b_constant:
+                if not np.all(b_constant):
                     n_visited_feature += 1
 
             # all features have been marked as constant and we need to clean
@@ -569,6 +571,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                                       min_samples_leaf)
                     if (b_impurity and b_samples_split and b_samples_lead):
                         parent_split_map.update({left_nid: left_sr})
+                        # propagate the info about constant feature
+                        constant_features[left_nid] = constant_features[nid]
 
                     # right child
                     b_impurity = right_sr.impurity > self.min_impurity_split
@@ -578,6 +582,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                                       min_samples_leaf)
                     if (b_impurity and b_samples_split and b_samples_lead):
                         parent_split_map.update({right_nid: right_sr})
+                        # propagate the info about constant feature
+                        constant_features[left_nid] = constant_features[nid]
 
                     self.counter_X_nid_labels_ = np.zeros(
                         max(parent_split_map.keys()), dtype=int)
@@ -585,6 +591,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                 # we can flush the data from the parent_split_map for the
                 # current node
                 del parent_split_map[nid]
+                del constant_features[nid]
 
             # the depth increased
             if b_grow:
