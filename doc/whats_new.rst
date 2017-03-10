@@ -415,6 +415,113 @@ Miscellaneous
 
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`
   now accept non-finite features. :issue:`8931` by :user:`Attractadore`.
+   - Added optional parameter ``verbose`` in :class:`pipeline.Pipeline` and
+     :class:`pipeline.FeatureUnion` for showing progress and timing of each
+     step. :issue:`8568` by :user:`Karan Desai <karandesai-96>`.
+
+   - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
+     documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986`
+     :user:`Oscar Najera <Titan-C>`
+
+   - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
+     now support online learning using `partial_fit`.
+     issue: `8053` by :user:`Peng Yu <yupbank>`.
+   - :class:`pipeline.Pipeline` allows to cache transformers
+     within a pipeline by using the ``memory`` constructor parameter.
+     By :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+   - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
+     :class:`decomposition.TruncatedSVD` now expose the singular values
+     from the underlying SVD. They are stored in the attribute
+     ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
+
+   - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
+     now uses significantly less memory when assigning data points to their
+     nearest cluster center. :issue:`7721` by :user:`Jon Crall <Erotemic>`.
+
+   - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`,
+     :class:`model_selection.RandomizedSearchCV`,  :class:`grid_search.GridSearchCV`,
+     and  :class:`grid_search.RandomizedSearchCV` that matches the ``classes_``
+     attribute of ``best_estimator_``. :issue:`7661` and :issue:`8295`
+     by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
+     and :user:`Stephen Hoover <stephen-hoover>`.
+
+   - The ``min_weight_fraction_leaf`` constraint in tree construction is now
+     more efficient, taking a fast path to declare a node a leaf if its weight
+     is less than 2 * the minimum. Note that the constructed tree will be
+     different from previous versions where ``min_weight_fraction_leaf`` is
+     used. :issue:`7441` by :user:`Nelson Liu <nelson-liu>`.
+
+   - Added ``average`` parameter to perform weights averaging in
+     :class:`linear_model.PassiveAggressiveClassifier`. :issue:`4939`
+     by :user:`Andrea Esuli <aesuli>`.
+
+   - Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
+     fewer constraints: they must take two 1d-arrays and return a float.
+     :issue:`6288` by `Jake Vanderplas`_.
+
+   - :class:`ensemble.GradientBoostingClassifier` and :class:`ensemble.GradientBoostingRegressor`
+     now support sparse input for prediction.
+     :issue:`6101` by :user:`Ibraim Ganiev <olologin>`.
+
+   - Added ``shuffle`` and ``random_state`` parameters to shuffle training
+     data before taking prefixes of it based on training sizes in
+     :func:`model_selection.learning_curve`.
+     :issue:`7506` by :user:`Narine Kokhlikyan <NarineK>`.
+
+   - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
+     to enable selection of the norm order when ``coef_`` is more than 1D
+
+   - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
+     :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
+
+   - ``check_estimator`` now attempts to ensure that methods transform, predict, etc.
+     do not set attributes on the estimator.
+     :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
+
+   - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
+     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
+     norm 'max' the norms returned will be the same as for dense matrices.
+     :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
+
+   - :class:`sklearn.linear_model.RANSACRegressor` no longer throws an error
+     when calling ``fit`` if no inliers are found in its first iteration.
+     Furthermore, causes of skipped iterations are tracked in newly added
+     attributes, ``n_skips_*``.
+     :issue:`7914` by :user:`Michael Horrell <mthorrell>`.
+
+   - :func:`model_selection.cross_val_predict` now returns output of the
+     correct shape for all values of the argument ``method``.
+     :issue:`7863` by :user:`Aman Dalmia <dalmia>`.
+
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
+   - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
+     A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
+     by :user:`Alexander Booth <alexandercbooth>`.
+
+   - Added type checking to the ``accept_sparse`` parameter in
+     :mod:`sklearn.utils.validation` methods. This parameter now accepts only
+     boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
+     and should be replaced by ``accept_sparse=False``.
+     :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
+
+   - :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`
+     and :func:`model_selection.cross_val_score` now allow estimators with callable
+     kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
+
+
+   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
+     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
+
+   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
+     Victor Poughon.
+
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+     is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
 
 Bug fixes
 .........
@@ -5754,3 +5861,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
 .. _Arthur Mensch: https://amensch.fr
+
+.. _Karan Desai: https://www.github.com/karandesai-96
