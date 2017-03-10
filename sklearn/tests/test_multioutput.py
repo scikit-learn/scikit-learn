@@ -484,19 +484,22 @@ def test_classifier_chain_vs_independent_models():
     yeast = fetch_mldata('yeast')
     X = yeast['data']
     Y = yeast['target'].transpose().toarray()
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.5)
+    X_train = X[:2000, :]
+    X_test = X[2000:, :]
+    Y_train = Y[:2000, :]
+    Y_test = Y[2000:, :]
+    # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.5)
 
     ovr = OneVsRestClassifier(LogisticRegression())
     ovr.fit(X_train, Y_train)
     Y_pred_ovr = ovr.predict(X_test)
 
-    chains = [ClassifierChain(LogisticRegression(), order='random')
-              for _ in range(10)]
+    chain = ClassifierChain(LogisticRegression(),
+                            order=np.array([0, 2, 4, 6, 8, 10,
+                                            12, 1, 3, 5, 7, 9,
+                                            11, 13]))
+    chain.fit(X_train, Y_train)
+    Y_pred_chain = chain.predict(X_test)
 
-    for chain in chains:
-        chain.fit(X_train, Y_train)
-
-    Y_pred_ensemble = np.array([chain.predict(X_test) for chain in
-                                chains]).mean(axis=0)
-    assert_greater(jaccard_similarity_score(Y_test, Y_pred_ensemble >= .5),
+    assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
                    jaccard_similarity_score(Y_test, Y_pred_ovr))

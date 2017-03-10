@@ -446,8 +446,9 @@ class ClassifierChain(BaseEstimator):
 
         if self.order is None:
             self.order = np.array(range(Y.shape[1]))
-        elif self.order == 'random':
-            self.order = random_state.permutation(Y.shape[1])
+        elif isinstance(self.order, str):
+            if self.order == 'random':
+                self.order = random_state.permutation(Y.shape[1])
         elif sorted(self.order) != list(range(Y.shape[1])):
                 raise ValueError("invalid order")
 

@@ -20,7 +20,7 @@ from sklearn.datasets import fetch_mldata
 yeast = fetch_mldata('yeast')
 X = yeast['data']
 Y = yeast['target'].transpose().toarray()
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.5)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2)
 
 # Fit an independent logistic regression model for each class using the
 # OneVsRestClassifier wrapper
