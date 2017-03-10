@@ -6,12 +6,11 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal, assert_almost_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
-
-from sklearn.utils.testing import assert_array_almost_equal, assert_almost_equal
 
 
 def test_bayesian_on_diabetes():
