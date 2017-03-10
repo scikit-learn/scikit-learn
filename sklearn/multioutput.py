@@ -399,9 +399,13 @@ class ClassifierChain(BaseEstimator):
             An object to be used as a cross-validation generator.
             An iterable yielding train, test splits.
 
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator used to generate random
-        chain orders.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+        Used to generate random chain orders.
 
     Attributes
     ----------
