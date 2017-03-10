@@ -22,7 +22,7 @@ Xdense = X.A
 
 
 def test_algorithms():
-    svd_a = TruncatedSVD(30, algorithm="arpack")
+    svd_a = TruncatedSVD(30, algorithm="arpack", random_state=42)
     svd_r = TruncatedSVD(30, algorithm="randomized", random_state=42)
 
     Xa = svd_a.fit_transform(X)[:, :6]
@@ -38,7 +38,7 @@ def test_algorithms():
 
 def test_attributes():
     for n_components in (10, 25, 41):
-        tsvd = TruncatedSVD(n_components).fit(X)
+        tsvd = TruncatedSVD(n_components, random_state=42).fit(X)
         assert_equal(tsvd.n_components, n_components)
         assert_equal(tsvd.components_.shape, (n_components, n_features))
 
@@ -46,14 +46,15 @@ def test_attributes():
 def test_too_many_components():
     for algorithm in ["arpack", "randomized"]:
         for n_components in (n_features, n_features + 1):
-            tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
+            tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm, 
+                                random_state=42)
             assert_raises(ValueError, tsvd.fit, X)
 
 
 def test_sparse_formats():
     for fmt in ("array", "csr", "csc", "coo", "lil"):
         Xfmt = Xdense if fmt == "dense" else getattr(X, "to" + fmt)()
-        tsvd = TruncatedSVD(n_components=11)
+        tsvd = TruncatedSVD(n_components=11, random_state=42)
         Xtrans = tsvd.fit_transform(Xfmt)
         assert_equal(Xtrans.shape, (n_samples, 11))
         Xtrans = tsvd.transform(Xfmt)
@@ -72,16 +73,16 @@ def test_inverse_transform():
 
 def test_integers():
     Xint = X.astype(np.int64)
-    tsvd = TruncatedSVD(n_components=6)
+    tsvd = TruncatedSVD(n_components=6, random_state=42)
     Xtrans = tsvd.fit_transform(Xint)
     assert_equal(Xtrans.shape, (n_samples, tsvd.n_components))
 
 
 def test_explained_variance():
     # Test sparse data
-    svd_a_10_sp = TruncatedSVD(10, algorithm="arpack")
+    svd_a_10_sp = TruncatedSVD(10, algorithm="arpack", random_state=42)
     svd_r_10_sp = TruncatedSVD(10, algorithm="randomized", random_state=42)
-    svd_a_20_sp = TruncatedSVD(20, algorithm="arpack")
+    svd_a_20_sp = TruncatedSVD(20, algorithm="arpack", random_state=42)
     svd_r_20_sp = TruncatedSVD(20, algorithm="randomized", random_state=42)
     X_trans_a_10_sp = svd_a_10_sp.fit_transform(X)
     X_trans_r_10_sp = svd_r_10_sp.fit_transform(X)
@@ -89,9 +90,9 @@ def test_explained_variance():
     X_trans_r_20_sp = svd_r_20_sp.fit_transform(X)
 
     # Test dense data
-    svd_a_10_de = TruncatedSVD(10, algorithm="arpack")
+    svd_a_10_de = TruncatedSVD(10, algorithm="arpack", random_state=42)
     svd_r_10_de = TruncatedSVD(10, algorithm="randomized", random_state=42)
-    svd_a_20_de = TruncatedSVD(20, algorithm="arpack")
+    svd_a_20_de = TruncatedSVD(20, algorithm="arpack", random_state=42)
     svd_r_20_de = TruncatedSVD(20, algorithm="randomized", random_state=42)
     X_trans_a_10_de = svd_a_10_de.fit_transform(X.toarray())
     X_trans_r_10_de = svd_r_10_de.fit_transform(X.toarray())

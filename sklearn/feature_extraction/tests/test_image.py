@@ -135,7 +135,7 @@ def test_extract_patches_all():
     i_h, i_w = face.shape
     p_h, p_w = 16, 16
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-    patches = extract_patches_2d(face, (p_h, p_w))
+    patches = extract_patches_2d(face, (p_h, p_w), random_state=42)
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
 
@@ -144,7 +144,7 @@ def test_extract_patches_all_color():
     i_h, i_w = face.shape[:2]
     p_h, p_w = 16, 16
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
-    patches = extract_patches_2d(face, (p_h, p_w))
+    patches = extract_patches_2d(face, (p_h, p_w), random_state=42)
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w, 3))
 
 
@@ -155,7 +155,7 @@ def test_extract_patches_all_rect():
     p_h, p_w = 16, 12
     expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
 
-    patches = extract_patches_2d(face, (p_h, p_w))
+    patches = extract_patches_2d(face, (p_h, p_w), random_state=42)
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
 
@@ -168,7 +168,8 @@ def test_extract_patches_max_patches():
     assert_equal(patches.shape, (100, p_h, p_w))
 
     expected_n_patches = int(0.5 * (i_h - p_h + 1) * (i_w - p_w + 1))
-    patches = extract_patches_2d(face, (p_h, p_w), max_patches=0.5)
+    patches = extract_patches_2d(face, (p_h, p_w), max_patches=0.5,
+                                 random_state=42)
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
     assert_raises(ValueError, extract_patches_2d, face, (p_h, p_w),
@@ -181,7 +182,7 @@ def test_reconstruct_patches_perfect():
     face = downsampled_face
     p_h, p_w = 16, 16
 
-    patches = extract_patches_2d(face, (p_h, p_w))
+    patches = extract_patches_2d(face, (p_h, p_w), random_state=42)
     face_reconstructed = reconstruct_from_patches_2d(patches, face.shape)
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 
@@ -190,7 +191,7 @@ def test_reconstruct_patches_perfect_color():
     face = orange_face
     p_h, p_w = 16, 16
 
-    patches = extract_patches_2d(face, (p_h, p_w))
+    patches = extract_patches_2d(face, (p_h, p_w), random_state=42)
     face_reconstructed = reconstruct_from_patches_2d(patches, face.shape)
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 

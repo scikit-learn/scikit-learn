@@ -395,7 +395,7 @@ def test_importances():
 @raises(ValueError)
 def test_importances_raises():
     # Check if variable importance before fit raises ValueError.
-    clf = DecisionTreeClassifier()
+    clf = DecisionTreeClassifier(random_state=42)
     clf.feature_importances_
 
 
@@ -1170,7 +1170,8 @@ def test_arrays_persist():
     # non-regression for #2726
     for attr in ['n_classes', 'value', 'children_left', 'children_right',
                  'threshold', 'impurity', 'feature', 'n_node_samples']:
-        value = getattr(DecisionTreeClassifier().fit([[0], [1]], [0, 1]).tree_, attr)
+        value = getattr(DecisionTreeClassifier(random_state=42).fit(
+            [[0], [1]], [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
         assert_true(-3 <= value.flat[0] < 3,
                     'Array points to arbitrary memory')
@@ -1207,7 +1208,7 @@ def test_with_only_one_non_constant_features():
 def test_big_input():
     # Test if the warning for too large inputs is appropriate.
     X = np.repeat(10 ** 40., 4).astype(np.float64).reshape(-1, 1)
-    clf = DecisionTreeClassifier()
+    clf = DecisionTreeClassifier(random_state=42)
     try:
         clf.fit(X, [0, 1, 0, 1])
     except ValueError as e:
@@ -1228,13 +1229,15 @@ def test_huge_allocations():
     # Sanity check: we cannot request more memory than the size of the address
     # space. Currently raises OverflowError.
     huge = 2 ** (n_bits + 1)
-    clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
+    clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge,
+                                 random_state=42)
     assert_raises(Exception, clf.fit, X, y)
 
     # Non-regression test: MemoryError used to be dropped by Cython
     # because of missing "except *".
     huge = 2 ** (n_bits - 1) - 1
-    clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
+    clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge,
+                                 random_state=42)
     assert_raises(MemoryError, clf.fit, X, y)
 
 
@@ -1528,8 +1531,8 @@ def check_presort_sparse(est, X, y):
 
 
 def test_presort_sparse():
-    ests = (DecisionTreeClassifier(presort=True),
-            DecisionTreeRegressor(presort=True))
+    ests = (DecisionTreeClassifier(presort=True, random_state=42),
+            DecisionTreeRegressor(presort=True, random_state=42))
     sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
 
     y, X = datasets.make_multilabel_classification(random_state=0,

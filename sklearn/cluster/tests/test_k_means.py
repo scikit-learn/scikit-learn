@@ -116,7 +116,8 @@ def test_minibatch_update_consistency():
     # step 1: compute the dense minibatch update
     old_inertia, incremental_diff = _mini_batch_step(
         X_mb, x_mb_squared_norms, new_centers, counts,
-        buffer, 1, None, random_reassign=False)
+        buffer, 1, None, random_reassign=False,
+        random_state=42)
     assert_greater(old_inertia, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
@@ -133,7 +134,8 @@ def test_minibatch_update_consistency():
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
         X_mb_csr, x_mb_squared_norms_csr, new_centers_csr, counts_csr,
-        buffer_csr, 1, None, random_reassign=False)
+        buffer_csr, 1, None, random_reassign=False,
+        random_state=42)
     assert_greater(old_inertia_csr, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
@@ -216,7 +218,7 @@ def test_k_means_plus_plus_init_2_jobs():
 def test_k_means_precompute_distances_flag():
     # check that a warning is raised if the precompute_distances flag is not
     # supported
-    km = KMeans(precompute_distances="wrong")
+    km = KMeans(precompute_distances="wrong", random_state=42)
     assert_raises(ValueError, km.fit, X)
 
 
@@ -263,8 +265,10 @@ def test_k_means_n_init():
 
     # two regression tests on bad n_init argument
     # previous bug: n_init <= 0 threw non-informative TypeError (#3858)
-    assert_raises_regex(ValueError, "n_init", KMeans(n_init=0).fit, X)
-    assert_raises_regex(ValueError, "n_init", KMeans(n_init=-1).fit, X)
+    assert_raises_regex(ValueError, "n_init", KMeans(n_init=0,
+                                                     random_state=42).fit, X)
+    assert_raises_regex(ValueError, "n_init", KMeans(n_init=-1,
+                                                     random_state=42).fit, X)
 
 
 def test_k_means_explicit_init_shape():
@@ -331,7 +335,8 @@ def test_mb_k_means_plus_plus_init_sparse_matrix():
 
 
 def test_minibatch_init_with_large_k():
-    mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
+    mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20,
+                                 random_state=42)
     # Check that a warning is raised, as the number clusters is larger
     # than the init_size
     assert_warns(RuntimeWarning, mb_k_means.fit, X)
@@ -516,12 +521,14 @@ def test_minibatch_set_init_size():
 
 
 def test_k_means_invalid_init():
-    km = KMeans(init="invalid", n_init=1, n_clusters=n_clusters)
+    km = KMeans(init="invalid", n_init=1, n_clusters=n_clusters,
+                random_state=42)
     assert_raises(ValueError, km.fit, X)
 
 
 def test_mini_match_k_means_invalid_init():
-    km = MiniBatchKMeans(init="invalid", n_init=1, n_clusters=n_clusters)
+    km = MiniBatchKMeans(init="invalid", n_init=1, n_clusters=n_clusters,
+                         random_state=42)
     assert_raises(ValueError, km.fit, X)
 
 
@@ -605,7 +612,8 @@ def test_predict_minibatch_dense_input():
 
 def test_predict_minibatch_kmeanspp_init_sparse_input():
     mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init='k-means++',
-                                 n_init=10).fit(X_csr)
+                                 n_init=10,
+                                 random_state=42).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
     assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)
@@ -621,6 +629,7 @@ def test_predict_minibatch_kmeanspp_init_sparse_input():
 
 def test_predict_minibatch_random_init_sparse_input():
     mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init='random',
+                                 random_state=42,
                                  n_init=10).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
@@ -643,15 +652,20 @@ def test_int_input():
         init_int = X_int[:2]
 
         fitted_models = [
-            KMeans(n_clusters=2).fit(X_int),
-            KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
+            KMeans(n_clusters=2, random_state=42).fit(X_int),
+            KMeans(n_clusters=2, init=init_int, n_init=1,
+                   random_state=42).fit(X_int),
             # mini batch kmeans is very unstable on such a small dataset hence
             # we use many inits
-            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
-            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
+            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2,
+                            random_state=42).fit(X_int),
+            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2,
+                            random_state=42).fit(X_int_csr),
             MiniBatchKMeans(n_clusters=2, batch_size=2,
+                            random_state=42,
                             init=init_int, n_init=1).fit(X_int),
             MiniBatchKMeans(n_clusters=2, batch_size=2,
+                            random_state=42,
                             init=init_int, n_init=1).fit(X_int_csr),
         ]
 
@@ -665,7 +679,7 @@ def test_int_input():
 
 
 def test_transform():
-    km = KMeans(n_clusters=n_clusters)
+    km = KMeans(n_clusters=n_clusters, random_state=42)
     km.fit(X)
     X_new = km.transform(km.cluster_centers_)
 
@@ -730,7 +744,8 @@ def test_k_means_function():
     sys.stdout = StringIO()
     try:
         cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
-                                                   verbose=True)
+                                                   verbose=True,
+                                                   random_state=42)
     finally:
         sys.stdout = old_stdout
     centers = cluster_centers
@@ -765,7 +780,7 @@ def test_x_squared_norms_init_centroids():
 
 def test_max_iter_error():
 
-    km = KMeans(max_iter=-1)
+    km = KMeans(max_iter=-1, random_state=42)
     assert_raise_message(ValueError, 'Number of iterations should be',
                          km.fit, X)
 
@@ -821,7 +836,8 @@ def test_k_means_init_centers():
         X_test = dtype(X_small)
         init_centers_test = dtype(init_centers)
         assert_array_equal(init_centers, init_centers_test)
-        km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
+        km = KMeans(init=init_centers_test, n_clusters=3, n_init=1, 
+                    random_state=42)
         km.fit(X_test)
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
 
@@ -833,14 +849,15 @@ def test_sparse_k_means_init_centers():
     X = iris.data
 
     # Get a local optimum
-    centers = KMeans(n_clusters=3).fit(X).cluster_centers_
+    centers = KMeans(n_clusters=3, random_state=42).fit(X).cluster_centers_
 
     # Fit starting from a local optimum shouldn't change the solution
     np.testing.assert_allclose(
         centers,
         KMeans(n_clusters=3,
                init=centers,
-               n_init=1).fit(X).cluster_centers_
+               n_init=1,
+               random_state=42).fit(X).cluster_centers_
     )
 
     # The same should be true when X is sparse
@@ -849,7 +866,8 @@ def test_sparse_k_means_init_centers():
         centers,
         KMeans(n_clusters=3,
                init=centers,
-               n_init=1).fit(X_sparse).cluster_centers_
+               n_init=1,
+               random_state=42).fit(X_sparse).cluster_centers_
     )
 
 
@@ -860,10 +878,11 @@ def test_sparse_validate_centers():
     X = iris.data
 
     # Get a local optimum
-    centers = KMeans(n_clusters=4).fit(X).cluster_centers_
+    centers = KMeans(n_clusters=4, random_state=42).fit(X).cluster_centers_
 
     # Test that a ValueError is raised for validate_center_shape
-    classifier = KMeans(n_clusters=3, init=centers, n_init=1)
+    classifier = KMeans(n_clusters=3, init=centers, n_init=1,
+                        random_state=42)
 
     msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
           "does not match the number of clusters 3"

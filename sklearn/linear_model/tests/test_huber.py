@@ -186,7 +186,7 @@ def test_huber_better_r2_score():
 
     # The Ridge regressor should be influenced by the outliers and hence
     # give a worse score on the non-outliers as compared to the huber regressor.
-    ridge = Ridge(fit_intercept=True, alpha=0.01)
+    ridge = Ridge(fit_intercept=True, alpha=0.01, random_state=42)
     ridge.fit(X, y)
     ridge_score = ridge.score(X[mask], y[mask])
     ridge_outlier_score = ridge.score(X[~mask], y[~mask])

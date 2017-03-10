@@ -42,16 +42,20 @@ def test_estimator_init():
 
 
 def test_predictproba_hardvoting():
-    eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
-                                        ('lr2', LogisticRegression())],
+    eclf = VotingClassifier(estimators=[('lr1',
+                                         LogisticRegression(random_state=42)),
+                                        ('lr2',
+                                         LogisticRegression(random_state=42))],
                             voting='hard')
     msg = "predict_proba is not available when voting='hard'"
     assert_raise_message(AttributeError, msg, eclf.predict_proba, X)
 
 
 def test_notfitted():
-    eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
-                                        ('lr2', LogisticRegression())],
+    eclf = VotingClassifier(estimators=[('lr1',
+                                         LogisticRegression(random_state=42)),
+                                        ('lr2',
+                                         LogisticRegression(random_state=42))],
                             voting='soft')
     msg = ("This VotingClassifier instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
@@ -183,7 +187,7 @@ def test_multilabel():
     X, y = make_multilabel_classification(n_classes=2, n_labels=1,
                                           allow_unlabeled=False,
                                           random_state=123)
-    clf = OneVsRestClassifier(SVC(kernel='linear'))
+    clf = OneVsRestClassifier(SVC(kernel='linear', random_state=42))
 
     eclf = VotingClassifier(estimators=[('ovr', clf)], voting='hard')
 

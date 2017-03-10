@@ -29,10 +29,12 @@ def test_silhouette():
         D = pairwise_distances(X, metric='euclidean')
         # Given that the actual labels are used, we can assume that S would be
         # positive.
-        score_precomputed = silhouette_score(D, y, metric='precomputed')
+        score_precomputed = silhouette_score(D, y, metric='precomputed',
+                                             random_state=42)
         assert_greater(score_precomputed, 0)
         # Test without calculating D
-        score_euclidean = silhouette_score(X, y, metric='euclidean')
+        score_euclidean = silhouette_score(X, y, metric='euclidean',
+                                           random_state=42)
         assert_almost_equal(score_precomputed, score_euclidean)
 
         if X is X_dense:
@@ -75,7 +77,7 @@ def test_cluster_size_1():
     #            inter-cluster = [arbitrary, arbitrary]
     #            silhouette    = [1., 1.]
 
-    silhouette = silhouette_score(X, labels)
+    silhouette = silhouette_score(X, labels, random_state=42)
     assert_false(np.isnan(silhouette))
     ss = silhouette_samples(X, labels)
     assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
@@ -91,14 +93,14 @@ def test_correct_labelsize():
     assert_raises_regexp(ValueError,
                          'Number of labels is %d\. Valid values are 2 '
                          'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+                         silhouette_score, X, y, random_state=42)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
     assert_raises_regexp(ValueError,
                          'Number of labels is %d\. Valid values are 2 '
                          'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+                         silhouette_score, X, y, random_state=42)
 
 
 def test_non_encoded_labels():
@@ -106,7 +108,8 @@ def test_non_encoded_labels():
     X = dataset.data
     labels = dataset.target
     assert_equal(
-        silhouette_score(X, labels * 2 + 10), silhouette_score(X, labels))
+        silhouette_score(X, labels * 2 + 10, random_state=42),
+        silhouette_score(X, labels, random_state=42))
     assert_array_equal(
         silhouette_samples(X, labels * 2 + 10), silhouette_samples(X, labels))
 
@@ -116,7 +119,8 @@ def test_non_numpy_labels():
     X = dataset.data
     y = dataset.target
     assert_equal(
-        silhouette_score(list(X), list(y)), silhouette_score(X, y))
+        silhouette_score(list(X), list(y), random_state=42),
+        silhouette_score(X, y, random_state=42))
 
 
 def test_calinski_harabaz_score():

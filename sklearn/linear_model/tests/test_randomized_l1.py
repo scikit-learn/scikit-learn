@@ -68,10 +68,10 @@ def test_randomized_lasso():
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(feature_scores, X.shape[1] * [1.])
 
-    clf = RandomizedLasso(verbose=False, scaling=-0.1)
+    clf = RandomizedLasso(verbose=False, scaling=-0.1, random_state=42)
     assert_raises(ValueError, clf.fit, X, y)
 
-    clf = RandomizedLasso(verbose=False, scaling=1.1)
+    clf = RandomizedLasso(verbose=False, scaling=1.1, random_state=42)
     assert_raises(ValueError, clf.fit, X, y)
 
 
@@ -100,7 +100,8 @@ def test_randomized_logistic():
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(np.argsort(F), np.argsort(feature_scores))
 
-    clf = RandomizedLogisticRegression(verbose=False, C=[[1., 0.5]])
+    clf = RandomizedLogisticRegression(verbose=False, C=[[1., 0.5]],
+                                       random_state=42)
     assert_raises(ValueError, clf.fit, X, y)
 
 

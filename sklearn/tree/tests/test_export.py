@@ -194,7 +194,7 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test classifier with degraded learning set
-    clf = DecisionTreeClassifier(max_depth=3)
+    clf = DecisionTreeClassifier(max_depth=3, random_state=42)
     clf.fit(X, y_degraded)
 
     contents1 = export_graphviz(clf, filled=True, out_file=None)
@@ -209,7 +209,8 @@ def test_graphviz_toy():
 
 def test_graphviz_errors():
     # Check for errors of export_graphviz
-    clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
+    clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2,
+                                 random_state=42)
     clf.fit(X, y)
 
     # Check feature_names error

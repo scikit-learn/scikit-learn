@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_warns
 
 def test_n_samples_leaves_roots():
     # Sanity check for the number of samples in leaves and roots
-    X, y = make_blobs(n_samples=10)
+    X, y = make_blobs(n_samples=10, random_state=42)
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
@@ -35,7 +35,7 @@ def test_n_samples_leaves_roots():
 
 def test_partial_fit():
     # Test that fit is equivalent to calling partial_fit multiple times
-    X, y = make_blobs(n_samples=100)
+    X, y = make_blobs(n_samples=100, random_state=42)
     brc = Birch(n_clusters=3)
     brc.fit(X)
     brc_partial = Birch(n_clusters=None)
@@ -71,7 +71,7 @@ def test_birch_predict():
 
 def test_n_clusters():
     # Test that n_clusters param works properly
-    X, y = make_blobs(n_samples=100, centers=10)
+    X, y = make_blobs(n_samples=100, centers=10, random_state=42)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
     assert_greater(len(brc1.subcluster_centers_), 10)
@@ -86,7 +86,7 @@ def test_n_clusters():
     assert_array_equal(brc1.labels_, brc2.labels_)
 
     # Test that the wrong global clustering step raises an Error.
-    clf = ElasticNet()
+    clf = ElasticNet(random_state=42)
     brc3 = Birch(n_clusters=clf)
     assert_raises(ValueError, brc3.fit, X)
 
@@ -97,7 +97,7 @@ def test_n_clusters():
 
 def test_sparse_X():
     # Test that sparse and dense data give same results
-    X, y = make_blobs(n_samples=100, centers=10)
+    X, y = make_blobs(n_samples=100, centers=10, random_state=42)
     brc = Birch(n_clusters=10)
     brc.fit(X)
 
@@ -120,7 +120,7 @@ def check_branching_factor(node, branching_factor):
 
 def test_branching_factor():
     # Test that nodes have at max branching_factor number of subclusters
-    X, y = make_blobs()
+    X, y = make_blobs(random_state=42)
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
@@ -150,7 +150,7 @@ def check_threshold(birch_instance, threshold):
 
 def test_threshold():
     # Test that the leaf subclusters have a threshold lesser than radius
-    X, y = make_blobs(n_samples=80, centers=4)
+    X, y = make_blobs(n_samples=80, centers=4, random_state=42)
     brc = Birch(threshold=0.5, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 0.5)

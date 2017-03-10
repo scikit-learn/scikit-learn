@@ -313,7 +313,7 @@ def test_grid_search_groups():
     grid = {'C': [1]}
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2), GroupKFold(),
-                 GroupShuffleSplit()]
+                 GroupShuffleSplit(random_state=42)]
     for cv in group_cvs:
         gs = GridSearchCV(clf, grid, cv=cv)
         assert_raise_message(ValueError,
@@ -321,7 +321,8 @@ def test_grid_search_groups():
                              gs.fit, X, y)
         gs.fit(X, y, groups=groups)
 
-    non_group_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
+    non_group_cvs = [StratifiedKFold(random_state=42),
+                     StratifiedShuffleSplit(random_state=42)]
     for cv in non_group_cvs:
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
@@ -363,7 +364,8 @@ def test_trivial_cv_results_attr():
     grid_search.fit(X, y)
     assert_true(hasattr(grid_search, "cv_results_"))
 
-    random_search = RandomizedSearchCV(clf, {'foo_param': [0]}, n_iter=1)
+    random_search = RandomizedSearchCV(clf, {'foo_param': [0]}, n_iter=1,
+                                       random_state=42)
     random_search.fit(X, y)
     assert_true(hasattr(grid_search, "cv_results_"))
 
@@ -390,7 +392,7 @@ def test_grid_search_error():
     # Test that grid search will capture errors on data with different length
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=42)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     assert_raises(ValueError, cv.fit, X_[:180], y_)
 
@@ -399,11 +401,11 @@ def test_grid_search_one_grid_point():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     param_dict = {"C": [1.0], "kernel": ["rbf"], "gamma": [0.1]}
 
-    clf = SVC()
+    clf = SVC(random_state=42)
     cv = GridSearchCV(clf, param_dict)
     cv.fit(X_, y_)
 
-    clf = SVC(C=1.0, kernel="rbf", gamma=0.1)
+    clf = SVC(C=1.0, kernel="rbf", gamma=0.1, random_state=42)
     clf.fit(X_, y_)
 
     assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
@@ -423,7 +425,7 @@ def test_grid_search_when_param_grid_includes_range():
 
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
-    clf = SVC()
+    clf = SVC(random_state=42)
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -431,14 +433,14 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
-    clf = SVC()
+    clf = SVC(random_state=42)
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a non-empty sequence.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": "1,2,3"}
-    clf = SVC()
+    clf = SVC(random_state=42)
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence"
@@ -446,7 +448,7 @@ def test_grid_search_bad_param_grid():
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones(6).reshape(3, 2)}
-    clf = SVC()
+    clf = SVC(random_state=42)
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
@@ -454,14 +456,14 @@ def test_grid_search_sparse():
     # Test that grid search works with both dense and sparse matrices
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=42)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=42)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(X_[:180].tocoo(), y_[:180])
     y_pred2 = cv.predict(X_[180:])
@@ -474,14 +476,14 @@ def test_grid_search_sparse():
 def test_grid_search_sparse_scoring():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=42)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=42)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
@@ -515,7 +517,7 @@ def test_grid_search_precomputed_kernel():
     K_train = np.dot(X_[:180], X_[:180].T)
     y_train = y_[:180]
 
-    clf = SVC(kernel='precomputed')
+    clf = SVC(kernel='precomputed', random_state=42)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     cv.fit(K_train, y_train)
 
@@ -539,7 +541,7 @@ def test_grid_search_precomputed_kernel_error_nonsquare():
     # training kernel matrix
     K_train = np.zeros((10, 20))
     y_train = np.ones((10, ))
-    clf = SVC(kernel='precomputed')
+    clf = SVC(kernel='precomputed', random_state=42)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     assert_raises(ValueError, cv.fit, K_train, y_train)
 
@@ -589,7 +591,7 @@ def test_X_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
-    cv = KFold(n_splits=3)
+    cv = KFold(n_splits=3, random_state=42)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
     assert_true(hasattr(grid_search, "cv_results_"))
@@ -601,7 +603,7 @@ def test_y_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
-    cv = KFold(n_splits=3)
+    cv = KFold(n_splits=3, random_state=42)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X, y.tolist()).score(X, y)
     assert_true(hasattr(grid_search, "cv_results_"))
@@ -742,10 +744,10 @@ def test_grid_search_cv_results():
     n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
+    grid_search = GridSearchCV(SVC(random_state=42), cv=n_splits, iid=False,
                                param_grid=params)
     grid_search.fit(X, y)
-    grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
+    grid_search_iid = GridSearchCV(SVC(random_state=42), cv=n_splits, iid=True,
                                    param_grid=params)
     grid_search_iid.fit(X, y)
 
@@ -802,13 +804,17 @@ def test_random_search_cv_results():
     n_splits = 3
     n_search_iter = 30
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+    random_search = RandomizedSearchCV(SVC(random_state=42),
+                                       n_iter=n_search_iter,
                                        cv=n_splits, iid=False,
-                                       param_distributions=params)
+                                       param_distributions=params,
+                                       random_state=42)
     random_search.fit(X, y)
-    random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+    random_search_iid = RandomizedSearchCV(SVC(random_state=42),
+                                           n_iter=n_search_iter,
                                            cv=n_splits, iid=True,
-                                           param_distributions=params)
+                                           param_distributions=params,
+                                           random_state=42)
     random_search_iid.fit(X, y)
 
     param_keys = ('param_C', 'param_gamma')
@@ -851,9 +857,10 @@ def test_search_iid_param():
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
     grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv)
-    random_search = RandomizedSearchCV(SVC(), n_iter=2,
+    random_search = RandomizedSearchCV(SVC(random_state=42), n_iter=2,
                                        param_distributions={'C': [1, 10]},
-                                       cv=cv)
+                                       cv=cv,
+                                       random_state=42)
     for search in (grid_search, random_search):
         search.fit(X, y)
         assert_true(search.iid)
@@ -896,9 +903,10 @@ def test_search_iid_param():
     grid_search = GridSearchCV(SVC(),
                                param_grid={'C': [1, 10]},
                                cv=cv, iid=False)
-    random_search = RandomizedSearchCV(SVC(), n_iter=2,
+    random_search = RandomizedSearchCV(SVC(random_state=42), n_iter=2,
                                        param_distributions={'C': [1, 10]},
-                                       cv=cv, iid=False)
+                                       cv=cv, iid=False,
+                                       random_state=42)
 
     for search in (grid_search, random_search):
         search.fit(X, y)
@@ -936,9 +944,10 @@ def test_search_cv_results_rank_tie_breaking():
     # which would result in a tie of their mean cv-scores
     param_grid = {'C': [1, 1.001, 0.001]}
 
-    grid_search = GridSearchCV(SVC(), param_grid=param_grid)
-    random_search = RandomizedSearchCV(SVC(), n_iter=3,
-                                       param_distributions=param_grid)
+    grid_search = GridSearchCV(SVC(random_state=42), param_grid=param_grid)
+    random_search = RandomizedSearchCV(SVC(random_state=42), n_iter=3,
+                                       param_distributions=param_grid,
+                                       random_state=42)
 
     for search in (grid_search, random_search):
         search.fit(X, y)
@@ -966,7 +975,8 @@ def test_search_cv_results_rank_tie_breaking():
 
 def test_search_cv_results_none_param():
     X, y = [[1], [2], [3], [4], [5]], [0, 0, 0, 0, 1]
-    estimators = (DecisionTreeRegressor(), DecisionTreeClassifier())
+    estimators = (DecisionTreeRegressor(random_state=42),
+                  DecisionTreeClassifier(random_state=42))
     est_parameters = {"random_state": [0, None]}
     cv = KFold(random_state=0)
 
@@ -984,7 +994,8 @@ def test_search_cv_timing():
     y = [0, 1, 1, 0]
 
     gs = GridSearchCV(svc, {'C': [0, 1]}, cv=2, error_score=0)
-    rs = RandomizedSearchCV(svc, {'C': [0, 1]}, cv=2, error_score=0, n_iter=2)
+    rs = RandomizedSearchCV(svc, {'C': [0, 1]}, cv=2, error_score=0, n_iter=2,
+                            random_state=42)
 
     for search in (gs, rs):
         search.fit(X, y)
@@ -1017,7 +1028,7 @@ def test_grid_search_correct_score_results():
                                for cv_i in range(n_splits)))
         assert_true(all(in1d(expected_keys, result_keys)))
 
-        cv = StratifiedKFold(n_splits=n_splits)
+        cv = StratifiedKFold(n_splits=n_splits, random_state=42)
         n_splits = grid_search.n_splits_
         for candidate_i, C in enumerate(Cs):
             clf.set_params(C=C)
@@ -1045,7 +1056,7 @@ def test_pickle():
                               grid_search_pickled.predict(X))
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [1, 2, 3]},
-                                       refit=True, n_iter=3)
+                                       refit=True, n_iter=3, random_state=42)
     random_search.fit(X, y)
     random_search_pickled = pickle.loads(pickle.dumps(random_search))
     assert_array_almost_equal(random_search.predict(X),
@@ -1082,7 +1093,7 @@ def test_grid_search_with_multioutput_data():
     # Test with a randomized search
     for est in estimators:
         random_search = RandomizedSearchCV(est, est_parameters,
-                                           cv=cv, n_iter=3)
+                                           cv=cv, n_iter=3, random_state=42)
         random_search.fit(X, y)
         res_params = random_search.cv_results_['params']
         for cand_i in range(len(res_params)):
@@ -1101,7 +1112,7 @@ def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
     y = [0, 0, 1, 1, 1]
-    clf = SVC(probability=False)
+    clf = SVC(probability=False, random_state=42)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
 
@@ -1191,10 +1202,10 @@ def test_grid_search_failing_classifier_raise():
 def test_parameters_sampler_replacement():
     # raise error if n_iter too large
     params = {'first': [0, 1], 'second': ['a', 'b', 'c']}
-    sampler = ParameterSampler(params, n_iter=7)
+    sampler = ParameterSampler(params, n_iter=7, random_state=42)
     assert_raises(ValueError, list, sampler)
     # degenerates to GridSearchCV if n_iter the same as grid_size
-    sampler = ParameterSampler(params, n_iter=6)
+    sampler = ParameterSampler(params, n_iter=6, random_state=42)
     samples = list(sampler)
     assert_equal(len(samples), 6)
     for values in ParameterGrid(params):
@@ -1211,7 +1222,7 @@ def test_parameters_sampler_replacement():
 
     # doesn't go into infinite loops
     params_distribution = {'first': bernoulli(.5), 'second': ['a', 'b', 'c']}
-    sampler = ParameterSampler(params_distribution, n_iter=7)
+    sampler = ParameterSampler(params_distribution, n_iter=7, random_state=42)
     samples = list(sampler)
     assert_equal(len(samples), 7)
 
@@ -1224,7 +1235,7 @@ def test_stochastic_gradient_loss_param():
     }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
-    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge'),
+    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge', random_state=42),
                        param_grid=param_grid)
 
     # When the estimator is not fitted, `predict_proba` is not available as the
@@ -1239,7 +1250,7 @@ def test_stochastic_gradient_loss_param():
     param_grid = {
         'loss': ['hinge'],
     }
-    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge'),
+    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge', random_state=42),
                        param_grid=param_grid)
     assert_false(hasattr(clf, "predict_proba"))
     clf.fit(X, y)
@@ -1270,7 +1281,7 @@ def test_grid_search_cv_splits_consistency():
 
     gs2 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
-                       cv=KFold(n_splits=n_splits))
+                       cv=KFold(n_splits=n_splits, random_state=42))
     gs2.fit(X, y)
 
     def _pop_time_keys(cv_results):
@@ -1291,7 +1302,8 @@ def test_grid_search_cv_splits_consistency():
     # Check consistency of folds across the parameters
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.1, 0.2, 0.2]},
-                      cv=KFold(n_splits=n_splits, shuffle=True))
+                      cv=KFold(n_splits=n_splits, shuffle=True,
+                               random_state=42))
     gs.fit(X, y)
 
     # As the first two param settings (C=0.1) and the next two param

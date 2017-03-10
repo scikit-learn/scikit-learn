@@ -588,7 +588,7 @@ def test_invalid_k():
 def test_f_classif_constant_feature():
     # Test that f_classif warns if a feature is constant throughout.
 
-    X, y = make_classification(n_samples=10, n_features=5)
+    X, y = make_classification(n_samples=10, n_features=5, random_state=42)
     X[:, 0] = 2.0
     assert_warns(UserWarning, f_classif, X, y)
 

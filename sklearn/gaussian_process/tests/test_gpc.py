@@ -36,7 +36,7 @@ kernels = [RBF(length_scale=0.1), fixed_kernel,
 def test_predict_consistent():
     # Check binary predict decision has also predicted probability above 0.5.
     for kernel in kernels:
-        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel, random_state=42).fit(X, y)
         assert_array_equal(gpc.predict(X),
                            gpc.predict_proba(X)[:, 1] >= 0.5)
 
@@ -46,7 +46,7 @@ def test_lml_improving():
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
-        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel, random_state=42).fit(X, y)
         assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
                        gpc.log_marginal_likelihood(kernel.theta))
 
@@ -54,7 +54,7 @@ def test_lml_improving():
 def test_lml_precomputed():
     # Test that lml of optimized kernel is stored correctly.
     for kernel in kernels:
-        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel, random_state=42).fit(X, y)
         assert_almost_equal(gpc.log_marginal_likelihood(gpc.kernel_.theta),
                             gpc.log_marginal_likelihood(), 7)
 
@@ -64,7 +64,7 @@ def test_converged_to_local_maximum():
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
-        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel, random_state=42).fit(X, y)
 
         lml, lml_gradient = \
             gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
@@ -77,7 +77,7 @@ def test_converged_to_local_maximum():
 def test_lml_gradient():
     # Compare analytic and numeric gradient of log marginal likelihood.
     for kernel in kernels:
-        gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+        gpc = GaussianProcessClassifier(kernel=kernel, random_state=42).fit(X, y)
 
         lml, lml_gradient = gpc.log_marginal_likelihood(kernel.theta, True)
         lml_gradient_approx = \
@@ -129,7 +129,8 @@ def test_custom_optimizer():
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
-        gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
+        gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer,
+                                        random_state=42)
         gpc.fit(X, y_mc)
         # Checks that optimizer improved marginal likelihood
         assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
@@ -139,7 +140,7 @@ def test_custom_optimizer():
 def test_multi_class():
     # Test GPC for multi-class classification problems.
     for kernel in kernels:
-        gpc = GaussianProcessClassifier(kernel=kernel)
+        gpc = GaussianProcessClassifier(kernel=kernel, random_state=42)
         gpc.fit(X, y_mc)
 
         y_prob = gpc.predict_proba(X2)
@@ -152,10 +153,11 @@ def test_multi_class():
 def test_multi_class_n_jobs():
     # Test that multi-class GPC produces identical results with n_jobs>1.
     for kernel in kernels:
-        gpc = GaussianProcessClassifier(kernel=kernel)
+        gpc = GaussianProcessClassifier(kernel=kernel, random_state=42)
         gpc.fit(X, y_mc)
 
-        gpc_2 = GaussianProcessClassifier(kernel=kernel, n_jobs=2)
+        gpc_2 = GaussianProcessClassifier(kernel=kernel, n_jobs=2,
+                                          random_state=42)
         gpc_2.fit(X, y_mc)
 
         y_prob = gpc.predict_proba(X2)

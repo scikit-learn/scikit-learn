@@ -195,13 +195,13 @@ def test_uniform_strategy_multioutput():
 def test_string_labels():
     X = [[0]] * 5
     y = ["paris", "paris", "tokyo", "amsterdam", "berlin"]
-    clf = DummyClassifier(strategy="most_frequent")
+    clf = DummyClassifier(strategy="most_frequent", random_state=42)
     clf.fit(X, y)
     assert_array_equal(clf.predict(X), ["paris"] * 5)
 
 
 def test_classifier_exceptions():
-    clf = DummyClassifier(strategy="unknown")
+    clf = DummyClassifier(strategy="unknown", random_state=42)
     assert_raises(ValueError, clf.fit, [], [])
 
     assert_raises(ValueError, clf.predict, [])
@@ -494,7 +494,7 @@ def test_classification_sample_weight():
     y = [0, 1, 0]
     sample_weight = [0.1, 1., 0.1]
 
-    clf = DummyClassifier().fit(X, y, sample_weight)
+    clf = DummyClassifier(random_state=42).fit(X, y, sample_weight)
     assert_array_almost_equal(clf.class_prior_, [0.2 / 1.2, 1. / 1.2])
 
 

@@ -79,7 +79,7 @@ def test_oneclass_adaboost_proba():
     # In response to issue #7501
     # https://github.com/scikit-learn/scikit-learn/issues/7501
     y_t = np.ones(len(X))
-    clf = AdaBoostClassifier().fit(X, y_t)
+    clf = AdaBoostClassifier(random_state=42).fit(X, y_t)
     assert_array_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
@@ -107,7 +107,7 @@ def test_iris():
     clf_samme = prob_samme = None
 
     for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg)
+        clf = AdaBoostClassifier(algorithm=alg, random_state=42)
         clf.fit(iris.data, iris.target)
 
         assert_array_equal(classes, clf.classes_)
@@ -158,7 +158,8 @@ def test_staged_predict():
 
     # AdaBoost classification
     for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg, n_estimators=10)
+        clf = AdaBoostClassifier(algorithm=alg, n_estimators=10,
+                                 random_state=42)
         clf.fit(iris.data, iris.target, sample_weight=iris_weights)
 
         predictions = clf.predict(iris.data)
@@ -197,7 +198,9 @@ def test_staged_predict():
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     # AdaBoost classification
-    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
+    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier(
+                               random_state=42),
+                               random_state=42)
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2),
                   'algorithm': ('SAMME', 'SAMME.R')}
@@ -205,7 +208,8 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(),
+    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(
+                              random_state=42),
                               random_state=0)
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
@@ -219,7 +223,7 @@ def test_pickle():
 
     # Adaboost classifier
     for alg in ['SAMME', 'SAMME.R']:
-        obj = AdaBoostClassifier(algorithm=alg)
+        obj = AdaBoostClassifier(algorithm=alg, random_state=42)
         obj.fit(iris.data, iris.target)
         score = obj.score(iris.data, iris.target)
         s = pickle.dumps(obj)
@@ -252,7 +256,7 @@ def test_importances():
                                         random_state=1)
 
     for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg)
+        clf = AdaBoostClassifier(algorithm=alg, random_state=42)
 
         clf.fit(X, y)
         importances = clf.feature_importances_
@@ -265,15 +269,15 @@ def test_importances():
 def test_error():
     # Test that it gives proper exception on deficient input.
     assert_raises(ValueError,
-                  AdaBoostClassifier(learning_rate=-1).fit,
+                  AdaBoostClassifier(learning_rate=-1, random_state=42).fit,
                   X, y_class)
 
     assert_raises(ValueError,
-                  AdaBoostClassifier(algorithm="foo").fit,
+                  AdaBoostClassifier(algorithm="foo", random_state=42).fit,
                   X, y_class)
 
     assert_raises(ValueError,
-                  AdaBoostClassifier().fit,
+                  AdaBoostClassifier(random_state=42).fit,
                   X, y_class, sample_weight=np.asarray([-1]))
 
 
@@ -284,10 +288,11 @@ def test_base_estimator():
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
-    clf = AdaBoostClassifier(RandomForestClassifier())
+    clf = AdaBoostClassifier(RandomForestClassifier(), random_state=42)
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(random_state=42),
+                                 algorithm="SAMME", random_state=42)
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
@@ -302,7 +307,8 @@ def test_base_estimator():
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(random_state=42),
+                             algorithm="SAMME", random_state=42)
     assert_raises_regexp(ValueError, "worse than random",
                          clf.fit, X_fail, y_fail)
 
@@ -311,10 +317,10 @@ def test_sample_weight_missing():
     from sklearn.linear_model import LogisticRegression
     from sklearn.cluster import KMeans
 
-    clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
+    clf = AdaBoostClassifier(KMeans(), algorithm="SAMME", random_state=42)
     assert_raises(ValueError, clf.fit, X, y_regr)
 
-    clf = AdaBoostRegressor(KMeans())
+    clf = AdaBoostRegressor(KMeans(), random_state=42)
     assert_raises(ValueError, clf.fit, X, y_regr)
 
 

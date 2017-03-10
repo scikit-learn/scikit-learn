@@ -235,30 +235,30 @@ def test_perfect_checkerboard():
 def test_errors():
     data = np.arange(25).reshape((5, 5))
 
-    model = SpectralBiclustering(n_clusters=(3, 3, 3))
+    model = SpectralBiclustering(n_clusters=(3, 3, 3), random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(n_clusters='abc')
+    model = SpectralBiclustering(n_clusters='abc', random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(n_clusters=(3, 'abc'))
+    model = SpectralBiclustering(n_clusters=(3, 'abc'), random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(method='unknown')
+    model = SpectralBiclustering(method='unknown', random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(svd_method='unknown')
+    model = SpectralBiclustering(svd_method='unknown', random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(n_components=0)
+    model = SpectralBiclustering(n_components=0, random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(n_best=0)
+    model = SpectralBiclustering(n_best=0, random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(n_components=3, n_best=4)
+    model = SpectralBiclustering(n_components=3, n_best=4, random_state=42)
     assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering()
+    model = SpectralBiclustering(random_state=42)
     data = np.arange(27).reshape((3, 3, 3))
     assert_raises(ValueError, model.fit, data)

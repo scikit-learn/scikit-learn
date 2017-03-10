@@ -87,7 +87,8 @@ def test_fastica_simple(add_noise=False):
             assert_raises(ValueError, fastica, m.T, fun=np.tanh,
                           algorithm=algo)
         else:
-            X = PCA(n_components=2, whiten=True).fit_transform(m.T)
+            X = PCA(n_components=2, whiten=True,
+                    random_state=42).fit_transform(m.T)
             k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False)
             assert_raises(ValueError, fastica, X, fun=np.tanh,
                           algorithm=algo)
@@ -129,7 +130,8 @@ def test_fastica_simple(add_noise=False):
         ica = FastICA(fun=fn, algorithm=algo, random_state=0)
         assert_raises(ValueError, ica.fit, m.T)
 
-    assert_raises(TypeError, FastICA(fun=moves.xrange(10)).fit, m.T)
+    assert_raises(TypeError, FastICA(fun=moves.xrange(10),
+                                     random_state=42).fit, m.T)
 
 
 def test_fastica_nowhiten():

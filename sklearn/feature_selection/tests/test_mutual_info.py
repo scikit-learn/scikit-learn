@@ -122,7 +122,7 @@ def test_mutual_info_classif_discrete():
 
     # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
     # informative.
-    mi = mutual_info_classif(X, y, discrete_features=True)
+    mi = mutual_info_classif(X, y, discrete_features=True, random_state=42)
     assert_array_equal(np.argsort(-mi), np.array([0, 2, 1]))
 
 

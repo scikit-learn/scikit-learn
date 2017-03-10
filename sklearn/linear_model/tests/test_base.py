@@ -317,7 +317,7 @@ def test_sparse_preprocess_data_with_return_mean():
 
 def test_csr_preprocess_data():
     # Test output format of _preprocess_data, when input is csr
-    X, y = make_regression()
+    X, y = make_regression(random_state=42)
     X[X < 2.5] = 0.0
     csr = sparse.csr_matrix(X)
     csr_, y, _, _, _ = _preprocess_data(csr, y, True)

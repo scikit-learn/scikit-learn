@@ -151,11 +151,14 @@ def test_invalid_params():
     X = np.ones((5, 10))
 
     invalid_models = (
-        ('n_topics', LatentDirichletAllocation(n_topics=0)),
+        ('n_topics', LatentDirichletAllocation(n_topics=0, random_state=42)),
         ('learning_method',
-         LatentDirichletAllocation(learning_method='unknown')),
-        ('total_samples', LatentDirichletAllocation(total_samples=0)),
-        ('learning_offset', LatentDirichletAllocation(learning_offset=-1)),
+         LatentDirichletAllocation(learning_method='unknown',
+                                   random_state=42)),
+        ('total_samples', LatentDirichletAllocation(total_samples=0,
+                                                    random_state=42)),
+        ('learning_offset', LatentDirichletAllocation(learning_offset=-1,
+                                                      random_state=42)),
     )
     for param, model in invalid_models:
         regex = r"^Invalid %r parameter" % param
@@ -165,7 +168,7 @@ def test_invalid_params():
 def test_lda_negative_input():
     # test pass dense matrix with sparse negative input.
     X = -np.ones((5, 10))
-    lda = LatentDirichletAllocation()
+    lda = LatentDirichletAllocation(random_state=42)
     regex = r"^Negative values in data passed"
     assert_raises_regexp(ValueError, regex, lda.fit, X)
 
@@ -174,7 +177,7 @@ def test_lda_no_component_error():
     # test `transform` and `perplexity` before `fit`
     rng = np.random.RandomState(0)
     X = rng.randint(4, size=(20, 10))
-    lda = LatentDirichletAllocation()
+    lda = LatentDirichletAllocation(random_state=42)
     regex = r"^no 'components_' attribute"
     assert_raises_regexp(NotFittedError, regex, lda.transform, X)
     assert_raises_regexp(NotFittedError, regex, lda.perplexity, X)
@@ -350,7 +353,7 @@ def test_lda_empty_docs():
     """Test LDA on empty document (all-zero rows)."""
     Z = np.zeros((5, 4))
     for X in [Z, csr_matrix(Z)]:
-        lda = LatentDirichletAllocation(max_iter=750).fit(X)
+        lda = LatentDirichletAllocation(max_iter=750, random_state=42).fit(X)
         assert_almost_equal(lda.components_.sum(axis=0),
                             np.ones(lda.components_.shape[1]))
 

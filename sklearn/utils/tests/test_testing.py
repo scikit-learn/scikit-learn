@@ -43,7 +43,7 @@ def test_assert_greater_equal():
 
 def test_set_random_state():
     lda = LinearDiscriminantAnalysis()
-    tree = DecisionTreeClassifier()
+    tree = DecisionTreeClassifier(random_state=42)
     # Linear Discriminant Analysis doesn't have random state: smoke test
     set_random_state(lda, 3)
     set_random_state(tree, 3)

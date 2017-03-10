@@ -92,43 +92,48 @@ def test_iforest_error():
 
     # Test max_samples
     assert_raises(ValueError,
-                  IsolationForest(max_samples=-1).fit, X)
+                  IsolationForest(max_samples=-1, random_state=42).fit, X)
     assert_raises(ValueError,
-                  IsolationForest(max_samples=0.0).fit, X)
+                  IsolationForest(max_samples=0.0, random_state=42).fit, X)
     assert_raises(ValueError,
-                  IsolationForest(max_samples=2.0).fit, X)
+                  IsolationForest(max_samples=2.0, random_state=42).fit, X)
     # The dataset has less than 256 samples, explicitly setting
     # max_samples > n_samples should result in a warning. If not set
     # explicitly there should be no warning
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
-                         IsolationForest(max_samples=1000).fit, X)
-    assert_no_warnings(IsolationForest(max_samples='auto').fit, X)
-    assert_no_warnings(IsolationForest(max_samples=np.int64(2)).fit, X)
-    assert_raises(ValueError, IsolationForest(max_samples='foobar').fit, X)
-    assert_raises(ValueError, IsolationForest(max_samples=1.5).fit, X)
+                         IsolationForest(max_samples=1000,
+                                         random_state=42).fit, X)
+    assert_no_warnings(IsolationForest(max_samples='auto',
+                                       random_state=42).fit, X)
+    assert_no_warnings(IsolationForest(max_samples=np.int64(2),
+                                       random_state=42).fit, X)
+    assert_raises(ValueError, IsolationForest(max_samples='foobar',
+                                              random_state=42).fit, X)
+    assert_raises(ValueError, IsolationForest(max_samples=1.5,
+                                              random_state=42).fit, X)
 
 
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
     X = iris.data
-    clf = IsolationForest().fit(X)
+    clf = IsolationForest(random_state=42).fit(X)
     for est in clf.estimators_:
         assert_equal(est.max_depth, int(np.ceil(np.log2(X.shape[0]))))
 
 
 def test_max_samples_attribute():
     X = iris.data
-    clf = IsolationForest().fit(X)
+    clf = IsolationForest(random_state=42).fit(X)
     assert_equal(clf.max_samples_, X.shape[0])
 
-    clf = IsolationForest(max_samples=500)
+    clf = IsolationForest(max_samples=500, random_state=42)
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          clf.fit, X)
     assert_equal(clf.max_samples_, X.shape[0])
 
-    clf = IsolationForest(max_samples=0.4).fit(X)
+    clf = IsolationForest(max_samples=0.4, random_state=42).fit(X)
     assert_equal(clf.max_samples_, 0.4*X.shape[0])
 
 
@@ -198,7 +203,7 @@ def test_iforest_works():
 def test_max_samples_consistency():
     # Make sure validated max_samples in iforest and BaseBagging are identical
     X = iris.data
-    clf = IsolationForest().fit(X)
+    clf = IsolationForest(random_state=42).fit(X)
     assert_equal(clf.max_samples_, clf._max_samples)
 
 
@@ -208,6 +213,6 @@ def test_iforest_subsampled_features():
     X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
                                                         boston.target[:50],
                                                         random_state=rng)
-    clf = IsolationForest(max_features=0.8)
+    clf = IsolationForest(max_features=0.8, random_state=42)
     clf.fit(X_train, y_train)
     clf.predict(X_test)

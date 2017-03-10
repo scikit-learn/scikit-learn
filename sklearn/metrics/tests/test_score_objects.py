@@ -343,7 +343,7 @@ def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    km = KMeans(n_clusters=3,random_state=42)
+    km = KMeans(n_clusters=3, random_state=42)
     km.fit(X_train)
     for name in CLUSTER_SCORERS:
         score1 = get_scorer(name)(km, X_test, y_test)
@@ -454,4 +454,5 @@ def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          Ridge(random_state=42), r2_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         KMeans(random_state=42), cluster_module.adjusted_rand_score)
+                         KMeans(random_state=42),
+                         cluster_module.adjusted_rand_score)

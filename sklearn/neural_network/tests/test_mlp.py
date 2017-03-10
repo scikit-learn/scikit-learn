@@ -274,7 +274,8 @@ def test_learning_rate_warmstart():
     for learning_rate in ["invscaling", "constant"]:
         mlp = MLPClassifier(solver='sgd', hidden_layer_sizes=4,
                             learning_rate=learning_rate, max_iter=1,
-                            power_t=0.25, warm_start=True)
+                            power_t=0.25, warm_start=True,
+                            random_state=42)
         with ignore_warnings(category=ConvergenceWarning):
             mlp.fit(X, y)
             prev_eta = mlp._optimizer.learning_rate
@@ -321,7 +322,7 @@ def test_partial_fit_classes_error():
     # Tests that passing different classes to partial_fit raises an error
     X = [[3, 2]]
     y = [0]
-    clf = MLPClassifier(solver='sgd')
+    clf = MLPClassifier(solver='sgd', random_state=42)
     clf.partial_fit(X, y, classes=[0, 1])
     assert_raises(ValueError, clf.partial_fit, X, y, classes=[1, 2])
 
@@ -392,10 +393,12 @@ def test_partial_fit_errors():
 
     # no classes passed
     assert_raises(ValueError,
-                  MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
+                  MLPClassifier(solver='sgd', random_state=42)
+                  .partial_fit, X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
+    assert_false(hasattr(MLPClassifier(solver='lbfgs', random_state=42),
+                 'partial_fit'))
 
 
 def test_params_errors():
@@ -431,7 +434,7 @@ def test_predict_proba_binary():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
 
-    clf = MLPClassifier(hidden_layer_sizes=5)
+    clf = MLPClassifier(hidden_layer_sizes=5, random_state=42)
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
@@ -454,7 +457,7 @@ def test_predict_proba_multiclass():
     X = X_digits_multi[:10]
     y = y_digits_multi[:10]
 
-    clf = MLPClassifier(hidden_layer_sizes=5)
+    clf = MLPClassifier(hidden_layer_sizes=5, random_state=42)
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
@@ -516,7 +519,7 @@ def test_tolerance():
     # It should force the solver to exit the loop when it converges.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(tol=0.5, max_iter=3000, solver='sgd')
+    clf = MLPClassifier(tol=0.5, max_iter=3000, solver='sgd', random_state=42)
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
 
@@ -526,7 +529,7 @@ def test_verbose_sgd():
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier(solver='sgd', max_iter=2, verbose=10,
-                        hidden_layer_sizes=2)
+                        hidden_layer_sizes=2, random_state=42)
     old_stdout = sys.stdout
     sys.stdout = output = StringIO()
 
@@ -543,7 +546,7 @@ def test_early_stopping():
     y = y_digits_binary[:100]
     tol = 0.2
     clf = MLPClassifier(tol=tol, max_iter=3000, solver='sgd',
-                        early_stopping=True)
+                        early_stopping=True, random_state=42)
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
 
@@ -558,7 +561,7 @@ def test_adaptive_learning_rate():
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier(tol=0.5, max_iter=3000, solver='sgd',
-                        learning_rate='adaptive')
+                        learning_rate='adaptive', random_state=42)
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
     assert_greater(1e-6, clf._optimizer.learning_rate)
@@ -577,13 +580,14 @@ def test_warm_start():
 
     # No error raised
     clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                        warm_start=True).fit(X, y)
+                        warm_start=True, random_state=42).fit(X, y)
     clf.fit(X, y)
     clf.fit(X, y_3classes)
 
     for y_i in (y_2classes, y_3classes_alt, y_4classes, y_5classes):
         clf = MLPClassifier(hidden_layer_sizes=2, solver='lbfgs',
-                            warm_start=True).fit(X, y)
+                            warm_start=True,
+                            random_state=42).fit(X, y)
         message = ('warm_start can only be used where `y` has the same '
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))

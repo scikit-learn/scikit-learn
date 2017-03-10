@@ -208,7 +208,8 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
+    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False,
+                                            random_state=42)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = \
         learning_curve(
@@ -259,7 +260,7 @@ def test_learning_curve_with_boolean_indices():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    cv = KFold(n=30, n_folds=3)
+    cv = KFold(n=30, n_folds=3, random_state=42)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))

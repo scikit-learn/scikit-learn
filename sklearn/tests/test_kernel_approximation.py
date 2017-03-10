@@ -134,11 +134,11 @@ def test_input_validation():
     # No assertions; the old versions would simply crash
     X = [[1, 2], [3, 4], [5, 6]]
     AdditiveChi2Sampler().fit(X).transform(X)
-    SkewedChi2Sampler().fit(X).transform(X)
-    RBFSampler().fit(X).transform(X)
+    SkewedChi2Sampler(random_state=42).fit(X).transform(X)
+    RBFSampler(random_state=42).fit(X).transform(X)
 
     X = csr_matrix(X)
-    RBFSampler().fit(X).transform(X)
+    RBFSampler(random_state=42).fit(X).transform(X)
 
 
 def test_nystroem_approximation():
@@ -147,7 +147,8 @@ def test_nystroem_approximation():
     X = rnd.uniform(size=(10, 4))
 
     # With n_components = n_samples this is exact
-    X_transformed = Nystroem(n_components=X.shape[0]).fit_transform(X)
+    X_transformed = Nystroem(n_components=X.shape[0],
+                             random_state=42).fit_transform(X)
     K = rbf_kernel(X)
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
@@ -176,7 +177,8 @@ def test_nystroem_singular_kernel():
     X = np.vstack([X] * 2)  # duplicate samples
 
     gamma = 100
-    N = Nystroem(gamma=gamma, n_components=X.shape[0]).fit(X)
+    N = Nystroem(gamma=gamma, n_components=X.shape[0],
+                 random_state=42).fit(X)
     X_transformed = N.transform(X)
 
     K = rbf_kernel(X, gamma=gamma)
@@ -192,7 +194,8 @@ def test_nystroem_poly_kernel_params():
 
     K = polynomial_kernel(X, degree=3.1, coef0=.1)
     nystroem = Nystroem(kernel="polynomial", n_components=X.shape[0],
-                        degree=3.1, coef0=.1)
+                        degree=3.1, coef0=.1,
+                        random_state=42)
     X_transformed = nystroem.fit_transform(X)
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
@@ -212,5 +215,6 @@ def test_nystroem_callable():
     X = list(X)     # test input validation
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
-             kernel_params={'log': kernel_log}).fit(X)
+             kernel_params={'log': kernel_log},
+             random_state=42).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)

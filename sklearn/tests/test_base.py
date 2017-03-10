@@ -232,7 +232,7 @@ def test_get_params_deprecated():
 
 
 def test_is_classifier():
-    svc = SVC()
+    svc = SVC(random_state=42)
     assert_true(is_classifier(svc))
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
@@ -242,7 +242,7 @@ def test_is_classifier():
 
 def test_set_params():
     # test nested estimator parameter setting
-    clf = Pipeline([("svc", SVC())])
+    clf = Pipeline([("svc", SVC(random_state=42))])
     # non-existing parameter in svc
     assert_raises(ValueError, clf.set_params, svc__stupid_param=True)
     # non-existing parameter of pipeline
@@ -258,8 +258,8 @@ def test_score_sample_weight():
     rng = np.random.RandomState(0)
 
     # test both ClassifierMixin and RegressorMixin
-    estimators = [DecisionTreeClassifier(max_depth=2),
-                  DecisionTreeRegressor(max_depth=2)]
+    estimators = [DecisionTreeClassifier(max_depth=2, random_state=42),
+                  DecisionTreeRegressor(max_depth=2, random_state=42)]
     sets = [datasets.load_iris(),
             datasets.load_boston()]
 
@@ -315,7 +315,7 @@ def test_clone_pandas_dataframe():
 
 def test_pickle_version_warning_is_not_raised_with_matching_version():
     iris = datasets.load_iris()
-    tree = DecisionTreeClassifier().fit(iris.data, iris.target)
+    tree = DecisionTreeClassifier(random_state=42).fit(iris.data, iris.target)
     tree_pickle = pickle.dumps(tree)
     assert_true(b"version" in tree_pickle)
     tree_restored = assert_no_warnings(pickle.loads, tree_pickle)

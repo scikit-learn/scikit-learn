@@ -35,7 +35,7 @@ def test_input_estimator_unchanged():
     """
     Test that SelectFromModel fits on a clone of the estimator.
     """
-    est = RandomForestClassifier()
+    est = RandomForestClassifier(random_state=42)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
     assert_true(transformer.estimator is est)
@@ -73,7 +73,7 @@ def test_feature_importances():
     assert_almost_equal(importances, importances_bis)
 
     # For the Lasso and related models, the threshold defaults to 1e-5
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1))
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1, random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -86,11 +86,12 @@ def test_feature_importances_2d_coef():
         n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
         n_repeated=0, shuffle=False, random_state=0, n_classes=4)
 
-    est = LogisticRegression()
+    est = LogisticRegression(random_state=42)
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
         for order in [1, 2, np.inf]:
             # Fit SelectFromModel a multi-class problem
-            transformer = SelectFromModel(estimator=LogisticRegression(),
+            transformer = SelectFromModel(estimator=LogisticRegression(
+                                                        random_state=42),
                                           threshold=threshold,
                                           norm_order=order)
             transformer.fit(X, y)

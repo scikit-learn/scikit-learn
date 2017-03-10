@@ -36,7 +36,7 @@ def test_lasso_zero():
     # Check that the lasso can handle zero data without crashing
     X = [[0], [0], [0]]
     y = [0, 0, 0]
-    clf = Lasso(alpha=0.1).fit(X, y)
+    clf = Lasso(alpha=0.1, random_state=42).fit(X, y)
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
@@ -52,28 +52,28 @@ def test_lasso_toy():
     Y = [-1, 0, 1]       # just a straight line
     T = [[2], [3], [4]]  # test sample
 
-    clf = Lasso(alpha=1e-8)
+    clf = Lasso(alpha=1e-8, random_state=42)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = Lasso(alpha=0.1)
+    clf = Lasso(alpha=0.1, random_state=42)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [.85])
     assert_array_almost_equal(pred, [1.7, 2.55, 3.4])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = Lasso(alpha=0.5)
+    clf = Lasso(alpha=0.5, random_state=42)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [.25])
     assert_array_almost_equal(pred, [0.5, 0.75, 1.])
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = Lasso(alpha=1)
+    clf = Lasso(alpha=1, random_state=42)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [.0])
@@ -92,7 +92,7 @@ def test_enet_toy():
     T = [[2.], [3.], [4.]]  # test sample
 
     # this should be the same as lasso
-    clf = ElasticNet(alpha=1e-8, l1_ratio=1.0)
+    clf = ElasticNet(alpha=1e-8, l1_ratio=1.0, random_state=42)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
@@ -100,7 +100,7 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=100,
-                     precompute=False)
+                     precompute=False, random_state=42)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -121,7 +121,7 @@ def test_enet_toy():
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
-    clf = ElasticNet(alpha=0.5, l1_ratio=0.5)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.5, random_state=42)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.45454], 3)
@@ -151,10 +151,12 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter).fit(X, y)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter,
+                  random_state=42).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True,
+                  random_state=42)
     clf.fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
@@ -181,13 +183,15 @@ def test_lasso_cv_positive_constraint():
 
     # Ensure the unconstrained fit has a negative coefficient
     clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
-                                n_jobs=1)
+                                n_jobs=1,
+                                random_state=42)
     clf_unconstrained.fit(X, y)
     assert_true(min(clf_unconstrained.coef_) < 0)
 
     # On same data, constrained fit has non-negative coefficients
     clf_constrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
-                              positive=True, cv=2, n_jobs=1)
+                              positive=True, cv=2, n_jobs=1,
+                              random_state=42)
     clf_constrained.fit(X, y)
     assert_true(min(clf_constrained.coef_) >= 0)
 
@@ -227,7 +231,7 @@ def test_enet_path():
     # ElasticNet might not converge. This is to speed up tests
     clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3,
                        l1_ratio=[0.5, 0.7], cv=3,
-                       max_iter=max_iter)
+                       max_iter=max_iter, random_state=42)
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty
@@ -238,7 +242,8 @@ def test_enet_path():
 
     clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3,
                        l1_ratio=[0.5, 0.7], cv=3,
-                       max_iter=max_iter, precompute=True)
+                       max_iter=max_iter, precompute=True,
+                       random_state=42)
     ignore_warnings(clf.fit)(X, y)
 
     # Well-conditioned settings, we should have selected our
@@ -255,7 +260,8 @@ def test_enet_path():
     # Multi-output/target case
     X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
     clf = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
-                                cv=3, max_iter=max_iter)
+                                cv=3, max_iter=max_iter,
+                                random_state=42)
     ignore_warnings(clf.fit)(X, y)
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
@@ -265,9 +271,11 @@ def test_enet_path():
     # Mono-output should have same cross-validated alpha_ and l1_ratio_
     # in both cases.
     X, y, _, _ = build_dataset(n_features=10)
-    clf1 = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1 = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
+                        random_state=42)
     clf1.fit(X, y)
-    clf2 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf2 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
+                                 random_state=42)
     clf2.fit(X, y[:, np.newaxis])
     assert_almost_equal(clf1.l1_ratio_, clf2.l1_ratio_)
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
@@ -278,7 +286,7 @@ def test_path_parameters():
     max_iter = 100
 
     clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
-                       l1_ratio=0.5, tol=1e-3)
+                       l1_ratio=0.5, tol=1e-3, random_state=42)
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(50, clf.n_alphas)
@@ -287,11 +295,11 @@ def test_path_parameters():
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
-    clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
+    clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True, random_state=42)
     ignore_warnings(clf.fit)(X, y)
     ignore_warnings(clf.fit)(X, y)  # do a second round with 5 iterations
 
-    clf2 = ElasticNet(alpha=0.1, max_iter=10)
+    clf2 = ElasticNet(alpha=0.1, max_iter=10, random_state=42)
     ignore_warnings(clf2.fit)(X, y)
     assert_array_almost_equal(clf2.coef_, clf.coef_)
 
@@ -300,7 +308,7 @@ def test_lasso_alpha_warning():
     X = [[-1], [0], [1]]
     Y = [-1, 0, 1]       # just a straight line
 
-    clf = Lasso(alpha=0)
+    clf = Lasso(alpha=0, random_state=42)
     assert_warns(UserWarning, clf.fit, X, Y)
 
 
@@ -308,11 +316,12 @@ def test_lasso_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, positive=True)
+    lasso = Lasso(alpha=0.1, max_iter=1000, positive=True, random_state=42)
     lasso.fit(X, y)
     assert_true(min(lasso.coef_) >= 0)
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True)
+    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True,
+                  random_state=42)
     lasso.fit(X, y)
     assert_true(min(lasso.coef_) >= 0)
 
@@ -321,7 +330,7 @@ def test_enet_positive_constraint():
     X = [[-1], [0], [1]]
     y = [1, 0, -1]       # just a straight line with negative slope
 
-    enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
+    enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True, random_state=42)
     enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
 
@@ -333,22 +342,27 @@ def test_enet_cv_positive_constraint():
     # Ensure the unconstrained fit has a negative coefficient
     enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1,
                                         max_iter=max_iter,
-                                        cv=2, n_jobs=1)
+                                        cv=2, n_jobs=1,
+                                        random_state=42)
     enetcv_unconstrained.fit(X, y)
     assert_true(min(enetcv_unconstrained.coef_) < 0)
 
     # On same data, constrained fit has non-negative coefficients
     enetcv_constrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
-                                      cv=2, positive=True, n_jobs=1)
+                                      cv=2, positive=True, n_jobs=1,
+                                      random_state=42)
     enetcv_constrained.fit(X, y)
     assert_true(min(enetcv_constrained.coef_) >= 0)
 
 
 def test_uniform_targets():
-    enet = ElasticNetCV(fit_intercept=True, n_alphas=3)
-    m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3)
-    lasso = LassoCV(fit_intercept=True, n_alphas=3)
-    m_lasso = MultiTaskLassoCV(fit_intercept=True, n_alphas=3)
+    enet = ElasticNetCV(fit_intercept=True, n_alphas=3, random_state=42)
+    m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3,
+                                   random_state=42)
+    lasso = LassoCV(fit_intercept=True, n_alphas=3,
+                    random_state=42)
+    m_lasso = MultiTaskLassoCV(fit_intercept=True, n_alphas=3,
+                               random_state=42)
 
     models_single_task = (enet, lasso)
     models_multi_task = (m_enet, m_lasso)
@@ -379,15 +393,15 @@ def test_multi_task_lasso_and_enet():
     X, y, X_test, y_test = build_dataset()
     Y = np.c_[y, y]
     # Y_test = np.c_[y_test, y_test]
-    clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
+    clf = MultiTaskLasso(alpha=1, tol=1e-8, random_state=42).fit(X, Y)
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
-    clf = MultiTaskElasticNet(alpha=1, tol=1e-8).fit(X, Y)
+    clf = MultiTaskElasticNet(alpha=1, tol=1e-8, random_state=42).fit(X, Y)
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
-    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
+    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1, random_state=42)
     assert_warns_message(ConvergenceWarning, 'did not converge', clf.fit, X, Y)
 
 
@@ -396,7 +410,7 @@ def test_lasso_readonly_data():
     Y = np.array([-1, 0, 1])   # just a straight line
     T = np.array([[2], [3], [4]])  # test sample
     with TempMemmap((X, Y)) as (X, Y):
-        clf = Lasso(alpha=0.5)
+        clf = Lasso(alpha=0.5, random_state=42)
         clf.fit(X, Y)
         pred = clf.predict(T)
         assert_array_almost_equal(clf.coef_, [.25])
@@ -409,7 +423,7 @@ def test_multi_task_lasso_readonly_data():
     Y = np.c_[y, y]
     with TempMemmap((X, Y)) as (X, Y):
         Y = np.c_[y, y]
-        clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
+        clf = MultiTaskLasso(alpha=1, tol=1e-8, random_state=42).fit(X, Y)
         assert_true(0 < clf.dual_gap_ < 1e-5)
         assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
@@ -418,7 +432,7 @@ def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
                                n_informative_features=10, n_targets=n_targets)
-    estimator = ElasticNet(alpha=0.01, fit_intercept=True)
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True, random_state=42)
     estimator.fit(X, y)
     coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
                                  estimator.dual_gap_)
@@ -434,20 +448,20 @@ def test_multioutput_enetcv_error():
     rng = np.random.RandomState(0)
     X = rng.randn(10, 2)
     y = rng.randn(10, 2)
-    clf = ElasticNetCV()
+    clf = ElasticNetCV(random_state=42)
     assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
-    clf = MultiTaskElasticNetCV().fit(X, y)
+    clf = MultiTaskElasticNetCV(random_state=42).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
-    clf = MultiTaskLassoCV().fit(X, y)
+    clf = MultiTaskLassoCV(random_state=42).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00278, 3)
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskElasticNetCV(n_alphas=10, eps=1e-3, max_iter=100,
-                                l1_ratio=[0.3, 0.5], tol=1e-3)
+                                l1_ratio=[0.3, 0.5], tol=1e-3, random_state=42)
     clf.fit(X, y)
     assert_equal(0.5, clf.l1_ratio_)
     assert_equal((3, X.shape[1]), clf.coef_.shape)
@@ -456,7 +470,8 @@ def test_multitask_enet_and_lasso_cv():
     assert_equal((2, 10), clf.alphas_.shape)
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3)
+    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3,
+                        random_state=42)
     clf.fit(X, y)
     assert_equal((3, X.shape[1]), clf.coef_.shape)
     assert_equal((3, ), clf.intercept_.shape)
@@ -467,9 +482,11 @@ def test_multitask_enet_and_lasso_cv():
 def test_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
-    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
+                       random_state=42)
     clf.fit(X, y[:, 0])
-    clf1 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
+                                 random_state=42)
     clf1.fit(X, y)
     assert_almost_equal(clf.l1_ratio_, clf1.l1_ratio_)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
@@ -480,9 +497,9 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
 def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
-    clf = LassoCV(n_alphas=5, eps=2e-3)
+    clf = LassoCV(n_alphas=5, eps=2e-3, random_state=42)
     clf.fit(X, y[:, 0])
-    clf1 = MultiTaskLassoCV(n_alphas=5, eps=2e-3)
+    clf1 = MultiTaskLassoCV(n_alphas=5, eps=2e-3, random_state=42)
     clf1.fit(X, y)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
     assert_almost_equal(clf.coef_, clf1.coef_[0])
@@ -491,16 +508,16 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
 
 def test_sparse_input_dtype_enet_and_lassocv():
     X, y, _, _ = build_dataset(n_features=10)
-    clf = ElasticNetCV(n_alphas=5)
+    clf = ElasticNetCV(n_alphas=5, random_state=42)
     clf.fit(sparse.csr_matrix(X), y)
-    clf1 = ElasticNetCV(n_alphas=5)
+    clf1 = ElasticNetCV(n_alphas=5, random_state=42)
     clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
-    clf = LassoCV(n_alphas=5)
+    clf = LassoCV(n_alphas=5, random_state=42)
     clf.fit(sparse.csr_matrix(X), y)
-    clf1 = LassoCV(n_alphas=5)
+    clf1 = LassoCV(n_alphas=5, random_state=42)
     clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
@@ -508,19 +525,20 @@ def test_sparse_input_dtype_enet_and_lassocv():
 
 def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
-    for clf in [ElasticNetCV(precompute="invalid"),
-                LassoCV(precompute="invalid")]:
+    for clf in [ElasticNetCV(precompute="invalid", random_state=42),
+                LassoCV(precompute="invalid", random_state=42)]:
         assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
                             "array-like.*Got 'invalid'", clf.fit, X, y)
 
     # Precompute = 'auto' is not supported for ElasticNet
     assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
-                        "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
+                        "Got 'auto'", ElasticNet(precompute='auto',
+                                                 random_state=42).fit, X, y)
 
 
 def test_warm_start_convergence():
     X, y, _, _ = build_dataset()
-    model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)
+    model = ElasticNet(alpha=1e-3, tol=1e-3, random_state=42).fit(X, y)
     n_iter_reference = model.n_iter_
 
     # This dataset is not trivial enough for the model to converge in one pass.
@@ -546,12 +564,13 @@ def test_warm_start_convergence_with_regularizer_decrement():
 
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5
-    low_reg_model = ElasticNet(alpha=final_alpha).fit(X, y)
+    low_reg_model = ElasticNet(alpha=final_alpha, random_state=42).fit(X, y)
 
     # Fitting a new model on a more regularized version of the same problem.
     # Fitting with high regularization is easier it should converge faster
     # in general.
-    high_reg_model = ElasticNet(alpha=final_alpha * 10).fit(X, y)
+    high_reg_model = ElasticNet(alpha=final_alpha * 10,
+                                random_state=42).fit(X, y)
     assert_greater(low_reg_model.n_iter_, high_reg_model.n_iter_)
 
     # Fit the solution to the original, less regularized version of the
@@ -571,7 +590,7 @@ def test_random_descent():
 
     # This uses the coordinate descent algo using the gram trick.
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
-    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8, random_state=42)
     clf_cyclic.fit(X, y)
     clf_random = ElasticNet(selection='random', tol=1e-8, random_state=42)
     clf_random.fit(X, y)
@@ -579,7 +598,7 @@ def test_random_descent():
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
 
     # This uses the descent algo without the gram trick
-    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8, random_state=42)
     clf_cyclic.fit(X.T, y[:20])
     clf_random = ElasticNet(selection='random', tol=1e-8, random_state=42)
     clf_random.fit(X.T, y[:20])
@@ -587,7 +606,7 @@ def test_random_descent():
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
 
     # Sparse Case
-    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8, random_state=42)
     clf_cyclic.fit(sparse.csr_matrix(X), y)
     clf_random = ElasticNet(selection='random', tol=1e-8, random_state=42)
     clf_random.fit(sparse.csr_matrix(X), y)
@@ -596,7 +615,8 @@ def test_random_descent():
 
     # Multioutput case.
     new_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
-    clf_cyclic = MultiTaskElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic = MultiTaskElasticNet(selection='cyclic', tol=1e-8,
+                                     random_state=42)
     clf_cyclic.fit(X, new_y)
     clf_random = MultiTaskElasticNet(selection='random', tol=1e-8,
                                      random_state=42)
@@ -605,7 +625,7 @@ def test_random_descent():
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
 
     # Raise error when selection is not in cyclic or random.
-    clf_random = ElasticNet(selection='invalid')
+    clf_random = ElasticNet(selection='invalid', random_state=42)
     assert_raises(ValueError, clf_random.fit, X, y)
 
 
@@ -632,7 +652,7 @@ def test_check_input_false():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     X = check_array(X, order='F', dtype='float64')
     y = check_array(X, order='F', dtype='float64')
-    clf = ElasticNet(selection='cyclic', tol=1e-8)
+    clf = ElasticNet(selection='cyclic', tol=1e-8, random_state=42)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
     X = check_array(X, order='F', dtype='float32')
@@ -651,7 +671,8 @@ def test_overrided_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
     clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram,
-                     fit_intercept=True)
+                     fit_intercept=True,
+                     random_state=42)
     assert_warns_message(UserWarning,
                          "Gram matrix was provided but X was centered"
                          " to fit intercept, "
@@ -685,7 +706,8 @@ def test_enet_float_precision():
             for dtype in [np.float64, np.float32]:
                 clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
                                  fit_intercept=fit_intercept,
-                                 normalize=normalize)
+                                 normalize=normalize,
+                                 random_state=42)
 
                 X = dtype(X)
                 y = dtype(y)
@@ -701,7 +723,8 @@ def test_enet_float_precision():
                 clf_precompute = ElasticNet(alpha=0.5, max_iter=100,
                                             precompute=Gram,
                                             fit_intercept=fit_intercept,
-                                            normalize=normalize)
+                                            normalize=normalize,
+                                            random_state=42)
                 ignore_warnings(clf_precompute.fit)(X, y)
                 assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
                 assert_array_almost_equal(clf.intercept_,
@@ -711,7 +734,8 @@ def test_enet_float_precision():
                 multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
                 clf_multioutput = MultiTaskElasticNet(
                     alpha=0.5, max_iter=100, fit_intercept=fit_intercept,
-                    normalize=normalize)
+                    normalize=normalize,
+                    random_state=42)
                 clf_multioutput.fit(X, multi_y)
                 coef[('multi', dtype)] = clf_multioutput.coef_
                 intercept[('multi', dtype)] = clf_multioutput.intercept_

@@ -34,22 +34,26 @@ def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
     msg = "Invalid solver parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, NMF(solver=name).fit, A)
+    assert_raise_message(ValueError, msg, NMF(solver=name,
+                                              random_state=42).fit, A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, NMF(init=name).fit, A)
+    assert_raise_message(ValueError, msg, NMF(init=name,
+                                              random_state=42).fit, A)
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     assert_raise_message(ValueError, msg, NMF(solver='mu',
-                                              beta_loss=name).fit, A)
+                                              beta_loss=name,
+                                              random_state=42).fit, A)
     msg = "Invalid beta_loss parameter: solver 'cd' does not handle "
     msg += "beta_loss = 1.0"
     assert_raise_message(ValueError, msg, NMF(solver='cd',
-                                              beta_loss=1.0).fit, A)
+                                              beta_loss=1.0,
+                                              random_state=42).fit, A)
 
     msg = "Negative values in data passed to"
-    assert_raise_message(ValueError, msg, NMF().fit, -A)
+    assert_raise_message(ValueError, msg, NMF(random_state=42).fit, -A)
     assert_raise_message(ValueError, msg, nmf._initialize_nmf, -A,
                          2, 'nndsvd')
-    clf = NMF(2, tol=0.1).fit(A)
+    clf = NMF(2, tol=0.1, random_state=42).fit(A)
     assert_raise_message(ValueError, msg, clf.transform, -A)
 
 

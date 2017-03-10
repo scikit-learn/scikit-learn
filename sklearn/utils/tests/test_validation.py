@@ -63,7 +63,7 @@ def test_as_float_array():
     matrices = [
         np.matrix(np.arange(5)),
         sp.csc_matrix(np.arange(5)).toarray(),
-        sparse_random_matrix(10, 10, density=0.10).toarray()
+        sparse_random_matrix(10, 10, density=0.10, random_state=42).toarray()
     ]
     for M in matrices:
         N = as_float_array(M, copy=True)
@@ -479,8 +479,8 @@ def test_check_is_fitted():
     except AttributeError as e:
         assert_equal(str(e), "Another message SVR, SVR")
 
-    ard.fit(*make_blobs())
-    svr.fit(*make_blobs())
+    ard.fit(*make_blobs(random_state=42))
+    svr.fit(*make_blobs(random_state=42))
 
     assert_equal(None, check_is_fitted(ard, "coef_"))
     assert_equal(None, check_is_fitted(svr, "support_"))
@@ -500,7 +500,7 @@ def test_check_consistent_length():
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
     # Despite ensembles having __len__ they must raise TypeError
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
-                         [1, 2], RandomForestRegressor())
+                         [1, 2], RandomForestRegressor(random_state=42))
     # XXX: We should have a test with a string, but what is correct behaviour?
 
 

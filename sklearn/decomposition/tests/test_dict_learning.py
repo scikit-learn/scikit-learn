@@ -91,7 +91,8 @@ def test_dict_learning_nonzero_coefs():
 
 def test_dict_learning_unknown_fit_algorithm():
     n_components = 5
-    dico = DictionaryLearning(n_components, fit_algorithm='<unknown>')
+    dico = DictionaryLearning(n_components, fit_algorithm='<unknown>',
+                              random_state=42)
     assert_raises(ValueError, dico.fit, X)
 
 

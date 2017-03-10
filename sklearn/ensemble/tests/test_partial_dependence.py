@@ -92,7 +92,7 @@ def test_partial_dependecy_input():
 
     # Gradient boosting estimator must be fit
     assert_raises(ValueError, partial_dependence,
-                  GradientBoostingClassifier(), [0], X=X)
+                  GradientBoostingClassifier(random_state=42), [0], X=X)
 
     assert_raises(ValueError, partial_dependence, clf, [-1], X=X)
 

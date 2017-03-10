@@ -16,7 +16,7 @@ def test_incremental_pca():
     X = iris.data
     batch_size = X.shape[0] // 3
     ipca = IncrementalPCA(n_components=2, batch_size=batch_size)
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=2, random_state=42)
     pca.fit_transform(X)
 
     X_transformed = ipca.fit_transform(X)
@@ -167,7 +167,7 @@ def test_incremental_pca_against_pca_iris():
     # Test that IncrementalPCA and PCA are approximate (to a sign flip).
     X = iris.data
 
-    Y_pca = PCA(n_components=2).fit_transform(X)
+    Y_pca = PCA(n_components=2, random_state=42).fit_transform(X)
     Y_ipca = IncrementalPCA(n_components=2, batch_size=25).fit_transform(X)
 
     assert_almost_equal(np.abs(Y_pca), np.abs(Y_ipca), 1)
@@ -180,7 +180,7 @@ def test_incremental_pca_against_pca_random_data():
     n_features = 3
     X = rng.randn(n_samples, n_features) + 5 * rng.rand(1, n_features)
 
-    Y_pca = PCA(n_components=3).fit_transform(X)
+    Y_pca = PCA(n_components=3, random_state=42).fit_transform(X)
     Y_ipca = IncrementalPCA(n_components=3, batch_size=25).fit_transform(X)
 
     assert_almost_equal(np.abs(Y_pca), np.abs(Y_ipca), 1)
@@ -193,7 +193,7 @@ def test_explained_variances():
     prec = 3
     n_samples, n_features = X.shape
     for nc in [None, 99]:
-        pca = PCA(n_components=nc).fit(X)
+        pca = PCA(n_components=nc, random_state=42).fit(X)
         ipca = IncrementalPCA(n_components=nc, batch_size=100).fit(X)
         assert_almost_equal(pca.explained_variance_, ipca.explained_variance_,
                             decimal=prec)
@@ -261,7 +261,7 @@ def test_whitening():
     prec = 3
     n_samples, n_features = X.shape
     for nc in [None, 9]:
-        pca = PCA(whiten=True, n_components=nc).fit(X)
+        pca = PCA(whiten=True, n_components=nc, random_state=42).fit(X)
         ipca = IncrementalPCA(whiten=True, n_components=nc,
                               batch_size=250).fit(X)
 

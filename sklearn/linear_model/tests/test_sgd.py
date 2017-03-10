@@ -470,7 +470,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Hinge loss does not allow for conditional prob estimate.
         # We cannot use the factory here, because it defines predict_proba
         # anyway.
-        clf = SGDClassifier(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
+        clf = SGDClassifier(loss="hinge",
+                            alpha=0.01, n_iter=10, random_state=42).fit(X, Y)
         assert_false(hasattr(clf, "predict_proba"))
         assert_false(hasattr(clf, "predict_log_proba"))
 
@@ -1129,7 +1130,8 @@ def test_underflow_or_overlow():
         y = (np.dot(X_scaled, ground_truth) > 0.).astype(np.int32)
         assert_array_equal(np.unique(y), [0, 1])
 
-        model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
+        model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500,
+                              random_state=42)
 
         # smoke test: model is stable on scaled data
         model.fit(X_scaled, y)
@@ -1158,7 +1160,8 @@ def test_large_regularization():
     # regularization parameters
     for penalty in ['l2', 'l1', 'elasticnet']:
         model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
-                              n_iter=5, penalty=penalty, shuffle=False)
+                              n_iter=5, penalty=penalty, shuffle=False,
+                              random_state=42)
         with np.errstate(all='raise'):
             model.fit(iris.data, iris.target)
         assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))

@@ -105,7 +105,7 @@ def test_gaussian_mixture_attributes():
     X = rng.rand(10, 2)
 
     n_components_bad = 0
-    gmm = GaussianMixture(n_components=n_components_bad)
+    gmm = GaussianMixture(n_components=n_components_bad, random_state=42)
     assert_raise_message(ValueError,
                          "Invalid value for 'n_components': %d "
                          "Estimation requires at least one component"
@@ -113,7 +113,7 @@ def test_gaussian_mixture_attributes():
 
     # covariance_type should be in [spherical, diag, tied, full]
     covariance_type_bad = 'bad_covariance_type'
-    gmm = GaussianMixture(covariance_type=covariance_type_bad)
+    gmm = GaussianMixture(covariance_type=covariance_type_bad, random_state=42)
     assert_raise_message(ValueError,
                          "Invalid value for 'covariance_type': %s "
                          "'covariance_type' should be in "
@@ -122,35 +122,35 @@ def test_gaussian_mixture_attributes():
                          gmm.fit, X)
 
     tol_bad = -1
-    gmm = GaussianMixture(tol=tol_bad)
+    gmm = GaussianMixture(tol=tol_bad, random_state=42)
     assert_raise_message(ValueError,
                          "Invalid value for 'tol': %.5f "
                          "Tolerance used by the EM must be non-negative"
                          % tol_bad, gmm.fit, X)
 
     reg_covar_bad = -1
-    gmm = GaussianMixture(reg_covar=reg_covar_bad)
+    gmm = GaussianMixture(reg_covar=reg_covar_bad, random_state=42)
     assert_raise_message(ValueError,
                          "Invalid value for 'reg_covar': %.5f "
                          "regularization on covariance must be "
                          "non-negative" % reg_covar_bad, gmm.fit, X)
 
     max_iter_bad = 0
-    gmm = GaussianMixture(max_iter=max_iter_bad)
+    gmm = GaussianMixture(max_iter=max_iter_bad, random_state=42)
     assert_raise_message(ValueError,
                          "Invalid value for 'max_iter': %d "
                          "Estimation requires at least one iteration"
                          % max_iter_bad, gmm.fit, X)
 
     n_init_bad = 0
-    gmm = GaussianMixture(n_init=n_init_bad)
+    gmm = GaussianMixture(n_init=n_init_bad, random_state=42)
     assert_raise_message(ValueError,
                          "Invalid value for 'n_init': %d "
                          "Estimation requires at least one run"
                          % n_init_bad, gmm.fit, X)
 
     init_params_bad = 'bad_method'
-    gmm = GaussianMixture(init_params=init_params_bad)
+    gmm = GaussianMixture(init_params=init_params_bad, random_state=42)
     assert_raise_message(ValueError,
                          "Unimplemented initialization method '%s'"
                          % init_params_bad,
@@ -162,7 +162,8 @@ def test_gaussian_mixture_attributes():
     gmm = GaussianMixture(n_components=n_components, tol=tol, n_init=n_init,
                           max_iter=max_iter, reg_covar=reg_covar,
                           covariance_type=covariance_type,
-                          init_params=init_params).fit(X)
+                          init_params=init_params,
+                          random_state=42).fit(X)
 
     assert_equal(gmm.n_components, n_components)
     assert_equal(gmm.covariance_type, covariance_type)
@@ -204,7 +205,7 @@ def test_check_weights():
     n_components = rand_data.n_components
     X = rand_data.X['full']
 
-    g = GaussianMixture(n_components=n_components)
+    g = GaussianMixture(n_components=n_components, random_state=42)
 
     # Check bad shape
     weights_bad_shape = rng.rand(n_components, 1)
@@ -237,7 +238,8 @@ def test_check_weights():
 
     # Check good weights matrix
     weights = rand_data.weights
-    g = GaussianMixture(weights_init=weights, n_components=n_components)
+    g = GaussianMixture(weights_init=weights, n_components=n_components,
+                        random_state=42)
     g.fit(X)
     assert_array_equal(weights, g.weights_init)
 
@@ -249,7 +251,7 @@ def test_check_means():
     n_components, n_features = rand_data.n_components, rand_data.n_features
     X = rand_data.X['full']
 
-    g = GaussianMixture(n_components=n_components)
+    g = GaussianMixture(n_components=n_components, random_state=42)
 
     # Check means bad shape
     means_bad_shape = rng.rand(n_components + 1, n_features)

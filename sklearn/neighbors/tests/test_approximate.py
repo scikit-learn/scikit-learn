@@ -38,7 +38,7 @@ def test_neighbors_accuracy_with_n_candidates():
     X = rng.rand(n_samples, n_features)
 
     for i, n_candidates in enumerate(n_candidates_values):
-        lshf = LSHForest(n_candidates=n_candidates,random_state=42)
+        lshf = LSHForest(n_candidates=n_candidates, random_state=42)
         ignore_warnings(lshf.fit)(X)
         for j in range(n_iter):
             query = X[rng.randint(0, n_samples)].reshape(1, -1)
@@ -74,7 +74,7 @@ def test_neighbors_accuracy_with_n_estimators():
     X = rng.rand(n_samples, n_features)
 
     for i, t in enumerate(n_estimators):
-        lshf = LSHForest(n_candidates=500, n_estimators=t)
+        lshf = LSHForest(n_candidates=500, n_estimators=t, random_state=42)
         ignore_warnings(lshf.fit)(X)
         for j in range(n_iter):
             query = X[rng.randint(0, n_samples)].reshape(1, -1)
@@ -108,7 +108,7 @@ def test_kneighbors():
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_features)
 
-    lshf = LSHForest(min_hash_match=0)
+    lshf = LSHForest(min_hash_match=0, random_state=42)
     # Test unfitted estimator
     assert_raises(ValueError, lshf.kneighbors, X[0])
 
@@ -159,7 +159,7 @@ def test_radius_neighbors():
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_features)
 
-    lshf = LSHForest()
+    lshf = LSHForest(random_state=42)
     # Test unfitted estimator
     assert_raises(ValueError, lshf.radius_neighbors, X[0])
 
@@ -288,7 +288,7 @@ def test_distances():
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_features)
 
-    lshf = LSHForest()
+    lshf = LSHForest(random_state=42)
     ignore_warnings(lshf.fit)(X)
 
     for i in range(n_iter):
@@ -314,7 +314,7 @@ def test_fit():
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_features)
 
-    lshf = LSHForest(n_estimators=n_estimators)
+    lshf = LSHForest(n_estimators=n_estimators, random_state=42)
     ignore_warnings(lshf.fit)(X)
 
     # _input_array = X
@@ -343,7 +343,7 @@ def test_partial_fit():
     X = rng.rand(n_samples, n_features)
     X_partial_fit = rng.rand(n_samples_partial_fit, n_features)
 
-    lshf = LSHForest()
+    lshf = LSHForest(random_state=42)
 
     # Test unfitted estimator
     ignore_warnings(lshf.partial_fit)(X)
@@ -407,7 +407,7 @@ def test_candidates():
     X_test = np.array([7, 10, 3], dtype=np.float32).reshape(1, -1)
 
     # For zero candidates
-    lshf = LSHForest(min_hash_match=32)
+    lshf = LSHForest(min_hash_match=32, random_state=42)
     ignore_warnings(lshf.fit)(X_train)
 
     message = ("Number of candidates is not sufficient to retrieve"
@@ -421,7 +421,7 @@ def test_candidates():
     assert_equal(distances.shape[1], 3)
 
     # For candidates less than n_neighbors
-    lshf = LSHForest(min_hash_match=31)
+    lshf = LSHForest(min_hash_match=31, random_state=42)
     ignore_warnings(lshf.fit)(X_train)
 
     message = ("Number of candidates is not sufficient to retrieve"
@@ -443,7 +443,7 @@ def test_graphs():
 
     for n_samples in n_samples_sizes:
         X = rng.rand(n_samples, n_features)
-        lshf = LSHForest(min_hash_match=0)
+        lshf = LSHForest(min_hash_match=0, random_state=42)
         ignore_warnings(lshf.fit)(X)
 
         kneighbors_graph = lshf.kneighbors_graph(X)

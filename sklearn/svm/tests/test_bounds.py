@@ -46,9 +46,9 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     min_c = l1_min_c(X, y, loss, fit_intercept, intercept_scaling)
 
     clf = {
-        'log': LogisticRegression(penalty='l1'),
+        'log': LogisticRegression(penalty='l1', random_state=42),
         'squared_hinge': LinearSVC(loss='squared_hinge',
-                                   penalty='l1', dual=False),
+                                   penalty='l1', dual=False, random_state=42),
     }[loss]
 
     clf.fit_intercept = fit_intercept

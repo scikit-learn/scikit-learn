@@ -253,10 +253,10 @@ def test_cross_val_score_predict_groups():
     # And also check if groups is correctly passed to the cv object
     X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
 
-    clf = SVC(kernel="linear")
+    clf = SVC(kernel="linear", random_state=42)
 
     group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2), GroupKFold(),
-                 GroupShuffleSplit()]
+                 GroupShuffleSplit(random_state=42)]
     for cv in group_cvs:
         assert_raise_message(ValueError,
                              "The groups parameter should not be None",
@@ -286,12 +286,12 @@ def test_cross_val_score_pandas():
 
 def test_cross_val_score_mask():
     # test that cross_val_score works with boolean masks
-    svm = SVC(kernel="linear")
+    svm = SVC(kernel="linear", random_state=42)
     iris = load_iris()
     X, y = iris.data, iris.target
-    kfold = KFold(5)
+    kfold = KFold(5, random_state=42)
     scores_indices = cross_val_score(svm, X, y, cv=kfold)
-    kfold = KFold(5)
+    kfold = KFold(5, random_state=42)
     cv_masks = []
     for train, test in kfold.split(X, y):
         mask_train = np.zeros(len(y), dtype=np.bool)
@@ -305,22 +305,22 @@ def test_cross_val_score_mask():
 
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
-    svm = SVC(kernel="precomputed")
+    svm = SVC(kernel="precomputed", random_state=42)
     iris = load_iris()
     X, y = iris.data, iris.target
     linear_kernel = np.dot(X, X.T)
     score_precomputed = cross_val_score(svm, linear_kernel, y)
-    svm = SVC(kernel="linear")
+    svm = SVC(kernel="linear", random_state=42)
     score_linear = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(kernel=lambda x, y: np.dot(x, y.T), random_state=42)
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 
     # Error raised for non-square X
-    svm = SVC(kernel="precomputed")
+    svm = SVC(kernel="precomputed", random_state=42)
     assert_raises(ValueError, cross_val_score, svm, X, y)
 
     # test error is raised when the precomputed kernel is not array-like
@@ -385,7 +385,7 @@ def test_cross_val_score_errors():
 
 def test_cross_val_score_with_score_func_classification():
     iris = load_iris()
-    clf = SVC(kernel='linear')
+    clf = SVC(kernel='linear', random_state=42)
 
     # Default score (should be the accuracy score)
     scores = cross_val_score(clf, iris.data, iris.target, cv=5)
@@ -407,7 +407,7 @@ def test_cross_val_score_with_score_func_classification():
 def test_cross_val_score_with_score_func_regression():
     X, y = make_regression(n_samples=30, n_features=20, n_informative=5,
                            random_state=0)
-    reg = Ridge()
+    reg = Ridge(random_state=42)
 
     # Default score of the Ridge regression estimator
     scores = cross_val_score(reg, X, y, cv=5)
@@ -435,8 +435,8 @@ def test_permutation_score():
     X = iris.data
     X_sparse = coo_matrix(X)
     y = iris.target
-    svm = SVC(kernel='linear')
-    cv = StratifiedKFold(2)
+    svm = SVC(kernel='linear', random_state=42)
+    cv = StratifiedKFold(2, random_state=42)
 
     score, scores, pvalue = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy")
@@ -450,8 +450,8 @@ def test_permutation_score():
     assert_true(pvalue_group == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SVC(kernel='linear')
-    cv_sparse = StratifiedKFold(2)
+    svm_sparse = SVC(kernel='linear', random_state=42)
+    cv_sparse = StratifiedKFold(2, random_state=42)
     score_group, _, pvalue_group = permutation_test_score(
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
         scoring="accuracy", groups=np.ones(y.size), random_state=0)
@@ -524,9 +524,9 @@ def test_cross_val_score_multilabel():
 def test_cross_val_predict():
     boston = load_boston()
     X, y = boston.data, boston.target
-    cv = KFold()
+    cv = KFold(random_state=42)
 
-    est = Ridge()
+    est = Ridge(random_state=42)
 
     # Naive loop (should be same as cross_val_predict):
     preds2 = np.zeros_like(y)
@@ -550,7 +550,7 @@ def test_cross_val_predict():
     preds = cross_val_predict(est, Xsp, y)
     assert_array_almost_equal(len(preds), len(y))
 
-    preds = cross_val_predict(KMeans(), X)
+    preds = cross_val_predict(KMeans(random_state=42), X)
     assert_equal(len(preds), len(y))
 
     class BadCV():
@@ -636,9 +636,10 @@ def test_learning_curve():
     for shuffle_train in [False, True]:
         with warnings.catch_warnings(record=True) as w:
             train_sizes, train_scores, test_scores = learning_curve(
-                estimator, X, y, cv=KFold(n_splits=n_splits),
+                estimator, X, y, cv=KFold(n_splits=n_splits, random_state=42),
                 train_sizes=np.linspace(0.1, 1.0, 10),
-                shuffle=shuffle_train)
+                shuffle=shuffle_train,
+                random_state=42)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_equal(train_scores.shape, (10, 3))
@@ -655,7 +656,8 @@ def test_learning_curve():
                 estimator, X, y,
                 cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
                 train_sizes=np.linspace(0.1, 1.0, 10),
-                shuffle=shuffle_train)
+                shuffle=shuffle_train,
+                random_state=42)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_array_almost_equal(train_scores2, train_scores)
@@ -668,7 +670,8 @@ def test_learning_curve_unsupervised():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y=None, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
+        estimator, X, y=None, cv=3, train_sizes=np.linspace(0.1, 1.0, 10),
+        random_state=42)
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -686,7 +689,7 @@ def test_learning_curve_verbose():
     sys.stdout = StringIO()
     try:
         train_sizes, train_scores, test_scores = \
-            learning_curve(estimator, X, y, cv=3, verbose=1)
+            learning_curve(estimator, X, y, cv=3, verbose=1, random_state=42)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
@@ -713,7 +716,8 @@ def test_learning_curve_incremental_learning():
     for shuffle_train in [False, True]:
         train_sizes, train_scores, test_scores = learning_curve(
             estimator, X, y, cv=3, exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10), shuffle=shuffle_train)
+            train_sizes=np.linspace(0.1, 1.0, 10), shuffle=shuffle_train,
+            random_state=42)
         assert_array_equal(train_sizes, np.linspace(2, 20, 10))
         assert_array_almost_equal(train_scores.mean(axis=1),
                                   np.linspace(1.9, 1.0, 10))
@@ -728,7 +732,8 @@ def test_learning_curve_incremental_learning_unsupervised():
     estimator = MockIncrementalImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y=None, cv=3, exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10))
+        train_sizes=np.linspace(0.1, 1.0, 10),
+        random_state=42)
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -741,16 +746,19 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
+    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False,
+                                            random_state=42)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = \
         learning_curve(
             estimator, X, y, train_sizes=train_sizes,
-            cv=3, exploit_incremental_learning=True)
+            cv=3, exploit_incremental_learning=True,
+            random_state=42)
     train_sizes_batch, train_scores_batch, test_scores_batch = \
         learning_curve(
             estimator, X, y, cv=3, train_sizes=train_sizes,
-            exploit_incremental_learning=False)
+            exploit_incremental_learning=False,
+            random_state=42)
 
     assert_array_equal(train_sizes_inc, train_sizes_batch)
     assert_array_almost_equal(train_scores_inc.mean(axis=1),
@@ -792,9 +800,10 @@ def test_learning_curve_with_boolean_indices():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    cv = KFold(n_splits=3)
+    cv = KFold(n_splits=3, random_state=42)
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
+        estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10),
+        random_state=42)
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -812,7 +821,7 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
     # of the learning curve doesn't contain label 4 in the training set.
-    estimator = PassiveAggressiveClassifier(shuffle=False)
+    estimator = PassiveAggressiveClassifier(shuffle=False, random_state=42)
 
     cv = GroupKFold(n_splits=2)
     train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
@@ -870,7 +879,8 @@ def test_validation_curve_cv_splits_consistency():
 
     scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
                                'C', [0.1, 0.1, 0.2, 0.2],
-                               cv=KFold(n_splits=n_splits, shuffle=True))
+                               cv=KFold(n_splits=n_splits, shuffle=True,
+                                        random_state=42))
 
     # For scores2, compare the 1st and 2nd parameter's scores
     # (Since the C value for 1st two param setting is 0.1, they must be
@@ -880,7 +890,8 @@ def test_validation_curve_cv_splits_consistency():
 
     scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
                                'C', [0.1, 0.1, 0.2, 0.2],
-                               cv=KFold(n_splits=n_splits))
+                               cv=KFold(n_splits=n_splits,
+                                        random_state=42))
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
     assert_array_almost_equal(np.array(scores3), np.array(scores1))
@@ -908,7 +919,7 @@ def test_cross_val_predict_sparse_prediction():
                                           random_state=1)
     X_sparse = csr_matrix(X)
     y_sparse = csr_matrix(y)
-    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    classif = OneVsRestClassifier(SVC(kernel='linear', random_state=42))
     preds = cross_val_predict(classif, X, y, cv=10)
     preds_sparse = cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()
@@ -921,7 +932,7 @@ def check_cross_val_predict_with_method(est):
     X, y = shuffle(X, y, random_state=0)
     classes = len(set(y))
 
-    kfold = KFold(len(iris.target))
+    kfold = KFold(len(iris.target), random_state=42)
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
@@ -955,7 +966,7 @@ def check_cross_val_predict_with_method(est):
 
 
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method(LogisticRegression())
+    check_cross_val_predict_with_method(LogisticRegression(random_state=42))
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
@@ -990,14 +1001,14 @@ def test_cross_val_predict_class_subset():
     y = np.array([0, 0, 1, 2])
     classes = 3
 
-    kfold3 = KFold(n_splits=3)
-    kfold4 = KFold(n_splits=4)
+    kfold3 = KFold(n_splits=3, random_state=42)
+    kfold4 = KFold(n_splits=4, random_state=42)
 
     le = LabelEncoder()
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
-        est = LogisticRegression()
+        est = LogisticRegression(random_state=42)
 
         # Test with n_splits=3
         predictions = cross_val_predict(est, X, y, method=method,

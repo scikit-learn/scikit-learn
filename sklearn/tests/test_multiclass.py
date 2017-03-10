@@ -121,14 +121,14 @@ def test_ovr_partial_fit_exceptions():
 def test_ovr_ovo_regressor():
     # test that ovr and ovo work on regressors which don't have a decision_
     # function
-    ovr = OneVsRestClassifier(DecisionTreeRegressor())
+    ovr = OneVsRestClassifier(DecisionTreeRegressor(random_state=42))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovr.estimators_), n_classes)
     assert_array_equal(np.unique(pred), [0, 1, 2])
     # we are doing something sensible
     assert_greater(np.mean(pred == iris.target), .9)
 
-    ovr = OneVsOneClassifier(DecisionTreeRegressor())
+    ovr = OneVsOneClassifier(DecisionTreeRegressor(random_state=42))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovr.estimators_), n_classes * (n_classes - 1) / 2)
     assert_array_equal(np.unique(pred), [0, 1, 2])
@@ -171,7 +171,8 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(pred, Y_pred_sprs.toarray())
 
         # Test decision_function
-        clf_sprs = OneVsRestClassifier(svm.SVC()).fit(X_train, sparse(Y_train))
+        clf_sprs = OneVsRestClassifier(
+            svm.SVC(random_state=42)).fit(X_train, sparse(Y_train))
         dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 
@@ -189,7 +190,7 @@ def test_ovr_always_present():
     y[:, 1] = 1
     y[:, 2] = 1
 
-    ovr = OneVsRestClassifier(LogisticRegression())
+    ovr = OneVsRestClassifier(LogisticRegression(random_state=42))
     assert_warns(UserWarning, ovr.fit, X, y)
     y_pred = ovr.predict(X)
     assert_array_equal(np.array(y_pred), np.array(y))
@@ -201,7 +202,7 @@ def test_ovr_always_present():
     # y has a constantly absent label
     y = np.zeros((10, 2))
     y[5:, 0] = 1  # variable label
-    ovr = OneVsRestClassifier(LogisticRegression())
+    ovr = OneVsRestClassifier(LogisticRegression(random_state=42))
     assert_warns(UserWarning, ovr.fit, X, y)
     y_pred = ovr.predict_proba(X)
     assert_array_equal(y_pred[:, -1], np.zeros(X.shape[0]))
@@ -220,8 +221,8 @@ def test_ovr_multiclass():
     classes = set("ham eggs spam".split())
 
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
-                     LinearRegression(), Ridge(),
-                     ElasticNet()):
+                     LinearRegression(), Ridge(random_state=42),
+                     ElasticNet(random_state=42)):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
@@ -260,11 +261,11 @@ def test_ovr_binary():
         assert_equal(y_pred, 1)
 
     for base_clf in (LinearSVC(random_state=0), LinearRegression(),
-                     Ridge(), ElasticNet()):
+                     Ridge(random_state=42), ElasticNet(random_state=42)):
         conduct_test(base_clf)
 
     for base_clf in (MultinomialNB(), SVC(probability=True),
-                     LogisticRegression()):
+                     LogisticRegression(random_state=42)):
         conduct_test(base_clf, test_predict_proba=True)
 
 
@@ -278,8 +279,9 @@ def test_ovr_multilabel():
                   [1, 0, 0]])
 
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
-                     LinearRegression(), Ridge(),
-                     ElasticNet(), Lasso(alpha=0.5)):
+                     LinearRegression(), Ridge(random_state=42),
+                     ElasticNet(random_state=42), Lasso(alpha=0.5,
+                                                        random_state=42)):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
@@ -419,10 +421,10 @@ def test_ovr_pipeline():
     # Test with pipeline of length one
     # This test is needed because the multiclass estimators may fail to detect
     # the presence of predict_proba or decision_function.
-    clf = Pipeline([("tree", DecisionTreeClassifier())])
+    clf = Pipeline([("tree", DecisionTreeClassifier(random_state=42))])
     ovr_pipe = OneVsRestClassifier(clf)
     ovr_pipe.fit(iris.data, iris.target)
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
+    ovr = OneVsRestClassifier(DecisionTreeClassifier(random_state=42))
     ovr.fit(iris.data, iris.target)
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
@@ -449,7 +451,7 @@ def test_ovr_coef_exceptions():
     assert_raises(ValueError, lambda x: ovr.coef_, None)
 
     # Doesn't have coef_ exception!
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
+    ovr = OneVsRestClassifier(DecisionTreeClassifier(random_state=42))
     ovr.fit(iris.data, iris.target)
     assert_raises(AttributeError, lambda x: ovr.coef_, None)
 
@@ -564,7 +566,8 @@ def test_ovo_ties():
     # not defaulting to the smallest label
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
     y = np.array([2, 0, 1, 2])
-    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
+    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False,
+                                              random_state=42))
     ovo_prediction = multi_clf.fit(X, y).predict(X)
     ovo_decision = multi_clf.decision_function(X)
 
@@ -591,7 +594,8 @@ def test_ovo_ties2():
     # cycle through labels so that each label wins once
     for i in range(3):
         y = (y_ref + i) % 3
-        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
+        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False,
+                                                  random_state=42))
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert_equal(ovo_prediction[0], i % 3)
 
@@ -601,13 +605,13 @@ def test_ovo_string_y():
     X = np.eye(4)
     y = np.array(['a', 'b', 'c', 'd'])
 
-    ovo = OneVsOneClassifier(LinearSVC())
+    ovo = OneVsOneClassifier(LinearSVC(random_state=42))
     ovo.fit(X, y)
     assert_array_equal(y, ovo.predict(X))
 
 
 def test_ecoc_exceptions():
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=42)
     assert_raises(ValueError, ecoc.predict, [])
 
 

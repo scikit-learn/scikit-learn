@@ -256,7 +256,8 @@ def test_regressor_matching():
 
     step_size = get_step_size(X, alpha, fit_intercept, classification=False)
     clf = Ridge(fit_intercept=fit_intercept, tol=.00000000001, solver='sag',
-                alpha=alpha * n_samples, max_iter=n_iter)
+                alpha=alpha * n_samples, max_iter=n_iter,
+                random_state=42)
     clf.fit(X, y)
 
     weights1, intercept1 = sag_sparse(X, y, step_size, alpha, n_iter=n_iter,
@@ -350,7 +351,8 @@ def test_sag_regressor_computed_correctly():
     step_size = get_step_size(X, alpha, fit_intercept, classification=False)
 
     clf1 = Ridge(fit_intercept=fit_intercept, tol=tol, solver='sag',
-                 alpha=alpha * n_samples, max_iter=max_iter)
+                 alpha=alpha * n_samples, max_iter=max_iter,
+                 random_state=42)
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
@@ -421,7 +423,8 @@ def test_sag_regressor():
     y = 0.5 * X.ravel()
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
-                 alpha=alpha * n_samples)
+                 alpha=alpha * n_samples,
+                 random_state=42)
     clf2 = clone(clf1)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -434,7 +437,8 @@ def test_sag_regressor():
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
-                 alpha=alpha * n_samples)
+                 alpha=alpha * n_samples,
+                 random_state=42)
     clf2 = clone(clf1)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -693,7 +697,7 @@ def test_classifier_single_class():
     assert_raise_message(ValueError,
                          "This solver needs samples of at least 2 classes "
                          "in the data",
-                         LogisticRegression(solver='sag').fit,
+                         LogisticRegression(solver='sag', random_state=42).fit,
                          X, y)
 
 
@@ -706,10 +710,12 @@ def test_step_size_alpha_error():
            " step_size * alpha_scaled == 1")
 
     clf1 = LogisticRegression(solver='sag', C=1. / alpha,
-                              fit_intercept=fit_intercept)
+                              fit_intercept=fit_intercept,
+                              random_state=42)
     assert_raise_message(ZeroDivisionError, msg, clf1.fit, X, y)
 
-    clf2 = Ridge(fit_intercept=fit_intercept, solver='sag', alpha=alpha)
+    clf2 = Ridge(fit_intercept=fit_intercept, solver='sag', alpha=alpha,
+                 random_state=42)
     assert_raise_message(ZeroDivisionError, msg, clf2.fit, X, y)
 
 

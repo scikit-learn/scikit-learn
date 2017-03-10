@@ -61,7 +61,7 @@ def test_transform():
 def test_small_sparse():
     # BernoulliRBM should work on small sparse matrices.
     X = csr_matrix(Xdigits[:4])
-    BernoulliRBM().fit(X)       # no exception
+    BernoulliRBM(random_state=42).fit(X)       # no exception
 
 
 def test_small_sparse_partial_fit():
@@ -165,7 +165,7 @@ def test_score_samples():
 
 
 def test_rbm_verbose():
-    rbm = BernoulliRBM(n_iter=2, verbose=10)
+    rbm = BernoulliRBM(n_iter=2, verbose=10, random_state=42)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:

@@ -341,7 +341,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
 
     digits = load_digits()
     X, y = digits.data[:800], digits.target[:800]
-    model = SVC(C=10, gamma=0.005)
+    model = SVC(C=10, gamma=0.005, random_state=42)
     n = len(y)
 
     cv = cval.KFold(n, 5, shuffle=False)
@@ -700,7 +700,7 @@ def test_cross_val_score_pandas():
 
 def test_cross_val_score_mask():
     # test that cross_val_score works with boolean masks
-    svm = SVC(kernel="linear")
+    svm = SVC(kernel="linear", random_state=42)
     iris = load_iris()
     X, y = iris.data, iris.target
     cv_indices = cval.KFold(len(y), 5)
@@ -719,17 +719,17 @@ def test_cross_val_score_mask():
 
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
-    svm = SVC(kernel="precomputed")
+    svm = SVC(kernel="precomputed", random_state=42)
     iris = load_iris()
     X, y = iris.data, iris.target
     linear_kernel = np.dot(X, X.T)
     score_precomputed = cval.cross_val_score(svm, linear_kernel, y)
-    svm = SVC(kernel="linear")
+    svm = SVC(kernel="linear", random_state=42)
     score_linear = cval.cross_val_score(svm, X, y)
     assert_array_equal(score_precomputed, score_linear)
 
     # Error raised for non-square X
-    svm = SVC(kernel="precomputed")
+    svm = SVC(kernel="precomputed", random_state=42)
     assert_raises(ValueError, cval.cross_val_score, svm, X, y)
 
     # test error is raised when the precomputed kernel is not array-like
@@ -878,7 +878,7 @@ def train_test_split_mock_pandas():
 
 def test_cross_val_score_with_score_func_classification():
     iris = load_iris()
-    clf = SVC(kernel='linear')
+    clf = SVC(kernel='linear', random_state=42)
 
     # Default score (should be the accuracy score)
     scores = cval.cross_val_score(clf, iris.data, iris.target, cv=5)
@@ -900,7 +900,7 @@ def test_cross_val_score_with_score_func_classification():
 def test_cross_val_score_with_score_func_regression():
     X, y = make_regression(n_samples=30, n_features=20, n_informative=5,
                            random_state=0)
-    reg = Ridge()
+    reg = Ridge(random_state=42)
 
     # Default score of the Ridge regression estimator
     scores = cval.cross_val_score(reg, X, y, cv=5)
@@ -928,7 +928,7 @@ def test_permutation_score():
     X = iris.data
     X_sparse = coo_matrix(X)
     y = iris.target
-    svm = SVC(kernel='linear')
+    svm = SVC(kernel='linear', random_state=42)
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
@@ -943,7 +943,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SVC(kernel='linear')
+    svm_sparse = SVC(kernel='linear', random_state=42)
     cv_sparse = cval.StratifiedKFold(y, 2)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
@@ -1036,8 +1036,8 @@ def test_shufflesplit_reproducible():
 
 
 def test_safe_split_with_precomputed_kernel():
-    clf = SVC()
-    clfp = SVC(kernel="precomputed")
+    clf = SVC(random_state=42)
+    clfp = SVC(kernel="precomputed", random_state=42)
 
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -1133,7 +1133,7 @@ def test_cross_val_predict():
     X, y = boston.data, boston.target
     cv = cval.KFold(len(boston.target))
 
-    est = Ridge()
+    est = Ridge(random_state=42)
 
     # Naive loop (should be same as cross_val_predict):
     preds2 = np.zeros_like(y)
@@ -1157,7 +1157,7 @@ def test_cross_val_predict():
     preds = cval.cross_val_predict(est, Xsp, y)
     assert_array_almost_equal(len(preds), len(y))
 
-    preds = cval.cross_val_predict(KMeans(), X)
+    preds = cval.cross_val_predict(KMeans(random_state=42), X)
     assert_equal(len(preds), len(y))
 
     def bad_cv():
@@ -1168,7 +1168,7 @@ def test_cross_val_predict():
 
 
 def test_cross_val_predict_input_types():
-    clf = Ridge()
+    clf = Ridge(random_state=42)
     # Smoke test
     predictions = cval.cross_val_predict(clf, X, y)
     assert_equal(predictions.shape, (10,))
@@ -1245,7 +1245,7 @@ def test_cross_val_predict_sparse_prediction():
                                           random_state=1)
     X_sparse = csr_matrix(X)
     y_sparse = csr_matrix(y)
-    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    classif = OneVsRestClassifier(SVC(kernel='linear', random_state=42))
     preds = cval.cross_val_predict(classif, X, y, cv=10)
     preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()

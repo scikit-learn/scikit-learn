@@ -353,8 +353,8 @@ def test_class_distribution():
 
 
 def test_safe_split_with_precomputed_kernel():
-    clf = SVC()
-    clfp = SVC(kernel="precomputed")
+    clf = SVC(random_state=42)
+    clfp = SVC(kernel="precomputed", random_state=42)
 
     iris = datasets.load_iris()
     X, y = iris.data, iris.target

@@ -31,7 +31,7 @@ def test_kernel_pca():
 
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             fit_inverse_transform=inv)
+                             fit_inverse_transform=inv, random_state=42)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
@@ -79,7 +79,7 @@ def test_kernel_pca_sparse():
         for kernel in ("linear", "rbf", "poly"):
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             fit_inverse_transform=False)
+                             fit_inverse_transform=False, random_state=42)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
@@ -105,8 +105,8 @@ def test_kernel_pca_linear_kernel():
     # fit only the first four components: fifth is near zero eigenvalue, so
     # can be trimmed due to roundoff error
     assert_array_almost_equal(
-        np.abs(KernelPCA(4).fit(X_fit).transform(X_pred)),
-        np.abs(PCA(4).fit(X_fit).transform(X_pred)))
+        np.abs(KernelPCA(4, random_state=42).fit(X_fit).transform(X_pred)),
+        np.abs(PCA(4, random_state=42).fit(X_fit).transform(X_pred)))
 
 
 def test_kernel_pca_n_components():
@@ -116,7 +116,7 @@ def test_kernel_pca_n_components():
 
     for eigen_solver in ("dense", "arpack"):
         for c in [1, 2, 4]:
-            kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver)
+            kpca = KernelPCA(n_components=c, eigen_solver=eigen_solver, random_state=42)
             shape = kpca.fit(X_fit).transform(X_pred).shape
 
             assert_equal(shape, (2, c))
@@ -126,15 +126,15 @@ def test_remove_zero_eig():
     X = np.array([[1 - 1e-30, 1], [1, 1], [1, 1 - 1e-20]])
 
     # n_components=None (default) => remove_zero_eig is True
-    kpca = KernelPCA()
+    kpca = KernelPCA(random_state=42)
     Xt = kpca.fit_transform(X)
     assert_equal(Xt.shape, (3, 0))
 
-    kpca = KernelPCA(n_components=2)
+    kpca = KernelPCA(n_components=2, random_state=42)
     Xt = kpca.fit_transform(X)
     assert_equal(Xt.shape, (3, 2))
 
-    kpca = KernelPCA(n_components=2, remove_zero_eig=True)
+    kpca = KernelPCA(n_components=2, remove_zero_eig=True, random_state=42)
     Xt = kpca.fit_transform(X)
     assert_equal(Xt.shape, (3, 0))
 
@@ -145,17 +145,20 @@ def test_kernel_pca_precomputed():
     X_pred = rng.random_sample((2, 4))
 
     for eigen_solver in ("dense", "arpack"):
-        X_kpca = KernelPCA(4, eigen_solver=eigen_solver).\
+        X_kpca = KernelPCA(4, eigen_solver=eigen_solver, random_state=42).\
             fit(X_fit).transform(X_pred)
         X_kpca2 = KernelPCA(
-            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
+            4, eigen_solver=eigen_solver, kernel='precomputed',
+            random_state=42).fit(
                 np.dot(X_fit, X_fit.T)).transform(np.dot(X_pred, X_fit.T))
 
         X_kpca_train = KernelPCA(
             4, eigen_solver=eigen_solver,
+            random_state=42,
             kernel='precomputed').fit_transform(np.dot(X_fit, X_fit.T))
         X_kpca_train2 = KernelPCA(
-            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
+            4, eigen_solver=eigen_solver, kernel='precomputed',
+            random_state=42).fit(
                 np.dot(X_fit, X_fit.T)).transform(np.dot(X_fit, X_fit.T))
 
         assert_array_almost_equal(np.abs(X_kpca),
@@ -168,7 +171,7 @@ def test_kernel_pca_precomputed():
 def test_kernel_pca_invalid_kernel():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((2, 4))
-    kpca = KernelPCA(kernel="tototiti")
+    kpca = KernelPCA(kernel="tototiti", random_state=42)
     assert_raises(ValueError, kpca.fit, X_fit)
 
 
@@ -177,8 +180,9 @@ def test_gridsearch_pipeline():
     # circles with a perceptron model.
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
-    kpca = KernelPCA(kernel="rbf", n_components=2)
-    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
+    kpca = KernelPCA(kernel="rbf", n_components=2, random_state=42)
+    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron",
+                                                Perceptron(random_state=42))])
     param_grid = dict(kernel_pca__gamma=2. ** np.arange(-2, 2))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     grid_search.fit(X, y)
@@ -190,8 +194,9 @@ def test_gridsearch_pipeline_precomputed():
     # circles with a perceptron model using a precomputed kernel.
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
-    kpca = KernelPCA(kernel="precomputed", n_components=2)
-    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
+    kpca = KernelPCA(kernel="precomputed", n_components=2, random_state=42)
+    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron",
+                                                Perceptron(random_state=42))])
     param_grid = dict(Perceptron__n_iter=np.arange(1, 5))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     X_kernel = rbf_kernel(X, gamma=2.)
@@ -205,7 +210,7 @@ def test_nested_circles():
                         random_state=0)
 
     # 2D nested circles are not linearly separable
-    train_score = Perceptron().fit(X, y).score(X, y)
+    train_score = Perceptron(random_state=42).fit(X, y).score(X, y)
     assert_less(train_score, 0.8)
 
     # Project the circles data into the first 2 components of a RBF Kernel
@@ -214,9 +219,9 @@ def test_nested_circles():
     # and the gamma value has to be updated, the Kernel PCA example will
     # have to be updated too.
     kpca = KernelPCA(kernel="rbf", n_components=2,
-                     fit_inverse_transform=True, gamma=2.)
+                     fit_inverse_transform=True, gamma=2., random_state=42)
     X_kpca = kpca.fit_transform(X)
 
     # The data is perfectly linearly separable in that space
-    train_score = Perceptron().fit(X_kpca, y).score(X_kpca, y)
+    train_score = Perceptron(random_state=42).fit(X_kpca, y).score(X_kpca, y)
     assert_equal(train_score, 1.0)

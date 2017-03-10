@@ -290,21 +290,21 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
 
 def test_early_exaggeration_too_small():
     # Early exaggeration factor must be >= 1.
-    tsne = TSNE(early_exaggeration=0.99)
+    tsne = TSNE(early_exaggeration=0.99, random_state=42)
     assert_raises_regexp(ValueError, "early_exaggeration .*",
                          tsne.fit_transform, np.array([[0.0]]))
 
 
 def test_too_few_iterations():
     # Number of gradient descent iterations must be at least 200.
-    tsne = TSNE(n_iter=199)
+    tsne = TSNE(n_iter=199, random_state=42)
     assert_raises_regexp(ValueError, "n_iter .*", tsne.fit_transform,
                          np.array([[0.0]]))
 
 
 def test_non_square_precomputed_distances():
     # Precomputed distance matrices must be square matrices.
-    tsne = TSNE(metric="precomputed")
+    tsne = TSNE(metric="precomputed", random_state=42)
     assert_raises_regexp(ValueError, ".* square distance matrix",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
@@ -317,7 +317,7 @@ def test_init_not_available():
 
 def test_init_ndarray():
     # Initialize TSNE with ndarray and test fit
-    tsne = TSNE(init=np.zeros((100, 2)))
+    tsne = TSNE(init=np.zeros((100, 2)), random_state=42)
     X_embedded = tsne.fit_transform(np.ones((100, 5)))
     assert_array_equal(np.zeros((100, 2)), X_embedded)
 
@@ -325,7 +325,7 @@ def test_init_ndarray():
 def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
-    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed", random_state=42)
     tsne.fit(np.zeros((100, 100)))
 
 
@@ -338,7 +338,7 @@ def test_distance_not_available():
 
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
     # Precomputed distance matrices must be square matrices.
-    tsne = TSNE(metric="precomputed", init="pca")
+    tsne = TSNE(metric="precomputed", init="pca", random_state=42)
     assert_raises_regexp(ValueError, "The parameter init=\"pca\" cannot be "
                          "used with metric=\"precomputed\".",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
@@ -425,7 +425,7 @@ def _run_answer_test(pos_input, pos_output, neighbors, grad_output,
 def test_verbose():
     # Verbose options write to stdout.
     random_state = check_random_state(0)
-    tsne = TSNE(verbose=2)
+    tsne = TSNE(verbose=2, random_state=42)
     X = random_state.randn(5, 2)
 
     old_stdout = sys.stdout
@@ -449,7 +449,7 @@ def test_verbose():
 def test_chebyshev_metric():
     # t-SNE should allow metrics that cannot be squared (issue #3526).
     random_state = check_random_state(0)
-    tsne = TSNE(metric="chebyshev")
+    tsne = TSNE(metric="chebyshev", random_state=42)
     X = random_state.randn(5, 2)
     tsne.fit_transform(X)
 
@@ -457,7 +457,7 @@ def test_chebyshev_metric():
 def test_reduction_to_one_component():
     # t-SNE should allow reduction to one component (issue #4154).
     random_state = check_random_state(0)
-    tsne = TSNE(n_components=1)
+    tsne = TSNE(n_components=1, random_state=42)
     X = random_state.randn(5, 2)
     X_embedded = tsne.fit(X).embedding_
     assert(np.all(np.isfinite(X_embedded)))
@@ -469,7 +469,7 @@ def test_no_sparse_on_barnes_hut():
     X = random_state.randn(100, 2)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
-    tsne = TSNE(n_iter=199, method='barnes_hut')
+    tsne = TSNE(n_iter=199, method='barnes_hut', random_state=42)
     assert_raises_regexp(TypeError, "A sparse matrix was.*",
                          tsne.fit_transform, X_csr)
 

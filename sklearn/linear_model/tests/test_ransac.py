@@ -169,7 +169,8 @@ def test_ransac_no_valid_data():
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator,
                                        is_data_valid=is_data_valid,
-                                       max_trials=5)
+                                       max_trials=5,
+                                       random_state=42)
 
     msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
@@ -185,7 +186,8 @@ def test_ransac_no_valid_model():
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator,
                                        is_model_valid=is_model_valid,
-                                       max_trials=5)
+                                       max_trials=5,
+                                       random_state=42)
 
     msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
@@ -202,7 +204,8 @@ def test_ransac_exceed_max_skips():
     ransac_estimator = RANSACRegressor(base_estimator,
                                        is_data_valid=is_data_valid,
                                        max_trials=5,
-                                       max_skips=3)
+                                       max_skips=3,
+                                       random_state=42)
 
     msg = ("RANSAC skipped more iterations than `max_skips`")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
@@ -227,7 +230,8 @@ def test_ransac_warn_exceed_max_skips():
     ransac_estimator = RANSACRegressor(base_estimator,
                                        is_data_valid=is_data_valid,
                                        max_skips=3,
-                                       max_trials=5)
+                                       max_trials=5,
+                                       random_state=42)
 
     assert_warns(UserWarning, ransac_estimator.fit, X, y)
     assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
@@ -472,10 +476,12 @@ def test_ransac_dynamic_max_trials():
 
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
-                                       stop_probability=-0.1)
+                                       stop_probability=-0.1,
+                                       random_state=42)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
-                                       stop_probability=1.1)
+                                       stop_probability=1.1,
+                                       random_state=42)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
 
 
@@ -520,6 +526,6 @@ def test_ransac_fit_sample_weight():
 
     # check that if base_estimator.fit doesn't support
     # sample_weight, raises error
-    base_estimator = Lasso()
-    ransac_estimator = RANSACRegressor(base_estimator)
+    base_estimator = Lasso(random_state=42)
+    ransac_estimator = RANSACRegressor(base_estimator, random_state=42)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)

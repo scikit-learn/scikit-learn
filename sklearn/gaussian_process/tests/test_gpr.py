@@ -38,7 +38,8 @@ kernels = [RBF(length_scale=1.0), fixed_kernel,
 def test_gpr_interpolation():
     # Test the interpolating property for different kernels.
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
         y_pred, y_cov = gpr.predict(X, return_cov=True)
 
         assert_almost_equal(y_pred, y)
@@ -50,7 +51,8 @@ def test_lml_improving():
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
         assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
                        gpr.log_marginal_likelihood(kernel.theta))
 
@@ -58,7 +60,8 @@ def test_lml_improving():
 def test_lml_precomputed():
     # Test that lml of optimized kernel is stored correctly.
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
         assert_equal(gpr.log_marginal_likelihood(gpr.kernel_.theta),
                      gpr.log_marginal_likelihood())
 
@@ -68,7 +71,8 @@ def test_converged_to_local_maximum():
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
 
         lml, lml_gradient = \
             gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
@@ -83,7 +87,8 @@ def test_solution_inside_bounds():
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
 
         bounds = gpr.kernel_.bounds
         max_ = np.finfo(gpr.kernel_.theta.dtype).max
@@ -97,7 +102,8 @@ def test_solution_inside_bounds():
 def test_lml_gradient():
     # Compare analytic and numeric gradient of log marginal likelihood.
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
 
         lml, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, True)
         lml_gradient_approx = \
@@ -112,7 +118,7 @@ def test_lml_gradient():
 def test_prior():
     # Test that GP prior has mean 0 and identical variances.
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel)
+        gpr = GaussianProcessRegressor(kernel=kernel, random_state=42)
 
         y_mean, y_cov = gpr.predict(X, return_cov=True)
 
@@ -127,7 +133,8 @@ def test_prior():
 def test_sample_statistics():
     # Test that statistics of samples drawn from GP are correct.
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
 
         y_mean, y_cov = gpr.predict(X2, return_cov=True)
 
@@ -142,14 +149,16 @@ def test_sample_statistics():
 def test_no_optimizer():
     # Test that kernel parameters are unmodified when optimizer is None.
     kernel = RBF(1.0)
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
+    gpr = GaussianProcessRegressor(
+        kernel=kernel, optimizer=None, random_state=42).fit(X, y)
     assert_equal(np.exp(gpr.kernel_.theta), 1.0)
 
 
 def test_predict_cov_vs_std():
     # Test that predicted std.-dev. is consistent with cov's diagonal.
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, random_state=42).fit(X, y)
         y_mean, y_cov = gpr.predict(X2, return_cov=True)
         y_mean, y_std = gpr.predict(X2, return_std=True)
         assert_almost_equal(np.sqrt(np.diag(y_cov)), y_std)
@@ -165,7 +174,8 @@ def test_anisotropic_kernel():
     y = X[:, 0] + 0.1 * X[:, 1]
 
     kernel = RBF([1.0, 1.0])
-    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    gpr = GaussianProcessRegressor(
+        kernel=kernel, random_state=42).fit(X, y)
     assert_greater(np.exp(gpr.kernel_.theta[1]),
                    np.exp(gpr.kernel_.theta[0]) * 5)
 
@@ -203,10 +213,11 @@ def test_y_normalization():
     y_norm = y - y_mean
     for kernel in kernels:
         # Fit non-normalizing GP on normalized y
-        gpr = GaussianProcessRegressor(kernel=kernel)
+        gpr = GaussianProcessRegressor(kernel=kernel, random_state=42)
         gpr.fit(X, y_norm)
         # Fit normalizing GP on unnormalized y
-        gpr_norm = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr_norm = GaussianProcessRegressor(
+            kernel=kernel, normalize_y=True, random_state=42)
         gpr_norm.fit(X, y)
 
         # Compare predicted mean, std-devs and covariances
@@ -231,11 +242,13 @@ def test_y_multioutput():
     kernel = RBF(length_scale=1.0)
 
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None,
-                                   normalize_y=False)
+                                   normalize_y=False,
+                                   random_state=42)
     gpr.fit(X, y)
 
     gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None,
-                                      normalize_y=False)
+                                      normalize_y=False,
+                                      random_state=42)
     gpr_2d.fit(X, y_2d)
 
     y_pred_1d, y_std_1d = gpr.predict(X2, return_std=True)
@@ -256,10 +269,12 @@ def test_y_multioutput():
 
     # Test hyperparameter optimization
     for kernel in kernels:
-        gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr = GaussianProcessRegressor(
+            kernel=kernel, normalize_y=True, random_state=42)
         gpr.fit(X, y)
 
-        gpr_2d = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+        gpr_2d = GaussianProcessRegressor(
+            kernel=kernel, normalize_y=True)
         gpr_2d.fit(X, np.vstack((y, y)).T)
 
         assert_almost_equal(gpr.kernel_.theta, gpr_2d.kernel_.theta, 4)
@@ -283,7 +298,8 @@ def test_custom_optimizer():
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
-        gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
+        gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer,
+                                       random_state=42)
         gpr.fit(X, y)
         # Checks that optimizer improved marginal likelihood
         assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
@@ -294,9 +310,11 @@ def test_duplicate_input():
     # Test GPR can handle two different output-values for the same input.
     for kernel in kernels:
         gpr_equal_inputs = \
-            GaussianProcessRegressor(kernel=kernel, alpha=1e-2)
+            GaussianProcessRegressor(kernel=kernel, alpha=1e-2,
+                                     random_state=42)
         gpr_similar_inputs = \
-            GaussianProcessRegressor(kernel=kernel, alpha=1e-2)
+            GaussianProcessRegressor(kernel=kernel, alpha=1e-2,
+                                     random_state=42)
 
         X_ = np.vstack((X, X[0]))
         y_ = np.hstack((y, y[0] + 1))

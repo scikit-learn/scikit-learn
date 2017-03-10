@@ -96,7 +96,8 @@ def test_calibration():
         # base-estimators should provide either decision_function or
         # predict_proba (most regressors, for instance, should fail)
         clf_base_regressor = \
-            CalibratedClassifierCV(RandomForestRegressor(), method="sigmoid")
+            CalibratedClassifierCV(RandomForestRegressor(random_state=42),
+                                   method="sigmoid")
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
@@ -129,7 +130,7 @@ def test_calibration_multiclass():
     """Test calibration for multiclass """
     # test multi-class setting with classifier that implements
     # only decision function
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=42)
     X, y_idx = make_blobs(n_samples=100, n_features=2, random_state=42,
                           centers=3, cluster_std=3.0)
 
@@ -267,7 +268,7 @@ def test_calibration_nan_imputer():
     X[0, 0] = np.nan
     clf = Pipeline(
         [('imputer', Imputer()),
-         ('rf', RandomForestClassifier(n_estimators=1))])
+         ('rf', RandomForestClassifier(n_estimators=1, random_state=42))])
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X, y)
     clf_c.predict(X)
@@ -278,8 +279,9 @@ def test_calibration_prob_sum():
     # issue #7796
     num_classes = 2
     X, y = make_classification(n_samples=10, n_features=5,
-                               n_classes=num_classes)
-    clf = LinearSVC(C=1.0)
+                               n_classes=num_classes,
+                               random_state=42)
+    clf = LinearSVC(C=1.0, random_state=42)
     clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
     clf_prob.fit(X, y)
 
@@ -294,7 +296,7 @@ def test_calibration_less_classes():
     # class label
     X = np.random.randn(10, 5)
     y = np.arange(10)
-    clf = LinearSVC(C=1.0)
+    clf = LinearSVC(C=1.0, random_state=42)
     cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
     cal_clf.fit(X, y)
 
