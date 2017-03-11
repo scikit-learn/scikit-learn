@@ -167,6 +167,29 @@ def test_fit():
     assert_almost_equal(mlp.predict_proba(X)[0, 1], 0.739, decimal=3)
 
 
+def test_transform():
+    # Test that MLPClassifier transforms input data properly.
+    X = np.array([[0.6, 0.8, 0.7]])
+    mlp = MLPClassifier(activation='identity', hidden_layer_sizes=2)
+
+    # set weights
+    mlp.coefs_ = [0] * 2
+    mlp.intercepts_ = [0] * 2
+    mlp.n_outputs_ = 1
+    mlp.coefs_[0] = np.array([[0.1, 0.2], [0.3, 0.1], [0.5, 0]])
+    mlp.coefs_[1] = np.array([[0.1], [0.2]])
+    mlp.intercepts_[0] = np.array([0.1, 0.1])
+    mlp.intercepts_[1] = np.array([1.0])
+
+    # Compute the number of layers
+    mlp.n_layers_ = 3
+    mlp.out_activation_ = 'identity'
+
+    Xt = mlp.transform(X)
+    assert_almost_equal(Xt[0], X, decimal=3)
+    assert_almost_equal(Xt[1], np.array([[0.75, 0.3]]), decimal=3)
+
+
 def test_gradient():
     # Test gradient.
 
