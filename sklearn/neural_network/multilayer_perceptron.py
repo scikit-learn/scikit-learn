@@ -643,8 +643,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _partial_fit(self, X, y, classes=None):
         return self._fit(X, y, incremental=True)
 
-    def _predict(self, X):
-        """Predict using the trained model
+    def _get_empty_activations(self, X):
+        """Validate input data and return an array like structure of empty
+        activations as per the number of neurons in hidden layers. This
+        returned structure would be used by predict or transform methods.
 
         Parameters
         ----------
@@ -653,8 +655,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Returns
         -------
-        y_pred : array-like, shape (n_samples,) or (n_samples, n_outputs)
-            The decision function of the samples for each class in the model.
+        activations : array-like
+            An empty placeholder to filled by performing forward pass later.
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
@@ -673,11 +675,49 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         for i in range(self.n_layers_ - 1):
             activations.append(np.empty((X.shape[0],
                                          layer_units[i + 1])))
+        return activations
+
+    def _predict(self, X):
+        """Predict using the trained model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y_pred : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The decision function of the samples for each class in the model.
+        """
+        activations = self._get_empty_activations(X)
         # forward propagate
         self._forward_pass(activations)
         y_pred = activations[-1]
 
         return y_pred
+
+    def _transform(self, X):
+        """Transform input data using the trained model. Transformed input
+        consists of activations at all hidden layers, these are learned
+        features from the input.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        Xt : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            Transformed input data.
+        """
+        activations = self._get_empty_activations(X)
+        # forward propagate
+        self._forward_pass(activations)
+        Xt = activations[:-1]
+
+        return Xt
 
 
 class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
@@ -965,6 +1005,23 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         return self._fit(X, y, incremental=(self.warm_start and
                                             hasattr(self, "classes_")))
 
+    def transform(self, X):
+        """Transform the input using the multi-layer perceptron classifier.
+        Transformed input consists of activations at all hidden layers,
+        these are learned features from the input.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y : array-like, shape (n_samples,) or (n_samples, n_classes)
+            Transformed input data.
+        """
+        return self._transform(X)
+
     @property
     def partial_fit(self):
         """Fit the model to data matrix X and target y.
@@ -1243,6 +1300,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         optimization." arXiv preprint arXiv:1412.6980 (2014).
 
     """
+
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
