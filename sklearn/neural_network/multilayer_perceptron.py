@@ -715,7 +715,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         activations = self._get_empty_activations(X)
         # forward propagate
         self._forward_pass(activations)
-        Xt = activations[:-1]
+        Xt = np.column_stack(activations[:-1])
 
         return Xt
 

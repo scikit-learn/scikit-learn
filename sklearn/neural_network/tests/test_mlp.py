@@ -186,8 +186,7 @@ def test_transform():
     mlp.out_activation_ = 'identity'
 
     Xt = mlp.transform(X)
-    assert_almost_equal(Xt[0], X, decimal=3)
-    assert_almost_equal(Xt[1], np.array([[0.75, 0.3]]), decimal=3)
+    assert_almost_equal(Xt, np.array([[0.6, 0.8, 0.7, 0.75, 0.3]]), decimal=3)
 
 
 def test_gradient():
