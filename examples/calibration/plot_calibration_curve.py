@@ -86,9 +86,10 @@ def plot_calibration_curve(est, name, fig_index):
 
     ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
     for clf, name in [(lr, 'Logistic'),
-                      (est, name),
-                      (isotonic, name + ' + Isotonic'),
-                      (sigmoid, name + ' + Sigmoid')]:
+                      # (est, name),
+                      (sigmoid, name),
+                      (isotonic, name + ' + Isotonic')]:
+                      # (sigmoid, name + ' + Sigmoid')]:
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
         if hasattr(clf, "predict_proba"):
