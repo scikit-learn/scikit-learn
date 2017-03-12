@@ -283,7 +283,7 @@ def test_kfold_indices():
     check_cv_coverage(kf, X2, y=None, groups=None, expected_n_splits=3)
 
     # Check if get_n_splits returns the number of folds
-    assert_equal(5, KFold(5,random_state=42).get_n_splits(X2))
+    assert_equal(5, KFold(5, random_state=42).get_n_splits(X2))
 
 
 def test_kfold_no_shuffle():

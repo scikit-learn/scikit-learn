@@ -127,7 +127,7 @@ def test_rfecv():
 
     # Test using the score function
     rfecv = RFECV(estimator=SVC(kernel="linear", random_state=42),
-                 step=1, cv=5)
+                  step=1, cv=5)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
