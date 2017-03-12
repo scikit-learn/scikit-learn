@@ -300,7 +300,7 @@ def _average_path_length(n_samples_leaf):
         if n_samples_leaf <= 1:
             return 1.
         else:
-            return 2. * (np.log(n_samples_leaf) + 0.5772156649) - 2. * (
+            return 2. * (np.log(n_samples_leaf - 1.) + 0.5772156649) - 2. * (
                 n_samples_leaf - 1.) / n_samples_leaf
 
     else:
