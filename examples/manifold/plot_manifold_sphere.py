@@ -67,7 +67,8 @@ plt.suptitle("Manifold Learning with %i points, %i neighbors"
              % (1000, n_neighbors), fontsize=14)
 
 ax = fig.add_subplot(251, projection='3d')
-ax.scatter(x, y, z, c=p[indices], cmap=plt.cm.rainbow)
+ax.scatter(x, y, z, c=p[indices], cmap=plt.cm.rainbow,
+           edgecolors='k')
 ax.view_init(40, -10)
 
 sphere_data = np.array([x, y, z]).T
@@ -85,7 +86,8 @@ for i, method in enumerate(methods):
     print("%s: %.2g sec" % (methods[i], t1 - t0))
 
     ax = fig.add_subplot(252 + i)
-    plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
+    plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow,
+                edgecolors='k')
     plt.title("%s (%.2g sec)" % (labels[i], t1 - t0))
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
@@ -99,7 +101,8 @@ t1 = time()
 print("%s: %.2g sec" % ('ISO', t1 - t0))
 
 ax = fig.add_subplot(257)
-plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow,
+            edgecolors='k')
 plt.title("%s (%.2g sec)" % ('Isomap', t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -113,7 +116,8 @@ t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(258)
-plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow,
+            edgecolors='k')
 plt.title("MDS (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -128,7 +132,8 @@ t1 = time()
 print("Spectral Embedding: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(259)
-plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow,
+            edgecolors='k')
 plt.title("Spectral Embedding (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -142,7 +147,8 @@ t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(2, 5, 10)
-plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow,
+            edgecolors='k')
 plt.title("t-SNE (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())

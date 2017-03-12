@@ -35,11 +35,13 @@ print("Done. Reconstruction error: %g" % err)
 fig = plt.figure()
 
 ax = fig.add_subplot(211, projection='3d')
-ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral,
+           edgecolors='k')
 
 ax.set_title("Original data")
 ax = fig.add_subplot(212)
-ax.scatter(X_r[:, 0], X_r[:, 1], c=color, cmap=plt.cm.Spectral)
+ax.scatter(X_r[:, 0], X_r[:, 1], c=color, cmap=plt.cm.Spectral,
+           edgecolors='k')
 plt.axis('tight')
 plt.xticks([]), plt.yticks([])
 plt.title('Projected data')
