@@ -341,7 +341,7 @@ def test_classes__property():
                        grid_search.classes_)
 
     # Test that regressors do not have a classes_ attribute
-    grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
+    grid_search = GridSearchCV(Ridge(random_state=42), {'alpha': [1.0, 2.0]})
     grid_search.fit(X, y)
     assert_false(hasattr(grid_search, 'classes_'))
 
@@ -856,7 +856,8 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv)
+    grid_search = GridSearchCV(SVC(random_state=42),
+                               param_grid={'C': [1, 10]}, cv=cv)
     random_search = RandomizedSearchCV(SVC(random_state=42), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv,
@@ -900,7 +901,7 @@ def test_search_iid_param():
         assert_almost_equal(train_std, 0)
 
     # once with iid=False
-    grid_search = GridSearchCV(SVC(),
+    grid_search = GridSearchCV(SVC(random_state=42),
                                param_grid={'C': [1, 10]},
                                cv=cv, iid=False)
     random_search = RandomizedSearchCV(SVC(random_state=42), n_iter=2,

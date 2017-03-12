@@ -16,7 +16,7 @@ from sklearn.ensemble import BaggingClassifier
 
 class DelegatorData(object):
     def __init__(self, name, construct, skip_methods=(),
-                 fit_args=make_classification()):
+                 fit_args=make_classification(random_state=42)):
         self.name = name
         self.construct = construct
         self.fit_args = fit_args

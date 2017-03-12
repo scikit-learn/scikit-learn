@@ -164,7 +164,8 @@ def test_extract_patches_max_patches():
     i_h, i_w = face.shape
     p_h, p_w = 16, 16
 
-    patches = extract_patches_2d(face, (p_h, p_w), max_patches=100)
+    patches = extract_patches_2d(face, (p_h, p_w), max_patches=100,
+                                 random_state=42)
     assert_equal(patches.shape, (100, p_h, p_w))
 
     expected_n_patches = int(0.5 * (i_h - p_h + 1) * (i_w - p_w + 1))

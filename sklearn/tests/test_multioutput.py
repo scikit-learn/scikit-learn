@@ -93,7 +93,7 @@ def test_multi_target_sample_weights_api():
     y = [[3.141, 2.718], [2.718, 3.141]]
     w = [0.8, 0.6]
 
-    rgr = MultiOutputRegressor(Lasso())
+    rgr = MultiOutputRegressor(Lasso(random_state=42))
     assert_raises_regex(ValueError, "does not support sample weights",
                         rgr.fit, X, y, w)
 

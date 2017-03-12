@@ -288,7 +288,8 @@ def test_base_estimator():
 
     # XXX doesn't work with y_class because RF doesn't support classes_
     # Shouldn't AdaBoost run a LabelBinarizer?
-    clf = AdaBoostClassifier(RandomForestClassifier(), random_state=42)
+    clf = AdaBoostClassifier(RandomForestClassifier(random_state=42),
+                             random_state=42)
     clf.fit(X, y_regr)
 
     clf = AdaBoostClassifier(SVC(random_state=42),
@@ -298,7 +299,8 @@ def test_base_estimator():
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.svm import SVR
 
-    clf = AdaBoostRegressor(RandomForestRegressor(), random_state=0)
+    clf = AdaBoostRegressor(RandomForestRegressor(random_state=42),
+                            random_state=0)
     clf.fit(X, y_regr)
 
     clf = AdaBoostRegressor(SVR(), random_state=0)

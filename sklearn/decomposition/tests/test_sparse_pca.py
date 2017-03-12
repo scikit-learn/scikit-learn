@@ -102,7 +102,7 @@ def test_transform_nan():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     Y[:, 0] = 0
-    estimator = SparsePCA(n_components=8)
+    estimator = SparsePCA(n_components=8, random_state=42)
     assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
 
 

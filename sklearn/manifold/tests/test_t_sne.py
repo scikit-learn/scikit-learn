@@ -331,7 +331,7 @@ def test_init_ndarray_precomputed():
 
 def test_distance_not_available():
     # 'metric' must be valid.
-    tsne = TSNE(metric="not available")
+    tsne = TSNE(metric="not available", random_state=42)
     assert_raises_regexp(ValueError, "Unknown metric not available.*",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 

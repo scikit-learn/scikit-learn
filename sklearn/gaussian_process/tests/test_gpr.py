@@ -274,7 +274,8 @@ def test_y_multioutput():
         gpr.fit(X, y)
 
         gpr_2d = GaussianProcessRegressor(
-            kernel=kernel, normalize_y=True)
+            kernel=kernel, normalize_y=True,
+            random_state=42)
         gpr_2d.fit(X, np.vstack((y, y)).T)
 
         assert_almost_equal(gpr.kernel_.theta, gpr_2d.kernel_.theta, 4)

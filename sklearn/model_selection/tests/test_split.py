@@ -227,13 +227,13 @@ def test_kfold_valueerrors():
     X1 = np.array([[1, 2], [3, 4], [5, 6]])
     X2 = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
     # Check that errors are raised if there is not enough samples
-    assert_raises(ValueError, next, KFold(4).split(X1))
+    assert_raises(ValueError, next, KFold(4, random_state=42).split(X1))
 
     # Check that a warning is raised if the least populated class has too few
     # members.
     y = np.array([3, 3, -1, -1, 3])
 
-    skf_3 = StratifiedKFold(3)
+    skf_3 = StratifiedKFold(3, random_state=42)
     assert_warns_message(Warning, "The least populated class",
                          next, skf_3.split(X2, y))
 
@@ -273,24 +273,24 @@ def test_kfold_valueerrors():
 def test_kfold_indices():
     # Check all indices are returned in the test folds
     X1 = np.ones(18)
-    kf = KFold(3)
+    kf = KFold(3, random_state=42)
     check_cv_coverage(kf, X1, y=None, groups=None, expected_n_splits=3)
 
     # Check all indices are returned in the test folds even when equal-sized
     # folds are not possible
     X2 = np.ones(17)
-    kf = KFold(3)
+    kf = KFold(3, random_state=42)
     check_cv_coverage(kf, X2, y=None, groups=None, expected_n_splits=3)
 
     # Check if get_n_splits returns the number of folds
-    assert_equal(5, KFold(5).get_n_splits(X2))
+    assert_equal(5, KFold(5,random_state=42).get_n_splits(X2))
 
 
 def test_kfold_no_shuffle():
     # Manually check that KFold preserves the data ordering on toy datasets
     X2 = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
 
-    splits = KFold(2).split(X2[:-1])
+    splits = KFold(2, random_state=42).split(X2[:-1])
     train, test = next(splits)
     assert_array_equal(test, [0, 1])
     assert_array_equal(train, [2, 3])
@@ -299,7 +299,7 @@ def test_kfold_no_shuffle():
     assert_array_equal(test, [2, 3])
     assert_array_equal(train, [0, 1])
 
-    splits = KFold(2).split(X2)
+    splits = KFold(2, random_state=42).split(X2)
     train, test = next(splits)
     assert_array_equal(test, [0, 1, 2])
     assert_array_equal(train, [3, 4])
@@ -314,7 +314,7 @@ def test_stratified_kfold_no_shuffle():
     # as possible on toy datasets in order to avoid hiding sample dependencies
     # when possible
     X, y = np.ones(4), [1, 1, 0, 0]
-    splits = StratifiedKFold(2).split(X, y)
+    splits = StratifiedKFold(2, random_state=42).split(X, y)
     train, test = next(splits)
     assert_array_equal(test, [0, 2])
     assert_array_equal(train, [1, 3])
@@ -324,7 +324,7 @@ def test_stratified_kfold_no_shuffle():
     assert_array_equal(train, [0, 2])
 
     X, y = np.ones(7), [1, 1, 1, 0, 0, 0, 0]
-    splits = StratifiedKFold(2).split(X, y)
+    splits = StratifiedKFold(2, random_state=42).split(X, y)
     train, test = next(splits)
     assert_array_equal(test, [0, 1, 3, 4])
     assert_array_equal(train, [2, 5, 6])
@@ -334,15 +334,15 @@ def test_stratified_kfold_no_shuffle():
     assert_array_equal(train, [0, 1, 3, 4])
 
     # Check if get_n_splits returns the number of folds
-    assert_equal(5, StratifiedKFold(5).get_n_splits(X, y))
+    assert_equal(5, StratifiedKFold(5, random_state=42).get_n_splits(X, y))
 
     # Make sure string labels are also supported
     X = np.ones(7)
     y1 = ['1', '1', '1', '0', '0', '0', '0']
     y2 = [1, 1, 1, 0, 0, 0, 0]
     np.testing.assert_equal(
-        list(StratifiedKFold(2).split(X, y1)),
-        list(StratifiedKFold(2).split(X, y2)))
+        list(StratifiedKFold(2, random_state=42).split(X, y1)),
+        list(StratifiedKFold(2, random_state=42).split(X, y2)))
 
 
 def test_stratified_kfold_ratios():
@@ -355,7 +355,9 @@ def test_stratified_kfold_ratios():
                  [1] * int(0.01 * n_samples))
 
     for shuffle in (False, True):
-        for train, test in StratifiedKFold(5, shuffle=shuffle).split(X, y):
+        for train, test in StratifiedKFold(5,
+                                           shuffle=shuffle,
+                                           random_state=42).split(X, y):
             assert_almost_equal(np.sum(y[train] == 4) / len(train), 0.10, 2)
             assert_almost_equal(np.sum(y[train] == 0) / len(train), 0.89, 2)
             assert_almost_equal(np.sum(y[train] == 1) / len(train), 0.01, 2)
@@ -367,7 +369,7 @@ def test_stratified_kfold_ratios():
 def test_kfold_balance():
     # Check that KFold returns folds with balanced sizes
     for i in range(11, 17):
-        kf = KFold(5).split(X=np.ones(i))
+        kf = KFold(5, random_state=42).split(X=np.ones(i))
         sizes = []
         for _, test in kf:
             sizes.append(len(test))
@@ -384,7 +386,7 @@ def test_stratifiedkfold_balance():
     y = [0] * 3 + [1] * 14
 
     for shuffle in (True, False):
-        cv = StratifiedKFold(3, shuffle=shuffle)
+        cv = StratifiedKFold(3, shuffle=shuffle, random_state=42)
         for i in range(11, 17):
             skf = cv.split(X[:i], y[:i])
             sizes = []
@@ -397,7 +399,7 @@ def test_stratifiedkfold_balance():
 
 def test_shuffle_kfold():
     # Check the indices are shuffled properly
-    kf = KFold(3)
+    kf = KFold(3, random_state=42)
     kf2 = KFold(3, shuffle=True, random_state=0)
     kf3 = KFold(3, shuffle=True, random_state=1)
 
@@ -474,7 +476,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
 
     n_splits = 3
 
-    cv = KFold(n_splits=n_splits, shuffle=False)
+    cv = KFold(n_splits=n_splits, shuffle=False, random_state=42)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(0.92, mean_score)
     assert_greater(mean_score, 0.80)
@@ -498,7 +500,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # the estimated mean score is close to the score measured with
     # non-shuffled KFold
 
-    cv = StratifiedKFold(n_splits)
+    cv = StratifiedKFold(n_splits, random_state=42)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(0.93, mean_score)
     assert_greater(mean_score, 0.80)
@@ -665,7 +667,8 @@ def test_predefinedsplit_with_kfold_split():
     folds = -1 * np.ones(10)
     kf_train = []
     kf_test = []
-    for i, (train_ind, test_ind) in enumerate(KFold(5, shuffle=True).split(X)):
+    for i, (train_ind, test_ind) in enumerate(KFold(5, shuffle=True,
+                                                    random_state=42).split(X)):
         kf_train.append(train_ind)
         kf_test.append(test_ind)
         folds[test_ind] = i
@@ -1043,27 +1046,32 @@ def test_check_cv():
     cv = check_cv(3, classifier=False)
     # Use numpy.testing.assert_equal which recursively compares
     # lists of lists
-    np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
+    np.testing.assert_equal(
+        list(KFold(3, random_state=42).split(X)), list(cv.split(X)))
 
     y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
     cv = check_cv(3, y_binary, classifier=True)
-    np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_binary)),
-                            list(cv.split(X, y_binary)))
+    np.testing.assert_equal(
+        list(StratifiedKFold(3, random_state=42).split(X, y_binary)),
+        list(cv.split(X, y_binary)))
 
     y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
     cv = check_cv(3, y_multiclass, classifier=True)
-    np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass)),
-                            list(cv.split(X, y_multiclass)))
+    np.testing.assert_equal(
+        list(StratifiedKFold(3, random_state=42).split(X, y_multiclass)),
+        list(cv.split(X, y_multiclass)))
 
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],
                              [1, 1, 0, 1], [0, 0, 1, 0]])
     cv = check_cv(3, y_multilabel, classifier=True)
-    np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
+    np.testing.assert_equal(
+        list(KFold(3, random_state=42).split(X)), list(cv.split(X)))
 
     y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
     cv = check_cv(3, y_multioutput, classifier=True)
-    np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
+    np.testing.assert_equal(list(KFold(3, random_state=42).split(X)),
+                            list(cv.split(X)))
 
     # Check if the old style classes are wrapped to have a split method
     X = np.ones(9)
@@ -1095,7 +1103,7 @@ def test_cv_iterable_wrapper():
     # Check if get_n_splits works correctly
     assert_equal(len(cv), wrapped_old_skf.get_n_splits())
 
-    kf_iter = KFold(n_splits=5).split(X, y)
+    kf_iter = KFold(n_splits=5, random_state=42).split(X, y)
     kf_iter_wrapped = check_cv(kf_iter)
     # Since the wrapped iterable is enlisted and stored,
     # split can be called any number of times to produce
@@ -1104,7 +1112,9 @@ def test_cv_iterable_wrapper():
                             list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
-    kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
+    kf_randomized_iter = KFold(n_splits=5,
+                               shuffle=True,
+                               random_state=42).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
                             list(kf_randomized_iter_wrapped.split(X, y)))
@@ -1255,7 +1265,8 @@ def test_nested_cv():
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
     groups = rng.randint(0, 5, 15)
 
-    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(), StratifiedKFold(),
+    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(),
+           StratifiedKFold(random_state=42),
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):

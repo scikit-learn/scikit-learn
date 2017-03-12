@@ -238,8 +238,8 @@ def test_spectral_embedding_deterministic():
     random_state = np.random.RandomState(36)
     data = random_state.randn(10, 30)
     sims = rbf_kernel(data)
-    embedding_1 = spectral_embedding(sims)
-    embedding_2 = spectral_embedding(sims)
+    embedding_1 = spectral_embedding(sims, random_state=42)
+    embedding_2 = spectral_embedding(sims, random_state=42)
     assert_array_almost_equal(embedding_1, embedding_2)
 
 
@@ -253,7 +253,8 @@ def test_spectral_embedding_unnormalized():
     embedding_1 = spectral_embedding(sims,
                                      norm_laplacian=False,
                                      n_components=n_components,
-                                     drop_first=False)
+                                     drop_first=False,
+                                     random_state=42)
 
     # Verify using manual computation with dense eigh
     laplacian, dd = graph_laplacian(sims, normed=False, return_diag=True)

@@ -449,7 +449,7 @@ def test_auto_weight():
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
-                LogisticRegression()):
+                LogisticRegression(random_state=42)):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight='balanced')
@@ -543,7 +543,7 @@ def test_linearsvc_parameters():
     losses = ['hinge', 'squared_hinge', 'logistic_regression', 'foo']
     penalties, duals = ['l1', 'l2', 'bar'], [True, False]
 
-    X, y = make_classification(n_samples=5, n_features=5)
+    X, y = make_classification(n_samples=5, n_features=5, random_state=42)
 
     for loss, penalty, dual in itertools.product(losses, penalties, duals):
         clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)

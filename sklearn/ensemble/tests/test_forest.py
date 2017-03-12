@@ -535,7 +535,8 @@ def test_random_trees_dense_type():
     # works by returning a dense array.
 
     # Create the RTE with sparse=False
-    hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False)
+    hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False,
+                                  random_state=42)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 

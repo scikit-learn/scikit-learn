@@ -311,7 +311,7 @@ def test_multilabel_classification():
 
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
-    X, y = make_regression(n_samples=200, n_targets=5)
+    X, y = make_regression(n_samples=200, n_targets=5, random_state=42)
     mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50, max_iter=200,
                        random_state=1)
     mlp.fit(X, y)

@@ -25,7 +25,8 @@ from sklearn.feature_selection import SelectFromModel
 def test_base():
     # Check BaseEnsemble methods.
     ensemble = BaggingClassifier(base_estimator=Perceptron(random_state=None),
-                                 n_estimators=3)
+                                 n_estimators=3,
+                                 random_state=42)
 
     iris = load_iris()
     ensemble.fit(iris.data, iris.target)

@@ -264,7 +264,7 @@ def test_ovr_binary():
                      Ridge(random_state=42), ElasticNet(random_state=42)):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True),
+    for base_clf in (MultinomialNB(), SVC(probability=True, random_state=42),
                      LogisticRegression(random_state=42)):
         conduct_test(base_clf, test_predict_proba=True)
 

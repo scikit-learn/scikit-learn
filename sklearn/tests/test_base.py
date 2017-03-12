@@ -341,7 +341,7 @@ pickle_error_message = (
 
 def test_pickle_version_warning_is_issued_upon_different_version():
     iris = datasets.load_iris()
-    tree = TreeBadVersion().fit(iris.data, iris.target)
+    tree = TreeBadVersion(random_state=42).fit(iris.data, iris.target)
     tree_pickle_other = pickle.dumps(tree)
     message = pickle_error_message.format(estimator="TreeBadVersion",
                                           old_version="something",

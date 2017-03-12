@@ -106,7 +106,7 @@ def test_classifier_partial_fit():
 
 def test_classifier_refit():
     # Classifier can be retrained on different labels and features.
-    clf = PassiveAggressiveClassifier().fit(X, y)
+    clf = PassiveAggressiveClassifier(random_state=42).fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
 
     clf.fit(X[:, :-1], iris.target_names[y])
@@ -138,7 +138,7 @@ def test_classifier_correctness():
 
 
 def test_classifier_undefined_methods():
-    clf = PassiveAggressiveClassifier()
+    clf = PassiveAggressiveClassifier(random_state=42)
     for meth in ("predict_proba", "predict_log_proba", "transform"):
         assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
 
@@ -285,6 +285,6 @@ def test_regressor_correctness():
 
 
 def test_regressor_undefined_methods():
-    reg = PassiveAggressiveRegressor()
+    reg = PassiveAggressiveRegressor(random_state=42)
     for meth in ("transform",):
         assert_raises(AttributeError, lambda x: getattr(reg, x), meth)

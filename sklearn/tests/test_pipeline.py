@@ -166,7 +166,7 @@ def test_pipeline_init():
     repr(pipe)
 
     # Test with two objects
-    clf = SVC()
+    clf = SVC(random_state=42)
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
@@ -214,7 +214,7 @@ def test_pipeline_methods_anova():
     X = iris.data
     y = iris.target
     # Test with Anova + LogisticRegression
-    clf = LogisticRegression()
+    clf = LogisticRegression(random_state=42)
     filter1 = SelectKBest(f_classif, k=2)
     pipe = Pipeline([('anova', filter1), ('logistic', clf)])
     pipe.fit(X, y)
@@ -294,7 +294,8 @@ def test_pipeline_methods_pca_svm():
     y = iris.target
     # Test with PCA + SVC
     clf = SVC(probability=True, random_state=0)
-    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True,
+              random_state=42)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
@@ -427,7 +428,7 @@ def test_feature_union():
 
 
 def test_make_union():
-    pca = PCA(svd_solver='full')
+    pca = PCA(svd_solver='full', random_state=42)
     mock = Transf()
     fu = make_union(pca, mock)
     names, transformers = zip(*fu.transformer_list)
@@ -436,7 +437,7 @@ def test_make_union():
 
 
 def test_make_union_kwargs():
-    pca = PCA(svd_solver='full')
+    pca = PCA(svd_solver='full', random_state=42)
     mock = Transf()
     fu = make_union(pca, mock, n_jobs=3)
     assert_equal(fu.transformer_list, make_union(pca, mock).transformer_list)
@@ -454,7 +455,7 @@ def test_pipeline_transform():
     # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
-    pca = PCA(n_components=2, svd_solver='full')
+    pca = PCA(n_components=2, svd_solver='full', random_state=42)
     pipeline = Pipeline([('pca', pca)])
 
     # test transform and fit_transform:
@@ -827,7 +828,8 @@ def test_pipeline_wrong_memory():
     y = iris.target
     # Define memory as an integer
     memory = 1
-    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
+    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc',
+                                                        SVC(random_state=42))],
                            memory=memory)
     assert_raises_regex(ValueError, "'memory' should either be a string or a"
                         " joblib.Memory instance, got 'memory=1' instead.",
