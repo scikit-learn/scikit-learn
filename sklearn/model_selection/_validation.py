@@ -596,8 +596,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The p-value, which approximates the probability the score would be
-        obtained by chance. This is calculated as:
+        The p-value, which approximates the probability that the score would
+        be obtained by chance. This is calculated as:
 
         `(C + 1) / (n_permutations + 1)`
 
