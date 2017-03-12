@@ -44,6 +44,7 @@ perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
+
 def test_iforest():
     """Check Isolation Forest for various parameter settings."""
     X_train = np.array([[0, 1], [1, 2]])
@@ -195,6 +196,7 @@ def test_iforest_works():
     assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
     assert_array_equal(pred, 6 * [1] + 2 * [-1])
 
+
 def test_max_samples_consistency():
     # Make sure validated max_samples in iforest and BaseBagging are identical
     X = iris.data
@@ -217,5 +219,3 @@ def test_iforest_average_path_length():
     assert_almost_equal(_average_path_length(1), 1., decimal=10)
     assert_almost_equal(_average_path_length(5), 2.327020052, decimal=10)
     assert_almost_equal(_average_path_length(999), 12.9679398844, decimal=10)
-
-
