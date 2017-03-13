@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 import scipy as sp
 from warnings import warn
+from sklearn.utils.fixes import euler_gamma
 
 from scipy.sparse import issparse
 
