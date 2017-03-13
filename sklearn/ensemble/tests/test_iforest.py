@@ -229,4 +229,6 @@ def test_iforest_average_path_length():
 def test_average_path_length_arr_int():
     # It tests non-regression for #8549 for integer array equivalence
 
-    assert_almost_equal(_average_path_length(5), _average_path_length(np.array([5])), decimal=10)
+    assert_almost_equal(_average_path_length(5),
+                        _average_path_length(np.array([5])),
+                        decimal=10)
