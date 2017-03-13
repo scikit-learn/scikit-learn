@@ -18,9 +18,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-   - Made a change to :class:`sklearn.ensemble.IsolationForest` by 
-     correcting a formula for the _average_path_length method
-     :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
+   * :class:`sklearn.ensemble.IsolationForest` (bug fix)
 
 Details are listed in the changelog below.
 
