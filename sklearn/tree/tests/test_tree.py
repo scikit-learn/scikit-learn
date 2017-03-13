@@ -1186,6 +1186,22 @@ def test_only_constant_features():
         assert_equal(est.tree_.max_depth, 0)
 
 
+def test_behaviour_constant_feature_after_splits():
+    X = np.transpose([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]])
+    y = [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3]
+    for name, TreeEstimator in CLF_TREES.items():
+        est = TreeEstimator(random_state=0, max_features=1)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 2)
+        assert_equal(est.tree_.node_count, 5)
+
+    for name, TreeEstimator in REG_TREES.items():
+        est = TreeEstimator(random_state=0, max_features=1)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 2)
+        assert_equal(est.tree_.node_count, 5)
+
+
 def test_with_only_one_non_constant_features():
     X = np.hstack([np.array([[1.], [1.], [0.], [0.]]),
                    np.zeros((4, 1000))])
