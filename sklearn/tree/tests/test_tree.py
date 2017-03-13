@@ -1189,13 +1189,7 @@ def test_only_constant_features():
 def test_behaviour_constant_feature_after_splits():
     X = np.transpose([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]])
     y = [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3]
-    for name, TreeEstimator in CLF_TREES.items():
-        est = TreeEstimator(random_state=0, max_features=1)
-        est.fit(X, y)
-        assert_equal(est.tree_.max_depth, 2)
-        assert_equal(est.tree_.node_count, 5)
-
-    for name, TreeEstimator in REG_TREES.items():
+    for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 2)
