@@ -348,8 +348,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Scalability:
 
     Because this implementation uses a flat kernel and
-    a Ball Tree to look up members of each kernel, the complexity will is
-    to O(T*n*log(n)) in lower dimensions, with n the number of samples
+    a Ball Tree to look up members of each kernel, the complexity will tend
+    towards O(T*n*log(n)) in lower dimensions, with n the number of samples
     and T the number of points. In higher dimensions the complexity will
     tend towards O(T*n^2).
 

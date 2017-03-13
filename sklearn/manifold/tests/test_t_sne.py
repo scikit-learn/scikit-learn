@@ -7,9 +7,11 @@ from sklearn.neighbors import BallTree
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_in
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
 from sklearn.manifold.t_sne import _joint_probabilities_nn
@@ -196,10 +198,13 @@ def test_gradient():
 
     P = _joint_probabilities(distances, desired_perplexity=25.0,
                              verbose=0)
-    fun = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                        n_components)[0]
-    grad = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                         n_components)[1]
+
+    def fun(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[0]
+
+    def grad(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
+
     assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0,
                         decimal=5)
 
@@ -305,9 +310,23 @@ def test_non_square_precomputed_distances():
 
 
 def test_init_not_available():
-    # 'init' must be 'pca' or 'random'.
-    m = "'init' must be 'pca', 'random' or a NumPy array"
+    # 'init' must be 'pca', 'random', or numpy array.
+    m = "'init' must be 'pca', 'random', or a numpy array"
     assert_raises_regexp(ValueError, m, TSNE, init="not available")
+
+
+def test_init_ndarray():
+    # Initialize TSNE with ndarray and test fit
+    tsne = TSNE(init=np.zeros((100, 2)))
+    X_embedded = tsne.fit_transform(np.ones((100, 5)))
+    assert_array_equal(np.zeros((100, 2)), X_embedded)
+
+
+def test_init_ndarray_precomputed():
+    # Initialize TSNE with ndarray and metric 'precomputed'
+    # Make sure no FutureWarning is thrown from _fit
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne.fit(np.zeros((100, 100)))
 
 
 def test_distance_not_available():
@@ -542,3 +561,67 @@ def test_index_offset():
     # Make sure translating between 1D and N-D indices are preserved
     assert_equal(_barnes_hut_tsne.test_index2offset(), 1)
     assert_equal(_barnes_hut_tsne.test_index_offset(), 1)
+
+
+def test_n_iter_without_progress():
+    # Make sure that the parameter n_iter_without_progress is used correctly
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    tsne = TSNE(n_iter_without_progress=2, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # The output needs to contain the value of n_iter_without_progress
+    assert_in("did not make any progress during the "
+              "last 2 episodes. Finished.", out)
+
+
+def test_min_grad_norm():
+    # Make sure that the parameter min_grad_norm is used correctly
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    min_grad_norm = 0.002
+    tsne = TSNE(min_grad_norm=min_grad_norm, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    lines_out = out.split('\n')
+
+    # extract the gradient norm from the verbose output
+    gradient_norm_values = []
+    for line in lines_out:
+        # When the computation is Finished just an old gradient norm value
+        # is repeated that we do not need to store
+        if 'Finished' in line:
+            break
+
+        start_grad_norm = line.find('gradient norm')
+        if start_grad_norm >= 0:
+            line = line[start_grad_norm:]
+            line = line.replace('gradient norm = ', '')
+            gradient_norm_values.append(float(line))
+
+    # Compute how often the gradient norm is smaller than min_grad_norm
+    gradient_norm_values = np.array(gradient_norm_values)
+    n_smaller_gradient_norms = \
+        len(gradient_norm_values[gradient_norm_values <= min_grad_norm])
+
+    # The gradient norm can be smaller than min_grad_norm at most once,
+    # because in the moment it becomes smaller the optimization stops
+    assert_less_equal(n_smaller_gradient_norms, 1)

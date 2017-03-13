@@ -41,9 +41,8 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array
+from .utils.validation import check_array, check_is_fitted
 from .exceptions import DataDimensionalityWarning
-from .exceptions import NotFittedError
 
 
 __all__ = ["SparseRandomProjection",
@@ -233,7 +232,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     Returns
     -------
-    components: numpy array or CSR matrix with shape [n_components, n_features]
+    components : array or CSR matrix with shape [n_components, n_features]
         The generated Gaussian random matrix.
 
     See Also
@@ -246,7 +245,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            http://www.cs.ucsc.edu/~optas/papers/jl.pdf
@@ -302,9 +301,6 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         self.eps = eps
         self.dense_output = dense_output
         self.random_state = random_state
-
-        self.components_ = None
-        self.n_components_ = None
 
     @abstractmethod
     def _make_random_matrix(n_components, n_features):
@@ -365,7 +361,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             if self.n_components <= 0:
                 raise ValueError("n_components must be greater than 0, got %s"
-                                 % self.n_components_)
+                                 % self.n_components)
 
             elif self.n_components > n_features:
                 warnings.warn(
@@ -408,8 +404,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        if self.components_ is None:
-            raise NotFittedError('No random projection matrix had been fit.')
+        check_is_fitted(self, 'components_')
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
@@ -581,7 +576,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf
@@ -596,7 +591,6 @@ class SparseRandomProjection(BaseRandomProjection):
             random_state=random_state)
 
         self.density = density
-        self.density_ = None
 
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix

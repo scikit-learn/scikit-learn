@@ -60,14 +60,14 @@ def _get_weights(dist, weights):
 
     Parameters
     ===========
-    dist: ndarray
+    dist : ndarray
         The input distances
-    weights: {'uniform', 'distance' or a callable}
+    weights : {'uniform', 'distance' or a callable}
         The kind of weighting used
 
     Returns
     ========
-    weights_arr: array of the same shape as ``dist``
+    weights_arr : array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
     if weights in (None, 'uniform'):
@@ -583,11 +583,12 @@ class RadiusNeighborsMixin(object):
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          squared=True)
+                                          n_jobs=self.n_jobs, squared=True)
                 radius *= radius
             else:
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
+                                          n_jobs=self.n_jobs,
                                           **self.effective_metric_params_)
 
             neigh_ind_list = [np.where(d <= radius)[0] for d in dist]

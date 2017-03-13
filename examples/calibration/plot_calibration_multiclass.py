@@ -145,7 +145,7 @@ prediction = np.vstack([calibrator.predict(this_p)
                         zip(calibrated_classifier.calibrators_, p.T)]).T
 prediction /= prediction.sum(axis=1)[:, None]
 
-# Ploit modifications of calibrator
+# Plot modifications of calibrator
 for i in range(prediction.shape[0]):
     plt.arrow(p[i, 0], p[i, 1],
               prediction[i, 0] - p[i, 0], prediction[i, 1] - p[i, 1],

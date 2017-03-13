@@ -51,7 +51,7 @@ for score in scores:
     print()
 
     clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5,
-                       scoring='%s_weighted' % score)
+                       scoring='%s_macro' % score)
     clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
@@ -60,9 +60,11 @@ for score in scores:
     print()
     print("Grid scores on development set:")
     print()
-    for params, mean_score, scores in clf.grid_scores_:
+    means = clf.cv_results_['mean_test_score']
+    stds = clf.cv_results_['std_test_score']
+    for mean, std, params in zip(means, stds, clf.cv_results_['params']):
         print("%0.3f (+/-%0.03f) for %r"
-              % (mean_score, scores.std() * 2, params))
+              % (mean, std * 2, params))
     print()
 
     print("Detailed classification report:")

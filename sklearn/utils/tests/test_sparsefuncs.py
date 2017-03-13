@@ -88,7 +88,7 @@ def test_incr_mean_variance_axis():
         rng = np.random.RandomState(0)
         n_features = 50
         n_samples = 10
-        data_chunks = [rng.random_integers(0, 1, size=n_features)
+        data_chunks = [rng.randint(0, 2, size=n_features)
                        for i in range(n_samples)]
 
         # default params for incr_mean_variance

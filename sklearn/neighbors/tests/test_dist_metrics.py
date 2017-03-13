@@ -7,7 +7,8 @@ from numpy.testing import assert_array_almost_equal
 import scipy
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
-from nose import SkipTest
+from sklearn.neighbors import BallTree
+from sklearn.utils.testing import SkipTest, assert_raises_regex
 
 
 def dist_func(x1, x2, p):
@@ -169,3 +170,28 @@ def test_pyfunc_metric():
 
     assert_array_almost_equal(D1, D2)
     assert_array_almost_equal(D1_pkl, D2_pkl)
+
+
+def test_bad_pyfunc_metric():
+    def wrong_distance(x, y):
+        return "1"
+
+    X = np.ones((5, 2))
+    assert_raises_regex(TypeError,
+                        "Custom distance function must accept two vectors",
+                        BallTree, X, metric=wrong_distance)
+
+
+def test_input_data_size():
+    # Regression test for #6288
+    # Previoulsly, a metric requiring a particular input dimension would fail
+    def custom_metric(x, y):
+        assert x.shape[0] == 3
+        return np.sum((x - y) ** 2)
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 3)
+
+    pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
+    eucl = DistanceMetric.get_metric("euclidean")
+    assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X))

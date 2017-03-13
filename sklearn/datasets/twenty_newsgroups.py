@@ -161,32 +161,32 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Parameters
     ----------
-    subset: 'train' or 'test', 'all', optional
+    subset : 'train' or 'test', 'all', optional
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    categories: None or collection of string or unicode
+    categories : None or collection of string or unicode
         If None (default), load all the categories.
         If not None, list of category names to load (other categories
         ignored).
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not to shuffle the data: might be important for models that
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state: numpy random number generator or seed integer
+    random_state : numpy random number generator or seed integer
         Used to shuffle the dataset.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    remove: tuple
+    remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
         these are kinds of text that will be detected and removed from the
         newsgroup posts, preventing classifiers from overfitting on
@@ -219,7 +219,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     if cache is None:
         if download_if_missing:
-            print('Downloading 20news dataset. This may take a few minutes.')
+            logger.info("Downloading 20news dataset. "
+                        "This may take a few minutes.")
             cache = download_20newsgroups(target_dir=twenty_home,
                                           cache_path=cache_path)
         else:
@@ -296,15 +297,15 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     Parameters
     ----------
 
-    subset: 'train' or 'test', 'all', optional
+    subset : 'train' or 'test', 'all', optional
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    remove: tuple
+    remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
         these are kinds of text that will be detected and removed from the
         newsgroup posts, preventing classifiers from overfitting on

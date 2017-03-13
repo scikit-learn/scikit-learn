@@ -4,7 +4,7 @@
 #          Lars Buitinck
 #          Giorgio Patrini
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 #!python
 #cython: boundscheck=False, wraparound=False, cdivision=True
@@ -23,24 +23,29 @@ ctypedef np.float64_t DOUBLE
 
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
+    if X.dtype != np.float32:
+        X = X.astype(np.float64)
+    return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
+
+
+def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
+                   shape,
+                   np.ndarray[int, ndim=1, mode="c"] X_indices,
+                   np.ndarray[int, ndim=1, mode="c"] X_indptr):
     cdef:
-        unsigned int n_samples = X.shape[0]
-        unsigned int n_features = X.shape[1]
+        unsigned int n_samples = shape[0]
+        unsigned int n_features = shape[1]
         np.ndarray[DOUBLE, ndim=1, mode="c"] norms
-        np.ndarray[DOUBLE, ndim=1, mode="c"] data
-        np.ndarray[int, ndim=1, mode="c"] indices = X.indices
-        np.ndarray[int, ndim=1, mode="c"] indptr = X.indptr
 
         np.npy_intp i, j
         double sum_
 
     norms = np.zeros(n_samples, dtype=np.float64)
-    data = np.asarray(X.data, dtype=np.float64)     # might copy!
 
     for i in range(n_samples):
         sum_ = 0.0
-        for j in range(indptr[i], indptr[i + 1]):
-            sum_ += data[j] * data[j]
+        for j in range(X_indptr[i], X_indptr[i + 1]):
+            sum_ += X_data[j] * X_data[j]
         norms[i] = sum_
 
     return norms
@@ -51,16 +56,16 @@ def csr_mean_variance_axis0(X):
 
     Parameters
     ----------
-    X: CSR sparse matrix, shape (n_samples, n_features)
+    X : CSR sparse matrix, shape (n_samples, n_features)
         Input data.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
@@ -123,16 +128,16 @@ def csc_mean_variance_axis0(X):
 
     Parameters
     ----------
-    X: CSC sparse matrix, shape (n_samples, n_features)
+    X : CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
@@ -198,25 +203,25 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
       Input data.
 
-    last_mean: float array with shape (n_features,)
+    last_mean : float array with shape (n_features,)
       Array of feature-wise means to update with the new data X.
 
-    last_var: float array with shape (n_features,)
+    last_var : float array with shape (n_features,)
       Array of feature-wise var to update with the new data X.
 
-    last_n: int
+    last_n : int
       Number of samples seen so far, before X.
 
     Returns
     -------
 
-    updated_mean: float array with shape (n_features,)
+    updated_mean : float array with shape (n_features,)
       Feature-wise means
 
-    updated_variance: float array with shape (n_features,)
+    updated_variance : float array with shape (n_features,)
       Feature-wise variances
 
     updated_n : int
@@ -382,21 +387,6 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
             X_data[j] /= sum_
 
 
-cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
-                      np.ndarray[int, ndim=1] indices,
-                      np.ndarray[int, ndim=1] indptr,
-                      int i, np.ndarray[np.float64_t, ndim=1, mode="c"] out):
-    """Add row i of CSR matrix (data, indices, indptr) to array out.
-
-    Equivalent to out += X[i].toarray(). Returns None.
-    """
-    cdef int ind, j
-
-    for ind in range(indptr[i], indptr[i + 1]):
-        j = indices[ind]
-        out[j] += data[ind]
-
-
 def assign_rows_csr(X,
                     np.ndarray[np.npy_intp, ndim=1] X_rows,
                     np.ndarray[np.npy_intp, ndim=1] out_rows,
@@ -427,8 +417,6 @@ def assign_rows_csr(X,
 
     out[out_rows] = 0.
     for i in range(X_rows.shape[0]):
-        # XXX we could reuse add_row_csr here, but the array slice
-        # is not optimized away.
         rX = X_rows[i]
         for ind in range(indptr[rX], indptr[rX + 1]):
             j = indices[ind]

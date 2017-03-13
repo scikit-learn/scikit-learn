@@ -149,6 +149,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     However care must taken to always make the affinity matrix symmetric
     so that the eigenvector decomposition works as expected.
 
+    Note : Laplacian Eigenmaps is the actual algorithm implemented here.
+
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
@@ -189,9 +191,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Notes
     -----
-    Spectral embedding is most useful when the graph has one connected
-    component. If there graph has many components, the first few eigenvectors
-    will simply uncover the connected components of the graph.
+    Spectral Embedding (Laplacian Eigenmaps) is most useful when the graph
+    has one connected component. If there graph has many components, the first
+    few eigenvectors will simply uncover the connected components of the graph.
 
     References
     ----------
@@ -328,6 +330,8 @@ class SpectralEmbedding(BaseEstimator):
     applies spectral decomposition to the corresponding graph laplacian.
     The resulting transformation is given by the value of the
     eigenvectors for each data point.
+
+    Note : Laplacian Eigenmaps is the actual algorithm implemented here.
 
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
@@ -494,7 +498,7 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -505,7 +509,7 @@ class SpectralEmbedding(BaseEstimator):
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self.fit(X)
         return self.embedding_

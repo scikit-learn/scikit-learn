@@ -171,9 +171,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             # Get coefs
             if hasattr(estimator, 'coef_'):
                 coefs = estimator.coef_
-            elif hasattr(estimator, 'feature_importances_'):
-                coefs = estimator.feature_importances_
             else:
+                coefs = getattr(estimator, 'feature_importances_', None)
+            if coefs is None:
                 raise RuntimeError('The classifier does not expose '
                                    '"coef_" or "feature_importances_" '
                                    'attributes')
@@ -293,8 +293,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If the 
+        estimator is a classifier or if ``y`` is neither binary nor multiclass, 
+        :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -395,10 +396,17 @@ class RFECV(RFE, MetaEstimatorMixin):
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
         n_features_to_select = 1
+
+        if 0.0 < self.step < 1.0:
+            step = int(max(1, self.step * n_features))
+        else:
+            step = int(self.step)
+        if step <= 0:
+            raise ValueError("Step must be >0")
+
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select,
-                  step=self.step, verbose=self.verbose - 1)
-
+                  step=self.step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
@@ -423,7 +431,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         scores = np.sum(scores, axis=0)
         n_features_to_select = max(
-            n_features - (np.argmax(scores) * self.step),
+            n_features - (np.argmax(scores) * step),
             n_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set

@@ -179,7 +179,7 @@ t0 = time()
 U, s, V = randomized_svd(X, 5, n_iter=3)
 print("done in %0.3fs" % (time() - t0))
 
-# print the names of the wikipedia related strongest components of the the
+# print the names of the wikipedia related strongest components of the
 # principal singular vector which should be similar to the highest eigenvector
 print("Top wikipedia pages according to principal singular vectors")
 pprint([names[i] for i in np.abs(U.T[0]).argsort()[-10:]])

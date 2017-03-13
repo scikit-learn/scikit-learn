@@ -75,9 +75,9 @@ spl.legend([b[0] for b in bars], cv_types)
 # Plot the winner
 splot = plt.subplot(2, 1, 2)
 Y_ = clf.predict(X)
-for i, (mean, covar, color) in enumerate(zip(clf.means_, clf.covariances_,
-                                             color_iter)):
-    v, w = linalg.eigh(covar)
+for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_,
+                                           color_iter)):
+    v, w = linalg.eigh(cov)
     if not np.any(Y_ == i):
         continue
     plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)

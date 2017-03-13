@@ -84,7 +84,7 @@ for X, y in datasets:
         score = clf.score(X_test, y_test)
 
         # Plot the decision boundary. For that, we will assign a color to each
-        # point in the mesh [x_min, m_max]x[y_min, y_max].
+        # point in the mesh [x_min, x_max]x[y_min, y_max].
         if hasattr(clf, "decision_function"):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         else:
