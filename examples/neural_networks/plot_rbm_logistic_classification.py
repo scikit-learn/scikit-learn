@@ -129,7 +129,7 @@ print("Logistic regression using raw pixel features:\n%s\n" % (
 # Plotting
 
 plt.figure(figsize=(4.2, 4))
-for i, comp in enumerate(rbm.components_):
+for i, comp in enumerate(classifier.named_steps_['rbm'].components_):
     plt.subplot(10, 10, i + 1)
     plt.imshow(comp.reshape((8, 8)), cmap=plt.cm.gray_r,
                interpolation='nearest')

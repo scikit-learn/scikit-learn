@@ -9,6 +9,8 @@ estimator, as a chain of transforms and estimators.
 #         Lars Buitinck
 # License: BSD
 
+import warnings
+
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
 
@@ -114,17 +116,20 @@ class Pipeline(_BasePipeline):
         If a string is given, it is the path to the caching directory.
         Enabling caching triggers a clone of the transformers before fitting.
         Therefore, the transformer instance given to the pipeline cannot be
-        inspected directly. Use the attribute ``named_steps`` or ``steps``
+        inspected directly. Use the attribute ``named_steps_`` or ``steps_``
         to inspect estimators within the pipeline.
         Caching the transformers is advantageous when fitting is time
         consuming.
 
-
     Attributes
     ----------
     named_steps : dict
-        Read-only attribute to access any step parameter by user given name.
-        Keys are step names and values are steps parameters.
+        Read-only attribute to access any unfitted step parameter by its
+        given name. Keys are step names and values are steps parameters.
+
+    named_steps_ : dict
+        Read-only attribute to access any fitted step parameter by user
+        given name. Keys are step names and values are steps parameters.
 
     Examples
     --------
@@ -152,7 +157,7 @@ class Pipeline(_BasePipeline):
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.829...
     >>> # getting the selected features chosen by anova_filter
-    >>> anova_svm.named_steps['anova'].get_support()
+    >>> anova_svm.named_steps_['anova'].get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
@@ -164,9 +169,10 @@ class Pipeline(_BasePipeline):
 
     def __init__(self, steps, memory=None):
         # shallow copy of steps
-        self.steps = tosequence(steps)
-        self._validate_steps()
+        self._steps = tosequence(steps)
         self.memory = memory
+        # to be removed in 0.22 - allows back-compatibility
+        # self.steps_ = self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -197,7 +203,7 @@ class Pipeline(_BasePipeline):
         return self
 
     def _validate_steps(self):
-        names, estimators = zip(*self.steps)
+        names, estimators = zip(*self._steps)
 
         # validate names
         self._validate_names(names)
@@ -221,22 +227,73 @@ class Pipeline(_BasePipeline):
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
+        # in version 0.21, we need to return:
+        # [(name, clone(est)) if est is not None else (name, None)
+        #  for name, est in self._steps]
+        # instead of:
+        # self._steps
+        # return self._steps
+        return self._steps
+
     @property
     def _estimator_type(self):
-        return self.steps[-1][1]._estimator_type
+        return self._steps[-1][1]._estimator_type
+
+    @property
+    def steps(self):
+        if hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps' will contain the estimator"
+                          " used to instantiate the pipeline. To get the"
+                          " fitted steps, use 'steps_' instead. The warning"
+                          " was introduced in 0.19 and will take effect in "
+                          " 0.22.",
+                          FutureWarning)
+            return self.steps_
+        else:
+            return self._steps
+
+    @steps.setter
+    def steps(self, val):
+        # set the steps_ to keep current behavior and warn the user
+        if hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps' will be the steps used to"
+                          " instantiate the pipeline. To set the fitted"
+                          " steps, use 'steps_' instead. The warning"
+                          " was introduced in 0.19 and will take effect in "
+                          " 0.22.",
+                          FutureWarning)
+            self.steps_ = val
+        # set the user argument
+        self._steps = val
 
     @property
     def named_steps(self):
-        return dict(self.steps)
+        if hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'named_steps' will return the"
+                          " unfitted estimator. To get the fitted estimator,"
+                          " use 'name_steps_' instead. The warning"
+                          " was introduced in 0.19 and will take effect in "
+                          " 0.22.",
+                          FutureWarning)
+            return dict(self.steps_)
+        else:
+            return dict(self._steps)
+
+    @property
+    def named_steps_(self):
+        return dict(self.steps_)
 
     @property
     def _final_estimator(self):
-        return self.steps[-1][1]
+        if hasattr(self, 'steps_'):
+            return self.steps_[-1][1]
+        else:
+            return self._steps[-1][1]
 
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
-        self._validate_steps()
+        steps_ = self._validate_steps()
         # Setup the memory
         memory = self.memory
         if memory is None:
@@ -250,13 +307,13 @@ class Pipeline(_BasePipeline):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = dict((name, {}) for name, step in self.steps
+        fit_params_steps = dict((name, {}) for name, step in steps_
                                 if step is not None)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
+        for step_idx, (name, transformer) in enumerate(steps_[:-1]):
             if transformer is None:
                 pass
             else:
@@ -266,17 +323,18 @@ class Pipeline(_BasePipeline):
                     cloned_transformer = transformer
                 else:
                     cloned_transformer = clone(transformer)
-                # Fit or load from cache the current transfomer
+                # Fit or load from cache the current transformer
                 Xt, fitted_transformer = fit_transform_one_cached(
                     cloned_transformer, None, Xt, y,
                     **fit_params_steps[name])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
                 # from the cache.
-                self.steps[step_idx] = (name, fitted_transformer)
+                steps_[step_idx] = (name, fitted_transformer)
+        self.steps_ = steps_
         if self._final_estimator is None:
             return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+        return Xt, fit_params_steps[steps_[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -339,11 +397,15 @@ class Pipeline(_BasePipeline):
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
         if hasattr(last_step, 'fit_transform'):
-            return last_step.fit_transform(Xt, y, **fit_params)
+            Xt = last_step.fit_transform(Xt, y, **fit_params)
+            self.steps_[-1] = (self.steps_[-1][0], last_step)
+            return Xt
         elif last_step is None:
             return Xt
         else:
-            return last_step.fit(Xt, y, **fit_params).transform(Xt)
+            fitted_transformer = last_step.fit(Xt, y, **fit_params)
+            self.steps_[-1] = (self.steps_[-1][0], fitted_transformer)
+            return fitted_transformer.transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
@@ -359,11 +421,21 @@ class Pipeline(_BasePipeline):
         -------
         y_pred : array-like
         """
+        # to ensure back-compatibility
+        if not hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps_' will need to be set instead"
+                          " of 'steps' to 'predict' without calling 'fit'. The"
+                          " warning was introduced in 0.19 and will take"
+                          " effect in 0.22",
+                          FutureWarning)
+            self.steps_ = self._validate_steps()
+        # to replaced the code above
+        # check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt)
+        return self.steps_[-1][-1].predict(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def fit_predict(self, X, y=None, **fit_params):
@@ -393,7 +465,7 @@ class Pipeline(_BasePipeline):
         y_pred : array-like
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
-        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+        return self.steps_[-1][-1].fit_predict(Xt, y, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
@@ -409,11 +481,21 @@ class Pipeline(_BasePipeline):
         -------
         y_proba : array-like, shape = [n_samples, n_classes]
         """
+        # to ensure back-compatibility
+        if not hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps_' will need to be set instead"
+                          " of 'steps' to 'predict_proba' without calling"
+                          " 'fit'. The warning was introduced in 0.19 and will"
+                          " take effect in 0.22",
+                          FutureWarning)
+            self.steps_ = self._validate_steps()
+        # to replaced the code above
+        # check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        return self.steps_[-1][-1].predict_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
@@ -429,11 +511,21 @@ class Pipeline(_BasePipeline):
         -------
         y_score : array-like, shape = [n_samples, n_classes]
         """
+        # to ensure back-compatibility
+        if not hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps_' will need to be set instead"
+                          " of 'steps' to 'decision_function' without calling"
+                          " 'fit'. The warning was introduced in 0.19 and will"
+                          " take effect in 0.22",
+                          FutureWarning)
+            self.steps_ = self._validate_steps()
+        # to replaced the code above
+        # check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].decision_function(Xt)
+        return self.steps_[-1][-1].decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
@@ -449,11 +541,21 @@ class Pipeline(_BasePipeline):
         -------
         y_score : array-like, shape = [n_samples, n_classes]
         """
+        # to ensure back-compatibility
+        if not hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps_' will need to be set instead"
+                          " of 'steps' to 'predict_log_proba' without calling"
+                          " 'fit'. The warning was introduced in 0.19 and will"
+                          " take effect in 0.22",
+                          FutureWarning)
+            self.steps_ = self._validate_steps()
+        # to replaced the code above
+        # check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        return self.steps_[-1][-1].predict_log_proba(Xt)
 
     @property
     def transform(self):
@@ -478,8 +580,18 @@ class Pipeline(_BasePipeline):
         return self._transform
 
     def _transform(self, X):
+        # to ensure back-compatibility
+        if not hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps_' will need to be set instead"
+                          " of 'steps' to 'transform' without calling"
+                          " 'fit'. The warning was introduced in 0.19 and will"
+                          " take effect in 0.22",
+                          FutureWarning)
+            self.steps_ = self._validate_steps()
+        # to replaced the code above
+        # check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps:
+        for name, transform in self.steps_:
             if transform is not None:
                 Xt = transform.transform(Xt)
         return Xt
@@ -503,14 +615,24 @@ class Pipeline(_BasePipeline):
         Xt : array-like, shape = [n_samples, n_features]
         """
         # raise AttributeError if necessary for hasattr behaviour
-        for name, transform in self.steps:
+        for name, transform in self._steps:
             if transform is not None:
                 transform.inverse_transform
         return self._inverse_transform
 
     def _inverse_transform(self, X):
+        # to ensure back-compatibility
+        if not hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps_' will need to be set instead"
+                          " of 'steps' to 'inverse_transform' without calling"
+                          " 'fit'. The warning was introduced in 0.19 and will"
+                          " take effect in 0.22",
+                          FutureWarning)
+            self.steps_ = self._validate_steps()
+        # to replaced the code above
+        # check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[::-1]:
+        for name, transform in self.steps_[::-1]:
             if transform is not None:
                 Xt = transform.inverse_transform(Xt)
         return Xt
@@ -537,23 +659,33 @@ class Pipeline(_BasePipeline):
         -------
         score : float
         """
+        # to ensure back-compatibility
+        if not hasattr(self, 'steps_'):
+            warnings.warn("In the future, 'steps_' will need to be set instead"
+                          " of 'steps' to 'score' without calling"
+                          " 'fit'. The warning was introduced in 0.19 and will"
+                          " take effect in 0.22",
+                          FutureWarning)
+            self.steps_ = self._validate_steps()
+        # to replaced the code above
+        # check_is_fitted(self, 'steps_')
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps_[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
-        return self.steps[-1][-1].score(Xt, y, **score_params)
+        return self.steps_[-1][-1].score(Xt, y, **score_params)
 
     @property
     def classes_(self):
-        return self.steps[-1][-1].classes_
+        return self.steps_[-1][-1].classes_
 
     @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
-        return getattr(self.steps[0][1], '_pairwise', False)
+        return getattr(self._steps[0][1], '_pairwise', False)
 
 
 def _name_estimators(estimators):

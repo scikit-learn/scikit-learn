@@ -60,6 +60,7 @@ Enhancements
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
+
    - :class:`pipeline.Pipeline` allows to cache transformers
      within a pipeline by using the ``memory`` constructor parameter.
      By :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -281,6 +282,13 @@ API changes summary
      **sklearn.utils.estimator_checks** to check their consistency. 
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
       
+
+    - In the future, the estimators in the ``steps`` and ``named_steps``
+      attributes will no longer have their ``fit()`` methods called directly.
+      Users will have to access fitted Pipeline steps in ``steps_``
+      and ``named_steps_`. The warning was introduced in 0.19 and will take
+      effect in 0.22.
+      :issue:`8350` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_0_18_1:
 

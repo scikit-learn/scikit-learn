@@ -50,16 +50,13 @@ it takes a variable number of estimators and returns a pipeline,
 filling in the names automatically::
 
     >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.naive_bayes import MultinomialNB
-    >>> from sklearn.preprocessing import Binarizer
-    >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
+    >>> make_pipeline(PCA(), SVC()) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
-             steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
-                    ('multinomialnb', MultinomialNB(alpha=1.0,
-                                                    class_prior=None,
-                                                    fit_prior=True))])
+             steps=[('pca', PCA(copy=True,...)),
+                    ('svc', SVC(C=1.0,...))])
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute::
+The original estimators of a pipeline are stored as a list in the ``steps``
+attribute::
 
     >>> pipe.steps[0]
     ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
@@ -70,6 +67,23 @@ and as a ``dict`` in ``named_steps``::
     >>> pipe.named_steps['reduce_dim']
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
+
+Once the pipeline has been fitted, ``steps_`` and ``named_steps_`` have to be
+used.
+
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> pipe.fit(iris.data, iris.target)
+    ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    Pipeline(memory=None,
+             steps=[('reduce_dim', PCA(copy=True,...)),
+                    ('clf', SVC(C=1.0,...))])
+    >>> pipe.named_steps_['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
+        svd_solver='auto', tol=0.0, whiten=False)
+    >>> pipe.steps_[0]  # doctest: +NORMALIZE_WHITESPACE
+    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None,
+     random_state=None, svd_solver='auto', tol=0.0, whiten=False))
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
@@ -151,48 +165,6 @@ object::
                     ('clf', SVC(C=1.0,...))])
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
-
-.. warning:: **Side effect of caching transfomers**
-
-   Using a :class:`Pipeline` without cache enabled, it is possible to
-   inspect the original instance such as::
-
-     >>> from sklearn.datasets import load_digits
-     >>> digits = load_digits()
-     >>> pca1 = PCA()
-     >>> svm1 = SVC()
-     >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-     >>> pipe.fit(digits.data, digits.target)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-     Pipeline(memory=None,
-              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
-     >>> # The pca instance can be inspected directly
-     >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-         [[ -1.77484909e-19  ... 4.07058917e-18]]
-
-   Enabling caching triggers a clone of the transformers before fitting.
-   Therefore, the transformer instance given to the pipeline cannot be
-   inspected directly.
-   In following example, accessing the :class:`PCA` instance ``pca2``
-   will raise an ``AttributeError`` since ``pca2`` will be an unfitted
-   transformer.
-   Instead, use the attribute ``named_steps`` to inspect estimators within
-   the pipeline::
-
-     >>> cachedir = mkdtemp()
-     >>> pca2 = PCA()
-     >>> svm2 = SVC()
-     >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
-     ...                        memory=cachedir)
-     >>> cached_pipe.fit(digits.data, digits.target)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-      Pipeline(memory=...,
-               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
-     >>> print(cached_pipe.named_steps['reduce_dim'].components_)
-     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-         [[ -1.77484909e-19  ... 4.07058917e-18]]
-     >>> # Remove the cache directory
-     >>> rmtree(cachedir)
 
 .. topic:: Examples:
 

@@ -1222,7 +1222,7 @@ polynomial regression can be created and used as follows::
     >>> x = np.arange(5)
     >>> y = 3 - 2 * x + x ** 2 - x ** 3
     >>> model = model.fit(x[:, np.newaxis], y)
-    >>> model.named_steps['linear'].coef_
+    >>> model.named_steps_['linear'].coef_
     array([ 3., -2.,  1., -1.])
 
 The linear model trained on polynomial features is able to exactly recover
