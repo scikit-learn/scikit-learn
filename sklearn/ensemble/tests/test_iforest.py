@@ -214,6 +214,7 @@ def test_iforest_subsampled_features():
     clf.fit(X_train, y_train)
     clf.predict(X_test)
 
+
 def test_iforest_average_path_length():
     # It tests non-regression for #8549 which used the wrong formula
     # for average path length
