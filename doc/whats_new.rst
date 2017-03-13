@@ -28,7 +28,7 @@ cannot assure that this list is complete.)
 Changelog
 ---------
 
-- New features
+-New features
 ............
 
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
