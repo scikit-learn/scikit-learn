@@ -156,7 +156,7 @@ Enhancements
 
 Bug fixes
 .........
-   - Fixex a bug where :class:`sklearn.ensemble.IsolationForest` used an
+   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` used an
      an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
 
