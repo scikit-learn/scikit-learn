@@ -1187,7 +1187,8 @@ def test_only_constant_features():
 
 
 def test_behaviour_constant_feature_after_splits():
-    X = np.transpose([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]])
+    X = np.transpose(np.vstack(([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]],
+                               np.zeros((4, 11)))))
     y = [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3]
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(random_state=0, max_features=1)
