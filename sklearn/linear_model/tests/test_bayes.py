@@ -46,9 +46,6 @@ def test_bayesian_ridge_parameter():
     rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(X, y)
     assert_array_almost_equal(rr_model.coef_, br_model.coef_)
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
-    # Results before fix
-    # ACTUAL: 2.422446078010811
-    # DESIRED: 2.4224997161532529
 
 
 def test_toy_bayesian_ridge_object():
