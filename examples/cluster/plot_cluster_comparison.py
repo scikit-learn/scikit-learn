@@ -3,9 +3,9 @@
 Comparing different clustering algorithms on toy datasets
 =========================================================
 
-This example aims to show characteristics of different
+This example shows characteristics of different
 clustering algorithms on datasets that are "interesting"
-but still in 2D. With the expection of the last dataset,
+but still in 2D. With the exception of the last dataset,
 the parameters of each of these dataset-algorithm pairs
 has been tuned to produce good clustering results. Some
 algorithms are more sensitive to parameter values than
@@ -85,10 +85,10 @@ datasets = [
     (blobs, {}),
     (no_structure, {})]
 
-for i_dataset, (dataset, params) in enumerate(datasets):
+for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # update parameters with dataset-specific values
-    defaults = default_base.copy()
-    defaults.update(params)
+    params = default_base.copy()
+    params.update(algo_params)
 
     X, y = dataset
 
@@ -96,11 +96,11 @@ for i_dataset, (dataset, params) in enumerate(datasets):
     X = StandardScaler().fit_transform(X)
 
     # estimate bandwidth for mean shift
-    bandwidth = cluster.estimate_bandwidth(X, quantile=defaults['quantile'])
+    bandwidth = cluster.estimate_bandwidth(X, quantile=params['quantile'])
 
     # connectivity matrix for structured Ward
     connectivity = kneighbors_graph(
-        X, n_neighbors=defaults['n_neighbors'], include_self=False)
+        X, n_neighbors=params['n_neighbors'], include_self=False)
     # make connectivity symmetric
     connectivity = 0.5 * (connectivity + connectivity.T)
 
@@ -108,22 +108,22 @@ for i_dataset, (dataset, params) in enumerate(datasets):
     # Create cluster objects
     # ============
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.MiniBatchKMeans(n_clusters=defaults['n_clusters'])
+    two_means = cluster.MiniBatchKMeans(n_clusters=params['n_clusters'])
     ward = cluster.AgglomerativeClustering(
-        n_clusters=defaults['n_clusters'], linkage='ward',
+        n_clusters=params['n_clusters'], linkage='ward',
         connectivity=connectivity)
     spectral = cluster.SpectralClustering(
-        n_clusters=defaults['n_clusters'], eigen_solver='arpack',
+        n_clusters=params['n_clusters'], eigen_solver='arpack',
         affinity="nearest_neighbors")
-    dbscan = cluster.DBSCAN(eps=defaults['eps'])
+    dbscan = cluster.DBSCAN(eps=params['eps'])
     affinity_propagation = cluster.AffinityPropagation(
-        damping=defaults['damping'], preference=defaults['preference'])
+        damping=params['damping'], preference=params['preference'])
     average_linkage = cluster.AgglomerativeClustering(
         linkage="average", affinity="cityblock",
-        n_clusters=defaults['n_clusters'], connectivity=connectivity)
-    birch = cluster.Birch(n_clusters=defaults['n_clusters'])
+        n_clusters=params['n_clusters'], connectivity=connectivity)
+    birch = cluster.Birch(n_clusters=params['n_clusters'])
     gmm = mixture.GaussianMixture(
-        n_components=defaults['n_clusters'], covariance_type='full')
+        n_components=params['n_clusters'], covariance_type='full')
 
     clustering_algorithms = (
         ('MiniBatchKMeans', two_means),
@@ -165,7 +165,8 @@ for i_dataset, (dataset, params) in enumerate(datasets):
         if i_dataset == 0:
             plt.title(name, size=18)
 
-        colors = np.array(list(islice(cycle('bgrcmyk'),
+        colors = np.array(list(islice(cycle(['navy', 'yellowgreen', 'gold',
+                                             'cornflowerblue']),
                                       int(max(y_pred) + 1))))
         plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
