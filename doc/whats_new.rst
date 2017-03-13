@@ -28,7 +28,7 @@ cannot assure that this list is complete.)
 Changelog
 ---------
 
--New features
+New features
 ............
 
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
@@ -156,8 +156,8 @@ Enhancements
 
 Bug fixes
 .........
-   - Fix a bug regarding fitting :class:`sklearn.ensemble.IsolationForest` with
-     an incorrect formula for the _average_path_length method
+   - Fixex a bug where :class:`sklearn.ensemble.IsolationForest` used an
+     an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
 
    - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect
