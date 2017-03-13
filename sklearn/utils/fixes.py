@@ -37,7 +37,7 @@ def _parse_version(version_string):
     return tuple(version)
 
 euler_gamma = getattr(np,
-                        'euler_gamma',
+                      'euler_gamma',
                       0.577215664901532860606512090082402431)
 
 np_version = _parse_version(np.__version__)
