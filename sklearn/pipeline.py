@@ -20,6 +20,7 @@ from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
+from .datasets.base import Bunch
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -122,7 +123,7 @@ class Pipeline(_BasePipeline):
 
     Attributes
     ----------
-    named_steps : dict
+    named_steps : Bunch object
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
@@ -227,7 +228,8 @@ class Pipeline(_BasePipeline):
 
     @property
     def named_steps(self):
-        return dict(self.steps)
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.steps))
 
     @property
     def _final_estimator(self):
