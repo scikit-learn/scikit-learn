@@ -1992,6 +1992,19 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.noise_variance = noise_variance
         self.random_state = random_state
 
+    def _compute_quantile_one_column(self, X_col, references):
+        """Private function to compute the quantiles for one features."""
+        rng = check_random_state(self.random_state)
+
+        if self.noise_variance is None:
+            noise = np.zeros(X_col.shape)
+        else:
+            noise = rng.normal(0, self.noise_variance, size=X_col.shape)
+
+        quantile = np.percentile(X_col + noise, references)
+
+        return quantile
+
     def _dense_fit(self, X):
         """Compute percentiles for dense matrices.
 
@@ -2014,19 +2027,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         else:
             subsample_idx = slice(None)
 
-        n_subsample = min(n_samples, self.subsample)
-        if self.noise_variance is None:
-            noise = np.zeros((n_subsample, ))
-        else:
-            noise = rng.normal(0, self.noise_variance,
-                               size=(n_subsample,))
-
         # for compatibility issue with numpy<=1.8.X, references
         # need to be a list scaled between 0 and 100
         references = np.linspace(0, 100, self.n_quantiles,
                                  endpoint=True).tolist()
         self.quantiles_ = np.transpose(
-            [np.percentile(X[subsample_idx, feature_idx] + noise, references)
+            [self._compute_quantile_one_column(X[subsample_idx, feature_idx],
+                                               references)
              for feature_idx in range(n_features)])
 
     def _sparse_fit(self, X):
@@ -2070,20 +2077,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                     column_data = np.zeros(shape=n_samples, dtype=X.dtype)
                 column_data[:len(column_nnz_data)] = column_nnz_data
 
-            n_subsample = column_data.size
-            if self.noise_variance is None:
-                noise = np.zeros((n_subsample, ))
-            else:
-                noise = rng.normal(0, self.noise_variance,
-                                   size=(n_subsample,))
-
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    np.percentile(column_data + noise, references))
+                    self._compute_quantile_one_column(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
