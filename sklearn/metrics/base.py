@@ -13,6 +13,7 @@ Common code for all metrics
 # License: BSD 3 clause
 
 from __future__ import division
+import itertools
 
 import numpy as np
 
@@ -171,26 +172,29 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
         Average the sum of pairwise binary metric scores
     """
     n_labels = len(np.unique(y_true))
-    apriori_label_distribution = np.bincount(y_true) / float(y_true.size)
-    label_scores = np.zeros(n_labels)
-    for pos in range(n_labels):
-        for neg in range(pos + 1, n_labels):
-            ix = np.in1d(y_true.ravel(), [pos, neg])
-            y_true_filtered = y_true[ix.reshape(y_true.shape)]
-            y_score_filtered = y_score[ix]
+    pos_and_neg_prevalence = []
+    label_scores = []
+    for pos, neg in itertools.combinations(range(n_labels), 2):
+        pos_ix = y_true == pos
+        ix = np.logical_or(pos_ix, y_true == neg)
 
-            # compute score with `pos` as the positive class
-            class_a = y_true_filtered == pos
-            # compute score with `neg` as the positive class
-            class_b = y_true_filtered == neg
-            score_class_a = binary_metric(
-                    class_a, y_score_filtered[:, pos])
-            score_class_b = binary_metric(
-                    class_b, y_score_filtered[:, neg])
-            binary_avg_score = (score_class_a + score_class_b) / 2.0
-            label_scores[pos] += binary_avg_score
+        pos_and_neg_prevalence.append(float(np.sum(ix)) / len(y_true))
+
+        y_score_filtered = y_score[ix]
+
+        class_a = pos_ix[ix]
+        class_b = np.logical_not(class_a)
+
+        score_class_a = binary_metric(
+                class_a, y_score_filtered[:, pos])
+        score_class_b = binary_metric(
+                class_b, y_score_filtered[:, neg])
+        binary_avg_score = (score_class_a + score_class_b) / 2.
+        label_scores.append(binary_avg_score)
+
     if average == "weighted":
-        label_scores = np.multiply(apriori_label_distribution, label_scores)
-        return 2. * np.sum(label_scores) / (n_labels - 1)
+        label_scores = np.multiply(np.array(pos_and_neg_prevalence),
+                                   np.array(label_scores))
+        return np.sum(label_scores) / (n_labels * (n_labels - 1))
     else:
-        return 2. * np.sum(label_scores) / (n_labels * (n_labels - 1))
+        return 2 * np.sum(label_scores) / (n_labels * (n_labels - 1))
