@@ -1081,6 +1081,29 @@ def test_quantile_transform_pickling():
                               qn2.transform(iris.data))
 
 
+def test_quantile_transform_numpy_interp_behaviour():
+    # The quantile transformer relies on the numpy implementation of
+    # 'interp' function. In the presence of a predominant constant
+    # feature values or a large number of quantiles, a single feature
+    # value is mapped to different quantiles. The default behaviour of
+    # 'interp' will be to return the larger quantile associated to the
+    # feature value. This test attends to check if there is any
+    # changes in the 'interp' function and to act accordingly.
+    unique_feature = [0, 0.5, 1]
+    X = np.transpose([[unique_feature[0]] * 1 +
+                      [unique_feature[1]] * 7 +
+                      [unique_feature[2]] * 2])
+    qt = QuantileTransformer(n_quantiles=100)
+    qt.fit(X)
+    ref = np.linspace(0., 1., num=qt.n_quantiles)
+    max_quantiles_idx = [np.flatnonzero(qt.quantiles_ == unique_feature[i])[-1]
+                         for i in range(len(unique_feature))]
+    X_trans = np.transpose([[ref[max_quantiles_idx[0]]] * 1 +
+                            [ref[max_quantiles_idx[1]]] * 7 +
+                            [ref[max_quantiles_idx[2]]] * 2])
+    assert_array_almost_equal(qt.transform(X), X_trans)
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),

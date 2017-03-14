@@ -1956,7 +1956,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    quantiles_ : ndarray, shape (n_quantiles, n_features)
+    quantiles_ : ndarray, shape (n_quantiles_, n_features)
         The values corresponding the quantiles of reference.
 
     Examples
@@ -2099,15 +2099,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 (sparse.issparse(X) and np.any(X.data < 0))):
             raise ValueError('QuantileTransformer only accepts non-negative'
                              ' sparse matrices')
-
-        # check the number of quantiles is less than the number of samples used
-        # in fitting
-        if (self.n_quantiles > min(X.shape[0], self.subsample)):
-            raise ValueError('The number of quantiles is less than either the'
-                             ' number which will be used during fitting. Got'
-                             ' {} quantiles for {} samples.'.format(
-                                 self.n_quantiles, min(X.shape[0],
-                                                       self.subsample)))
 
         if sparse.issparse(X):
             self._sparse_fit(X)
@@ -2354,7 +2345,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     Attributes
     ----------
-    quantiles_ : ndarray, shape (n_quantiles, n_features)
+    quantiles_ : ndarray, shape (n_quantiles_, n_features)
         The values corresponding the quantiles of reference.
 
     Examples
