@@ -1949,10 +1949,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Maximum number of samples used to estimate the quantiles.
 
     smoothing_noise : None or float, optional (default=None)
-        Standard deviation of the noise which will be added to the
-        subsamples to compute the corresponding quantiles. This
-        parameter can be useful if there a feature value is
-        predominant.
+        Standard deviation of the added noise before computing the
+        quantiles. This parameter is useful if there is a predominant
+        feature value predominant.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -2349,10 +2348,9 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         Maximum number of samples used to estimate the quantiles.
 
     smoothing_noise : None or float, optional (default=None)
-        Standard deviation of the noise which will be added to the
-        subsamples to compute the corresponding quantiles. This
-        parameter can be useful if there a feature value is
-        predominant.
+        Standard deviation of the added noise before computing the
+        quantiles. This parameter is useful if there is a predominant
+        feature value predominant.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
