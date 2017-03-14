@@ -1558,8 +1558,8 @@ class MultiTaskElasticNet(Lasso):
 
     l1_ratio : float
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
-        is an L1 penalty.
+        For l1_ratio = 1 the penalty is an L1/L2 penalty. For l1_ratio = 0 it
+        is an L2 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
 
     fit_intercept : boolean
@@ -1611,7 +1611,8 @@ class MultiTaskElasticNet(Lasso):
 
     coef_ : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula). If a 1D y is \
-        passed in at fit (non multi-task usage), ``coef_`` is then a 1D array
+        passed in at fit (non multi-task usage), ``coef_`` is then a 1D array.
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
@@ -1658,7 +1659,7 @@ class MultiTaskElasticNet(Lasso):
         self.selection = selection
 
     def fit(self, X, y):
-        """Fit MultiTaskLasso model with coordinate descent
+        """Fit MultiTaskElasticNet model with coordinate descent
 
         Parameters
         -----------
@@ -1792,7 +1793,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     Attributes
     ----------
     coef_ : array, shape (n_tasks, n_features)
-        parameter vector (W in the cost function formula)
+        Parameter vector (W in the cost function formula).
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     intercept_ : array, shape (n_tasks,)
         independent term in decision function.
@@ -1873,8 +1875,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     l1_ratio : float or array of floats
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
-        is an L1 penalty.
+        For l1_ratio = 1 the penalty is an L1/L2 penalty. For l1_ratio = 0 it
+        is an L2 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
         This parameter can be a list, in which case the different
         values are tested by cross-validation and the one giving the best
@@ -1950,6 +1952,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     coef_ : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula).
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     alpha_ : float
         The amount of penalization chosen by cross validation
@@ -2115,6 +2118,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     coef_ : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula).
+        Note that ``coef_`` stores the transpose of ``W``, ``W.T``.
 
     alpha_ : float
         The amount of penalization chosen by cross validation

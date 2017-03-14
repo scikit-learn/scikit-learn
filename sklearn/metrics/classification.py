@@ -236,6 +236,11 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
            [0, 0, 1],
            [1, 0, 2]])
 
+    In the binary case, we can extract true positives, etc as follows:
+    >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
+    >>> (tn, fp, fn, tp)
+    (0, 2, 1, 1)
+
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
@@ -275,7 +280,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     return CM
 
 
-def cohen_kappa_score(y1, y2, labels=None, weights=None):
+def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -311,6 +316,9 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
         List of weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
     Returns
     -------
     kappa : float
@@ -328,7 +336,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
-    confusion = confusion_matrix(y1, y2, labels=labels)
+    confusion = confusion_matrix(y1, y2, labels=labels,
+                                 sample_weight=sample_weight)
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
