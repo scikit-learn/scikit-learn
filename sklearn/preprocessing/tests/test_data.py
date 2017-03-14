@@ -877,8 +877,8 @@ def test_quantile_transform_check_error():
                         QuantileTransformer(n_quantiles=0).fit, X_neg)
     assert_raises_regex(ValueError, "Invalid value for 'subsample'",
                         QuantileTransformer(subsample=0).fit, X_neg)
-    assert_raises_regex(ValueError, "Invalid value for 'noise_variance'",
-                        QuantileTransformer(noise_variance=0).fit, X_neg)
+    assert_raises_regex(ValueError, "Invalid value for 'smoothing_noise'",
+                        QuantileTransformer(smoothing_noise=0).fit, X_neg)
 
     transformer = QuantileTransformer(n_quantiles=10)
     assert_raises_regex(ValueError, "QuantileTransformer only accepts "
@@ -1089,12 +1089,12 @@ def test_quantile_transform_add_noise_subsamples():
     X = np.transpose([[unique_feature[0]] * 1 +
                       [unique_feature[1]] * 7 +
                       [unique_feature[2]] * 2])
-    transformer = QuantileTransformer(n_quantiles=100, noise_variance=1e-7)
+    transformer = QuantileTransformer(n_quantiles=100, smoothing_noise=1e-7)
     transformer.fit(X)
     assert_true(np.all(np.diff(transformer.quantiles_) > 0))
     # iris dataset
     X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, noise_variance=1e-7)
+    transformer = QuantileTransformer(n_quantiles=1000, smoothing_noise=1e-7)
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
