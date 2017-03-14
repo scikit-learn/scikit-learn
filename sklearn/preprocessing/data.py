@@ -2112,8 +2112,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         if self.smoothing_noise is not None:
             if self.smoothing_noise <= 0:
                 raise ValueError("Invalid value for 'smoothing_noise': %d. "
-                                 "The noise std. dev. should be greater than 0."
-                                 % self.smoothing_noise)
+                                 "The noise std. dev. should be greater than "
+                                 "0." % self.smoothing_noise)
 
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false
