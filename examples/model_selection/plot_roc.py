@@ -196,13 +196,13 @@ for pos in range(n_classes):
         # Compute ROC curve and ROC area with `pos` as the positive class
         class_a = y_true_filtered == pos
         fpr[(pos, neg)], tpr[(pos, neg)], _ = roc_curve(
-                class_a, y_score_filtered[:, pos])
+            class_a, y_score_filtered[:, pos])
         roc_auc[(pos, neg)] = auc(fpr[(pos, neg)], tpr[(pos, neg)])
 
         # Compute ROC curve and ROC area with `neg` as the positive class
         class_b = y_true_filtered == neg
         fpr[(neg, pos)], tpr[(neg, pos)], _ = roc_curve(
-                class_b, y_score_filtered[:, neg])
+            class_b, y_score_filtered[:, neg])
         roc_auc[(neg, pos)] = auc(fpr[(neg, pos)], tpr[(neg, pos)])
 
 plt.figure()
@@ -211,11 +211,11 @@ for pos in range(n_classes):
         plt.plot(fpr[(pos, neg)], tpr[(pos, neg)], lw=lw,
                  label='ROC curve of class {0} against class {1} '
                        '(area = {2:0.2f})'.format(
-                        pos, neg, roc_auc[(pos, neg)]))
+                    pos, neg, roc_auc[(pos, neg)]))
         plt.plot(fpr[(neg, pos)], tpr[(neg, pos)], lw=lw,
                  label='ROC curve of class {0} against class {1} '
                        '(area = {2:0.2f})'.format(
-                        neg, pos, roc_auc[(neg, pos)]))
+                    neg, pos, roc_auc[(neg, pos)]))
 plt.plot([0, 1], [0, 1], 'k--', lw=lw)
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
