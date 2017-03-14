@@ -877,6 +877,8 @@ def test_quantile_transform_check_error():
                         QuantileTransformer(n_quantiles=0).fit, X_neg)
     assert_raises_regex(ValueError, "Invalid value for 'subsample'",
                         QuantileTransformer(subsample=0).fit, X_neg)
+    assert_raises_regex(ValueError, "Invalid value for 'noise_variance'",
+                        QuantileTransformer(noise_variance=0).fit, X_neg)
 
     transformer = QuantileTransformer(n_quantiles=10)
     assert_raises_regex(ValueError, "QuantileTransformer only accepts "
@@ -1061,24 +1063,42 @@ def test_qunatile_transform_bounds():
                   [1, 0.5, 0]]).T
     X1 = np.array([[0, 0, 1],
                    [0.1, 0.5, 0.1]]).T
-    qn = QuantileTransformer(n_quantiles=3).fit(X)
-    X_trans = qn.transform(X1)
+    transformer = QuantileTransformer(n_quantiles=3).fit(X)
+    X_trans = transformer.transform(X1)
     assert_array_almost_equal(X_trans, X1)
 
 
 def test_quantile_transform_pickling():
-    qn = QuantileTransformer(n_quantiles=100)
+    transformer = QuantileTransformer(n_quantiles=100)
 
-    qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
-    qn2 = pickle.loads(qn_ser)
-    assert_false(hasattr(qn2, 'f_transform_'))
-    assert_false(hasattr(qn2, 'f_inverse_transform_'))
+    transformer_ser = pickle.dumps(transformer, pickle.HIGHEST_PROTOCOL)
+    transformer2 = pickle.loads(transformer_ser)
+    assert_false(hasattr(transformer2, 'f_transform_'))
+    assert_false(hasattr(transformer2, 'f_inverse_transform_'))
 
-    qn.fit(iris.data)
-    qn_ser = pickle.dumps(qn, pickle.HIGHEST_PROTOCOL)
-    qn2 = pickle.loads(qn_ser)
-    assert_array_almost_equal(qn.transform(iris.data),
-                              qn2.transform(iris.data))
+    transformer.fit(iris.data)
+    transformer_ser = pickle.dumps(transformer, pickle.HIGHEST_PROTOCOL)
+    transformer2 = pickle.loads(transformer_ser)
+    assert_array_almost_equal(transformer.transform(iris.data),
+                              transformer2.transform(iris.data))
+
+
+def test_quantile_transform_add_noise_subsamples():
+    # toy examples
+    unique_feature = [0, 0.5, 1]
+    X = np.transpose([[unique_feature[0]] * 1 +
+                      [unique_feature[1]] * 7 +
+                      [unique_feature[2]] * 2])
+    transformer = QuantileTransformer(n_quantiles=100, noise_variance=1e-7)
+    transformer.fit(X)
+    assert_true(np.all(np.diff(transformer.quantiles_) > 0))
+    # iris dataset
+    X = iris.data
+    transformer = QuantileTransformer(n_quantiles=1000, noise_variance=1e-7)
+    X_trans = transformer.fit_transform(X)
+    X_trans_inv = transformer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    assert_true(np.all(np.diff(transformer.quantiles_, axis=0) > 0))
 
 
 def test_quantile_transform_numpy_interp_behaviour():

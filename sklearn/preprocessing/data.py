@@ -1948,6 +1948,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     subsample : int, optional (default=1e5)
         Maximum number of samples used to estimate the quantiles.
 
+    noise_variance : None or float, optional (default=None)
+        Variance of the noise which will be added to the subsamples to
+        compute the corresponding quantiles. This parameter can be
+        useful if there a feature value is predominant.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -1979,11 +1984,12 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
-                 random_state=None):
+                 noise_variance=None, random_state=None):
         self.n_quantiles = n_quantiles
         self.output_distribution = output_distribution
         self.ignore_implicit_zeros = ignore_implicit_zeros
         self.subsample = subsample
+        self.noise_variance = noise_variance
         self.random_state = random_state
 
     def _dense_fit(self, X):
@@ -2008,12 +2014,19 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         else:
             subsample_idx = slice(None)
 
+        n_subsample = min(n_samples, self.subsample)
+        if self.noise_variance is None:
+            noise = np.zeros((n_subsample, ))
+        else:
+            noise = rng.normal(0, self.noise_variance,
+                               size=(n_subsample,))
+
         # for compatibility issue with numpy<=1.8.X, references
         # need to be a list scaled between 0 and 100
         references = np.linspace(0, 100, self.n_quantiles,
                                  endpoint=True).tolist()
         self.quantiles_ = np.transpose(
-            [np.percentile(X[subsample_idx, feature_idx], references)
+            [np.percentile(X[subsample_idx, feature_idx] + noise, references)
              for feature_idx in range(n_features)])
 
     def _sparse_fit(self, X):
@@ -2056,13 +2069,21 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 else:
                     column_data = np.zeros(shape=n_samples, dtype=X.dtype)
                 column_data[:len(column_nnz_data)] = column_nnz_data
+
+            n_subsample = column_data.size
+            if self.noise_variance is None:
+                noise = np.zeros((n_subsample, ))
+            else:
+                noise = rng.normal(0, self.noise_variance,
+                                   size=(n_subsample,))
+
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    np.percentile(column_data, references))
+                    np.percentile(column_data + noise, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2090,8 +2111,14 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         if self.subsample <= 0:
             raise ValueError("Invalid value for 'subsample': %d. "
-                             "The number of quantiles must be at least one."
+                             "The number of subsamples must be at least one."
                              % self.subsample)
+
+        if self.noise_variance is not None:
+            if self.noise_variance <= 0:
+                raise ValueError("Invalid value for 'noise_variance': %d. "
+                                 "The noise variance should be greater than 0."
+                                 % self.noise_variance)
 
         # we only accept positive sparse matrix when ignore_implicit_zeros is
         # false
@@ -2104,18 +2131,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             self._sparse_fit(X)
         else:
             self._dense_fit(X)
-
-        # check that the quantiles are strictly monotonically increasing
-        for feature_idx, quantile in enumerate(self.quantiles_):
-            if not np.all(np.diff(quantile) > 0):
-                warnings.warn('The feature values corresponding to the'
-                              ' quantiles computed are not strictly'
-                              ' monotonically increasing for the feature #'
-                              '{}. This configuration is ill-posed for the'
-                              ' QuantileTransformer. If this feature is'
-                              ' a categorical feature, be aware that this'
-                              ' transformation will not work.'.format(
-                                  feature_idx))
 
         return self
 
@@ -2291,6 +2306,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
+                       noise_variance=None,
                        random_state=None):
     """Transform features using quantiles information.
 
@@ -2337,6 +2353,11 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     subsample : int, optional (default=1e5)
         Maximum number of samples used to estimate the quantiles.
 
+    noise_variance : None or float, optional (default=None)
+        Variance of the noise which will be added to the subsamples to
+        compute the corresponding quantiles. This parameter can be
+        useful if there a feature value is predominant.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -2369,6 +2390,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     """
     n = QuantileTransformer(n_quantiles=n_quantiles, subsample=subsample,
                             ignore_implicit_zeros=ignore_implicit_zeros,
+                            noise_variance=noise_variance,
                             random_state=random_state)
     if axis == 0:
         return n.fit_transform(X)
