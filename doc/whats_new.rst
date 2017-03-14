@@ -18,7 +18,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-* *to be listed*
+   * :class:`sklearn.ensemble.IsolationForest` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -156,7 +156,11 @@ Enhancements
 
 Bug fixes
 .........
-   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect 
+   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
+     an incorrect formula for the average path length
+     :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
+
+   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect
      result when input is a precomputed sparse matrix with initial
      rows all zero.
      :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
@@ -167,7 +171,7 @@ Bug fixes
 
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
-     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>` 
+     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
 
    - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
      :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
@@ -274,13 +278,13 @@ API changes summary
       selection classes to be used with tools such as
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
-      
-   - Estimators with both methods ``decision_function`` and ``predict_proba`` 
-     are now required to have a monotonic relation between them. The 
-     method ``check_decision_proba_consistency`` has been added in 
-     **sklearn.utils.estimator_checks** to check their consistency. 
+
+   - Estimators with both methods ``decision_function`` and ``predict_proba``
+     are now required to have a monotonic relation between them. The
+     method ``check_decision_proba_consistency`` has been added in
+     **sklearn.utils.estimator_checks** to check their consistency.
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
-      
+
 
 .. _changes_0_18_1:
 
