@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from math import ceil, sqrt, log
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
@@ -143,7 +144,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 ###############################################################################
 # Initialization heuristic for k-means-parallel
 
-def _init_kmeans_pll(X, n_clusters, random_state, sampling_factor=1):
+def _init_kmeans_pll(X, n_clusters, x_squared_norms, random_state,
+                     sampling_factor=1):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -171,30 +173,30 @@ def _init_kmeans_pll(X, n_clusters, random_state, sampling_factor=1):
 
     """
 
-    n = shape(X)[0]
     elected_centers = []
     candidate_centers = []
-    X_temp = X.A.tolist()
+    X_temp = X.tolist()
+    X = np.mat(X)
 
     # initialize 2-d mat with first center selected arbitrarily
     candidate_centers.append(X[0, :].tolist()[0])
 
     # Step-2 find the nearest distance to the closest centers
     # in candidate_centers
-    Dx = array([min([distEclud(c, x) for c in candidate_centers])
-                for x in X])
+    Dx = np.array([min([distEclud(c, x) for c in candidate_centers])
+                   for x in X])
     psi = sum(Dx)
     l = int(ceil(log(psi)))
 
-    # Step-3 Start of loop for log(phi) times
+    # Step-3 Start of loop for log(psi) times
     for k in range(l):
 
         # Step-4 sample each point independently
-        r_points = random.random_sample((sampling_factor, ))
-        Dx = array([min([distEclud(c, x) for c in candidate_centers])
-                    for x in X])
+        r_points = np.random.random_sample((sampling_factor, ))
+        Dx = np.array([min([distEclud(c, x) for c in candidate_centers])
+                       for x in X])
         probs = (sampling_factor * Dx)/psi
-        cumsumprobs = cumsum(probs)
+        cumsumprobs = np.cumsum(probs)
         psi = sum(Dx)
 
         # parallel job start (in future after this works)
@@ -213,28 +215,28 @@ def _init_kmeans_pll(X, n_clusters, random_state, sampling_factor=1):
     # closest to
     w = [0 for _ in range(len(candidate_centers))]
     for i in range(len(X_temp)):
-        minDist = inf
+        minDist = float("inf")
         for j, c in enumerate(candidate_centers):
-                dist = distEclud(c, array(X_temp[i]))
+                dist = distEclud(c, np.array(X_temp[i]))
                 if dist < minDist:
                     minDist = dist
                     index = j
         w[index] += 1
 
     # Step-8 Recluster-select k-clusters according to kmeans++
-    w = array(w)
+    w = np.array(w)
     probs = w/float(sum(w))
-    cumsprobs = cumsum(probs)
+    cumsprobs = np.cumsum(probs)
 
-    for k in range(K):
-        r = random.rand()
+    for k in range(n_clusters):
+        r = np.random.rand()
         for j, p in enumerate(cumsprobs):
             if r < p and candidate_centers[j] not in elected_centers:
                 index = j
                 elected_centers.append(candidate_centers[index])
                 break
 
-    return elected_centers
+    return np.array(elected_centers)
 
 ########################################################################
 # helper function
@@ -243,7 +245,7 @@ def _init_kmeans_pll(X, n_clusters, random_state, sampling_factor=1):
 def distEclud(vecA, vecB):
     # calculates eucledian distance between two vectors
     # although we have this I would like to use it temporarily
-    return sqrt(sum(power(vecA-vecB, 2)))
+    return np.sqrt(np.sum(np.power(vecA-vecB, 2)))
 
 ###############################################################################
 # K-means batch estimation by EM (expectation maximization)
@@ -296,7 +298,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    init : {'k-means++', 'random', or ndarray, or a callable}, optional
+    init : {'k-means++', 'k-means||', 'random', or ndarray, or a callable},
+             optional
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
