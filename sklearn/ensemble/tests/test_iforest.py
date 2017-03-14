@@ -9,6 +9,7 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 import numpy as np
 
 from sklearn.utils.fixes import euler_gamma
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -221,5 +222,7 @@ def test_iforest_average_path_length():
 
     result_one = 2. * (np.log(4.) + euler_gamma) - 2. * 4. / 5.
     result_two = 2. * (np.log(998.) + euler_gamma) - 2. * 998. / 999.
+    assert_almost_equal(_average_path_length(5), result_one, decimal=10)
+    assert_almost_equal(_average_path_length(999), result_two, decimal=10)
     assert_array_almost_equal(_average_path_length(np.array([1, 5, 999])),
                               [1., result_one, result_two], decimal=10)
