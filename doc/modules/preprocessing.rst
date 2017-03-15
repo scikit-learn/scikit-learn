@@ -253,10 +253,13 @@ defined by :math:`phi` followed by removal of the mean in that space.
 Non-linear transformation
 =========================
 
-In the contrary of scaling, data can be non-linearly transformed to reduce the
-influence of marginal outliers present in a dataset. Additionally, reducing the
-influence of those outliers allows for a more direct comparison between
-features, at the cost of distorting correlations between them.
+In the contrary of scaling, data can be non-linearly transformed to
+reduce the influence of marginal outliers present in a
+dataset. Additionally, reducing the influence of those outliers allows
+for a more direct comparison between features, at the cost of
+distorting correlations between them. Be aware that if the final aim
+is to predict such outliers, this transformation completely inhibit the
+discriminative power of those samples.
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
 non-parametric transformation based the quantile function to map the data to a
