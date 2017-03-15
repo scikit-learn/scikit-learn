@@ -5,10 +5,10 @@ Effect of smoothing noise when using QuantileTransformer
 ========================================================
 
 This example shows the effect of applying a small noise before
-computing the quantiles in the QuantileTransformer. This parameter can
-be used if a constant feature value is predominant in the dataset. It
-will lead to a difficult interpretation when the quantiles computed
-are introspected.
+computing the quantiles in the QuantileTransformer. The parameter
+``smoothing_noise`` can be used if a constant feature value is
+predominant in the dataset. It will lead to a difficult interpretation
+when the quantiles computed are manually checked.
 
 """
 
@@ -52,10 +52,10 @@ def plot_transform_feat_val(ax, transformer, title):
 
 
 ###############################################################################
-# We can create a synthetic dataset which could represent the
-# customers' ratings for restaurant. The scale used is ranging from 1
-# to 5 and a large number of customers attributed a grade of 3 to the
-# current restaurant.
+# We can create a synthetic dataset representing the customers'
+# ratings for a restaurant. The scale used is ranging from 1 to 5 and
+# a large number of customers attributed a grade of 3 to the current
+# restaurant.
 
 X = np.array([1] * 1000 +
              [2] * 2000 +
@@ -68,11 +68,11 @@ _, (ax1, ax2) = plt.subplots(1, 2)
 
 ###############################################################################
 # By default, the ``QuantileTransformer`` does not apply any smoothing
-# noise.  Dealing with dataset with predominant values, the quantile
-# return for such value will correspond to the largest quantile
-# computed. In practise, marchine learning algorithms will usually not
-# be affected by such characteristics. However, manual interpretation
-# might be counter intuitive.
+# noise. Dealing with dataset with a predominant value, the quantile
+# computed for such value will correspond to the largest quantiled. In
+# practise, marchine learning algorithms will usually not be affected
+# by such characteristics. However, manual interpretation might be
+# counter intuitive.
 
 qt = QuantileTransformer(n_quantiles=N_QUANTILES)
 qt.fit(X)
@@ -85,7 +85,7 @@ plot_transform_feat_val(ax1, qt, 'Mapping without using smoothing noise')
 # feature value to the greater quantile as show by the marker in the
 # figure.
 #
-# A solution is to applied a small smoothing noise before the
+# A solution is to apply a small smoothing noise before the
 # computation of the quantiles. The parameter 'smoothing_noise' offers
 # this possibility as illustrated below.
 
@@ -93,5 +93,8 @@ qt = QuantileTransformer(n_quantiles=N_QUANTILES,
                          smoothing_noise=1e-7)
 qt.fit(X)
 plot_transform_feat_val(ax2, qt, 'Mapping using smoothing noise')
+
+###############################################################################
+# In this last case, the marker is centered at the median as expected.
 
 plt.show()
