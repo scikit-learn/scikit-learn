@@ -68,12 +68,13 @@ _, (ax1, ax2) = plt.subplots(1, 2)
 
 qt = QuantileTransformer(n_quantiles=N_QUANTILES)
 qt.fit(X)
-plot_transform_feat_val(ax1, qt, 'Mapping without using smoothing noise')
+plot_transform_feat_val(ax1, qt, 'Without smoothing')
 
 qt = QuantileTransformer(n_quantiles=N_QUANTILES,
                          smoothing_noise=1e-7)
 qt.fit(X)
-plot_transform_feat_val(ax2, qt, 'Mapping using smoothing noise')
+plot_transform_feat_val(ax2, qt, 'With smoothing')
+plt.tight_layout()
 
 ###############################################################################
 # By default, the ``QuantileTransformer`` does not apply any smoothing
