@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""=============================================================
+"""
+=============================================================
 Compare the effect of different scalers on data with outliers
 =============================================================
 
@@ -16,7 +17,13 @@ a large number of machine learning algorithms such as metrics-based
 algorithms or algorithms using gradient-based optimization.
 
 This example uses different scalers, transformers and normalizers to
-bring the data within a smaller range.
+bring the data within a smaller range. Scalers are linear
+transformations and differ from each other depending of the subset of
+data which is considered to define the estimate using during
+scaling. ``QuantileTransformer`` provides a non-linear transformation
+in which distances between marginal outliers and inliers are
+shrunk. Unlinke the previous transformation, normalization refers to a
+per sample transformation instead of a per feature transformation.
 
 """
 
@@ -151,28 +158,5 @@ norm = mpl.colors.Normalize(y_full.min(), y_full.max())
 mpl.colorbar.ColorbarBase(heatmap_legend_ax, cmap=cm.plasma_r,
                           norm=norm, orientation='horizontal',
                           label='Color mapping for values of y')
-
-###############################################################################
-# The different scalers applied a linear transformation to the
-# data. The main between these scalers lie in the fact that they are
-# using a subset of data to apply this linear
-# scaling. ``MinMaxScaler`` will take the full data range while
-# ``RobustScaler`` will use a subset of data by discarding data
-# outside of certain percentiles. The ``MaxAbsScaler`` will use the
-# maximum absolute value while the ``StandardScaler`` will use the
-# mean and stardard deviation to scale the data.
-#
-# The ``QuantileTransformer`` will shrink the distance between the
-# outliers and inliers, since this transformation is
-# non-linear. Consequently, comparison between features is made easier
-# while the potential discriminative power of outliers is
-# discarded. This is an important to consider if the aim of the
-# application is to detect those outliers. Additionally, this
-# transform can map the data to either a uniform or a normal
-# distribution.
-#
-# Unlike the scalers and the transformers, the `Normalizer` applied a
-# transformation per samples instead of per features.
-#
 
 plt.show()
