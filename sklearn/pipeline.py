@@ -123,7 +123,7 @@ class Pipeline(_BasePipeline):
 
     Attributes
     ----------
-    named_steps : Bunch object
+    named_steps : bunch object
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
@@ -158,8 +158,11 @@ class Pipeline(_BasePipeline):
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
            False, False], dtype=bool)
-    >>> anova_svm.named_steps.anova
-    SelectKBest(k=5, score_func=<function f_regression at 0x7f1d984d8620>)
+    >>> anova_svm.named_steps.anova.get_support()
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([False, False,  True,  True, False, False, True,  True, False,
+           True,  False,  True,  True, False, True,  False, True, True,
+           False, False], dtype=bool)
     """
 
     # BaseEstimator interface
