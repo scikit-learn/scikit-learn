@@ -1089,15 +1089,23 @@ def test_quantile_transform_add_noise_subsamples():
     X = np.transpose([[unique_feature[0]] * 1 +
                       [unique_feature[1]] * 7 +
                       [unique_feature[2]] * 2])
-    transformer = QuantileTransformer(n_quantiles=100, smoothing_noise=1e-7)
+    transformer = QuantileTransformer(n_quantiles=100, smoothing_noise=1e-7,
+                                      random_state=0)
     transformer.fit(X)
+    # check  that  the  feature  values associated  to  quantiles  are
+    # strictly  monitically increasing  as suggested  by the  'interp'
+    # function from numpy
     assert_true(np.all(np.diff(transformer.quantiles_) > 0))
     # iris dataset
     X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, smoothing_noise=1e-7)
+    transformer = QuantileTransformer(n_quantiles=1000, smoothing_noise=1e-7,
+                                      random_state=0)
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
+    # check  that  the  feature  values associated  to  quantiles  are
+    # strictly  monitically increasing  as suggested  by the  'interp'
+    # function from numpy
     assert_true(np.all(np.diff(transformer.quantiles_, axis=0) > 0))
 
 
@@ -1106,9 +1114,12 @@ def test_quantile_transform_numpy_interp_behaviour():
     # 'interp' function. In the presence of a predominant constant
     # feature values or a large number of quantiles, a single feature
     # value is mapped to different quantiles. The default behaviour of
-    # 'interp' will be to return the larger quantile associated to the
+    # 'interp' will be returning the larger quantile associated to the
     # feature value. This test attends to check if there is any
-    # changes in the 'interp' function and to act accordingly.
+    # changes in the 'interp' function and to act accordingly. This
+    # implementation subtilities is mention in the docstring of the
+    # 'interp' function.
+
     unique_feature = [0, 0.5, 1]
     X = np.transpose([[unique_feature[0]] * 1 +
                       [unique_feature[1]] * 7 +
