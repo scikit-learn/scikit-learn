@@ -1,20 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-=============================================================
+"""=============================================================
 Compare the effect of different scalers on data with outliers
 =============================================================
 
-The feature 0 and feature 5 of california housing dataset contains large
-outliers that can make visualization of the data difficult.
+The feature 0 and feature 5 of california housing dataset are outside
+of the typical range [0, 1] and contain large outliers. These two
+characteristics lead to difficulties to visualize the data and, more
+importantly, they can degrade the fitting procedure of most of machine
+learning algorithms.
 
-Also linear models like :class:`sklearn.linear_model.SVM` require data which is
-approximately normalized to the [-1, 1] or [0, 1] range, or at the very least
-have all the features on the same scale.
+Indeed, data spread in the standard range [0, 1] is a requirement for
+a large number of machine learning algorithms such as metrics-based
+algorithms or algorithms using gradient-based optimization.
 
-This example uses different scalers and normalizers to bring the data within a
-smaller range.
+This example uses different scalers, transformers and normalizers to
+bring the data within a smaller range.
+
 """
 
 # Author:  Raghav RV <rvraghav93@gmail.com>
@@ -148,4 +151,28 @@ norm = mpl.colors.Normalize(y_full.min(), y_full.max())
 mpl.colorbar.ColorbarBase(heatmap_legend_ax, cmap=cm.plasma_r,
                           norm=norm, orientation='horizontal',
                           label='Color mapping for values of y')
+
+###############################################################################
+# The different scalers applied a linear transformation to the
+# data. The main between these scalers lie in the fact that they are
+# using a subset of data to apply this linear
+# scaling. ``MinMaxScaler`` will take the full data range while
+# ``RobustScaler`` will use a subset of data by discarding data
+# outside of certain percentiles. The ``MaxAbsScaler`` will use the
+# maximum absolute value while the ``StandardScaler`` will use the
+# mean and stardard deviation to scale the data.
+#
+# The ``QuantileTransformer`` will shrink the distance between the
+# outliers and inliers, since this transformation is
+# non-linear. Consequently, comparison between features is made easier
+# while the potential discriminative power of outliers is
+# discarded. This is an important to consider if the aim of the
+# application is to detect those outliers. Additionally, this
+# transform can map the data to either a uniform or a normal
+# distribution.
+#
+# Unlike the scalers and the transformers, the `Normalizer` applied a
+# transformation per samples instead of per features.
+#
+
 plt.show()
