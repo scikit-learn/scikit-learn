@@ -158,7 +158,8 @@ class Pipeline(_BasePipeline):
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
            False, False], dtype=bool)
-
+    >>> anova_svm.named_steps.anova
+    SelectKBest(k=5, score_func=<function f_regression at 0x7f1d984d8620>)
     """
 
     # BaseEstimator interface
