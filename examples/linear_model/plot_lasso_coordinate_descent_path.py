@@ -8,8 +8,6 @@ coordinate descent.
 
 The coefficients can be forced to be positive.
 """
-print(__doc__)
-
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
@@ -19,6 +17,8 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import lasso_path, enet_path
 from sklearn import datasets
+
+print(__doc__)
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data
@@ -36,6 +36,7 @@ alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps, fit_intercept=False)
 print("Computing regularization path using the positive lasso...")
 alphas_positive_lasso, coefs_positive_lasso, _ = lasso_path(
     X, y, eps, positive=True, fit_intercept=False)
+
 print("Computing regularization path using the elastic net...")
 alphas_enet, coefs_enet, _ = enet_path(
     X, y, eps=eps, l1_ratio=0.8, fit_intercept=False)
