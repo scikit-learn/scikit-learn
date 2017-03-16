@@ -513,7 +513,7 @@ def test_pipeline_named_steps():
     transf = Transf()
     mult2 = Mult(mult=2)
     pipeline = Pipeline([('mock', transf), ("mult", mult2)])
-    
+
     # Test access via named_steps bunch object
     assert_true('mock' in pipeline.named_steps)
     assert_true('mock2' not in pipeline.named_steps)
