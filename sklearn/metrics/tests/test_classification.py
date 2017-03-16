@@ -11,6 +11,7 @@ from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
+from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
@@ -1465,3 +1466,34 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+
+def test_accuracy_score_permutation_invariance_multiclass():
+    y_true = np.random.randint(0, 20, 100)
+    y_pred = np.random.randint(0, 20, 100)
+    classes_perm = np.random.permutation(20)
+    y_true_perm = [classes_perm[y] for y in y_true]
+    y_pred_perm = [classes_perm[y] for y in y_pred]
+    score = accuracy_score(y_true, y_pred)
+    score_perm = accuracy_score(y_true_perm, y_pred_perm)
+    assert_equal(score, score_perm)
+
+def test_accuracy_score_permutation_invariance_multilabel():
+    y_true = []
+    y_pred = []
+    for i in range(0, 100):
+        n_labels_true = np.random.randint(1, 10)
+        n_labels_pred = np.random.randint(1, 10)
+        y_true.append(np.random.randint(0, 20, n_labels_true))
+        y_pred.append(np.random.randint(0, 20, n_labels_pred))
+    print(y_true)
+    classes_perm = np.random.permutation(20)
+    y_true_perm = MultiLabelBinarizer().fit_transform([[classes_perm[label] for label in y] for y in y_true])
+    y_pred_perm = MultiLabelBinarizer().fit_transform([[classes_perm[label] for label in y] for y in y_pred])
+    y_true = MultiLabelBinarizer().fit_transform(y_true)
+    y_pred = MultiLabelBinarizer().fit_transform(y_pred)
+    score = accuracy_score(y_true, y_pred)
+    score_perm = accuracy_score(y_true_perm, y_pred_perm)
+    assert_equal(score, score_perm)
+
+
