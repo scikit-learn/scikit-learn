@@ -1469,9 +1469,10 @@ def test_brier_score_loss():
 
 
 def test_metric_permutation_invariance_multiclass():
-    y_true = np.random.randint(0, 20, 100)
-    y_pred = np.random.randint(0, 20, 100)
-    classes_perm = np.random.permutation(20)
+    rng = np.random.RandomState(42)
+    y_true = rng.randint(0, 20, 100)
+    y_pred = rng.randint(0, 20, 100)
+    classes_perm = rng.permutation(42)
     y_true_perm = classes_perm[y_true]
     y_pred_perm = classes_perm[y_pred]
     metrics_no_avg = [accuracy_score, cohen_kappa_score,
@@ -1498,12 +1499,13 @@ def test_metric_permutation_invariance_multiclass():
 def test_metric_permutation_invariance_multilabel():
     y_true = []
     y_pred = []
+    rng = np.random.RandomState(42)
     for i in range(0, 100):
-        n_labels_true = np.random.randint(1, 10)
-        n_labels_pred = np.random.randint(1, 10)
-        y_true.append(np.random.randint(0, 20, n_labels_true))
-        y_pred.append(np.random.randint(0, 20, n_labels_pred))
-    classes_perm = np.random.permutation(20)
+        n_labels_true = rng.randint(1, 10)
+        n_labels_pred = rng.randint(1, 10)
+        y_true.append(rng.randint(0, 20, n_labels_true))
+        y_pred.append(rng.randint(0, 20, n_labels_pred))
+    classes_perm = rng.permutation(20)
     y_true_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
                                                        for y in y_true])
     y_pred_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
