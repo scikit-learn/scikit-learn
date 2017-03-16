@@ -154,6 +154,9 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+     is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+
 Bug fixes
 .........
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
