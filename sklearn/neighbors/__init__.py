@@ -9,6 +9,7 @@ from .dist_metrics import DistanceMetric
 from .graph import kneighbors_graph, radius_neighbors_graph
 from .unsupervised import NearestNeighbors
 from .classification import KNeighborsClassifier, RadiusNeighborsClassifier
+from .lmnn import LargeMarginNearestNeighbor
 from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
