@@ -52,6 +52,16 @@ def test_as_float_array():
     assert_true(as_float_array(X, False) is not X)
     # Checking that the new type is ok
     np.testing.assert_equal(X2.dtype, np.float64)
+    # Checking that smaller ints are properly converted to float32
+    dtypes = [np.int8, np.int16, np.int32,
+              np.uint8, np.uint16, np.uint32,
+              np.bool,
+              ]
+    for intsize in dtypes:
+        X = X.astype(intsize)
+        X2 = as_float_array(X)
+        # Checking that the new type is ok
+        np.testing.assert_equal(X2.dtype, np.float32)
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
     assert_true(as_float_array(X, copy=False) is X)
