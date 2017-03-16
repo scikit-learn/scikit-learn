@@ -13,12 +13,12 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 
-n_neighbors = 15
+n_neighbors = 3
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]  # we only take the first two features. We could avoid
+# this ugly slicing by using a two-dim data set
 y = iris.target
 
 h = .02  # step size in the mesh
@@ -29,7 +29,7 @@ cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
 
 
 # we create an instance of Neighbours Classifier and fit the data.
-clf = neighbors.LargeMarginNearestNeighbor(n_neighbors)
+clf = neighbors.LargeMarginNearestNeighbor(n_neighbors=n_neighbors)
 clf.fit(X, y)
 
 # Plot the decision boundary. For that, we will assign a color to each
