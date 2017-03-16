@@ -244,6 +244,11 @@ Bug fixes
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
 
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
+     ridge parameter `alpha_` and `lambda_` consistent with calculated
+     coefficients `coef_` and `intercept_`.
+     :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
+
 API changes summary
 -------------------
 
