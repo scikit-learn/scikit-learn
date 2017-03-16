@@ -12,7 +12,6 @@ import warnings
 
 import os
 import numpy as np
-import numpy.linalg as LA
 from scipy import sparse, optimize
 
 from ..neighbors import KNeighborsClassifier
@@ -685,7 +684,7 @@ def pca_fit(X, var_ratio=1, return_transform=True):
     """
 
     cov_ = np.cov(X, rowvar=False)  # Mean is removed
-    evals, evecs = LA.eigh(cov_)
+    evals, evecs = np.linalg.eigh(cov_)
     evecs = np.fliplr(evecs)
 
     if var_ratio == 1:
