@@ -76,7 +76,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         extension. If None, nothing will be saved (default: None).
 
     verbose : int
-        The level of logger verbosity. Can take values from 0 to 4 inclusive (default: 1).
+        The level of logger verbosity. Can take values from 0 to 4 inclusive (default: 0).
         0: Only basic information will be printed.
         1: Information from the classifier will be logged.
         2: Information from the classifier and debugging information will be logged.
@@ -122,10 +122,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     n_funcalls_ : int
         The number of times the optimizer computes the loss and the gradient.
 
-    name_ : str
+    name : str
         A name for the instance based on the current number of existing instances.
 
-    logger_ : object
+    logger : object
         A logger object to log information during fitting.
 
     details_ : dict
@@ -172,9 +172,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
-        # Setup instance name
+        # Setup instance name and logger
         LargeMarginNearestNeighbor._obj_count += 1
-        self.name_ = __name__ + '(' + str(LargeMarginNearestNeighbor._obj_count) + ')'
+        self.name = __name__ + '(' + str(LargeMarginNearestNeighbor._obj_count) + ')'
+        self.logger = self._setup_logger()
 
     def fit(self, X, y):
         """Find a linear transformation by optimization of the unconstrained problem, such that the k-nearest neighbor
@@ -193,9 +194,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             self
 
         """
-
-        # Setup logger
-        self.logger_ = self._setup_logger()
 
         # Check inputs consistency
         self.X_, y = check_X_y(X, y)
@@ -233,7 +231,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         # Call optimizer
         disp = 1 if self.verbose in [3, 4] else None
-        self.logger_.info('Now optimizing...')
+        self.logger.info('Now optimizing...')
         L, loss, details = optimize.fmin_l_bfgs_b(func=self._loss_grad, x0=self.L_, bounds=None,
                                                   m=100, pgtol=self.tol, maxfun=500*self.max_iter,
                                                   maxiter=self.max_iter, disp=disp, callback=self._cb)
@@ -314,11 +312,13 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
     def _setup_logger(self):
         """Instantiate a logger object for the current class instance"""
-        logger = logging.getLogger(self.name_)
+        logger = logging.getLogger(self.name)
         if self.verbose in [1, 3]:
             logger.setLevel(logging.INFO)
         elif self.verbose in [2, 4]:
             logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.NOTSET)
 
         stream_handler = logging.StreamHandler(stream=sys.stdout)
         formatter = logging.Formatter(fmt='%(asctime)s  %(name)s - %(levelname)s : %(message)s')
@@ -339,7 +339,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         max_neighbors = min_class_size - 1
         if n_neighbors > max_neighbors:
-            self.logger_.warning('n_neighbors(={}) too high. Setting to {}\n'.format(n_neighbors, max_neighbors))
+            self.logger.warning('n_neighbors(={}) too high. Setting to {}\n'.format(n_neighbors, max_neighbors))
 
         return min(n_neighbors, max_neighbors)
 
@@ -363,7 +363,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             raise ValueError('Dimensionality of the given transformation and the inputs don\'t match ({},{}).'.format(L.shape[1], n_features_in))
 
         if n_features_out > n_features_in:
-            self.logger_.warning('n_features_out({}) cannot be larger than the inputs dimensionality, setting n_features_out to {}!'.format(n_features_out, n_features_in))
+            self.logger.warning('n_features_out({}) cannot be larger than the inputs dimensionality, setting n_features_out to {}!'.format(n_features_out, n_features_in))
             n_features_out = n_features_in
 
         if L.shape[0] > n_features_out:
@@ -381,7 +381,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         """
 
-        self.logger_.info('Finding target neighbors...')
+        self.logger.info('Finding target neighbors...')
         target_neighbors = np.empty((self.X_.shape[0], self.n_neighbors_), dtype=int)
         for class_ in self.classes_:
             class_ind, = np.where(np.equal(self.y_, class_))
@@ -406,7 +406,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         """
 
-        self.logger_.info('Computing gradient component due to target neighbors...')
+        self.logger.info('Computing gradient component due to target neighbors...')
         n_samples, n_neighbors = self.targets_.shape
         rows = np.repeat(np.arange(n_samples), n_neighbors)  # 0 0 0 1 1 1 ... (n-1) (n-1) (n-1) with n_neighbors=3
         cols = self.targets_.flatten()
@@ -424,7 +424,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             The (flattened) linear transformation in the current iteration.
 
         """
-        self.logger_.info('Iteration {:4} / {:4}'.format(self.n_iter_, self.max_iter))
+        self.logger.info('Iteration {:4} / {:4}'.format(self.n_iter_, self.max_iter))
         if self.save is not None:
             save_file = self.save + '_' + str(self.n_iter_)
             L = L.reshape(self.n_features_out_, L.size // self.n_features_out_)
@@ -450,23 +450,23 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         n_samples, n_features_in = self.X_.shape
         self.L_ = L.reshape(self.n_features_out_, n_features_in)
         self.n_funcalls_ += 1
-        self.logger_.debug('Function call {}'.format(self.n_funcalls_))
+        self.logger.debug('Function call {}'.format(self.n_funcalls_))
 
         Lx = self.transform()
 
         # Compute distances to target neighbors under L (plus margin)
-        self.logger_.debug('Computing distances to target neighbors under new L...')
+        self.logger.debug('Computing distances to target neighbors under new L...')
         dist_tn = np.zeros((n_samples, self.n_neighbors_))
         for k in range(self.n_neighbors_):
             dist_tn[:, k] = np.sum(np.square(Lx - Lx[self.targets_[:, k]]), axis=1) + 1
 
         # Compute distances to impostors under L
-        self.logger_.debug('Setting margin radii...')
+        self.logger.debug('Setting margin radii...')
         margin_radii = np.add(dist_tn[:, -1], 2)
 
         imp1, imp2, dist_imp = self._find_impostors(Lx, margin_radii, use_sparse=self.use_sparse)
 
-        self.logger_.debug('Computing loss and gradient under new L...')
+        self.logger.debug('Computing loss and gradient under new L...')
         loss = 0
         A0 = sparse.csr_matrix((n_samples, n_samples))
         for k in reversed(range(self.n_neighbors_)):
@@ -486,7 +486,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         df = self.L_.dot(self.grad_static_ + grad_new)
         df *= 2
         loss = loss + (self.grad_static_ * (self.L_.T.dot(self.L_))).sum()
-        self.logger_.info('Loss = {:,} at function call {}.\n'.format(loss, self.n_funcalls_))
+        self.logger.info('Loss = {:,} at function call {}.\n'.format(loss, self.n_funcalls_))
 
         return loss, df.flatten()
 
@@ -516,7 +516,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         """
         n_samples = Lx.shape[0]
 
-        self.logger_.debug('Now computing impostor vectors...')
+        self.logger.debug('Now computing impostor vectors...')
         if use_sparse:
             # Initialize impostors matrix
             impostors_sp = sparse.csr_matrix((n_samples, n_samples), dtype=np.int8)
@@ -527,7 +527,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 ind_out, = np.where(np.greater(self.y_, class_))
 
                 # Subdivide idx_out x idx_in to chunks of a size that is fitting in memory
-                self.logger_.debug('Impostor classes {} to class {}..'.format(self.classes_[self.classes_ > class_], class_))
+                self.logger.debug('Impostor classes {} to class {}..'.format(self.classes_[self.classes_ > class_], class_))
                 ii, jj = self._find_impostors_batch(Lx[ind_out], Lx[ind_in], margin_radii[ind_out],
                                                     margin_radii[ind_in])
                 if len(ii):
@@ -557,7 +557,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 # idx_out = np.random.permutation(idx_out)
 
                 # Subdivide idx_out x idx_in to chunks of a size that is fitting in memory
-                self.logger_.debug('Impostor classes {} to class {}..'.format(self.classes_[self.classes_ > class_], class_))
+                self.logger.debug('Impostor classes {} to class {}..'.format(self.classes_[self.classes_ > class_], class_))
                 ii, jj, dd = self._find_impostors_batch(Lx[ind_out], Lx[ind_in], margin_radii[ind_out],
                                                         margin_radii[ind_in], return_dist=True)
                 if len(ii):
@@ -566,7 +566,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                     dist.extend(dd)
 
             ind_unique = unique_pairs(imp1, imp2, n_samples)
-            self.logger_.debug('Found {} unique pairs out of {}.'.format(len(ind_unique), len(imp1)))
+            self.logger.debug('Found {} unique pairs out of {}.'.format(len(ind_unique), len(imp1)))
 
             # subsample constraints if they are too many
             if len(ind_unique) > self.max_constr:
@@ -636,14 +636,14 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     def __getstate__(self):
         """Have to override getstate because logger is not picklable"""
         state = dict(self.__dict__)
-        del state['logger_']
+        del state['logger']
 
         return state
 
     def __setstate__(self, state):
         """Have to override setstate because logger is not picklable"""
         self.__dict__.update(state)
-        self.logger_ = self._setup_logger()
+        self.logger = self._setup_logger()
 
 
 ##########################
