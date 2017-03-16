@@ -59,8 +59,7 @@ ax.set_ylim(0.68, 1)
 # Get the regular numpy array from the MaskedArray
 X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
 
-for scorer, color in (('AUC Score', 'g'), ('F1 Score', 'k'),
-                      ('Precision', 'r'), ('Recall', 'blue')):
+for scorer, color in zip(sorted(scoring), ['g', 'k', 'r', 'b']):
     for sample, style in (('train', '--'), ('test', '-')):
         sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
