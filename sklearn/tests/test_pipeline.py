@@ -518,7 +518,7 @@ def test_pipeline_named_steps():
     assert_true('mock' in pipeline.named_steps)
     assert_true('mock2' not in pipeline.named_steps)
     assert_true(pipeline.named_steps.mock is transf)
-    assert_true(pipeline.named_steps.mult is mult2)    
+    assert_true(pipeline.named_steps.mult is mult2)
 
 
 def test_set_pipeline_step_none():
