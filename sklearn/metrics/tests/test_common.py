@@ -49,6 +49,8 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
 
+from sklearn.preprocessing import MultiLabelBinarizer
+
 # TODO Curve are currently not covered by invariance test
 # from sklearn.metrics import precision_recall_curve
 # from sklearn.metrics import roc_curve
@@ -1110,3 +1112,101 @@ def test_no_averaging_labels():
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
+
+
+def test_metric_permutation_invariance_multiclass():
+    rng = np.random.RandomState(42)
+    y_true = rng.randint(0, 20, 100)
+    y_pred = rng.randint(0, 20, 100)
+    classes_perm = rng.permutation(20)
+    y_true_perm = classes_perm[y_true]
+    y_pred_perm = classes_perm[y_pred]
+    for name, metric in ALL_METRICS.items():
+        if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
+            continue
+        if name is "explained_variance_score" or "confusion_matrix":
+            continue
+        print(name)
+        metric = ALL_METRICS[name]
+        score = metric(y_true, y_pred)
+        score_perm = metric(y_true_perm, y_pred_perm)
+        assert_almost_equal(score, score_perm)
+
+
+def test_metric_permutation_invariance_multilabel():
+    y_true = []
+    y_pred = []
+    rng = np.random.RandomState(42)
+    for i in range(0, 100):
+        n_labels_true = rng.randint(1, 10)
+        n_labels_pred = rng.randint(1, 10)
+        y_true.append(rng.randint(0, 20, n_labels_true))
+        y_pred.append(rng.randint(0, 20, n_labels_pred))
+    classes_perm = rng.permutation(20)
+    y_true_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
+                                                       for y in y_true])
+    y_pred_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
+                                                       for y in y_pred])
+    y_true = MultiLabelBinarizer().fit_transform(y_true)
+    y_pred = MultiLabelBinarizer().fit_transform(y_pred)
+
+    for name in MULTILABELS_METRICS:
+        metric = ALL_METRICS[name]
+        print(name)
+        score = metric(y_true, y_pred)
+        score_perm = metric(y_true_perm, y_pred_perm)
+        assert_almost_equal(score, score_perm)
+
+
+def test_metric_permutation_invariance_thresholded_multiclass():
+    y_score = np.random.rand(100, 3)
+    y_score[:, 2] += .1
+    y_score[:, 1] -= .1
+    y_true = np.argmax(y_score, axis=1)
+    y_true[np.random.randint(len(y_score), size=20)] = np.random.randint(
+        2, size=20)
+    for name in THRESHOLDED_METRICS:
+        if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
+            continue
+        metric = ALL_METRICS[name]
+        same_score_under_permutation = None
+        for perm in [[0, 1, 2], [0, 2, 1], [1, 0, 2],
+                     [1, 2, 0], [2, 0, 1], [2, 1, 0]]:
+            inv_perm = np.zeros(3, dtype=int)
+            inv_perm[perm] = np.arange(3)
+            y_score_perm = y_score[:, inv_perm]
+            y_true_perm = np.take(perm, y_true)
+            score = metric(y_true_perm, y_score_perm)
+            if not same_score_under_permutation:
+                same_score_under_permutation = score
+            else:
+                assert_almost_equal(score, same_score_under_permutation)
+
+
+def test_metric_permutation_invariance_thresholded_multilabel():
+    y_true = []
+    y_true_perm = []
+    y_score = []
+    y_score_perm = []
+    rng = np.random.RandomState(42)
+    classes_perm = rng.permutation(20)
+    for i in range(0, 100):
+        n_labels_true = rng.randint(1, 10)
+        n_labels_pred = rng.randint(1, 10)
+        y_true.append(rng.randint(0, 20, n_labels_true))
+        y_score.append(rng.rand(20))
+        y_score_perm.append(y_score[i][classes_perm])
+
+    y_true_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
+                                                       for y in y_true])
+
+    y_true = MultiLabelBinarizer().fit_transform(y_true)
+
+    for name in THRESHOLDED_MULTILABEL_METRICS:
+        if name is "log_loss" or "unnormalized_log_loss":
+            continue
+        metric = ALL_METRICS[name]
+        print(name)
+        score = metric(y_true, y_score)
+        score_perm = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, score_perm)

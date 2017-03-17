@@ -11,7 +11,6 @@ from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
-from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
@@ -1466,67 +1465,3 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
-
-
-def test_metric_permutation_invariance_multiclass():
-    rng = np.random.RandomState(42)
-    y_true = rng.randint(0, 20, 100)
-    y_pred = rng.randint(0, 20, 100)
-    classes_perm = rng.permutation(42)
-    y_true_perm = classes_perm[y_true]
-    y_pred_perm = classes_perm[y_pred]
-    metrics_no_avg = [accuracy_score, cohen_kappa_score,
-                      jaccard_similarity_score, zero_one_loss,
-                      hamming_loss]
-    for metric in metrics_no_avg:
-        score = metric(y_true, y_pred)
-        score_perm = metric(y_true_perm, y_pred_perm)
-        assert_almost_equal(score, score_perm)
-
-    metrics_avg = [f1_score, precision_score, recall_score]
-    for avg_method in ["micro", "macro", "weighted"]:
-        for metric in metrics_avg:
-            score = metric(y_true, y_pred, average=avg_method)
-            score_perm = metric(y_true_perm, y_pred_perm, average=avg_method)
-            assert_almost_equal(score, score_perm)
-        # fbeta needs beta parameter additionally
-        score_fbeta = fbeta_score(y_true, y_pred, 0.5, average=avg_method)
-        score_perm_fbeta = fbeta_score(y_true_perm, y_pred_perm, 0.5,
-                                       average=avg_method)
-        assert_almost_equal(score_fbeta, score_perm_fbeta)
-
-
-def test_metric_permutation_invariance_multilabel():
-    y_true = []
-    y_pred = []
-    rng = np.random.RandomState(42)
-    for i in range(0, 100):
-        n_labels_true = rng.randint(1, 10)
-        n_labels_pred = rng.randint(1, 10)
-        y_true.append(rng.randint(0, 20, n_labels_true))
-        y_pred.append(rng.randint(0, 20, n_labels_pred))
-    classes_perm = rng.permutation(20)
-    y_true_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
-                                                       for y in y_true])
-    y_pred_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
-                                                       for y in y_pred])
-    y_true = MultiLabelBinarizer().fit_transform(y_true)
-    y_pred = MultiLabelBinarizer().fit_transform(y_pred)
-    metrics_no_avg = [accuracy_score, jaccard_similarity_score,
-                      zero_one_loss, hamming_loss]
-    for metric in metrics_no_avg:
-        score = metric(y_true, y_pred)
-        score_perm = metric(y_true_perm, y_pred_perm)
-        assert_almost_equal(score, score_perm)
-
-    metrics_avg = [f1_score, precision_score, recall_score]
-    for avg_method in ["micro", "macro", "weighted"]:
-        for metric in metrics_avg:
-            score = metric(y_true, y_pred, average=avg_method)
-            score_perm = metric(y_true_perm, y_pred_perm, average=avg_method)
-            assert_almost_equal(score, score_perm)
-        # fbeta needs beta parameter additionally
-        score_fbeta = fbeta_score(y_true, y_pred, 0.5, average=avg_method)
-        score_perm_fbeta = fbeta_score(y_true_perm, y_pred_perm, 0.5,
-                                       average=avg_method)
-        assert_almost_equal(score_fbeta, score_perm_fbeta)
