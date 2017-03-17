@@ -198,7 +198,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return self
 
-    def _validate_targets(self, y):
+    def _validate_targets(self, y, sample_weight):
         """Validation of y and class_weight.
 
         Default implementation for SVR and one-class; overridden in BaseSVC.
