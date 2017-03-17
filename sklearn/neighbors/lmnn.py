@@ -265,8 +265,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                                                       bounds=None,
                                                       m=100,
                                                       pgtol=self.tol,
-                                                      maxfun=500*self.max_iter,
-                                                      iprint=self.disp)
+                                                      maxfun=500*self.max_iter)
 
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //

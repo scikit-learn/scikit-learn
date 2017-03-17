@@ -1626,7 +1626,7 @@ def check_non_transformer_estimators_n_iter(name, Estimator):
     not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
                             'LogisticRegressionCV', 'LinearSVC',
-                            'LogisticRegression']
+                            'LogisticRegression', 'LargeMarginNearestNeighbor']
 
     # Tested in test_transformer_n_iter
     not_run_check_n_iter += CROSS_DECOMPOSITION
