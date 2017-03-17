@@ -1159,11 +1159,12 @@ def test_metric_permutation_invariance_multilabel():
 
 
 def test_metric_permutation_invariance_thresholded_multiclass():
-    y_score = np.random.rand(100, 3)
+    rng = np.random.RandomState(42)
+    y_score = rng.rand(100, 3)
     y_score[:, 2] += .1
     y_score[:, 1] -= .1
     y_true = np.argmax(y_score, axis=1)
-    y_true[np.random.randint(len(y_score), size=20)] = np.random.randint(
+    y_true[rng.randint(len(y_score), size=20)] = np.random.randint(
         2, size=20)
     for name in THRESHOLDED_METRICS:
         if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
