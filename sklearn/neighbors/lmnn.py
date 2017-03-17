@@ -221,8 +221,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         # Check that the number of neighbors is achievable for all classes
         self.n_neighbors_ = self.check_n_neighbors(self.y_)
-        # TODO: Notify superclass KNeighborsClassifier that n_neighbors might
-        # have changed to n_neighbors_
+        # TODO: Notify superclass KNeighborsClassifier that n_neighbors
+        # might have changed to n_neighbors_
         # super().set_params(n_neighbors=self.n_neighbors_)
 
         # Initialize transformer
@@ -247,15 +247,27 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self.n_funcalls_ = 0
 
         # Call optimizer
-        L, loss, details = optimize.fmin_l_bfgs_b(func=self._loss_grad,
-                                                  x0=self.L_,
-                                                  bounds=None,
-                                                  m=100,
-                                                  pgtol=self.tol,
-                                                  maxfun=500*self.max_iter,
-                                                  maxiter=self.max_iter,
-                                                  disp=self.disp,
-                                                  callback=self._cb)
+        # Type Error caused in old versions of SciPy because of no
+        # maxiter argument ( <= 0.9). (according to linear_model/huber.py)
+        try:
+            L, loss, details = optimize.fmin_l_bfgs_b(func=self._loss_grad,
+                                                      x0=self.L_,
+                                                      bounds=None,
+                                                      m=100,
+                                                      pgtol=self.tol,
+                                                      maxfun=500*self.max_iter,
+                                                      maxiter=self.max_iter,
+                                                      disp=self.disp,
+                                                      callback=self._cb)
+        except TypeError:
+            L, loss, details = optimize.fmin_l_bfgs_b(func=self._loss_grad,
+                                                      x0=self.L_,
+                                                      bounds=None,
+                                                      m=100,
+                                                      pgtol=self.tol,
+                                                      maxfun=500*self.max_iter,
+                                                      iprint=self.disp)
+
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //
                             self.n_features_out_)
