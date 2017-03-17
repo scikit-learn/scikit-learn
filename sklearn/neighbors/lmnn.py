@@ -250,6 +250,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         try:
             L, loss, info = optimize.fmin_l_bfgs_b(func=self._loss_grad,
                                                    x0=self.L_,
+                                                   args=(self.X_,),
                                                    bounds=None,
                                                    m=100,
                                                    pgtol=self.tol,
@@ -262,6 +263,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             # maxiter argument (<= 0.9).
             L, loss, info = optimize.fmin_l_bfgs_b(func=self._loss_grad,
                                                    x0=self.L_,
+                                                   args=(self.X_,),
                                                    bounds=None,
                                                    m=100,
                                                    pgtol=self.tol)
@@ -473,7 +475,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         self.n_iter_ += 1
 
-    def _loss_grad(self, L):
+    def _loss_grad(self, L, X):
         """Compute the loss under a given linear transformation `L` and the
         loss gradient w.r.t. `L`.
 
@@ -492,7 +494,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         """
 
-        n_samples, n_features_in = self.X_.shape
+        n_samples, n_features_in = X.shape
         self.L_ = L.reshape(self.n_features_out_, n_features_in)
         self.n_funcalls_ += 1
 
