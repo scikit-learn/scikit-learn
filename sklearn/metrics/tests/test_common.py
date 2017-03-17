@@ -1178,7 +1178,7 @@ def test_metric_permutation_invariance_thresholded_multiclass():
             y_score_perm = y_score[:, inv_perm]
             y_true_perm = np.take(perm, y_true)
             score = metric(y_true_perm, y_score_perm)
-            if not same_score_under_permutation:
+            if same_score_under_permutation is None:
                 same_score_under_permutation = score
             else:
                 assert_almost_equal(score, same_score_under_permutation)
