@@ -23,15 +23,21 @@ from ..utils.validation import check_is_fitted, check_array, check_X_y, \
 
 
 class LargeMarginNearestNeighbor(KNeighborsClassifier):
-    """Large Margin Nearest Neighbor metric learning.
+    """Distance Metric Learning for Large Margin Classification
 
+    Large margin nearest neighbor classification (LMNN) is a machine learning
+    algorithm for metric learning. It learns a (pseudo-)metric in a
+    supervised fashion to improve the classification accuracy of the k-nearest
+    neighbor rule.
+    The main intuition behind LMNN is to learn a pseudometric under which all
+    data instances in the training set are surrounded by at least k instances
+    that share the same class label. If this is achieved, the leave-one-out
+    error is minimized.
     This implementation follows closely Kilian Weinberger's MATLAB code found
-    at https://bitbucket.org/mlcircus/lmnn which solves the unconstrained
+    at <https://bitbucket.org/mlcircus/lmnn> which solves the unconstrained
     problem, finding a linear transformation with L-BFGS instead of solving the
     constrained problem that finds the globally optimal metric.
 
-    Copyright (c) 2017, John Chiotellis
-    Licensed under the GPLv3 license (see LICENSE.txt)
 
     Parameters
     ----------
@@ -148,6 +154,17 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     [0]
     >>> print(lmnn.predict_proba([[0.9]]))
     [[ 1.  0.]]
+
+
+    References
+    ----------
+    .. [1] `Weinberger, K. Q.; Saul L. K. (2009). "Distance Metric Learning
+    for Large Margin Classification". Journal of Machine Learning Research.
+    10: 207–244.
+    <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_
+
+    .. [2] `Wikipedia entry on Large Margin Nearest Neighbor
+           <https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor>`_
 
     """
 
