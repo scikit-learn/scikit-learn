@@ -378,9 +378,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                              format(L.shape[1], n_features_in))
 
         if n_features_out > n_features_in:
-            warnings.warn('Outputs dimensionality ({}) cannot be larger than the '
+            warnings.warn('Outputs dimensionality ({}) cannot be larger than '
                           'inputs dimensionality, setting n_features_out to '
-                          '{}!'.format(n_features_out, n_features_in), DataDimensionalityWarning)
+                          '{}!'.format(n_features_out, n_features_in),
+                          DataDimensionalityWarning)
             n_features_out = n_features_in
 
         if L.shape[0] > n_features_out:
@@ -723,7 +724,8 @@ def pca_fit(X, var_ratio=1, return_transform=True):
 
 
 def sum_outer_products(X, weights, remove_zero=False):
-    """Computes the sum of weighted outer products using a sparse weights matrix
+    """Computes the sum of weighted outer products using a sparse weights
+    matrix
 
     Parameters
     ----------
