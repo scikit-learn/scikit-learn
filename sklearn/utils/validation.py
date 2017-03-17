@@ -80,8 +80,7 @@ def as_float_array(X, copy=True, force_all_finite=True):
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
         return X.copy('F' if X.flags['F_CONTIGUOUS'] else 'C') if copy else X
     else:
-        if X.dtype.kind in 'uib' and \
-           X.dtype.itemsize <= 4:  # size of an int32
+        if X.dtype.kind in 'uib' and X.dtype.itemsize <= 4:
             return_dtype = np.float32
         else:
             return_dtype = np.float64
