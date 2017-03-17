@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Large Margin Nearest Neighbor Classification
 """
@@ -347,7 +348,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         max_neighbors = min_class_size - 1
         if n_neighbors > max_neighbors:
-
             warnings.warn('n_neighbors(={}) too high. Setting to {}\n'.
                           format(n_neighbors, max_neighbors))
 
@@ -451,6 +451,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             save_file = self.save + '_' + str(self.n_iter_)
             L = L.reshape(self.n_features_out_, L.size // self.n_features_out_)
             np.save(save_file, L)
+
         self.n_iter_ += 1
 
     def _loss_grad(self, L):
@@ -763,21 +764,21 @@ def pairs_distances_batch(X, ind_a, ind_b, batch_size=500):
     X : array_like
         An array of data samples with shape (n_samples, n_features_in).
     ind_a : array_like
-        An array of samples indices with shape (m,).
+        An array of samples indices with shape (n_indices,).
     ind_b : array_like
-        Another array of samples indices with shape (m,).
+        Another array of samples indices with shape (n_indices,).
     batch_size :
         Size of each chunk of X to compute distances for (default: 500)
 
     Returns
     -------
     array-like
-        An array of pairwise distances with shape (m,).
+        An array of pairwise distances with shape (n_indices,).
 
     """
-    n = len(ind_a)
-    res = np.zeros(n)
-    for chunk in gen_batches(n, batch_size):
+    n_indices = len(ind_a)
+    res = np.zeros(n_indices)
+    for chunk in gen_batches(n_indices, batch_size):
         res[chunk] = np.sum(np.square(X[ind_a[chunk]] - X[ind_b[chunk]]),
                             axis=1)
 
