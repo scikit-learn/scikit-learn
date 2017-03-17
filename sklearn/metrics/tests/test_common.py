@@ -1124,7 +1124,7 @@ def test_metric_permutation_invariance_multiclass():
     for name in CLASSIFICATION_METRICS:
         if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
             continue
-        if name is ["confusion_matrix"]:
+        if name is "confusion_matrix":
             continue
         metric = ALL_METRICS[name]
         score = metric(y_true, y_pred)
