@@ -18,9 +18,11 @@ from scipy import sparse, optimize
 from ..neighbors import KNeighborsClassifier
 from ..metrics.pairwise import euclidean_distances
 from ..utils import gen_batches
+from ..utils.fixes import argpartition
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y, \
     check_random_state
+from ..exceptions import DataDimensionalityWarning
 
 
 class LargeMarginNearestNeighbor(KNeighborsClassifier):
@@ -376,9 +378,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                              format(L.shape[1], n_features_in))
 
         if n_features_out > n_features_in:
-            warnings.warn('n_features_out({}) cannot be larger than the '
+            warnings.warn('Outputs dimensionality ({}) cannot be larger than the '
                           'inputs dimensionality, setting n_features_out to '
-                          '{}!'.format(n_features_out, n_features_in))
+                          '{}!'.format(n_features_out, n_features_in), DataDimensionalityWarning)
             n_features_out = n_features_in
 
         if L.shape[0] > n_features_out:
@@ -404,7 +406,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             class_ind, = np.where(np.equal(self.y_, class_))
             dist = euclidean_distances(self.X_[class_ind], squared=True)
             np.fill_diagonal(dist, np.inf)
-            neigh_ind = np.argpartition(dist, self.n_neighbors_ - 1, axis=1)
+            neigh_ind = argpartition(dist, self.n_neighbors_ - 1, axis=1)
             neigh_ind = neigh_ind[:, :self.n_neighbors_]
             # argpartition doesn't guarantee sorted order, so we sort again
             # but only the k neighbors
