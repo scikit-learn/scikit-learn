@@ -149,7 +149,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         sample_weight = np.asarray([]
                                    if sample_weight is None
                                    else sample_weight, dtype=np.float64)
-        X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
+        X, y = check_X_y(X, y, dtype=np.float64, order='C',
+                         accept_sparse='csr')
         y = self._validate_targets(y, sample_weight)
         solver_type = LIBSVM_IMPL.index(self._impl)
 
