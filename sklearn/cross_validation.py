@@ -1756,8 +1756,10 @@ def _permutation_test_score(estimator, X, y, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
-        estimator.fit(X[train], y[train])
-        avg_score.append(scorer(estimator, X[test], y[test]))
+        X_train, y_train = _safe_split(estimator, X, y, train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train)
+        estimator.fit(X_train, y_train)
+        avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
 
 
@@ -1770,7 +1772,7 @@ def _shuffle(y, labels, random_state):
         for label in np.unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
-    return y[ind]
+    return safe_indexing(y, ind)
 
 
 def check_cv(cv, X=None, y=None, classifier=False):
@@ -1903,11 +1905,14 @@ def permutation_test_score(estimator, X, y, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `scoring` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `scoring` is
-        rather a loss function (i.e. when lower is better such as with
-        `mean_squared_error`) then this is actually the complement of the
-        p-value:  1 - p-value.
+        The p-value, which approximates the probability that the score would
+        be obtained by chance. This is calculated as:
+
+        `(C + 1) / (n_permutations + 1)`
+
+        Where C is the number of permutations whose score >= the true score.
+
+        The best possible p-value is 1/(n_permutations + 1), the worst is 1.0.
 
     Notes
     -----

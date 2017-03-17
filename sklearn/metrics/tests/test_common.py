@@ -369,7 +369,6 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
-    "cohen_kappa_score",
     "confusion_matrix", # Left this one here because the tests in this file do
                         # not work for confusion_matrix, as its output is a
                         # matrix instead of a number. Testing of
@@ -717,8 +716,8 @@ def test_multilabel_representation_invariance():
                                            allow_unlabeled=True)
 
     # To make sure at least one empty label is present
-    y1 += [0]*n_classes
-    y2 += [0]*n_classes
+    y1 = np.vstack([y1, [[0] * n_classes]])
+    y2 = np.vstack([y2, [[0] * n_classes]])
 
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
@@ -1014,6 +1013,17 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
+    # regression
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    for name in ALL_METRICS:
+        if name not in REGRESSION_METRICS:
+            continue
+        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
+            continue
+        metric = ALL_METRICS[name]
+        yield _named_check(check_sample_weight_invariance, name), name,\
+            metric, y_true, y_pred
 
     # binary
     random_state = check_random_state(0)
@@ -1021,6 +1031,8 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY):
             continue
@@ -1038,6 +1050,8 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 5, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY_MULTICLASS):
             continue

@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -58,7 +59,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -72,16 +73,21 @@ class MockClassifier(object):
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
+        self.classes_ = np.unique(Y)
         return self
 
     def predict(self, T):
         return T.shape[0]
 
+    def transform(self, X):
+        return X + self.foo_param
+
+    def inverse_transform(self, X):
+        return X - self.foo_param
+
     predict_proba = predict
     predict_log_proba = predict
     decision_function = predict
-    transform = predict
-    inverse_transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -173,6 +179,74 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
+    searcher = klass(clf, {'foo_param': [1, 2, 3]}, cv=2, **klass_kwargs)
+
+    # The CheckingClassifer generates an assertion error if
+    # a parameter is missing or has length != len(X).
+    assert_raise_message(AssertionError,
+                         "Expected fit parameter(s) ['eggs'] not seen.",
+                         searcher.fit, X, y, spam=np.ones(10))
+    assert_raise_message(AssertionError,
+                         "Fit parameter spam has length 1; expected 4.",
+                         searcher.fit, X, y, spam=np.ones(1),
+                         eggs=np.zeros(10))
+    searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
+
+
+def test_grid_search_with_fit_params():
+    check_hyperparameter_searcher_with_fit_params(GridSearchCV)
+
+
+def test_random_search_with_fit_params():
+    check_hyperparameter_searcher_with_fit_params(RandomizedSearchCV, n_iter=1)
+
+
+def test_grid_search_fit_params_deprecation():
+    # NOTE: Remove this test in v0.21
+
+    # Use of `fit_params` in the class constructor is deprecated,
+    # but will still work until v0.21.
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam'])
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                               fit_params={'spam': np.ones(10)})
+    assert_warns(DeprecationWarning, grid_search.fit, X, y)
+
+
+def test_grid_search_fit_params_two_places():
+    # NOTE: Remove this test in v0.21
+
+    # If users try to input fit parameters in both
+    # the constructor (deprecated use) and the `fit`
+    # method, we'll ignore the values passed to the constructor.
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    clf = CheckingClassifier(expected_fit_params=['spam'])
+
+    # The "spam" array is too short and will raise an
+    # error in the CheckingClassifier if used.
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                               fit_params={'spam': np.ones(1)})
+
+    expected_warning = ('Ignoring fit_params passed as a constructor '
+                        'argument in favor of keyword arguments to '
+                        'the "fit" method.')
+    assert_warns_message(RuntimeWarning, expected_warning,
+                         grid_search.fit, X, y, spam=np.ones(10))
+
+    # Verify that `fit` prefers its own kwargs by giving valid
+    # kwargs in the constructor and invalid in the method call
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]},
+                               fit_params={'spam': np.ones(10)})
+    assert_raise_message(AssertionError, "Fit parameter spam has length 1",
+                         grid_search.fit, X, y, spam=np.ones(1))
+
+
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
@@ -252,6 +326,33 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+def test_classes__property():
+    # Test that classes_ property matches best_estimator_.classes_
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    Cs = [.1, 1, 10]
+
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    grid_search.fit(X, y)
+    assert_array_equal(grid_search.best_estimator_.classes_,
+                       grid_search.classes_)
+
+    # Test that regressors do not have a classes_ attribute
+    grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
+
+    # Test that the grid searcher has no classes_ attribute before it's fit
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    assert_false(hasattr(grid_search, 'classes_'))
+
+    # Test that the grid searcher has no classes_ attribute without a refit
+    grid_search = GridSearchCV(LinearSVC(random_state=0),
+                               {'C': Cs}, refit=False)
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
 
 
 def test_trivial_cv_results_attr():
@@ -443,15 +544,6 @@ def test_grid_search_precomputed_kernel_error_nonsquare():
     assert_raises(ValueError, cv.fit, K_train, y_train)
 
 
-def test_grid_search_precomputed_kernel_error_kernel_function():
-    # Test that grid search returns an error when using a kernel_function
-    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
-    kernel_function = lambda x1, x2: np.dot(x1, x2.T)
-    clf = SVC(kernel=kernel_function)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
-    assert_raises(ValueError, cv.fit, X_, y_)
-
-
 class BrokenClassifier(BaseEstimator):
     """Broken classifier that cannot be fit twice"""
 
@@ -549,6 +641,12 @@ def test_unsupervised_grid_search():
                                scoring='adjusted_rand_score')
     grid_search.fit(X, y)
     # ARI can find the right number :)
+    assert_equal(grid_search.best_params_["n_clusters"], 3)
+
+    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
+                               scoring='fowlkes_mallows_score')
+    grid_search.fit(X, y)
+    # So can FMS ;)
     assert_equal(grid_search.best_params_["n_clusters"], 3)
 
     # Now without a score, and without y
@@ -1211,3 +1309,12 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2],
                                   per_param_scores[3])
+
+
+def test_transform_inverse_transform_round_trip():
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+
+    grid_search.fit(X, y)
+    X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
+    assert_array_equal(X, X_round_trip)

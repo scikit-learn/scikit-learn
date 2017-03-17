@@ -1,6 +1,6 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-#          Denis Engemann <d.engemann@fz-juelich.de>
+#          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
 
