@@ -44,7 +44,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
     Parameters
     ----------
-    L : array_like
+    L : array-like
         Initial transformation in an array with shape (n_features_out,
         n_features_in).  If None `load` will be used to load a transformation
         from a file. (default: None)
@@ -99,7 +99,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
     Attributes
     ----------
-    L_ : array_like
+    L_ : array-like
         The linear transformation used during fitting with shape
         (n_features_out, n_features_in).
 
@@ -111,25 +111,25 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         The dimensionality of a vector after applying to it the linear
         transformation.
 
-    X_ : array_like
+    X_ : array-like
         An array of training samples with shape (n_samples, n_features_in).
 
-    y_ : array_like
+    y_ : array-like
         An array of training labels with shape (n_samples,).
 
-    labels_: array_like
+    labels_: array-like
         An array of the uniquely appearing class labels with shape (n_classes,)
         and type object.
 
-    classes_: array_like
+    classes_: array-like
         An array of the uniquely appearing class labels as integers with shape
         (n_classes,) and type int.
 
-    targets_ : array_like
+    targets_ : array-like
         An array of target neighbors for each sample with shape (n_samples,
         n_neighbors).
 
-    grad_static_ : array_like
+    grad_static_ : array-like
         An array of the gradient component caused by target neighbors, that
         stays fixed throughout the algorithm with shape (n_features_in,
         n_features_in).
@@ -199,9 +199,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        X : array_like
+        X : array-like
             An array of training samples with shape (n_samples, n_features_in).
-        y : array_like
+        y : array-like
             An array of data labels with shape (n_samples,).
 
         Returns
@@ -247,32 +247,37 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self.n_funcalls_ = 0
 
         # Call optimizer
-        # Type Error caused in old versions of SciPy because of no
-        # maxiter argument ( <= 0.9). (according to linear_model/huber.py)
         try:
-            L, loss, details = optimize.fmin_l_bfgs_b(func=self._loss_grad,
-                                                      x0=self.L_,
-                                                      bounds=None,
-                                                      m=100,
-                                                      pgtol=self.tol,
-                                                      maxfun=500*self.max_iter,
-                                                      maxiter=self.max_iter,
-                                                      disp=self.disp,
-                                                      callback=self._cb)
+            L, loss, info = optimize.fmin_l_bfgs_b(func=self._loss_grad,
+                                                   x0=self.L_,
+                                                   bounds=None,
+                                                   m=100,
+                                                   pgtol=self.tol,
+                                                   maxfun=500*self.max_iter,
+                                                   maxiter=self.max_iter,
+                                                   disp=self.disp,
+                                                   callback=self._cb)
         except TypeError:
-            L, loss, details = optimize.fmin_l_bfgs_b(func=self._loss_grad,
-                                                      x0=self.L_,
-                                                      bounds=None,
-                                                      m=100,
-                                                      pgtol=self.tol,
-                                                      maxfun=500*self.max_iter)
+            # Type Error caused in old versions of SciPy because of no
+            # maxiter argument (<= 0.9).
+            L, loss, info = optimize.fmin_l_bfgs_b(func=self._loss_grad,
+                                                   x0=self.L_,
+                                                   bounds=None,
+                                                   m=100,
+                                                   pgtol=self.tol)
+
+        if info['warnflag'] == 2:
+            raise ValueError("LargeMarginNearestNeighbor convergence failed:"
+                             " l-BFGS-b solver terminated with %s"
+                             % info['task'].decode('ascii'))
+        self.n_iter_ = info.get('nit', self.n_iter_)
 
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //
                             self.n_features_out_)
 
         # Store output to return
-        self.details_ = details
+        self.details_ = info
         self.details_['loss'] = loss
 
         # Fit a simple nearest neighbor classifier with the learned metric
@@ -285,13 +290,13 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        X : array_like
+        X : array-like
             An array of data samples with shape (n_samples, n_features_in)
             (default: None, defined when fit is called).
 
         Returns
         -------
-        array_like
+        array-like
             An array of transformed data samples with shape (n_samples,
             n_features_out).
 
@@ -406,7 +411,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Returns
         -------
-        array_like
+        array-like
             An array of neighbors indices for each sample with shape
             (n_samples, n_neighbors).
 
@@ -435,7 +440,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Returns
         -------
-        array_like
+        array-like
             An array with the sum of all weighted outer products with shape
             (n_features_in, n_features_in).
 
@@ -457,7 +462,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        L : array_like
+        L : array-like
             The (flattened) linear transformation in the current iteration.
 
         """
@@ -474,7 +479,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        L : array_like
+        L : array-like
             The current (flattened) linear transformation with shape
             (n_features_out x n_features_in,).
 
@@ -482,7 +487,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         -------
         tuple
             float: The new loss.
-            array_like: The new (flattened) gradient with shape
+            array-like: The new (flattened) gradient with shape
             (n_features_out x n_features_in,).
 
         """
@@ -536,10 +541,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        Lx : array_like
+        Lx : array-like
             An array of transformed samples with shape (n_samples,
             n_features_out).
-        margin_radii : array_like
+        margin_radii : array-like
             An array of distances to the farthest target neighbors + margin,
             with shape (n_samples,).
         use_sparse : bool
@@ -548,14 +553,14 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Returns
         -------
-        tuple: (array_like, array_like, array_like)
+        tuple: (array-like, array-like, array-like)
 
-            imp1 : array_like
+            imp1 : array-like
                 An array of sample indices with shape (n_impostors,).
-            imp2 : array_like
+            imp2 : array-like
                 An array of sample indices that violate a margin with shape
                 (n_impostors,).
-            dist : array_like
+            dist : array-like
                 An array of pairwise distances of (imp1, imp2) with shape
                 (n_impostors,).
 
@@ -634,15 +639,15 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        x1 : array_like
+        x1 : array-like
             An array of transformed data samples with shape (n_samples,
             n_features).
-        x2 : array_like
+        x2 : array-like
             An array of transformed data samples with shape (m_samples,
             n_features) where m_samples < n_samples.
-        t1 : array_like
+        t1 : array-like
             An array of distances to the margins with shape (n_samples,).
-        t2 : array_like
+        t2 : array-like
             An array of distances to the margins with shape (m_samples,).
         batch_size : int (Default value = 500)
             The size of each chunk of x1 to compute distances to.
@@ -651,14 +656,14 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Returns
         -------
-        tuple: (array_like, array_like, [array_like])
+        tuple: (array-like, array-like, [array-like])
 
-            imp1 : array_like
+            imp1 : array-like
                 An array of sample indices with shape (n_impostors,).
-            imp2 : array_like
+            imp2 : array-like
                 An array of sample indices that violate a margin with shape
                 (n_impostors,).
-            dist : array_like, optional
+            dist : array-like, optional
                 An array of pairwise distances of (imp1, imp2) with shape
                 (n_impostors,).
 
@@ -697,7 +702,7 @@ def pca_fit(X, var_ratio=1, return_transform=True):
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         An array of data samples with shape (n_samples, n_features).
     var_ratio : float
         The variance ratio to be captured (Default value = 1).
@@ -706,7 +711,7 @@ def pca_fit(X, var_ratio=1, return_transform=True):
 
     Returns
     -------
-    array_like
+    array-like
         If return_transform is True, an array with shape
         (n_samples, n_components) which is the input samples projected
         onto `n_components` principal components. Otherwise the first
@@ -740,7 +745,7 @@ def sum_outer_products(X, weights, remove_zero=False):
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         An array of data samples with shape (n_samples, n_features_in).
     weights : csr_matrix
         A sparse weights matrix (indicating target neighbors) with shape
@@ -751,7 +756,7 @@ def sum_outer_products(X, weights, remove_zero=False):
 
     Returns
     -------
-    array_like
+    array-like
         An array with the sum of all weighted outer products with shape
         (n_features_in, n_features_in).
 
@@ -776,11 +781,11 @@ def pairs_distances_batch(X, ind_a, ind_b, batch_size=500):
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         An array of data samples with shape (n_samples, n_features_in).
-    ind_a : array_like
+    ind_a : array-like
         An array of samples indices with shape (n_indices,).
-    ind_b : array_like
+    ind_b : array-like
         Another array of samples indices with shape (n_indices,).
     batch_size :
         Size of each chunk of X to compute distances for (default: 500)
