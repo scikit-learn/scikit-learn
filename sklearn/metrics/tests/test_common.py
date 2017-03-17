@@ -1185,14 +1185,12 @@ def test_metric_permutation_invariance_thresholded_multiclass():
 
 def test_metric_permutation_invariance_thresholded_multilabel():
     y_true = []
-    y_true_perm = []
     y_score = []
     y_score_perm = []
     rng = np.random.RandomState(42)
     classes_perm = rng.permutation(20)
     for i in range(0, 100):
         n_labels_true = rng.randint(1, 10)
-        n_labels_pred = rng.randint(1, 10)
         y_true.append(rng.randint(0, 20, n_labels_true))
         y_score.append(rng.rand(20))
         y_score_perm.append(y_score[i][classes_perm])
