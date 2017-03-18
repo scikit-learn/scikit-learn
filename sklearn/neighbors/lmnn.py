@@ -272,8 +272,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                                                        disp=self.disp,
                                                        pgtol=self.tol)
             except Exception:
-                raise Exception('lbfgs does not work as expected in this '
-                                'version of SciPy. Probably it is too old.')
+                print('lbfgs does not work as expected in this version of '
+                      'Scipy. Probably it is too old.')
+                return self
 
         self.n_iter_ = info.get('nit', self.n_iter_)
 
@@ -478,7 +479,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         self.n_iter_ += 1
 
-    def _loss_grad(self, L, X):
+    def _loss_grad(self, L):
         """Compute the loss under a given linear transformation `L` and the
         loss gradient w.r.t. `L`.
 
@@ -497,7 +498,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         """
 
-        n_samples, n_features_in = X.shape
+        n_samples, n_features_in = self.X_.shape
         self.L_ = L.reshape(self.n_features_out_, n_features_in)
         self.n_funcalls_ += 1
 
