@@ -116,12 +116,13 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True):
+                 axis=0, verbose=0, copy=True, empty_attribute_constant=None):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
         self.verbose = verbose
         self.copy = copy
+        self.empty_attribute_constant = empty_attribute_constant
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -334,6 +335,12 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.strategy,
                                              self.missing_values,
                                              self.axis)
+
+        # impute completelly empty columns with constant, if required
+        if self.empty_attribute_constant is not None:
+            invalid_mask = np.isnan(statistics)
+            X[:, invalid_mask] = self.empty_attribute_constant
+            statistics[invalid_mask] = self.empty_attribute_constant
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
