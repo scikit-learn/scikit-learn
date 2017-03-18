@@ -246,32 +246,35 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self.n_iter_ = 0
         self.n_funcalls_ = 0
 
+        # Set some default values for the optimizer
+        max_corr = 100
+        max_funcalls = 2*self.max_iter
+
         # Call optimizer
         try:
             L, loss, info = optimize.fmin_l_bfgs_b(func=self._loss_grad,
                                                    x0=self.L_,
-                                                   args=(self.X_,),
-                                                   bounds=None,
-                                                   m=100,
+                                                   m=max_corr,
                                                    pgtol=self.tol,
-                                                   maxfun=500*self.max_iter,
                                                    maxiter=self.max_iter,
+                                                   maxfun=max_funcalls,
                                                    disp=self.disp,
                                                    callback=self._cb)
         except TypeError:
             # Type Error caused in old versions of SciPy because of no
             # maxiter argument (<= 0.9).
-            L, loss, info = optimize.fmin_l_bfgs_b(func=self._loss_grad,
-                                                   x0=self.L_,
-                                                   args=(self.X_,),
-                                                   bounds=None,
-                                                   m=100,
-                                                   pgtol=self.tol)
+            self.L_ = np.asfortranarray(self.L_)
+            try:
+                L, loss, info = optimize.fmin_l_bfgs_b(func=self._loss_grad,
+                                                       x0=self.L_,
+                                                       m=max_corr,
+                                                       maxfun=max_funcalls,
+                                                       disp=self.disp,
+                                                       pgtol=self.tol)
+            except Exception:
+                raise Exception('lbfgs does not work as expected in this '
+                                'version of SciPy. Probably it is too old.')
 
-        if info['warnflag'] == 2:
-            raise ValueError("LargeMarginNearestNeighbor convergence failed:"
-                             " l-BFGS-b solver terminated with %s"
-                             % info['task'].decode('ascii'))
         self.n_iter_ = info.get('nit', self.n_iter_)
 
         # Reshape result from optimizer
