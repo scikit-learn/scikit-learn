@@ -212,7 +212,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         """
 
         # Check inputs consistency
-        self.X_, y = check_X_y(X, y)
+        self.X_, y = check_X_y(X, y, order='F')
         check_classification_targets(y)
 
         # Store the appearing classes and the class index for each sample
