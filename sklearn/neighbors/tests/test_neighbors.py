@@ -16,6 +16,8 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.validation import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.neighbors.base import (VALID_METRICS,
+                                      VALID_METRICS_SPARSE)
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
 
@@ -149,7 +151,7 @@ def test_precomputed(random_state=42):
                 neighbors.RadiusNeighborsClassifier,
                 neighbors.KNeighborsRegressor,
                 neighbors.RadiusNeighborsRegressor):
-        print(Est)
+        
         est = Est(metric='euclidean')
         est.radius = est.n_neighbors = 1
         pred_X = est.fit(X, target).predict(Y)
@@ -984,8 +986,26 @@ def test_callable_metric():
 
     dist1, ind1 = nbrs1.kneighbors(X)
     dist2, ind2 = nbrs2.kneighbors(X)
-
+    
+    assert_true(nbrs1._fit_method, 'ball_tree')
+    assert_true(nbrs2._fit_method, 'ball_tree')
+    
     assert_array_almost_equal(dist1, dist2)
+
+
+def test_algo_auto_metrics():
+    X = rng.rand(12, 3)
+    Xcsr = csr_matrix(X)
+  
+    for metric in VALID_METRICS['brute']:
+        nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                        metric=metric).fit(X)
+        assert_true(nn._fit_method, 'brute')
+
+    for metric in VALID_METRICS_SPARSE['brute']:
+        nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                        metric=metric).fit(Xcsr)
+        assert_true(nn._fit_method, 'brute')
 
 
 def test_metric_params_interface():
