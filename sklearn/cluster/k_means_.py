@@ -175,15 +175,17 @@ def _init_kmeans_pll(X, n_clusters, x_squared_norms, random_state,
 
     elected_centers = []
     candidate_centers = []
-    X_temp = X.tolist()
-    X = np.mat(X)
+    if type(X) == np.mat:
+        X = X.A
+    else:
+        X = np.array(X)
 
     # initialize 2-d mat with first center selected arbitrarily
-    candidate_centers.append(X[0, :].tolist()[0])
+    candidate_centers.append(X[0, :].tolist())
 
     # Step-2 find the nearest distance to the closest centers
     # in candidate_centers
-    Dx = np.array([min([distEclud(c, x) for c in candidate_centers])
+    Dx = np.array([min([distEclud(c, np.array(x)) for c in candidate_centers])
                    for x in X])
     psi = sum(Dx)
     l = int(ceil(log(psi)))
@@ -193,8 +195,8 @@ def _init_kmeans_pll(X, n_clusters, x_squared_norms, random_state,
 
         # Step-4 sample each point independently
         r_points = np.random.random_sample((sampling_factor, ))
-        Dx = np.array([min([distEclud(c, x) for c in candidate_centers])
-                       for x in X])
+        Dx = np.array([min([distEclud(c, np.array(x))
+                       for c in candidate_centers]) for x in X])
         probs = (sampling_factor * Dx)/psi
         cumsumprobs = np.cumsum(probs)
         psi = sum(Dx)
@@ -206,7 +208,8 @@ def _init_kmeans_pll(X, n_clusters, x_squared_norms, random_state,
                     i = j
                     break
             # Step-5 add the point to the candidate center
-            candidate_centers.append(X[i, :].tolist()[0])
+            candidate_centers.append(X[i, :].tolist())
+            X = np.delete(X, i, axis=0)
         # parallel job stop
 
     # Step-6 end for
@@ -214,10 +217,10 @@ def _init_kmeans_pll(X, n_clusters, x_squared_norms, random_state,
     # Step-7 weight each candidate point according to how many points its
     # closest to
     w = [0 for _ in range(len(candidate_centers))]
-    for i in range(len(X_temp)):
+    for i in range(len(X)):
         minDist = float("inf")
         for j, c in enumerate(candidate_centers):
-                dist = distEclud(c, np.array(X_temp[i]))
+                dist = distEclud(c, np.array(X[i]))
                 if dist < minDist:
                     minDist = dist
                     index = j
