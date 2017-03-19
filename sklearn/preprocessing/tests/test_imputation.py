@@ -15,7 +15,8 @@ from sklearn.random_projection import sparse_random_matrix
 
 
 def _check_statistics(X, X_true,
-                      strategy, statistics, missing_values):
+                      strategy, statistics, missing_values,
+                      empty_attribute_constant=None):
     """Utility function for testing imputation for a given strategy.
 
     Test:
@@ -30,16 +31,16 @@ def _check_statistics(X, X_true,
               "axis = {0}, sparse = {1}" % (strategy, missing_values)
 
     # Normal matrix, axis = 0
-    imputer = Imputer(missing_values, strategy=strategy, axis=0)
+    imputer = Imputer(missing_values, strategy=strategy, axis=0, empty_attribute_constant=empty_attribute_constant)
     X_trans = imputer.fit(X).transform(X.copy())
     assert_array_equal(imputer.statistics_, statistics,
                        err_msg.format(0, False))
     assert_array_equal(X_trans, X_true, err_msg.format(0, False))
 
     # Normal matrix, axis = 1
-    imputer = Imputer(missing_values, strategy=strategy, axis=1)
+    imputer = Imputer(missing_values, strategy=strategy, axis=1, empty_attribute_constant=empty_attribute_constant)
     imputer.fit(X.transpose())
-    if np.isnan(statistics).any():
+    if np.isnan(statistics).any() and empty_attribute_constant is None:
         assert_raises(ValueError, imputer.transform, X.copy().transpose())
     else:
         X_trans = imputer.transform(X.copy().transpose())
@@ -47,7 +48,7 @@ def _check_statistics(X, X_true,
                            err_msg.format(1, False))
 
     # Sparse matrix, axis = 0
-    imputer = Imputer(missing_values, strategy=strategy, axis=0)
+    imputer = Imputer(missing_values, strategy=strategy, axis=0, empty_attribute_constant=empty_attribute_constant)
     imputer.fit(sparse.csc_matrix(X))
     X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
 
@@ -59,9 +60,9 @@ def _check_statistics(X, X_true,
     assert_array_equal(X_trans, X_true, err_msg.format(0, True))
 
     # Sparse matrix, axis = 1
-    imputer = Imputer(missing_values, strategy=strategy, axis=1)
+    imputer = Imputer(missing_values, strategy=strategy, axis=1, empty_attribute_constant=empty_attribute_constant)
     imputer.fit(sparse.csc_matrix(X.transpose()))
-    if np.isnan(statistics).any():
+    if np.isnan(statistics).any() and empty_attribute_constant is None:
         assert_raises(ValueError, imputer.transform,
                       sparse.csc_matrix(X.copy().transpose()))
     else:
@@ -119,6 +120,68 @@ def test_imputation_mean_median_only_zero():
     _check_statistics(X, X_imputed_mean, "mean", statistics_mean, 0)
     _check_statistics(X_for_median, X_imputed_median, "median",
                       statistics_median, 0)
+
+
+def test_imputation_empty_column_missing_zero():
+    X = np.array([
+        [np.nan, 0, 0, 0, 5],
+        [np.nan, 1, 0, np.nan, 3],
+        [np.nan, 2, 0, 0, 0],
+        [np.nan, 6, 0, 5, 13],
+    ])
+
+    X_imputed_mean = np.array([
+        [-1, 3, -1, -1, 5],
+        [-1, 1, -1, -1, 3],
+        [-1, 2, -1, -1, 7],
+        [-1, 6, -1, -1, 13],
+    ])
+    statistics_mean = [np.nan, 3, np.nan, np.nan, 7]
+    _check_statistics(X, X_imputed_mean, "mean",
+                      statistics_mean, 0, empty_attribute_constant=-1)
+
+    X_for_median = X[:, [0, 1, 2, 4]]
+    X_imputed_median = np.array([
+        [-1, 2, -1, 5],
+        [-1, 1, -1, 3],
+        [-1, 2, -1, 5],
+        [-1, 6, -1, 13],
+    ])
+    statistics_median = [np.nan, 2, np.nan, 5]
+    _check_statistics(X_for_median, X_imputed_median,
+                      "median", statistics_median, 0,
+                      empty_attribute_constant=-1)
+
+
+def test_imputation_empty_column_missing_nan():
+    X = np.array([
+        [np.nan, 3, 0, 4, np.nan],
+        [np.nan, 1, 0, np.nan, 5],
+        [np.nan, 2, 0, 0, 0],
+        [np.nan, 6, 0, 5, 13],
+    ])
+
+    X_imputed_mean = np.array([
+        [-1, 3, 0, 4, 6],
+        [-1, 1, 0, 3, 5],
+        [-1, 2, 0, 0, 0],
+        [-1, 6, 0, 5, 13],
+    ])
+    statistics_mean = [np.nan, 3, 0, 3, 6]
+    _check_statistics(X, X_imputed_mean, "mean",
+                      statistics_mean, "NaN",
+                      empty_attribute_constant=-1)
+
+    X_imputed_median = np.array([
+        [-1, 3, 0, 4, 5],
+        [-1, 1, 0, 4, 5],
+        [-1, 2, 0, 0, 0],
+        [-1, 6, 0, 5, 13],
+    ])
+    X_imputed_median = [np.nan, 3, 0, 4, 5]
+    _check_statistics(X, X_imputed_mean, "mean",
+                      statistics_mean, "NaN",
+                      empty_attribute_constant=-1)
 
 
 def safe_median(arr, *args, **kwargs):
