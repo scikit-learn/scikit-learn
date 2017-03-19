@@ -620,8 +620,8 @@ is called :math:`(r, e , p1 , p2 )`-sensitive, with :math:`r, e > 0`,
 :math:`p_1 > p_2 > 0`, if for any :math:`p, q \in S`, the following conditions
 hold (:math:`D` is the distance function):
 
-* If :math:`D(p,q) <= r` then :math:`P_H[h(p) = h(q)] >= p_1`,
-* If :math:`D(p,q) > r(1 + e)` then :math:`P_H[h(p) = h(q)] <= p_2`.
+* If :math:`D(p,q) \le r` then :math:`P_H[h(p) = h(q)] \ge p_1`,
+* If :math:`D(p,q) > r(1 + e)` then :math:`P_H[h(p) = h(q)] \le p_2`.
 
 As defined, nearby points within a distance of :math:`r` to each other are
 likely to collide with probability :math:`p_1`. In contrast, distant points
