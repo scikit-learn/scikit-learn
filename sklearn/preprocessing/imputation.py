@@ -312,7 +312,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             check_is_fitted(self, 'statistics_')
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
                             force_all_finite=False, copy=self.copy)
-            statistics = self.statistics_
+            statistics = self.statistics_.copy()
             if X.shape[1] != statistics.shape[0]:
                 raise ValueError("X has %d features per sample, expected %d"
                                  % (X.shape[1], self.statistics_.shape[0]))
@@ -336,11 +336,16 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.missing_values,
                                              self.axis)
 
-        # impute completelly empty columns with constant, if required
+        # impute completelly empty columns with constant, if
+        # `empty_attribute_constant' parameter was set
         if self.empty_attribute_constant is not None:
             invalid_mask = np.isnan(statistics)
-            X[:, invalid_mask] = self.empty_attribute_constant
-            statistics[invalid_mask] = self.empty_attribute_constant
+            if self.axis == 0:
+                X[:, invalid_mask] = self.empty_attribute_constant
+                statistics[invalid_mask] = self.empty_attribute_constant
+            else:
+                X[invalid_mask, :] = self.empty_attribute_constant
+                statistics[invalid_mask] = self.empty_attribute_constant
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
