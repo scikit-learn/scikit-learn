@@ -665,7 +665,7 @@ There are two phases of tree traversals used in order to answer a query to find
 the :math:`m` nearest neighbors of a point :math:`q`. First, a top-down
 traversal is performed using a binary search to identify the leaf having the
 longest prefix match (maximum depth) with :math:`q`'s label after subjecting
-:math:`q` to the same hash functions. :math:`M >> m` points (total candidates)
+:math:`q` to the same hash functions. :math:`M \gg m` points (total candidates)
 are extracted from the forest, moving up from the previously found maximum 
 depth towards the root synchronously across all trees in the bottom-up
 traversal. `M` is set to  :math:`cl` where :math:`c`, the number of candidates
