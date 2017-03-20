@@ -256,19 +256,18 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                     iprint=iprint,
                     args=(X, y_, targets, grad_static))
 
-            except ValueError as ve:
+            except (ValueError, Exception) as e:
                 # ValueError: failed to initialize intent(inout) array --
                 # input not fortran contiguous
-                raise ValueError('Reraising ValueError: {}\n\t'.format(ve))
-
-            except Exception:
+                # or
+                # ValueError: zero-size array to maximum.reduce without
+                # identity
+                # or
                 # _lbfgsb.error: failed in converting 4th argument `u' of
                 # _lbfgsb.setulb to C/Fortran array
-                # raise Exception('Old Scipy / lbfgsb version:\n\t{}'.
-                # format(e))
                 raise SkipTest("Skipping because SciPy version earlier than "
-                               "0.12.0 and thus _lbfgsb.error is caused on "
-                               "some *nix systems.")
+                               "0.12.0 and thus errors are caused on some "
+                               "*nix systems:\n\t{}".format(e))
 
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //
