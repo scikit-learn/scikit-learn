@@ -31,14 +31,16 @@ def _check_statistics(X, X_true,
               "axis = {0}, sparse = {1}" % (strategy, missing_values)
 
     # Normal matrix, axis = 0
-    imputer = Imputer(missing_values, strategy=strategy, axis=0, fill_empty=fill_empty)
+    imputer = Imputer(missing_values, strategy=strategy, axis=0,
+                      fill_empty=fill_empty)
     X_trans = imputer.fit(X).transform(X.copy())
     assert_array_equal(imputer.statistics_, statistics,
                        err_msg.format(0, False))
     assert_array_equal(X_trans, X_true, err_msg.format(0, False))
 
     # Normal matrix, axis = 1
-    imputer = Imputer(missing_values, strategy=strategy, axis=1, fill_empty=fill_empty)
+    imputer = Imputer(missing_values, strategy=strategy, axis=1,
+                      fill_empty=fill_empty)
     imputer.fit(X.transpose())
     if np.isnan(statistics).any() and not avoids_value_error:
         assert_raises(ValueError, imputer.transform, X.copy().transpose())
@@ -48,7 +50,8 @@ def _check_statistics(X, X_true,
                            err_msg.format(1, False))
 
     # Sparse matrix, axis = 0
-    imputer = Imputer(missing_values, strategy=strategy, axis=0, fill_empty=fill_empty)
+    imputer = Imputer(missing_values, strategy=strategy, axis=0,
+                      fill_empty=fill_empty)
     imputer.fit(sparse.csc_matrix(X))
     X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
 
@@ -60,7 +63,8 @@ def _check_statistics(X, X_true,
     assert_array_equal(X_trans, X_true, err_msg.format(0, True))
 
     # Sparse matrix, axis = 1
-    imputer = Imputer(missing_values, strategy=strategy, axis=1, fill_empty=fill_empty)
+    imputer = Imputer(missing_values, strategy=strategy, axis=1,
+                      fill_empty=fill_empty)
     imputer.fit(sparse.csc_matrix(X.transpose()))
     if np.isnan(statistics).any() and not avoids_value_error:
         assert_raises(ValueError, imputer.transform,

@@ -347,7 +347,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         if self.fill_empty is not None:
             if sparse.issparse(X):
                 X = X.toarray()
-            empty_mask = np.all(_get_mask(X, self.missing_values), axis=self.axis)
+            empty_mask = np.all(_get_mask(X, self.missing_values),
+                                axis=self.axis)
             statistics[empty_mask] = self.fill_empty
 
         # Delete the invalid rows/columns
