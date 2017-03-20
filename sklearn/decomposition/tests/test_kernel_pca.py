@@ -1,11 +1,13 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
-                                   assert_equal, assert_not_equal,
-                                   assert_raises, assert_false,
-                                   assert_no_warnings)
-
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.linear_model import Perceptron
@@ -223,7 +225,6 @@ def test_nested_circles():
 
 
 def test_nan_fit_transform():
-
     data = np.array([[0.766655, 0.682869, 0.390646, 0.760579, 0.420476],
                      [0.228259, 0.215964, 0.850258, 0.586082, 0.772744],
                      [0.844907, 0.622898, 0.590107, 0.0109604, 0.368699],
@@ -231,17 +232,10 @@ def test_nan_fit_transform():
                      [0.494486, 0.373545, 0.887394, 0.185106, 0.189797],
                      [0.391528, 0.80944, 0.100942, 0.981701, 0.169761]])
 
-    kernel_type = 'sigmoid'
-    settings_degree = 10
-    settings_gamma = 4
-    settings_coef0 = 0
-
     kpca = KernelPCA(n_components=data.shape[1],
-                     kernel=kernel_type,
-                     degree=settings_degree,
-                     gamma=settings_gamma,
-                     coef0=settings_coef0)
-
+                     kernel='sigmoid',
+                     degree=10,
+                     gamma=4,
+                     coef0=0)
     output = assert_no_warnings(kpca.fit_transform, data)
-
     assert_false(np.isnan(output).any())
