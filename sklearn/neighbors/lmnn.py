@@ -16,7 +16,7 @@ from scipy import sparse, optimize
 from ..neighbors import KNeighborsClassifier
 from ..metrics.pairwise import euclidean_distances
 from ..utils import gen_batches
-from ..utils.fixes import argpartition
+from ..utils.fixes import argpartition, sp_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y, \
     check_random_state
@@ -44,7 +44,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     ----------
     L : array with shape (n_features_out, n_features_in), optional, default
         None
-        Initial transformation.
+        Initial linear transformation.
 
     n_neighbors : int, optional, default 3
         Number of target neighbors.
@@ -90,8 +90,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     iprint : bool, optional, default False
         Whether to print progress messages from the optimizer.
 
-    random_state : int
-        A seed for reproducibility of random state (default: None).
+    random_state : int, optional, default None
+        A seed for reproducibility of random state.
 
     n_jobs : int, optional, default 1
         The number of parallel jobs to run for neighbors search.
@@ -233,7 +233,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         iprint = 2*int(self.iprint) - 1
 
         # Call optimizer
-        try:
+        if sp_version >= (0, 12, 0):
             L, loss, info = optimize.fmin_l_bfgs_b(
                 func=self._loss_grad,
                 x0=L,
@@ -242,10 +242,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 maxiter=self.max_iter,
                 iprint=iprint,
                 args=(X, y_, targets, grad_static))
-
-        except TypeError:
+        else:
             # Type Error caused in old versions of SciPy because of no
-            # maxiter argument (<= 0.9).
+            # maxiter argument (<= 0.11.0).
             L = np.asfortranarray(L)
             try:
                 L, loss, info = optimize.fmin_l_bfgs_b(
@@ -257,10 +256,15 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                     iprint=iprint,
                     args=(X, y_, targets, grad_static))
 
-            except Exception:
-                print('lbfgs does not work as expected in this version of '
-                      'Scipy. Probably it is too old.')
-                return self
+            except ValueError as ve:
+                # ValueError: failed to initialize intent(inout) array --
+                # input not fortran contiguous
+                raise ValueError('Reraising ValueError: {}\n\t'.format(ve))
+
+            except Exception as e:
+                # _lbfgsb.error: failed in converting 4th argument `u' of
+                # _lbfgsb.setulb to C/Fortran array
+                raise Exception('Old Scipy / lbfgsb version:\n\t{}'.format(e))
 
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //
@@ -287,7 +291,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         X : array-like, shape (n_samples, n_features_in)
             Data samples.
 
-        check: bool, optional, default False
+        check: bool, optional, default True
             Whether to validate ``X``.
 
         Returns
