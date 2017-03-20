@@ -146,7 +146,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
 def _init_kmeans_pll(X, n_clusters, x_squared_norms, random_state,
                      sampling_factor=1):
-    """Init n_clusters seeds according to k-means++
+    """Init n_clusters seeds according to k-means++ ,a scalable approach
 
     Parameters
     -----------
@@ -308,6 +308,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
+
+        'k-means||' : select initial cluster centers for k-means clustering
+        by oversampling. Use only when you can run multiple parallel jobs.
+        Notes in _init_kmeans_pll for more details.
 
         'random': generate k centroids from a Gaussian with mean and
         variance estimated from the data.
@@ -540,12 +544,17 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
     max_iter : int, optional, default 300
         Maximum number of iterations of the k-means algorithm to run.
 
-    init : {'k-means++', 'random', or ndarray, or a callable}, optional
+    init : {'k-means++', 'k-means||', 'random', or ndarray, or a callable},
+        optional
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
+
+        'k-means||' : select initial cluster centers for k-means clustering
+        by oversampling. Use only when you can run multiple parallel jobs.
+        Notes in _init_kmeans_pll for more details.
 
         'random': generate k centroids from a Gaussian with mean and
         variance estimated from the data.
@@ -761,6 +770,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     init : {'k-means++', 'k-means||', 'random' or ndarray or callable} optional
         Method for initialization
 
+        'k-means||' : select initial cluster centers for k-means clustering
+        by oversampling. Use only when you can run multiple parallel jobs.
+        Notes in _init_kmeans_pll for more details.
+
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
@@ -860,6 +873,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
+
+        'k-means||' : select initial cluster centers for k-means clustering
+        by oversampling. Use only when you can run multiple parallel jobs.
+        Notes in _init_kmeans_pll for more details.
 
         'random': choose k observations (rows) at random from data for
         the initial centroids.
@@ -1367,6 +1384,10 @@ class MiniBatchKMeans(KMeans):
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
         Notes in k_init for more details.
+
+        'k-means||' : select initial cluster centers for k-means clustering
+        by oversampling. Use only when you can run multiple parallel jobs.
+        Notes in _init_kmeans_pll for more details.
 
         'random': choose k observations (rows) at random from data for
         the initial centroids.
