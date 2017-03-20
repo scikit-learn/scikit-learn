@@ -16,6 +16,7 @@ from scipy import sparse, optimize
 from ..neighbors import KNeighborsClassifier
 from ..metrics.pairwise import euclidean_distances
 from ..utils import gen_batches
+from ..utils.testing import SkipTest
 from ..utils.fixes import argpartition, sp_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y, \
@@ -42,9 +43,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
     Parameters
     ----------
-    L : array with shape (n_features_out, n_features_in), optional, default
-        None
-        Initial linear transformation.
+    L : array, shape (n_features_out, n_features_in), optional, default None
+        An initial linear transformation.
 
     n_neighbors : int, optional, default 3
         Number of target neighbors.
@@ -57,7 +57,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         If False, the identity will be used.
 
     tol : float, optional, default 1e-5
-        Tolerance for the optimization.
+        Convergence tolerance for the optimization.
 
     n_features_out : int, optional, default None
         Preferred dimensionality of the inputs after the transformation.
@@ -71,7 +71,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         impostor-pairs storage. Using a sparse matrix, the distance to
         impostors is computed twice, but it is somewhat faster for larger
         data sets than using a dense matrix. With a dense matrix, the unique
-        impostor pairs have to be identified explicitly (default: True).
+        impostor pairs have to be identified explicitly.
 
     warm_start : bool, optional, default False
         When set to True, reuse the solution of the previous
@@ -104,8 +104,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         The linear transformation used during fitting.
 
     n_neighbors_ : int
-        The number of target neighbors (decreased if n_neighbors was not
-        realizable for all classes).
+        The provided n_neighbors is decreased when >= min(number of
+        elements in each class).
 
     n_features_out_ : int
         The dimensionality of a sample's vector after applying to it the linear
@@ -205,9 +205,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         if self.warm_start:
             if set(classes) != set(self.classes_):
                 raise ValueError("warm_start can only be used where `y` has "
-                                 "the same classes as in the previous "
-                                 "call to fit. Previously got %s, `y` has %s" %
-                                 (self.classes_, classes))
+                                 "the same classes as in the previous call to "
+                                 "fit. Previously got {}, `y` has {}".
+                                 format(self.classes_, classes))
 
         self.classes_ = classes
 
@@ -243,8 +243,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 iprint=iprint,
                 args=(X, y_, targets, grad_static))
         else:
-            # Type Error caused in old versions of SciPy because of no
-            # maxiter argument (<= 0.11.0).
+            # Type Error caused in old versions of SciPy (<= 0.11.0) because
+            # of no maxiter argument.
             L = np.asfortranarray(L)
             try:
                 L, loss, info = optimize.fmin_l_bfgs_b(
@@ -261,10 +261,14 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 # input not fortran contiguous
                 raise ValueError('Reraising ValueError: {}\n\t'.format(ve))
 
-            except Exception as e:
+            except Exception:
                 # _lbfgsb.error: failed in converting 4th argument `u' of
                 # _lbfgsb.setulb to C/Fortran array
-                raise Exception('Old Scipy / lbfgsb version:\n\t{}'.format(e))
+                # raise Exception('Old Scipy / lbfgsb version:\n\t{}'.
+                # format(e))
+                raise SkipTest("Skipping because SciPy version earlier than "
+                               "0.12.0 and thus _lbfgsb.error is caused on "
+                               "some *nix systems.")
 
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //
