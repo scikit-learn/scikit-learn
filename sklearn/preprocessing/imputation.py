@@ -102,6 +102,12 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If `axis=0` and X is encoded as a CSR matrix;
         - If `axis=1` and X is encoded as a CSC matrix.
 
+    fill_empty : integer, optional (default=None)
+        When set, axis (columns/rows) that contain solely empty values
+        will not be removed, but rather be imputed by this constant.
+        Note that if missing_values != "NaN" and the data contains "NaN"-
+        values nonetheless, these columns will still be removed.
+
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -116,13 +122,13 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True, empty_attribute_constant=None):
+                 axis=0, verbose=0, copy=True, fill_empty=None):
         self.missing_values = missing_values
         self.strategy = strategy
         self.axis = axis
         self.verbose = verbose
         self.copy = copy
-        self.empty_attribute_constant = empty_attribute_constant
+        self.fill_empty = fill_empty
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -337,15 +343,12 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.axis)
 
         # impute completelly empty columns with constant, if
-        # `empty_attribute_constant' parameter was set
-        if self.empty_attribute_constant is not None:
-            invalid_mask = np.isnan(statistics)
-            if self.axis == 0:
-                X[:, invalid_mask] = self.empty_attribute_constant
-                statistics[invalid_mask] = self.empty_attribute_constant
-            else:
-                X[invalid_mask, :] = self.empty_attribute_constant
-                statistics[invalid_mask] = self.empty_attribute_constant
+        # `fill_empty' parameter was set
+        if self.fill_empty is not None:
+            if sparse.issparse(X):
+                X = X.toarray()
+            empty_mask = np.all(_get_mask(X, self.missing_values), axis=self.axis)
+            statistics[empty_mask] = self.fill_empty
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
