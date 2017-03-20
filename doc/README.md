@@ -1,4 +1,4 @@
-#Documentation for scikit-learn
+# Documentation for scikit-learn
 
 This section contains the full manual and web page as displayed in
 http://scikit-learn.org. To generate the full web page, including
@@ -34,4 +34,3 @@ to update the http://scikit-learn.org/dev tree of the website.
 The configuration of this server is managed at:
 
   https://github.com/scikit-learn/sklearn-docbuilder
-
