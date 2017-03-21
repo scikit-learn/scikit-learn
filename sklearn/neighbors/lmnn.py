@@ -16,7 +16,6 @@ from scipy import sparse, optimize
 from ..neighbors import KNeighborsClassifier
 from ..metrics.pairwise import euclidean_distances
 from ..utils import gen_batches
-from ..utils.testing import SkipTest
 from ..utils.fixes import argpartition, sp_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y, \
@@ -196,11 +195,15 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         """
 
         # Check inputs consistency
-        X, y = check_X_y(X, y, order='F')
+        X, y = check_X_y(X, y)
         check_classification_targets(y)
 
         # Store the appearing classes and the class index for each sample
         classes, y_ = np.unique(y, return_inverse=True)
+
+        if len(classes) <= 1:
+            raise ValueError("LargeMarginNearestNeighbor requires 2 or more "
+                             "distinct classes, got {}.".format(len(classes)))
 
         if self.warm_start:
             if set(classes) != set(self.classes_):
@@ -232,6 +235,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self.n_funcalls_ = 0
         iprint = 2*int(self.iprint) - 1
 
+        # For older versions of fmin, x0 needs to be a vector
+        L = L.ravel()
+
         # Call optimizer
         if sp_version >= (0, 12, 0):
             L, loss, info = optimize.fmin_l_bfgs_b(
@@ -245,7 +251,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         else:
             # Type Error caused in old versions of SciPy (<= 0.11.0) because
             # of no maxiter argument.
-            L = np.asfortranarray(L)
             try:
                 L, loss, info = optimize.fmin_l_bfgs_b(
                     func=self._loss_grad,
@@ -256,18 +261,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                     iprint=iprint,
                     args=(X, y_, targets, grad_static))
 
-            except (ValueError, Exception) as e:
-                # ValueError: failed to initialize intent(inout) array --
-                # input not fortran contiguous
-                # or
-                # ValueError: zero-size array to maximum.reduce without
-                # identity
-                # or
-                # _lbfgsb.error: failed in converting 4th argument `u' of
-                # _lbfgsb.setulb to C/Fortran array
-                raise SkipTest("Skipping because SciPy version earlier than "
-                               "0.12.0 and thus errors are caused on some "
-                               "*nix systems:\n\t{}".format(e))
+            except ValueError as e:
+                # zero-size array to maximum.reduce without identity
+                raise ValueError("Reraising ValueError\n\t{}".format(e))
 
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //
@@ -797,6 +793,8 @@ def sum_outer_products(X, weights, remove_zero=False):
     """
     weights_sym = weights + weights.T
     if remove_zero:
+        # this throws the following ValueError in some old numpy version:
+        # zero-size array to maximum.reduce without identity
         _, cols = weights_sym.nonzero()
         ind = np.unique(cols)
         weights_sym = weights_sym.tocsc()[:, ind].tocsr()[ind, :]
