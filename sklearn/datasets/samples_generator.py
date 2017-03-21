@@ -687,7 +687,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     n_samples : int or list, optional (default=100)
         The total number of points equally divided among clusters if it
         is an int. Otherwise each element of the list indicates
-        the number of samples per cluster
+        the number of samples per cluster.
 
     n_features : int, optional (default=2)
         The number of features for each sample.
@@ -696,7 +696,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         (default=3)
         The number of centers to generate, or the fixed center locations.
         If n_samples is a list, centers is considered only if it is a list
-        of the same length
+        of the same length.
 
     cluster_std : float or sequence of floats, optional (default=1.0)
         The standard deviation of the clusters.
