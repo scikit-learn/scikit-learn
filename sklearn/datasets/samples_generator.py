@@ -684,8 +684,10 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
     Parameters
     ----------
-    n_samples : int, optional (default=100)
-        The total number of points equally divided among clusters.
+    n_samples : int or list, optional (default=100)
+        The total number of points equally divided among clusters if it
+        is an int. Otherwise each element of the list indicates
+        the number of samples per cluster
 
     n_features : int, optional (default=2)
         The number of features for each sample.
@@ -693,6 +695,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     centers : int or array of shape [n_centers, n_features], optional
         (default=3)
         The number of centers to generate, or the fixed center locations.
+        If n_samples is a list, centers is considered only if it is a list
+        of the same length
 
     cluster_std : float or sequence of floats, optional (default=1.0)
         The standard deviation of the clusters.
@@ -734,12 +738,34 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     """
     generator = check_random_state(random_state)
 
-    if isinstance(centers, numbers.Integral):
-        centers = generator.uniform(center_box[0], center_box[1],
-                                    size=(centers, n_features))
+    if isinstance(n_samples, int):
+        # n_centers is figured by the centers arg
+        if isinstance(centers, numbers.Integral):
+            centers = generator.uniform(center_box[0], center_box[1],
+                                        size=(centers, n_features))
+        else:
+            centers = check_array(centers)
+            n_features = centers.shape[1]
+
+        n_centers = centers.shape[0]
+
     else:
-        centers = check_array(centers)
-        n_features = centers.shape[1]
+        # n_centers is figured by the [n_samples] arg
+        n_centers = len(n_samples)
+        if isinstance(centers, int):
+            # generate centers based on [n_samples]
+            centers = generator.uniform(center_box[0], center_box[1],
+                                        size=(n_centers, n_features))
+        elif len(centers) == n_centers:
+            # take into acount [centers] only if it has appropriate length
+            centers = check_array(centers)
+            n_features = centers.shape[1]
+
+    # stds: if cluster_std is given as list, it must be consistent
+    # with the n_centers
+    if isinstance(cluster_std, list) and len(cluster_std) != n_centers:
+        raise ValueError("Length of clusters_std not consistent"
+                         " with number of centers")
 
     if isinstance(cluster_std, numbers.Real):
         cluster_std = np.ones(len(centers)) * cluster_std
@@ -747,22 +773,28 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     X = []
     y = []
 
-    n_centers = centers.shape[0]
-    n_samples_per_center = [int(n_samples // n_centers)] * n_centers
+    if isinstance(n_samples, list):
+        n_samples_per_center = n_samples
+    else:
+        n_samples_per_center = [int(n_samples // n_centers)] * n_centers
 
-    for i in range(n_samples % n_centers):
-        n_samples_per_center[i] += 1
+        for i in range(n_samples % n_centers):
+            n_samples_per_center[i] += 1
 
     for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
-        X.append(centers[i] + generator.normal(scale=std,
-                                               size=(n, n_features)))
+        X.append(generator.normal(loc=centers[i], scale=std,
+                                  size=(n, n_features)))
         y += [i] * n
 
     X = np.concatenate(X)
     y = np.array(y)
 
     if shuffle:
-        indices = np.arange(n_samples)
+        if isinstance(n_samples, list):
+            total_n_samples = sum(n_samples)
+        else:
+            total_n_samples = n_samples
+        indices = np.arange(total_n_samples)
         generator.shuffle(indices)
         X = X[indices]
         y = y[indices]
