@@ -553,7 +553,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                      (n_samples, n_samples))
             loss = loss + np.sum(loss1 ** 2) + np.sum(loss2 ** 2)
 
-        grad_new = sum_outer_products(X, A0, remove_zero=True)
+        grad_new = sum_outer_products(X, A0, remove_zero=False)
         grad = self.L_.dot(grad_static + grad_new)
         grad *= 2
         loss = loss + (grad_static * (self.L_.T.dot(self.L_))).sum()
