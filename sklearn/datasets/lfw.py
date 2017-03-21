@@ -34,7 +34,8 @@ try:
 except ImportError:
     import urllib
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 from ..externals.joblib import Memory
 
 from ..externals.six import b

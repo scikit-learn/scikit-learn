@@ -37,9 +37,9 @@ except ImportError:
 import numpy as np
 from scipy.io.matlab import loadmat
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
 from .base import _pkl_filepath
-from ..utils import check_random_state
+from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
 

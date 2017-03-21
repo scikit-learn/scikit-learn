@@ -520,6 +520,14 @@ def test_pipeline_named_steps():
     assert_true(pipeline.named_steps.mock is transf)
     assert_true(pipeline.named_steps.mult is mult2)
 
+    # Test bunch with conflict attribute of dict
+    pipeline = Pipeline([('values', transf), ("items", mult2)])
+    assert_true('values' in pipeline.named_steps)
+    assert_true('items' in pipeline.named_steps)
+    # still need to verify
+    #assert_true(pipeline.named_steps.values is transf)
+    #assert_true(pipeline.named_steps.items is mult2)
+
 
 def test_set_pipeline_step_none():
     # Test setting Pipeline steps to None
