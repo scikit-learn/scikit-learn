@@ -251,19 +251,14 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         else:
             # Type Error caused in old versions of SciPy (<= 0.11.0) because
             # of no maxiter argument.
-            try:
-                L, loss, info = optimize.fmin_l_bfgs_b(
-                    func=self._loss_grad,
-                    x0=L,
-                    m=self.max_corrections,
-                    pgtol=self.tol,
-                    maxfun=self.max_iter,
-                    iprint=iprint,
-                    args=(X, y_, targets, grad_static))
-
-            except ValueError as e:
-                # zero-size array to maximum.reduce without identity
-                raise ValueError("Reraising ValueError\n\t{}".format(e))
+            L, loss, info = optimize.fmin_l_bfgs_b(
+                func=self._loss_grad,
+                x0=L,
+                m=self.max_corrections,
+                pgtol=self.tol,
+                maxfun=self.max_iter,
+                iprint=iprint,
+                args=(X, y_, targets, grad_static))
 
         # Reshape result from optimizer
         self.L_ = L.reshape(self.n_features_out_, L.size //
