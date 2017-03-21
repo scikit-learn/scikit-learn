@@ -441,7 +441,7 @@ class SingleInheritanceEstimator(BaseEstimator):
         return data
 
 
-@ignore_warnings(category=(DeprecationWarning, UserWarning))
+@ignore_warnings(category=(UserWarning))
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
     estimator._attribute_not_pickled = "this attribute should not be pickled"
