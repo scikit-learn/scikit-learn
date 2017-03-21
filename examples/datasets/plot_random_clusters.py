@@ -23,7 +23,7 @@ plt.figure(figsize=(8, 8))
 plt.subplots_adjust(bottom=.05, top=.9, left=.05, right=.95)
 
 plt.subplot(221)
-plt.title("Varying standard deviation and numper of samples",
+plt.title("Varying standard deviation and number of samples",
           fontsize='small')
 samples = [20, 20, 5]
 cluster_stds = np.array([0.05, 0.2, 0.4])
@@ -33,7 +33,7 @@ X, y = make_blobs(random_state=42, n_samples=samples, n_features=2,
 plt.scatter(X[:, 0], X[:, 1], marker='o', c=y)
 
 plt.subplot(222)
-plt.title("Four clusters with varying numer of samples each",
+plt.title("Four clusters with varying number of samples each",
           fontsize='small')
 samples = [2, 8, 32, 64]
 cluster_centers = [[-5.0, -5.0], [-5.0, 5.0], [5.0, 5.0], [5.0, -5.0]]
