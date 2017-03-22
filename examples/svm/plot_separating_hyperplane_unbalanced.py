@@ -40,7 +40,7 @@ clusters_std = [1.5, 0.5]
 X, y = make_blobs(n_samples=[n_samples_1, n_samples_2],
                   centers=centers,
                   cluster_std=clusters_std,
-                  random_state=0)
+                  random_state=0, shuffle=False)
 
 # fit the model and get the separating hyperplane
 clf = svm.SVC(kernel='linear', C=1.0)
