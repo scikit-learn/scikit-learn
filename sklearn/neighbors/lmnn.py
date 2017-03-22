@@ -17,9 +17,9 @@ from ..neighbors import KNeighborsClassifier
 from ..metrics.pairwise import euclidean_distances
 from ..utils import gen_batches
 from ..utils.fixes import argpartition, sp_version, bincount
+from ..utils.random import choice, check_random_state
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, check_array, check_X_y, \
-    check_random_state
+from ..utils.validation import check_is_fitted, check_array, check_X_y
 from ..exceptions import DataDimensionalityWarning
 
 
@@ -100,7 +100,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     iprint : bool, optional, default False
         Whether to print progress messages from the optimizer.
 
-    random_state : int, optional, default None
+    random_state : int or numpy.RandomState, optional, default None
         A seed for reproducibility of random state.
 
     n_jobs : int, optional, default 1
@@ -207,6 +207,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         # Check inputs consistency
         X, y_ = self._validate_params(X, y)
+
+        self.rng = check_random_state(self.random_state)
 
         # Initialize transformer
         L, self.n_features_out_ = self._init_transformer(X)
@@ -650,10 +652,13 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             imp1, imp2 = impostors_sp.nonzero()
             # subsample constraints if they are too many
             if impostors_sp.nnz > self.max_constraints:
-                random_state = check_random_state(self.random_state)
-                ind_subsample = random_state.choice(impostors_sp.nnz,
-                                                    self.max_constraints,
-                                                    replace=False)
+                # numpy.RandomState.choice raises AttributeError:
+                # 'mtrand.RandomState' object has no attribute 'choice'
+                # does not exist for numpy versions < (1, 7, 0)
+                # switching to randint
+                ind_subsample = choice(impostors_sp.nnz, self.max_constraints,
+                                       replace=False, random_state=self.rng)
+
                 imp1, imp2 = imp1[ind_subsample], imp2[ind_subsample]
 
             dist = pairs_distances_batch(Lx, imp1, imp2)
@@ -678,10 +683,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
             # subsample constraints if they are too many
             if len(ind_unique) > self.max_constraints:
-                random_state = check_random_state(self.random_state)
-                ind_unique = random_state.choice(ind_unique,
-                                                 self.max_constraints,
-                                                 replace=False)
+                ind_unique = choice(ind_unique, self.max_constraints,
+                                    replace=False, random_state=self.rng)
 
             imp1 = np.asarray(imp1)[ind_unique]
             imp2 = np.asarray(imp2)[ind_unique]
