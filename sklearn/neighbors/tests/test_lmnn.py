@@ -50,7 +50,7 @@ def test_neighbors_digits():
     test = np.arange(train_test_boundary, n_samples)
     X_train, Y_train, X_test, Y_test = X[train], Y[train], X[test], Y[test]
 
-    clf = LMNN(n_neighbors=1, max_iter=100)
+    clf = LMNN(n_neighbors=1, max_iter=50)
     score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
     score_float = clf.fit(X_train.astype(float), Y_train).score(
         X_test.astype(float), Y_test)

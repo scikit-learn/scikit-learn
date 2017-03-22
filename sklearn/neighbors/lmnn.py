@@ -124,6 +124,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     classes_ : array-like, shape (n_classes,)
         The appearing class labels.
 
+    rng_ : np.random.RandomState
+
     n_iter_ : int
         The number of iterations of the optimizer.
 
@@ -208,7 +210,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # Check inputs consistency
         X, y_ = self._validate_params(X, y)
 
-        self.rng = check_random_state(self.random_state)
+        self.rng_ = check_random_state(self.random_state)
 
         # Initialize transformer
         L, self.n_features_out_ = self._init_transformer(X)
@@ -655,9 +657,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 # numpy.RandomState.choice raises AttributeError:
                 # 'mtrand.RandomState' object has no attribute 'choice'
                 # does not exist for numpy versions < (1, 7, 0)
-                # switching to randint
+                # switching to utils.random.choice
                 ind_subsample = choice(impostors_sp.nnz, self.max_constraints,
-                                       replace=False, random_state=self.rng)
+                                       replace=False, random_state=self.rng_)
 
                 imp1, imp2 = imp1[ind_subsample], imp2[ind_subsample]
 
@@ -684,7 +686,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             # subsample constraints if they are too many
             if len(ind_unique) > self.max_constraints:
                 ind_unique = choice(ind_unique, self.max_constraints,
-                                    replace=False, random_state=self.rng)
+                                    replace=False, random_state=self.rng_)
 
             imp1 = np.asarray(imp1)[ind_unique]
             imp2 = np.asarray(imp2)[ind_unique]
