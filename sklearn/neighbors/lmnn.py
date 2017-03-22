@@ -336,6 +336,21 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         X, y = check_X_y(X, y, ensure_min_samples=2)
         check_classification_targets(y)
 
+        if self.n_features_out is not None:
+            check_scalar(self.n_features_out, 'n_features_out', int, 1)
+        check_scalar(self.n_neighbors, 'n_neighbors', int, 1)
+        check_scalar(self.max_iter, 'max_iter', int, 1)
+        check_scalar(self.max_constraints, 'max_constraints', int, 1)
+        check_scalar(self.max_corrections, 'max_corrections', int, 1)
+        check_scalar(self.n_jobs, 'n_jobs', int, -1)
+
+        check_scalar(self.tol, 'tol', float, 0.)
+
+        check_scalar(self.use_pca, 'use_pca', bool)
+        check_scalar(self.use_sparse, 'use_sparse', bool)
+        check_scalar(self.verbose, 'verbose', bool)
+        check_scalar(self.iprint, 'iprint', bool)
+
         # Store the appearing classes and the class index for each sample
         classes, y_inversed = np.unique(y, return_inverse=True)
 
@@ -376,13 +391,12 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         # Check preferred output dimensionality
         if self.n_features_out is not None:
-            check_scalar(self.n_features_out, 'n_features_out', int, 1)
             if self.L is not None:
-                if self.n_features_out != self.L.shape[0]:
+                if self.n_features_out != len(self.L):
                     raise ValueError('Preferred outputs dimensionality ({}) '
                                      'does not match the given linear '
                                      'transformation {}!'.format(
-                                        self.n_features_out, self.L.shape[0]))
+                                        self.n_features_out, len(self.L)))
 
             elif self.n_features_out > len(X[0]):
                 raise ValueError('Preferred outputs dimensionality ({}) '
@@ -391,7 +405,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                                     self.n_features_out, len(X[0])))
 
         # Check preferred number of neighbors
-        check_scalar(self.n_neighbors, 'n_neighbors', int, 1)
         max_neighbors = min_class_size - 1
         if self.n_neighbors > max_neighbors:
             warnings.warn('n_neighbors(={}) too high. Setting to {}.'.
@@ -401,18 +414,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # might have changed to n_neighbors_
         # super(LargeMarginNearestNeighbor, self).set_params(
         # n_neighbors=self.n_neighbors_)
-
-        check_scalar(self.max_iter, 'max_iter', int, 1)
-        check_scalar(self.max_constraints, 'max_constraints', int, 1)
-        check_scalar(self.max_corrections, 'max_corrections', int, 1)
-        check_scalar(self.n_jobs, 'n_jobs', int, -1)
-
-        check_scalar(self.tol, 'tol', float, 0.)
-
-        check_scalar(self.use_pca, 'use_pca', bool)
-        check_scalar(self.use_sparse, 'use_sparse', bool)
-        check_scalar(self.verbose, 'verbose', bool)
-        check_scalar(self.iprint, 'iprint', bool)
 
         return X, y_inversed
 
@@ -782,14 +783,14 @@ def pca_fit(X, var_ratio=1, return_transform=True):
     evals, evecs = np.linalg.eigh(cov_)
     evecs = np.fliplr(evecs)
 
-    if var_ratio == 1:
-        L = evecs.T
-    else:
-        evals = np.flip(evals, axis=0)
-        var_exp = np.cumsum(evals)
-        var_exp = var_exp / var_exp[-1]
-        n_components = np.argmax(np.greater_equal(var_exp, var_ratio))
-        L = evecs.T[:n_components]
+    # if var_ratio == 1:
+    L = evecs.T
+    # else:
+    #     evals = np.flip(evals, axis=0)
+    #     var_exp = np.cumsum(evals)
+    #     var_exp = var_exp / var_exp[-1]
+    #     n_components = np.argmax(np.greater_equal(var_exp, var_ratio))
+    #     L = evecs.T[:n_components]
 
     if return_transform:
         return X.dot(L.T)
@@ -821,12 +822,13 @@ def sum_outer_products(X, weights, remove_zero=False):
     """
     weights_sym = weights + weights.T
     if remove_zero:
-        # this throws the following ValueError in some old numpy version:
-        # zero-size array to maximum.reduce without identity
-        _, cols = weights_sym.nonzero()
-        ind = np.unique(cols)
-        weights_sym = weights_sym.tocsc()[:, ind].tocsr()[ind, :]
-        X = X[ind]
+        pass
+    #     # this throws the following ValueError in some old numpy version:
+    #     # zero-size array to maximum.reduce without identity
+    #     _, cols = weights_sym.nonzero()
+    #     ind = np.unique(cols)
+    #     weights_sym = weights_sym.tocsc()[:, ind].tocsr()[ind, :]
+    #     X = X[ind]
 
     n_samples = weights_sym.shape[0]
     diag = sparse.spdiags(weights_sym.sum(axis=0), 0, n_samples, n_samples)
