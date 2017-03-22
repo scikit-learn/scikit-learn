@@ -32,15 +32,15 @@ from sklearn import svm
 from sklearn.datasets import make_blobs
 #from sklearn.linear_model import SGDClassifier
 
-# we create two clusters or random points
-rng = np.random.RandomState(0)
+# we create two clusters of random points
 n_samples_1 = 1000
 n_samples_2 = 100
 centers = [[0.0, 0.0], [2.0, 2.0]]
 clusters_std = [1.5, 0.5]
 X, y = make_blobs(n_samples=[n_samples_1, n_samples_2],
                   centers=centers,
-                  cluster_std=clusters_std)
+                  cluster_std=clusters_std,
+                  random_state=0)
 
 # fit the model and get the separating hyperplane
 clf = svm.SVC(kernel='linear', C=1.0)
