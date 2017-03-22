@@ -27,7 +27,6 @@ import numpy as np
 from ..utils import check_random_state
 
 
-
 def get_data_home(data_home=None):
     """Return the path of the scikit-learn data dir.
 

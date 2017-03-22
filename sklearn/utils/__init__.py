@@ -27,6 +27,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated"]
 
+
 class Bunch(dict):
     """Container object for datasets
 
@@ -60,6 +61,12 @@ class Bunch(dict):
             return self[key]
         except KeyError:
             raise AttributeError(key)
+
+    def __getattribute__(self, name):
+        try:
+            return self[name]
+        except Exception:
+            return object.__getattribute__(self, name)
 
     def __setstate__(self, state):
         # Bunch pickles generated with scikit-learn 0.16.* have an non
