@@ -28,12 +28,10 @@ def check_scalar(x, name, dtype, min_val=None, max_val=None):
         raise TypeError('{} must be {}.'.format(name, dtype))
 
     if min_val is not None and x < min_val:
-        raise ValueError('{} must be an integer > {}.'.
-                         format(name, min_val))
+        raise ValueError('{} must be >= {}.'.format(name, min_val))
 
     if max_val is not None and x > max_val:
-        raise ValueError('{} must be an integer < {}.'.
-                         format(name, max_val))
+        raise ValueError('{} must be <= {}.'.format(name, max_val))
 
 
 class LargeMarginNearestNeighbor(KNeighborsClassifier):

@@ -5,7 +5,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
-from sklearn import neighbors, datasets
+from sklearn import datasets
+from sklearn.neighbors import LargeMarginNearestNeighbor as LMNN
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -26,13 +27,14 @@ def test_neighbors_iris():
     # Puts three points of each label in the plane and performs a
     # nearest neighbor query on points near the decision boundary.
 
-    clf = neighbors.LargeMarginNearestNeighbor(n_neighbors=1)
+    clf = LMNN(n_neighbors=1)
     clf.fit(iris.data, iris.target)
     assert_array_equal(clf.predict(iris.data), iris.target)
 
     clf.set_params(n_neighbors=9)
     clf.fit(iris.data, iris.target)
-    assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.95)
+
+    assert_true(clf.score(iris.data, iris.target) > 0.95)
 
 
 def test_neighbors_digits():
@@ -48,34 +50,32 @@ def test_neighbors_digits():
     test = np.arange(train_test_boundary, n_samples)
     (X_train, Y_train, X_test, Y_test) = X[train], Y[train], X[test], Y[test]
 
-    clf = neighbors.LargeMarginNearestNeighbor(n_neighbors=1)
+    clf = LMNN(n_neighbors=1)
     score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
     score_float = clf.fit(X_train.astype(float), Y_train).score(
         X_test.astype(float), Y_test)
     assert_equal(score_uint8, score_float)
 
 
-def test_neighbors_badargs():
-    # Test bad argument values: these should all raise ValueErrors
-    cls = neighbors.LargeMarginNearestNeighbor
-    assert_raises(ValueError, cls.fit, L='blah')
+def test_params_errors():
+    # Test that invalid parameters raise value error
+    X = [[3, 2], [1, 6]]
+    y = [1, 0]
+    clf = LMNN
 
-    X = rng.random_sample((10, 2))
-    # Xsparse = csr_matrix(X)
-    y = np.ones(10)
-
-    nbrs = cls()
-    assert_raises(ValueError, nbrs.predict, X)
-
-    nbrs = cls()
-    assert_raises(ValueError, nbrs.fit, np.ones((0, 2)), np.ones(0))
-    assert_raises(ValueError, nbrs.fit, X[:, :, None], y)
-    nbrs.fit(X, y)
-    assert_raises(ValueError, nbrs.predict, [[]])
-
-    # check negative number of neighbors
-    nbrs = cls(n_neighbors=-1)
-    assert_raises(ValueError, nbrs.fit, X, y)
+    assert_raises(ValueError, clf(n_neighbors=-1).fit, X, y)
+    assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
+    assert_raises(ValueError, clf(verbose='true').fit, X, y)
+    assert_raises(ValueError, clf(max_constraints=-1).fit, X, y)
+    assert_raises(ValueError, clf(max_corrections=-1).fit, X, y)
+    assert_raises(ValueError, clf(iprint=2).fit, X, y)
+    assert_raises(ValueError, clf(tol=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(L='invalid').fit, X, y)
+    assert_raises(ValueError, clf(n_features_out='invalid').fit, X, y)
+    assert_raises(ValueError, clf(use_pca=1).fit, X, y)
+    assert_raises(ValueError, clf(n_jobs=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(warm_start=1).fit, X, y)
+    assert_raises(ValueError, clf(use_sparse=-0.5).fit, X, y)
 
 
 def check_object_arrays(nparray, list_check):
@@ -88,7 +88,7 @@ def test_same_lmnn_parallel():
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    clf = neighbors.LargeMarginNearestNeighbor(n_neighbors=3)
+    clf = LMNN(n_neighbors=3)
     clf.fit(X_train, y_train)
     y = clf.predict(X_test)
 
@@ -100,7 +100,7 @@ def test_same_lmnn_parallel():
 
 
 def test_dtype_convert():
-    classifier = neighbors.KNeighborsClassifier(n_neighbors=1)
+    classifier = LMNN(n_neighbors=1)
     CLASSES = 15
     X = np.eye(CLASSES)
     y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
