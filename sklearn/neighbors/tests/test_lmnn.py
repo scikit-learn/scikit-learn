@@ -63,19 +63,28 @@ def test_params_errors():
     y = [1, 0]
     clf = LMNN
 
+    # TypeError
+    assert_raises(TypeError, clf(n_neighbors=1.3).fit, X, y)
+    assert_raises(TypeError, clf(max_iter='21').fit, X, y)
+    assert_raises(TypeError, clf(verbose='true').fit, X, y)
+    assert_raises(TypeError, clf(max_constraints=23.1).fit, X, y)
+    assert_raises(TypeError, clf(max_corrections=1e3).fit, X, y)
+    assert_raises(TypeError, clf(iprint=2).fit, X, y)
+    assert_raises(TypeError, clf(tol=1).fit, X, y)
+    assert_raises(TypeError, clf(n_features_out='invalid').fit, X, y)
+    assert_raises(TypeError, clf(use_pca=1).fit, X, y)
+    assert_raises(TypeError, clf(n_jobs='yes').fit, X, y)
+    assert_raises(TypeError, clf(warm_start=1).fit, X, y)
+    assert_raises(TypeError, clf(use_sparse=0.5).fit, X, y)
+
+    # ValueError
     assert_raises(ValueError, clf(n_neighbors=-1).fit, X, y)
     assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
-    assert_raises(ValueError, clf(verbose='true').fit, X, y)
     assert_raises(ValueError, clf(max_constraints=-1).fit, X, y)
     assert_raises(ValueError, clf(max_corrections=-1).fit, X, y)
-    assert_raises(ValueError, clf(iprint=2).fit, X, y)
-    assert_raises(ValueError, clf(tol=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(L='invalid').fit, X, y)
-    assert_raises(ValueError, clf(n_features_out='invalid').fit, X, y)
-    assert_raises(ValueError, clf(use_pca=1).fit, X, y)
-    assert_raises(ValueError, clf(n_jobs=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(warm_start=1).fit, X, y)
-    assert_raises(ValueError, clf(use_sparse=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(L=np.random.rand(5, 3)).fit, X, y)
+    assert_raises(ValueError, clf(n_features_out=10).fit, X, y)
+    assert_raises(ValueError, clf(n_jobs=-2).fit, X, y)
 
 
 def check_object_arrays(nparray, list_check):
@@ -99,11 +108,68 @@ def test_same_lmnn_parallel():
     assert_array_equal(y, y_parallel)
 
 
-def test_dtype_convert():
-    classifier = LMNN(n_neighbors=1)
-    CLASSES = 15
-    X = np.eye(CLASSES)
-    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+# def test_dtype_convert():
+#     classifier = LMNN(n_neighbors=1)
+#     CLASSES = 15
+#     X = np.eye(CLASSES)
+#     y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+#
+#     result = classifier.fit(X, y).predict(X)
+#     assert_array_equal(result, y)
 
-    result = classifier.fit(X, y).predict(X)
-    assert_array_equal(result, y)
+
+# TODO: TESTS
+def test_L():
+    pass
+
+
+def test_n_neighbors():
+    pass
+
+
+def test_n_features_out():
+    pass
+
+
+def test_L__n_features_out_combinations():
+    pass
+
+
+def test_use_pca():
+    pass
+
+
+def test_L__n_features_out__use_pca_combinations():
+    pass
+
+
+def test_max_constraints():
+    pass
+
+
+def test_use_sparse():
+    pass
+
+
+def test_warm_start():
+    pass
+
+
+def test_max_corrections():
+    pass
+
+
+def test_verbose():
+    pass
+
+
+def test_iprint():
+    pass
+
+
+def test_random_state():
+    pass
+
+
+def test_n_jobs():
+    pass

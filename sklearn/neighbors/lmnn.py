@@ -363,16 +363,16 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # Check linear transformation dimensions
         if self.L is not None:
             check_array(self.L)
-            if self.L.shape[1] != X.shape[1]:
+            if len(self.L[0]) != len(X[0]):
                 raise ValueError('Transformation input dimensionality ({}) '
                                  'must match the inputs dimensionality ({}).'
-                                 .format(self.L.shape[1], self.X.shape[1]))
+                                 .format(len(self.L[0]), len(X[0])))
 
-            if self.L.shape[0] > self.L.shape[1]:
+            if len(self.L) > len(self.L[0]):
                 raise ValueError('Transformation output dimensionality ({}) '
-                                 'cannot be greater than the inputs '
-                                 'dimensionality ({}).'.
-                                 format(self.L.shape[0], self.L.shape[1]))
+                                 'cannot be greater than the '
+                                 'tranformation input dimensionality ({}).'.
+                                 format(len(self.L), len(self.L[0])))
 
         # Check preferred output dimensionality
         if self.n_features_out is not None:
@@ -384,11 +384,11 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                                      'transformation {}!'.format(
                                         self.n_features_out, self.L.shape[0]))
 
-            elif self.n_features_out > X.shape[1]:
+            elif self.n_features_out > len(X[0]):
                 raise ValueError('Preferred outputs dimensionality ({}) '
                                  'cannot be greater than the given data '
                                  'dimensionality {}!'.format(
-                                    self.n_features_out, X.shape[1]))
+                                    self.n_features_out, len(X[0])))
 
         # Check preferred number of neighbors
         check_scalar(self.n_neighbors, 'n_neighbors', int, 1)
