@@ -62,12 +62,6 @@ class Bunch(dict):
         except KeyError:
             raise AttributeError(key)
 
-    def __getattribute__(self, name):
-        try:
-            return self[name]
-        except Exception:
-            return object.__getattribute__(self, name)
-
     def __setstate__(self, state):
         # Bunch pickles generated with scikit-learn 0.16.* have an non
         # empty __dict__. This causes a surprising behaviour when
