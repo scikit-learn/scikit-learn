@@ -649,7 +649,7 @@ def test_gaussian_mixture_fit_convergence_warning():
                             max_iter=max_iter, reg_covar=0, random_state=rng,
                             covariance_type=covar_type)
         assert_warns_message(ConvergenceWarning,
-                             'Initialization %d did not converged. '
+                             'Initialization %d did not converge. '
                              'Try different init parameters, '
                              'or increase max_iter, tol '
                              'or check for degenerate data.'
