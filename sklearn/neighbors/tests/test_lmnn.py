@@ -59,8 +59,8 @@ def test_neighbors_digits():
 
 def test_params_errors():
     # Test that invalid parameters raise value error
-    X = [[3, 2], [1, 6]]
-    y = [1, 0]
+    X = np.arange(12).reshape(4, 3)
+    y = [1, 1, 2, 2]
     clf = LMNN
 
     # TypeError
@@ -85,11 +85,6 @@ def test_params_errors():
     assert_raises(ValueError, clf(L=np.random.rand(5, 3)).fit, X, y)
     assert_raises(ValueError, clf(n_features_out=10).fit, X, y)
     assert_raises(ValueError, clf(n_jobs=-2).fit, X, y)
-
-
-def check_object_arrays(nparray, list_check):
-    for ind, ele in enumerate(nparray):
-        assert_array_equal(ele, list_check[ind])
 
 
 def test_same_lmnn_parallel():
@@ -120,7 +115,15 @@ def test_same_lmnn_parallel():
 
 # TODO: TESTS
 def test_L():
-    pass
+
+    X = np.arange(12).reshape(4, 3)
+    y = [1, 1, 2, 2]
+
+    L = [[1, 2], [3, 4]]  # len(L[0]) != len(X[0])
+    assert_raises(ValueError, LMNN(L=L, n_neighbors=1).fit, X, y)
+
+    L = [[1, 2], [3, 4], [5, 6]]  # len(L) > len(L[0])
+    assert_raises(ValueError, LMNN(L=L, n_neighbors=1).fit, X, y)
 
 
 def test_n_neighbors():
@@ -128,7 +131,17 @@ def test_n_neighbors():
 
 
 def test_n_features_out():
-    pass
+
+    X = np.arange(12).reshape(4, 3)
+    y = [1, 1, 2, 2]
+
+    L = [[1, 2, 3], [4, 5, 6]]  # len(L) != n_features_out
+    clf = LMNN(L=L, n_neighbors=1, n_features_out=5)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    # n_features_out > len(X[0])
+    clf = LMNN(L=L, n_neighbors=1, n_features_out=5)
+    assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_L__n_features_out_combinations():
@@ -144,7 +157,10 @@ def test_L__n_features_out__use_pca_combinations():
 
 
 def test_max_constraints():
-    clf = LMNN(n_neighbors=3, max_constraints=1)
+    clf = LMNN(n_neighbors=3, max_constraints=1, use_sparse=False)
+    clf.fit(iris.data, iris.target)
+
+    clf = LMNN(n_neighbors=3, max_constraints=1, use_sparse=False)
     clf.fit(iris.data, iris.target)
 
 
