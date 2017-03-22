@@ -1,18 +1,11 @@
 import numpy as np
 
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.validation import check_random_state
 from sklearn import neighbors, datasets
-from sklearn.exceptions import DataConversionWarning
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -26,38 +19,6 @@ digits = datasets.load_digits()
 perm = rng.permutation(digits.target.size)
 digits.data = digits.data[perm]
 digits.target = digits.target[perm]
-
-
-def test_lmnn_classifier_predict_proba():
-    # Test LargeMarginNearestNeighbor.predict_proba() method
-    X = np.array([[0, 2, 0],
-                  [0, 2, 1],
-                  [2, 0, 0],
-                  [2, 2, 0],
-                  [0, 0, 2],
-                  [0, 0, 1]])
-    y = np.array([4, 4, 5, 5, 1, 1])
-    cls = neighbors.KNeighborsClassifier(n_neighbors=3, p=1)  # cityblock dist
-    cls.fit(X, y)
-    y_prob = cls.predict_proba(X)
-    real_prob = np.array([[0, 2. / 3, 1. / 3],
-                          [1. / 3, 2. / 3, 0],
-                          [1. / 3, 0, 2. / 3],
-                          [0, 1. / 3, 2. / 3],
-                          [2. / 3, 1. / 3, 0],
-                          [2. / 3, 1. / 3, 0]])
-    assert_array_equal(real_prob, y_prob)
-    # Check that it also works with non integer labels
-    cls.fit(X, y.astype(str))
-    y_prob = cls.predict_proba(X)
-    assert_array_equal(real_prob, y_prob)
-    # Check that it works with weights='distance'
-    cls = neighbors.KNeighborsClassifier(
-        n_neighbors=2, p=1, weights='distance')
-    cls.fit(X, y)
-    y_prob = cls.predict_proba(np.array([[0, 2, 0], [2, 2, 2]]))
-    real_prob = np.array([[0, 1, 0], [0, 0.4, 0.6]])
-    assert_array_almost_equal(real_prob, y_prob)
 
 
 def test_neighbors_iris():
@@ -103,11 +64,7 @@ def test_neighbors_badargs():
     # Xsparse = csr_matrix(X)
     y = np.ones(10)
 
-    cls = neighbors.LargeMarginNearestNeighbor
-    assert_raises(ValueError, cls, weights='blah')
-    assert_raises(ValueError, cls, p=-1)
-    assert_raises(ValueError, cls, algorithm='blah')
-    nbrs = cls(algorithm='ball_tree', metric='haversine')
+    nbrs = cls()
     assert_raises(ValueError, nbrs.predict, X)
 
     nbrs = cls()

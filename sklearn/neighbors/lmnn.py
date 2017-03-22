@@ -16,11 +16,24 @@ from scipy import sparse, optimize
 from ..neighbors import KNeighborsClassifier
 from ..metrics.pairwise import euclidean_distances
 from ..utils import gen_batches
-from ..utils.fixes import argpartition, sp_version
+from ..utils.fixes import argpartition, sp_version, bincount
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y, \
     check_random_state
 from ..exceptions import DataDimensionalityWarning
+
+
+def check_scalar(x, name, dtype, min_val=None, max_val=None):
+    if type(x) is not dtype:
+        raise TypeError('{} must be {}.'.format(name, dtype))
+
+    if min_val is not None and x < min_val:
+        raise ValueError('{} must be an integer > {}.'.
+                         format(name, min_val))
+
+    if max_val is not None and x > max_val:
+        raise ValueError('{} must be an integer < {}.'.
+                         format(name, max_val))
 
 
 class LargeMarginNearestNeighbor(KNeighborsClassifier):
@@ -195,31 +208,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         """
 
         # Check inputs consistency
-        X, y = check_X_y(X, y)
-        check_classification_targets(y)
-
-        # Store the appearing classes and the class index for each sample
-        classes, y_ = np.unique(y, return_inverse=True)
-
-        if len(classes) <= 1:
-            raise ValueError("LargeMarginNearestNeighbor requires 2 or more "
-                             "distinct classes, got {}.".format(len(classes)))
-
-        if self.warm_start:
-            if set(classes) != set(self.classes_):
-                raise ValueError("warm_start can only be used where `y` has "
-                                 "the same classes as in the previous call to "
-                                 "fit. Previously got {}, `y` has {}".
-                                 format(self.classes_, classes))
-
-        self.classes_ = classes
-
-        # Check that the number of neighbors is achievable for all classes
-        self.n_neighbors_ = self.check_n_neighbors(y_)
-        # TODO: Notify superclass KNeighborsClassifier that n_neighbors
-        # might have changed to n_neighbors_
-        # super(LargeMarginNearestNeighbor, self).set_params(
-        # n_neighbors=self.n_neighbors_)
+        X, y_ = self._validate_params(X, y)
 
         # Initialize transformer
         L, self.n_features_out_ = self._init_transformer(X)
@@ -343,38 +332,91 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         return probabilities
 
-    def check_n_neighbors(self, y):
-        """Check if all classes have enough samples to query the specified
-        number of neighbors.
+    def _validate_params(self, X, y):
 
-        Parameters
-        ----------
-        y : array, shape (n_samples,)
-            Indices of class labels of the samples.
+        # Check training data
+        X, y = check_X_y(X, y, ensure_min_samples=2)
+        check_classification_targets(y)
 
-        Returns
-        -------
-        n_neighbors : int
-            The achievable number of neighbors to consider.
+        # Store the appearing classes and the class index for each sample
+        classes, y_inversed = np.unique(y, return_inverse=True)
 
-        """
+        check_scalar(self.warm_start, 'warm_start', bool)
+        if self.warm_start:
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used where `y` has "
+                                 "the same classes as in the previous call to "
+                                 "fit. Previously got {}, `y` has {}".
+                                 format(self.classes_, classes))
+        self.classes_ = classes
 
-        n_neighbors = self.n_neighbors
+        # Check number of classes > 1
+        n_classes = len(classes)
+        if n_classes < 2:
+            raise ValueError("LargeMarginNearestNeighbor requires 2 or more "
+                             "distinct classes, got {}.".format(n_classes))
 
-        if n_neighbors < 1:
-            raise ValueError('Number of neighbors must be positive.')
-
-        min_class_size = np.bincount(y).min()
+        # Check every class has at least 2 samples
+        min_class_size = bincount(y_inversed).min()
         if min_class_size < 2:
             raise ValueError('At least one class has less than 2 ({}) '
                              'training samples.'.format(min_class_size))
 
-        max_neighbors = min_class_size - 1
-        if n_neighbors > max_neighbors:
-            warnings.warn('n_neighbors(={}) too high. Setting to {}.\n'.
-                          format(n_neighbors, max_neighbors))
+        # Check linear transformation dimensions
+        if self.L is not None:
+            check_array(self.L)
+            if self.L.shape[1] != X.shape[1]:
+                raise ValueError('Transformation input dimensionality ({}) '
+                                 'must match the inputs dimensionality ({}).'
+                                 .format(self.L.shape[1], self.X.shape[1]))
 
-        return min(n_neighbors, max_neighbors)
+            if self.L.shape[0] > self.L.shape[1]:
+                raise ValueError('Transformation output dimensionality ({}) '
+                                 'cannot be greater than the inputs '
+                                 'dimensionality ({}).'.
+                                 format(self.L.shape[0], self.L.shape[1]))
+
+        # Check preferred output dimensionality
+        if self.n_features_out is not None:
+            check_scalar(self.n_features_out, 'n_features_out', int, 1)
+            if self.L is not None:
+                if self.n_features_out != self.L.shape[0]:
+                    raise ValueError('Preferred outputs dimensionality ({}) '
+                                     'does not match the given linear '
+                                     'transformation {}!'.format(
+                                        self.n_features_out, self.L.shape[0]))
+
+            elif self.n_features_out > X.shape[1]:
+                raise ValueError('Preferred outputs dimensionality ({}) '
+                                 'cannot be greater than the given data '
+                                 'dimensionality {}!'.format(
+                                    self.n_features_out, X.shape[1]))
+
+        # Check preferred number of neighbors
+        check_scalar(self.n_neighbors, 'n_neighbors', int, 1)
+        max_neighbors = min_class_size - 1
+        if self.n_neighbors > max_neighbors:
+            warnings.warn('n_neighbors(={}) too high. Setting to {}.'.
+                          format(self.n_neighbors, max_neighbors))
+        self.n_neighbors_ = min(self.n_neighbors, max_neighbors)
+        # TODO: Notify superclass KNeighborsClassifier that n_neighbors
+        # might have changed to n_neighbors_
+        # super(LargeMarginNearestNeighbor, self).set_params(
+        # n_neighbors=self.n_neighbors_)
+
+        check_scalar(self.max_iter, 'max_iter', int, 1)
+        check_scalar(self.max_constraints, 'max_constraints', int, 1)
+        check_scalar(self.max_corrections, 'max_corrections', int, 1)
+        check_scalar(self.n_jobs, 'n_jobs', int, -1)
+
+        check_scalar(self.tol, 'tol', float, 0.)
+
+        check_scalar(self.use_pca, 'use_pca', bool)
+        check_scalar(self.use_sparse, 'use_sparse', bool)
+        check_scalar(self.verbose, 'verbose', bool)
+        check_scalar(self.iprint, 'iprint', bool)
+
+        return X, y_inversed
 
     def _init_transformer(self, X):
         """Initialize the linear transformation by setting to user specified
@@ -401,24 +443,17 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         else:
             L = np.eye(X.shape[1])
 
-        n_features_out = L.shape[0] if self.n_features_out is None else \
-            self.n_features_out
-        n_features_in = X.shape[1]
-
-        if L.shape[1] != n_features_in:
-            raise ValueError('Dimensionality of the given transformation and '
-                             'the inputs don\'t match ({},{}).'.
-                             format(L.shape[1], n_features_in))
-
-        if n_features_out > n_features_in:
-            warnings.warn('Outputs dimensionality ({}) cannot be larger than '
-                          'inputs dimensionality, setting n_features_out to '
-                          '{}!'.format(n_features_out, n_features_in),
-                          DataDimensionalityWarning)
-            n_features_out = n_features_in
-
-        if L.shape[0] > n_features_out:
-            L = L[:n_features_out]
+        if self.n_features_out is None:
+            n_features_out = L.shape[0]
+        else:
+            n_features_out = self.n_features_out
+            if L.shape[0] > n_features_out:
+                warnings.warn('Decreasing the initial linear transformation '
+                              'output dimensionality ({}) to the'
+                              'preferred output dimensionality ({}).'.
+                              format(L.shape[0], n_features_out),
+                              DataDimensionalityWarning)
+                L = L[:n_features_out]
 
         return L, n_features_out
 
