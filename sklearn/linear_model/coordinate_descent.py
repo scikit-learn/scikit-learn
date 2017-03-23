@@ -128,26 +128,26 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
-    """Compute Lasso path with coordinate descent
+    r"""Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
 
     For mono-output tasks it is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|y - Xw\\|^2_2
-        + \\alpha \\|w\\|_1
+        \frac{1}{2 \mathrm{n\_samples}} \|y - Xw\|^2_2
+        + \alpha \|w\|_1
 
     For multi-output tasks it is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|Y - XW\\|^2_{\\mathrm{Fro}}
-        + \\alpha \\|W\\|_{2,1}
+        \frac{1}{2 \mathrm{n\_samples}} \|Y - XW\|^2_{\mathrm{Fro}}
+        + \alpha \|W\|_{2,1}
 
     Where
 
     .. math::
-        \\|W\\|_{2,1} = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        \|W\|_{2,1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -274,29 +274,29 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    """Compute elastic net path with coordinate descent
+    r"""Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
 
     For mono-output tasks it is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|y - Xw\\|^2_2
-        + \\alpha \\mathrm{l1\\_ratio} \\|w\\|_1
-        + 0.5 \\alpha (1 - \\mathrm{l1\\_ratio}) \\|w\\|^2_2
+        \frac{1}{2 \mathrm{n\_samples}} \|y - Xw\|^2_2
+        + \alpha \mathrm{l1\_ratio} \|w\|_1
+        + 0.5 \alpha (1 - \mathrm{l1\_ratio}) \|w\|^2_2
 
     For multi-output tasks it is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|Y - XW\\|^2_{\\mathrm{Fro}}
-        + \\alpha \\mathrm{l1\\_ratio} \\|W\\|_{2,1}
-        + 0.5 \\alpha (1 - \\mathrm{l1\\_ratio})
-        \\|W\\|_{\\mathrm{Fro}}^2
+        \frac{1}{2 \mathrm{n\_samples}} \|Y - XW\|^2_{\mathrm{Fro}}
+        + \alpha \mathrm{l1\_ratio} \|W\|_{2,1}
+        + 0.5 \alpha (1 - \mathrm{l1\_ratio})
+        \|W\|_{\mathrm{Fro}}^2
 
     Where
 
     .. math::
-        \\|W\\|_{2,1} = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        \|W\|_{2,1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -510,14 +510,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
 
 class ElasticNet(LinearModel, RegressorMixin):
-    """Linear regression with combined L1 and L2 priors as regularizer.
+    r"""Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function
 
     .. math::
-            \\frac{1}{2 \\mathrm{n\\_samples}} \\|y - Xw\\|^2_2
-            + \\alpha \\mathrm{l1\\_ratio} \\|w\\|_1
-            + 0.5 \\alpha (1 - \\mathrm{l1\\_ratio}) \\|w\\|^2_2
+            \frac{1}{2 \mathrm{n\_samples}} \|y - Xw\|^2_2
+            + \alpha \mathrm{l1\_ratio} \|w\|_1
+            + 0.5 \alpha (1 - \mathrm{l1\_ratio}) \|w\|^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to
@@ -528,8 +528,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     where
 
     .. math::
-            \\alpha & = a + b \\\\
-            \\mathrm{l1\\_ratio} & = \\frac{a}{a + b}
+            \alpha & = a + b \\
+            \mathrm{l1\_ratio} & = \frac{a}{a + b}
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package while
     alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
@@ -781,13 +781,13 @@ class ElasticNet(LinearModel, RegressorMixin):
 # Lasso model
 
 class Lasso(ElasticNet):
-    """Linear Model trained with L1 prior as regularizer (aka the Lasso)
+    r"""Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
     The optimization objective for Lasso is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|y - Xw\\|^2_2
-        + \\alpha \\|w\\|_1
+        \frac{1}{2 \mathrm{n\_samples}} \|y - Xw\|^2_2
+        + \alpha \|w\|_1
 
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with ``l1_ratio=1.0`` (no L2 penalty).
@@ -1219,15 +1219,15 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
-    """Lasso linear model with iterative fitting along a regularization path
+    r"""Lasso linear model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
 
     The optimization objective for Lasso is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|y - Xw\\|^2_2
-        + \\alpha \\|w\\|_1
+        \frac{1}{2 \mathrm{n\_samples}} \|y - Xw\|^2_2
+        + \alpha \|w\|_1
 
     Read more in the :ref:`User Guide <lasso>`.
 
@@ -1367,7 +1367,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
-    """Elastic Net model with iterative fitting along a regularization path
+    r"""Elastic Net model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
 
@@ -1504,9 +1504,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     More specifically, the optimization objective is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|y - Xw\\|^2_2
-        + \\alpha \\mathrm{l1\\_ratio} \\|w\\|_1
-        + 0.5 \\alpha (1 - \\mathrm{l1\\_ratio}) \\|w\\|^2_2
+        \frac{1}{2 \mathrm{n\_samples}} \|y - Xw\|^2_2
+        + \alpha \mathrm{l1\_ratio} \|w\|_1
+        + 0.5 \alpha (1 - \mathrm{l1\_ratio}) \|w\|^2_2
 
     If you are interested in controlling the L1 and L2 penalty
     separately, keep in mind that this is equivalent to
@@ -1514,11 +1514,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     .. math::
         a L1 + b L2
 
-    for
+for
 
-    .. math::
-        \\alpha & = a + b \\\\
-        \\mathrm{l1\\_ratio} & = a / (a + b).
+.. math::
+    \alpha & = a + b \\
+    \mathrm{l1\_ratio} & = \frac{a}{a + b}
 
     See also
     --------
@@ -1556,19 +1556,19 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskElasticNet(Lasso):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
+    r"""Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for MultiTaskElasticNet is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|Y - XW\\|^2_{\\mathrm{Fro}}
-        + \\alpha \\mathrm{l1\\_ratio} \\|W\\|_{2,1}
-        + 0.5 \\alpha (1 - \\mathrm{l1\\_ratio}) \\|W\\|_{\\mathrm{Fro}}^2
+        \frac{1}{2 \mathrm{n\_samples}} \|Y - XW\|^2_{\mathrm{Fro}}
+        + \alpha \mathrm{l1\_ratio} \|W\|_{2,1}
+        + 0.5 \alpha (1 - \mathrm{l1\_ratio}) \|W\|_{\mathrm{Fro}}^2
 
     Where
 
     .. math::
-        \\|W\\|_{2,1} = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        \|W\|_{2,1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1752,18 +1752,18 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    r"""Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for Lasso is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|Y - XW\\|^2_{\\mathrm{Fro}}
-        + \\alpha \\|W\\|_{2,1}
+        \frac{1}{2 \mathrm{n\_samples}} \|Y - XW\|^2_{\mathrm{Fro}}
+        + \alpha \|W\|_{2,1}
 
     Where
 
     .. math::
-        \\|W\\|_{2,1} = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        \|W\|_{2,1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -1870,20 +1870,20 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 ElasticNet with built-in cross-validation.
+    r"""Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     The optimization objective for MultiTaskElasticNet is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|Y - XW\\|^2_{\\mathrm{Fro}}
-        + \\alpha \\mathrm{l1\\_ratio} \\|W\\|_{2,1}
-        + 0.5 \\alpha (1 - \\mathrm{l1\\_ratio})
-        \\|W\\|_{\\mathrm{Fro}}^2
+        \frac{1}{2 \mathrm{n\_samples}} \|Y - XW\|^2_{\mathrm{Fro}}
+        + \alpha \mathrm{l1\_ratio} \|W\|_{2,1}
+        + 0.5 \alpha (1 - \mathrm{l1\_ratio})
+        \|W\|_{\mathrm{Fro}}^2
 
     Where
 
     .. math::
-        \\|W\\|_{2,1} = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        \|W\|_{2,1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
@@ -2053,18 +2053,18 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 Lasso with built-in cross-validation.
+    r"""Multi-task L1/L2 Lasso with built-in cross-validation.
 
     The optimization objective for MultiTaskLasso is
 
     .. math::
-        \\frac{1}{2 \\mathrm{n\\_samples}} \\|Y - XW\\|^2_{\\mathrm{Fro}}
-        + \\alpha \\|W\\|_{2,1}
+        \frac{1}{2 \mathrm{n\_samples}} \|Y - XW\|^2_{\mathrm{Fro}}
+        + \alpha \|W\|_{2,1}
 
     Where
 
     .. math::
-        \\|W\\|_{2,1} = \\sum_i \\sqrt{\\sum_j w_{ij}^2}
+        \|W\|_{2,1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
 
