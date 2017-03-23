@@ -327,7 +327,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     def _validate_params(self, X, y):
 
         # Check training data
-        X, y = check_X_y(X, y, ensure_min_samples=4)
+        X, y = check_X_y(X, y, ensure_min_samples=2)
         check_classification_targets(y)
 
         if self.n_features_out is not None:
