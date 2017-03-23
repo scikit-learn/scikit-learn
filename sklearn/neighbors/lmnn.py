@@ -441,7 +441,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             n_features_out = self.n_features_out
             if L.shape[0] > n_features_out:
                 warnings.warn('Decreasing the initial linear transformation '
-                              'output dimensionality ({}) to the'
+                              'output dimensionality ({}) to the '
                               'preferred output dimensionality ({}).'.
                               format(L.shape[0], n_features_out),
                               DataDimensionalityWarning)
