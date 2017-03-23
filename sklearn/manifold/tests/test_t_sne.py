@@ -645,10 +645,10 @@ def test_accessible_kl_divergence():
 
     # The output needs to contain the accessible kl_divergence as the error at
     # the last iteration
-    lines_out = out.split('\n')[::-1]
-    for line in lines_out:
+    for line in out.split('\n')[::-1]:
         if 'Iteration' in line:
             _, _, error = line.partition('error = ')
             if error:
                 error, _, _ = error.partition(',')
-    assert_equal(("%.7f" % tsne.kl_divergence_), error)
+                break
+    assert_almost_equal(tsne.kl_divergence_, float(error), decimal=5)
