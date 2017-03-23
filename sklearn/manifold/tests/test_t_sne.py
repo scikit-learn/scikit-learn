@@ -648,9 +648,7 @@ def test_accessible_kl_divergence():
     lines_out = out.split('\n')[::-1]
     for line in lines_out:
         if 'Iteration' in line:
-            start_pos = line.find('error = ')
-            if start_pos >= 0:
-                error, _ = line[start_pos:].split(',')
-                error = error.replace('error = ', '')
-                break
+            _, _, error = line.partition('error = ')
+            if error:
+                error, _, _ = error.partition(',')
     assert_equal(("%.7f" % tsne.kl_divergence_), error)

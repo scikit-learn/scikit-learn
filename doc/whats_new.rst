@@ -5031,5 +5031,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vincent Pham: https://github.com/vincentpham1991
 
 .. _Denis Engemann: http://denis-engemann.de
+.. _Anish Shah: https://github.com/AnishShah
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
