@@ -103,3 +103,6 @@ optipng:
 
 dist: html latexpdf
 	cp _build/latex/user_guide.pdf _build/html/stable/_downloads/scikit-learn-docs.pdf
+
+changed-from-master:
+	../build_tools/circle/print_changed_docfiles.sh
