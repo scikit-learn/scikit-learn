@@ -79,12 +79,17 @@ def test_params_errors():
 
     # ValueError
     assert_raises(ValueError, clf(n_neighbors=-1).fit, X, y)
+    assert_raises(ValueError, clf(n_neighbors=len(X)).fit, X, y)
     assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
     assert_raises(ValueError, clf(max_constraints=-1).fit, X, y)
     assert_raises(ValueError, clf(max_corrections=-1).fit, X, y)
     assert_raises(ValueError, clf(L=np.random.rand(5, 3)).fit, X, y)
     assert_raises(ValueError, clf(n_features_out=10).fit, X, y)
     assert_raises(ValueError, clf(n_jobs=-2).fit, X, y)
+
+    # test min_class_size < 2
+    y = [1, 1, 1, 2]
+    assert_raises(ValueError, clf(n_neighbors=1).fit, X, y)
 
 
 def test_same_lmnn_parallel():
@@ -125,6 +130,9 @@ def test_L():
     L = [[1, 2], [3, 4], [5, 6]]  # len(L) > len(L[0])
     assert_raises(ValueError, LMNN(L=L, n_neighbors=1).fit, X, y)
 
+    L = np.arange(9).reshape(3, 3)
+    LMNN(L=L, n_neighbors=1).fit(X, y)
+
 
 def test_n_neighbors():
     pass
@@ -143,6 +151,10 @@ def test_n_features_out():
     clf = LMNN(L=L, n_neighbors=1, n_features_out=5)
     assert_raises(ValueError, clf.fit, X, y)
 
+    # n_features_out < len(L) = np.eye(len(X[0])).shape[0]
+    clf = LMNN(n_neighbors=1, n_features_out=2, use_pca=False)
+    clf.fit(X, y)
+
 
 def test_L__n_features_out_combinations():
     pass
@@ -157,7 +169,7 @@ def test_L__n_features_out__use_pca_combinations():
 
 
 def test_max_constraints():
-    clf = LMNN(n_neighbors=3, max_constraints=1, use_sparse=False)
+    clf = LMNN(n_neighbors=3, max_constraints=1, use_sparse=True)
     clf.fit(iris.data, iris.target)
 
     clf = LMNN(n_neighbors=3, max_constraints=1, use_sparse=False)

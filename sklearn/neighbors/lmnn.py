@@ -23,17 +23,6 @@ from ..utils.validation import check_is_fitted, check_array, check_X_y
 from ..exceptions import DataDimensionalityWarning
 
 
-def check_scalar(x, name, dtype, min_val=None, max_val=None):
-    if type(x) is not dtype:
-        raise TypeError('{} must be {}.'.format(name, dtype))
-
-    if min_val is not None and x < min_val:
-        raise ValueError('{} must be >= {}.'.format(name, min_val))
-
-    if max_val is not None and x > max_val:
-        raise ValueError('{} must be <= {}.'.format(name, max_val))
-
-
 class LargeMarginNearestNeighbor(KNeighborsClassifier):
     """Distance Metric Learning for Large Margin Classification
 
@@ -338,7 +327,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     def _validate_params(self, X, y):
 
         # Check training data
-        X, y = check_X_y(X, y, ensure_min_samples=2)
+        X, y = check_X_y(X, y, ensure_min_samples=4)
         check_classification_targets(y)
 
         if self.n_features_out is not None:
@@ -443,7 +432,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         elif self.warm_start:
             L = self.L_
         elif self.use_pca and X.shape[1] > 1:
-            L = pca_fit(X)
+            cov_ = np.cov(X, rowvar=False)  # Mean is removed
+            _, evecs = np.linalg.eigh(cov_)
+            evecs = np.fliplr(evecs)  # Sort by descending eigenvalues
+            L = evecs.T  # Get as eigenvectors as rows
         else:
             L = np.eye(X.shape[1])
 
@@ -533,6 +525,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         X : array-like, shape (n_samples, n_features_in)
             The training samples.
+
         y : array, shape (n_samples,)
             The corresponding training labels.
 
@@ -587,7 +580,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                      (n_samples, n_samples))
             loss = loss + np.sum(loss1 ** 2) + np.sum(loss2 ** 2)
 
-        grad_new = sum_outer_products(X, A0, remove_zero=False)
+        grad_new = sum_outer_products(X, A0)
         grad = self.L_.dot(grad_static + grad_new)
         grad *= 2
         loss = loss + (grad_static * (self.L_.T.dot(self.L_))).sum()
@@ -657,8 +650,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             if impostors_sp.nnz > self.max_constraints:
                 # numpy.RandomState.choice raises AttributeError:
                 # 'mtrand.RandomState' object has no attribute 'choice'
-                # does not exist for numpy versions < (1, 7, 0)
-                # switching to utils.random.choice
+                # choice does not exist for numpy versions < (1, 7, 0)
                 ind_subsample = choice(impostors_sp.nnz, self.max_constraints,
                                        replace=False, random_state=self.rng_)
 
@@ -758,31 +750,18 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 # Some helper functions #
 #########################
 
-def pca_fit(X):
-    """Do PCA and return the principal components as rows.
+def check_scalar(x, name, dtype, min_val=None, max_val=None):
+    if type(x) is not dtype:
+        raise TypeError('{} must be {}.'.format(name, dtype))
 
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        An array of data samples.
+    if min_val is not None and x < min_val:
+        raise ValueError('{} must be >= {}.'.format(name, min_val))
 
-    Returns
-    -------
-    L: array, shape (n_components, n_features)
-        The first ``n_components`` eigenvectors of the covariance matrix
-        corresponding to the ``n_components`` largest eigenvalues are
-        returned as rows.
-
-    """
-
-    cov_ = np.cov(X, rowvar=False)  # Mean is removed
-    evals, evecs = np.linalg.eigh(cov_)
-    evecs = np.fliplr(evecs)
-
-    return evecs.T
+    if max_val is not None and x > max_val:
+        raise ValueError('{} must be <= {}.'.format(name, max_val))
 
 
-def sum_outer_products(X, weights, remove_zero=False):
+def sum_outer_products(X, weights):
     """Computes the sum of weighted outer products using a sparse weights
     matrix
 
@@ -794,9 +773,6 @@ def sum_outer_products(X, weights, remove_zero=False):
     weights : csr_matrix, shape (n_samples, n_samples)
         A sparse weights matrix (indicating target neighbors).
 
-    remove_zero : bool, optional, default False
-        Whether to remove rows and columns of the symmetrized weights matrix
-        that are zero.
 
     Returns
     -------
@@ -805,15 +781,6 @@ def sum_outer_products(X, weights, remove_zero=False):
 
     """
     weights_sym = weights + weights.T
-    if remove_zero:
-        pass
-    #     # this throws the following ValueError in some old numpy version:
-    #     # zero-size array to maximum.reduce without identity
-    #     _, cols = weights_sym.nonzero()
-    #     ind = np.unique(cols)
-    #     weights_sym = weights_sym.tocsc()[:, ind].tocsr()[ind, :]
-    #     X = X[ind]
-
     n_samples = weights_sym.shape[0]
     diag = sparse.spdiags(weights_sym.sum(axis=0), 0, n_samples, n_samples)
     laplacian = diag.tocsr() - weights_sym
