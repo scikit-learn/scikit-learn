@@ -521,9 +521,9 @@ def test_pipeline_named_steps():
     assert_true(pipeline.named_steps.mult is mult2)
 
     # Test bunch with conflict attribute of dict
-    pipeline = Pipeline([('values', transf), ("items", mult2)])
+    pipeline = Pipeline([('values', transf), ("mult", mult2)])
     assert_true(pipeline.named_steps.values is not transf)
-    assert_true(pipeline.named_steps.items is not mult2)
+    assert_true(pipeline.named_steps.mult is mult2)
 
 
 def test_set_pipeline_step_none():
