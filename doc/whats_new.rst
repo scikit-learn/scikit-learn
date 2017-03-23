@@ -252,6 +252,9 @@ Bug fixes
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
 
+   - Fixed a bug in :class:`manifold.TSNE` where it stored the incorrect
+     ``kl_divergence_``. :issue:`6507` by :user:`Sebastian Saeger <ssaeger>`.
+
 API changes summary
 -------------------
 
@@ -5031,5 +5034,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vincent Pham: https://github.com/vincentpham1991
 
 .. _Denis Engemann: http://denis-engemann.de
+.. _Anish Shah: https://github.com/AnishShah
 
 .. _Neeraj Gangwar: http://neerajgangwar.in

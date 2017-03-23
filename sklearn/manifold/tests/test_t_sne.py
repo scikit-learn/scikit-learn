@@ -625,3 +625,30 @@ def test_min_grad_norm():
     # The gradient norm can be smaller than min_grad_norm at most once,
     # because in the moment it becomes smaller the optimization stops
     assert_less_equal(n_smaller_gradient_norms, 1)
+
+
+def test_accessible_kl_divergence():
+    # Ensures that the accessible kl_divergence matches the computed value
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    tsne = TSNE(n_iter_without_progress=2, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # The output needs to contain the accessible kl_divergence as the error at
+    # the last iteration
+    for line in out.split('\n')[::-1]:
+        if 'Iteration' in line:
+            _, _, error = line.partition('error = ')
+            if error:
+                error, _, _ = error.partition(',')
+                break
+    assert_almost_equal(tsne.kl_divergence_, float(error), decimal=5)
