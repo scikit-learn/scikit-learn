@@ -604,10 +604,8 @@ def test_ridgecv_sample_weight():
 
         # Check using GridSearchCV directly
         parameters = {'alpha': alphas}
-        fit_params = {'sample_weight': sample_weight}
-        gs = GridSearchCV(Ridge(), parameters, fit_params=fit_params,
-                          cv=cv)
-        gs.fit(X, y)
+        gs = GridSearchCV(Ridge(), parameters, cv=cv)
+        gs.fit(X, y, sample_weight=sample_weight)
 
         assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
         assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)

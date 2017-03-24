@@ -834,3 +834,37 @@ Christian Rammig, Head of Data Science, Otto Group
 
   </span>
 
+`Zopa <https://zopa.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/zopa.png
+    :width: 120pt
+    :target: https://zopa.com
+
+.. raw:: html
+
+   </div>
+
+
+At Zopa, the first ever Peer-to-Peer lending platform, we extensively use scikit-learn
+to run the business and optimize our users' experience. It powers our 
+Machine Learning models involved in credit risk, fraud risk, marketing, and pricing, 
+and has been used for originating at least 1 billion GBP worth of Zopa loans.
+It is very well documented, powerful, and simple to use. We are grateful for the 
+capabilities it has provided, and for allowing us to deliver on our mission of making
+money simple and fair.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Vlasios Vasileiou, Head of Data Science, Zopa
+
+.. raw:: html
+
+  </span>
+

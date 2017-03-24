@@ -510,7 +510,8 @@ class BinomialDeviance(ClassificationLossFunction):
         numerator = np.sum(sample_weight * residual)
         denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -576,7 +577,8 @@ class MultinomialDeviance(ClassificationLossFunction):
         denominator = np.sum(sample_weight * (y - residual) *
                              (1.0 - y + residual))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -633,7 +635,8 @@ class ExponentialLoss(ClassificationLossFunction):
         numerator = np.sum(y_ * sample_weight * np.exp(-y_ * pred))
         denominator = np.sum(sample_weight * np.exp(-y_ * pred))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -1384,6 +1387,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
@@ -1727,7 +1738,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        previous solution.
+        p
+revious solution.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1763,12 +1775,21 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    `init` : BaseEstimator
+    init : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
     estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, 1]
         The collection of fitted sub-estimators.
+
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
