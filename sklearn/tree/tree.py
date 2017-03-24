@@ -607,13 +607,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         by `np.random`.
 
     min_impurity_decrease : float, optional (default=0.)
-        Threshold for early stopping in tree growth. A node will be split
-        if the impurity decrease due to the splitting, is greater than or equal
-        to this value. If not, the node is marked as a leaf.
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
 
-        The impurity decrease due to a potential split is the difference in the
-        parent node's impurity and the weighted average of impurities of the
-        node's children, as given by this potential split.
+        The impurity decrease is the difference in the parent node's impurity
+        and the weighted average of impurities of the node's children, as
+        given by this potential split.
 
         The sample counts of each child is used to weigh the impurity of the
         child for averaging the impurity.
@@ -918,13 +917,12 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         by `np.random`.
 
     min_impurity_decrease : float, optional (default=0.)
-        Threshold for early stopping in tree growth. A node will be split
-        if the impurity decrease due to the splitting, is greater than or equal
-        to this value. If not, the node is marked as a leaf.
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
 
-        The impurity decrease due to a potential split is the difference in the
-        parent node's impurity and the weighted average of impurities of the
-        node's children, as given by this potential split.
+        The impurity decrease is the difference in the parent node's impurity
+        and the weighted average of impurities of the node's children, as
+        given by this potential split.
 
         The sample counts of each child is used to weigh the impurity of the
         child for averaging the impurity.

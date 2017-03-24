@@ -1324,21 +1324,20 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, optional (default=1e-7)
-        Threshold for early stopping in tree growth. A node will be split
-        if the impurity decrease due to the splitting, is greater than or equal
-        to this value. If not, the node is marked as a leaf.
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
 
-        The impurity decrease due to a potential split is the difference in the
-        parent node's impurity and the weighted average of impurities of the
-        node's children, as given by this potential split.
+        The impurity decrease is the difference in the parent node's impurity
+        and the weighted average of impurities of the node's children, as
+        given by this potential split.
 
         The sample counts of each child is used to weigh the impurity of the
         child for averaging the impurity.
 
         .. versionadded:: 0.19
 
-        init : BaseEstimator, None, optional (default=None)
+    init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
@@ -1717,14 +1716,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, optional (default=1e-7)
-        Threshold for early stopping in tree growth. A node will be split
-        if the impurity decrease due to the splitting, is greater than or equal
-        to this value. If not, the node is marked as a leaf.
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
 
-        The impurity decrease due to a potential split is the difference in the
-        parent node's impurity and the weighted average of impurities of the
-        node's children, as given by this potential split.
+        The impurity decrease is the difference in the parent node's impurity
+        and the weighted average of impurities of the node's children, as
+        given by this potential split.
 
         The sample counts of each child is used to weigh the impurity of the
         child for averaging the impurity.
