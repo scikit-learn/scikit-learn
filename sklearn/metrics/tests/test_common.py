@@ -49,8 +49,6 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
 
-from sklearn.preprocessing import MultiLabelBinarizer
-
 # TODO Curve are currently not covered by invariance test
 # from sklearn.metrics import precision_recall_curve
 # from sklearn.metrics import roc_curve
@@ -1116,9 +1114,20 @@ def test_no_averaging_labels():
 
 def test_metric_permutation_invariance_multiclass():
     rng = np.random.RandomState(42)
-    y_true = rng.randint(0, 20, 100)
-    y_pred = rng.randint(0, 20, 100)
-    classes_perm = rng.permutation(20)
+    n_classes = 5
+    n_samples = 100
+    p_C = rng.rand(n_classes)
+    p_C /= p_C.sum()
+    cp_C = np.cumsum(p_C)
+    y_true = np.searchsorted(cp_C, rng.rand(n_samples))
+    y_pred = [];
+    for y in y_true:
+        if rng.randint(0, 10) > 5:
+            y_pred_new = (y + 1) % n_classes
+        else:
+            y_pred_new = y;
+        y_pred.append(y_pred_new)
+    classes_perm = rng.permutation(n_classes)
     y_true_perm = classes_perm[y_true]
     y_pred_perm = classes_perm[y_pred]
     for name in CLASSIFICATION_METRICS:
@@ -1133,21 +1142,16 @@ def test_metric_permutation_invariance_multiclass():
 
 
 def test_metric_permutation_invariance_multilabel():
-    y_true = []
-    y_pred = []
     rng = np.random.RandomState(42)
-    for i in range(0, 100):
-        n_labels_true = rng.randint(1, 10)
-        n_labels_pred = rng.randint(1, 10)
-        y_true.append(rng.randint(0, 20, n_labels_true))
-        y_pred.append(rng.randint(0, 20, n_labels_pred))
-    classes_perm = rng.permutation(20)
-    y_true_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
-                                                       for y in y_true])
-    y_pred_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
-                                                       for y in y_pred])
-    y_true = MultiLabelBinarizer().fit_transform(y_true)
-    y_pred = MultiLabelBinarizer().fit_transform(y_pred)
+    n_samples = 100
+    n_classes = 5
+    p = 0.7
+    R = np.random.rand(n_samples, n_classes)
+    y_true = R > p
+    y_pred = R + np.random.randn(n_samples, n_classes) > p
+    classes_perm = rng.permutation(n_classes)
+    y_true_perm = y_true[:, classes_perm]
+    y_pred_perm = y_pred[:, classes_perm]
 
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
@@ -1183,22 +1187,21 @@ def test_metric_permutation_invariance_thresholded_multiclass():
 
 
 def test_metric_permutation_invariance_thresholded_multilabel():
-    y_true = []
+    rng = np.random.RandomState(42)
+    n_samples = 100
+    n_classes = 5
+    p = 0.7
+    R = np.random.rand(n_samples, n_classes)
+    y_true = R > p
     y_score = []
     y_score_perm = []
     rng = np.random.RandomState(42)
-    classes_perm = rng.permutation(20)
-    for i in range(0, 100):
-        n_labels_true = rng.randint(1, 10)
-        y_true.append(rng.randint(0, 20, n_labels_true))
-        y_score.append(rng.rand(20))
+    classes_perm = rng.permutation(n_classes)
+    for i,y in enumerate(y_true):
+        y_score.append(rng.normal(size=y.shape))
         y_score_perm.append(y_score[i][classes_perm])
 
-    y_true_perm = MultiLabelBinarizer().fit_transform([classes_perm[y]
-                                                       for y in y_true])
-
-    y_true = MultiLabelBinarizer().fit_transform(y_true)
-
+    y_true_perm = y_true[:, classes_perm]
     for name in THRESHOLDED_MULTILABEL_METRICS:
         if name in ["log_loss", "unnormalized_log_loss"]:
             continue
