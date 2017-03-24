@@ -213,7 +213,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional, default True
         If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
         When the regressors are normalized, note that this makes the
@@ -611,6 +611,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     -----
     See examples/linear_model/plot_sparse_recovery.py for an example.
     """
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     rng = check_random_state(random_state)
 
     if not (0 < scaling < 1):
