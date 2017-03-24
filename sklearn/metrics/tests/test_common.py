@@ -1203,9 +1203,7 @@ def test_metric_permutation_invariance_thresholded_multilabel():
 
     y_true_perm = y_true[:, classes_perm]
     for name in THRESHOLDED_MULTILABEL_METRICS:
-        if name in ["log_loss", "unnormalized_log_loss"]:
-            continue
         metric = ALL_METRICS[name]
         score = metric(y_true, y_score)
         score_perm = metric(y_true_perm, y_score_perm)
-        assert_almost_equal(score, score_perm, decimal=1)
+        assert_almost_equal(score, score_perm)
