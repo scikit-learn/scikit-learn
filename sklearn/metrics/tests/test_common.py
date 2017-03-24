@@ -1120,12 +1120,12 @@ def test_metric_permutation_invariance_multiclass():
     p_C /= p_C.sum()
     cp_C = np.cumsum(p_C)
     y_true = np.searchsorted(cp_C, rng.rand(n_samples))
-    y_pred = [];
+    y_pred = []
     for y in y_true:
         if rng.randint(0, 10) > 5:
             y_pred_new = (y + 1) % n_classes
         else:
-            y_pred_new = y;
+            y_pred_new = y
         y_pred.append(y_pred_new)
     classes_perm = rng.permutation(n_classes)
     y_true_perm = classes_perm[y_true]
@@ -1197,8 +1197,8 @@ def test_metric_permutation_invariance_thresholded_multilabel():
     y_score_perm = []
     rng = np.random.RandomState(42)
     classes_perm = rng.permutation(n_classes)
-    for i,y in enumerate(y_true):
-        y_score.append(rng.normal(size=y.shape))
+    for i in y_true:
+        y_score.append(rng.normal(size=y_true[0].shape))
         y_score_perm.append(y_score[i][classes_perm])
 
     y_true_perm = y_true[:, classes_perm]
