@@ -154,6 +154,9 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+     is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+
 Bug fixes
 .........
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
@@ -246,11 +249,19 @@ Bug fixes
    - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
      raising an exception if instability is identified.  :issue:`7376` and
      :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
+     
    - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
 
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
+     ridge parameter `alpha_` and `lambda_` consistent with calculated
+     coefficients `coef_` and `intercept_`.
+     :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
+
+   - Fixed a bug in :class:`manifold.TSNE` where it stored the incorrect
+     ``kl_divergence_``. :issue:`6507` by :user:`Sebastian Saeger <ssaeger>`.
 
 API changes summary
 -------------------
@@ -5031,5 +5042,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vincent Pham: https://github.com/vincentpham1991
 
 .. _Denis Engemann: http://denis-engemann.de
+.. _Anish Shah: https://github.com/AnishShah
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
