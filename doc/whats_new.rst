@@ -152,7 +152,7 @@ Enhancements
 
 Bug fixes
 .........
-   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect 
+   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect
      result when input is a precomputed sparse matrix with initial
      rows all zero.
      :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
@@ -163,7 +163,7 @@ Bug fixes
 
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
-     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>` 
+     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
 
    - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
      :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
@@ -246,6 +246,12 @@ API changes summary
      user no longer has access to the unnormalized document topic distribution
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
+
+   - Replace attribute ``named_steps`` ``dict`` to :class:`sklearn.utils.Bunch`
+     in :class:`sklearn.pipeline.Pipeline` to enable tab completion in interactive
+     environment. In the case conflict value on ``named_steps`` and ``dict``
+     attribute, ``dict`` behavior will be prioritized.
+     :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
    - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
      function used to return a 3d array (``n_samples``, ``n_classes``,
