@@ -171,30 +171,30 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
     score : float
         Average the sum of pairwise binary metric scores
     """
-    n_labels = len(np.unique(y_true))
-    pos_and_neg_prevalence = []
-    label_scores = []
-    for pos, neg in itertools.combinations(range(n_labels), 2):
-        pos_ix = y_true == pos
-        ix = np.logical_or(pos_ix, y_true == neg)
+    n_classes = len(np.unique(y_true))
+    n_pairs = n_classes * (n_classes - 1) // 2
+    prevalence = np.empty(n_pairs)
+    pair_scores = np.empty(n_pairs)
 
-        pos_and_neg_prevalence.append(float(np.sum(ix)) / len(y_true))
+    ix = 0
+    for a, b in itertools.combinations(range(n_classes), 2):
+        a_mask = y_true == a
+        ab_mask = np.logical_or(a_mask, y_true == b)
 
-        y_score_filtered = y_score[ix]
+        prevalence[ix] = np.sum(ab_mask) / len(y_true)
 
-        class_a = pos_ix[ix]
-        class_b = np.logical_not(class_a)
+        y_score_filtered = y_score[ab_mask]
 
-        score_class_a = binary_metric(
-                class_a, y_score_filtered[:, pos])
-        score_class_b = binary_metric(
-                class_b, y_score_filtered[:, neg])
-        binary_avg_score = (score_class_a + score_class_b) / 2.
-        label_scores.append(binary_avg_score)
+        a_true = a_mask[ab_mask]
+        b_true = np.logical_not(a_true)
 
-    if average == "weighted":
-        label_scores = np.multiply(np.array(pos_and_neg_prevalence),
-                                   np.array(label_scores))
-        return np.sum(label_scores) / (n_labels * (n_labels - 1))
-    else:
-        return 2 * np.sum(label_scores) / (n_labels * (n_labels - 1))
+        a_true_score = binary_metric(
+                a_true, y_score_filtered[:, a])
+        b_true_score = binary_metric(
+                b_true, y_score_filtered[:, b])
+        binary_avg_score = (a_true_score + b_true_score) / 2
+        pair_scores[ix] = binary_avg_score
+
+        ix += 1
+    return (np.average(pair_scores, weights=prevalence)
+            if average == "weighted" else np.average(pair_scores))

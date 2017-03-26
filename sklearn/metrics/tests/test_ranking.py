@@ -427,11 +427,9 @@ def test_multi_ovo_auc_toydata():
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
     # Each term is weighted by the posterior for the positive label.
-    weighted_sum_avg_scores = (0.75 * average_score_01 +
-                               0.75 * average_score_02 +
-                               0.50 * average_score_12)
-    ovo_weighted_coefficient = 1. / (n_labels * (n_labels - 1))
-    ovo_weighted_score = ovo_weighted_coefficient * weighted_sum_avg_scores
+    pair_scores = [average_score_01, average_score_02, average_score_12]
+    prevalence = [0.75, 0.75, 0.50]
+    ovo_weighted_score = np.average(pair_scores, weights=prevalence)
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovo", average="weighted"),
         ovo_weighted_score)
@@ -480,7 +478,7 @@ def test_multi_auc_score_under_permutation():
                 y_true_perm = np.take(perm, y_true)
                 score = roc_auc_score(y_true_perm, y_score_perm,
                                       multiclass=multiclass, average=average)
-                if not same_score_under_permutation:
+                if same_score_under_permutation is None:
                     same_score_under_permutation = score
                 else:
                     assert_almost_equal(score, same_score_under_permutation)
@@ -712,8 +710,6 @@ def test_score_scale_invariance():
     # issue #3864 (and others), where overly aggressive rounding was causing
     # problems for users with very small y_score values
     y_true, _, probas_pred = make_prediction(binary=True)
-    print(y_true.shape)
-    print(probas_pred.shape)
     roc_auc = roc_auc_score(y_true, probas_pred)
     roc_auc_scaled_up = roc_auc_score(y_true, 100 * probas_pred)
     roc_auc_scaled_down = roc_auc_score(y_true, 1e-6 * probas_pred)
