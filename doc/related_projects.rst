@@ -184,6 +184,12 @@ and tasks.
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
 
+**Dataset resampling**
+
+- `imbalanced-learn
+  <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
+  methods to under- and over-sample datasets.
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
