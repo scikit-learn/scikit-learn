@@ -25,9 +25,9 @@ or multi-label classification can use the One-vs-Rest or One-vs-One scheme.
 One-vs-Rest
 -----------
 
-The output is binarized and one ROC curve can be drawn per label,
-where the label is the positive class and all other labels are
-the negative class.
+The output is binarized and one ROC curve is drawn per label,
+where label is set to be the positive class and all other labels (the "rest")
+are considered the negative class.
 
 The ROC area can be approximated by taking the average--unweighted or weighted
 by the a priori class distribution--of the one-vs-rest ROC areas.
@@ -44,14 +44,13 @@ One-vs-One
 ----------
 
 Two ROC curves can be drawn per pair of labels because either of the two
-labels can be considered the positive class.
+labels can be considered the positive class (and the other the negative
+class). The ROC area of a label pair is approximated taking the average of these
+two ROC AUC scores.
 
-The ROC area can be approximated by first computing the
-approximate ROC area of each label pair as the average of the
-two ROC AUC scores corresponding to that pair. The One-vs-One
-approximation of a multi-class ROC AUC score is the average--
-unweighted or weighted by the a priori class distribution--across
-all of the pairwise approximate ROC AUC scores.
+The One-vs-One approximation of a multi-class ROC AUC score is the average--
+unweighted or weighted by class prevalence--across all of the pairwise
+approximate ROC AUC scores.
 
 .. note::
 
@@ -63,7 +62,7 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from itertools import cycle
+from itertools import combinations, cycle
 
 from sklearn import svm, datasets
 from sklearn.metrics import roc_curve, auc, roc_auc_score
@@ -185,37 +184,35 @@ print("One-vs-Rest ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
 ##############################################################################
 # Plot ROC curves for the multiclass problem using One vs. One classification.
 
-for pos in range(n_classes):
-    for neg in range(pos + 1, n_classes):
-        # Filter `y_test` and `y_score` to only consider the current
-        # class pair: `pos` and `neg`.
-        class_pair_indices = np.in1d(y_test, [pos, neg])
-        y_true_filtered = y_test[class_pair_indices]
-        y_score_filtered = y_score[class_pair_indices]
+for a, b in combinations(range(n_classes), 2):
+    # Filter `y_test` and `y_score` to only consider the current
+    # `a` and `b` class pair.
+    ab_mask = np.logical_or(y_test == a, y_true == b)
+    y_true_filtered = y_test[ab_mask]
+    y_score_filtered = y_score[ab_mask]
 
-        # Compute ROC curve and ROC area with `pos` as the positive class
-        class_a = y_true_filtered == pos
-        fpr[(pos, neg)], tpr[(pos, neg)], _ = roc_curve(
-            class_a, y_score_filtered[:, pos])
-        roc_auc[(pos, neg)] = auc(fpr[(pos, neg)], tpr[(pos, neg)])
+    # Compute ROC curve and ROC area with `a` as the positive class
+    class_a = y_true_filtered == a
+    fpr[(a, b)], tpr[(a, b)], _ = roc_curve(
+        class_a, y_score_filtered[:, a])
+    roc_auc[(a, b)] = auc(fpr[(a, b)], tpr[(a, b)])
 
-        # Compute ROC curve and ROC area with `neg` as the positive class
-        class_b = y_true_filtered == neg
-        fpr[(neg, pos)], tpr[(neg, pos)], _ = roc_curve(
-            class_b, y_score_filtered[:, neg])
-        roc_auc[(neg, pos)] = auc(fpr[(neg, pos)], tpr[(neg, pos)])
+    # Compute ROC curve and ROC area with `b` as the positive class
+    class_b = y_true_filtered == b
+    fpr[(b, a)], tpr[(b, a)], _ = roc_curve(
+        class_b, y_score_filtered[:, b])
+    roc_auc[(b, a)] = auc(fpr[(b, a)], tpr[(b, a)])
 
 plt.figure()
-for pos in range(n_classes):
-    for neg in range(pos + 1, n_classes):
-        plt.plot(fpr[(pos, neg)], tpr[(pos, neg)], lw=lw,
-                 label='ROC curve of class {0} against class {1} '
-                       '(area = {2:0.2f})'.format(
-            pos, neg, roc_auc[(pos, neg)]))
-        plt.plot(fpr[(neg, pos)], tpr[(neg, pos)], lw=lw,
-                 label='ROC curve of class {0} against class {1} '
-                       '(area = {2:0.2f})'.format(
-            neg, pos, roc_auc[(neg, pos)]))
+for a, b in combinations(range(n_classes), 2):
+    plt.plot(fpr[(a, b)], tpr[(a, b)], lw=lw,
+             label='ROC curve of class {0} against class {1} '
+                   '(area = {2:0.2f})'.format(
+        a, b, roc_auc[(a, b)]))
+    plt.plot(fpr[(b, a)], tpr[(b, a)], lw=lw,
+             label='ROC curve of class {0} against class {1} '
+                   '(area = {2:0.2f})'.format(
+        b, a, roc_auc[(b, a)]))
 plt.plot([0, 1], [0, 1], 'k--', lw=lw)
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
