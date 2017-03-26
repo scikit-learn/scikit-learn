@@ -510,7 +510,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         return 1. / (1. + np.exp(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
+def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, n_bins=5):
     """Compute true and predicted probabilities for a calibration curve.
 
      Calibration curves may also be referred to as reliability diagrams.
@@ -562,9 +562,9 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
     bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
     binids = np.digitize(y_prob, bins) - 1
 
-    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
-    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
-    bin_total = np.bincount(binids, minlength=len(bins))
+    bin_sums = np.bincount(binids, weights=sample_weight*y_prob, minlength=len(bins))
+    bin_true = np.bincount(binids, weights=sample_weight*y_true, minlength=len(bins))
+    bin_total = np.bincount(binids, weights=sample_weight, minlength=len(bins))
 
     nonzero = bin_total != 0
     prob_true = (bin_true[nonzero] / bin_total[nonzero])
