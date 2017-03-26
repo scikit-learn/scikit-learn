@@ -83,7 +83,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Bin edges for feature `i` are defined as
 
     ```
-    np.concatenate([-np.inf, offset_[i] + bin_width_[i] * np.arange(1, n_bins_[i]), np.inf])
+    np.concatenate([
+        -np.inf, offset_[i] + bin_width_[i] * np.arange(1, n_bins_[i]), np.inf
+    ])
     ```
     """
 
@@ -123,8 +125,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ptp = np.ptp(X, axis=0)
         same_min_max = np.where(ptp == 0)[0]
         if len(same_min_max) > 0:
-            warnings.warn("Features {} are constant and will be replaced with 0."
-                          .format(", ".join(str(i) for i in same_min_max)))
+            warnings.warn("Features {} are constant and will be replaced with "
+                          "0.".format(", ".join(str(i) for i in same_min_max)))
 
         with np.errstate(divide='ignore', invalid='ignore'):
             bin_widths = ptp / self.n_bins_

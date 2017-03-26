@@ -114,8 +114,8 @@ def test_same_min_max():
                   [1, 0],
                   [1, 1]])
     est = assert_warns_message(UserWarning,
-                               "Features 0 are constant and will be replaced with 0.",
-                               KBinsDiscretizer(n_bins=3).fit, X)
+                               "Features 0 are constant and will be replaced "
+                               "with 0.", KBinsDiscretizer(n_bins=3).fit, X)
     Xt = est.transform(X)
 
     expected = [[0, 0],
