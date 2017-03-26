@@ -114,9 +114,7 @@ def test_same_min_max():
                   [1, 0],
                   [1, 1]])
     est = assert_warns_message(UserWarning,
-                               "Fitted X contained constant features at "
-                               "indices 0. All of these features will be "
-                               "discretized to the value 0.",
+                               "Features 0 are constant and will be replaced with 0.",
                                KBinsDiscretizer(n_bins=3).fit, X)
     Xt = est.transform(X)
 

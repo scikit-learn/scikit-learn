@@ -37,8 +37,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ----------
     offset_ : float array, shape (n_features,)
         Minimum value per feature in ``X``. An ignored feature at index
-        ``i`` will have ``offset_[i] == 0``. Used for the transformation
-        process.
+        ``i`` will have ``offset_[i] == 0``.
 
     transformed_features_ : int array, shape (n_features,)
         Features which are transformed.
@@ -78,6 +77,14 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
+
+    Notes
+    -----
+    Bin edges for feature `i` are defined as
+
+    ```
+    np.concatenate([-np.inf, offset_[i] + bin_width_[i] * np.arange(1, n_bins_[i]), np.inf])
+    ```
     """
 
     def __init__(self, n_bins=2, ignored_features=None):
@@ -116,9 +123,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ptp = np.ptp(X, axis=0)
         same_min_max = np.where(ptp == 0)[0]
         if len(same_min_max) > 0:
-            warnings.warn("Fitted X contained constant features at indices "
-                          "{}. All of these features will be discretized to "
-                          "the value 0."
+            warnings.warn("Features {} are constant and will be replaced with 0."
                           .format(", ".join(str(i) for i in same_min_max)))
 
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -222,9 +227,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv = Xt.copy()
         Xinv_sel = Xinv[:, trans]
 
+        Xinv_sel += 0.5
         Xinv_sel *= self.bin_width_[trans]
         Xinv_sel += self.offset_[trans]
-        Xinv_sel += self.bin_width_[trans] / 2
 
         Xinv[:, trans] = Xinv_sel
         return Xinv

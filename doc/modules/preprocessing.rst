@@ -432,10 +432,10 @@ Discretization
 ==============
 
 `Discretization <https://en.wikipedia.org/wiki/Discretization_of_continuous_features>`_
-provides a way to quantize continuous features into discrete values. Certain
-datasets with many continuous features may benefit from discretization, because
-discretization can transform the dataset of continuous attributes to one with
-only nominal attributes.
+(otherwise known as quantization or binning) provides a way to partition continuous
+features into discrete values. Certain datasets with many continuous features
+may benefit from discretization, because discretization can transform the dataset
+of continuous attributes to one with only nominal attributes.
 
 Scikit-learn provides a mechanism way for users to discretize a feature into
 ``k`` equal length bins using a :class:`KBinsDiscretizer`::
