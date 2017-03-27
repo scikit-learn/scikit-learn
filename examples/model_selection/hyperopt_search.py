@@ -45,13 +45,13 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
+    print (k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters'])
 print (hs.best_index_)
 
 
 print (hs.best_params_)
 y_pred = hs.predict(x_test)
-print "MAE (min): {}\n".format(median_absolute_error(y_true=y_test, y_pred=y_pred))
+print ("MAE (min): {}\n".format(median_absolute_error(y_true=y_test, y_pred=y_pred)))
 
 ### Maximize
 from sklearn.metrics import explained_variance_score
@@ -63,13 +63,13 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
+    print (k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters'])
 print (hs.best_index_)
 
 
 print (hs.best_params_)
 y_pred = hs.predict(x_test)
-print "Explained variance (max): {}\n".format(explained_variance_score(y_true=y_test, y_pred=y_pred))
+print ("Explained variance (max): {}\n".format(explained_variance_score(y_true=y_test, y_pred=y_pred)))
 
 
 ###################################
@@ -114,13 +114,13 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
+    print (k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters'])
 print (hs.best_index_)
 
 
 print (hs.best_params_)
 y_prob = hs.predict_proba(x_test)
-print "Brier score loss (min): {}\n".format(brier_score_loss(y_true=y_test, y_prob=y_prob[:, 1]))
+print ("Brier score loss (min): {}\n".format(brier_score_loss(y_true=y_test, y_prob=y_prob[:, 1])))
 
 #### Without probability
 from sklearn.metrics import hamming_loss
@@ -132,13 +132,13 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
+    print(k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters'])
 print (hs.best_index_)
 
 
 print (hs.best_params_)
 y_pred = hs.predict(x_test)
-print "Hamming loss (min): {}\n".format(hamming_loss(y_true=y_test, y_pred=y_pred))
+print ("Hamming loss (min): {}\n".format(hamming_loss(y_true=y_test, y_pred=y_pred)))
 
 ### Maximize
 
@@ -153,13 +153,13 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
+    print (k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters'])
 print (hs.best_index_)
 
 
 print (hs.best_params_)
 y_prob = hs.predict_proba(x_test)
-print "Roc Auc (max): {}\n".format(roc_auc_score(y_true=y_test, y_score=y_prob[:, 1]))
+print ("Roc Auc (max): {}\n".format(roc_auc_score(y_true=y_test, y_score=y_prob[:, 1])))
 
 #### Without probability
 from sklearn.metrics import f1_score
@@ -171,13 +171,13 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
+    print (k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters'])
 print (hs.best_index_)
 
 
 print (hs.best_params_)
 y_pred = hs.predict(x_test)
-print "F1_score (max): {}\n".format(f1_score(y_true=y_test, y_pred=y_pred))
+print ("F1_score (max): {}\n".format(f1_score(y_true=y_test, y_pred=y_pred)))
 
 
 ###################################
