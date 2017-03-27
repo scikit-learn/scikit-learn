@@ -31,7 +31,7 @@ pipeline = Pipeline([
     ('model', LinearRegression())
 ])
 space = {
-    'pca__n_components': hp.choice('pca__n_components', [2, 3]),
+    'pca__n_components': hp.choice('pca__n_components', [1, 2, 3, 4]),
     'model__fit_intercept': hp.choice('model__fit_intercept', [True, False])
 }
 
@@ -45,7 +45,7 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']),hs.report[k]['parameters']
+    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
 print (hs.best_index_)
 
 
@@ -63,7 +63,7 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']),hs.report[k]['parameters']
+    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
 print (hs.best_index_)
 
 
@@ -95,7 +95,7 @@ pipeline = Pipeline([
     ('model', LogisticRegression())
 ])
 space = {
-    'pca__n_components': hp.choice('pca__n_components',[2, 3]),
+    'pca__n_components': hp.choice('pca__n_components', [1, 2, 3, 4]),
     'model__fit_intercept': hp.choice('model__fit_intercept', [True, False]),
     'model__penalty': hp.choice('model__penalty',['l1', 'l2']),
     'model__C': hp.uniform('model__C', 0.00001, 100000)
@@ -114,7 +114,7 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']),hs.report[k]['parameters']
+    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
 print (hs.best_index_)
 
 
@@ -132,7 +132,7 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']),hs.report[k]['parameters']
+    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
 print (hs.best_index_)
 
 
@@ -153,7 +153,7 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']),hs.report[k]['parameters']
+    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
 print (hs.best_index_)
 
 
@@ -171,10 +171,14 @@ hs = HyperoptSearchCV(estimator=pipeline,
                       fit_params=None)
 hs.fit(x_train, y_train)
 for k in hs.report.keys():
-    print k, np.median(hs.report[k]['test_scores']),hs.report[k]['parameters']
+    print k, np.median(hs.report[k]['test_scores']), hs.report[k]['parameters']
 print (hs.best_index_)
 
 
 print (hs.best_params_)
 y_pred = hs.predict(x_test)
 print "F1_score (max): {}\n".format(f1_score(y_true=y_test, y_pred=y_pred))
+
+
+###################################
+## Test function minimization

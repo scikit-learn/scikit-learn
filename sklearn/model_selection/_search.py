@@ -19,7 +19,7 @@ import operator
 import warnings
 
 import numpy as np
-from hyperopt import fmin, tpe
+from hyperopt import fmin, tpe, Trials
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
@@ -1186,12 +1186,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
 
 class HyperoptSearchCV(BaseSearchCV):
-    """Description
-    Integration of hyperopt library in scikit-learn
-
-    Parameters
-    ----------
-    """
+    """Class for hyper parameter search integrating Hyperopt library (http://jaberg.github.io/hyperopt/)"""
 
     def __init__(self, estimator,
                  # Hyperopt Fmin parameters
@@ -1220,14 +1215,26 @@ class HyperoptSearchCV(BaseSearchCV):
         self.return_argmin=return_argmin
 
     def fit(self, X, y=None, groups=None, **fit_params):
-        """
+        """Run fit with all sets of parameters.
 
-        :param X:
-        :param y:
-        :param groups:
-        :param fit_params:
-        :return:
-        """
+         Parameters
+         ----------
+
+         X : array-like, shape = [n_samples, n_features]
+             Training vector, where n_samples is the number of samples and
+             n_features is the number of features.
+
+         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+             Target relative to X for classification or regression;
+             None for unsupervised learning.
+
+         groups : array-like, with shape (n_samples,), optional
+             Group labels for the samples used while splitting the dataset into
+             train/test set.
+
+         **fit_params : dict of string -> object
+             Parameters passed to the ``fit`` method of the estimator
+         """
         if self.fit_params:
             warnings.warn('"fit_params" as a constructor argument was '
                           'deprecated in version 0.19 and will be removed '
@@ -1279,12 +1286,13 @@ class HyperoptSearchCV(BaseSearchCV):
 
             return -1*np.median(test_scores)
 
-        fmin(fn=to_minimize, space=self.space, algo=self.algo,
-             max_evals=self.max_evals, trials=self.trials,
-             rstate=self.rstate, allow_trials_fmin=self.allow_trials_fmin,
-             pass_expr_memo_ctrl=self.pass_expr_memo_ctrl,
-             catch_eval_exceptions=self.catch_eval_exceptions,
-             return_argmin=self.return_argmin)
+        self.trials = Trials()
+        best = fmin(fn=to_minimize, space=self.space, algo=self.algo,
+                    max_evals=self.max_evals, trials=self.trials,
+                    rstate=self.rstate, allow_trials_fmin=self.allow_trials_fmin,
+                    pass_expr_memo_ctrl=self.pass_expr_memo_ctrl,
+                    catch_eval_exceptions=self.catch_eval_exceptions,
+                    return_argmin=self.return_argmin)
 
         candidate_params = [report[i]['parameters'] for i in range(len(report))]
         n_candidates = len(candidate_params)
@@ -1324,19 +1332,14 @@ class HyperoptSearchCV(BaseSearchCV):
         best_parameters = report[best_index]['parameters']
 
         results['params'] = [report[i]['parameters'] for i in range(len(report))]
-        self.cv_results_ = results
 
+        self.cv_results_ = results
         self.best_index_ = best_index
         self.n_splits_ = n_splits
 
 
         self.best_parameters=best_parameters
         self.report = report
-
-
-
-
-
 
         if self.refit:
             # fit the best estimator using the entire dataset
@@ -1349,4 +1352,3 @@ class HyperoptSearchCV(BaseSearchCV):
                 best_estimator.fit(X, **fit_params)
             self.best_estimator_ = best_estimator
         return self
-
