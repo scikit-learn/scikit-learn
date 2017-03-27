@@ -229,7 +229,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.17
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -251,18 +251,22 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
-        - 'sag' uses a Stochastic Average Gradient descent. It also uses an
-          iterative procedure, and is often faster than other solvers when
-          both n_samples and n_features are large. Note that 'sag' fast
-          convergence is only guaranteed on features with approximately the
-          same scale. You can preprocess the data with a scaler from
-          sklearn.preprocessing.
+        - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
+          its improved, unbiased version named SAGA. Both methods also use an
+          iterative procedure, and are often faster than other solvers when
+          both n_samples and n_features are large. Note that 'sag' and
+          'saga' fast convergence is only guaranteed on features with
+          approximately the same scale. You can preprocess the data with a
+          scaler from sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data. However,
-        only 'sag' supports sparse input when `fit_intercept` is True.
+
+        All last five solvers support both dense and sparse data. However, only
+        'sag' and 'saga' supports sparse input when`fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
+        .. versionadded:: 0.19
+           SAGA solver.
 
     tol : float
         Precision of the solution.
@@ -314,7 +318,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         solver = 'sag'
 
     # SAG needs X and y columns to be C-contiguous and np.float64
-    if solver == 'sag':
+    if solver in ['sag', 'saga']:
         X = check_array(X, accept_sparse=['csr'],
                         dtype=np.float64, order='C')
         y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
@@ -358,7 +362,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        if solver != 'sag':
+        if solver not in ['sag', 'saga']:
             # SAG supports sample_weight directly. For other solvers,
             # we implement sample_weight via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
@@ -373,7 +377,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
-    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag'):
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
         raise ValueError('Solver %s not understood' % solver)
 
     n_iter = None
@@ -401,7 +405,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                 # use SVD solver if matrix is singular
                 solver = 'svd'
 
-    elif solver == 'sag':
+    elif solver in ['sag', 'saga']:
         # precompute max_squared_sum for all targets
         max_squared_sum = row_norms(X, squared=True).max()
 
@@ -411,9 +415,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
             init = {'coef': np.zeros((n_features + int(return_intercept), 1))}
             coef_, n_iter_, _ = sag_solver(
-                X, target.ravel(), sample_weight, 'squared', alpha_i,
+                X, target.ravel(), sample_weight, 'squared', alpha_i, 0,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
-                init)
+                init,
+                is_saga=solver == 'saga')
             if return_intercept:
                 coef[i] = coef_[:-1]
                 intercept[i] = coef_[-1]
@@ -536,7 +541,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         `preprocessing.StandardScaler` before calling `fit` on an estimator
         with `normalize=False`.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -557,18 +562,22 @@ class Ridge(_BaseRidge, RegressorMixin):
           scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
-        - 'sag' uses a Stochastic Average Gradient descent. It also uses an
-          iterative procedure, and is often faster than other solvers when
-          both n_samples and n_features are large. Note that 'sag' fast
-          convergence is only guaranteed on features with approximately the
-          same scale. You can preprocess the data with a scaler from
-          sklearn.preprocessing.
+        - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
+          its improved, unbiased version named SAGA. Both methods also use an
+          iterative procedure, and are often faster than other solvers when
+          both n_samples and n_features are large. Note that 'sag' and
+          'saga' fast convergence is only guaranteed on features with
+          approximately the same scale. You can preprocess the data with a
+          scaler from sklearn.preprocessing.
 
-        All last four solvers support both dense and sparse data. However,
-        only 'sag' supports sparse input when `fit_intercept` is True.
+        All last five solvers support both dense and sparse data. However,
+        only 'sag' and 'saga' supports sparse input when `fit_intercept` is
+        True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
+        .. versionadded:: 0.19
+           SAGA solver.
 
     tol : float
         Precision of the solution.
@@ -686,7 +695,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         `preprocessing.StandardScaler` before calling `fit` on an estimator
         with `normalize=False`.
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -707,12 +716,18 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
-        - 'sag' uses a Stochastic Average Gradient descent. It also uses an
-          iterative procedure, and is faster than other solvers when both
-          n_samples and n_features are large.
+        - 'sag' uses a Stochastic Average Gradient descent, and 'saga' uses
+          its unbiased and more flexible version named SAGA. Both methods
+          use an iterative procedure, and are often faster than other solvers
+          when both n_samples and n_features are large. Note that 'sag' and
+          'saga' fast convergence is only guaranteed on features with
+          approximately the same scale. You can preprocess the data with a
+          scaler from sklearn.preprocessing.
 
           .. versionadded:: 0.17
              Stochastic Average Gradient descent solver.
+          .. versionadded:: 0.19
+           SAGA solver.
 
     tol : float
         Precision of the solution.
