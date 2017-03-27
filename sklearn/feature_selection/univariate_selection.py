@@ -230,14 +230,15 @@ def chi2(X, y):
 def r_regression(X, y, center=True):
     """Univariate linear regression tests returning Pearson R.
 
-    Quick linear model for testing the effect of a single regressor,
-    sequentially for many regressors.
+    Linear model for testing the individual effect of each of many regressors.
+    This is a scoring function to be used in a feature seletion procedure, not
+    a free standing feature selection procedure.
 
     The cross correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
+    that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
        std(y)).
 
-    Read more in the :ref:`User Guide <univariate_feature_selection>`.
+    For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -255,12 +256,20 @@ def r_regression(X, y, center=True):
     corr : array, shape=(n_features,)
         Pearson R correlation coefficients of features.
 
+
     See also
     --------
     f_regression: Univariate linear regression tests returning f-statistic
         and p-values
+    mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    SelectKBest: Select features based on the k highest scores.
+    SelectFpr: Select features based on a false positive rate test.
+    SelectFdr: Select features based on an estimated false discovery rate.
+    SelectFwe: Select features based on family-wise error rate.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     """
     X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
     n_samples = X.shape[0]

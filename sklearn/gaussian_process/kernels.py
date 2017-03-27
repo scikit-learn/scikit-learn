@@ -1852,7 +1852,7 @@ class PairwiseKernel(Kernel):
             Diagonal of kernel k(X, X)
         """
         # We have to fall back to slow way of computing diagonal
-        return np.apply_along_axis(self, 1, X)[:, 0]
+        return np.apply_along_axis(self, 1, X).ravel()
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """

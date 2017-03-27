@@ -4,7 +4,7 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Michael Eickenberg <michael.eickenberg@inria.fr>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #
@@ -386,6 +386,9 @@ class PCA(_BasePCA):
             return self._fit_full(X, n_components)
         elif svd_solver in ['arpack', 'randomized']:
             return self._fit_truncated(X, n_components, svd_solver)
+        else:
+            raise ValueError("Unrecognized svd_solver='{0}'"
+                             "".format(svd_solver))
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X"""

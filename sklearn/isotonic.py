@@ -35,7 +35,7 @@ def check_increasing(x, y):
 
     Returns
     -------
-    `increasing_bool` : boolean
+    increasing_bool : boolean
         Whether the relationship is increasing or decreasing.
 
     Notes
