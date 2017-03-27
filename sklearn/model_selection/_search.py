@@ -19,6 +19,7 @@ import operator
 import warnings
 
 import numpy as np
+import hyperopt
 from hyperopt import fmin, tpe, Trials
 
 from ..base import BaseEstimator, is_classifier, clone
