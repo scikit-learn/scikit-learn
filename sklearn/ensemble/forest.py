@@ -536,6 +536,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
             return predictions
 
+    import memory_profiler
+    @memory_profiler.profile
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -653,6 +655,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             verbose=verbose,
             warm_start=warm_start)
 
+    import memory_profiler
+    @memory_profiler.profile
     def predict(self, X):
         """Predict regression target for X.
 
