@@ -114,7 +114,7 @@ for node_id in node_index:
     else:
         threshold_sign = ">"
 
-    print("decision id node %s : (X[%s, %s] (= %s) %s %s)"
+    print("decision id node %s : (X_test[%s, %s] (= %s) %s %s)"
           % (node_id,
              sample_id,
              feature[node_id],
