@@ -139,7 +139,8 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         # Plot the training points, these are clustered together and have a
         # black outline
-        plt.scatter(X[:, 0], X[:, 1], c=y, cmap=ListedColormap(['r', 'y', 'b']))
+        plt.scatter(X[:, 0], X[:, 1], c=y,
+                    cmap=ListedColormap(['r', 'y', 'b']))
         plot_idx += 1  # move on to the next plot in sequence
 
 plt.suptitle("Classifiers on feature subsets of the Iris dataset")
