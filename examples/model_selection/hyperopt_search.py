@@ -181,4 +181,3 @@ print "F1_score (max): {}\n".format(f1_score(y_true=y_test, y_pred=y_pred))
 
 
 ###################################
-## Test function minimization
