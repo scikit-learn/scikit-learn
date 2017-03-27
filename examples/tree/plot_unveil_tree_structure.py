@@ -118,7 +118,7 @@ for node_id in node_index:
           % (node_id,
              sample_id,
              feature[node_id],
-             X_test[i, feature[node_id]],
+             X_test[sample_id, feature[node_id]],
              threshold_sign,
              threshold[node_id]))
 
