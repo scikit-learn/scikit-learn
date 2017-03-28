@@ -2873,3 +2873,221 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     X_tr[mask, idx] = None
 
         return X_tr
+
+
+class OrdinalEncoder(BaseEstimator, TransformerMixin):
+    """Encode ordinal integer features using a unary scheme.
+
+    The input to this transformer should be a matrix of integers, denoting
+    the values taken on by ordinal (discrete) features. The output will be
+    a matrix where all the columns with index lower than feature value will
+    be active. It is assumed that input features take on values in the range
+    [0, n_values).
+
+    This encoding is needed for feeding ordinal data to many scikit-learn
+    estimators, notably linear models and SVMs with the standard kernels.
+
+    Read more in the :ref:`User Guide <FIXME>`.
+
+    Parameters
+    ----------
+    n_values : 'auto', int or array of ints
+        Number of values per feature.
+
+        - 'auto' : determine value range from training data.
+        - int : number of ordinal values per feature.
+                Each feature value should be in ``range(n_values)``
+        - array : ``n_values[i]`` is the number of ordinal values in
+                  ``X[:, i]``. Each feature value should be
+                  in ``range(n_values[i])``
+
+    ordinal_features : "all" or array of indices or mask
+        Specify what features are treated as ordinal.
+
+        - 'all' (default): All features are treated as ordinal.
+        - array of indices: Array of ordinal feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+
+        Non-ordinal features are always stacked to the right of the matrix.
+
+    dtype : number type, default=np.float
+        Desired dtype of output.
+
+    sparse : boolean, default=True
+        Will return sparse matrix if set True else will return an array.
+
+    handle_unknown : str, 'error' or 'ignore'
+        Whether to raise an error or ignore if a unknown ordinal feature is
+        present during transform.
+
+    Attributes
+    ----------
+    feature_indices_ : array of shape (n_features,)
+        Indices to feature ranges.
+        Feature ``i`` in the original data is mapped to features
+        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+
+    n_values_ : array of shape (n_features,)
+        Maximum number of values per feature.
+
+    Examples
+    --------
+    Given a dataset with three features and four samples, we let the encoder
+    find the maximum value per feature and transform the data to a binary
+    Ordinal encoding.
+
+    >>> from sklearn.preprocessing import OrdinalEncoder
+    >>> enc = OrdinalEncoder()
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
+[1, 0, 2]])  # doctest: +ELLIPSIS
+    OrdinalEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
+            n_values='auto', ordinal_features='all', sparse=True)
+    >>> enc.n_values_
+    array([2, 3, 4])
+    >>> enc.feature_indices_
+    array([0, 1, 3, 6])
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
+
+    See also
+    --------
+    sklearn.feature_extraction.DictVectorizer : performs a Ordinal encoding of
+      dictionary items (also handles string-valued features).
+    sklearn.feature_extraction.FeatureHasher : performs an approximate Ordinal
+      encoding of dictionary items or strings.
+    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
+      fashion.
+    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
+      iterables and a multilabel format, e.g. a (samples x classes) binary
+      matrix indicating the presence of a class label.
+    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
+      and n_classes-1.
+    """
+    def __init__(self, n_values="auto", ordinal_features="all",
+                 dtype=np.float64, sparse=True, handle_unknown='error'):
+        self.n_values = n_values
+        self.ordinal_features = ordinal_features
+        self.dtype = dtype
+        self.sparse = sparse
+        self.handle_unknown = handle_unknown
+
+    def fit(self, X, y=None):
+        """Fit OrdinalEncoder to X.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_feature]
+            Input array of type int.
+        """
+        self.fit_transform(X)
+        return self
+
+    def _fit_transform(self, X):
+        """Assumes X contains only ordinal features."""
+        X = check_array(X, dtype=np.int)
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
+            n_values = np.max(X, axis=0) + 1
+        elif isinstance(self.n_values, numbers.Integral):
+            if (np.max(X, axis=0) >= self.n_values).any():
+                raise ValueError("Feature out of bounds for n_values=%d"
+                                 % self.n_values)
+            n_values = np.empty(n_features, dtype=np.int)
+            n_values.fill(self.n_values)
+        else:
+            try:
+                n_values = np.asarray(self.n_values, dtype=int)
+            except (ValueError, TypeError):
+                raise TypeError("Wrong type for parameter `n_values`. Expected"
+                                " 'auto', int or array of ints, got %r"
+                                % self.n_values)
+            if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
+                raise ValueError("Shape mismatch: if n_values is an array,"
+                                 " it has to be of shape (n_features,).")
+
+        self.n_values_ = n_values
+        n_values = np.hstack([[0], n_values - 1])
+        indices = np.cumsum(n_values)
+        self.feature_indices_ = indices
+
+        column_start = np.tile(indices[:-1], n_samples)
+        column_end = (X + indices[:-1]).ravel()
+        column_indices = np.hstack([np.arange(s, e) for s, e
+                                   in zip(column_start, column_end)])
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                X.sum(axis=1))
+        data = np.ones(X.sum())
+        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+                                shape=(n_samples, indices[-1]),
+                                dtype=self.dtype).tocsr()
+
+        return out if self.sparse else out.toarray()
+
+    def fit_transform(self, X, y=None):
+        """Fit OrdinalEncoder to X, then transform X.
+
+        Equivalent to self.fit(X).transform(X), but more convenient and more
+        efficient. See fit for the parameters, transform for the return value.
+        """
+        return _transform_selected(X, self._fit_transform,
+                                   self.ordinal_features, copy=True)
+
+    def _transform(self, X):
+        """Assumes X contains only ordinal features."""
+        X = check_array(X, dtype=np.int)
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+
+        indices = self.feature_indices_
+        if n_features != indices.shape[0] - 1:
+            raise ValueError("X has different shape than during fitting."
+                             " Expected %d, got %d."
+                             % (indices.shape[0] - 1, n_features))
+
+        # We use only those ordinal features of X that are known using fit.
+        # i.e lesser than n_values_ using mask.
+        # This means, if self.handle_unknown is "ignore", the row_indices and
+        # col_indices corresponding to the unknown ordinal feature are
+        # ignored.
+        mask = (X < self.n_values_).ravel()
+        if np.any(~mask):
+            if self.handle_unknown not in ['error', 'ignore']:
+                raise ValueError("handle_unknown should be either 'error' or "
+                                 "'ignore' got %s" % self.handle_unknown)
+            if self.handle_unknown == 'error':
+                raise ValueError("unknown ordinal feature present %s "
+                                 "during transform." % X.ravel()[~mask])
+
+        column_start = np.tile(indices[:-1], n_samples)[mask]
+        column_end = (X + indices[:-1]).ravel()[mask]
+        column_indices = np.hstack([np.arange(s, e) for s, e
+                                   in zip(column_start, column_end)])
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                np.where(mask.reshape(X.shape), X,
+                                0).sum(axis=1))
+        data = np.ones(X.ravel()[mask].sum())
+        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+                                shape=(n_samples, indices[-1]),
+                                dtype=self.dtype).tocsr()
+
+        return out if self.sparse else out.toarray()
+
+    def transform(self, X):
+        """Transform X using Ordinal encoding.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            Input array of type int.
+
+        Returns
+        -------
+        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
+            Transformed input.
+        """
+        return _transform_selected(X, self._transform,
+                                   self.ordinal_features, copy=True)
