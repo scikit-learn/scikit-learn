@@ -1561,7 +1561,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> print(cross_val_score(lasso, X, y))  # doctest:  +ELLIPSIS
-    [ 0.33139385  0.08022927  0.03534988]
+    [ 0.3313...  0.0802...  0.0353...]
 
     See Also
     ---------
