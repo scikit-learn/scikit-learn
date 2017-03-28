@@ -608,7 +608,7 @@ Model selection and evaluation
      Index which measures the similarity of two clusterings of a set of points
      By :user:`Arnaud Fouchet <afouchet>` and :user:`Thierry Guillemot <tguillemot>`.
 
-   - Added :func:`metrics.calinski_harabaz_score`, which computes the Calinski
+   - Added :func:`metrics.calinski_harabasz_score`, which computes the Calinski
      and Harabaz score to evaluate the resulting clustering of a set of points.
      By :user:`Arnaud Fouchet <afouchet>` and :user:`Thierry Guillemot <tguillemot>`.
 

@@ -13,7 +13,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
-from sklearn.metrics.cluster import calinski_harabaz_score
+from sklearn.metrics.cluster import calinski_harabasz_score
 
 
 def test_silhouette():
@@ -119,30 +119,30 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
 
-def test_calinski_harabaz_score():
+def test_calinski_harabasz_score():
     rng = np.random.RandomState(seed=0)
 
     # Assert message when there is only one label
     assert_raise_message(ValueError, "Number of labels is",
-                         calinski_harabaz_score,
+                         calinski_harabasz_score,
                          rng.rand(10, 2), np.zeros(10))
 
     # Assert message when all point are in different clusters
     assert_raise_message(ValueError, "Number of labels is",
-                         calinski_harabaz_score,
+                         calinski_harabasz_score,
                          rng.rand(10, 2), np.arange(10))
 
     # Assert the value is 1. when all samples are equals
-    assert_equal(1., calinski_harabaz_score(np.ones((10, 2)),
+    assert_equal(1., calinski_harabasz_score(np.ones((10, 2)),
                                             [0] * 5 + [1] * 5))
 
     # Assert the value is 0. when all the mean cluster are equal
-    assert_equal(0., calinski_harabaz_score([[-1, -1], [1, 1]] * 10,
+    assert_equal(0., calinski_harabasz_score([[-1, -1], [1, 1]] * 10,
                                             [0] * 10 + [1] * 10))
 
     # General case (with non numpy arrays)
     X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
          [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
-    assert_almost_equal(calinski_harabaz_score(X, labels),
+    assert_almost_equal(calinski_harabasz_score(X, labels),
                         45 * (40 - 4) / (5 * (4 - 1)))
