@@ -64,12 +64,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is True.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
         `preprocessing.StandardScaler` before calling `fit` on an estimator
         with `normalize=False`.
 
@@ -329,12 +327,10 @@ class ARDRegression(LinearModel, RegressorMixin):
         Default is True.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
         `preprocessing.StandardScaler` before calling `fit` on an estimator
         with `normalize=False`.
 
