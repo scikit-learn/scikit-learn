@@ -393,7 +393,8 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         if six.b("\0") in comment:
             raise ValueError("comment string contains NUL byte")
 
-    yval = check_array(y, accept_sparse='csr', ensure_2d=False)
+    yval = check_array(y, accept_sparse='csr', ensure_2d=False,
+                       variable_name='y')
     if sp.issparse(yval):
         if yval.shape[1] != 1 and not multilabel:
             raise ValueError("expected y of shape (n_samples, 1),"

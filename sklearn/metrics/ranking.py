@@ -78,8 +78,8 @@ def auc(x, y, reorder=False):
 
     """
     check_consistent_length(x, y)
-    x = column_or_1d(x)
-    y = column_or_1d(y)
+    x = column_or_1d(x, variable_name='x')
+    y = column_or_1d(y, variable_name='y')
 
     if x.shape[0] < 2:
         raise ValueError('At least 2 points are needed to compute'
@@ -295,13 +295,14 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         Decreasing score values.
     """
     check_consistent_length(y_true, y_score)
-    y_true = column_or_1d(y_true)
-    y_score = column_or_1d(y_score)
+    y_true = column_or_1d(y_true, variable_name='y_true')
+    y_score = column_or_1d(y_score, variable_name='y_score')
     assert_all_finite(y_true)
     assert_all_finite(y_score)
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
+        sample_weight = column_or_1d(sample_weight,
+                                     variable_name='sample_weight')
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
@@ -588,8 +589,8 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     """
     check_consistent_length(y_true, y_score)
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, variable_name='y_true')
+    y_score = check_array(y_score, ensure_2d=False, variable_name='y_score')
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
@@ -663,8 +664,8 @@ def coverage_error(y_true, y_score, sample_weight=None):
            handbook (pp. 667-685). Springer US.
 
     """
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, variable_name='y_true')
+    y_score = check_array(y_score, ensure_2d=False, variable_name='y_score')
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true)
@@ -722,8 +723,9 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
            handbook (pp. 667-685). Springer US.
 
     """
-    y_true = check_array(y_true, ensure_2d=False, accept_sparse='csr')
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse='csr',
+                         variable_name='y_true')
+    y_score = check_array(y_score, ensure_2d=False, variable_name='y_score')
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true)

@@ -111,7 +111,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         random_state = check_random_state(self.random_state)
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
-            y = check_array(y, ensure_2d=False, dtype=None)
+            y = check_array(y, ensure_2d=False, dtype=None, variable_name='y')
             if issparse(X):
                 X.sort_indices()
 

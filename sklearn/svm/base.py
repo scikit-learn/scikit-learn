@@ -207,7 +207,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # XXX this is ugly.
         # Regression models should not have a class_weight_ attribute.
         self.class_weight_ = np.empty(0)
-        return column_or_1d(y, warn=True).astype(np.float64)
+        return column_or_1d(y, warn=True, variable_name='y').astype(np.float64)
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
@@ -496,7 +496,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             random_state=random_state)
 
     def _validate_targets(self, y):
-        y_ = column_or_1d(y, warn=True)
+        y_ = column_or_1d(y, warn=True, variable_name='y')
         check_classification_targets(y)
         cls, y = np.unique(y_, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)

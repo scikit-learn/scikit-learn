@@ -71,8 +71,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -100,8 +100,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(X, y, fit_intercept,
-                                                      normalize,
-                                                      return_mean=True)
+                                                          normalize,
+                                                          return_mean=True)
             mean_dot = X_offset * np.sum(y)
 
     if Xy.ndim == 1:
@@ -368,7 +368,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/linear_model/plot_lasso_coordinate_descent_path.py for an example.
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py for an
+    example.
 
     See also
     --------
@@ -383,11 +384,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         X = check_array(X, 'csc', dtype=[np.float64, np.float32],
                         order='F', copy=copy_X)
         y = check_array(y, 'csc', dtype=X.dtype.type, order='F', copy=False,
-                        ensure_2d=False)
+                        ensure_2d=False, variable_name='y')
         if Xy is not None:
             # Xy should be a 1d contiguous array or a 2D C ordered array
             Xy = check_array(Xy, dtype=X.dtype.type, order='C', copy=False,
-                             ensure_2d=False)
+                             ensure_2d=False, variable_name='Xy')
 
     n_samples, n_features = X.shape
 
@@ -460,7 +461,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # checks
             if check_input:
                 precompute = check_array(precompute, dtype=X.dtype.type,
-                                         order='C')
+                                         order='C', variable_name='precompute')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
@@ -530,8 +531,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     alpha : float, optional
         Constant that multiplies the penalty terms. Defaults to 1.0.
         See the notes for the exact mathematical meaning of this
-        parameter.``alpha = 0`` is equivalent to an ordinary least square, solved
-        by the :class:`LinearRegression` object. For numerical
+        parameter.``alpha = 0`` is equivalent to an ordinary least square,
+        solved by the :class:`LinearRegression` object. For numerical
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
 
@@ -552,8 +553,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     precompute : True | False | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -679,7 +680,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                              copy=self.copy_X and self.fit_intercept,
                              multi_output=True, y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
-                            ensure_2d=False)
+                            ensure_2d=False, variable_name='y')
 
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
@@ -718,8 +719,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          X_offset=X_offset, X_scale=X_scale, return_n_iter=True,
-                          coef_init=coef_[k], max_iter=self.max_iter,
+                          X_offset=X_offset, X_scale=X_scale,
+                          return_n_iter=True, coef_init=coef_[k],
+                          max_iter=self.max_iter,
                           random_state=self.random_state,
                           selection=self.selection,
                           check_input=False)
@@ -800,8 +802,8 @@ class Lasso(ElasticNet):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1046,7 +1048,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             Target values
         """
         y = check_array(y, copy=False, dtype=[np.float64, np.float32],
-                        ensure_2d=False)
+                        ensure_2d=False, variable_name='y')
         if y.shape[0] == 0:
             raise ValueError("y has 0 samples: %r" % y)
 
@@ -1063,7 +1065,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
                                  "MultiTask%sCV" % (model_str))
-            y = column_or_1d(y, warn=True)
+            y = column_or_1d(y, warn=True, variable_name='y')
         else:
             if sparse.isspmatrix(X):
                 raise TypeError("X should be dense but a sparse matrix was"
@@ -1288,8 +1290,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1442,8 +1444,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1574,8 +1576,8 @@ class MultiTaskElasticNet(Lasso):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1680,7 +1682,8 @@ class MultiTaskElasticNet(Lasso):
         """
         X = check_array(X, dtype=[np.float64, np.float32], order='F',
                         copy=self.copy_X and self.fit_intercept)
-        y = check_array(y, dtype=X.dtype.type, ensure_2d=False)
+        y = check_array(y, dtype=X.dtype.type, ensure_2d=False,
+                        variable_name='y')
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
@@ -1760,8 +1763,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1897,8 +1900,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2063,8 +2066,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
-        with ``normalize=False``.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an
+        estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.

@@ -75,8 +75,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         return binary_metric(y_true, y_score, sample_weight=sample_weight)
 
     check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true)
-    y_score = check_array(y_score)
+    y_true = check_array(y_true, variable_name='y_true')
+    y_score = check_array(y_score, variable_name='y_score')
 
     not_average_axis = 1
     score_weight = sample_weight

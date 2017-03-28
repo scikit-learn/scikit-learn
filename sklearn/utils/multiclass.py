@@ -23,6 +23,7 @@ from .validation import check_array
 from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
 
+
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
         return np.unique(np.asarray(y))
@@ -31,7 +32,8 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
+    return np.arange(
+        check_array(y, ['csr', 'csc', 'coo'], variable_name='y').shape[1])
 
 
 _FN_UNIQUE_LABELS = {
@@ -155,6 +157,7 @@ def is_multilabel(y):
         return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
                                     _is_integral_float(labels))
 
+
 def check_classification_targets(y):
     """Ensure that target y is of a non-regression type.
 
@@ -168,9 +171,8 @@ def check_classification_targets(y):
     """
     y_type = type_of_target(y)
     if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
-            'multilabel-indicator', 'multilabel-sequences']:
+                      'multilabel-indicator', 'multilabel-sequences']:
         raise ValueError("Unknown label type: %r" % y_type)
-
 
 
 def type_of_target(y):

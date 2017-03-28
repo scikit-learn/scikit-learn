@@ -1520,7 +1520,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        K = check_array(K, dtype=FLOAT_DTYPES)
+        K = check_array(K, dtype=FLOAT_DTYPES, variable_name='K')
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
@@ -1543,7 +1543,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'K_fit_all_')
 
-        K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
+        K = check_array(K, copy=copy, dtype=FLOAT_DTYPES, variable_name='K')
 
         K_pred_cols = (np.sum(K, axis=1) /
                        self.K_fit_rows_.shape[0])[:, np.newaxis]

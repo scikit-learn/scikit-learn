@@ -459,7 +459,7 @@ class BiclusterMixin(object):
 
         """
         from .utils.validation import check_array
-        data = check_array(data, accept_sparse='csr')
+        data = check_array(data, accept_sparse='csr', variable_name='data')
         row_ind, col_ind = self.get_indices(i)
         return data[row_ind[:, np.newaxis], col_ind]
 

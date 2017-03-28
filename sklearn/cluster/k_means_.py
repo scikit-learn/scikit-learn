@@ -300,7 +300,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
     # Validate init array
     if hasattr(init, '__array__'):
-        init = check_array(init, dtype=X.dtype.type, copy=True)
+        init = check_array(init, dtype=X.dtype.type, copy=True,
+                           variable_name='init')
         _validate_center_shape(X, n_clusters, init)
 
         if n_init != 1:
@@ -884,7 +885,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
                 X, n_clusters=self.n_clusters, init=self.init,
-                n_init=self.n_init, max_iter=self.max_iter, verbose=self.verbose,
+                n_init=self.n_init, max_iter=self.max_iter,
+                verbose=self.verbose,
                 precompute_distances=self.precompute_distances,
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs, algorithm=self.algorithm,

@@ -321,11 +321,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if solver in ['sag', 'saga']:
         X = check_array(X, accept_sparse=['csr'],
                         dtype=np.float64, order='C')
-        y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
+        y = check_array(y, dtype=np.float64, ensure_2d=False, order='F',
+                        variable_name='y')
     else:
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64)
-        y = check_array(y, dtype='numeric', ensure_2d=False)
+        y = check_array(y, dtype='numeric', ensure_2d=False, variable_name='y')
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -973,7 +974,8 @@ class _RidgeGCV(LinearModel):
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = check_array(sample_weight, ensure_2d=False,
+                                        variable_name='sample_weight')
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(

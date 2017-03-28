@@ -58,7 +58,8 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         if self.check_y is not None:
             assert_true(self.check_y(y))
         self.classes_ = np.unique(check_array(y, ensure_2d=False,
-                                              allow_nd=True))
+                                              allow_nd=True,
+                                              variable_name='y'))
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
             assert_true(len(missing) == 0, 'Expected fit parameter(s) %s not '

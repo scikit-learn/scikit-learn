@@ -392,7 +392,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
     def _validate_y(self, y):
         # Default implementation
-        return column_or_1d(y, warn=True)
+        return column_or_1d(y, warn=True, variable_name='y')
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -616,7 +616,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         self.oob_score_ = oob_score
 
     def _validate_y(self, y):
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, warn=True, variable_name='y')
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)

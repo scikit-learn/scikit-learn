@@ -980,7 +980,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
-            sample_weight = column_or_1d(sample_weight, warn=True)
+            sample_weight = column_or_1d(sample_weight, warn=True,
+                                         variable_name='sample_weight')
 
         check_consistent_length(X, y, sample_weight)
 

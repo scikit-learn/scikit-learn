@@ -245,7 +245,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         """
         X = check_array(X, accept_sparse='csr')
-        y = check_array(y, ensure_2d=False)
+        y = check_array(y, ensure_2d=False, variable_name='y')
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:

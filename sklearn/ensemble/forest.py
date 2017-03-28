@@ -244,9 +244,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         # Validate or convert input data
         X = check_array(X, accept_sparse="csc", dtype=DTYPE)
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None,
+                        variable_name='y')
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = check_array(sample_weight, ensure_2d=False,
+                                        variable_name='sample_weight')
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.

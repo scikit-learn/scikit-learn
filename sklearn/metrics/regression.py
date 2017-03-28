@@ -73,8 +73,8 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     """
     check_consistent_length(y_true, y_pred)
-    y_true = check_array(y_true, ensure_2d=False)
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, variable_name='y_true')
+    y_pred = check_array(y_pred, ensure_2d=False, variable_name='y_pred')
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
@@ -96,7 +96,8 @@ def _check_reg_targets(y_true, y_pred, multioutput):
                                  allowed_multioutput_str,
                                  multioutput))
     elif multioutput is not None:
-        multioutput = check_array(multioutput, ensure_2d=False)
+        multioutput = check_array(multioutput, ensure_2d=False,
+                                  variable_name='multioutput')
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in "
                              "multi-output cases.")
@@ -530,7 +531,8 @@ def r2_score(y_true, y_pred, sample_weight=None,
         y_true, y_pred, multioutput)
 
     if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
+        sample_weight = column_or_1d(sample_weight,
+                                     variable_name='sample_weight')
         weight = sample_weight[:, np.newaxis]
     else:
         weight = 1.

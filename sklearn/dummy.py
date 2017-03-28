@@ -395,7 +395,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              "'mean', 'median', 'quantile' or 'constant'"
                              % self.strategy)
 
-        y = check_array(y, ensure_2d=False)
+        y = check_array(y, ensure_2d=False, variable_name='y')
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 

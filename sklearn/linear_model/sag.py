@@ -235,7 +235,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
 
     if check_input:
         X = check_array(X, dtype=np.float64, accept_sparse='csr', order='C')
-        y = check_array(y, dtype=np.float64, ensure_2d=False, order='C')
+        y = check_array(y, dtype=np.float64, ensure_2d=False, order='C',
+                        variable_name='y')
 
     n_samples, n_features = X.shape[0], X.shape[1]
     # As in SGD, the alpha is scaled by n_samples.
