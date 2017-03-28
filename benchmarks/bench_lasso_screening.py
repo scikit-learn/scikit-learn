@@ -10,6 +10,9 @@ News, MNIST and Leukemia.
 
 We plot the relative time of execution for high and low tolerances.
 """
+# Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# License: BSD 3 clause
+
 import gc
 import matplotlib.pyplot as plt
 import numpy as np

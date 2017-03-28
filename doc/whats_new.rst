@@ -60,6 +60,10 @@ New features
 Enhancements
 ............
 
+   - Added gap safe screening to :class:`linear_model.LassoCV`,
+     :func:`linear_model.enet_path` and :class:`linear_model.ElasticNet`
+     :issue:`7853`, :issue:`5075` :user:`Thierry Guillemot <tguillemot>`
+
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986`
      :user:`Oscar Najera <Titan-C>`
@@ -161,7 +165,7 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
-   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
@@ -261,7 +265,7 @@ Bug fixes
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
 
-   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
