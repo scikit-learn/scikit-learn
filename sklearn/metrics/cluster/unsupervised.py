@@ -207,13 +207,13 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     return sil_samples
 
 
-def calinski_harabaz_score(X, labels):
-    """Compute the Calinski and Harabaz score.
+def calinski_harabasz_score(X, labels):
+    """Compute the Calinski and Harabasz score.
 
     The score is defined as ratio between the within-cluster dispersion and
     the between-cluster dispersion.
 
-    Read more in the :ref:`User Guide <calinski_harabaz_index>`.
+    Read more in the :ref:`User Guide <calinski_harabasz_index>`.
 
     Parameters
     ----------
@@ -227,7 +227,7 @@ def calinski_harabaz_score(X, labels):
     Returns
     -------
     score : float
-        The resulting Calinski-Harabaz score.
+        The resulting Calinski-Harabasz score.
 
     References
     ----------
