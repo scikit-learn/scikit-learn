@@ -526,8 +526,7 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, n_bin
         Probabilities of the positive class.
 
     sample_weight : array-like, shape=(n_samples,), optional, default: None
-            Weights. If set to None, all weights will be set to 1 (equal
-            weights).
+            Weights. If set to None, no sample weights will be applied.
 
     normalize : bool, optional, default=False
         Whether y_prob needs to be normalized into the bin [0, 1], i.e. is not
@@ -552,6 +551,7 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, n_bin
     International Conference on Machine Learning (ICML).
     See section 4 (Qualitative Analysis of Predictions).
     """
+
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
 
@@ -560,7 +560,7 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, n_bin
     elif y_prob.min() < 0 or y_prob.max() > 1:
         raise ValueError("y_prob has values outside [0, 1] and normalize is "
                          "set to False.")
-    
+
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
 
     bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
