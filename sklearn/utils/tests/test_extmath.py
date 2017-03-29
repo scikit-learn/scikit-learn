@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.fixes import np_version
+from sklearn.utils.fixes import sp_version
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -669,8 +670,13 @@ def test_csr_to_array_fallback():
     X_sp = sparse.csr_matrix(X)
     X_sp_dense = _csr_to_array_fallback(X_sp)
     assert_array_equal(X, X_sp_dense)
+    if sp_version > (0, 12, 0):
+        args = {'random_state': 0}
+    else:
+        # random state not supported by scipy.sparse.rand
+        args = {}
 
-    X_sp = sparse.rand(1000, 1000, random_state=0, format='csr')
+    X_sp = sparse.rand(1000, 1000, format='csr', **args)
     X = X_sp.toarray()
     X_2 = _csr_to_array_fallback(X_sp)
     assert_array_equal(X, X_2)
