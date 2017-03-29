@@ -20,6 +20,7 @@ from .supervised import entropy
 from .unsupervised import silhouette_samples
 from .unsupervised import silhouette_score
 from .unsupervised import calinski_harabasz_score
+from .unsupervised import calinski_harabaz_score
 from .bicluster import consensus_score
 
 __all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
