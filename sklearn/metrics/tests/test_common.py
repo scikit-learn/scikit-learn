@@ -1193,14 +1193,13 @@ def test_metric_permutation_invariance_thresholded_multilabel():
     p = 0.7
     R = np.random.rand(n_samples, n_classes)
     y_true = R > p
-    for i in range(len(y_true)):
-        while len(np.unique(y_true[i])) == 1:
-            y_true[i] = np.random.rand(n_classes) > p
     y_score = []
     y_score_perm = []
     classes_perm = rng.permutation(n_classes)
     for i in range(len(y_true)):
-        y_score.append(rng.normal(size=y_true[0].shape))
+        while len(np.unique(y_true[i])) == 1:
+            y_true[i] = np.random.rand(n_classes) > p
+        y_score.append(y_true[i] + rng.normal(size=y_true[i].shape))
         y_score_perm.append(y_score[i][classes_perm])
 
     y_true_perm = y_true[:, classes_perm]
