@@ -117,7 +117,7 @@ model.
 .. _expectation_maximization:
 
 Estimation algorithm Expectation-maximization
------------------------------------------------
+---------------------------------------------
 
 The main difficulty in learning Gaussian mixture models from unlabeled
 data is that it is one usually doesn't know which points came from
@@ -147,7 +147,7 @@ similar as the one defined by :class:`GaussianMixture`.
 .. _variational_inference:
 
 Estimation algorithm: variational inference
----------------------------------------------
+-------------------------------------------
 
 Variational inference is an extension of expectation-maximization that
 maximizes a lower bound on model evidence (including
@@ -188,8 +188,8 @@ more uniform weights when the type of prior is 'dirichlet_distribution' while
 this is not necessarily the case for the 'dirichlet_process' type (used by
 default).
 
-.. |plot_bgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
-   :target: ../auto_examples/mixture/plot_gmm.html
+.. |plot_bgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_001.png
+   :target: ../auto_examples/mixture/plot_concentration_prior.html
    :scale: 48%
 
 .. |plot_dpgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
@@ -250,7 +250,7 @@ Pros and cons of variational inference with :class:`BayesianGaussianMixture`
 ----------------------------------------------------------------------------
 
 Pros
-.....
+....
 
 :Automatic selection: when ``weight_concentration_prior`` is small enough and
    ``n_components`` is larger than what is found necessary by the model, the
@@ -274,7 +274,7 @@ Pros
 
 
 Cons
-.....
+....
 
 :Speed: the extra parametrization necessary for variational inference make
    inference slower, although not by much.
