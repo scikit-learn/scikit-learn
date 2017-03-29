@@ -1404,4 +1404,4 @@ To be removed in 0.20
    cross_validation.check_cv
    cross_validation.permutation_test_score
    cross_validation.train_test_split
-   metrics.calinski_harabasz_score
+   metrics.calinski_harabaz_score
