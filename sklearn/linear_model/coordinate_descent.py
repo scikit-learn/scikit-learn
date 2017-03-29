@@ -1432,7 +1432,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
