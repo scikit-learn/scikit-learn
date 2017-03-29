@@ -12,6 +12,7 @@ from ...utils import check_X_y
 from ...utils.fixes import bincount
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
+from sklearn.utils import deprecated
 
 
 def check_number_of_labels(n_labels, n_samples):
