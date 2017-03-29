@@ -207,7 +207,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     return sil_samples
 
 
-def calinski_harabasz_score(X, labels):
+def calinski_harabasz_score(X, labels, normalize=True):
     """Compute the Calinski and Harabasz score.
 
     The score is defined as ratio between the within-cluster dispersion and
@@ -255,3 +255,12 @@ def calinski_harabasz_score(X, labels):
     return (1. if intra_disp == 0. else
             extra_disp * (n_samples - n_labels) /
             (intra_disp * (n_labels - 1.)))
+    pass
+
+@deprecated("Function 'calinski_harabaz_score' was renamed to 'calinski_harabasz_score' "
+            "in version 0.13 and will be removed in release 0.15. "
+            "Default behavior is changed from 'normalize=False' to "
+            "'normalize=True'")
+
+def calinski_harabaz_score(X, labels, normalize=False):
+    return calinski_harabasz_score(X, labels, normalize)
