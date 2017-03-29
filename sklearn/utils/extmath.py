@@ -20,7 +20,7 @@ from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
 
 from . import check_random_state
-from .fixes import np_version
+from .fixes import np_version, sp_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
@@ -174,6 +174,24 @@ def density(w, **kwargs):
     return d
 
 
+def _csr_to_array_fallback(X):
+    """ This provides the equivalent functionality to
+       csr_matrix.toarray()
+    and provides a fix for scipy versions <1.0.0 where
+    the above command fails for arrays with more than 2**31
+    elements.
+    """
+    if X.format != 'csr':
+        raise ValueError('Only CSR sparse arrays are supported')
+    row_indices = np.zeros(len(X.indices), dtype='int32')
+    indptr = X.indptr
+    for idx in range(len(indptr) - 1):
+        row_indices[indptr[idx]:indptr[idx+1]] = idx
+    Y = np.zeros(X.shape, dtype=X.dtype)
+    Y[row_indices, X.indices] = X.data
+    return Y
+
+
 def safe_sparse_dot(a, b, dense_output=False):
     """Dot product that handle the sparse matrix case correctly
 
@@ -183,7 +201,18 @@ def safe_sparse_dot(a, b, dense_output=False):
     if issparse(a) or issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
-            ret = ret.toarray()
+            if ret.nnz > 2147483648 and ret.format == 'csr' \
+                    and sp_version < (1, 0, 0):
+                warnings.warn('Conversion of CSR arrays to dense '
+                              'is not supported in your scipy version '
+                              'for arrays with more than 2**31 elements. '
+                              'Please consider upgrading to scipy >=1.0.0. '
+                              'Falling back to a slower implementation..',
+                              RuntimeWarning)
+
+                ret = _csr_to_array_fallback(ret)
+            else:
+                ret = ret.toarray()
         return ret
     else:
         return fast_dot(a, b)

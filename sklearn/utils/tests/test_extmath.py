@@ -36,6 +36,7 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.extmath import _csr_to_array_fallback
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -661,3 +662,15 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+
+
+def test_csr_to_array_fallback():
+    X = np.random.rand(100, 10)
+    X_sp = sparse.csr_matrix(X)
+    X_sp_dense = _csr_to_array_fallback(X_sp)
+    assert_array_equal(X, X_sp_dense)
+
+    X_sp = sparse.rand(1000, 1000, random_state=0, format='csr')
+    X = X_sp.toarray()
+    X_2 = _csr_to_array_fallback(X_sp)
+    assert_array_equal(X, X_2)
