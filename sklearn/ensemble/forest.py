@@ -373,6 +373,13 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         return sum(all_importances) / len(self.estimators_)
 
+def run_estimator(e, X, out):
+    out += e.predict_proba(X, check_input=False)
+
+def run_estimator2(e, X, out):
+    all_proba = e.predict_proba(X, check_input=False)
+    for i in range(len(out)):
+        out[i] += all_proba[i]
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                                           ClassifierMixin)):
@@ -567,31 +574,27 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        # Parallel loop
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                             backend="threading")(
-            delayed(parallel_helper)(e, 'predict_proba', X,
-                                      check_input=False)
-            for e in self.estimators_)
-
-        # Reduce
-        proba = all_proba[0]
-
         if self.n_outputs_ == 1:
-            for j in range(1, len(all_proba)):
-                proba += all_proba[j]
+            out = np.zeros((X.shape[0], self.n_classes_), dtype=np.float64)
 
-            proba /= len(self.estimators_)
+            # Parallel loop
+            Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
+                delayed(run_estimator)(e, X, out) for e in self.estimators_)
+
+            out /= len(self.estimators_)
+            return out
 
         else:
-            for j in range(1, len(all_proba)):
-                for k in range(self.n_outputs_):
-                    proba[k] += all_proba[j][k]
+            out = [np.zeros((X.shape[0], j), dtype=np.float64)
+                   for j in self.n_classes_]
 
-            for k in range(self.n_outputs_):
-                proba[k] /= self.n_estimators
+            # Parallel loop
+            Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
+                delayed(run_estimator2)(e, X, out) for e in self.estimators_)
 
-        return proba
+            for out_ in out:
+                out_ /= len(self.estimators_)
+            return out
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
