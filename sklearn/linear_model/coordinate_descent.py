@@ -1536,6 +1536,13 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
+    screening : int
+        If screening is not zero, variable screening is performed every
+        screening iterations, e.g. every 5 iterations if screening
+        is set to 5. In a vast majority of cases 5 is a good default value.
+
+        .. versionadded:: 0.19
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -1617,7 +1624,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', screening=5):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1634,6 +1641,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.screening = screening
 
 
 ###############################################################################
