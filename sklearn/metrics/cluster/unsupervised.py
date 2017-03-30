@@ -261,6 +261,5 @@ def calinski_harabasz_score(X, labels, normalize=True):
             "in version 0.13 and will be removed in release 0.15. "
             "Default behavior is changed from 'normalize=False' to "
             "'normalize=True'")
-
 def calinski_harabaz_score(X, labels, normalize=False):
     return calinski_harabasz_score(X, labels, normalize)
