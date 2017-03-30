@@ -50,6 +50,13 @@ New features
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
 
+   - Added solver ``saga`` that implements the improved version of Stochastic
+     Average Gradient, in :class:`linear_model.LogisticRegression` and
+     :class:`linear_model.Ridge`. It allows the use of L1 penalty with
+     multinomial logistic loss, and behaves marginally better than 'sag'
+     during the first epochs of ridge and logistic regression.
+     By `Arthur Mensch`_.
+
 Enhancements
 ............
 
@@ -251,6 +258,9 @@ Bug fixes
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
+
+   - Fixed a bug in :class:`manifold.TSNE` where it stored the incorrect
+     ``kl_divergence_``. :issue:`6507` by :user:`Sebastian Saeger <ssaeger>`.
 
 API changes summary
 -------------------
@@ -5031,5 +5041,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vincent Pham: https://github.com/vincentpham1991
 
 .. _Denis Engemann: http://denis-engemann.de
+.. _Anish Shah: https://github.com/AnishShah
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
+.. _Arthur Mensch: https://amensch.fr
