@@ -257,7 +257,8 @@ def calinski_harabasz_score(X, labels, normalize=True):
             extra_disp * (n_samples - n_labels) /
             (intra_disp * (n_labels - 1.)))
     pass
-@deprecated("Function 'calinski_harabaz_score' was renamed to 'calinski_harabasz_score' "
+@deprecated("Function 'calinski_harabaz_score' was renamed to "
+            "'calinski_harabasz_score' "
             "in version 0.13 and will be removed in release 0.15. "
             "Default behavior is changed from 'normalize=False' to "
             "'normalize=True'")
