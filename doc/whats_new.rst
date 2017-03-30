@@ -240,11 +240,12 @@ Bug fixes
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
 
 
-   - Fix a bug where `sklearn.feature_extraction.FeatureHasher` mandatorily
-     applied a sparse random projection to the hashed features, preventing
-     the use of `sklearn.feature_extraction.text.HashingVectorizer` in a
-     pipeline with  `sklearn.feature_extraction.text.TfidfTransformer`.
-     :issue:`7513` by `Roman Yurchal <rth>`.
+   - Fix a bug where :class:`sklearn.feature_extraction.FeatureHasher`
+     mandatorily applied a sparse random projection to the hashed features,
+     preventing the use of 
+     :class:`sklearn.feature_extraction.text.HashingVectorizer` in a
+     pipeline with  :class:`sklearn.feature_extraction.text.TfidfTransformer`.
+     :issue:`7513` by :user:`Roman Yurchak <rth>`.
      
    - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
      raising an exception if instability is identified.  :issue:`7376` and
