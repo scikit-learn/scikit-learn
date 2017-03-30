@@ -184,6 +184,16 @@ and tasks.
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
 
+**Pre-processing**
+
+- `categorical-encoding
+  <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
+  library of sklearn compatible categorical variable encoders.
+
+- `imbalanced-learn
+  <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
+  methods to under- and over-sample datasets.
+
 Statistical learning with Python
 --------------------------------
 Other packages useful for data analysis and machine learning.
