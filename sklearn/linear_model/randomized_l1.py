@@ -416,7 +416,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional, default True
         If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
         When the regressors are normalized, note that this makes the
