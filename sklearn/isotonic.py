@@ -57,7 +57,7 @@ def check_increasing(x, y):
     increasing_bool = rho >= 0
 
     # Run Fisher transform to get the rho CI, but handle rho=+/-1
-    if rho not in [-1.0, 1.0]:
+    if rho not in [-1.0, 1.0] and len(x) > 3:
         F = 0.5 * math.log((1. + rho) / (1. - rho))
         F_se = 1 / math.sqrt(len(x) - 3)
 
