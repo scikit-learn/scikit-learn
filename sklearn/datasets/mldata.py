@@ -23,7 +23,8 @@ import scipy as sp
 from scipy import io
 from shutil import copyfileobj
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 

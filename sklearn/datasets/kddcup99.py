@@ -23,7 +23,7 @@ except ImportError:
 import numpy as np
 
 from .base import get_data_home
-from .base import Bunch
+from ..utils import Bunch
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method

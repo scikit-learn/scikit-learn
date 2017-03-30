@@ -277,6 +277,12 @@ API changes summary
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
 
+   - Replace attribute ``named_steps`` ``dict`` to :class:`sklearn.utils.Bunch`
+     in :class:`sklearn.pipeline.Pipeline` to enable tab completion in interactive
+     environment. In the case conflict value on ``named_steps`` and ``dict``
+     attribute, ``dict`` behavior will be prioritized.
+     :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
+
    - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
      function used to return a 3d array (``n_samples``, ``n_classes``,
      ``n_outputs``). In the case where different target columns had different

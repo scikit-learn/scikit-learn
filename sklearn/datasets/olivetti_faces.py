@@ -37,9 +37,9 @@ except ImportError:
 import numpy as np
 from scipy.io.matlab import loadmat
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
 from .base import _pkl_filepath
-from ..utils import check_random_state
+from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
 
@@ -80,10 +80,12 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     An object with the following attributes:
 
     data : numpy array of shape (400, 4096)
-        Each row corresponds to a ravelled face image of original size 64 x 64 pixels.
+        Each row corresponds to a ravelled face image of original size
+        64 x 64 pixels.
 
     images : numpy array of shape (400, 64, 64)
-        Each row is a face image corresponding to one of the 40 subjects of the dataset.
+        Each row is a face image corresponding to one of the 40 subjects
+        of the dataset.
 
     target : numpy array of shape (400, )
         Labels associated to each face image. Those labels are ranging from

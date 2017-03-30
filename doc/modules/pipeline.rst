@@ -79,6 +79,11 @@ Parameters of the estimators in the pipeline can be accessed using the
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
                     ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
 
+Attributes of named_steps map to keys, enabling tab completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe.named_steps['reduce_dim']
+    True
+
 This is particularly important for doing grid searches::
 
     >>> from sklearn.model_selection import GridSearchCV

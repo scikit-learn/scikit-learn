@@ -20,6 +20,7 @@ from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
+from .utils import Bunch
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -122,7 +123,7 @@ class Pipeline(_BasePipeline):
 
     Attributes
     ----------
-    named_steps : dict
+    named_steps : bunch object, a dictionary with attribute access
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
@@ -157,7 +158,12 @@ class Pipeline(_BasePipeline):
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
            False, False], dtype=bool)
-
+    >>> # Another way to get selected features chosen by anova_filter
+    >>> anova_svm.named_steps.anova.get_support()
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([False, False,  True,  True, False, False, True,  True, False,
+           True,  False,  True,  True, False, True,  False, True, True,
+           False, False], dtype=bool)
     """
 
     # BaseEstimator interface
@@ -227,7 +233,8 @@ class Pipeline(_BasePipeline):
 
     @property
     def named_steps(self):
-        return dict(self.steps)
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.steps))
 
     @property
     def _final_estimator(self):

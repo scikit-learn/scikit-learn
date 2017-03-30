@@ -50,7 +50,8 @@ except ImportError:
 
 import numpy as np
 
-from sklearn.datasets.base import get_data_home, Bunch
+from sklearn.datasets.base import get_data_home
+from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 

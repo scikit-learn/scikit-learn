@@ -35,7 +35,8 @@ except ImportError:
 
 import numpy as np
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 from .base import _pkl_filepath
 from ..externals import joblib
 
