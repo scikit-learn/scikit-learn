@@ -47,10 +47,9 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import get_data_home
-from .base import Bunch
 from .base import load_files
 from .base import _pkl_filepath
-from ..utils import check_random_state
+from ..utils import check_random_state, Bunch
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..externals import joblib, six
