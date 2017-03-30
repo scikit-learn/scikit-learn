@@ -510,7 +510,8 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         return 1. / (1. + np.exp(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, n_bins=5):
+def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, 
+                      n_bins=5):
     """Compute true and predicted probabilities for a calibration curve.
 
      Calibration curves may also be referred to as reliability diagrams.
@@ -567,9 +568,9 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, n_bin
     binids = np.digitize(y_prob, bins) - 1
 
     if sample_weight is None:
-       bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
-       bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
-       bin_total = np.bincount(binids, minlength=len(bins))
+        bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
+        bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
+        bin_total = np.bincount(binids, minlength=len(bins))
     else:
         sample_weight = check_array(sample_weight, ensure_2d=False)
         check_consistent_length(y_true, sample_weight)
@@ -580,9 +581,12 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False, n_bin
                 "Attempting to calibrate with a non-positive "
                 "weighted number of samples.")
 
-        bin_sums = np.bincount(binids, weights=sample_weight*y_prob, minlength=len(bins))
-        bin_true = np.bincount(binids, weights=sample_weight*y_true, minlength=len(bins))
-        bin_total = np.bincount(binids, weights=sample_weight, minlength=len(bins))
+        bin_sums = np.bincount(binids, weights=sample_weight*y_prob,
+                               minlength=len(bins))
+        bin_true = np.bincount(binids, weights=sample_weight*y_true,
+                               minlength=len(bins))
+        bin_total = np.bincount(binids, weights=sample_weight,
+                                minlength=len(bins))
 
     nonzero = bin_total != 0
     prob_true = (bin_true[nonzero] / bin_total[nonzero])
