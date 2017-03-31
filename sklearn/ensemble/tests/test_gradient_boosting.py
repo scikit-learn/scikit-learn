@@ -966,8 +966,7 @@ def test_min_impurity_split():
     # Test if min_impurity_split of base estimators is set
     # Regression test for #8006
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    all_estimators = [GradientBoostingRegressor,
-                      GradientBoostingClassifier]
+    all_estimators = [GradientBoostingRegressor, GradientBoostingClassifier]
 
     for GBEstimator in all_estimators:
         est = GBEstimator(min_impurity_split=0.1)
@@ -978,18 +977,12 @@ def test_min_impurity_split():
 
 
 def test_min_impurity_decrease():
-    # Test if min_impurity_split of base estimators is set
-    # Regression test for #8006
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    all_estimators = [GradientBoostingRegressor,
-                      GradientBoostingClassifier]
+    all_estimators = [GradientBoostingRegressor, GradientBoostingClassifier]
 
     for GBEstimator in all_estimators:
         est = GBEstimator(min_impurity_decrease=0.1)
-        try:
-            assert_warns(DeprecationWarning, est.fit, X, y)
-        except AssertionError:
-            pass
+        est.fit(X, y)
         for tree in est.estimators_.flat:
             # Simply check if the parameter is passed on correctly. Tree tests
             # will suffice for the actual working of this param
