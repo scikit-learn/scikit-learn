@@ -69,7 +69,6 @@ def test_params_errors():
     assert_raises(TypeError, clf(verbose='true').fit, X, y)
     assert_raises(TypeError, clf(max_constraints=23.1).fit, X, y)
     assert_raises(TypeError, clf(max_corrections=1e3).fit, X, y)
-    assert_raises(TypeError, clf(iprint=2).fit, X, y)
     assert_raises(TypeError, clf(tol=1).fit, X, y)
     assert_raises(TypeError, clf(n_features_out='invalid').fit, X, y)
     assert_raises(TypeError, clf(use_pca=1).fit, X, y)
@@ -206,17 +205,9 @@ def test_max_corrections():
 
 
 def test_verbose():
-    clf = LMNN(n_neighbors=3, verbose=True)
+    clf = LMNN(n_neighbors=3, verbose=1)
     clf.fit(iris.data, iris.target)
 
 
-def test_iprint():
-    pass
-
-
 def test_random_state():
-    pass
-
-
-def test_n_jobs():
     pass

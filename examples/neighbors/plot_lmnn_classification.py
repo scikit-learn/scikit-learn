@@ -8,6 +8,10 @@ It will plot the decision boundaries for each class.
 """
 print(__doc__)
 
+# Author: John Chiotellis <johnyc.code@gmail.com>
+#
+# License: BSD 3 clause
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
@@ -49,6 +53,6 @@ plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
 plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
 plt.xlim(xx.min(), xx.max())
 plt.ylim(yy.min(), yy.max())
-plt.title("3-Class classification (k = %i)" % (n_neighbors))
+plt.title("3-Class classification (k = %i)" % n_neighbors)
 
 plt.show()

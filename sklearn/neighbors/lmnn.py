@@ -4,8 +4,8 @@ Large Margin Nearest Neighbor Classification
 """
 
 # Author: John Chiotellis <johnyc.code@gmail.com>
-
-# License: BSD 3 clause (C) John Chiotellis
+#
+# License: BSD 3 clause
 
 from __future__ import print_function
 import warnings
@@ -42,57 +42,59 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
     Parameters
     ----------
-    L : array, shape (n_features_out, n_features_in), optional, default None
-        An initial linear transformation.
+    L : array, shape (n_features_out, n_features_in), optional (default=None)
+        An initial linear transformation. If None (default), the initial
+        transformation is set to the identity, except if ``warm_start`` or
+        ``use_pca`` is True.
 
-    n_neighbors : int, optional, default 3
-        Number of target neighbors.
+    warm_start : bool, optional (default=False)
+        If True and :meth:`fit` has been called before, use the solution of the
+        previous call to :meth:`fit` to initialize the linear transformation.
 
-    max_iter : int, optional, default 200
-        Maximum number of iterations in the optimization.
+    use_pca : bool, optional (default=True)
+        Whether to use PCA to initialize the linear transformation.
+        If False, the identity will be used, except if ``warm_start`` is True.
 
-    use_pca : bool, optional, default True
-        Whether to use pca to warm-start the linear transformation.
-        If False, the identity will be used.
-
-    tol : float, optional, default 1e-5
-        Convergence tolerance for the optimization.
-
-    n_features_out : int, optional, default None
+    n_features_out : int, optional (default=None)
         Preferred dimensionality of the inputs after the transformation.
         If None it is inferred from ``use_pca`` and ``L``.
 
-    max_constraints : int, optional, default 10 million
+    n_neighbors : int, optional (default=3)
+        Number of target neighbors.
+
+    max_iter : int, optional (default=200)
+        Maximum number of iterations in the optimization.
+
+    tol : float, optional (default=1e-5)
+        Convergence tolerance for the optimization.
+
+    max_constraints : int, optional (default=int(1e7))
         Maximum number of constraints to enforce per iteration.
 
-    use_sparse : bool, optional, default True
+    use_sparse : bool, optional (default=True)
         Whether to use a sparse matrix (default) or a dense matrix for the
         impostor-pairs storage. Using a sparse matrix, the distance to
         impostors is computed twice, but it is somewhat faster for larger
         data sets than using a dense matrix. With a dense matrix, the unique
         impostor pairs have to be identified explicitly.
 
-    warm_start : bool, optional, default False
-        When set to True, reuse the solution of the previous
-        call to fit as initialization, otherwise, just erase the
-        previous solution.
-
-    max_corrections : int, optional, default 100
+    max_corrections : int, optional (default=100)
         The maximum number of variable metric corrections
         used to define the limited memory matrix. (The limited memory BFGS
         method does not store the full hessian but uses this many terms in an
         approximation to it.)
 
-    verbose : bool, optional, default False
-        Whether to print progress messages to stdout.
+    verbose : int, optional (default=0)
+        If 0, no progress messages will be printed.
+        If 1, progress messages will be printed to stdout.
+        If >1, progress messages will be printed and the ``iprint``
+        parameter of :meth:`fmin_l_bfgs_b` of `scipy.optimize` will be set to
+        verbose - 2.
 
-    iprint : bool, optional, default False
-        Whether to print progress messages from the optimizer.
+    random_state : int or numpy.RandomState or None, optional (default=None)
+        A pseudo random number generator used for sampling the constraints.
 
-    random_state : int or numpy.RandomState, optional, default None
-        A seed for reproducibility of random state.
-
-    n_jobs : int, optional, default 1
+    n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Doesn't affect :meth:`fit` method.
@@ -107,17 +109,19 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         elements in each class).
 
     n_features_out_ : int
-        The dimensionality of a sample's vector after applying to it the linear
-        transformation.
+        The dimensionality of a sample's vector after applying to it the
+        linear transformation.
 
     classes_ : array-like, shape (n_classes,)
         The appearing class labels.
 
-    n_iter_ : int
-        The number of iterations of the optimizer.
-
     n_funcalls_ : int
         The number of times the optimizer computes the loss and the gradient.
+
+    n_iter_ : int
+        The number of iterations of the optimizer. Falls back to
+        `n_funcalls` if the version of :meth:`fmin_l_bfgs_b` of
+        `scipy.optimize` (< 0.12.0) does not store the number of iterations.
 
     details_ : dict
         A dictionary of information created by the L-BFGS optimizer during
@@ -140,22 +144,20 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
     References
     ----------
-    .. [1] `Weinberger, K. Q.; Saul L. K. (2009). "Distance Metric Learning
-    for Large Margin Classification". Journal of Machine Learning Research.
-    10: 207–244.
-    <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_
+    .. [1] Weinberger, Kilian Q., and Lawrence K. Saul. "Distance Metric
+    Learning for Large Margin Nearest Neighbor Classification."
+    Journal of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
+    (http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf)
 
-    .. [2] `Wikipedia entry on Large Margin Nearest Neighbor
-           <https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor>`_
+    .. [2] Wikipedia entry on Large Margin Nearest Neighbor
+    (https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor)
 
     """
 
-    def __init__(self, L=None, n_neighbors=3, n_features_out=None,
-                 max_iter=200, tol=1e-5, use_pca=True,
-                 max_constraints=int(1e7),
-                 use_sparse=True, warm_start=False,
-                 max_corrections=100, verbose=False, iprint=False,
-                 random_state=None, n_jobs=1):
+    def __init__(self, L=None, warm_start=False, use_pca=True,
+                 n_features_out=None, n_neighbors=3, max_iter=200, tol=1e-5,
+                 max_constraints=int(1e7), use_sparse=True,
+                 max_corrections=100, verbose=0, random_state=None, n_jobs=1):
 
         super(LargeMarginNearestNeighbor, self).__init__(
             n_neighbors=n_neighbors, n_jobs=n_jobs)
@@ -171,7 +173,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self.warm_start = warm_start
         self.max_corrections = max_corrections
         self.verbose = verbose
-        self.iprint = iprint
         self.random_state = random_state
         self.n_jobs = n_jobs
 
@@ -211,7 +212,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # Initialize number of optimizer iterations and objective funcalls
         self.n_iter_ = 0
         self.n_funcalls_ = 0
-        iprint = 2*int(self.iprint) - 1
+        iprint = self.verbose - 2 if self.verbose > 1 else -1
 
         # For older versions of fmin, x0 needs to be a vector
         L = L.ravel()
@@ -262,7 +263,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         X : array-like, shape (n_samples, n_features_in)
             Data samples.
 
-        check: bool, optional, default True
+        check: bool, optional (default=True)
             Whether to validate ``X``.
 
         Returns
@@ -338,8 +339,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         check_scalar(self.use_pca, 'use_pca', bool)
         check_scalar(self.use_sparse, 'use_sparse', bool)
-        check_scalar(self.verbose, 'verbose', bool)
-        check_scalar(self.iprint, 'iprint', bool)
+        check_scalar(self.verbose, 'verbose', int, 0)
 
         # Store the appearing classes and the class index for each sample
         classes, y_inversed = np.unique(y, return_inverse=True)
@@ -425,7 +425,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         if self.L is not None:
             L = np.asarray(self.L)
-        elif self.warm_start:
+        elif self.warm_start and check_is_fitted(self, ['L_']):
             L = self.L_
         elif self.use_pca and X.shape[1] > 1:
             cov_ = np.cov(X, rowvar=False)  # Mean is removed
@@ -606,7 +606,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         margin_radii : array-like, shape (n_samples,)
             Distances to the farthest target neighbors + margin.
 
-        use_sparse : bool, optional, default True
+        use_sparse : bool, optional (default=True)
             Whether to use a sparse matrix for storing the impostor pairs.
 
         Returns
@@ -708,10 +708,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         margin_radii2 : array, shape (n_samples2,)
             Distances of the samples in ``X2`` to their margins.
 
-        batch_size : int, optional, default 500
+        batch_size : int, optional (default=500)
             The size of each chunk of ``X1`` to compute distances to.
 
-        return_dist : bool, optional, default False
+        return_dist : bool, optional (default=False)
             Whether to return the distances to the impostors.
 
         Returns
@@ -751,6 +751,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 ##########################
 # Some helper functions #
 #########################
+
 
 def check_scalar(x, name, dtype, min_val=None, max_val=None):
     if type(x) is not dtype:
@@ -805,7 +806,7 @@ def pairs_distances_batch(X, ind_a, ind_b, batch_size=500):
     ind_b : array, shape (n_indices,)
         Another array of sample indices.
 
-    batch_size : bool, optional, default 500
+    batch_size : bool, optional (default=500)
         Size of each chunk of ``X`` to compute distances for.
 
     Returns
