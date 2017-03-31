@@ -20,12 +20,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import get_data_home
-from .base import Bunch
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
+from ..utils import Bunch
 
 
 URL = ('http://jmlr.csail.mit.edu/papers/volume5/lewis04a/'
