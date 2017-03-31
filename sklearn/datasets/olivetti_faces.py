@@ -61,7 +61,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     shuffle : boolean, optional
         If True the order of the dataset is shuffled to avoid having
