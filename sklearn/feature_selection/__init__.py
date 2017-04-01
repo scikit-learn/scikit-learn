@@ -19,6 +19,7 @@ from .variance_threshold import VarianceThreshold
 
 from .rfe import RFE
 from .rfe import RFECV
+from .sfs import SFS
 
 from .from_model import SelectFromModel
 
@@ -26,6 +27,7 @@ from .mutual_info_ import mutual_info_regression, mutual_info_classif
 
 
 __all__ = ['GenericUnivariateSelect',
+           'SFS',
            'RFE',
            'RFECV',
            'SelectFdr',
