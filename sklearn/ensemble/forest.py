@@ -581,28 +581,28 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         # avoid storing the output of every estimator by summing them in `out`
         if self.n_outputs_ == 1:
-            out = np.zeros((X.shape[0], self.n_classes_), dtype=np.float64)
+            proba = np.zeros((X.shape[0], self.n_classes_), dtype=np.float64)
 
             # Parallel loop
             Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-                delayed(_run_estimator)(e.predict_proba, X, out)
+                delayed(_run_estimator)(e.predict_proba, X, proba)
                 for e in self.estimators_)
 
-            out /= len(self.estimators_)
-            return out
+            proba /= len(self.estimators_)
+            return proba
 
         else:
-            out = [np.zeros((X.shape[0], j), dtype=np.float64)
-                   for j in self.n_classes_]
+            all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
+                         for j in self.n_classes_]
 
             # Parallel loop
             Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-                delayed(_run_estimator2)(e.predict_proba, X, out)
+                delayed(_run_estimator2)(e.predict_proba, X, all_proba)
                 for e in self.estimators_)
 
-            for out_ in out:
-                out_ /= len(self.estimators_)
-            return out
+            for proba in all_proba:
+                proba /= len(self.estimators_)
+            return all_proba
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
@@ -693,18 +693,18 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         # avoid storing the output of every estimator by summing them in `out`
         if self.n_outputs_ > 1:
-            out = np.zeros((X.shape[0], self.n_outputs_), dtype=np.float64)
+            y_hat = np.zeros((X.shape[0], self.n_outputs_), dtype=np.float64)
         else:
-            out = np.zeros((X.shape[0]), dtype=np.float64)
+            y_hat = np.zeros((X.shape[0]), dtype=np.float64)
 
         # Parallel loop
         Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-            delayed(_run_estimator)(e.predict, X, out)
+            delayed(_run_estimator)(e.predict, X, y_hat)
             for e in self.estimators_)
 
-        out /= len(self.estimators_)
+        y_hat /= len(self.estimators_)
 
-        return out
+        return y_hat
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag scores"""
