@@ -474,7 +474,7 @@ class SelectKBest(_BaseFilter):
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a continious target.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
