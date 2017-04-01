@@ -19,7 +19,6 @@ from .variance_threshold import VarianceThreshold
 
 from .rfe import RFE
 from .rfe import RFECV
-
 from .sequential_feature_selector import SequentialFeatureSelector
 
 from .from_model import SelectFromModel
