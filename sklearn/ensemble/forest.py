@@ -374,18 +374,17 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return sum(all_importances) / len(self.estimators_)
 
 
-# these next two are utility functions for joblib's Parallel. Ideally
-# they would be defined locally in ForestClassifier or ForestRegressor, but
-# joblib complains that it cannot Pickle them when placed there.
+# This is a utility function for joblib's Parallel. It can't go locally in
+# ForestClassifier or ForestRegressor, because joblib complains that it cannot
+# pickle it when placed there.
 
-def _run_estimator(f, X, out):
-    out += f(X, check_input=False)
-
-
-def _run_estimator2(f, X, out):
-    all_proba = f(X, check_input=False)
-    for i in range(len(out)):
-        out[i] += all_proba[i]
+def accumulate_prediction(predict, X, out):
+    prediction = predict(X, check_input=False)
+    if len(out) == 1:
+        out[0] += prediction
+    else:
+        for i in range(len(out)):
+            out[i] += prediction[i]
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
@@ -579,29 +578,19 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        # avoid storing the output of every estimator by summing them in `out`
-        if self.n_outputs_ == 1:
-            proba = np.zeros((X.shape[0], self.n_classes_), dtype=np.float64)
+        # avoid storing the output of every estimator by summing them here
+        all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
+                     for j in np.atleast_1d(self.n_classes_)]
+        Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
+            delayed(accumulate_prediction)(e.predict_proba, X, all_proba)
+            for e in self.estimators_)
 
-            # Parallel loop
-            Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-                delayed(_run_estimator)(e.predict_proba, X, proba)
-                for e in self.estimators_)
-
+        for proba in all_proba:
             proba /= len(self.estimators_)
-            return proba
 
+        if len(all_proba) == 1:
+            return all_proba[0]
         else:
-            all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
-                         for j in self.n_classes_]
-
-            # Parallel loop
-            Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-                delayed(_run_estimator2)(e.predict_proba, X, all_proba)
-                for e in self.estimators_)
-
-            for proba in all_proba:
-                proba /= len(self.estimators_)
             return all_proba
 
     def predict_log_proba(self, X):
@@ -691,7 +680,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        # avoid storing the output of every estimator by summing them in `out`
+        # avoid storing the output of every estimator by summing them here
         if self.n_outputs_ > 1:
             y_hat = np.zeros((X.shape[0], self.n_outputs_), dtype=np.float64)
         else:
@@ -699,7 +688,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         # Parallel loop
         Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-            delayed(_run_estimator)(e.predict, X, y_hat)
+            delayed(accumulate_prediction)(e.predict, X, [y_hat])
             for e in self.estimators_)
 
         y_hat /= len(self.estimators_)
