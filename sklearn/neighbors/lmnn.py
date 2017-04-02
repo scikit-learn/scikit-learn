@@ -289,6 +289,11 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         -------
         y_pred : array, shape (n_query,)
             A predicted class label for each test sample.
+
+        Raises
+        ------
+        NotFittedError
+            If :meth:`fit` has not been called before.
         """
 
         # Check if fit has been called
@@ -312,6 +317,11 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
+
+        Raises
+        ------
+        NotFittedError
+            If :meth:`fit` has not been called before.
         """
 
         # Check if fit has been called
