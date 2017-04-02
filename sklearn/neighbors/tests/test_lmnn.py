@@ -166,11 +166,11 @@ def test_use_pca():
 
     clf = LMNN(n_neighbors=3, use_pca=False)
     clf.fit(X_train, y_train)
-    n_iter_no_pca = clf.details_['nit']
+    n_iter_no_pca = clf.n_iter_
 
     clf = LMNN(n_neighbors=3, use_pca=True)
     clf.fit(X_train, y_train)
-    n_iter_pca = clf.details_['nit']
+    n_iter_pca = clf.n_iter_
 
     assert_true(n_iter_pca <= n_iter_no_pca)
 
