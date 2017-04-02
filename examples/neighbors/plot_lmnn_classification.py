@@ -6,7 +6,6 @@ Large Margin Nearest Neighbor Classification
 Sample usage of Large Margin Nearest Neighbors classification.
 It will plot the decision boundaries for each class.
 """
-print(__doc__)
 
 # Author: John Chiotellis <johnyc.code@gmail.com>
 #
@@ -16,6 +15,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
+
+
+print(__doc__)
 
 n_neighbors = 3
 
