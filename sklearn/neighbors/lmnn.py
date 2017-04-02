@@ -192,7 +192,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         Returns
         -------
         self : returns a trained LargeMarginNearestNeighbor model.
-
         """
 
         # Check inputs consistency
@@ -271,8 +270,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         -------
         Lx: array-like, shape (n_samples, n_features_out)
             The data samples transformed.
-
         """
+
         if check:
             X = check_array(X)
 
@@ -292,7 +291,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             A predicted class label for each test sample.
         """
 
-        # Check if fit had been called
+        # Check if fit has been called
         check_is_fitted(self, ['L_'])
         y_pred = super(LargeMarginNearestNeighbor, self).predict(
             self.transform(X))
@@ -315,7 +314,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             by lexicographic order.
         """
 
-        # Check if fit had been called
+        # Check if fit has been called
         check_is_fitted(self, ['L_'])
         probabilities = super(LargeMarginNearestNeighbor, self).predict_proba(
             self.transform(X))
@@ -323,6 +322,33 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         return probabilities
 
     def _validate_params(self, X, y):
+        """Validate input parameters as soon as :meth:`fit` is called.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features_in)
+            The training samples.
+
+        y : array-like, shape (n_samples,)
+            The corresponding training labels.
+
+        Returns
+        -------
+        X : array, shape (n_samples, n_features_in)
+            The training samples.
+
+        y_inversed : array, shape (n_samples,)
+            The corresponding training labels.
+
+        Raises
+        -------
+        TypeError
+            If a parameter's type does not match the desired type.
+
+        ValueError
+            If a parameter's value violates its legal value range or if the
+            combination of two or more given parameters is incompatible.
+        """
 
         # Check training data
         X, y = check_X_y(X, y, ensure_min_samples=2)
@@ -420,14 +446,13 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features_in)
+        X : array, shape (n_samples, n_features_in)
             Data samples.
 
         Returns
         -------
         L : array, shape (n_features_out, n_features_in)
             The initial linear transformation.
-
         """
 
         if self.L is not None:
@@ -462,7 +487,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features_in)
+        X : array, shape (n_samples, n_features_in)
             The training samples.
 
         y : array, shape (n_samples,)
@@ -472,7 +497,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         -------
         target_neighbors: array, shape (n_samples, n_neighbors)
             An array of neighbors indices for each sample.
-
         """
 
         target_neighbors = np.empty((X.shape[0], self.n_neighbors_), dtype=int)
@@ -498,14 +522,13 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features_in)
+        X : array, shape (n_samples, n_features_in)
             The training samples.
 
         Returns
         -------
-        array-like, shape (n_features_in, n_features_in)
+        array, shape (n_features_in, n_features_in)
             An array with the sum of all weighted outer products.
-
         """
 
         n_samples, n_neighbors = targets.shape
@@ -549,7 +572,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             The new loss.
         grad: array, shape (n_features_out * n_features_in,)
             The new (flattened) gradient.
-
         """
 
         n_samples, n_features_in = X.shape
@@ -604,13 +626,13 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        Lx : array-like, shape (n_samples, n_features_out)
+        Lx : array, shape (n_samples, n_features_out)
             An array of transformed samples.
 
         y : array, shape (n_samples,)
             The corresponding class labels.
 
-        margin_radii : array-like, shape (n_samples,)
+        margin_radii : array, shape (n_samples,)
             Distances to the farthest target neighbors + margin.
 
         use_sparse : bool, optional (default=True)
@@ -624,7 +646,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             Corresponding sample indices that violate a margin.
         dist : array, shape (n_impostors,)
             dist[i] is the distance between samples imp1[i] and imp2[i].
-
         """
         n_samples = Lx.shape[0]
 
@@ -703,10 +724,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         Parameters
         ----------
-        X1 : array-like, shape (n_samples1, n_features)
+        X1 : array, shape (n_samples1, n_features)
             An array of transformed data samples.
 
-        X2 : array-like, shape (n_samples2, n_features)
+        X2 : array, shape (n_samples2, n_features)
             Transformed data samples where n_samples2 < n_samples1.
 
         margin_radii1 : array, shape (n_samples1,)
@@ -729,7 +750,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             Corresponding sample indices that violate a margin.
         dist : array, shape (n_impostors,), optional
             dist[i] is the distance between samples imp1[i] and imp2[i].
-
         """
 
         n_samples1 = X1.shape[0]
@@ -761,6 +781,37 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
 
 def check_scalar(x, name, dtype, min_val=None, max_val=None):
+    """Validates scalar parameters by checking if their datatype matches and
+    if their values are within a valid given range.
+
+    Parameters
+    ----------
+    x : object
+        The scalar parameter to validate.
+
+    name : str
+        The name of the parameter to be printed in error messages.
+
+    dtype : type
+        The desired datatype for the parameter
+
+    min_val : float or int, optional (default=None)
+        The minimum value value the parameter can take. If None (default) it
+        is implied that the parameter does not have a lower bound.
+
+    max_val: float or int, optional (default=None)
+        The maximum valid value the parameter can take. If None (default) it
+        is implied that the parameter does not have an upper bound.
+
+    Raises
+    -------
+    TypeError
+        If the parameter's type does not match the desired type.
+
+    ValueError
+        If the parameter's value violates the given bounds.
+    """
+
     if type(x) is not dtype:
         raise TypeError('{} must be {}.'.format(name, dtype))
 
@@ -777,7 +828,7 @@ def sum_outer_products(X, weights):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features_in)
+    X : array, shape (n_samples, n_features_in)
         An array of data samples.
 
     weights : csr_matrix, shape (n_samples, n_samples)
@@ -786,10 +837,10 @@ def sum_outer_products(X, weights):
 
     Returns
     -------
-    sum_outer_prods : array-like, shape (n_features_in, n_features_in)
+    sum_outer_prods : array, shape (n_features_in, n_features_in)
         The sum of all weighted outer products.
-
     """
+
     weights_sym = weights + weights.T
     n_samples = weights_sym.shape[0]
     diag = sparse.spdiags(weights_sym.sum(axis=0), 0, n_samples, n_samples)
@@ -804,7 +855,7 @@ def pairs_distances_batch(X, ind_a, ind_b, batch_size=500):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features_in)
+    X : array, shape (n_samples, n_features_in)
         An array of data samples.
 
     ind_a : array, shape (n_indices,)
@@ -820,8 +871,8 @@ def pairs_distances_batch(X, ind_a, ind_b, batch_size=500):
     -------
     dist: array, shape (n_indices,)
         An array of pairwise distances.
-
     """
+
     n_indices = len(ind_a)
     dist = np.zeros(n_indices)
     for chunk in gen_batches(n_indices, batch_size):
@@ -849,8 +900,8 @@ def unique_pairs(ind_a, ind_b, n_samples):
     -------
     ind_unique: array, shape (n_unique_pairs,)
          The indices of unique pairs contained in zip(ind_a, ind_b).
-
     """
+
     # First generate a hash array
     h = np.array([i * n_samples + j for i, j in zip(ind_a, ind_b)],
                  dtype=np.uint32)
