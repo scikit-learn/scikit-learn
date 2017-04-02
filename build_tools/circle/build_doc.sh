@@ -128,21 +128,10 @@ set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt
 cd -
 set +o pipefail
 
-affected_doc_paths() {
-	files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
-	echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
-	echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
-	sklearn_files=$(echo "$files" | grep '^sklearn/')
-	if [ -n "$sklearn_files" ]
-	then
-		grep -hlR -f<(echo "$sklearn_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/stable/modules/generated | cut -d/ -f5-
-	fi
-}
-
 if [ -n "$CI_PULL_REQUEST" ]
 then
 	echo "The following documentation files may have been changed by PR #$CI_PULL_REQUEST:"
-	affected=$(affected_doc_paths)
+	affected=$(./build_tools/circle/print_changed_docfiles.sh --no-writehtml --refbase origin/master --commit $CIRCLE_SHA1)
 	echo "$affected" | sed 's|^|* http://scikit-learn.org/circle?'$CIRCLE_BUILD_NUM'/|'
 	(
 	echo '<html><body><ul>'
