@@ -26,7 +26,7 @@ except ImportError:
 import numpy as np
 
 from .base import get_data_home
-from .base import Bunch
+from ..utils import Bunch
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
