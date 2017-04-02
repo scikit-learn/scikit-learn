@@ -43,17 +43,17 @@ def test_neighbors_digits():
     # dtype is uint8 due to overflow in distance calculations.
 
     X = digits.data.astype('uint8')
-    Y = digits.target
+    y = digits.target
     n_samples, n_features = X.shape
     train_test_boundary = int(n_samples * 0.8)
     train = np.arange(0, train_test_boundary)
     test = np.arange(train_test_boundary, n_samples)
-    X_train, Y_train, X_test, Y_test = X[train], Y[train], X[test], Y[test]
+    X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
     clf = LMNN(n_neighbors=1, max_iter=50)
-    score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
-    score_float = clf.fit(X_train.astype(float), Y_train).score(
-        X_test.astype(float), Y_test)
+    score_uint8 = clf.fit(X_train, y_train).score(X_test, y_test)
+    score_float = clf.fit(X_train.astype(float), y_train).score(
+        X_test.astype(float), y_test)
     assert_equal(score_uint8, score_float)
 
 
@@ -160,7 +160,19 @@ def test_L__n_features_out_combinations():
 
 
 def test_use_pca():
-    pass
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                        n_redundant=0, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    clf = LMNN(n_neighbors=3, use_pca=False)
+    clf.fit(X_train, y_train)
+    n_iter_no_pca = clf.details_['nit']
+
+    clf = LMNN(n_neighbors=3, use_pca=True)
+    clf.fit(X_train, y_train)
+    n_iter_pca = clf.details_['nit']
+
+    assert_true(n_iter_pca <= n_iter_no_pca)
 
 
 def test_L__n_features_out__use_pca_combinations():
@@ -177,31 +189,59 @@ def test_max_constraints():
 
 def test_use_sparse():
     X = iris.data
-    Y = iris.target
+    y = iris.target
     n_samples, n_features = X.shape
     train_test_boundary = int(n_samples * 0.8)
     train = np.arange(0, train_test_boundary)
     test = np.arange(train_test_boundary, n_samples)
-    X_train, Y_train, X_test, Y_test = X[train], Y[train], X[test], Y[test]
+    X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
     clf = LMNN(n_neighbors=3, use_sparse=False)
-    clf.fit(X_train, Y_train)
-    acc_sparse = clf.score(X_test, Y_test)
+    clf.fit(X_train, y_train)
+    acc_sparse = clf.score(X_test, y_test)
 
     clf = LMNN(n_neighbors=3, use_sparse=True)
-    clf.fit(X_train, Y_train)
-    acc_dense = clf.score(X_test, Y_test)
+    clf.fit(X_train, y_train)
+    acc_dense = clf.score(X_test, y_test)
 
     err_msg = 'Toggling use_sparse results in different accuracy.'
     assert_equal(acc_dense, acc_sparse, msg=err_msg)
 
 
 def test_warm_start():
-    pass
+    # A 1-iteration second fit on same data should give almost same result
+    # with warm starting, and quite different result without warm starting.
 
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                        n_redundant=0, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    n_iter = 10
 
-def test_max_corrections():
-    pass
+    clf_warm = LMNN(n_neighbors=3, warm_start=True, max_iter=n_iter,
+                    random_state=0).fit(X_train, y_train)
+    L_warm = clf_warm.L_
+    clf_warm.max_iter = 1
+    clf_warm.fit(X_train, y_train)
+    L_warm_plus_one = clf_warm.L_
+
+    clf_cold = LMNN(n_neighbors=3, warm_start=False, max_iter=n_iter,
+                    random_state=0).fit(X_train, y_train)
+    L_cold = clf_cold.L_
+    clf_cold.max_iter = 1
+    clf_cold.fit(X_train, y_train)
+    L_cold_plus_one = clf_cold.L_
+
+    diff_warm = np.sum(np.abs(L_warm_plus_one - L_warm))
+    diff_cold = np.sum(np.abs(L_cold_plus_one - L_cold))
+
+    err_msg = "Transformer changed significantly after one iteration even " \
+              "though it was warm-started."
+
+    assert_true(diff_warm < 2.0, err_msg)
+
+    err_msg = "Cold-started transformer changed less significantly than " \
+              "warm-started transformer after one iteration."
+    assert_true(diff_cold > diff_warm, err_msg)
 
 
 def test_verbose():
@@ -210,4 +250,27 @@ def test_verbose():
 
 
 def test_random_state():
-    pass
+    """Assert that when having more than max_constraints (forcing sampling),
+    the same constraints will be sampled given the same random_state and
+    different constraints will be sampled given a different random_state"""
+
+    X = iris.data
+    y = iris.target
+    n_constr = 5
+
+    clf = LMNN(n_neighbors=3, max_constraints=n_constr, random_state=1)
+    clf.fit(X, y)
+    L_1 = clf.L_
+
+    clf = LMNN(n_neighbors=3, max_constraints=n_constr, random_state=1)
+    clf.fit(X, y)
+    L_2 = clf.L_
+
+    assert_array_equal(L_1, L_2)
+
+    clf = LMNN(n_neighbors=3, max_constraints=n_constr, random_state=2)
+    clf.fit(X, y)
+    L_3 = clf.L_
+
+    diff = np.sum(np.abs(L_2, L_3))
+    assert_true(diff > 0.2)

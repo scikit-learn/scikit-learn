@@ -198,7 +198,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # Check inputs consistency
         X, y_ = self._validate_params(X, y)
 
-        self._random_state = check_random_state(self.random_state)
+        self.random_state_ = check_random_state(self.random_state)
 
         # Initialize transformer
         L, self.n_features_out_ = self._init_transformer(X)
@@ -234,6 +234,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             print('{:^9}\t{:^13}\t{:^20}'.
                   format('Iteration', 'Function Call', 'Loss'))
             print('-'*50)
+            print('{:^9}'.format(self.n_iter_))
 
         # Call optimizer
         L, loss, info = optimize.fmin_l_bfgs_b(**optimizer_dict)
@@ -327,6 +328,36 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         X, y = check_X_y(X, y, ensure_min_samples=2)
         check_classification_targets(y)
 
+        # Store the appearing classes and the class index for each sample
+        classes, y_inversed = np.unique(y, return_inverse=True)
+
+        # Check number of classes > 1
+        n_classes = len(classes)
+        if n_classes < 2:
+            raise ValueError("LargeMarginNearestNeighbor requires 2 or more "
+                             "distinct classes, got {}.".format(n_classes))
+
+        # Check every class has at least 2 samples
+        min_class_size = bincount(y_inversed).min()
+        if min_class_size < 2:
+            raise ValueError('At least one class has less than 2 ({}) '
+                             'training samples.'.format(min_class_size))
+
+        check_scalar(self.warm_start, 'warm_start', bool)
+        if self.warm_start and hasattr(self, 'L_'):
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used where `y` has "
+                                 "the same classes as in the previous call to "
+                                 "fit. Previously got {}, `y` has {}".
+                                 format(self.classes_, classes))
+
+            if len(self.L_[0]) != len(X[0]):
+                raise ValueError('The new inputs dimensionality ({}) does not '
+                                 'match the previously learned transformation '
+                                 'input dimensionality ({}).'
+                                 .format(len(self.L_[0]), len(X[0])))
+        self.classes_ = classes
+
         if self.n_features_out is not None:
             check_scalar(self.n_features_out, 'n_features_out', int, 1)
         check_scalar(self.n_neighbors, 'n_neighbors', int, 1, len(X) - 1)
@@ -341,30 +372,6 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         check_scalar(self.use_sparse, 'use_sparse', bool)
         check_scalar(self.verbose, 'verbose', int, 0)
 
-        # Store the appearing classes and the class index for each sample
-        classes, y_inversed = np.unique(y, return_inverse=True)
-
-        check_scalar(self.warm_start, 'warm_start', bool)
-        if self.warm_start:
-            if set(classes) != set(self.classes_):
-                raise ValueError("warm_start can only be used where `y` has "
-                                 "the same classes as in the previous call to "
-                                 "fit. Previously got {}, `y` has {}".
-                                 format(self.classes_, classes))
-        self.classes_ = classes
-
-        # Check number of classes > 1
-        n_classes = len(classes)
-        if n_classes < 2:
-            raise ValueError("LargeMarginNearestNeighbor requires 2 or more "
-                             "distinct classes, got {}.".format(n_classes))
-
-        # Check every class has at least 2 samples
-        min_class_size = bincount(y_inversed).min()
-        if min_class_size < 2:
-            raise ValueError('At least one class has less than 2 ({}) '
-                             'training samples.'.format(min_class_size))
-
         # Check linear transformation dimensions
         if self.L is not None:
             check_array(self.L)
@@ -376,7 +383,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             if len(self.L) > len(self.L[0]):
                 raise ValueError('Transformation output dimensionality ({}) '
                                  'cannot be greater than the '
-                                 'tranformation input dimensionality ({}).'.
+                                 'transformation input dimensionality ({}).'.
                                  format(len(self.L), len(self.L[0])))
 
         # Check preferred output dimensionality
@@ -425,7 +432,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
         if self.L is not None:
             L = np.asarray(self.L)
-        elif self.warm_start and check_is_fitted(self, ['L_']):
+        elif self.warm_start and hasattr(self, 'L_'):
             L = self.L_
         elif self.use_pca and X.shape[1] > 1:
             cov_ = np.cov(X, rowvar=False)  # Mean is removed
@@ -653,7 +660,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 # choice does not exist for numpy versions < (1, 7, 0)
                 ind_subsample = choice(impostors_sp.nnz, self.max_constraints,
                                        replace=False,
-                                       random_state=self._random_state)
+                                       random_state=self.random_state_)
 
                 imp1, imp2 = imp1[ind_subsample], imp2[ind_subsample]
 
@@ -681,7 +688,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             if len(ind_unique) > self.max_constraints:
                 ind_unique = choice(ind_unique, self.max_constraints,
                                     replace=False,
-                                    random_state=self._random_state)
+                                    random_state=self.random_state_)
 
             imp1 = np.asarray(imp1)[ind_unique]
             imp2 = np.asarray(imp2)[ind_unique]
