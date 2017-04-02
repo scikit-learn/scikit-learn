@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn import datasets
@@ -50,7 +51,7 @@ def test_neighbors_digits():
     test = np.arange(train_test_boundary, n_samples)
     X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
-    clf = LMNN(n_neighbors=1, max_iter=50)
+    clf = LMNN(n_neighbors=1, max_iter=30)
     score_uint8 = clf.fit(X_train, y_train).score(X_test, y_test)
     score_float = clf.fit(X_train.astype(float), y_train).score(
         X_test.astype(float), y_test)
@@ -117,7 +118,6 @@ def test_same_lmnn_parallel():
 #     assert_array_equal(result, y)
 
 
-# TODO: TESTS
 def test_L():
 
     X = np.arange(12).reshape(4, 3)
@@ -134,7 +134,13 @@ def test_L():
 
 
 def test_n_neighbors():
-    pass
+    X = np.arange(12).reshape(4, 3)
+    y = [1, 1, 2, 2]
+
+    clf = LMNN(n_neighbors=2)
+    assert_warns(UserWarning, clf.fit, X, y)
+
+    # TODO: Test if KNeighbors superclass predicts with reduced n_neighbors
 
 
 def test_n_features_out():
@@ -155,10 +161,6 @@ def test_n_features_out():
     clf.fit(X, y)
 
 
-def test_L__n_features_out_combinations():
-    pass
-
-
 def test_use_pca():
     X, y = datasets.make_classification(n_samples=30, n_features=5,
                                         n_redundant=0, random_state=0)
@@ -173,10 +175,6 @@ def test_use_pca():
     n_iter_pca = clf.n_iter_
 
     assert_true(n_iter_pca <= n_iter_no_pca)
-
-
-def test_L__n_features_out__use_pca_combinations():
-    pass
 
 
 def test_max_constraints():
@@ -242,6 +240,33 @@ def test_warm_start():
     err_msg = "Cold-started transformer changed less significantly than " \
               "warm-started transformer after one iteration."
     assert_true(diff_cold > diff_warm, err_msg)
+
+
+def test_warm_start_diff_classes():
+    make_cla = datasets.make_classification
+    X, y = make_cla(n_samples=30, n_features=3, n_classes=3, n_redundant=0,
+                    n_informative=3, random_state=0)
+
+    clf = LMNN(n_neighbors=1, warm_start=True, max_iter=5)
+    clf.fit(X, y)
+
+    X, y_less_classes = make_cla(n_samples=30, n_features=3, n_classes=2,
+                                 n_redundant=0, random_state=0)
+    assert_raises(ValueError, clf.fit, X, y_less_classes)
+
+
+def test_warm_start_diff_inputs():
+    make_cla = datasets.make_classification
+    X, y = make_cla(n_samples=30, n_features=5, n_classes=4, n_redundant=0,
+                    n_informative=5, random_state=0)
+
+    clf = LMNN(n_neighbors=1, warm_start=True, max_iter=5)
+    clf.fit(X, y)
+
+    X_less_features, y = make_cla(n_samples=30, n_features=4, n_classes=4,
+                                  n_redundant=0, n_informative=4,
+                                  random_state=0)
+    assert_raises(ValueError, clf.fit, X_less_features, y)
 
 
 def test_verbose():
