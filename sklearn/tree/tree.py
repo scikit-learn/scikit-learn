@@ -104,6 +104,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+        self._feature_importances = None
+
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -118,6 +120,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
                     raise ValueError("No support for np.int64 index based "
                                      "sparse matrices")
+
+        # Reset externally calculated importances when re-fitting
+        self._feature_importances = None
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -490,7 +495,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         check_is_fitted(self, 'tree_')
 
-        return self.tree_.compute_feature_importances()
+        if self._feature_importances is not None:
+            feature_importances = self._feature_importances
+        else:
+            feature_importances = self.tree_.compute_feature_importances()
+
+        return feature_importances
 
 
 # =============================================================================
