@@ -19,7 +19,8 @@ from .variance_threshold import VarianceThreshold
 
 from .rfe import RFE
 from .rfe import RFECV
-from .sfs import SFS
+
+from .sequential_feature_selector import SequentialFeatureSelector
 
 from .from_model import SelectFromModel
 
@@ -27,7 +28,7 @@ from .mutual_info_ import mutual_info_regression, mutual_info_classif
 
 
 __all__ = ['GenericUnivariateSelect',
-           'SFS',
+           'SequentialFeatureSelector',
            'RFE',
            'RFECV',
            'SelectFdr',

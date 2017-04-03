@@ -10,19 +10,20 @@ Sequential feature selection
 import numpy as np
 from itertools import combinations
 from collections import defaultdict
+from .base import SelectorMixin
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..utils.validation import check_is_fitted
 from ..externals import six
 from ..model_selection import cross_val_score
-from ..metrics import get_scorer
+from ..metrics.scorer import check_scoring
 
 
-class SFS(BaseEstimator, MetaEstimatorMixin):
+class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
     """Feature selector that selects features via greedy search.
 
-    This Sequential Feature Selector (SFS) adds (forward selection) or
+    This Sequential Feature Selector adds (forward selection) or
     removes (backward selection) the features (X) to form a feature subset
     in a greedy fashion that optimizes the extrinsic performance metric
     of a Regressor or Classifier on the desired ouputs (y).
@@ -33,9 +34,9 @@ class SFS(BaseEstimator, MetaEstimatorMixin):
     ----------
     estimator : scikit-learn Classifier or Regressor
 
-    k_features : int or tuple (default=1)
+    n_features_to_select : int or tuple (default=1)
         An integer arguments specifies the number of features to select,
-        where k_features < the full feature set.
+        where n_features_to_select < the full feature set.
         Optionally, a tuple containing a min and max value can be provided
         so that the feature selector will return a feature subset between
         with min <= n_features <= max that scored highest in the evaluation.
@@ -102,13 +103,13 @@ class SFS(BaseEstimator, MetaEstimatorMixin):
     (cv=5 by default) of the `estimator` (here: KNN)
     during the greedy forward selection search.
 
-        >>> from sklearn.feature_selection import SFS
+        >>> from sklearn.feature_selection import SequentialFeatureSelector
         >>> from sklearn.neighbors import KNeighborsClassifier
         >>> from sklearn.datasets import load_iris
         >>> iris = load_iris()
         >>> X, y = iris.data, iris.target
         >>> knn = KNeighborsClassifier(n_neighbors=3)
-        >>> sfs = SFS(knn, k_features=(1, 3))
+        >>> sfs = SequentialFeatureSelector(knn, n_features_to_select=(1, 3))
         >>> sfs = sfs.fit(X, y)
         >>> round(sfs.k_score_, 4)
         0.9733
@@ -118,29 +119,16 @@ class SFS(BaseEstimator, MetaEstimatorMixin):
         >>> (150, 3)
 
     """
-    def __init__(self, estimator, k_features=1,
+    def __init__(self, estimator, n_features_to_select=1,
                  forward=True, scoring=None,
                  cv=5, n_jobs=1,
                  pre_dispatch='2*n_jobs'):
 
         self.estimator = clone(estimator)
-        self.k_features = k_features
+        self.n_features_to_select = n_features_to_select
         self.forward = forward
         self.pre_dispatch = pre_dispatch
         self.scoring = scoring
-        if scoring is None:
-            if self.estimator._estimator_type == 'classifier':
-                scoring = 'accuracy'
-            elif self.estimator._estimator_type == 'regressor':
-                scoring = 'r2'
-            else:
-                raise ValueError('Estimator must '
-                                 'be a Classifier or Regressor.')
-
-        if isinstance(scoring, str):
-            self.scorer = get_scorer(scoring)
-        else:
-            self.scorer = scoring
         self.cv = cv
         self.n_jobs = n_jobs
         self.named_est = {key: value for key, value in
@@ -164,51 +152,59 @@ class SFS(BaseEstimator, MetaEstimatorMixin):
         self : object
 
         """
-        if not isinstance(self.k_features, int) and\
-                not isinstance(self.k_features, tuple):
-            raise ValueError('k_features must be a positive integer'
+        if self.scoring is None:
+            self.scorer = check_scoring(self.estimator)
+        else:
+            self.scorer = self.scoring
+
+        if not isinstance(self.n_features_to_select, int) and\
+                not isinstance(self.n_features_to_select, tuple):
+            raise ValueError('n_features_to_select must be a positive integer'
                              ' or tuple')
 
-        if isinstance(self.k_features, int) and (self.k_features < 1 or
-                                                 self.k_features > X.shape[1]):
-            raise ValueError('k_features must be a positive integer'
+        if isinstance(self.n_features_to_select, int) and (
+                    self.n_features_to_select < 1 or
+                    self.n_features_to_select > X.shape[1]):
+            raise ValueError('n_features_to_select must be a positive integer'
                              ' between 1 and X.shape[1], got %s'
-                             % (self.k_features, ))
+                             % (self.n_features_to_select, ))
 
-        if isinstance(self.k_features, tuple):
-            if len(self.k_features) != 2:
-                raise ValueError('k_features tuple must consist of 2'
+        if isinstance(self.n_features_to_select, tuple):
+            if len(self.n_features_to_select) != 2:
+                raise ValueError('n_features_to_select tuple must consist of 2'
                                  ' elements a min and a max value.')
 
-            if self.k_features[0] not in range(1, X.shape[1] + 1):
-                raise ValueError('k_features tuple min value must be in'
-                                 ' range(1, X.shape[1]+1).')
+            if self.n_features_to_select[0] not in range(1, X.shape[1] + 1):
+                raise ValueError('n_features_to_select tuple min value must'
+                                 ' be in range(1, X.shape[1]+1).')
 
-            if self.k_features[1] not in range(1, X.shape[1] + 1):
-                raise ValueError('k_features tuple max value must be in'
-                                 ' range(1, X.shape[1]+1).')
+            if self.n_features_to_select[1] not in range(1, X.shape[1] + 1):
+                raise ValueError('n_features_to_select tuple max value must'
+                                 ' be in range(1, X.shape[1]+1).')
 
-            if self.k_features[0] > self.k_features[1]:
-                raise ValueError('The min k_features value must be larger'
-                                 ' than the max k_features value.')
+            if self.n_features_to_select[0] > self.n_features_to_select[1]:
+                raise ValueError('The min n_features_to_select value must be'
+                                 ' larger than the max'
+                                 ' n_features_to_select value.')
 
-        if isinstance(self.k_features, tuple):
+        if isinstance(self.n_features_to_select, tuple):
             select_in_range = True
         else:
             select_in_range = False
-            k_to_select = self.k_features
+            k_to_select = self.n_features_to_select
 
+        self._n_features = X.shape[1]
         self.subsets_ = {}
-        orig_set = set(range(X.shape[1]))
+        orig_set = set(range(self._n_features))
         if self.forward:
             if select_in_range:
-                k_to_select = self.k_features[1]
+                k_to_select = self.n_features_to_select[1]
             k_idx = ()
             k = 0
         else:
             if select_in_range:
-                k_to_select = self.k_features[0]
-            k_idx = tuple(range(X.shape[1]))
+                k_to_select = self.n_features_to_select[0]
+            k_idx = tuple(range(self._n_features))
             k = len(k_idx)
             k_score = self._calc_score(X, y, k_idx)
             self.subsets_[k] = {
@@ -310,39 +306,15 @@ class SFS(BaseEstimator, MetaEstimatorMixin):
                    all_cv_scores[best])
         return res
 
-    def transform(self, X):
-        """Reduce X to its most important features.
+    @property
+    def _estimator_type(self):
+        return self.estimator._estimator_type
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
-
-        Returns
-        -------
-        Reduced feature subset of X, shape={n_samples, k_features}
-
-        """
+    def _get_support_mask(self):
         check_is_fitted(self, 'k_feature_idx_')
-        return X[:, self.k_feature_idx_]
-
-    def fit_transform(self, X, y):
-        """Fit to training data then reduce X to its most important features.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
-
-        Returns
-        -------
-        Reduced feature subset of X, shape={n_samples, k_features}
-
-        """
-        self.fit(X, y)
-        return self.transform(X)
+        mask = np.ones(self._n_features, dtype=np.int)
+        mask[self.k_feature_idx_] = 1
+        return mask
 
 
 def _name_estimators(estimators):

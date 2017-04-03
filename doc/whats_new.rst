@@ -139,9 +139,10 @@ Model selection and evaluation
    - Added the :class:`model_selection.RepeatedKFold` and
      :class:`model_selection.RepeatedStratifiedKFold`.
      :issue:`8120` by `Neeraj Gangwar`_.
-     - Added the :class: `feature_selection.SFS` class for sequential
-       feature selection for classifiers and regressors.
-       :issue:6545` by `Sebastian Raschka`_.
+
+   - Added the :class: `feature_selection.SFS` class for sequential
+     feature selection for classifiers and regressors.
+     :issue:6545` by `Sebastian Raschka`_.
 
 Enhancements
 ............
