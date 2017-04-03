@@ -78,7 +78,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     data_home : optional, default: None
         Specify another download and cache folder for the data sets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     Returns
     -------
