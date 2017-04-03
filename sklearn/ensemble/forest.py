@@ -811,7 +811,8 @@ class RandomForestClassifier(ForestClassifier):
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
-        The weighted impurity decrease equation is the following:
+        The weighted impurity decrease equation is the following::
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
@@ -1046,7 +1047,8 @@ class RandomForestRegressor(ForestRegressor):
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
-        The weighted impurity decrease equation is the following:
+        The weighted impurity decrease equation is the following::
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
@@ -1241,7 +1243,8 @@ class ExtraTreesClassifier(ForestClassifier):
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
-        The weighted impurity decrease equation is the following:
+        The weighted impurity decrease equation is the following::
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
@@ -1466,7 +1469,8 @@ class ExtraTreesRegressor(ForestRegressor):
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
-        The weighted impurity decrease equation is the following:
+        The weighted impurity decrease equation is the following::
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
@@ -1638,7 +1642,8 @@ class RandomTreesEmbedding(BaseForest):
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
-        The weighted impurity decrease equation is the following:
+        The weighted impurity decrease equation is the following::
+
             N_t / N * (impurity - N_t_R / N_t * right_impurity
                                 - N_t_L / N_t * left_impurity)
 
