@@ -717,12 +717,7 @@ class CategoricalStratifiedKFold(StratifiedKFold):
             rng = self.random_state
         y = np.asarray(y)
         n_samples = y.shape[0]
-        #             unique_y, y_inversed = np.unique(y, return_inverse=True)
-        #             print "unique_y",unique_y
-        #             print "y_inversed",y_inversed
-        #             y_counts = bincount(y_inversed)
         unique_y = np.array(range(y.shape[1]))
-        #             print "counts", np.sum(y,axis=0)
         y_counts = np.sum(y, axis=0)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
@@ -749,15 +744,10 @@ class CategoricalStratifiedKFold(StratifiedKFold):
             for count in y_counts]
 
         test_folds = np.zeros(n_samples, dtype=np.int)
-        #             print "test_folds",test_folds
-        #             print "per_cls_cvs",per_cls_cvs
         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                #                     print "y",y
-                #                     print "cls",cls
-                #                     print "test_folds",test_folds#
-                #                     print "y==cls",np.array(y == 1)[:,cls]
-                #                     print "test_fold_indices",test_fold_indices
+
+                #Check which of the samples have this class dimension
                 test_folds_index = np.array(y == 1)[:, cls]
                 cls_test_folds = test_folds[test_folds_index]
                 # the test split can be too big because we used
