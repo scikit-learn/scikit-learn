@@ -1795,8 +1795,11 @@ def train_test_split(*arrays, **options):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
