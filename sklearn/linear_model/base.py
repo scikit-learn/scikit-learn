@@ -433,16 +433,6 @@ class LinearRegression(LinearModel, RegressorMixin):
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    residues_ : array, shape (n_targets,) or (1,) or empty
-        Sum of residuals. Squared Euclidean 2-norm for each target passed
-        during the fit. If the linear regression problem is under-determined
-        (the number of linearly independent rows of the training matrix is less
-        than its number of linearly independent columns), this is an empty
-        array. If the target vector passed during the fit is 1-dimensional,
-        this is a (1,) shape array.
-
-        .. versionadded:: 0.18
-
     intercept_ : array
         Independent term in the linear model.
 
