@@ -511,6 +511,9 @@ class GroupKFold(_BaseKFold):
             yield np.where(indices == f)[0]
 
 
+
+
+
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross-validator
 
@@ -647,6 +650,127 @@ class StratifiedKFold(_BaseKFold):
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedKFold, self).split(X, y, groups)
+
+
+class CategoricalStratifiedKFold(StratifiedKFold):
+    """Stratified Categorical output cross-validator
+
+    Provides train/test indices to split data in train/test sets.
+
+    This cross-validation object is a variation of StratifiedKFold that returns
+    stratified folds. The folds are made by preserving the percentage of
+    samples for each class. The difference is that this cross-validator work on
+    categorical outputs.That is when the output is treated as a probability mass
+    over the labels rather than the specific class.
+
+    For example, the classes Man/Woman/Undefined can be represented either as
+    0/1/2 or as [1 0 0]/[0 1 0]/[0 0 1], where the dimension with 1 idicates the class
+
+
+    Parameters
+    ----------
+    n_splits : int, default=3
+        Number of folds. Must be at least 2.
+
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
+
+    Examples
+    --------
+    X = np.array([[1, 2], [3, 4], [1, 2], [3, 4],[3, 4],[3, 4]])
+    y = np.array([[1,0,0], [1,0,0], [0,1,0], [0,1,0],[0,0,1],[0,0,1]])
+    skf = StratifiedKFoldMulti(n_splits=2)
+    skf.get_n_splits(X, y)
+
+    print(skf)
+    StratifiedKFoldMulti(n_splits=2, random_state=None, shuffle=False)
+
+    for train_index, test_index in skf.split(X, y):
+         print("TRAIN:", train_index, "TEST:", test_index)
+         X_train, X_test = X[train_index], X[test_index]
+         y_train, y_test = y[train_index], y[test_index]
+
+    ('TRAIN:', array([1, 3, 5]), 'TEST:', array([0, 2, 4]))
+    ('TRAIN:', array([0, 2, 4]), 'TEST:', array([1, 3, 5]))
+
+    Notes
+    -----
+    All the folds have size ``trunc(n_samples / n_splits)``, the last one has
+    the complementary.
+
+    See also
+    --------
+    StratifiedKFold: Returns Stratified K-Folds
+    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
+
+    """
+
+    def _make_test_folds(self, X, y=None, groups=None):
+        if self.shuffle:
+            rng = check_random_state(self.random_state)
+        else:
+            rng = self.random_state
+        y = np.asarray(y)
+        n_samples = y.shape[0]
+        #             unique_y, y_inversed = np.unique(y, return_inverse=True)
+        #             print "unique_y",unique_y
+        #             print "y_inversed",y_inversed
+        #             y_counts = bincount(y_inversed)
+        unique_y = np.array(range(y.shape[1]))
+        #             print "counts", np.sum(y,axis=0)
+        y_counts = np.sum(y, axis=0)
+        min_groups = np.min(y_counts)
+        if np.all(self.n_splits > y_counts):
+            raise ValueError("All the n_groups for individual classes"
+                             " are less than n_splits=%d."
+                             % (self.n_splits))
+        if self.n_splits > min_groups:
+            warnings.warn(("The least populated class in y has only %d"
+                           " members, which is too few. The minimum"
+                           " number of groups for any class cannot"
+                           " be less than n_splits=%d."
+                           % (min_groups, self.n_splits)), Warning)
+
+        # TODO ensure y is in categorical format
+        # pre-assign each sample to a test fold index using individual KFold
+        # splitting strategies for each class so as to respect the balance of
+        # classes
+        # NOTE: Passing the data corresponding to ith class say X[y==class_i]
+        # will break when the data is not 100% stratifiable for all classes.
+        # So we pass np.zeroes(max(c, n_splits)) as data to the KFold
+        per_cls_cvs = [
+            KFold(self.n_splits, shuffle=self.shuffle,
+                  random_state=rng).split(np.zeros(max(count, self.n_splits)))
+            for count in y_counts]
+
+        test_folds = np.zeros(n_samples, dtype=np.int)
+        #             print "test_folds",test_folds
+        #             print "per_cls_cvs",per_cls_cvs
+        for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
+            for cls, (_, test_split) in zip(unique_y, per_cls_splits):
+                #                     print "y",y
+                #                     print "cls",cls
+                #                     print "test_folds",test_folds#
+                #                     print "y==cls",np.array(y == 1)[:,cls]
+                #                     print "test_fold_indices",test_fold_indices
+                test_folds_index = np.array(y == 1)[:, cls]
+                cls_test_folds = test_folds[test_folds_index]
+                # the test split can be too big because we used
+                # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
+                # stratifiable for all the classes
+                # (we use a warning instead of raising an exception)
+                # If this is the case, let's trim it:
+                test_split = test_split[test_split < len(cls_test_folds)]
+                cls_test_folds[test_split] = test_fold_indices
+                test_folds[test_folds_index] = cls_test_folds
+
+        return test_folds
+
 
 
 class TimeSeriesSplit(_BaseKFold):
