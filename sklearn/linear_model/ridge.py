@@ -275,9 +275,13 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when
         shuffling the data. Used only in 'sag' solver.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_n_iter : boolean, default False
         If True, the method also returns `n_iter`, the actual number of
@@ -580,9 +584,13 @@ class Ridge(_BaseRidge, RegressorMixin):
     tol : float
         Precision of the solution.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when
         shuffling the data. Used only in 'sag' solver.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
         .. versionadded:: 0.17
            *random_state* to support Stochastic Average Gradient.
@@ -728,9 +736,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     tol : float
         Precision of the solution.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when
-        shuffling the data. Used in 'sag' solver.
+        shuffling the data. Used only in 'sag' solver.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

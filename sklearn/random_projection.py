@@ -170,9 +170,13 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     n_features : int,
         Dimensionality of the original source space.
 
-    random_state : int, RandomState instance or None (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         Control the pseudo random number generator used to generate the
         matrix at fit time.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -226,9 +230,13 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-    random_state : integer, RandomState instance or None (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         Control the pseudo random number generator used to generate the
         matrix at fit time.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -446,9 +454,13 @@ class GaussianRandomProjection(BaseRandomProjection):
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    random_state : integer, RandomState instance or None (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         Control the pseudo random number generator used to generate the
         matrix at fit time.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -552,9 +564,13 @@ class SparseRandomProjection(BaseRandomProjection):
         If False, the projected data uses a sparse representation if
         the input is sparse.
 
-    random_state : integer, RandomState instance or None (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         Control the pseudo random number generator used to generate the
         matrix at fit time.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

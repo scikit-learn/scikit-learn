@@ -582,10 +582,14 @@ class ElasticNet(LinearModel, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -829,10 +833,14 @@ class Lasso(ElasticNet):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1266,10 +1274,14 @@ class LassoCV(LinearModelCV, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     fit_intercept : boolean, default True
         whether to calculate the intercept for this model. If set
@@ -1418,10 +1430,14 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -1588,10 +1604,14 @@ class MultiTaskElasticNet(Lasso):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1772,10 +1792,14 @@ class MultiTaskLasso(MultiTaskElasticNet):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1925,10 +1949,14 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -2089,10 +2117,14 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

@@ -50,10 +50,14 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : int, RandomState instance or None, optional, default: None
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -198,10 +202,14 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : integer or numpy.RandomState, optional, default: None
-        The generator used to initialize the centers. If an integer is given,
-        it fixes the seed. Defaults to the global numpy random number
-        generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_n_iter : bool, optional, default: False
         Whether or not to return the number of iterations.
@@ -314,10 +322,14 @@ class MDS(BaseEstimator):
         (``n_cpus + 1 + n_jobs``) are used. Thus for ``n_jobs = -2``, all CPUs
         but one are used.
 
-    random_state : integer or numpy.RandomState, optional, default: None
-        The generator used to initialize the centers. If an integer is given,
-        it fixes the seed. Defaults to the global numpy random number
-        generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
         Dissimilarity measure to use:
