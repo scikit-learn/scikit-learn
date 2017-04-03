@@ -660,11 +660,12 @@ class CategoricalStratifiedKFold(StratifiedKFold):
     This cross-validation object is a variation of StratifiedKFold that returns
     stratified folds. The folds are made by preserving the percentage of
     samples for each class. The difference is that this cross-validator work on
-    categorical outputs.That is when the output is treated as a probability mass
-    over the labels rather than the specific class.
+    categorical outputs.That is when the output is treated as a probability
+    mass over the labels rather than the specific class.
 
     For example, the classes Man/Woman/Undefined can be represented either as
-    0/1/2 or as [1 0 0]/[0 1 0]/[0 0 1], where the dimension with 1 idicates the class
+    0/1/2 or as [1 0 0]/[0 1 0]/[0 0 1], where the dimension with 1 idicates
+    the class
 
 
     Parameters
@@ -709,7 +710,6 @@ class CategoricalStratifiedKFold(StratifiedKFold):
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
 
     """
-
     def _make_test_folds(self, X, y=None, groups=None):
         if self.shuffle:
             rng = check_random_state(self.random_state)
@@ -747,7 +747,7 @@ class CategoricalStratifiedKFold(StratifiedKFold):
         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
 
-                #Check which of the samples have this class dimension
+                # Check which of the samples have this class dimension
                 test_folds_index = np.array(y == 1)[:, cls]
                 cls_test_folds = test_folds[test_folds_index]
                 # the test split can be too big because we used
@@ -760,7 +760,6 @@ class CategoricalStratifiedKFold(StratifiedKFold):
                 test_folds[test_folds_index] = cls_test_folds
 
         return test_folds
-
 
 
 class TimeSeriesSplit(_BaseKFold):
