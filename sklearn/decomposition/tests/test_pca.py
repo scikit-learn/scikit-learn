@@ -345,9 +345,9 @@ def test_pca_validation():
     # matrix X) raise errors.
     X = np.array([[0, 1, 0], [1, 0, 0]])
     for solver in solver_list:
-        for n_comp in [-1, 3]:
+        for n_components in [-1, 3]:
             assert_raises(ValueError,
-                          PCA(n_components=n_comp, svd_solver=solver).fit, X)
+                          PCA(n_components, svd_solver=solver).fit, X)
 
 
 def test_n_components_none():
