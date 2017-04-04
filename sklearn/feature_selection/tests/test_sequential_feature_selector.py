@@ -14,9 +14,10 @@ from sklearn.feature_selection import SequentialFeatureSelector as SFS
 def dict_compare_utility(d1, d2):
     assert d1.keys() == d2.keys(), "%s != %s" % (d1, d2)
     for i in d1:
-        err_msg = ("d1[%s]['feature_idx']"
-                   " != d2[%s]['feature_idx']" % (i, i))
-        assert d1[i]['feature_idx'] == d1[i]["feature_idx"], err_msg
+        err_msg = ("d1[%s]['feature_subset_idx']"
+                   " != d2[%s]['feature_subset_idx']" % (i, i))
+        assert d1[i]['feature_subset_idx'] == \
+            d1[i]["feature_subset_idx"], err_msg
         assert_almost_equal(d1[i]['avg_score'],
                             d2[i]['avg_score'],
                             decimal=3,
@@ -36,7 +37,7 @@ def test_run_default():
     knn = KNeighborsClassifier()
     sfs = SFS(estimator=knn)
     sfs.fit(X, y)
-    assert sfs.k_feature_idx_ == (3, )
+    assert sfs.feature_subset_idx_ == (3, )
 
 
 def test_kfeatures_type_1():
@@ -110,13 +111,13 @@ def test_knn_wo_cv():
     sfs1 = sfs1.fit(X, y)
     expect = {1: {'avg_score': 0.95999999999999996,
                   'cv_scores': np.array([0.96]),
-                  'feature_idx': (3,)},
+                  'feature_subset_idx': (3,)},
               2: {'avg_score': 0.97333333333333338,
                   'cv_scores': np.array([0.97333333]),
-                  'feature_idx': (2, 3)},
+                  'feature_subset_idx': (2, 3)},
               3: {'avg_score': 0.97333333333333338,
                   'cv_scores': np.array([0.97333333]),
-                  'feature_idx': (1, 2, 3)}}
+                  'feature_subset_idx': (1, 2, 3)}}
     dict_compare_utility(d1=expect, d2=sfs1.subsets_)
 
 
@@ -136,19 +137,19 @@ def test_knn_cv3():
                                          0.94871795,
                                          0.88888889,
                                          1.0]),
-                  'feature_idx': (3,)},
+                  'feature_subset_idx': (3,)},
               2: {'avg_score': 0.95993589743589736,
                   'cv_scores': np.array([0.97435897,
                                          0.94871795,
                                          0.91666667,
                                          1.0]),
-                  'feature_idx': (2, 3)},
+                  'feature_subset_idx': (2, 3)},
               3: {'avg_score': 0.97275641025641035,
                   'cv_scores': np.array([0.97435897,
                                          1.0,
                                          0.94444444,
                                          0.97222222]),
-                  'feature_idx': (1, 2, 3)}}
+                  'feature_subset_idx': (1, 2, 3)}}
     dict_compare_utility(d1=expect, d2=sfs1.subsets_)
 
 
@@ -162,7 +163,7 @@ def test_knn_option_sbs():
                forward=False,
                cv=4)
     sfs3 = sfs3.fit(X, y)
-    assert sfs3.k_feature_idx_ == (1, 2, 3)
+    assert sfs3.feature_subset_idx_ == (1, 2, 3)
 
 
 def test_knn_option_sfs_tuplerange():
@@ -175,8 +176,8 @@ def test_knn_option_sfs_tuplerange():
                forward=True,
                cv=4)
     sfs4 = sfs4.fit(X, y)
-    assert round(sfs4.k_score_, 3) == 0.967
-    assert sfs4.k_feature_idx_ == (0, 2, 3)
+    assert round(sfs4.score_, 3) == 0.967
+    assert sfs4.feature_subset_idx_ == (0, 2, 3)
 
 
 def test_knn_scoring_metric():
@@ -189,14 +190,14 @@ def test_knn_scoring_metric():
                forward=False,
                cv=4)
     sfs5 = sfs5.fit(X, y)
-    assert round(sfs5.k_score_, 4) == 0.9728
+    assert round(sfs5.score_, 4) == 0.9728
 
     sfs6 = SFS(knn,
                n_features_to_select=3,
                forward=False,
                cv=4)
     sfs6 = sfs6.fit(X, y)
-    assert round(sfs6.k_score_, 4) == 0.9728
+    assert round(sfs6.score_, 4) == 0.9728
 
     sfs7 = SFS(knn,
                n_features_to_select=3,
@@ -204,7 +205,7 @@ def test_knn_scoring_metric():
                scoring='f1_macro',
                cv=4)
     sfs7 = sfs7.fit(X, y)
-    assert round(sfs7.k_score_, 4) == 0.9727
+    assert round(sfs7.score_, 4) == 0.9727
 
 
 def test_regression():
@@ -216,8 +217,8 @@ def test_regression():
                 forward=True,
                 cv=10)
     sfs_r = sfs_r.fit(X, y)
-    assert len(sfs_r.k_feature_idx_) == 13
-    assert round(sfs_r.k_score_, 4) == 0.2001
+    assert len(sfs_r.feature_subset_idx_) == 13
+    assert round(sfs_r.score_, 4) == 0.2001
 
 
 def test_regression_in_tuplerange():
@@ -229,8 +230,8 @@ def test_regression_in_tuplerange():
                 forward=True,
                 cv=10)
     sfs_r = sfs_r.fit(X, y)
-    assert len(sfs_r.k_feature_idx_) == 9
-    assert round(sfs_r.k_score_, 4) == 0.2991, sfs_r.k_score_
+    assert len(sfs_r.feature_subset_idx_) == 9
+    assert round(sfs_r.score_, 4) == 0.2991, sfs_r.score_
 
 
 def test_transform_not_fitted():

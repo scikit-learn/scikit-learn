@@ -44,7 +44,8 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
         so that the feature selector will return a feature subset between
         with min <= n_features <= max that scored highest in the evaluation.
         For example, the tuple (1, 4) will return any combination from
-        1 up to 4 features instead of a fixed number of features k.
+        1 up to 4 features instead of a fixed number
+        of features `n_features_to_select`.
 
     scoring : str, callable, or None (default=None)
         A string (see model evaluation documentation) or a scorer
@@ -85,10 +86,10 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
     estimator_ : scikit-learn Classifier or Regressor
         Fitted clone of `estimator`.
 
-    k_feature_idx_ : array-like, shape = [n_predictions]
+    feature_subset_idx_ : array-like, shape = [n_predictions]
         Feature Indices of the selected feature subsets.
 
-    k_score_ : float
+    score_ : float
         Cross validation average score of the selected subset.
 
     subsets_ : dict
@@ -96,7 +97,7 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
         sequential selection, where the dictionary keys are
         the lengths k of these feature subsets. The dictionary
         values are dictionaries themselves with the following
-        keys: 'feature_idx' (tuple of indices of the feature subset)
+        keys: 'feature_subset_idx' (tuple of indices of the feature subset)
               'cv_scores' (list individual cross-validation scores)
               'avg_score' (average cross-validation score)
 
@@ -117,9 +118,9 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
         >>> knn = KNeighborsClassifier(n_neighbors=3)
         >>> sfs = SequentialFeatureSelector(knn, n_features_to_select=(1, 3))
         >>> sfs = sfs.fit(X, y)
-        >>> sfs.k_score_  # doctest: +ELLIPSIS
+        >>> sfs.score_  # doctest: +ELLIPSIS
         0.9733...
-        >>> sfs.k_feature_idx_
+        >>> sfs.feature_subset_idx_
         (0, 2, 3)
         >>> sfs.transform(X).shape
         (150, 3)
@@ -213,7 +214,7 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
             k = len(k_idx)
             k_score = self._calc_score(X, y, k_idx)
             self.subsets_[k] = {
-                'feature_idx': k_idx,
+                'feature_subset_idx': k_idx,
                 'cv_scores': k_score,
                 'avg_score': k_score.mean()
                 }
@@ -241,7 +242,7 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
             if k not in self.subsets_ or (self.subsets_[k]['avg_score'] <
                                           k_score):
                 self.subsets_[k] = {
-                    'feature_idx': k_idx,
+                    'feature_subset_idx': k_idx,
                     'cv_scores': cv_scores,
                     'avg_score': k_score
                 }
@@ -253,10 +254,10 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
                     max_score = self.subsets_[k]['avg_score']
                     best_subset = k
             k_score = max_score
-            k_idx = self.subsets_[best_subset]['feature_idx']
+            k_idx = self.subsets_[best_subset]['feature_subset_idx']
 
-        self.k_feature_idx_ = k_idx
-        self.k_score_ = k_score
+        self.feature_subset_idx_ = k_idx
+        self.score_ = k_score
         return self
 
     def _calc_score(self, X, y, indices):
@@ -316,7 +317,7 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
         return self.estimator_._estimator_type
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'k_feature_idx_')
+        check_is_fitted(self, 'feature_subset_idx_')
         mask = np.zeros((self._n_features,), dtype=np.bool)
-        mask[[self.k_feature_idx_]] = True
+        mask[[self.feature_subset_idx_]] = True
         return mask
