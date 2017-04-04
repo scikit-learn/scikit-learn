@@ -9,7 +9,6 @@ Sequential feature selection
 
 import numpy as np
 from itertools import combinations
-from collections import defaultdict
 from .base import SelectorMixin
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
@@ -20,7 +19,8 @@ from ..model_selection import cross_val_score
 from ..metrics.scorer import check_scoring
 
 
-class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
+class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
+                                SelectorMixin):
     """Feature selector that selects features via greedy search.
 
     This Sequential Feature Selector adds (forward selection) or
