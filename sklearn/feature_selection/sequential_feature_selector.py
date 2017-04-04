@@ -14,7 +14,6 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..utils.validation import check_is_fitted
-from ..externals import six
 from ..model_selection import cross_val_score
 from ..metrics.scorer import check_scoring
 
