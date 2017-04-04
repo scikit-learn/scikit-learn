@@ -535,8 +535,8 @@ class StratifiedKFold(_BaseKFold):
 
     See also
     --------
-    LabelKFold: K-fold iterator variant with non"""-overlapping labels.
-
+    LabelKFold: K-fold iterator variant with non-overlapping labels.
+    """
 
     def __init__(self, y, n_folds=3, shuffle=False,
                  random_state=None):
