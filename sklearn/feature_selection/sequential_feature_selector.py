@@ -111,12 +111,12 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
         >>> knn = KNeighborsClassifier(n_neighbors=3)
         >>> sfs = SequentialFeatureSelector(knn, n_features_to_select=(1, 3))
         >>> sfs = sfs.fit(X, y)
-        >>> round(sfs.k_score_, 4)
-        0.9733
+        >>> sfs.k_score_  # doctest: +ELLIPSIS
+        0.9733...
         >>> sfs.k_feature_idx_
         (0, 2, 3)
         >>> sfs.transform(X).shape
-        >>> (150, 3)
+        (150, 3)
 
     """
     def __init__(self, estimator, n_features_to_select=1,
@@ -312,8 +312,8 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
 
     def _get_support_mask(self):
         check_is_fitted(self, 'k_feature_idx_')
-        mask = np.ones(self._n_features, dtype=np.int)
-        mask[self.k_feature_idx_] = 1
+        mask = np.zeros((self._n_features,), dtype=np.bool)
+        mask[[self.k_feature_idx_]] = True
         return mask
 
 
