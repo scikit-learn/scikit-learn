@@ -51,9 +51,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         convergence.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+        The generator used to initialize the centers.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -203,9 +201,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         convergence.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+        The generator used to initialize the centers.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -323,9 +319,7 @@ class MDS(BaseEstimator):
         but one are used.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+        The generator used to initialize the centers.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
