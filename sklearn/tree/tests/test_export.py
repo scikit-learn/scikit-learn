@@ -2,13 +2,16 @@
 Testing for export functions of decision trees (sklearn.tree.export).
 """
 
-from re import finditer
+from re import finditer, search
+
+from numpy.random import RandomState
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
-from sklearn.utils.testing import assert_in, assert_equal, assert_raises
+from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
+                                   assert_raises_regex)
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -220,6 +223,13 @@ def test_graphviz_errors():
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
 
+    # Check decimals error
+    out = StringIO()
+    assert_raises_regex(ValueError, "should be greater or equal",
+                        export_graphviz, clf, out, decimals=-1)
+    assert_raises_regex(ValueError, "should be an integer",
+                        export_graphviz, clf, out, decimals="1")
+
 
 def test_friedman_mse_in_graphviz():
     clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
@@ -234,3 +244,27 @@ def test_friedman_mse_in_graphviz():
 
     for finding in finditer("\[.*?samples.*?\]", dot_data.getvalue()):
         assert_in("friedman_mse", finding.group())
+
+
+def test_decimals():
+    rng = RandomState(2)
+    X = rng.random_sample((5, 2))
+    y_reg = rng.random_sample((5, ))
+
+    # regression case
+    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
+                                max_depth=1)
+    clf.fit(X, y_reg)
+    for decimals, nb_len in zip((4, 3), (5, 4)):
+        dot_data = StringIO()
+        export_graphviz(clf, out_file=dot_data, decimals=decimals)
+        # check value
+        for finding in finditer("nvalue = \d+\.\d+", dot_data.getvalue()):
+            assert_equal(len(search("\.\d+", finding.group()).group()), nb_len)
+        # check impurity
+        for finding in finditer("friedman_mse = \d+\.\d+",
+                                dot_data.getvalue()):
+            assert_equal(len(search("\.\d+", finding.group()).group()), nb_len)
+        # check threshold
+        for finding in finditer("<= \d+\.\d+", dot_data.getvalue()):
+            assert_equal(len(search("\.\d+", finding.group()).group()), nb_len)

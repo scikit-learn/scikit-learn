@@ -10,6 +10,8 @@ This module defines export functions for decision trees.
 #          Trevor Stephens <trev.stephens@gmail.com>
 # License: BSD 3 clause
 
+from numbers import Integral
+
 import numpy as np
 import warnings
 
@@ -71,7 +73,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False):
+                    rounded=False, special_characters=False, decimals=3):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -141,6 +143,10 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
         When set to ``False``, ignore special characters for PostScript
         compatibility.
 
+    decimals : int, optional (default=3)
+        The number of decimal reported of the ``impurity``,
+        ``threshold``, and ``value`` parameters at each node.
+
     Returns
     -------
     dot_data : string
@@ -160,6 +166,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
     >>> clf = clf.fit(iris.data, iris.target)
     >>> tree.export_graphviz(clf,
     ...     out_file='tree.dot')                # doctest: +SKIP
+
     """
 
     def get_color(value):
@@ -223,7 +230,8 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                                        characters[2])
             node_string += '%s %s %s%s' % (feature,
                                            characters[3],
-                                           round(tree.threshold[node_id], 4),
+                                           round(tree.threshold[node_id],
+                                                 decimals),
                                            characters[4])
 
         # Write impurity
@@ -234,7 +242,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
-            node_string += (str(round(tree.impurity[node_id], 4)) +
+            node_string += (str(round(tree.impurity[node_id], decimals)) +
                             characters[4])
 
         # Write node sample count
@@ -257,16 +265,16 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             node_string += 'value = '
         if tree.n_classes[0] == 1:
             # Regression
-            value_text = np.around(value, 4)
+            value_text = np.around(value, decimals)
         elif proportion:
             # Classification
-            value_text = np.around(value, 2)
+            value_text = np.around(value, decimals)
         elif np.all(np.equal(np.mod(value, 1), 0)):
             # Classification without floating-point weights
             value_text = value.astype(int)
         else:
             # Classification with floating-point weights
-            value_text = np.around(value, 4)
+            value_text = np.around(value, decimals)
         # Strip whitespace
         value_text = str(value_text.astype('S32')).replace("b'", "'")
         value_text = value_text.replace("' '", ", ").replace("'", "")
@@ -396,6 +404,14 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
         if out_file is None:
             return_string = True
             out_file = six.StringIO()
+
+        if isinstance(decimals, Integral):
+            if decimals < 0:
+                raise ValueError("'decimal' should be greater or equal to 0."
+                                 " Got {} instead.".format(decimals))
+        else:
+            raise ValueError("'decimal should be an integer. Got {}"
+                             " instead.".format(type(decimals)))
 
         # The depth of each node for plotting with 'leaf' option
         ranks = {'leaves': []}
