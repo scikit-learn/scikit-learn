@@ -319,5 +319,6 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
     def _get_support_mask(self):
         check_is_fitted(self, 'feature_subset_idx_')
         mask = np.zeros((self._n_features,), dtype=np.bool)
-        mask[[self.feature_subset_idx_]] = True
+        # list to avoid IndexError in old NumPy versions
+        mask[list(self.feature_subset_idx_)] = True
         return mask
