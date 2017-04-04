@@ -102,6 +102,18 @@ class VectorizerMixin(object):
 
     _white_spaces = re.compile(r"\s\s+")
 
+    @property
+    def ngram_range(self):
+        return self._ngram_range
+
+    @ngram_range.setter
+    def ngram_range(self, value):
+        if isinstance(value, tuple):
+            # raise 'ValueError' if min_n > max_n.
+            if value[0] > value[1]:
+                raise ValueError("min_n must not be greater than max_n.")
+        self._ngram_range = value
+
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
 
