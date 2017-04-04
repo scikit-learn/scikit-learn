@@ -33,6 +33,9 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
     Parameters
     ----------
     estimator : scikit-learn Classifier or Regressor
+        Invoking the ``fit`` method on the `SequentialFeatureSelector`
+        will fit a clone of the original estimator that
+        will be stored in the class attribute `self.estimators_`.
 
     n_features_to_select : int or tuple (default=1)
         An integer arguments specifies the number of features to select,
@@ -79,6 +82,9 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
 
     Attributes
     ----------
+    estimator_ : scikit-learn Classifier or Regressor
+        Fitted clone of `estimator`.
+
     k_feature_idx_ : array-like, shape = [n_predictions]
         Feature Indices of the selected feature subsets.
 
@@ -124,16 +130,13 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
                  cv=5, n_jobs=1,
                  pre_dispatch='2*n_jobs'):
 
-        self.estimator = clone(estimator)
+        self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.forward = forward
         self.pre_dispatch = pre_dispatch
         self.scoring = scoring
         self.cv = cv
         self.n_jobs = n_jobs
-        self.named_est = {key: value for key, value in
-                          _name_estimators([self.estimator])}
-
         self.subsets_ = {}
 
     def fit(self, X, y):
@@ -192,6 +195,8 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
         else:
             select_in_range = False
             k_to_select = self.n_features_to_select
+
+        self.estimator_ = clone(self.estimator)
 
         self._n_features = X.shape[1]
         self.subsets_ = {}
@@ -256,15 +261,15 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
 
     def _calc_score(self, X, y, indices):
         if self.cv:
-            scores = cross_val_score(self.estimator,
+            scores = cross_val_score(self.estimator_,
                                      X[:, indices], y,
                                      cv=self.cv,
                                      scoring=self.scorer,
                                      n_jobs=self.n_jobs,
                                      pre_dispatch=self.pre_dispatch)
         else:
-            self.estimator.fit(X[:, indices], y)
-            scores = np.array([self.scorer(self.estimator, X[:, indices], y)])
+            self.estimator_.fit(X[:, indices], y)
+            scores = np.array([self.scorer(self.estimator_, X[:, indices], y)])
         return scores
 
     def _inclusion(self, orig_set, subset, X, y):
@@ -308,31 +313,10 @@ class SequentialFeatureSelector(BaseEstimator, SelectorMixin):
 
     @property
     def _estimator_type(self):
-        return self.estimator._estimator_type
+        return self.estimator_._estimator_type
 
     def _get_support_mask(self):
         check_is_fitted(self, 'k_feature_idx_')
         mask = np.zeros((self._n_features,), dtype=np.bool)
         mask[[self.k_feature_idx_]] = True
         return mask
-
-
-def _name_estimators(estimators):
-    """Generate names for estimators."""
-
-    names = [type(estimator).__name__.lower() for estimator in estimators]
-    namecount = defaultdict(int)
-    for est, name in zip(estimators, names):
-        namecount[name] += 1
-
-    for k, v in list(six.iteritems(namecount)):
-        if v == 1:
-            del namecount[k]
-
-    for i in reversed(range(len(estimators))):
-        name = names[i]
-        if name in namecount:
-            names[i] += "-%d" % namecount[name]
-            namecount[name] -= 1
-
-    return list(zip(names, estimators))
