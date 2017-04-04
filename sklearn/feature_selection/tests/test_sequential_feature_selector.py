@@ -237,7 +237,6 @@ def test_regression_in_tuplerange():
 def test_transform_not_fitted():
     iris = load_iris()
     X = iris.data
-    y = iris.target
     knn = KNeighborsClassifier(n_neighbors=4)
 
     sfs1 = SFS(knn,
