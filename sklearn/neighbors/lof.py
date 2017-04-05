@@ -197,6 +197,35 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         return self
 
+    def score(self, X=None):
+        """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
+
+        If X is None, returns the same as fit_predict(X_train).
+        This method allows to generalize prediction to new observations (not
+        in the training set). As LOF originally does not deal with new data,
+        this method is kept private.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features), default=None
+            The query sample or samples to compute the Local Outlier Factor
+            w.r.t. to the training samples. If None, makes prediction on the
+            training data without considering them as their own neighbors.
+
+        Returns
+        -------
+        is_inlier : array, shape (n_samples,)
+            Returns -1 for anomalies/outliers and +1 for inliers.
+        """
+        check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
+                               "n_neighbors_", "_distances_fit_X_"])
+        if X is not None:
+            _score = self._decision_function(X)
+        else:
+            _score = self.negative_outlier_factor_
+
+        return _score
+
     def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
@@ -219,7 +248,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         """
         check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
                                "n_neighbors_", "_distances_fit_X_"])
-
         if X is not None:
             X = check_array(X, accept_sparse='csr')
             is_inlier = np.ones(X.shape[0], dtype=int)
