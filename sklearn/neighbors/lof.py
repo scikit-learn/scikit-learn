@@ -197,7 +197,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         return self
 
-    def predict_proba(self, X=None):
+    def score(self, X=None, y=None):
         """Predict the outlier score of X according to LOF.
 
         This method allows to generalize prediction to new observations (not
@@ -215,7 +215,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         -------
         score : outlier score as local outlier factor
         """
-        self.fit(X)
         if X is not None:
             X = check_array(X, accept_sparse='csr')
             _score = self._decision_function(X)
