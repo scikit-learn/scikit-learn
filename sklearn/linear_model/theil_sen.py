@@ -244,12 +244,11 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         Tolerance when calculating spatial median.
 
     random_state : int, RandomState instance or None, optional, default None
-        A random number generator instance to define the state of the
-        random permutations generator.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        A random number generator instance to define the state of the random
+        permutations generator.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     n_jobs : integer, optional, default 1
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -281,6 +280,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
+
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,

@@ -19,8 +19,7 @@ from ..isotonic import IsotonicRegression
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
                    max_iter=300, verbose=0, eps=1e-3, random_state=None):
-    """
-    Computes multidimensional scaling using SMACOF algorithm
+    """Computes multidimensional scaling using SMACOF algorithm
 
     Parameters
     ----------
@@ -51,11 +50,10 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         convergence.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The generator used to initialize the centers.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -68,6 +66,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
     n_iter : int
         The number of iterations corresponding to the best stress.
+
     """
     dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
 
@@ -136,8 +135,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
            n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None,
            return_n_iter=False):
-    """
-    Computes multidimensional scaling using the SMACOF algorithm.
+    """Computes multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
     multidimensional scaling algorithm which minimizes an objective function
@@ -201,11 +199,10 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         convergence.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The generator used to initialize the centers.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     return_n_iter : bool, optional, default: False
         Whether or not to return the number of iterations.
@@ -233,6 +230,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
 
     "Multidimensional scaling by optimizing goodness of fit to a nonmetric
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
+
     """
 
     dissimilarities = check_array(dissimilarities)
@@ -319,11 +317,10 @@ class MDS(BaseEstimator):
         but one are used.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The generator used to initialize the centers.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
         Dissimilarity measure to use:

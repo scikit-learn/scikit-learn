@@ -321,11 +321,10 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     random_state : int, RandomState instance or None, optional (default=None)
         Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        `max_patches` is not None.  If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -357,6 +356,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     >>> patches[8]
     array([[10, 11],
            [14, 15]])
+
     """
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size

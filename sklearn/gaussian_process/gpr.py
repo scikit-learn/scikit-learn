@@ -104,11 +104,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         externally.
 
     random_state : int, RandomState instance or None, optional (default: None)
-        The generator used to initialize the centers.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The generator used to initialize the centers. If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -349,7 +348,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         y_samples : array, shape = (n_samples_X, [n_output_dims], n_samples)
             Values of n_samples samples drawn from Gaussian process and
             evaluated at query points.
-
         """
         rng = check_random_state(random_state)
 

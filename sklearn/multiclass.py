@@ -641,11 +641,10 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         than one-vs-the-rest.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the codebook.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The generator used to initialize the codebook.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     n_jobs : int, optional, default: 1
         The number of jobs to use for the computation. If -1 all CPUs are used.
@@ -681,6 +680,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     .. [3] "The Elements of Statistical Learning",
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
+
     """
 
     def __init__(self, estimator, code_size=1.5, random_state=None, n_jobs=1):

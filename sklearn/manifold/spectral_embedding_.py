@@ -168,11 +168,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     random_state : int, RandomState instance or None, optional, default: None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        lobpcg eigenvectors decomposition.  If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`. Used when
+        ``solver`` == 'amg'.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -206,6 +206,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
       Block Preconditioned Conjugate Gradient Method
       Andrew V. Knyazev
       http://dx.doi.org/10.1137%2FS1064827500366124
+
     """
     adjacency = check_symmetric(adjacency)
 
@@ -350,11 +351,11 @@ class SpectralEmbedding(BaseEstimator):
 
     random_state : int, RandomState instance or None, optional, default: None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        lobpcg eigenvectors.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``solver`` ==
+        'amg'.
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
@@ -398,6 +399,7 @@ class SpectralEmbedding(BaseEstimator):
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+
     """
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",

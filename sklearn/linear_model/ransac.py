@@ -159,11 +159,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         this sample is classified as an outlier.
 
     random_state : int, RandomState instance or None, optional, default None
-        The generator used to initialize the centers.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The generator used to initialize the centers.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -199,6 +198,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     .. [1] https://en.wikipedia.org/wiki/RANSAC
     .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+
     """
 
     def __init__(self, base_estimator=None, min_samples=None,

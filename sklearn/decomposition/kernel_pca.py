@@ -75,12 +75,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         with zero eigenvalues are removed regardless.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        A pseudo random number generator used for the initialization of the
-        residuals when eigen_solver == 'arpack'.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
         .. versionadded:: 0.18
 

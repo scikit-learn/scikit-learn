@@ -154,7 +154,7 @@ def _check_input_size(n_components, n_features):
 
 
 def gaussian_random_matrix(n_components, n_features, random_state=None):
-    """ Generate a dense Gaussian random matrix.
+    """Generate a dense Gaussian random matrix.
 
     The components of the random matrix are drawn from
 
@@ -171,12 +171,11 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
         Dimensionality of the original source space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -187,6 +186,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     --------
     GaussianRandomProjection
     sparse_random_matrix
+
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
@@ -231,12 +231,11 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         Achlioptas, 2001.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -455,12 +454,11 @@ class GaussianRandomProjection(BaseRandomProjection):
         dimensions (n_components) in the target projection space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -565,12 +563,11 @@ class SparseRandomProjection(BaseRandomProjection):
         the input is sparse.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------

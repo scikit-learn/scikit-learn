@@ -197,13 +197,12 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         but may also lead to instabilities
 
     random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization
-        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
-        and by the K-Means initialization.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
+        the K-Means initialization. If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -250,6 +249,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
+
     """
     if assign_labels not in ('kmeans', 'discretize'):
         raise ValueError("The 'assign_labels' parameter should be "
@@ -333,13 +333,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         but may also lead to instabilities
 
     random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization
-        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
-        and by the K-Means initialization.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
+        the K-Means initialization.  If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -407,6 +407,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
       http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+
     """
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,

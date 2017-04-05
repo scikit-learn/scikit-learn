@@ -216,12 +216,11 @@ def randomized_range_finder(A, size, n_iter,
         .. versionadded:: 0.18
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Returns
     -------
@@ -240,6 +239,7 @@ def randomized_range_finder(A, size, n_iter,
     An implementation of a randomized algorithm for principal component
     analysis
     A. Szlam et al. 2014
+
     """
     random_state = check_random_state(random_state)
 
@@ -326,12 +326,11 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         loadings for each component in the left singular vectors positive.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Notes
     -----
@@ -354,6 +353,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     * An implementation of a randomized algorithm for principal component
       analysis
       A. Szlam et al. 2014
+
     """
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples

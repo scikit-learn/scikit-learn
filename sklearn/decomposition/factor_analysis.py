@@ -89,12 +89,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         if ``svd_method`` equals 'randomized'
 
     random_state : int, RandomState instance or None, optional (default=0)
-        Pseudo number generator state used for random sampling. Only used
-        if ``svd_method`` equals 'randomized'.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Only used when ``svd_method`` equals 'randomized'.
 
     Attributes
     ----------

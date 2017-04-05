@@ -87,12 +87,11 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         properly in a multithreaded context.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -282,12 +281,11 @@ class LinearSVR(LinearModel, RegressorMixin):
         properly in a multithreaded context.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -321,6 +319,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
+
     """
 
     def __init__(self, epsilon=0.0, tol=1e-4, C=1.0,
@@ -477,12 +476,11 @@ class SVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -634,12 +632,11 @@ class NuSVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -692,6 +689,7 @@ class NuSVC(BaseSVC):
     LinearSVC
         Scalable linear Support Vector Machine for classification using
         liblinear.
+
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
@@ -989,12 +987,11 @@ class OneClassSVM(BaseLibSVM):
         Hard limit on iterations within solver, or -1 for no limit.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------

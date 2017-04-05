@@ -276,12 +276,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         information depending on the solver used.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in 'sag' solver.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag'.
 
     return_n_iter : boolean, default False
         If True, the method also returns `n_iter`, the actual number of
@@ -313,6 +312,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     Notes
     -----
     This function won't compute the intercept.
+
     """
     if return_intercept and sparse.issparse(X) and solver != 'sag':
         if solver != 'auto':
@@ -585,12 +585,11 @@ class Ridge(_BaseRidge, RegressorMixin):
         Precision of the solution.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in 'sag' solver.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag'.
 
         .. versionadded:: 0.17
            *random_state* to support Stochastic Average Gradient.
@@ -737,12 +736,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Precision of the solution.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in 'sag' solver.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag'.
 
     Attributes
     ----------
@@ -766,6 +764,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     For multi-class classification, n_class classifiers are trained in
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
+
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,

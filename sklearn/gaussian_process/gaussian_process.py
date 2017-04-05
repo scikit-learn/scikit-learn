@@ -171,11 +171,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     random_state : int, RandomState instance or None, optional (default=None)
         The generator used to shuffle the sequence of coordinates of theta in
-        the Welch optimizer.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        the Welch optimizer. If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -213,6 +212,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         and M.D.  Morris (1992). Screening, predicting, and computer
         experiments.  Technometrics, 34(1) 15--25.`
         http://www.jstor.org/stable/1269548
+
     """
 
     _regression_types = {

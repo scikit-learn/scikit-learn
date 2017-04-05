@@ -583,13 +583,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         especially when tol is higher than 1e-4.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     Attributes
     ----------
@@ -617,6 +616,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     SGDRegressor: implements elastic net regression with incremental training.
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
+
     """
     path = staticmethod(enet_path)
 
@@ -834,13 +834,12 @@ class Lasso(ElasticNet):
         especially when tol is higher than 1e-4.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     Attributes
     ----------
@@ -886,6 +885,7 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
     """
     path = staticmethod(enet_path)
 
@@ -1275,13 +1275,12 @@ class LassoCV(LinearModelCV, RegressorMixin):
         especially when tol is higher than 1e-4.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     fit_intercept : boolean, default True
         whether to calculate the intercept for this model. If set
@@ -1339,6 +1338,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     LassoLars
     Lasso
     LassoLarsCV
+
     """
     path = staticmethod(lasso_path)
 
@@ -1431,13 +1431,12 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         especially when tol is higher than 1e-4.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -1605,13 +1604,12 @@ class MultiTaskElasticNet(Lasso):
         especially when tol is higher than 1e-4.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     Attributes
     ----------
@@ -1652,6 +1650,7 @@ class MultiTaskElasticNet(Lasso):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
@@ -1793,13 +1792,12 @@ class MultiTaskLasso(MultiTaskElasticNet):
         especially when tol is higher than 1e-4
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     Attributes
     ----------
@@ -1838,6 +1836,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
@@ -1950,13 +1949,12 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         especially when tol is higher than 1e-4.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     Attributes
     ----------
@@ -2013,6 +2011,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
     """
     path = staticmethod(enet_path)
 
@@ -2118,13 +2117,12 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         especially when tol is higher than 1e-4.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when selection is set to
-        'random'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
+        'random'/
 
     Attributes
     ----------
@@ -2160,6 +2158,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
     """
     path = staticmethod(lasso_path)
 

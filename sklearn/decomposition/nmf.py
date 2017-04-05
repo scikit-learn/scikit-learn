@@ -269,12 +269,10 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Truncate all values less then this in output to zero.
 
     random_state : int, RandomState instance or None, optional, default: None
-        Random number generator seed control, used in 'nndsvdar' and
-        'random' modes.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
 
     Returns
     -------

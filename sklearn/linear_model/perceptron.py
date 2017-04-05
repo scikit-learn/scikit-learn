@@ -31,12 +31,11 @@ class Perceptron(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level
@@ -88,6 +87,7 @@ class Perceptron(BaseSGDClassifier):
     ----------
 
     https://en.wikipedia.org/wiki/Perceptron and references therein.
+
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=True, verbose=0, eta0=1.0, n_jobs=1,

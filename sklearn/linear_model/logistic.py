@@ -544,12 +544,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         'newton-cg' solvers.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -583,6 +583,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     .. versionchanged:: 0.19
         The "copy" parameter was removed.
+
     """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
@@ -865,12 +866,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         liblinear solver.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' and
+        'liblinear'.
 
     max_squared_sum : float, default None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -896,6 +897,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     n_iter : array, shape(n_cs,)
         Actual number of iteration for each Cs.
+
     """
     _check_solver_option(solver, multi_class, penalty, dual)
 
@@ -1033,12 +1035,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Maximum number of iterations taken for the solvers to converge.
 
     random_state : int, RandomState instance or None, optional, default: None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
         default: 'liblinear'
@@ -1147,6 +1149,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,

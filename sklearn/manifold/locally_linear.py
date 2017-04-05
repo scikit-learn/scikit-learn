@@ -141,12 +141,10 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         not used if eigen_solver=='dense'
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The generator or seed used to determine the starting vector for arpack
-        iterations.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when ``solver`` == 'arpack'.
 
     """
     if eigen_solver == 'auto':
@@ -250,12 +248,10 @@ def locally_linear_embedding(
         Only used if method == 'modified'
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The generator or seed used to determine the starting vector for arpack
-        iterations.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when ``solver`` == 'arpack'.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -577,12 +573,10 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         passed to neighbors.NearestNeighbors instance
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The generator or seed used to determine the starting vector for arpack
-        iterations.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.

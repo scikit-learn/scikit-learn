@@ -586,9 +586,8 @@ class TSNE(BaseEstimator):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
-        Note that different initializations might result in different
-        local minima of the cost function.
+        by `np.random`.  Note that different initializations might result in
+        different local minima of the cost function.
 
     method : string (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -649,7 +648,6 @@ class TSNE(BaseEstimator):
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
         http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
-
     """
 
     def __init__(self, n_components=2, perplexity=30.0,

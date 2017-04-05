@@ -805,12 +805,11 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         Stopping condition.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
 
     multi_class : str, {'ovr', 'crammer_singer'}
@@ -844,6 +843,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     n_iter_ : int
         Maximum number of iterations run across all classes.
+
     """
     if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
         enc = LabelEncoder()

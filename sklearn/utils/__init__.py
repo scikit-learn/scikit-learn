@@ -176,12 +176,11 @@ def resample(*arrays, **options):
         arrays.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Returns
     -------
@@ -225,6 +224,7 @@ def resample(*arrays, **options):
     See also
     --------
     :func:`sklearn.utils.shuffle`
+
     """
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
@@ -277,12 +277,11 @@ def shuffle(*arrays, **options):
         sparse matrices with consistent first dimension.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
@@ -329,6 +328,7 @@ def shuffle(*arrays, **options):
     See also
     --------
     :func:`sklearn.utils.resample`
+
     """
     options['replace'] = False
     return resample(*arrays, **options)
