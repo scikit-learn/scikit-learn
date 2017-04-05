@@ -224,7 +224,6 @@ def resample(*arrays, **options):
     See also
     --------
     :func:`sklearn.utils.shuffle`
-
     """
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
@@ -328,7 +327,6 @@ def shuffle(*arrays, **options):
     See also
     --------
     :func:`sklearn.utils.resample`
-
     """
     options['replace'] = False
     return resample(*arrays, **options)

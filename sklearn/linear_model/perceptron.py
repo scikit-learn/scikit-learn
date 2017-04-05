@@ -87,7 +87,6 @@ class Perceptron(BaseSGDClassifier):
     ----------
 
     https://en.wikipedia.org/wiki/Perceptron and references therein.
-
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=True, verbose=0, eta0=1.0, n_jobs=1,

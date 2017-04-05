@@ -212,7 +212,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         and M.D.  Morris (1992). Screening, predicting, and computer
         experiments.  Technometrics, 34(1) 15--25.`
         http://www.jstor.org/stable/1269548
-
     """
 
     _regression_types = {

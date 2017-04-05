@@ -583,7 +583,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     .. versionchanged:: 0.19
         The "copy" parameter was removed.
-
     """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
@@ -897,7 +896,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     n_iter : array, shape(n_cs,)
         Actual number of iteration for each Cs.
-
     """
     _check_solver_option(solver, multi_class, penalty, dual)
 
@@ -1149,7 +1147,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
-
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,

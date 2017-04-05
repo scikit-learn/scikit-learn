@@ -319,7 +319,6 @@ class LinearSVR(LinearModel, RegressorMixin):
         by adjusting the penalty and loss parameters. In addition it requires
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
-
     """
 
     def __init__(self, epsilon=0.0, tol=1e-4, C=1.0,
@@ -689,7 +688,6 @@ class NuSVC(BaseSVC):
     LinearSVC
         Scalable linear Support Vector Machine for classification using
         liblinear.
-
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,

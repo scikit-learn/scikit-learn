@@ -229,7 +229,6 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     --------
     Ridge, SGDRegressor, ElasticNet, Lasso, SVR, and
     LogisticRegression, SGDClassifier, LinearSVC, Perceptron
-
     """
     if warm_start_mem is None:
         warm_start_mem = {}

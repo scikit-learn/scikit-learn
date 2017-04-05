@@ -239,7 +239,6 @@ def randomized_range_finder(A, size, n_iter,
     An implementation of a randomized algorithm for principal component
     analysis
     A. Szlam et al. 2014
-
     """
     random_state = check_random_state(random_state)
 
@@ -353,7 +352,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     * An implementation of a randomized algorithm for principal component
       analysis
       A. Szlam et al. 2014
-
     """
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples

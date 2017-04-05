@@ -66,7 +66,6 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
     n_iter : int
         The number of iterations corresponding to the best stress.
-
     """
     dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
 
@@ -230,7 +229,6 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
 
     "Multidimensional scaling by optimizing goodness of fit to a nonmetric
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
-
     """
 
     dissimilarities = check_array(dissimilarities)

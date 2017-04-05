@@ -194,7 +194,6 @@ class KernelDensity(BaseEstimator):
         -------
         X : array_like, shape (n_samples, n_features)
             List of samples.
-
         """
         # TODO: implement sampling for other valid kernel shapes
         if self.kernel not in ['gaussian', 'tophat']:

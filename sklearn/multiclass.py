@@ -680,7 +680,6 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     .. [3] "The Elements of Statistical Learning",
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
-
     """
 
     def __init__(self, estimator, code_size=1.5, random_state=None, n_jobs=1):

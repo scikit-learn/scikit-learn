@@ -356,7 +356,6 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     >>> patches[8]
     array([[10, 11],
            [14, 15]])
-
     """
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size

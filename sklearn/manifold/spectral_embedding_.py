@@ -206,7 +206,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
       Block Preconditioned Conjugate Gradient Method
       Andrew V. Knyazev
       http://dx.doi.org/10.1137%2FS1064827500366124
-
     """
     adjacency = check_symmetric(adjacency)
 
@@ -399,7 +398,6 @@ class SpectralEmbedding(BaseEstimator):
     - Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
-
     """
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",

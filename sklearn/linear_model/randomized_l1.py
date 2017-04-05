@@ -576,11 +576,10 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         randomly scale the features. Should be between 0 and 1.
 
     random_state : int, RandomState instance or None, optional, default=None
-        The generator used to randomize the design.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        The generator used to randomize the design.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     n_resampling : int, optional, default=200
         Number of randomized models.

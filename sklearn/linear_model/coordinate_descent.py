@@ -616,7 +616,6 @@ class ElasticNet(LinearModel, RegressorMixin):
     SGDRegressor: implements elastic net regression with incremental training.
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
-
     """
     path = staticmethod(enet_path)
 
@@ -885,7 +884,6 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
-
     """
     path = staticmethod(enet_path)
 
@@ -1338,7 +1336,6 @@ class LassoCV(LinearModelCV, RegressorMixin):
     LassoLars
     Lasso
     LassoLarsCV
-
     """
     path = staticmethod(lasso_path)
 
@@ -1650,7 +1647,6 @@ class MultiTaskElasticNet(Lasso):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
-
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
@@ -1836,7 +1832,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
-
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
@@ -2011,7 +2006,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
-
     """
     path = staticmethod(enet_path)
 
@@ -2158,7 +2152,6 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
-
     """
     path = staticmethod(lasso_path)
 

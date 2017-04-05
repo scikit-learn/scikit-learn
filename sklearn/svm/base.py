@@ -843,7 +843,6 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     n_iter_ : int
         Maximum number of iterations run across all classes.
-
     """
     if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
         enc = LabelEncoder()

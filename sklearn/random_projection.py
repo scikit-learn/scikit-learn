@@ -186,7 +186,6 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     --------
     GaussianRandomProjection
     sparse_random_matrix
-
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)

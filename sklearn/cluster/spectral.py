@@ -249,7 +249,6 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
-
     """
     if assign_labels not in ('kmeans', 'discretize'):
         raise ValueError("The 'assign_labels' parameter should be "
@@ -406,7 +405,6 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
       http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
-
     """
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,

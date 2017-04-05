@@ -312,7 +312,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     Notes
     -----
     This function won't compute the intercept.
-
     """
     if return_intercept and sparse.issparse(X) and solver != 'sag':
         if solver != 'auto':
@@ -764,7 +763,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     For multi-class classification, n_class classifiers are trained in
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
-
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,

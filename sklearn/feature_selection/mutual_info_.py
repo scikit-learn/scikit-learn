@@ -244,7 +244,6 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
            information". Phys. Rev. E 69, 2004.
     .. [2] B. C. Ross "Mutual Information between Discrete and Continuous
            Data Sets". PLoS ONE 9(2), 2014.
-
     """
     X, y = check_X_y(X, y, accept_sparse='csc', y_numeric=not discrete_target)
     n_samples, n_features = X.shape
@@ -445,7 +444,6 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
            Data Sets". PLoS ONE 9(2), 2014.
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
-
     """
     check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors,
