@@ -77,6 +77,7 @@ def test_lof_values():
     s_1 = (1. + sqrt(2)) * (1. / (4. * sqrt(2.)) + 1. / (2. + 2. * sqrt(2)))
     # check predict()
     assert_array_almost_equal(-clf.negative_outlier_factor_, [s_0, s_1, s_1])
+    assert_array_almost_equal(-clf.decision_function(), [s_0, s_1, s_1])
     # check predict(one sample not in train)
     assert_array_almost_equal(-clf._decision_function([[2., 2.]]), [s_0])
     # # check predict(one sample already in train)
