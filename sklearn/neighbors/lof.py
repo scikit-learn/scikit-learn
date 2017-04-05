@@ -245,6 +245,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         """
         check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
                                "n_neighbors_", "_distances_fit_X_"])
+
         if X is not None:
             X = check_array(X, accept_sparse='csr')
             is_inlier = np.ones(X.shape[0], dtype=int)
