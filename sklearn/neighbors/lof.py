@@ -198,7 +198,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         return self
 
     def score(self, X=None):
-        """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
+        """Predict the outlier level of X according to LOF.
 
         If X is None, returns the same as fit_predict(X_train).
         This method allows to generalize prediction to new observations (not
@@ -220,6 +220,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
                                "n_neighbors_", "_distances_fit_X_"])
         if X is not None:
+            X = check_array(X, accept_sparse='csr')
             _score = self._decision_function(X)
         else:
             _score = self.negative_outlier_factor_
