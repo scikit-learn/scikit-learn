@@ -159,9 +159,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
 
-        isnone = np.array([1 if clf is None else 0
-                           for _, clf in self.estimators])
-        if isnone.sum() == len(self.estimators):
+        n_isnone = np.sum([clf is None for _, clf in self.estimators])
+        if n_isnone == len(self.estimators):
             raise ValueError('All estimators are None. At least one is '
                              'required to be a classifier!')
         self.le_ = LabelEncoder().fit(y)
@@ -271,6 +270,22 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             return self._predict(X)
 
     def set_params(self, **params):
+        """ Setting the parameters for the voting classifier
+
+        Valid parameter keys can be listed with get_params().
+
+        Parameters
+        ----------
+        params: keyword arguments
+            Specific parameters using e.g. set_params(parameter_name=new_value)
+            Estimators can be removed by setting them to None. In the following
+            example, the RandomForestClassifier is removed:
+            clf1 = LogisticRegression()
+            clf2 = RandomForestClassifier()
+            eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
+            eclf.set_params(rf=None)
+
+        """
         super(VotingClassifier, self)._set_params('estimators', **params)
         return self
 
