@@ -137,7 +137,6 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         self.scoring = scoring
         self.cv = cv
         self.n_jobs = n_jobs
-        self.subsets_ = {}
 
     def fit(self, X, y):
         """Perform feature selection and learn model from training data.
