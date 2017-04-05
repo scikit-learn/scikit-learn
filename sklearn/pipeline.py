@@ -16,11 +16,13 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import sparse
 
-from .base import TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .base import clone, BaseEstimator, TransformerMixin
+from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
-from .utils.metaestimators import if_delegate_has_method, _BaseComposition
+from .utils.metaestimators import if_delegate_has_method
+from .utils import Bunch
+from .utils.metaestimators import _BaseComposition
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
