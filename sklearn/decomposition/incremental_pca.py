@@ -216,12 +216,12 @@ class IncrementalPCA(_BasePCA):
         else:
             self.n_components_ = self.n_components
 
-        if (self.components_ is not None) and (self.components_.shape[0] !=
+        if (self.components_ is not None) and (self.components_.shape[1] !=
                                                self.n_components_):
             raise ValueError("Number of input features has changed from %i "
                              "to %i between calls to partial_fit! Try "
                              "setting n_components to a fixed value." %
-                             (self.components_.shape[0], self.n_components_))
+                             (self.components_.shape[1], self.n_components_))
 
         # This is the first partial_fit
         if not hasattr(self, 'n_samples_seen_'):
