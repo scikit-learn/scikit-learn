@@ -333,7 +333,6 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         but may also lead to instabilities
 
     random_state : int, RandomState instance or None, optional, default: None
-
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
         the K-Means initialization.  If int, random_state is the seed used by
