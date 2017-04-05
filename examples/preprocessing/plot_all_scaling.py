@@ -78,7 +78,7 @@ distributions = OrderedDict((
         QuantileTransformer(output_distribution='uniform')
         .fit_transform(X)),
     ('Data after quantile transformation (gaussian pdf)',
-        QuantileTransformer(output_distribution='norm')
+        QuantileTransformer(output_distribution='normal')
         .fit_transform(X))))
 
 y = minmax_scale(y_full)  # To make colors corresponding to the target),

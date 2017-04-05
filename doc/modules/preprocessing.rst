@@ -253,13 +253,11 @@ defined by :math:`phi` followed by removal of the mean in that space.
 Non-linear transformation
 =========================
 
-In the contrary of scaling, data can be non-linearly transformed to
-reduce the influence of marginal outliers present in a
-dataset. Additionally, reducing the influence of those outliers allows
-for a more direct comparison between features, at the cost of
-distorting correlations between them. Be aware that if the final aim
-is to predict such outliers, this transformation completely inhibit the
-discriminative power of those samples.
+Like scalers, :class:`QuantileTransformer` puts each feature into the same
+range or distribution. However, by performing a rank transformation, it smooths
+out unusual distributions and is less influenced by outliers than scaling
+methods. It does, however, distort correlations and distances within and across
+features.
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
 non-parametric transformation based the quantile function to map the data to a
@@ -272,18 +270,13 @@ uniform distribution::
   >>> X_trans = quantile_transformer.fit_transform(iris.data)
 
 It is also possible to map the transformed data to a normal distribution by
-setting ``output_distribution='norm'``::
+setting ``output_distribution='normal'``::
 
-  >>> X_trans = preprocessing.quantile_transform(X, output_distribution='norm')
+  >>> X_trans = preprocessing.quantile_transform(X, output_distribution='normal')
 
-.. topic:: Sparse input
-
-   :class:`QuantileTransformer` and :func:`quantile_transform` accept **both
-   dense array-like and sparse matrices from scipy.sparse as input**.
-
-   For sparse input the data is **converted to the Compressed Sparse Columns
-   representation** (see ``scipy.sparse.csc_matrix``). To avoid unnecessary
-   memory copies, it is recommended to choose the CSC representation upstream.
+Thus the median of the input becomes the mean of the output, centered at 0. The
+normal output is clipped so that the input's maximum and minimum do not become
+infinite under the transformation.
 
 .. _preprocessing_normalization:
 
