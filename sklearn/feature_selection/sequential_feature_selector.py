@@ -154,10 +154,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         self : object
 
         """
-        if self.scoring is None:
-            self.scorer = check_scoring(self.estimator)
-        else:
-            self.scorer = self.scoring
+        self._scorer = check_scoring(self.estimator, scoring=self.scoring)
 
         if not isinstance(self.n_features_to_select, int) and\
                 not isinstance(self.n_features_to_select, tuple):
@@ -263,12 +260,13 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             scores = cross_val_score(self.estimator_,
                                      X[:, indices], y,
                                      cv=self.cv,
-                                     scoring=self.scorer,
+                                     scoring=self._scorer,
                                      n_jobs=self.n_jobs,
                                      pre_dispatch=self.pre_dispatch)
         else:
             self.estimator_.fit(X[:, indices], y)
-            scores = np.array([self.scorer(self.estimator_, X[:, indices], y)])
+            scores = np.array([self._scorer(self.estimator_,
+                               X[:, indices], y)])
         return scores
 
     def _inclusion(self, orig_set, subset, X, y):
