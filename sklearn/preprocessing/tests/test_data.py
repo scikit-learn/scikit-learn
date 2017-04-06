@@ -3,12 +3,12 @@
 #          Giorgio Patrini
 #
 # License: BSD 3 clause
+from __future__ import division
 
 import warnings
-import pickle
 import numpy as np
 import numpy.linalg as la
-from scipy import sparse
+from scipy import sparse, stats
 from distutils.version import LooseVersion
 
 from sklearn.utils import gen_batches
@@ -974,8 +974,8 @@ def test_quantile_transform_dense_toy():
     transformer.fit(X)
 
     X_trans = transformer.fit_transform(X)
-    assert_almost_equal(np.min(X_trans, axis=0), 0.)
-    assert_almost_equal(np.max(X_trans, axis=0), 1.)
+    X_gt = np.tile(np.linspace(0, 1, num=5), (3, 1)).T
+    assert_almost_equal(np.sort(X_trans, axis=0), X_gt)
 
     X_test = np.array([
         [-1,  1,  0],
@@ -990,13 +990,39 @@ def test_quantile_transform_dense_toy():
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
-    # test subsampling
-    # FIXME: there is not comparison for the moment
-    random_state = 42
-    transformer.set_params(**{'subsample': 3,
-                              'n_quantiles': 2,
-                              'random_state': random_state})
-    X_trans = transformer.fit_transform(X)
+
+def test_quantile_transform_subsampling():
+    # dense support
+    N = 1000000
+    X = np.sort(np.random.sample((N, 1)), axis=0)
+    # transform by subsampling several time with different random state
+    ROUND = 5
+    inf_norm_arr = []
+    for random_state in range(ROUND):
+        transformer_subsample = QuantileTransformer(random_state=random_state,
+                                                    n_quantiles=N,
+                                                    subsample=N // 10)
+        transformer_subsample.fit(X)
+        inf_norm = np.max(np.abs(np.linspace(0, 1, N) -
+                                 np.ravel(transformer_subsample.quantiles_)))
+        assert_true(inf_norm < 1e-2)
+        inf_norm_arr.append(inf_norm)
+    assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
+
+    # sparse support
+    X = sparse.random(N, 1, density=.9, format='csc',
+                      random_state=0, data_rvs=stats.uniform().rvs)
+    inf_norm_arr = []
+    for random_state in range(ROUND):
+        transformer_subsample = QuantileTransformer(random_state=random_state,
+                                                    n_quantiles=N,
+                                                    subsample=N // 10)
+        transformer_subsample.fit(X)
+        inf_norm = np.max(np.abs(np.linspace(0, 1, N) -
+                                 np.ravel(transformer_subsample.quantiles_)))
+        assert_true(inf_norm < 1e-1)
+        inf_norm_arr.append(inf_norm)
+    assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
 
 
 def test_quantile_transform_sparse_toy():
@@ -1025,14 +1051,6 @@ def test_quantile_transform_sparse_toy():
     X_trans_inv = transformer_dense.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
-    # test subsampling
-    # FIXME: there is not comparison for the moment
-    random_state = 42
-    transformer.set_params(**{'subsample': 3,
-                              'n_quantiles': 2,
-                              'random_state': random_state})
-    X_trans = transformer.fit_transform(X)
-
 
 def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
@@ -1044,7 +1062,7 @@ def test_quantile_transform_axis1():
     assert_array_almost_equal(X_trans_a0, X_trans_a1.T)
 
 
-def test_qunatile_transform_bounds():
+def test_quantile_transform_bounds():
     X_dense = np.array([[0, 0],
                         [0, 0],
                         [1, 0]])
@@ -1066,21 +1084,6 @@ def test_qunatile_transform_bounds():
     transformer = QuantileTransformer(n_quantiles=3).fit(X)
     X_trans = transformer.transform(X1)
     assert_array_almost_equal(X_trans, X1)
-
-
-def test_quantile_transform_pickling():
-    transformer = QuantileTransformer(n_quantiles=100)
-
-    transformer_ser = pickle.dumps(transformer, pickle.HIGHEST_PROTOCOL)
-    transformer2 = pickle.loads(transformer_ser)
-    assert_false(hasattr(transformer2, 'f_transform_'))
-    assert_false(hasattr(transformer2, 'f_inverse_transform_'))
-
-    transformer.fit(iris.data)
-    transformer_ser = pickle.dumps(transformer, pickle.HIGHEST_PROTOCOL)
-    transformer2 = pickle.loads(transformer_ser)
-    assert_array_almost_equal(transformer.transform(iris.data),
-                              transformer2.transform(iris.data))
 
 
 def test_quantile_transform_add_noise_subsamples():

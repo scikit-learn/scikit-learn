@@ -2007,8 +2007,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def _compute_quantile_one_column(self, X_col, references, random_state):
         """Private function to compute the quantiles for one features."""
         if self.smoothing_noise is not None:
-            X_col += random_state.normal(0, self.smoothing_noise,
-                                         size=X_col.shape)
+            X_col = X_col + random_state.normal(0, self.smoothing_noise,
+                                                size=X_col.shape)
 
         return np.percentile(X_col, references)
 
