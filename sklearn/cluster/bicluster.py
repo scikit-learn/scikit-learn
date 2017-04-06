@@ -236,9 +236,11 @@ class SpectralCoclustering(BaseSpectral):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -366,9 +368,11 @@ class SpectralBiclustering(BaseSpectral):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

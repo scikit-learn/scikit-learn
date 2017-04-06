@@ -175,8 +175,12 @@ def resample(*arrays, **options):
         If replace is False it should not be larger than the length of
         arrays.
 
-    random_state : int or RandomState instance
-        Control the shuffling for reproducible behavior.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Returns
     -------
@@ -271,8 +275,12 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    random_state : int or RandomState instance
-        Control the shuffling for reproducible behavior.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is

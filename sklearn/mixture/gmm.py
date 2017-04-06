@@ -152,8 +152,11 @@ class _GMMBase(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    random_state : RandomState or an int seed (None by default)
-        A random number generator instance
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent

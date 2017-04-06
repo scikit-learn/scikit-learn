@@ -755,8 +755,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations.
 
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
@@ -1126,8 +1129,11 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations.
 
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
