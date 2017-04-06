@@ -262,6 +262,9 @@ Bug fixes
    - Fixed a bug in :class:`manifold.TSNE` where it stored the incorrect
      ``kl_divergence_``. :issue:`6507` by :user:`Sebastian Saeger <ssaeger>`.
 
+   - Fixed a bug in :class:`svm.OneClassSVM` where it returned floats instead of
+     integer classes. :issue:`8676` by :user:`Vathsala Achar <VathsalaAchar>`.
+
 API changes summary
 -------------------
 
