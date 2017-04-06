@@ -1767,8 +1767,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        p
-revious solution.
+        previous solution.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

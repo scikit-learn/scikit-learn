@@ -60,8 +60,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     verbose :
         Degree of verbosity of the printed output.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -228,8 +231,11 @@ class MiniBatchSparsePCA(SparsePCA):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

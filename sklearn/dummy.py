@@ -47,8 +47,11 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
              Dummy Classifier now supports prior fitting strategy using
              parameter *prior*.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     constant : int or str or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This

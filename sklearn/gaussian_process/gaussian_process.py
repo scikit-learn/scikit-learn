@@ -169,11 +169,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         The generator used to shuffle the sequence of coordinates of theta in
-        the Welch optimizer. If an integer is given, it fixes the seed.
-        Defaults to the global numpy random number generator.
-
+        the Welch optimizer. If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------

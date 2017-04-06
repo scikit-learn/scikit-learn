@@ -166,10 +166,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default: None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
-        By default, arpack is used.
+        lobpcg eigenvectors decomposition.  If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`. Used when
+        ``solver`` == 'amg'.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -345,9 +348,13 @@ class SpectralEmbedding(BaseEstimator):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    random_state : int seed, RandomState instance, or None, default : None
+    random_state : int, RandomState instance or None, optional, default: None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
+        lobpcg eigenvectors.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``solver`` ==
+        'amg'.
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.

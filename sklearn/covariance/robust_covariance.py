@@ -55,9 +55,11 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     verbose : boolean, optional
         Verbose mode.
 
-    random_state : integer or numpy.RandomState, optional
-        The random generator used. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     cov_computation_method : callable, default empirical_covariance
         The function which will be used to compute the covariance.
@@ -214,9 +216,11 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         Maximum number of iterations for the c_step procedure.
         (2 is enough to be close to the final solution. "Never" exceeds 20).
 
-    random_state : integer or numpy.RandomState, default None
-        The random generator used. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     cov_computation_method : callable, default empirical_covariance
         The function which will be used to compute the covariance.
@@ -311,10 +315,11 @@ def fast_mcd(X, support_fraction=None,
           value of support_fraction will be used within the algorithm:
           `[n_sample + n_features + 1] / 2`.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to randomly subsample. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     cov_computation_method : callable, default empirical_covariance
         The function which will be used to compute the covariance.
@@ -531,9 +536,11 @@ class MinCovDet(EmpiricalCovariance):
         value of support_fraction will be used within the algorithm:
         [n_sample + n_features + 1] / 2
 
-    random_state : integer or numpy.RandomState, optional
-        The random generator used. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
