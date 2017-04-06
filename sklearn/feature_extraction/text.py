@@ -435,8 +435,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.stop_words = stop_words
         self.n_features = n_features
         self.ngram_range = ngram_range
-        if ngram_range[0] > ngram_range[1]:
-            raise ValueError("min_n must not be greater than max_n.")
+        min_n, max_n = ngram_range
+        if min_n > max_n:
+            raise ValueError(
+                    ('Invalid value for "ngram_range": {0},'
+                     ' min_n must not be greater than max_n.'
+                     .format(ngram_range)))
         self.binary = binary
         self.norm = norm
         self.non_negative = non_negative
@@ -685,8 +689,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
         self.ngram_range = ngram_range
-        if ngram_range[0] > ngram_range[1]:
-            raise ValueError("min_n must not be greater than max_n.")
+        min_n, max_n = ngram_range
+        if min_n > max_n:
+            raise ValueError(
+                    ('Invalid value for "ngram_range": {0},'
+                     ' min_n must not be greater than max_n.'
+                     .format(ngram_range)))
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
