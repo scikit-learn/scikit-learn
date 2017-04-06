@@ -34,7 +34,8 @@ try:
 except ImportError:
     import urllib
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 from ..externals.joblib import Memory
 
 from ..externals.six import b
@@ -250,7 +251,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     funneled : boolean, optional, default: True
         Download and use the funneled variant of the dataset.
@@ -413,7 +414,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By
-        default all scikit learn data is stored in '~/scikit_learn_data'
+        default all scikit-learn data is stored in '~/scikit_learn_data'
         subfolders.
 
     funneled : boolean, optional, default: True

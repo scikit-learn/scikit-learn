@@ -18,7 +18,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-* *to be listed*
+   * :class:`sklearn.ensemble.IsolationForest` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -41,10 +41,21 @@ New features
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      By `Tom Dupre la Tour`_.
 
+   - Added the :class:`sklearn.model_selection.RepeatedKFold` and
+     :class:`sklearn.model_selection.RepeatedStratifiedKFold`.
+     :issue:`8120` by `Neeraj Gangwar`_.
+
    - Added :func:`metrics.mean_squared_log_error`, which computes
      the mean square error of the logarithmic transformation of targets,
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
+
+   - Added solver ``saga`` that implements the improved version of Stochastic
+     Average Gradient, in :class:`linear_model.LogisticRegression` and
+     :class:`linear_model.Ridge`. It allows the use of L1 penalty with
+     multinomial logistic loss, and behaves marginally better than 'sag'
+     during the first epochs of ridge and logistic regression.
+     By `Arthur Mensch`_.
 
 Enhancements
 ............
@@ -56,6 +67,9 @@ Enhancements
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
+   - :class:`pipeline.Pipeline` allows to cache transformers
+     within a pipeline by using the ``memory`` constructor parameter.
+     By :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
 
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
      :class:`decomposition.TruncatedSVD` now expose the singular values
@@ -146,9 +160,32 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+     is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
 
 Bug fixes
 .........
+   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
+     an incorrect formula for the average path length
+     :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
+
+   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect
+     result when input is a precomputed sparse matrix with initial
+     rows all zero.
+     :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
+
+   - Fixed a bug where :class:`sklearn.ensemble.AdaBoostClassifier` throws
+     ``ZeroDivisionError`` while fitting data with single class labels.
+     :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
+
+   - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
+     returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
+     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
+
+   - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
+     :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
+     sparse input.
+     :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
 
    - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
@@ -161,6 +198,10 @@ Bug fixes
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
 
+   - Fixed a bug in :class:`sklearn.ensemble.GradientBoostingClassifier`
+     and :class:`sklearn.ensemble.GradientBoostingRegressor`
+     where a float being compared to ``0.0`` using ``==`` caused a divide by zero
+     error. This was fixed in :issue:`7970` by :user:`He Chen <chenhe95>`.
 
    - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
      sparse array X and initial centroids, where X's means were unnecessarily
@@ -204,6 +245,22 @@ Bug fixes
      left `coef_` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
 
+   - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
+     raising an exception if instability is identified.  :issue:`7376` and
+     :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
+   - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
+     obstructed pickling customizations of child-classes, when used in a
+     multiple inheritance context.
+     :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
+
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
+     ridge parameter `alpha_` and `lambda_` consistent with calculated
+     coefficients `coef_` and `intercept_`.
+     :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
+
+   - Fixed a bug in :class:`manifold.TSNE` where it stored the incorrect
+     ``kl_divergence_``. :issue:`6507` by :user:`Sebastian Saeger <ssaeger>`.
+
 API changes summary
 -------------------
 
@@ -218,6 +275,12 @@ API changes summary
      user no longer has access to the unnormalized document topic distribution
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
+
+   - Replace attribute ``named_steps`` ``dict`` to :class:`sklearn.utils.Bunch`
+     in :class:`sklearn.pipeline.Pipeline` to enable tab completion in interactive
+     environment. In the case conflict value on ``named_steps`` and ``dict``
+     attribute, ``dict`` behavior will be prioritized.
+     :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
    - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
      function used to return a 3d array (``n_samples``, ``n_classes``,
@@ -238,6 +301,19 @@ API changes summary
       selection classes to be used with tools such as
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+
+   - Estimators with both methods ``decision_function`` and ``predict_proba``
+     are now required to have a monotonic relation between them. The
+     method ``check_decision_proba_consistency`` has been added in
+     **sklearn.utils.estimator_checks** to check their consistency.
+     :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
+
+   - All tree based estimators now accept a ``min_impurity_decrease``
+     parameter in lieu of the ``min_impurity_split``, which is now deprecated.
+     The ``min_impurity_decrease`` helps stop splitting the nodes in which
+     the weighted impurity decrease from splitting is no longer alteast
+     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
+
 
 .. _changes_0_18_1:
 
@@ -2292,7 +2368,7 @@ Enhancements
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
 
    - Vector and matrix multiplications have been optimised throughout the
-     library by :user:`Denis Engemann <dengemann>`, and `Alexandre Gramfort`_.
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
      In particular, they should take less memory with older NumPy versions
      (prior to 1.7.2).
 
@@ -2305,7 +2381,7 @@ Enhancements
 
    - Added svd_method option with default value to "randomized" to
      :class:`decomposition.FactorAnalysis` to save memory and
-     significantly speedup computation by :user:`Denis Engemann <dengemann>`, and
+     significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
 
    - Changed :class:`cross_validation.StratifiedKFold` to try and
@@ -2828,7 +2904,7 @@ Changelog
      faster on sparse data (the speedup depends on the sparsity). By
      `Lars Buitinck`_.
 
-   - Reduce memory footprint of FastICA by :user:`Denis Engemann <dengemann>` and
+   - Reduce memory footprint of FastICA by `Denis Engemann`_ and
      `Alexandre Gramfort`_.
 
    - Verbose output in :mod:`sklearn.ensemble.gradient_boosting` now uses
@@ -4974,3 +5050,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Kathleen Chen: https://github.com/kchen17
 
 .. _Vincent Pham: https://github.com/vincentpham1991
+
+.. _Denis Engemann: http://denis-engemann.de
+.. _Anish Shah: https://github.com/AnishShah
+
+.. _Neeraj Gangwar: http://neerajgangwar.in
+.. _Arthur Mensch: https://amensch.fr
