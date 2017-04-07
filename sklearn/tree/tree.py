@@ -662,12 +662,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Notes
     -----
-    The parameters that control the size of the tree (e.g. ``max_depth``,
-    ``min_samples_leaf``, etc.) should be set according to the learning task
-    and the training data. The defaults for these parameters might be inclined
-    towards giving each sample instance a distinct leaf thus overfitting the
-    data. Large trees can also be a problem because of their memory
-    requirements; limiting the size can save RAM.
+    The default values for parameters that control the size of the trees (e.g.
+    ``max_depth``, ``min_samples_leaf``, etc.) can potentially result in large
+    trees on many data sets. To reduce memory consumption the complexity and
+    size of the trees should be controlled with appropriate parameter values.
 
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
@@ -985,12 +983,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Notes
     -----
-    The parameters that control the size of the tree (e.g. ``max_depth``,
-    ``min_samples_leaf``, etc.) should be set according to the learning task
-    and the training data. The defaults for these parameters might be inclined
-    towards giving each sample instance a distinct leaf thus overfitting the
-    data. Large trees can also be a problem because of their memory
-    requirements; limiting the size can save RAM.
+    The default values for parameters that control the size of the trees (e.g.
+    ``max_depth``, ``min_samples_leaf``, etc.) can potentially result in large
+    trees on many data sets. To reduce memory consumption the complexity and
+    size of the trees should be controlled with appropriate parameter values.
 
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
