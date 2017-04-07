@@ -425,6 +425,11 @@ API changes summary
 
    - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
      only if the underlying estimator does.  By `Andreas Müller`_.
+     only if the underlying estimator does.  By `Andreas Müller`_. 
+    - Change the default value for ``learning_rate`` in the
+      `sklearn.manifold.TSNE` constructor from 1000 to 200 (with a warning
+      message if not set explicitely). This fixes :issue:`6204` by
+      :user:`John Joseph Valletta <jjvalletta>`.
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
