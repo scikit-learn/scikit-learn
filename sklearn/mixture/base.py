@@ -340,7 +340,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
-        """Predict posterior probability of data per each component.
+        """Predict posterior probability of each component given the data.
 
         Parameters
         ----------
@@ -351,8 +351,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         resp : array, shape (n_samples, n_components)
-            Returns the probability of the sample for each Gaussian
-            (state) in the model.
+            Returns the probability of each Gaussian (state) in
+            the model given each sample.
         """
         self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
