@@ -1642,7 +1642,8 @@ def _transform_selected(X, transform, selected="all", copy=True,
     retain_order : boolean, default=False
         If True, the non-selected features will not be displaced to the right
         side of the transformed array. The number of features in Xt must
-        match the number of features in X. Furthermore, X must not be sparse.
+        match the number of features in X. Furthermore, X and Xt cannot be
+        sparse.
 
     Returns
     -------
