@@ -135,7 +135,7 @@ class PCA(_BasePCA):
         if ``0 < n_components < 1`` and svd_solver == 'full', select the number
         of components such that the amount of variance that needs to be
         explained is greater than the percentage specified by n_components.
-        if svd_solver == 'arpack', the number of components must be strictly
+        If svd_solver == 'arpack', the number of components must be strictly
         less than the minimum of n_features and n_samples:
 
             n_components == min(n_samples, n_features)
