@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -346,8 +347,11 @@ def test_pca_validation():
     X = np.array([[0, 1, 0], [1, 0, 0]])
     for solver in solver_list:
         for n_components in [-1, 3]:
-            assert_raises(ValueError,
-                          PCA(n_components, svd_solver=solver).fit, X)
+            assert_raises_regex(ValueError,
+                                "n_components\=.* must be between .* and min\("
+                                "n_samples, n_features\)\=.* with svd_solver"
+                                "\=\'(?:full|arpack|randomized|auto)\'$",
+                                PCA(n_components, svd_solver=solver).fit, X)
 
 
 def test_n_components_none():
