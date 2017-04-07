@@ -1976,10 +1976,28 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_iris
+    >>> import numpy as np
     >>> from sklearn.preprocessing import QuantileTransformer
-    >>> iris = load_iris()
-    >>> X_trans = QuantileTransformer(n_quantiles=20).fit_transform(iris.data)
+    >>> RNG = np.random.RandomState(0)
+    >>> X = np.sort(RNG.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> # these samples follow a Gaussian distribution
+    >>> print(np.ravel(X))
+    [-0.13824745  0.25568053  0.28647607  0.31445874  0.44871043  0.4621607
+      0.47419529  0.53041875  0.53601089  0.57826693  0.58341858  0.6000393
+      0.60264963  0.61096581  0.66340465  0.69025943  0.71610905  0.7375221
+      0.7446845   0.86356838  0.87351977  0.94101309  0.9668895   1.0602233
+      1.06743866]
+    >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
+    >>> Xt = qt.fit_transform(X)
+    >>> # these samples have been mapped to a uniform distribution
+    >>> print(np.ravel(Xt))
+    [  9.99999998e-08   9.87187297e-02   1.06436120e-01   1.17546710e-01
+       2.10174366e-01   2.19454446e-01   2.34986656e-01   3.24436417e-01
+       3.33333333e-01   4.13607939e-01   4.23394641e-01   4.62578413e-01
+       4.71122361e-01   4.98342373e-01   5.99865364e-01   6.33903024e-01
+       6.66666667e-01   6.88731010e-01   6.96111249e-01   8.12806989e-01
+       8.21603540e-01   8.81264388e-01   9.05160277e-01   9.93194350e-01
+       9.99999900e-01]
 
     See also
     --------
@@ -2034,13 +2052,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 subsample_idx = choice(n_samples, size=self.subsample,
                                        replace=False,
                                        random_state=random_state)
-            else:
-                subsample_idx = range(n_samples)
-
+                col = col.take(subsample_idx, mode='clip')
             self.quantiles_.append(
-                self._compute_quantile_one_column(col.take(subsample_idx,
-                                                           mode='clip'),
-                                                  references, random_state))
+                self._compute_quantile_one_column(col, references,
+                                                  random_state))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2338,16 +2353,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     Parameters
     ----------
-    X : ndarray or sparse matrix, shape (n_samples, n_features)
-        The data used to scale along the features axis. If a sparse
-        matrix is provided, it will be converted into a sparse
-        ``csc_matrix``. Additionally, the sparse matrix needs to be
-        nonnegative if `ignore_implicit_zeros` is False.
-
-    axis : 0 or 1, optional (0 by default)
-        axis used to normalize the data along. If 1, independently normalize
-        each sample, otherwise (if 0) normalize each feature.
-
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative density function.
@@ -2357,23 +2362,26 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         'uniform' (default) or 'normal'.
 
     ignore_implicit_zeros : bool, optional (default=False)
-        Apply only for sparse matrices. If True, the sparse entries of the
+        Only applies to sparse matrices. If True, the sparse entries of the
         matrix are discarded to compute the quantile statistics. If false,
-        these entries are accounting for zeros.
+        these entries are treated as zeros.
 
     subsample : int, optional (default=1e5)
-        Maximum number of samples used to estimate the quantiles.
+        Maximum number of samples used to estimate the quantiles for
+        computational efficiency.
 
     smoothing_noise : float, optional
-        Standard deviation of the added noise before computing the
-        quantiles. This parameter is useful if there is a predominant
-        feature value predominant.
+        Perturbs features at training time before computing quantiles by adding
+        Gaussian noise with standard deviation ``smoothing_noise``. It eases
+        the interpratation of the computed ``quantiles_`` when a particular
+        feature value is predominant.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by np.random.
+        by np.random. Note that this is used by subsampling and smoothing
+        noise.
 
     copy : boolean, optional, (default=True)
         Set to False to perform inplace scaling and avoid a copy (if the input
@@ -2384,12 +2392,32 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     quantiles_ : ndarray, shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
+    references_ : ndarray, shape(n_quantiles, )
+        Quantiles of references.
+
     Examples
     --------
-    >>> from sklearn.datasets import load_iris
+    >>> import numpy as np
     >>> from sklearn.preprocessing import quantile_transform
-    >>> iris = load_iris()
-    >>> X_trans = quantile_transform(iris.data, n_quantiles=20)
+    >>> RNG = np.random.RandomState(0)
+    >>> X = np.sort(RNG.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> # these samples follow a Gaussian distribution
+    >>> print(np.ravel(X))
+    [-0.13824745  0.25568053  0.28647607  0.31445874  0.44871043  0.4621607
+      0.47419529  0.53041875  0.53601089  0.57826693  0.58341858  0.6000393
+      0.60264963  0.61096581  0.66340465  0.69025943  0.71610905  0.7375221
+      0.7446845   0.86356838  0.87351977  0.94101309  0.9668895   1.0602233
+      1.06743866]
+    >>> Xt = quantile_transform(X, n_quantiles=10, random_state=0)
+    >>> # these samples have been mapped to a uniform distribution
+    >>> print(np.ravel(Xt))
+    [  9.99999998e-08   9.87187297e-02   1.06436120e-01   1.17546710e-01
+       2.10174366e-01   2.19454446e-01   2.34986656e-01   3.24436417e-01
+       3.33333333e-01   4.13607939e-01   4.23394641e-01   4.62578413e-01
+       4.71122361e-01   4.98342373e-01   5.99865364e-01   6.33903024e-01
+       6.66666667e-01   6.88731010e-01   6.96111249e-01   8.12806989e-01
+       8.21603540e-01   8.81264388e-01   9.05160277e-01   9.93194350e-01
+       9.99999900e-01]
 
     See also
     --------

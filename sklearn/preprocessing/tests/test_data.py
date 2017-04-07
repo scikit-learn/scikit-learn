@@ -995,7 +995,6 @@ def test_quantile_transform_subsampling():
     # dense support
     N = 1000000
     X = np.sort(np.random.sample((N, 1)), axis=0)
-    # transform by subsampling several time with different random state
     ROUND = 5
     inf_norm_arr = []
     for random_state in range(ROUND):
@@ -1010,7 +1009,7 @@ def test_quantile_transform_subsampling():
     assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
 
     # sparse support
-    X = sparse.random(N, 1, density=.9, format='csc',
+    X = sparse.random(N, 1, density=.99, format='csc',
                       random_state=0, data_rvs=stats.uniform().rvs)
     inf_norm_arr = []
     for random_state in range(ROUND):
@@ -1020,6 +1019,7 @@ def test_quantile_transform_subsampling():
         transformer_subsample.fit(X)
         inf_norm = np.max(np.abs(np.linspace(0, 1, N) -
                                  np.ravel(transformer_subsample.quantiles_)))
+
         assert_true(inf_norm < 1e-1)
         inf_norm_arr.append(inf_norm)
     assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
