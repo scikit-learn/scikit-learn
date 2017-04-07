@@ -1084,4 +1084,3 @@ class OneClassSVM(BaseLibSVM):
         """
         y = super(OneClassSVM, self).predict(X)
         return np.asarray(y, dtype=np.intp)
-
