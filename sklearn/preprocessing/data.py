@@ -1980,24 +1980,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import QuantileTransformer
     >>> RNG = np.random.RandomState(0)
     >>> X = np.sort(RNG.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> # these samples follow a Gaussian distribution
-    >>> print(np.ravel(X))
-    [-0.13824745  0.25568053  0.28647607  0.31445874  0.44871043  0.4621607
-      0.47419529  0.53041875  0.53601089  0.57826693  0.58341858  0.6000393
-      0.60264963  0.61096581  0.66340465  0.69025943  0.71610905  0.7375221
-      0.7446845   0.86356838  0.87351977  0.94101309  0.9668895   1.0602233
-      1.06743866]
     >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
-    >>> Xt = qt.fit_transform(X)
-    >>> # these samples have been mapped to a uniform distribution
-    >>> print(np.ravel(Xt))
-    [  9.99999998e-08   9.87187297e-02   1.06436120e-01   1.17546710e-01
-       2.10174366e-01   2.19454446e-01   2.34986656e-01   3.24436417e-01
-       3.33333333e-01   4.13607939e-01   4.23394641e-01   4.62578413e-01
-       4.71122361e-01   4.98342373e-01   5.99865364e-01   6.33903024e-01
-       6.66666667e-01   6.88731010e-01   6.96111249e-01   8.12806989e-01
-       8.21603540e-01   8.81264388e-01   9.05160277e-01   9.93194350e-01
-       9.99999900e-01]
+    >>> qt.fit_transform(X) # doctest: +ELLIPSIS
+    array([...])
 
     See also
     --------
@@ -2401,23 +2386,9 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     >>> from sklearn.preprocessing import quantile_transform
     >>> RNG = np.random.RandomState(0)
     >>> X = np.sort(RNG.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> # these samples follow a Gaussian distribution
-    >>> print(np.ravel(X))
-    [-0.13824745  0.25568053  0.28647607  0.31445874  0.44871043  0.4621607
-      0.47419529  0.53041875  0.53601089  0.57826693  0.58341858  0.6000393
-      0.60264963  0.61096581  0.66340465  0.69025943  0.71610905  0.7375221
-      0.7446845   0.86356838  0.87351977  0.94101309  0.9668895   1.0602233
-      1.06743866]
-    >>> Xt = quantile_transform(X, n_quantiles=10, random_state=0)
-    >>> # these samples have been mapped to a uniform distribution
-    >>> print(np.ravel(Xt))
-    [  9.99999998e-08   9.87187297e-02   1.06436120e-01   1.17546710e-01
-       2.10174366e-01   2.19454446e-01   2.34986656e-01   3.24436417e-01
-       3.33333333e-01   4.13607939e-01   4.23394641e-01   4.62578413e-01
-       4.71122361e-01   4.98342373e-01   5.99865364e-01   6.33903024e-01
-       6.66666667e-01   6.88731010e-01   6.96111249e-01   8.12806989e-01
-       8.21603540e-01   8.81264388e-01   9.05160277e-01   9.93194350e-01
-       9.99999900e-01]
+    >>> quantile_transform(X, n_quantiles=10, random_state=0)
+    ... # doctest: +ELLIPSIS
+    array([...])
 
     See also
     --------
