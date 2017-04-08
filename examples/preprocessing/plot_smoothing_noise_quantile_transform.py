@@ -5,11 +5,20 @@
 Effect of smoothing noise when using QuantileTransformer
 ========================================================
 
-This example shows the effect of applying a small noise before
-computing the quantiles in the QuantileTransformer. The parameter
-``smoothing_noise`` can be used if a constant feature value is
-predominant in the dataset. It will lead to a difficult interpretation
-when the quantiles computed are manually checked.
+The parameter ``smoothing_noise`` can be used if some specific feature values
+are repeated exactly many times to the point of being predominant in the
+dataset.
+
+Without smoothing noise, the ``QuantileTransformer`` will map those values to
+some arbitrary value: the highest quantile value for all the inputs with the
+same value. While this is usually not an issue when ``QuantileTransformer`` is
+used as a preprocessing transformer for a subsequent subsequent supervised
+estimator, it can lead to surprising results when manually inspecting the
+transformed values (e.g. for visualization or reporting).
+
+The goal of the smoothing noise is to make it possible to map those repeated
+values to some middle quantile value to make interpretation more intuitive as
+demonstrated in the following.
 
 """
 
@@ -58,8 +67,8 @@ def plot_transform_feat_val(ax, transformer, title):
 # a large number of customers attributed a grade of 3 to the current
 # restaurant.
 
-X = np.array([1] * 1000 +
-             [2] * 2000 +
+X = np.array([1] * 2000 +
+             [2] * 1000 +
              [3] * 7000 +
              [4] * 2000 +
              [5] * 1000).reshape(-1, 1)

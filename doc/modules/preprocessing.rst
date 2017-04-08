@@ -261,7 +261,7 @@ features.
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
 non-parametric transformation based the quantile function to map the data to a
-uniform distribution::
+uniform distribution with value between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> iris = load_iris()
@@ -275,8 +275,9 @@ setting ``output_distribution='normal'``::
   >>> X_trans = preprocessing.quantile_transform(X, output_distribution='normal')
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
-normal output is clipped so that the input's maximum and minimum do not become
-infinite under the transformation.
+normal output is clipped so that the input's maximum and minimum ---
+corresponding to the 1 - 1e-7 and 1e-7 quantiles, respectively --- do not
+become infinite under the transformation.
 
 .. _preprocessing_normalization:
 

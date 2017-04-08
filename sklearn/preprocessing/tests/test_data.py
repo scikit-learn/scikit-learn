@@ -993,35 +993,38 @@ def test_quantile_transform_dense_toy():
 
 def test_quantile_transform_subsampling():
     # dense support
-    N = 1000000
-    X = np.sort(np.random.sample((N, 1)), axis=0)
+    n_samples = 1000000
+    X = np.sort(np.random.sample((n_samples, 1)), axis=0)
     ROUND = 5
     inf_norm_arr = []
     for random_state in range(ROUND):
-        transformer_subsample = QuantileTransformer(random_state=random_state,
-                                                    n_quantiles=N,
-                                                    subsample=N // 10)
-        transformer_subsample.fit(X)
-        inf_norm = np.max(np.abs(np.linspace(0, 1, N) -
-                                 np.ravel(transformer_subsample.quantiles_)))
+        transformer = QuantileTransformer(random_state=random_state,
+                                          n_quantiles=n_samples,
+                                          subsample=n_samples//10)
+        transformer.fit(X)
+        diff = np.linspace(0, 1, n_samples) - np.ravel(transformer.quantiles_)
+        inf_norm = np.max(np.abs(diff))
         assert_true(inf_norm < 1e-2)
         inf_norm_arr.append(inf_norm)
+    # each random subsampling yield a unique approximation to the expected
+    # linspace CDF
     assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
 
     # sparse support
-    X = sparse.random(N, 1, density=.99, format='csc',
-                      random_state=0, data_rvs=stats.uniform().rvs)
+    X = sparse.rand(n_samples, 1, density=.99, format='csc', random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
-        transformer_subsample = QuantileTransformer(random_state=random_state,
-                                                    n_quantiles=N,
-                                                    subsample=N // 10)
-        transformer_subsample.fit(X)
-        inf_norm = np.max(np.abs(np.linspace(0, 1, N) -
-                                 np.ravel(transformer_subsample.quantiles_)))
+        transformer = QuantileTransformer(random_state=random_state,
+                                          n_quantiles=n_samples,
+                                          subsample=n_samples//10)
+        transformer.fit(X)
+        diff = np.linspace(0, 1, n_samples) - np.ravel(transformer.quantiles_)
+        inf_norm = np.max(np.abs(diff))
 
         assert_true(inf_norm < 1e-1)
         inf_norm_arr.append(inf_norm)
+    # each random subsampling yield a unique approximation to the expected
+    # linspace CDF
     assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
 
 
@@ -1095,9 +1098,8 @@ def test_quantile_transform_add_noise_subsamples():
     transformer = QuantileTransformer(n_quantiles=100, smoothing_noise=1e-7,
                                       random_state=0)
     transformer.fit(X)
-    # check  that  the  feature  values associated  to  quantiles  are
-    # strictly  monitically increasing  as suggested  by the  'interp'
-    # function from numpy
+    # check that the feature values associated to quantiles are strictly
+    # monitically increasing as suggested by the 'interp' function from numpy
     assert_true(np.all(np.diff(transformer.quantiles_) > 0))
     # iris dataset
     X = iris.data
@@ -1113,15 +1115,14 @@ def test_quantile_transform_add_noise_subsamples():
 
 
 def test_quantile_transform_numpy_interp_behaviour():
-    # The quantile transformer relies on the numpy implementation of
-    # 'interp' function. In the presence of a predominant constant
-    # feature values or a large number of quantiles, a single feature
-    # value is mapped to different quantiles. The default behaviour of
-    # 'interp' will be returning the larger quantile associated to the
-    # feature value. This test attends to check if there is any
-    # changes in the 'interp' function and to act accordingly. This
-    # implementation subtilities is mention in the docstring of the
-    # 'interp' function.
+    # The quantile transformer relies on the numpy implementation of 'interp'
+    # function. In the presence of a predominant constant feature values or a
+    # large number of quantiles, a single feature value is mapped to different
+    # quantiles.  The default behaviour of 'interp' will be returning the
+    # largest quantile associated to the feature value. This test attends to
+    # check if there is any behavorial changes in the 'interp' function and to
+    # act accordingly.  This implementation subtilities is mention in the
+    # docstring of the 'interp' function.
 
     unique_feature = [0, 0.5, 1]
     X = np.transpose([[unique_feature[0]] * 1 +
