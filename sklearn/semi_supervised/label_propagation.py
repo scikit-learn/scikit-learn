@@ -88,7 +88,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         and return a [n_samples, n_samples] shaped weight matrix
 
     gamma : float
-        Parameter for rbf kernel
+        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
 
     alpha : float
         Clamping factor
@@ -294,7 +294,7 @@ class LabelPropagation(BaseLabelPropagation):
         and return a [n_samples, n_samples] shaped weight matrix.
 
     gamma : float
-        Parameter for rbf kernel
+        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
 
     n_neighbors : integer > 0
         Parameter for knn kernel
@@ -386,16 +386,16 @@ class LabelSpreading(BaseLabelPropagation):
         and return a [n_samples, n_samples] shaped weight matrix
 
     gamma : float
-      parameter for rbf kernel
+        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
 
     n_neighbors : integer > 0
-      parameter for knn kernel
+        parameter for knn kernel
 
     alpha : float
-      clamping factor
+        clamping factor
 
     max_iter : float
-      maximum number of iterations allowed
+        maximum number of iterations allowed
 
     tol : float
       Convergence tolerance: threshold to consider the system at steady
