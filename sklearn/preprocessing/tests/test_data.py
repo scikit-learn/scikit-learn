@@ -8,7 +8,7 @@ from __future__ import division
 import warnings
 import numpy as np
 import numpy.linalg as la
-from scipy import sparse, stats
+from scipy import sparse
 from distutils.version import LooseVersion
 
 from sklearn.utils import gen_batches
@@ -1011,7 +1011,7 @@ def test_quantile_transform_subsampling():
     assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
 
     # sparse support
-    X = sparse.rand(n_samples, 1, density=.99, format='csc', random_state=0)
+    X = sparse.rand(n_samples, 1, density=.99, format='csc')
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
