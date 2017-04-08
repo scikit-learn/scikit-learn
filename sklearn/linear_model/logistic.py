@@ -543,9 +543,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         the entire probability distribution. Works only for the 'lbfgs' and
         'newton-cg' solvers.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -860,9 +864,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         the entire probability distribution. Does not work for
         liblinear solver.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' and
+        'liblinear'.
 
     max_squared_sum : float, default None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -1024,9 +1032,13 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    random_state : int seed, RandomState instance, default: None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
+    random_state : int, RandomState instance or None, optional, default: None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
         default: 'liblinear'
@@ -1470,9 +1482,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
