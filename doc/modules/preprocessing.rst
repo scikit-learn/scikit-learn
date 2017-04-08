@@ -261,7 +261,7 @@ features.
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
 non-parametric transformation based the quantile function to map the data to a
-uniform distribution with value between 0 and 1::
+uniform distribution with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> iris = load_iris()

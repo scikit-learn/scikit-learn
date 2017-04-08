@@ -1011,6 +1011,9 @@ def test_quantile_transform_subsampling():
     assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
 
     # sparse support
+
+    # TODO: rng should be seeded once we drop support for older versions of
+    # scipy (< 0.13) that don't support seeding.
     X = sparse.rand(n_samples, 1, density=.99, format='csc')
     inf_norm_arr = []
     for random_state in range(ROUND):
