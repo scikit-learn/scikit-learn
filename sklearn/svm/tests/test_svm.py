@@ -368,7 +368,8 @@ def test_svdd():
     clf.fit(X)
     pred = clf.predict(T)
 
-    assert_array_almost_equal(pred, [-1, -1, -1])
+    assert_array_equal(pred, [-1, -1, -1])
+    assert_equal(pred.dtype, np.dtype('intp'))
     assert_array_almost_equal(clf.intercept_, [0.491], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],

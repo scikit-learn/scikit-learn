@@ -243,6 +243,7 @@ Model selection and evaluation
      cumulative gain (NDCG).
      :issue:`7739` by :user:`David Gasquez <davidgasquez>`.
      By `Arthur Mensch`_.
+
    - Added the :class:`svm.SVDD` class for novelty detection based on
      soft minimal volume hypersphere around the sample data.
      By `Ivan Nazarov`_.
