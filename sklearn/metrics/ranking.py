@@ -218,7 +218,7 @@ def average_precision_score(y_true, y_score, average="macro",
                                  sample_weight=sample_weight)
 
 
-def detection_error_tradeoff(y_true, probas_pred, pos_label=None,
+def detection_error_tradeoff(y_true, y_score, pos_label=None,
                              sample_weight=None):
     """Compute error rates for different probability thresholds
 
@@ -229,7 +229,7 @@ def detection_error_tradeoff(y_true, probas_pred, pos_label=None,
     y_true : array, shape = [n_samples]
         True targets of binary classification in range {-1, 1} or {0, 1}.
 
-    probas_pred : array, shape = [n_samples]
+    y_score : array, shape = [n_samples]
         Estimated probabilities or decision function.
 
     pos_label : int, optional (default=None)
@@ -281,7 +281,7 @@ def detection_error_tradeoff(y_true, probas_pred, pos_label=None,
     array([ 0.35,  0.4 ,  0.8 ])
 
     """
-    fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
+    fps, tps, thresholds = _binary_clf_curve(y_true, y_score,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
     fns = tps[-1] - tps

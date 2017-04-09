@@ -105,6 +105,7 @@ __all__ = [
     'coverage_error',
     'dcg_score',
     'davies_bouldin_score',
+    'detection_error_tradeoff',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
