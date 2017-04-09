@@ -909,6 +909,12 @@ class RandomForestClassifier(ForestClassifier):
 
     Notes
     -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
+
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
     ``max_features=n_features`` and ``bootstrap=False``, if the improvement
@@ -1114,6 +1120,12 @@ class RandomForestRegressor(ForestRegressor):
 
     Notes
     -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
+
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data,
     ``max_features=n_features`` and ``bootstrap=False``, if the improvement
@@ -1337,6 +1349,14 @@ class ExtraTreesClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
 
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
+
     References
     ----------
 
@@ -1532,6 +1552,14 @@ class ExtraTreesRegressor(ForestRegressor):
 
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
+
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
 
     References
     ----------
