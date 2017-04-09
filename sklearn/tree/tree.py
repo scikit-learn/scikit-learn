@@ -1117,6 +1117,14 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
 
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
+
     References
     ----------
 
@@ -1168,6 +1176,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     See also
     --------
     ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
 
     References
     ----------
