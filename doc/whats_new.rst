@@ -163,6 +163,13 @@ Enhancements
 
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
+     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
+
+   - :class:`ensemble.VotingClassifier` now allow changing estimators by using
+     :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
+     removed by setting it to `None`.
+     :issue:`7674` by:user:`Yichuan Liu <yl565>`.
 
 Bug fixes
 .........
