@@ -100,5 +100,5 @@ __all__ = ['clear_data_home',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
            'make_swiss_roll',
-	   'make_trefoil_knot',
+           'make_trefoil_knot',
            'mldata_filename']

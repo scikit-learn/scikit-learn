@@ -327,6 +327,7 @@ def test_make_s_curve():
     assert_array_almost_equal(X[:, 0], np.sin(t))
     assert_array_almost_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
 
+
 def test_make_trefoil_knot():
     X, t = make_trefoil_knot(n_samples=5, noise=0.0, random_state=0)
 
@@ -334,6 +335,7 @@ def test_make_trefoil_knot():
     assert_equal(t.shape, (5,), "t shape mismatch")
     assert_array_almost_equal(X[:, 0], np.sin(t) + 2 * np.sin(2 * t))
     assert_array_almost_equal(X[:, 2], -np.sin(3 * t))
+
 
 def test_make_biclusters():
     X, rows, cols = make_biclusters(
