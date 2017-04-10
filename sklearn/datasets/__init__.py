@@ -39,6 +39,7 @@ from .samples_generator import make_sparse_uncorrelated
 from .samples_generator import make_spd_matrix
 from .samples_generator import make_swiss_roll
 from .samples_generator import make_s_curve
+from .samples_generator import make_trefoil_knot
 from .samples_generator import make_sparse_spd_matrix
 from .samples_generator import make_gaussian_quantiles
 from .samples_generator import make_biclusters
@@ -99,4 +100,5 @@ __all__ = ['clear_data_home',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
            'make_swiss_roll',
+	   'make_trefoil_knot',
            'mldata_filename']
