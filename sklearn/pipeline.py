@@ -11,6 +11,7 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 from abc import ABCMeta, abstractmethod
+import time
 
 import numpy as np
 from scipy import sparse
@@ -25,7 +26,24 @@ from .utils import Bunch
 __all__ = ['Pipeline', 'FeatureUnion']
 
 
+def _pretty_print(step_info):
+    """Helper method to print the information about execution of a particular
+    step of Pipeline / FeatureUnion (if verbosity is enabled). It receives a
+    string having information about current step and prints it in such a way
+    that its length is 70 characters.
+
+    Parameters
+    ----------
+    step_info : str
+        String of form '[ClassName] (step x of y) step_name ... time_elapsed'
+
+    """
+    name, elapsed = step_info.split('...')
+    print('%s%s%s' % (name, '.' * (70 - len(name + elapsed)), elapsed))
+
+
 class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
+
     """Handles parameter management for classifiers composed of named steps.
     """
 
@@ -84,6 +102,7 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
 
 
 class Pipeline(_BasePipeline):
+
     """Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
@@ -119,6 +138,9 @@ class Pipeline(_BasePipeline):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
+    verbose : boolean, optional
+        Verbosity mode.
+
     Attributes
     ----------
     named_steps : bunch object, a dictionary with attribute access
@@ -146,7 +168,7 @@ class Pipeline(_BasePipeline):
     ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Pipeline(memory=None,
              steps=[('anova', SelectKBest(...)),
-                    ('svc', SVC(...))])
+                    ('svc', SVC(...))], verbose=False)
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.829...
@@ -166,11 +188,12 @@ class Pipeline(_BasePipeline):
 
     # BaseEstimator interface
 
-    def __init__(self, steps, memory=None):
+    def __init__(self, steps, memory=None, verbose=False):
         # shallow copy of steps
         self.steps = tosequence(steps)
         self._validate_steps()
         self.memory = memory
+        self.verbose = verbose
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -225,6 +248,13 @@ class Pipeline(_BasePipeline):
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
+    def _print_final_step(self, final_step_time_elapsed, time_elapsed_so_far):
+        _pretty_print('[Pipeline] (step %d of %d) %s ... %.5fs' %
+                      (len(self.steps), len(self.steps), self.steps[-1][0],
+                       final_step_time_elapsed))
+        _pretty_print('[Pipeline] Total time elapsed: ... %.5fs' %
+                      time_elapsed_so_far)
+
     @property
     def _estimator_type(self):
         return self.steps[-1][1]._estimator_type
@@ -261,7 +291,10 @@ class Pipeline(_BasePipeline):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
+        # Keep a record of time elapsed
+        time_elapsed_so_far = 0
         for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
+            step_start_time = time.time()
             if transformer is None:
                 pass
             else:
@@ -279,9 +312,17 @@ class Pipeline(_BasePipeline):
                 # transformer. This is necessary when loading the transformer
                 # from the cache.
                 self.steps[step_idx] = (name, fitted_transformer)
+
+            step_time_elapsed = time.time() - step_start_time
+            time_elapsed_so_far += step_time_elapsed
+            # Logging time elapsed for current step to stdout
+            if self.verbose:
+                _pretty_print('[Pipeline] (step %d of %d) %s ... %.5fs' %
+                              (step_idx + 1, len(self.steps), name,
+                               step_time_elapsed))
         if self._final_estimator is None:
-            return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+            return Xt, {}, time_elapsed_so_far
+        return Xt, fit_params_steps[self.steps[-1][0]], time_elapsed_so_far
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -309,9 +350,15 @@ class Pipeline(_BasePipeline):
         self : Pipeline
             This estimator
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
+        Xt, fit_params, time_elapsed_so_far = self._fit(X, y, **fit_params)
+        final_step_start_time = time.time()
         if self._final_estimator is not None:
             self._final_estimator.fit(Xt, y, **fit_params)
+        final_step_time_elapsed = time.time() - final_step_start_time
+        time_elapsed_so_far += final_step_time_elapsed
+        if self.verbose:
+            self._print_final_step(final_step_time_elapsed,
+                                   time_elapsed_so_far)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -342,13 +389,25 @@ class Pipeline(_BasePipeline):
             Transformed samples
         """
         last_step = self._final_estimator
-        Xt, fit_params = self._fit(X, y, **fit_params)
-        if hasattr(last_step, 'fit_transform'):
-            return last_step.fit_transform(Xt, y, **fit_params)
-        elif last_step is None:
+        Xt, fit_params, time_elapsed_so_far = self._fit(X, y, **fit_params)
+        final_step_start_time = time.time()
+        if last_step is None:
+            if self.verbose:
+                _pretty_print('[Pipeline] Step %s is NoneType ...' %
+                              self.steps[-1][0])
+                _pretty_print('[Pipeline] Total time elapsed: ... %.5fs' %
+                              time_elapsed_so_far)
             return Xt
+        elif hasattr(last_step, 'fit_transform'):
+            Xt = last_step.fit_transform(Xt, y, **fit_params)
         else:
-            return last_step.fit(Xt, y, **fit_params).transform(Xt)
+            Xt = last_step.fit(Xt, y, **fit_params).transform(Xt)
+        final_step_time_elapsed = time.time() - final_step_start_time
+        time_elapsed_so_far += final_step_time_elapsed
+        if self.verbose:
+            self._print_final_step(final_step_time_elapsed,
+                                   time_elapsed_so_far)
+        return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
@@ -397,8 +456,15 @@ class Pipeline(_BasePipeline):
         -------
         y_pred : array-like
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
-        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+        Xt, fit_params, time_elapsed_so_far = self._fit(X, y, **fit_params)
+        final_step_start_time = time.time()
+        y_pred = self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+        final_step_time_elapsed = time.time() - final_step_start_time
+        time_elapsed_so_far += final_step_time_elapsed
+        if self.verbose:
+            self._print_final_step(final_step_time_elapsed,
+                                   time_elapsed_so_far)
+        return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
@@ -598,7 +664,7 @@ def make_pipeline(*steps):
     Pipeline(memory=None,
              steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB(priors=None))])
+                    ('gaussiannb', GaussianNB(priors=None))], verbose=False)
 
     Returns
     -------
@@ -607,8 +673,16 @@ def make_pipeline(*steps):
     return Pipeline(_name_estimators(steps))
 
 
-def _fit_one_transformer(transformer, X, y):
-    return transformer.fit(X, y)
+def _fit_one_transformer(trans, X, y, verbose=False, idx=None,
+                         total_steps=None, name=None):
+    # idx, total_steps and name are not required when verbosity is disabled
+    step_start_time = time.time()
+    trans = trans.fit(X, y)
+    step_time_elapsed = time.time() - step_start_time
+    if verbose:
+        _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
+                      (idx + 1, total_steps, name, step_time_elapsed))
+    return trans
 
 
 def _transform_one(transformer, weight, X):
@@ -619,19 +693,26 @@ def _transform_one(transformer, weight, X):
     return res * weight
 
 
-def _fit_transform_one(transformer, weight, X, y,
-                       **fit_params):
-    if hasattr(transformer, 'fit_transform'):
-        res = transformer.fit_transform(X, y, **fit_params)
+def _fit_transform_one(trans, weight, X, y, verbose=False, idx=None,
+                       total_steps=None, name=None, **fit_params):
+    # idx, total_steps and name are not required when verbosity is disabled
+    step_start_time = time.time()
+    if hasattr(trans, 'fit_transform'):
+        res = trans.fit_transform(X, y, **fit_params)
     else:
-        res = transformer.fit(X, y, **fit_params).transform(X)
+        res = trans.fit(X, y, **fit_params).transform(X)
+    step_time_elapsed = time.time() - step_start_time
+    if verbose:
+        _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
+                      (idx + 1, total_steps, name, step_time_elapsed))
     # if we have a weight for this transformer, multiply output
     if weight is None:
-        return res, transformer
-    return res * weight, transformer
+        return res, trans
+    return res * weight, trans
 
 
 class FeatureUnion(_BasePipeline, TransformerMixin):
+
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -658,11 +739,17 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
+    verbose : boolean, optional
+        Verbosity mode.
+
     """
-    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
+
+    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None,
+                 verbose=False):
         self.transformer_list = tosequence(transformer_list)
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
+        self.verbose = verbose
         self._validate_transformers()
 
     def get_params(self, deep=True):
@@ -752,9 +839,19 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             This estimator
         """
         self._validate_transformers()
+        all_transformers = [(name, trans, weight) for name, trans, weight in
+                            self._iter()]
+        total_steps = len(all_transformers)
+        # Keep a record of time elapsed
+        start_time = time.time()
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans, X, y)
-            for _, trans, _ in self._iter())
+            delayed(_fit_one_transformer)(trans, X, y, self.verbose, idx,
+                                          total_steps, name)
+            for idx, (name, trans, _) in enumerate(all_transformers))
+        time_elapsed = time.time() - start_time
+        if self.verbose:
+            _pretty_print(
+                '[FeatureUnion] Total time elapsed: ... %.5fs' % time_elapsed)
         self._update_transformer_list(transformers)
         return self
 
@@ -776,10 +873,19 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         self._validate_transformers()
+        all_transformers = [(name, trans, weight) for name, trans, weight in
+                            self._iter()]
+        total_steps = len(all_transformers)
+        # Keep a record of time elapsed
+        start_time = time.time()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, X, y,
-                                        **fit_params)
-            for name, trans, weight in self._iter())
+            delayed(_fit_transform_one)(trans, weight, X, y, self.verbose,
+                                        idx, total_steps, name)
+            for idx, (name, trans, weight) in enumerate(all_transformers))
+        time_elapsed = time.time() - start_time
+        if self.verbose:
+            _pretty_print(
+                '[FeatureUnion] Total time elapsed: ... %.5fs' % time_elapsed)
 
         if not result:
             # All transformers are None
@@ -858,7 +964,7 @@ def make_union(*transformers, **kwargs):
                               TruncatedSVD(algorithm='randomized',
                               n_components=2, n_iter=5,
                               random_state=None, tol=0.0))],
-           transformer_weights=None)
+           transformer_weights=None, verbose=False)
     """
     n_jobs = kwargs.pop('n_jobs', 1)
     if kwargs:

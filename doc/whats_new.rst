@@ -60,6 +60,10 @@ New features
 Enhancements
 ............
 
+   - Added optional parameter ``verbose`` in :class:`pipeline.Pipeline` and
+     :class:`pipeline.FeatureUnion` for showing progress and timing of each
+     step. :issue:`8568` by :user:`Karan Desai <karandesai-96>`.
+
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986`
      :user:`Oscar Najera <Titan-C>`
@@ -5060,3 +5064,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
 .. _Arthur Mensch: https://amensch.fr
+
+.. _Karan Desai: https://www.github.com/karandesai-96

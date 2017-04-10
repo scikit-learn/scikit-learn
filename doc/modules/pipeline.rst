@@ -42,7 +42,7 @@ is an estimator object::
     >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
              steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+                    ('clf', SVC(C=1.0,...))], verbose=False)
 
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
@@ -57,7 +57,7 @@ filling in the names automatically::
              steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
                     ('multinomialnb', MultinomialNB(alpha=1.0,
                                                     class_prior=None,
-                                                    fit_prior=True))])
+                                                    fit_prior=True))], verbose=False)
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
@@ -77,7 +77,8 @@ Parameters of the estimators in the pipeline can be accessed using the
     >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
-                    ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
+                    ('clf', SVC(C=10, cache_size=200, class_weight=None,...))],
+                    verbose=False)
 
 Attributes of named_steps map to keys, enabling tab completion in interactive environments::
 
@@ -153,7 +154,7 @@ object::
     >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(...,
              steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+                    ('clf', SVC(C=1.0,...))], verbose=False)
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
@@ -170,7 +171,7 @@ object::
      >>> pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
      Pipeline(memory=None,
-              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
+              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))], verbose=False)
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[ -1.77484909e-19  ... 4.07058917e-18]]
@@ -192,7 +193,7 @@ object::
      >>> cached_pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
       Pipeline(memory=...,
-               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
+               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))], verbose=False)
      >>> print(cached_pipe.named_steps['reduce_dim'].components_)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[ -1.77484909e-19  ... 4.07058917e-18]]
@@ -246,7 +247,7 @@ and ``value`` is an estimator object::
     FeatureUnion(n_jobs=1,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
-                 transformer_weights=None)
+                 transformer_weights=None, verbose=False)
 
 
 Like pipelines, feature unions have a shorthand constructor called
@@ -261,7 +262,7 @@ and ignored by setting to ``None``::
     FeatureUnion(n_jobs=1,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', None)],
-                 transformer_weights=None)
+                 transformer_weights=None, verbose=False)
 
 .. topic:: Examples:
 

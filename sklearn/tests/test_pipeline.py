@@ -45,6 +45,7 @@ JUNK_FOOD_DOCS = (
 
 
 class NoFit(object):
+
     """Small class to test parameter dispatching.
     """
 
@@ -67,11 +68,13 @@ class NoTrans(NoFit):
 
 
 class NoInvTransf(NoTrans):
+
     def transform(self, X, y=None):
         return X
 
 
 class Transf(NoInvTransf):
+
     def transform(self, X, y=None):
         return X
 
@@ -87,6 +90,7 @@ class TransfFitParams(Transf):
 
 
 class Mult(BaseEstimator):
+
     def __init__(self, mult=1):
         self.mult = mult
 
@@ -109,6 +113,7 @@ class Mult(BaseEstimator):
 
 
 class FitParamT(BaseEstimator):
+
     """Mock classifier
     """
 
@@ -132,6 +137,7 @@ class FitParamT(BaseEstimator):
 
 
 class DummyTransf(Transf):
+
     """Transformer which store the column means"""
 
     def fit(self, X, y):
@@ -557,7 +563,7 @@ def test_set_pipeline_step_none():
                        'memory': None,
                        'm2__mult': 2,
                        'last__mult': 5,
-                       })
+                       'verbose': False})
 
     pipeline.set_params(m2=None)
     exp = 5
@@ -911,3 +917,82 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)
+
+
+def check_pipeline_verbosity_fit_predict(pipe_method):
+    # Test that the verbosity of pipeline is proper
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    pipe_method(X=None, y=None, clf__should_succeed=True)
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    lines = verbose_output.readlines()
+    assert_true('[Pipeline] (step 1 of 2) transf ...' in lines[0])
+    assert_true('[Pipeline] (step 2 of 2) clf ...' in lines[1])
+    assert_true('[Pipeline] Total time elapsed: ' in lines[2])
+
+
+def test_pipeline_fit_verbosity():
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())], verbose=True)
+    yield check_pipeline_verbosity_fit_predict, pipe.fit
+    yield check_pipeline_verbosity_fit_predict, pipe.fit_predict
+
+
+def check_pipeline_verbosity_fit_transform(pipe_method, last_was_none=False):
+    # Test that the verbosity of pipeline is proper
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    pipe_method(X=[[1, 2, 3], [4, 5, 6]], y=[[7], [8]])
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    lines = verbose_output.readlines()
+    assert_true('[Pipeline] (step 1 of 2) mult1 ...' in lines[0])
+    if last_was_none:
+        assert_true('[Pipeline] Step mult2 is NoneType ...' in lines[1])
+    else:
+        assert_true('[Pipeline] (step 2 of 2) mult2 ...' in lines[1])
+    assert_true('[Pipeline] Total time elapsed: ' in lines[2])
+
+
+def test_pipeline_verbosity_fit_transform():
+    pipe = Pipeline([('mult1', Mult(mult=1)), ('mult2', Mult(mult=2))],
+                    verbose=True)
+    yield check_pipeline_verbosity_fit_transform, pipe.fit_transform
+    pipe = Pipeline([('mult1', Mult(mult=1)), ('mult2', None)],
+                    verbose=True)
+    yield check_pipeline_verbosity_fit_transform, pipe.fit_transform, True
+
+
+def check_feature_union_verbosity(feature_union_method):
+    # Test that the verbosity of feature union is proper
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    feature_union_method(X=[[1, 2, 3], [4, 5, 6]], y=[[7], [8]])
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    lines = verbose_output.readlines()
+    assert_true('[FeatureUnion] (step 1 of 2) mult1 ...' in lines[0])
+    assert_true('[FeatureUnion] (step 2 of 2) mult2 ...' in lines[1])
+    assert_true('[FeatureUnion] Total time elapsed: ' in lines[2])
+
+
+def test_feature_union_verbosity():
+    union = FeatureUnion([('mult1', Mult(mult=1)), ('mult2', Mult(mult=2))],
+                         verbose=True)
+    yield check_feature_union_verbosity, union.fit
+    yield check_feature_union_verbosity, union.fit_transform
