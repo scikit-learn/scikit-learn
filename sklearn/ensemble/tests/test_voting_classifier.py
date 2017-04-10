@@ -300,7 +300,6 @@ def test_set_params():
                  eclf1.get_params()["lr"].get_params()['C'])
 
 
-
 def test_set_estimator_none():
     """VotingClassifier set_params should be able to set estimators as None"""
     # Test predict
