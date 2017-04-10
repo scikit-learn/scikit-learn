@@ -317,6 +317,12 @@ def test_set_estimator_none():
     eclf2.set_params(rf=None).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
+    assert_true(dict(eclf2.estimators)["rf"] is None)
+    assert_true(len(eclf2.estimators_) == 2)
+    assert_true(all([not isinstance(est, RandomForestClassifier) for est in
+                     eclf2.estimators_]))
+    assert_true(eclf2.get_params()["rf"] is None)
+
     eclf1.set_params(voting='soft').fit(X, y)
     eclf2.set_params(voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))

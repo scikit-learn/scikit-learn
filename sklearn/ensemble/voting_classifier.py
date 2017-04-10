@@ -278,18 +278,31 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         ----------
         params: keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
-            Estimators can be removed by setting them to None. In the following
-            example, the RandomForestClassifier is removed:
-            clf1 = LogisticRegression()
-            clf2 = RandomForestClassifier()
-            eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-            eclf.set_params(rf=None)
+            In addition, to setting the parameters of the ``VotingClassifier``,
+            the individual classifiers of the ``VotingClassifier`` can also be
+            set or replaced by setting them to None.
+
+        Examples
+        --------
+        # In this example, the RandomForestClassifier is removed
+        clf1 = LogisticRegression()
+        clf2 = RandomForestClassifier()
+        eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
+        eclf.set_params(rf=None)
 
         """
         super(VotingClassifier, self)._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):
+        """ Get the parameters of the VotingClassifier
+
+        Parameters
+        ----------
+        deep: bool
+            Setting it to True gets the various classifiers and the parameters
+            of the classifiers as well
+        """
         return super(VotingClassifier,
                      self)._get_params('estimators', deep=deep)
 
