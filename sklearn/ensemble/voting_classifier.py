@@ -13,14 +13,13 @@ classification estimators.
 
 import numpy as np
 
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.metaestimators import _BaseComposition
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight):
@@ -32,7 +31,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight):
     return estimator
 
 
-class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
+class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -44,7 +43,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        `self.estimators_`.
+        ``self.estimators_``. An estimator can be set to `None` using
+        ``set_params``.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -64,7 +64,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     Attributes
     ----------
     estimators_ : list of classifiers
-        The collection of fitted sub-estimators.
+        The collection of fitted sub-estimators as defined in ``estimators``
+        that are not `None`.
 
     classes_ : array-like, shape = [n_predictions]
         The classes labels.
@@ -102,10 +103,13 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1):
         self.estimators = estimators
-        self.named_estimators = dict(estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
+
+    @property
+    def named_estimators(self):
+        return dict(self.estimators)
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -150,11 +154,16 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         if sample_weight is not None:
             for name, step in self.estimators:
                 if not has_fit_parameter(step, 'sample_weight'):
-                    raise ValueError('Underlying estimator \'%s\' does not support'
-                                     ' sample weights.' % name)
+                    raise ValueError('Underlying estimator \'%s\' does not'
+                                     ' support sample weights.' % name)
+        names, clfs = zip(*self.estimators)
+        self._validate_names(names)
 
-        self.le_ = LabelEncoder()
-        self.le_.fit(y)
+        n_isnone = np.sum([clf is None for _, clf in self.estimators])
+        if n_isnone == len(self.estimators):
+            raise ValueError('All estimators are None. At least one is '
+                             'required to be a classifier!')
+        self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
 
@@ -162,10 +171,18 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                    sample_weight)
-                    for _, clf in self.estimators)
+                                                 sample_weight)
+                for clf in clfs if clf is not None)
 
         return self
+
+    @property
+    def _weights_not_none(self):
+        """Get the weights of not `None` estimators"""
+        if self.weights is None:
+            return None
+        return [w for est, w in zip(self.estimators,
+                                    self.weights) if est[1] is not None]
 
     def predict(self, X):
         """ Predict class labels for X.
@@ -188,11 +205,10 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            maj = np.apply_along_axis(lambda x:
-                                      np.argmax(np.bincount(x,
-                                                weights=self.weights)),
-                                      axis=1,
-                                      arr=predictions.astype('int'))
+            maj = np.apply_along_axis(
+                lambda x: np.argmax(
+                    np.bincount(x, weights=self._weights_not_none)),
+                axis=1, arr=predictions.astype('int'))
 
         maj = self.le_.inverse_transform(maj)
 
@@ -208,7 +224,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             raise AttributeError("predict_proba is not available when"
                                  " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
-        avg = np.average(self._collect_probas(X), axis=0, weights=self.weights)
+        avg = np.average(self._collect_probas(X), axis=0,
+                         weights=self._weights_not_none)
         return avg
 
     @property
@@ -252,17 +269,42 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         else:
             return self._predict(X)
 
+    def set_params(self, **params):
+        """ Setting the parameters for the voting classifier
+
+        Valid parameter keys can be listed with get_params().
+
+        Parameters
+        ----------
+        params: keyword arguments
+            Specific parameters using e.g. set_params(parameter_name=new_value)
+            In addition, to setting the parameters of the ``VotingClassifier``,
+            the individual classifiers of the ``VotingClassifier`` can also be
+            set or replaced by setting them to None.
+
+        Examples
+        --------
+        # In this example, the RandomForestClassifier is removed
+        clf1 = LogisticRegression()
+        clf2 = RandomForestClassifier()
+        eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
+        eclf.set_params(rf=None)
+
+        """
+        super(VotingClassifier, self)._set_params('estimators', **params)
+        return self
+
     def get_params(self, deep=True):
-        """Return estimator parameter names for GridSearch support"""
-        if not deep:
-            return super(VotingClassifier, self).get_params(deep=False)
-        else:
-            out = super(VotingClassifier, self).get_params(deep=False)
-            out.update(self.named_estimators.copy())
-            for name, step in six.iteritems(self.named_estimators):
-                for key, value in six.iteritems(step.get_params(deep=True)):
-                    out['%s__%s' % (name, key)] = value
-            return out
+        """ Get the parameters of the VotingClassifier
+
+        Parameters
+        ----------
+        deep: bool
+            Setting it to True gets the various classifiers and the parameters
+            of the classifiers as well
+        """
+        return super(VotingClassifier,
+                     self)._get_params('estimators', deep=deep)
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
