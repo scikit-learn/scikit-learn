@@ -37,9 +37,9 @@ except ImportError:
 import numpy as np
 from scipy.io.matlab import loadmat
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
 from .base import _pkl_filepath
-from ..utils import check_random_state
+from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
 
@@ -61,7 +61,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     shuffle : boolean, optional
         If True the order of the dataset is shuffled to avoid having
@@ -71,19 +71,23 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : optional, integer or RandomState object
-        The seed or the random number generator used to shuffle the
-        data.
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
     An object with the following attributes:
 
     data : numpy array of shape (400, 4096)
-        Each row corresponds to a ravelled face image of original size 64 x 64 pixels.
+        Each row corresponds to a ravelled face image of original size
+        64 x 64 pixels.
 
     images : numpy array of shape (400, 64, 64)
-        Each row is a face image corresponding to one of the 40 subjects of the dataset.
+        Each row is a face image corresponding to one of the 40 subjects
+        of the dataset.
 
     target : numpy array of shape (400, )
         Labels associated to each face image. Those labels are ranging from

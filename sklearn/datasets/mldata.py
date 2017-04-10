@@ -23,7 +23,8 @@ import scipy as sp
 from scipy import io
 from shutil import copyfileobj
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
@@ -77,7 +78,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     data_home : optional, default: None
         Specify another download and cache folder for the data sets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     Returns
     -------

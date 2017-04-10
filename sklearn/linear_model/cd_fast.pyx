@@ -217,8 +217,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef floating *R_data = <floating*> R.data
     cdef floating *XtA_data = <floating*> XtA.data
 
-    if alpha == 0:
-        warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
+    if alpha == 0 and beta == 0:
+        warnings.warn("Coordinate descent with no regularization may lead to unexpected"
             " results and is discouraged.")
 
     with nogil:
