@@ -683,7 +683,7 @@ class TSNE(BaseEstimator):
             warnings.warn("The default learning rate of TSNE has changed " +
                           "from 1000 to 200 in sklearn 0.19. Set the " +
                           "learning rate explicitely to avoid this message.")
-            learning_rate = 200.0
+            self.learning_rate = 200.0
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
