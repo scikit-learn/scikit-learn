@@ -1354,6 +1354,7 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
 
     return X, t
 
+
 def make_trefoil_knot(n_samples=100, noise=0.0, random_state=None):
     """Generate a trefoil knot dataset.
 
@@ -1395,6 +1396,7 @@ def make_trefoil_knot(n_samples=100, noise=0.0, random_state=None):
     t = np.squeeze(t)
 
     return X, t
+
 
 def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
                             n_features=2, n_classes=3,
