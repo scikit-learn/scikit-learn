@@ -537,7 +537,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     bound = self._perplexity_precomp_distr(X, doc_topics_distr,
                                                            sub_sampling=False)
                     if self.verbose:
-                        print('iteration: %d of max_iters: %d, perplexity: %.4f'
+                        print('iteration: %d of max_iter: %d, perplexity: %.4f'
                               % (i + 1, max_iter, bound))
 
                     if last_bound and abs(last_bound - bound) < self.perp_tol:
