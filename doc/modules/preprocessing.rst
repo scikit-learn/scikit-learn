@@ -10,6 +10,9 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
+Refer to :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` for a
+comparison of the different scalers, transformers, and normalizers.
+
 .. _preprocessing_scaler:
 
 Standardization, or mean removal and variance scaling
@@ -278,6 +281,10 @@ Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's maximum and minimum ---
 corresponding to the 1 - 1e-7 and 1e-7 quantiles, respectively --- do not
 become infinite under the transformation.
+
+:class:`QuantileTransformer` provides a ``smoothing_noise`` parameter to make
+the interpretation more intuitive when manually checking the transformation. See
+:ref:`sphx_glr_auto_examples_preprocessing_plot_smoothing_noise_quantile_transform.py`
 
 .. _preprocessing_normalization:
 

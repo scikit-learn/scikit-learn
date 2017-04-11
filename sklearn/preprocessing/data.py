@@ -120,10 +120,14 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     To avoid memory copy the caller should pass a CSC matrix.
 
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
+
     See also
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
@@ -244,6 +248,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     See also
     --------
     minmax_scale: Equivalent function without the object oriented API.
+
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -400,6 +409,11 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
@@ -492,6 +506,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     :class:`sklearn.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
+
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
     """  # noqa
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
@@ -694,6 +713,11 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     See also
     --------
     maxabs_scale: Equivalent function without the object oriented API.
+
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
     """
 
     def __init__(self, copy=True):
@@ -821,6 +845,11 @@ def maxabs_scale(X, axis=0, copy=True):
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
 
@@ -913,7 +942,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    See examples/preprocessing/plot_robust_scaling.py for an example.
+    See examples/preprocessing/plot_all_scaling.py for an example.
 
     https://en.wikipedia.org/wiki/Median_(statistics)
     https://en.wikipedia.org/wiki/Interquartile_range
@@ -1062,6 +1091,9 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
     if he/she expects the materialized dense array to fit in memory.
 
     To avoid memory copy the caller should pass a CSR matrix.
+
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
 
     See also
     --------
@@ -1279,6 +1311,11 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
     """
     if norm not in ('l1', 'l2', 'max'):
         raise ValueError("'%s' is not a supported norm" % norm)
@@ -1361,6 +1398,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
     -----
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
+
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
 
     See also
     --------
@@ -1994,6 +2034,14 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     RobustScaler : perform robust standardization that removes the influence
     of outliers but does not put outliers and inliers on the same scale.
 
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
+
+    See examples/preprocessing/plot_smoothing_noise_quantile_transform.py for
+    an illustration of the ``smoothing_noise`` parameter use.
+
     """
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
@@ -2401,6 +2449,15 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     robust_scale : perform robust standardization that removes the influence
     of outliers but does not put outliers and inliers on the same scale.
+
+    Notes
+    -----
+    See examples/preprocessing/plot_all_scaling.py for a comparison of the
+    different scalers, transformers, and normalizers.
+
+    See examples/preprocessing/plot_smoothing_noise_quantile_transform.py for
+    an illustration of the ``smoothing_noise`` parameter use.
+
     """
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
