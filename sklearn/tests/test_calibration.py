@@ -248,7 +248,8 @@ def test_calibration_curve():
     prob_true_unnormalized, prob_pred_unnormalized = \
         calibration_curve(y_true, y_pred * 2, normalize=True, n_bins=2)
     prob_true_weighted, prob_pred_weighted = \
-        calibration_curve(y_true, y_pred, n_bins=2, sample_weight=sample_weight)
+        calibration_curve(y_true, y_pred, n_bins=2,
+                          sample_weight=sample_weight)
     assert_equal(len(prob_true), 2)
     assert_equal(len(prob_true), len(prob_pred))
     assert_almost_equal(prob_true, [0, 1])
