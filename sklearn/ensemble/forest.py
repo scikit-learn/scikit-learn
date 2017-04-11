@@ -90,7 +90,7 @@ def _get_class_balance_data(y):
 
     else:
         classes, class_counts, class_indices = [], [], []
-        for i in xrange(y.shape[1]):
+        for i in range(y.shape[1]):
             y_i = y[:, i]
             classes_i, class_counts_i = np.unique(y_i, return_counts=True)
             class_indices_i = [np.nonzero(y == cls)[0] for cls in classes_i]
@@ -123,7 +123,7 @@ def _generate_balanced_sample_indices(random_state, balance_data):
     random_instance = check_random_state(random_state)
     sample_indices = np.empty(n_class*min_count, dtype=int)
 
-    for i, cls, count, indices in zip(xrange(n_class), classes, class_counts, class_indices):
+    for i, cls, count, indices in zip(range(n_class), classes, class_counts, class_indices):
         random_instances = random_instance.randint(0, count, min_count)
         random_indices = indices[random_instances]
         sample_indices[i*min_count:(i+1)*min_count] = random_indices
