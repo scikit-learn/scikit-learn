@@ -81,35 +81,40 @@ def _generate_sample_indices(random_state, n_samples):
 
     return sample_indices
 
+
 def _get_class_balance_data(y):
     """Private function used to fit function."""
     if len(y.shape) == 1:
         classes, class_counts = np.unique(y, return_counts=True)
-        class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
+        class_indices = [np.nonzero(y == cls)[0] for cls in classes]
 
     else:
-        classes, class_counts, class_indices = [],[],[]
+        classes, class_counts, class_indices = [], [], []
         for i in xrange(y.shape[1]):
-            y_i = y[:,i]
+            y_i = y[:, i]
             classes_i, class_counts_i = np.unique(y_i, return_counts=True)
-            class_indices_i = [ np.nonzero(y==cls)[0] for cls in classes_i ]
+            class_indices_i = [np.nonzero(y == cls)[0] for cls in classes_i]
             classes_i = [(i, cls) for cls in classes_i]
-            
+
             classes.extend(classes_i)
             class_counts.extend(class_counts_i)
             class_indices.extend(class_indices_i)
 
     return classes, class_counts, class_indices
 
+
 def _generate_balanced_sample_indices(random_state, balance_data):
     """Private function used to _parallel_build_trees function.
-    
-    Generates samples according to the balanced random forest method [1] (adapted for multi-class)
-    i.e. a bootstrap sample from the minority class and a random sample with replacement of the same size from all other classes.
-    
+
+    Generates samples according to the balanced random forest method [1],
+        adapted for multi-class, i.e. a bootstrap sample from the minority
+        class and a random sample with replacement of the same size from all
+        other classes.
+
     References
     ----------
-    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to Learn Imbalanced Data", Tech. Rep. 666, 2004
+    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to
+           Learn Imbalanced Data", Tech. Rep. 666, 2004
     """
     classes, class_counts, class_indices = balance_data
     min_count = np.min(class_counts)
@@ -118,12 +123,13 @@ def _generate_balanced_sample_indices(random_state, balance_data):
     random_instance = check_random_state(random_state)
     sample_indices = np.empty(n_class*min_count, dtype=int)
 
-    for i,cls, count, indices in zip(xrange(n_class), classes, class_counts, class_indices):
+    for i, cls, count, indices in zip(xrange(n_class), classes, class_counts, class_indices):
         random_instances = random_instance.randint(0, count, min_count)
-        random_indices =  indices[random_instances]
-        sample_indices[i*min_count:(i+1)*min_count]=random_indices
-    
+        random_indices = indices[random_instances]
+        sample_indices[i*min_count:(i+1)*min_count] = random_indices
+
     return sample_indices
+
 
 def _generate_unsampled_indices(random_state, n_samples):
     """Private function used to forest._set_oob_score function."""
@@ -257,7 +263,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               backend="threading")(
             delayed(parallel_helper)(tree, 'decision_path', X,
-                                      check_input=False)
+                                     check_input=False)
             for tree in self.estimators_)
 
         n_nodes = [0]
@@ -377,7 +383,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              backend="threading")(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight, balance_data=balance_data)
+                    verbose=self.verbose, class_weight=self.class_weight,
+                    balance_data=balance_data)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -1358,7 +1365,8 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or
+        None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
