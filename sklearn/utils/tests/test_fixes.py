@@ -6,6 +6,7 @@
 import pickle
 import numpy as np
 import math
+import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
@@ -18,6 +19,8 @@ from sklearn.utils.fixes import divide, expit
 from sklearn.utils.fixes import astype
 from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import norm
+from sklearn.utils.fixes import _csr_to_array_fallback
+from sklearn.utils.fixes import sp_version
 
 
 def test_expit():
@@ -91,3 +94,20 @@ def test_norm():
     assert_equal((), norm(X).shape)
     assert_equal((3,), norm(X, axis=0).shape)
     assert_equal((4,), norm(X, axis=1).shape)
+
+
+def test_csr_to_array_fallback():
+    X = np.random.RandomState(42).rand(100, 10)
+    X_sp = sp.csr_matrix(X)
+    X_sp_dense = _csr_to_array_fallback(X_sp)
+    assert_array_equal(X, X_sp_dense)
+    if sp_version > (0, 12, 0):
+        args = {'random_state': 43}
+    else:
+        # random state not supported by scipy.sparse.rand
+        args = {}
+
+    X_sp = sp.rand(1000, 1000, format='csr', **args)
+    X = X_sp.toarray()
+    X_2 = _csr_to_array_fallback(X_sp)
+    assert_array_equal(X, X_2)

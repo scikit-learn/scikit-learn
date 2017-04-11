@@ -20,7 +20,7 @@ from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
 
 from . import check_random_state
-from .fixes import np_version, sp_version
+from .fixes import np_version, sp_version, _csr_to_array_fallback
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
@@ -172,24 +172,6 @@ def density(w, **kwargs):
     else:
         d = 0 if w is None else float((w != 0).sum()) / w.size
     return d
-
-
-def _csr_to_array_fallback(X):
-    """ This provides the equivalent functionality to
-       csr_matrix.toarray()
-    and provides a fix for scipy versions <1.0.0 where
-    the above command fails for arrays with more than 2**31
-    elements.
-    """
-    if X.format != 'csr':
-        raise ValueError('Only CSR sparse arrays are supported')
-    row_indices = np.zeros(len(X.indices), dtype='int32')
-    indptr = X.indptr
-    for idx in range(len(indptr) - 1):
-        row_indices[indptr[idx]:indptr[idx+1]] = idx
-    Y = np.zeros(X.shape, dtype=X.dtype)
-    Y[row_indices, X.indices] = X.data
-    return Y
 
 
 def safe_sparse_dot(a, b, dense_output=False):

@@ -408,3 +408,19 @@ if 'axis' not in signature(np.linalg.norm).parameters:
 
 else:
     norm = np.linalg.norm
+
+
+def _csr_to_array_fallback(X):
+    """ This provides the equivalent functionality to
+       csr_matrix.toarray()
+    and provides a fix for scipy versions <1.0.0 where
+    the above command fails for arrays with more than 2**31
+    elements.
+    """
+    row_indices = np.zeros(len(X.indices), dtype='int32')
+    indptr = X.indptr
+    for idx in range(len(indptr) - 1):
+        row_indices[indptr[idx]:indptr[idx+1]] = idx
+    Y = np.zeros(X.shape, dtype=X.dtype)
+    Y[row_indices, X.indices] = X.data
+    return Y
