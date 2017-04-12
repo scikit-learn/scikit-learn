@@ -1367,8 +1367,8 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or
-        None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample",
+        or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1378,13 +1378,15 @@ class ExtraTreesClassifier(ForestClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-        The "balanced_subsample" mode is the same as "balanced" except that weights are
-        computed based on the bootstrap sample for every tree grown.
+        The "balanced_subsample" mode is the same as "balanced" except that
+        weights are computed based on the bootstrap sample for every tree
+        grown.
 
         For multi-output, the weights of each column of y will be multiplied.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
+
 
     Attributes
     ----------
