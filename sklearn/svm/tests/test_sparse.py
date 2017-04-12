@@ -181,7 +181,7 @@ def test_error():
     Y2 = Y[:-1]  # wrong dimensions for labels
     assert_raises(ValueError, clf.fit, X_sp, Y2)
 
-    clf = svm.SVC()
+    clf = svm.SVC(gamma="scale")
     clf.fit(X_sp, Y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -238,7 +238,7 @@ def test_weight():
     X_ = sparse.csr_matrix(X_)
     for clf in (linear_model.LogisticRegression(),
                 svm.LinearSVC(random_state=0),
-                svm.SVC()):
+                svm.SVC(gamma="scale")):
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[:180], y_[:180])
         y_pred = clf.predict(X_[180:])
@@ -247,7 +247,7 @@ def test_weight():
 
 def test_sample_weights():
     # Test weights on individual samples
-    clf = svm.SVC()
+    clf = svm.SVC(gamma="scale")
     clf.fit(X_sp, Y)
     assert_array_equal(clf.predict([X[2]]), [1.])
 

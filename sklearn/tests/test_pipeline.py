@@ -166,7 +166,7 @@ def test_pipeline_init():
     repr(pipe)
 
     # Test with two objects
-    clf = SVC()
+    clf = SVC(gamma="scale")
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
@@ -844,7 +844,7 @@ def test_pipeline_wrong_memory():
     y = iris.target
     # Define memory as an integer
     memory = 1
-    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
+    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC(gamma="scale"))],
                            memory=memory)
     assert_raises_regex(ValueError, "'memory' should either be a string or a"
                         " joblib.Memory instance, got 'memory=1' instead.",

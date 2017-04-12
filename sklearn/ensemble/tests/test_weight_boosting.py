@@ -287,7 +287,7 @@ def test_base_estimator():
     clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(gamma="scale"), algorithm="SAMME")
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
@@ -302,7 +302,7 @@ def test_base_estimator():
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(gamma="scale"), algorithm="SAMME")
     assert_raises_regexp(ValueError, "worse than random",
                          clf.fit, X_fail, y_fail)
 
