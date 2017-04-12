@@ -123,7 +123,10 @@ def _generate_balanced_sample_indices(random_state, balance_data):
     random_instance = check_random_state(random_state)
     sample_indices = np.empty(n_class*min_count, dtype=int)
 
-    for i, cls, count, indices in zip(range(n_class), classes, class_counts, class_indices):
+    for i, cls, count, indices in zip(range(n_class),
+                                      classes,
+                                      class_counts,
+                                      class_indices):
         random_instances = random_instance.randint(0, count, min_count)
         random_indices = indices[random_instances]
         sample_indices[i*min_count:(i+1)*min_count] = random_indices
@@ -158,7 +161,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         if balance_data is None:
             indices = _generate_sample_indices(tree.random_state, n_samples)
         else:
-            indices = _generate_balanced_sample_indices(tree.random_state, balance_data)
+            indices = _generate_balanced_sample_indices(tree.random_state,
+                                                        balance_data)
 
         sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
@@ -326,8 +330,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.n_outputs_ = y.shape[1]
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
-#        if self.balanced and self.n_outputs_ > 1:
-#            raise NotImplementedError("Multi-output balanced random forest is not impemented.")
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
