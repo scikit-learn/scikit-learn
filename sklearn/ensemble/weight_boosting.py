@@ -113,7 +113,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if sample_weight is None:
             # Initialize weights to 0
-            sample_weight = np.zeros(X.shape[0], dtype=np.float64)
+            sample_weight = np.ones(X.shape[0], dtype=np.float64)
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
 
