@@ -81,35 +81,40 @@ def _generate_sample_indices(random_state, n_samples):
 
     return sample_indices
 
+
 def _get_class_balance_data(y):
     """Private function used to fit function."""
     if len(y.shape) == 1:
         classes, class_counts = np.unique(y, return_counts=True)
-        class_indices = [ np.nonzero(y==cls)[0] for cls in classes ]
+        class_indices = [np.nonzero(y == cls)[0] for cls in classes]
 
     else:
-        classes, class_counts, class_indices = [],[],[]
-        for i in xrange(y.shape[1]):
-            y_i = y[:,i]
+        classes, class_counts, class_indices = [], [], []
+        for i in range(y.shape[1]):
+            y_i = y[:, i]
             classes_i, class_counts_i = np.unique(y_i, return_counts=True)
-            class_indices_i = [ np.nonzero(y==cls)[0] for cls in classes_i ]
+            class_indices_i = [np.nonzero(y == cls)[0] for cls in classes_i]
             classes_i = [(i, cls) for cls in classes_i]
-            
+
             classes.extend(classes_i)
             class_counts.extend(class_counts_i)
             class_indices.extend(class_indices_i)
 
     return classes, class_counts, class_indices
 
+
 def _generate_balanced_sample_indices(random_state, balance_data):
     """Private function used to _parallel_build_trees function.
-    
-    Generates samples according to the balanced random forest method [1] (adapted for multi-class)
-    i.e. a bootstrap sample from the minority class and a random sample with replacement of the same size from all other classes.
-    
+
+    Generates samples according to the balanced random forest method [1],
+        adapted for multi-class, i.e. a bootstrap sample from the minority
+        class and a random sample with replacement of the same size from all
+        other classes.
+
     References
     ----------
-    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to Learn Imbalanced Data", Tech. Rep. 666, 2004
+    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to
+           Learn Imbalanced Data", Tech. Rep. 666, 2004
     """
     classes, class_counts, class_indices = balance_data
     min_count = np.min(class_counts)
@@ -118,12 +123,14 @@ def _generate_balanced_sample_indices(random_state, balance_data):
     random_instance = check_random_state(random_state)
     sample_indices = np.empty(n_class*min_count, dtype=int)
 
-    for i,cls, count, indices in zip(xrange(n_class), classes, class_counts, class_indices):
+    for i, cls, count, indices in zip(range(n_class), classes, class_counts,
+                                      class_indices):
         random_instances = random_instance.randint(0, count, min_count)
-        random_indices =  indices[random_instances]
-        sample_indices[i*min_count:(i+1)*min_count]=random_indices
-    
+        random_indices = indices[random_instances]
+        sample_indices[i*min_count:(i+1)*min_count] = random_indices
+
     return sample_indices
+
 
 def _generate_unsampled_indices(random_state, n_samples):
     """Private function used to forest._set_oob_score function."""
@@ -152,7 +159,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         if balance_data is None:
             indices = _generate_sample_indices(tree.random_state, n_samples)
         else:
-            indices = _generate_balanced_sample_indices(tree.random_state, balance_data)
+            indices = _generate_balanced_sample_indices(tree.random_state,
+                                                        balance_data)
 
         sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
@@ -257,7 +265,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               backend="threading")(
             delayed(parallel_helper)(tree, 'decision_path', X,
-                                      check_input=False)
+                                     check_input=False)
             for tree in self.estimators_)
 
         n_nodes = [0]
@@ -272,8 +280,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The training input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            The training input samples. Internally, its dtype will be converted
+            to ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
@@ -320,8 +328,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.n_outputs_ = y.shape[1]
 
         y, expanded_class_weight = self._validate_y_class_weight(y)
-#        if self.balanced and self.n_outputs_ > 1:
-#            raise NotImplementedError("Multi-output balanced random forest is not impemented.")
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -367,7 +373,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                             random_state=random_state)
                 trees.append(tree)
 
-            balance_data = _get_class_balance_data(y) if self.balanced else None
+            balance_data = _get_class_balance_data(y)\
+                if self.balanced else None
 
             # Parallel loop: we use the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
@@ -377,7 +384,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              backend="threading")(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight, balance_data=balance_data)
+                    verbose=self.verbose, class_weight=self.class_weight,
+                    balance_data=balance_data)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -535,7 +543,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
         for k in range(self.n_outputs_):
-            classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
+            classes_k, y_store_unique_indices[:, k] = np.unique(
+                    y[:, k], return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
         y = y_store_unique_indices
@@ -545,16 +554,18 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample". Given "%s".'
+                                     '"balanced" and "balanced_subsample". '
+                                     'Given "%s".'
                                      % self.class_weight)
                 if self.warm_start:
-                    warn('class_weight presets "balanced" or "balanced_subsample" are '
+                    warn('class_weight presets "balanced" or '
+                         '"balanced_subsample" are '
                          'not recommended for warm_start if the fitted data '
                          'differs from the full dataset. In order to use '
-                         '"balanced" weights, use compute_class_weight("balanced", '
-                         'classes, y). In place of y you can use a large '
-                         'enough sample of the full training set target to '
-                         'properly estimate the class frequency '
+                         '"balanced" weights, use compute_class_weight('
+                         '"balanced", classes, y). In place of y you can use a'
+                         'large enough sample of the full training set target '
+                         'to properly estimate the class frequency '
                          'distributions. Pass the resulting weights as the '
                          'class_weight parameter.')
 
@@ -610,8 +621,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
-        class in a leaf.
+        class probability of a single tree is the fraction of samples of the
+        same class in a leaf.
 
         Parameters
         ----------
@@ -1358,7 +1369,8 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or
+        None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1368,8 +1380,9 @@ class ExtraTreesClassifier(ForestClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-        The "balanced_subsample" mode is the same as "balanced" except that weights are
-        computed based on the bootstrap sample for every tree grown.
+        The "balanced_subsample" mode is the same as "balanced" except that
+        weights are computed based on the bootstrap sample for every tree
+        grown.
 
         For multi-output, the weights of each column of y will be multiplied.
 
