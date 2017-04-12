@@ -510,7 +510,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         return 1. / (1. + np.exp(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5, 
+def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
                       sample_weight=None):
     """Compute true and predicted probabilities for a calibration curve.
 

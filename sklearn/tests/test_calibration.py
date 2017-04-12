@@ -265,8 +265,8 @@ def test_calibration_curve():
 
     # the sum of sample_weight should not be less than zero and therefore
     # should not be accepted
-    assert_raises(ValueError, calibration_curve, [0.0, 1.0], [0.1, 0.8], 
-                  normalize=True, sample_weight=[-0.7, -1.1])
+    assert_raises(ValueError, calibration_curve, [0.0, 1.0], [0.1, 0.8],
+                  normalize=False, sample_weight=[-0.7, -1.1])
 
 
 def test_calibration_nan_imputer():
