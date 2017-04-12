@@ -112,13 +112,10 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                          y_numeric=is_regressor(self))
 
         if sample_weight is None:
-            # Initialize weights to 1 / n_samples
-            sample_weight = np.empty(X.shape[0], dtype=np.float64)
-            sample_weight[:] = 1. / X.shape[0]
+            # Initialize weights to 0
+            sample_weight = np.zeros(X.shape[0], dtype=np.float64)
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
-            # Normalize existing weights
-            sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
 
             # Check that the sample weights sum is positive
             if sample_weight.sum() <= 0:
