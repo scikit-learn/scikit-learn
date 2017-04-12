@@ -6,24 +6,27 @@
 Compare the effect of different scalers on data with outliers
 =============================================================
 
-The feature 0 and feature 5 of california housing dataset are outside
-of the typical range [0, 1] and contain large outliers. These two
-characteristics lead to difficulties to visualize the data and, more
-importantly, they can degrade the fitting procedure of most of machine
-learning algorithms.
+The feature 0 and feature 5 of California housing dataset are outside of the
+typical range [0, 1] and contain large outliers. These two characteristics lead
+to difficulties to visualize the data and, more importantly, they can degrade
+the fitting procedure of most of machine learning algorithms.
 
-Indeed, data spread in the standard range [0, 1] is a requirement for
-a large number of machine learning algorithms such as metrics-based
-algorithms or algorithms using gradient-based optimization.
+Indeed many estimators assume that each feature takes values spread around or
+close to zero and more importantly that all features vary on comparable
+scales. In particular metric-based and gradient-based estimators often assume
+approximately standardized data (centered features with unit variances). A
+notable exception are decision tree-based estimators that are robust to
+arbitrary scaling of the data.
 
-This example uses different scalers, transformers and normalizers to
-bring the data within a smaller range. Scalers are linear
-transformations and differ from each other depending of the subset of
-data which is considered to define the estimate using during
-scaling. ``QuantileTransformer`` provides a non-linear transformation
-in which distances between marginal outliers and inliers are
-shrunk. Unlinke the previous transformation, normalization refers to a
-per sample transformation instead of a per feature transformation.
+This example uses different scalers, transformers and normalizers to bring the
+data within a pre-defined range.
+
+Scalers are linear (or more exactly affine) transformations and differ from
+each other in the way to estimate the parameters used to shift and scale each
+feature. ``QuantileTransformer`` provides a non-linear transformation in which
+distances between marginal outliers and inliers are shrunk. Unlike the
+previous transformations, normalization refers to a per sample transformation
+instead of a per feature transformation.
 
 """
 

@@ -267,10 +267,13 @@ non-parametric transformation based the quantile function to map the data to a
 uniform distribution with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
+  >>> from sklearn.model_selection import train_test_split
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
   >>> quantile_transformer = preprocessing.QuantileTransformer()
-  >>> X_trans = quantile_transformer.fit_transform(iris.data)
+  >>> X_train_trans = quantile_transformer.fit_transform(X_train)
+  >>> X_test_trans = quantile_transformer.transform(X_test)
 
 It is also possible to map the transformed data to a normal distribution by
 setting ``output_distribution='normal'``::
@@ -278,8 +281,8 @@ setting ``output_distribution='normal'``::
   >>> X_trans = preprocessing.quantile_transform(X, output_distribution='normal')
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
-normal output is clipped so that the input's maximum and minimum ---
-corresponding to the 1 - 1e-7 and 1e-7 quantiles, respectively --- do not
+normal output is clipped so that the input's minimum and maximum ---
+corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively --- do not
 become infinite under the transformation.
 
 :class:`QuantileTransformer` provides a ``smoothing_noise`` parameter to make

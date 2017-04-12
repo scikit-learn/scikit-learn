@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
@@ -1103,7 +1104,8 @@ def test_quantile_transform_add_noise_subsamples():
     transformer.fit(X)
     # check that the feature values associated to quantiles are strictly
     # monitically increasing as suggested by the 'interp' function from numpy
-    assert_true(np.all(np.diff(transformer.quantiles_) > 0))
+    diff_quantiles = np.diff(transformer.quantiles_, axis=0)
+    map(assert_greater, diff_quantiles, [0] * len(diff_quantiles))
     # iris dataset
     X = iris.data
     transformer = QuantileTransformer(n_quantiles=1000, smoothing_noise=1e-7,
@@ -1114,7 +1116,9 @@ def test_quantile_transform_add_noise_subsamples():
     # check  that  the  feature  values associated  to  quantiles  are
     # strictly  monitically increasing  as suggested  by the  'interp'
     # function from numpy
-    assert_true(np.all(np.diff(transformer.quantiles_, axis=0) > 0))
+    diff_quantiles = np.diff(transformer.quantiles_, axis=0)
+    for dq in diff_quantiles.T:
+        map(assert_greater, dq, [0] * len(dq))
 
 
 def test_quantile_transform_numpy_interp_behaviour():
@@ -1934,13 +1938,10 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
-def test_function_valid_axis():
+def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
                   [2.6, 4.1, 2.3, 9.5, 0.1]])
 
-    func_list = [quantile_transform]
-
-    for func in func_list:
-        assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
-                            ". Got axis=2", func, X.T, axis=2)
+    assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
+                        ". Got axis=2", quantile_transform, X.T, axis=2)

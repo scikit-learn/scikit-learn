@@ -2027,12 +2027,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     See also
     --------
     quantile_transform : Equivalent function without the object oriented API.
-
     StandardScaler : perform standardization that is faster, but less robust
-    to outliers.
-
+        to outliers.
     RobustScaler : perform robust standardization that removes the influence
-    of outliers but does not put outliers and inliers on the same scale.
+        of outliers but does not put outliers and inliers on the same scale.
 
     Notes
     -----
@@ -2441,14 +2439,12 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     See also
     --------
     QuantileTransformer : Performs quantile-based scaling using the
-    ``Transformer`` API (e.g. as part of a preprocessing
-    :class:`sklearn.pipeline.Pipeline`).
-
+        ``Transformer`` API (e.g. as part of a preprocessing
+        :class:`sklearn.pipeline.Pipeline`).
     scale : perform standardization that is faster, but less robust
-    to outliers.
-
+        to outliers.
     robust_scale : perform robust standardization that removes the influence
-    of outliers but does not put outliers and inliers on the same scale.
+        of outliers but does not put outliers and inliers on the same scale.
 
     Notes
     -----

@@ -85,6 +85,7 @@ qt = QuantileTransformer(n_quantiles=N_QUANTILES,
 qt.fit(X)
 plot_transform_feat_val(ax2, qt, 'With smoothing')
 plt.tight_layout()
+plt.show()
 
 ###############################################################################
 # By default, the ``QuantileTransformer`` does not apply any smoothing
@@ -104,5 +105,3 @@ plt.tight_layout()
 # computation of the quantiles. The parameter ``smoothing_noise`` offers
 # this possibility as illustrated above.
 # In this case, the marker is centered at the median as expected.
-
-plt.show()
