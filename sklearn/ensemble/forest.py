@@ -144,7 +144,7 @@ def _generate_unsampled_indices(random_state, n_samples):
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None, balance_data=None):
+                          verbose=0, class_weight=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -156,11 +156,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        if balance_data is None:
-            indices = _generate_sample_indices(tree.random_state, n_samples)
-        else:
+        if class_weight == 'balanced_bootstraping':
             indices = _generate_balanced_sample_indices(tree.random_state,
                                                         balance_data)
+        else:
+            indices = _generate_sample_indices(tree.random_state, n_samples)
 
         sample_counts = bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
@@ -198,8 +198,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None,
-                 balanced=False):
+                 class_weight=None):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -212,7 +211,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.verbose = verbose
         self.warm_start = warm_start
         self.class_weight = class_weight
-        self.balanced = balanced
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
@@ -374,7 +372,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 trees.append(tree)
 
             balance_data = _get_class_balance_data(y)\
-                if self.balanced else None
+                if class_weight == 'balanced_bootstraping' else None
 
             # Parallel loop: we use the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
@@ -384,8 +382,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              backend="threading")(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight,
-                    balance_data=balance_data)
+                    verbose=self.verbose, class_weight=self.class_weight)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -468,8 +465,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None,
-                 balanced=False):
+                 class_weight=None):
 
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -481,8 +477,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            class_weight=class_weight,
-            balanced=balanced)
+            class_weight=class_weight)
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
@@ -1015,8 +1010,7 @@ class RandomForestClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None,
-                 balanced=False):
+                 class_weight=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -1031,8 +1025,7 @@ class RandomForestClassifier(ForestClassifier):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            class_weight=class_weight,
-            balanced=balanced)
+            class_weight=class_weight)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1369,8 +1362,8 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or
-        None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample",
+        "balanced_bootstraping" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1388,6 +1381,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
+
+        The "balanced_bootstraping" mode bootstraps the samples to generate
+        each tree acording to the balanced random forest method [2].
 
     Attributes
     ----------
@@ -1433,6 +1429,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
+
+    .. [2] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to
+           Learn Imbalanced Data", Tech. Rep. 666, 2004
 
     See also
     --------
