@@ -510,8 +510,8 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         return 1. / (1. + np.exp(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False,
-                      n_bins=5):
+def calibration_curve(y_true, y_prob, normalize=False, n_bins=5, 
+                      sample_weight=None):
     """Compute true and predicted probabilities for a calibration curve.
 
      Calibration curves may also be referred to as reliability diagrams.
@@ -526,9 +526,6 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False,
     y_prob : array, shape (n_samples,)
         Probabilities of the positive class.
 
-    sample_weight : array-like, shape=(n_samples,), optional, default: None
-            Weights. If set to None, no sample weights will be applied.
-
     normalize : bool, optional, default=False
         Whether y_prob needs to be normalized into the bin [0, 1], i.e. is not
         a proper probability. If True, the smallest value in y_prob is mapped
@@ -536,6 +533,9 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False,
 
     n_bins : int
         Number of bins. A bigger number requires more data.
+
+    sample_weight : array-like, shape=(n_samples,), optional, default: None
+            Weights. If set to None, no sample weights will be applied.
 
     Returns
     -------
@@ -578,8 +578,8 @@ def calibration_curve(y_true, y_prob, sample_weight=None, normalize=False,
         # Check that the sample weights sum is positive
         if sample_weight.sum() <= 0:
             raise ValueError(
-                "Attempting to calibrate with a non-positive "
-                "weighted number of samples.")
+                "Attempting to calibrate predicted probabilities with a "
+                "non-positive weighted number of samples.")
 
         bin_sums = np.bincount(binids, weights=sample_weight*y_prob,
                                minlength=len(bins))
