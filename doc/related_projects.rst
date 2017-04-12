@@ -68,8 +68,8 @@ enhance the functionality of scikit-learn's estimators.
   for quick and easy generation of common plots in data analysis and machine learning.
 
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
-  custom matplotlib visualizers for scikit-learn estimators to support visual
-  model selection, evaluation, and diagnostics.
+  custom matplotlib visualizers for scikit-learn estimators to support visual feature
+  analysis, model selection, evaluation, and diagnostics.
 
 
 **Model export for production**
