@@ -375,7 +375,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                             random_state=random_state)
                 trees.append(tree)
 
-            balance_data = _get_class_balance_data(y) if self.balanced else None
+            if self.balanced:
+                balance_data = _get_class_balance_data(y)
+            else:
+                balance_data = None
 
             # Parallel loop: we use the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
