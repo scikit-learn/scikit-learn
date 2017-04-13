@@ -36,6 +36,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                 eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
     """ Compute the grid of alpha values for elastic net parameter search
 
+    Modification test // To be removed
+
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
