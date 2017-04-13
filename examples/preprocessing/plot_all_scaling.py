@@ -88,7 +88,7 @@ distributions = OrderedDict((
 y = minmax_scale(y_full)  # To make colors corresponding to the target),
 
 
-def create_axes(figsize=(8, 8)):
+def create_axes(figsize=(16, 8)):
     plt.figure(figsize=figsize)
 
     # define the axis for the first plot
@@ -169,11 +169,10 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
 
 
 def make_plot(item_idx):
-    title, X = distributions.items()[item_idx]
+    _, X = distributions.items()[item_idx]
     ax_zoom_out, ax_zoom_in, ax_colorbar = create_axes()
     axarr = (ax_zoom_out, ax_zoom_in)
     plot_distribution(axarr[0], X, y, hist_nbins=200,
-                      title=title + ' including outliers',
                       X_label="Median Income", y_label="Number of households")
 
     # zoom-in
@@ -186,7 +185,6 @@ def make_plot(item_idx):
         np.all(X < [cutoffs_X0[1], cutoffs_X1[1]], axis=1))
     plot_distribution(axarr[1], X[non_outliers_mask], y[non_outliers_mask],
                       hist_nbins=50,
-                      title=title + '\nZoomed-in at percentile range (0, 99)',
                       X_label="Median Income", y_label="Number of households")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
