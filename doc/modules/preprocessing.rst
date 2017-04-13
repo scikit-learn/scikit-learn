@@ -10,8 +10,13 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
-Refer to :ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py` for a
-comparison of the different scalers, transformers, and normalizers.
+In general, learning algorithm benefit from standardization of the data set. If
+some outliers are present in the set, robust scalers or transformers are more
+appropriate. The behaviors of the different scalers, transformers, and
+normalizers on a dataset containing marginal outliers is highlighted in
+ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`. In the
+following, a description of these methods is given.
+
 
 .. _preprocessing_scaler:
 
@@ -42,10 +47,10 @@ operation on a single array-like dataset::
 
   >>> from sklearn import preprocessing
   >>> import numpy as np
-  >>> X = np.array([[ 1., -1.,  2.],
-  ...               [ 2.,  0.,  0.],
-  ...               [ 0.,  1., -1.]])
-  >>> X_scaled = preprocessing.scale(X)
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  >>> X_scaled = preprocessing.scale(X_train)
 
   >>> X_scaled                                          # doctest: +ELLIPSIS
   array([[ 0.  ..., -1.22...,  1.33...],
@@ -74,7 +79,7 @@ able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
-  >>> scaler = preprocessing.StandardScaler().fit(X)
+  >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
   StandardScaler(copy=True, with_mean=True, with_std=True)
 
@@ -84,7 +89,7 @@ This class is hence suitable for use in the early steps of a
   >>> scaler.scale_                                       # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
-  >>> scaler.transform(X)                               # doctest: +ELLIPSIS
+  >>> scaler.transform(X_train)                           # doctest: +ELLIPSIS
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
@@ -93,7 +98,8 @@ This class is hence suitable for use in the early steps of a
 The scaler instance can then be used on new data to transform it the
 same way it did on the training set::
 
-  >>> scaler.transform([[-1.,  1., 0.]])                # doctest: +ELLIPSIS
+  >>> X_test = [[-1., 1., 0.]]
+  >>> scaler.transform(X_test)                # doctest: +ELLIPSIS
   array([[-2.44...,  1.22..., -0.26...]])
 
 It is possible to disable either centering or scaling by either
