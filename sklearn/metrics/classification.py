@@ -690,13 +690,13 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> y_true = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
     >>> y_pred = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0]
     >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.50...
+    0.50292397660818711
     >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.73...
+    0.73333333333333328
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-    0.68...
+    0.68304093567251456
     >>> f1_score(y_true, y_pred, average=None)
-    array([ 0.84...,  0.66...,  0.        ])
+    array([ 0.84210526,  0.66666667,  0.        ])
 
 
     """
@@ -812,16 +812,16 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> y_pred = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.48...
+    0.48044217687074831
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.73...
+    0.73333333333333328
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.66...
+    0.65646258503401356
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
-    array([ 0.82...,  0.63...,  0.        ])
+    array([ 0.81632653,  0.625     ,  0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
