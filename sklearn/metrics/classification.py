@@ -609,7 +609,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     In the multi-class and multi-label case, the overall F1 score can be
     calculated as a weighted average of the F1 scores for the classes/labels.
-    Depending on the averaging methods, there are different overall F1 scores:
+    Depending on the averaging methods, there are different overall F1 scores::
     ``macro-averaging`` gives the arithmetic mean of the F1 scores; ``micro-
     averaging`` uses the total true positives, false negatives and false
     positives to compute, which equals to compute the sum of precisions and the
@@ -724,7 +724,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     In the multi-class and multi-label case, the overall F-beta score can be
     calculated as a weighted average of the F-beta scores for the classes/
     labels. Depending on the averaging methods, there are different overall F-
-    beta scores: ``macro-averaging`` gives the arithmetic mean of the F-beta
+    beta scores:: ``macro-averaging`` gives the arithmetic mean of the F-beta
     scores; ``micro-averaging`` uses the total true positives, false negatives
     and false positives to compute, which equals to compute the sum of
     precisions and the sum of recalls for all classes as the overall precision
