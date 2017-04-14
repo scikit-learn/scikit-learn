@@ -603,12 +603,19 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     The F1 score can be interpreted as a weighted average of the precision and
     recall, where an F1 score reaches its best value at 1 and worst score at 0.
     The relative contribution of precision and recall to the F1 score are
-    equal. The formula for the F1 score is::
+    equal. The formula for the F1 score in the simple ``binary`` case is::
 
         F1 = 2 * (precision * recall) / (precision + recall)
 
-    In the multi-class and multi-label case, this is the weighted average of
-    the F1 score of each class.
+    In the multi-class and multi-label case, the overall F1 score can be
+    calculated as a weighted average of the F1 scores for the classes/labels.
+    Depending on the averaging methods, there are different overall F1 scores:
+    ``macro-averaging`` gives the arithmetic mean of the F1 scores; ``micro-
+    averaging`` uses the total true positives, false negatives and false
+    positives to compute, which equals to compute the sum of precisions and the
+    sum of recalls for all classes as the overall precision and recall;
+    ``weighted`` method uses the F1 scores weighed by the class/label
+    proportions to the total sample size.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -680,16 +687,16 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     Examples
     --------
     >>> from sklearn.metrics import f1_score
-    >>> y_true = [0, 1, 2, 0, 1, 2]
-    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> y_true = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
+    >>> y_pred = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0]
     >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.26...
+    0.50...
     >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.33...
+    0.73...
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-    0.26...
+    0.68...
     >>> f1_score(y_true, y_pred, average=None)
-    array([ 0.8,  0. ,  0. ])
+    array([ 0.84...,  0.66...,  0.        ])
 
 
     """
@@ -709,7 +716,21 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
     favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
     only recall).
+    
+    The formula for the F-beta score in the simple ``binary`` case is::
 
+    F(b) = (1 + b ^ 2) * (precision * recall) / (b ^ 2 * precision + recall)
+    
+    In the multi-class and multi-label case, the overall F-beta score can be
+    calculated as a weighted average of the F-beta scores for the classes/
+    labels. Depending on the averaging methods, there are different overall F-
+    beta scores: ``macro-averaging`` gives the arithmetic mean of the F-beta
+    scores; ``micro-averaging`` uses the total true positives, false negatives
+    and false positives to compute, which equals to compute the sum of
+    precisions and the sum of recalls for all classes as the overall precision
+    and recall; ``weighted`` method uses the F-beta scores weighed by the
+    class/label proportions to the total sample size.
+    
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -787,20 +808,20 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     Examples
     --------
     >>> from sklearn.metrics import fbeta_score
-    >>> y_true = [0, 1, 2, 0, 1, 2]
-    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> y_true = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
+    >>> y_pred = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.23...
+    0.48...
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.33...
+    0.73...
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.23...
+    0.66...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
-    array([ 0.71...,  0.        ,  0.        ])
+    array([ 0.82...,  0.63...,  0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
