@@ -423,7 +423,7 @@ class SVC(BaseSVC):
         Ignored by all other kernels.
 
     gamma : float, optional (default='auto')
-        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -580,7 +580,7 @@ class NuSVC(BaseSVC):
         Ignored by all other kernels.
 
     gamma : float, optional (default='auto')
-        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -736,7 +736,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Ignored by all other kernels.
 
     gamma : float, optional (default='auto')
-        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -851,7 +851,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Ignored by all other kernels.
 
     gamma : float, optional (default='auto')
-        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -960,7 +960,7 @@ class OneClassSVM(BaseLibSVM):
         Ignored by all other kernels.
 
     gamma : float, optional (default='auto')
-        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
