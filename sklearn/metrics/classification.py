@@ -716,11 +716,11 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
     favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
     only recall).
-    
+
     The formula for the F-beta score in the simple ``binary`` case is::
 
     F(b) = (1 + b ^ 2) * (precision * recall) / (b ^ 2 * precision + recall)
-    
+
     In the multi-class and multi-label case, the overall F-beta score can be
     calculated as a weighted average of the F-beta scores for the classes/
     labels. Depending on the averaging methods, there are different overall F-
@@ -730,7 +730,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     precisions and the sum of recalls for all classes as the overall precision
     and recall; ``weighted`` method uses the F-beta scores weighed by the
     class/label proportions to the total sample size.
-    
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
