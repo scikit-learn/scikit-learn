@@ -366,7 +366,7 @@ class SpectralEmbedding(BaseEstimator):
            and return affinity matrix (n_samples, n_samples).
 
     gamma : float, optional, default : 1/n_features
-        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Kernel coefficient for rbf kernel.
 
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
