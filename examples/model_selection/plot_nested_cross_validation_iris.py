@@ -47,6 +47,7 @@ from sklearn.datasets import load_iris
 from matplotlib import pyplot as plt
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, cross_val_score, KFold
+from sklearn.metrics import precision_recall_fscore_support
 import numpy as np
 
 print(__doc__)
@@ -70,6 +71,11 @@ svr = SVC(kernel="rbf")
 non_nested_scores = np.zeros(NUM_TRIALS)
 nested_scores = np.zeros(NUM_TRIALS)
 
+
+def calc_diagnostics(data):
+    return data['split_idx'], precision_recall_fscore_support(
+        data['estimator'].predict(data['X_test']), data['y_test'])
+
 # Loop for each trial
 for i in range(NUM_TRIALS):
 
@@ -80,9 +86,11 @@ for i in range(NUM_TRIALS):
     outer_cv = KFold(n_splits=4, shuffle=True, random_state=i)
 
     # Non_nested parameter search and scoring
-    clf = GridSearchCV(estimator=svr, param_grid=p_grid, cv=inner_cv)
+    clf = GridSearchCV(estimator=svr, param_grid=p_grid, cv=inner_cv,
+                       diagnostic_func=calc_diagnostics)
     clf.fit(X_iris, y_iris)
     non_nested_scores[i] = clf.best_score_
+    print(clf.cv_results_)
 
     # Nested CV with parameter optimization
     nested_score = cross_val_score(clf, X=X_iris, y=y_iris, cv=outer_cv)

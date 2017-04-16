@@ -144,7 +144,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
-                   return_times=False, error_score='raise'):
+                   return_times=False, error_score='raise', split_idx=None,
+                   diagnostic_func=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -190,6 +191,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
+    diagnostic_func : callable(dict) -> object, optional
+
     Returns
     -------
     train_score : float, optional
@@ -209,6 +212,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
+
+    diagnostic : object, optional
+        The return value of ``diagnostic_func``
     """
     if verbose > 1:
         if parameters is None:
@@ -237,7 +243,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             estimator.fit(X_train, y_train, **fit_params)
 
-    except Exception as e:
+    except Exception as exc:
         # Note fit time as time until error
         fit_time = time.time() - start_time
         score_time = 0.0
@@ -249,7 +255,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                 train_score = error_score
             warnings.warn("Classifier fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
-                          "Details: \n%r" % (error_score, e), FitFailedWarning)
+                          "Details: \n%r" % (error_score, exc),
+                          FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
@@ -261,6 +268,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_score = _score(estimator, X_train, y_train, scorer)
+        exc = None
 
     if verbose > 2:
         msg += ", score=%f" % test_score
@@ -277,6 +285,24 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
+
+    if diagnostic_func is not None:
+        dia = diagnostic_func({'estimator': estimator,
+                               'split_idx': split_idx,
+                               'X_train': X_train,
+                               'y_train': y_train,
+                               'train_score': (train_score
+                                               if return_train_score
+                                               else None),
+                               'X_test': X_test,
+                               'y_test': y_test,
+                               'test_score': test_score,
+                               'fit_time': fit_time,
+                               'score_time': score_time,
+                               'parameters': parameters,
+                               'fit_params': fit_params,
+                               'exception': exc})
+        ret.append(dia)
     return ret
 
 

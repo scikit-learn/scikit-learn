@@ -381,7 +381,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise', return_train_score=True):
+                 error_score='raise', return_train_score=True,
+                 diagnostic_func=None):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -394,6 +395,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.diagnostic_func = diagnostic_func
 
     @property
     def _estimator_type(self):
@@ -599,18 +601,25 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_train_score=self.return_train_score,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
-                                  error_score=self.error_score)
-          for train, test in cv.split(X, y, groups)
+                                  error_score=self.error_score,
+                                  diagnostic_func=self.diagnostic_func,
+                                  split_idx=split_idx)
+          for split_idx, (train, test) in enumerate(cv.split(X, y, groups))
           for parameters in candidate_params)
+
+        out = tuple(zip(*out))  # transpose
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_scores, test_scores, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-        else:
-            (test_scores, test_sample_counts, fit_time, score_time) = zip(*out)
+            train_scores = out[0]
+            out = out[1:]
+        if self.diagnostic_func is not None:
+            diagnostics = out[-1]
+            out = out[:-1]
 
-        results = dict()
+        (test_scores, test_sample_counts, fit_time, score_time) = out
+
+        results = {}
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
@@ -664,6 +673,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 param_results["param_%s" % name][cand_i] = value
 
         results.update(param_results)
+
+        if self.diagnostic_func is not None:
+            _diagnostics = np.zeros(n_candidates * n_splits, dtype=object)
+            _diagnostics[:] = diagnostics
+            _diagnostics = _diagnostics.reshape(n_splits, n_candidates).T
+            for split_i in range(n_splits):
+                results["split%d_%s"
+                        % (split_i, 'diagnostic')] = _diagnostics[:, split_i]
 
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
@@ -811,6 +828,45 @@ class GridSearchCV(BaseSearchCV):
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
+    diagnostic_func : callable(dict) -> object, optional
+        After fitting and scoring, this will be called, and its return value
+        stored in ``cv_results_['split<K>_diagnostic']`` for split index K.
+        The single parameter passed to ``diagnostic_func`` is a dict with the
+        following keys:
+
+            "estimator"
+                The fitted estimator
+            "split_idx"
+                The index of the current split generated from ``cv``,
+                ranging ``0..n_splits``
+            "X_train"
+                The features used to train the estimator
+            "y_train"
+                The targets used to train the estimator
+            "train_score"
+                The score on training data (where ``return_train_score=True``)
+            "X_test"
+                The features used to train the estimator
+            "y_test"
+                The targets used to train the estimator
+            "test_score"
+                The score on test data
+            "fit_time"
+                Time spent fitting in seconds
+            "score_time"
+                Time spent scoring in seconds
+            "parameters"
+                Parameters being set on the estimator for grid search.
+            "fit_params"
+                Parameters passed to ``fit``
+            "exception"
+                The exception raised when ``fit`` was called, or ``None``.
+
+        New keys may be added to this dict in future versions without notice.
+
+        Note that in order to use parallelism or pickling, this callable must
+        be picklable, e.g. a named function imported from a module.
+
 
     Examples
     --------
@@ -822,7 +878,7 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None, error_score=...,
+    GridSearchCV(cv=None, diagnostic_func=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          decision_function_shape='ovr', degree=..., gamma=...,
                          kernel='rbf', max_iter=-1, probability=False,
@@ -948,12 +1004,13 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=True):
+                 return_train_score=True, diagnostic_func=None):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+            diagnostic_func=diagnostic_func)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1076,6 +1133,45 @@ class RandomizedSearchCV(BaseSearchCV):
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
+    diagnostic_func : callable(dict) -> object, optional
+        After fitting and scoring, this will be called, and its return value
+        stored in ``cv_results_['split<K>_diagnostic']`` for split index K.
+        The single parameter passed to ``diagnostic_func`` is a dict with the
+        following keys:
+
+            "estimator"
+                The fitted estimator
+            "split_idx"
+                The index of the current split generated from ``cv``,
+                ranging ``0..n_splits``
+            "X_train"
+                The features used to train the estimator
+            "y_train"
+                The targets used to train the estimator
+            "train_score"
+                The score on training data (where ``return_train_score=True``)
+            "X_test"
+                The features used to train the estimator
+            "y_test"
+                The targets used to train the estimator
+            "test_score"
+                The score on test data
+            "fit_time"
+                Time spent fitting in seconds
+            "score_time"
+                Time spent scoring in seconds
+            "parameters"
+                Parameters being set on the estimator for grid search.
+            "fit_params"
+                Parameters passed to ``fit``
+            "exception"
+                The exception raised when ``fit`` was called, or ``None``.
+
+        New keys may be added to this dict in future versions without notice.
+
+        Note that in order to use parallelism or pickling, this callable must
+        be picklable, e.g. a named function imported from a module.
+
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -1175,15 +1271,17 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=True):
+                 error_score='raise', return_train_score=True,
+                 diagnostic_func=None):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
-             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-             pre_dispatch=pre_dispatch, error_score=error_score,
-             return_train_score=return_train_score)
+              estimator=estimator, scoring=scoring, fit_params=fit_params,
+              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+              pre_dispatch=pre_dispatch, error_score=error_score,
+              return_train_score=return_train_score,
+              diagnostic_func=diagnostic_func)
 
     def _get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""
