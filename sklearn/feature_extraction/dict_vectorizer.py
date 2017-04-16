@@ -3,10 +3,9 @@
 # License: BSD 3 clause
 
 from array import array
-from collections import Mapping
+from collections import Mapping, Iterable
 from operator import itemgetter
 from numbers import Number
-import types
 
 import numpy as np
 import scipy.sparse as sp
@@ -133,14 +132,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         return self
 
     def add_element(self, f, v, feature_names, vocab, fitting=True, transforming=False, indices=None, values=None):
-        if hasattr(v, '__iter__'):
-            for vv in v.__iter__():
+        if not isinstance(v, six.string_types) and isinstance(v, Iterable):
+            for vv in v:
                 self.add_element(f, vv, feature_names, vocab, fitting, transforming, indices, values)
         else:
-            if isinstance(v, basestring):
+            if isinstance(v, six.string_types):
                 feature_name = "%s%s%s" % (f, self.separator, v)
                 v = 1
-            elif isinstance(v, (Number, types.BooleanType, types.NoneType)):
+            elif isinstance(v, Number) or (v is True) or (v is False) or (v is None):
                 feature_name = f
             else:
                 raise Exception('Unsupported Type %s for {%s: %s}' % (type(v), f, v))
@@ -298,26 +297,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        if self.sparse:
-            return self._transform(X, fitting=False)
-
-        else:
-            dtype = self.dtype
-            vocab = self.vocabulary_
-            X = _tosequence(X)
-            Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
-
-            for i, x in enumerate(X):
-                for f, v in six.iteritems(x):
-                    if isinstance(v, six.string_types):
-                        f = "%s%s%s" % (f, self.separator, v)
-                        v = 1
-                    try:
-                        Xa[i, vocab[f]] = dtype(v)
-                    except KeyError:
-                        pass
-
-            return Xa
+        return self._transform(X, fitting=False)
 
     def get_feature_names(self):
         """Returns a list of feature names, ordered by their indices.
