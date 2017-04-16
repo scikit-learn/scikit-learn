@@ -60,8 +60,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort : boolean, optional.
-        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
-        True by default.
+        Whether ``feature_names_`` and ``vocabulary_`` should be sorted
+        when fitting. True by default.
 
     Attributes
     ----------
@@ -131,18 +131,22 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def add_element(self, f, v, feature_names, vocab, fitting=True, transforming=False, indices=None, values=None):
+    def add_element(self, f, v, feature_names, vocab, fitting=True,
+                    transforming=False, indices=None, values=None):
         if not isinstance(v, six.string_types) and isinstance(v, Iterable):
             for vv in v:
-                self.add_element(f, vv, feature_names, vocab, fitting, transforming, indices, values)
+                self.add_element(f, vv, feature_names, vocab,
+                                 fitting, transforming, indices, values)
         else:
             if isinstance(v, six.string_types):
                 feature_name = "%s%s%s" % (f, self.separator, v)
                 v = 1
-            elif isinstance(v, Number) or (v is True) or (v is False) or (v is None):
+            elif isinstance(v, Number) or (v is True) or\
+                    (v is False) or (v is None):
                 feature_name = f
             else:
-                raise Exception('Unsupported Type %s for {%s: %s}' % (type(v), f, v))
+                raise Exception(
+                    'Unsupported Type %s for {%s: %s}' % (type(v), f, v))
             if fitting:
                 if feature_name not in vocab:
                     vocab[feature_name] = len(feature_names)
@@ -186,7 +190,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # same time
         for x in X:
             for f, v in six.iteritems(x):
-                self.add_element(f, v, feature_names, vocab, fitting, transforming, indices, values)
+                self.add_element(f, v, feature_names, vocab,
+                                 fitting, transforming, indices, values)
             indptr.append(len(indices))
 
         if len(indptr) == 1:
