@@ -77,6 +77,23 @@ def test_one_of_k():
     assert_false("version" in names)
 
 
+def test_iterable_value():
+    D_in = [{"version": ["1", "2"], "ham": 2},
+            {"version": "2", "spam": .3},
+            {"version=3": True, "spam": -1}]
+    v = DictVectorizer()
+    X = v.fit_transform(D_in)
+    assert_equal(X.shape, (3, 5))
+
+    D_out = v.inverse_transform(X)
+    assert_equal(D_out[0], {"version=1": 1, "version=2": 1, "ham": 2})
+
+    names = v.get_feature_names()
+    assert_true("version=2" in names)
+    assert_true("version=1" in names)
+    assert_false("version" in names)
+
+
 def test_unseen_or_no_features():
     D = [{"camelot": 0, "spamalot": 1}]
     for sparse in [True, False]:

@@ -5,6 +5,8 @@
 from array import array
 from collections import Mapping
 from operator import itemgetter
+from numbers import Number
+import types
 
 import numpy as np
 import scipy.sparse as sp
@@ -119,11 +121,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         for x in X:
             for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
-                    f = "%s%s%s" % (f, self.separator, v)
-                if f not in vocab:
-                    feature_names.append(f)
-                    vocab[f] = len(vocab)
+                self.add_element(f, v, feature_names, vocab)
 
         if self.sort:
             feature_names.sort()
@@ -133,6 +131,28 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         self.vocabulary_ = vocab
 
         return self
+
+    def add_element(self, f, v, feature_names, vocab, fitting=True, transforming=False, indices=None, values=None):
+        if hasattr(v, '__iter__'):
+            for vv in v.__iter__():
+                self.add_element(f, vv, feature_names, vocab, fitting, transforming, indices, values)
+        else:
+            if isinstance(v, basestring):
+                feature_name = "%s%s%s" % (f, self.separator, v)
+                v = 1
+            elif isinstance(v, (Number, types.BooleanType, types.NoneType)):
+                feature_name = f
+            else:
+                raise Exception('Unsupported Type %s for {%s: %s}' % (type(v), f, v))
+            if fitting:
+                if feature_name not in vocab:
+                    vocab[feature_name] = len(feature_names)
+                    feature_names.append(feature_name)
+
+            if transforming:
+                if feature_name in vocab:
+                    indices.append(vocab[feature_name])
+                    values.append(self.dtype(v))
 
     def _transform(self, X, fitting):
         # Sanity check: Python's array has no way of explicitly requesting the
@@ -152,6 +172,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             feature_names = self.feature_names_
             vocab = self.vocabulary_
 
+        transforming = True
+
         # Process everything as sparse regardless of setting
         X = [X] if isinstance(X, Mapping) else X
 
@@ -165,19 +187,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # same time
         for x in X:
             for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
-                    f = "%s%s%s" % (f, self.separator, v)
-                    v = 1
-                if f in vocab:
-                    indices.append(vocab[f])
-                    values.append(dtype(v))
-                else:
-                    if fitting:
-                        feature_names.append(f)
-                        vocab[f] = len(vocab)
-                        indices.append(vocab[f])
-                        values.append(dtype(v))
-
+                self.add_element(f, v, feature_names, vocab, fitting, transforming, indices, values)
             indptr.append(len(indices))
 
         if len(indptr) == 1:
