@@ -608,14 +608,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         F1 = 2 * (precision * recall) / (precision + recall)
 
     In the multi-class and multi-label case, the overall F1 score can be
-    calculated as a weighted average of the F1 scores for the classes/labels.
-    Depending on the averaging methods, there are different overall F1 scores::
-    ``macro-averaging`` gives the arithmetic mean of the F1 scores; ``micro-
-    averaging`` uses the total true positives, false negatives and false
-    positives to compute, which equals to compute the sum of precisions and the
-    sum of recalls for all classes as the overall precision and recall;
-    ``weighted`` method uses the F1 scores weighed by the class/label
-    proportions to the total sample size.
+    calculated by using the F1 scores for each class/label. Depending on the
+    averaging methods, there are different overall F1 scores. See the
+    ``average`` parameter.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -722,14 +717,9 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     F(b) = (1 + b ^ 2) * (precision * recall) / (b ^ 2 * precision + recall)
 
     In the multi-class and multi-label case, the overall F-beta score can be
-    calculated as a weighted average of the F-beta scores for the classes/
-    labels. Depending on the averaging methods, there are different overall F-
-    beta scores:: ``macro-averaging`` gives the arithmetic mean of the F-beta
-    scores; ``micro-averaging`` uses the total true positives, false negatives
-    and false positives to compute, which equals to compute the sum of
-    precisions and the sum of recalls for all classes as the overall precision
-    and recall; ``weighted`` method uses the F-beta scores weighed by the
-    class/label proportions to the total sample size.
+    calculated by using the F-beta scores for each class/label. Depending on
+    the averaging methods, there are different overall F-beta scores. See the
+    ``average`` parameter.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
