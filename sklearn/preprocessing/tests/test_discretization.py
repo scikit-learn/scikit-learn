@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import numpy as np
+from six.moves import range
 import warnings
 
 from sklearn.preprocessing import KBinsDiscretizer
@@ -149,3 +150,13 @@ def test_inverse_transform_with_ignored():
                 [0.25, 3, -1.5, 1.5]]
 
     assert_array_equal(expected, Xinv)
+
+
+def test_numeric_stability():
+    X_init = np.array([2., 4., 6., 8., 10.]).reshape(-1, 1)
+    Xt_expected = np.array([0, 0, 1, 1, 1]).reshape(-1, 1)
+
+    for i in range(1, 11):
+        X = X_init / i
+        Xt = KBinsDiscretizer(n_bins=2).fit_transform(X)
+        assert_array_equal(Xt_expected, Xt)

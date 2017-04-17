@@ -202,11 +202,19 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         trans = self.transformed_features_
 
         X -= self.offset_[trans]
+        bin_width = self.bin_width_[trans]
+
+        # Values which are a multiple of the bin width are susceptible to
+        # numeric instability. For these values, after normalizing into
+        # [-1, n_bins] range, add 0.5 so they are binned correctly.
         with np.errstate(divide='ignore', invalid='ignore'):
-            X //= self.bin_width_[trans]
+            needs_correction = np.isclose(np.mod(X, bin_width), bin_width)
+            X /= bin_width
+        X[needs_correction] += 0.5
+        np.floor(X, out=X)
+        np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
 
         X[~np.isfinite(X)] = 0
-        np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
         return X
 
     def inverse_transform(self, Xt):
