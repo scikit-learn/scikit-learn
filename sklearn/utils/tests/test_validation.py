@@ -36,7 +36,6 @@ from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.validation import has_fit_parameter, SparseTypeError
 
 
 def test_as_float_array():
@@ -134,8 +133,7 @@ def test_check_array():
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
-    assert_true(issubclass(SparseTypeError, TypeError))
-    assert_raises(SparseTypeError, check_array, X_csr)
+    assert_raises(TypeError, check_array, X_csr)
     # ensure_2d
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)

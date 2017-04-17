@@ -119,6 +119,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.metric_params = metric_params
         self.p = p
         self.n_jobs = n_jobs
+        self._fit_X = None
+        self._tree = None
+        self._fit_method = None
         # validate here as well as fit() for backwards compatibility
         self._validate_params()
 
@@ -128,8 +131,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
            and not hasattr(self.algorithm, 'fit'):
             raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
-        if algorithm == 'auto':
-            if metric == 'precomputed':
+        if self.algorithm == 'auto':
+            if self.metric == 'precomputed':
                 alg_check = 'brute'
             else:
                 alg_check = 'ball_tree'
@@ -191,10 +194,19 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if isinstance(X, NeighborsBase):
             self._fit_X = X._fit_X
             self._tree = X._tree
+            self._fit_method = X._fit_method
             return self
-        elif isinstance(X, (BallTree, KDTree)):
+
+        elif isinstance(X, BallTree):
             self._fit_X = X.data
             self._tree = X
+            self._fit_method = 'ball_tree'
+            return self
+
+        elif isinstance(X, KDTree):
+            self._fit_X = X.data
+            self._tree = X
+            self._fit_method = 'kd_tree'
             return self
 
         X = check_array(X, accept_sparse='csr')
@@ -205,40 +217,41 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if issparse(X) and not hasattr(self.algorithm, 'fit'):
             if self.algorithm not in ('auto', 'brute'):
-                warnings.warn("cannot use binary tree with sparse input: "
+                warnings.warn("cannot use tree with sparse input: "
                               "using brute force")
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
             self._fit_X = X.copy()
             self._tree = None
+            self._fit_method = 'brute'
             return self
 
-        algorithm = self.algorithm
+        self._fit_method = self.algorithm
         self._fit_X = X
 
-        if algorithm == 'auto':
+        if self._fit_method == 'auto':
             # A tree approach is better for small number of neighbors,
             # and KDTree is generally faster when available
             if ((self.n_neighbors is None or
                  self.n_neighbors < self._fit_X.shape[0] // 2) and
                     self.metric != 'precomputed'):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
-                    algorithm = 'kd_tree'
+                    self._fit_method = 'kd_tree'
                 else:
-                    algorithm = 'ball_tree'
+                    self._fit_method = 'ball_tree'
             else:
-                algorithm = 'brute'
+                self._fit_method = 'brute'
 
-        if algorithm == 'ball_tree':
+        if self._fit_method == 'ball_tree':
             self._tree = BallTree(X, self.leaf_size,
                                   metric=self.effective_metric_,
                                   **self.effective_metric_params_)
-        elif algorithm == 'kd_tree':
+        elif self._fit_method == 'kd_tree':
             self._tree = KDTree(X, self.leaf_size,
                                 metric=self.effective_metric_,
                                 **self.effective_metric_params_)
-        elif algorithm == 'brute':
+        elif self._fit_method == 'brute':
             self._tree = None
         elif hasattr(algorithm, 'fit'):
             self._tree = clone(algorithm)
@@ -318,10 +331,8 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        if not hasattr(self, '_fit_X'):
-            raise ValueError("must fit neighbors before querying")
-
-        X = check_array(X, accept_sparse='csr')
+        if self._fit_method is None:
+            raise NotFittedError("Must fit neighbors before querying.")
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -387,22 +398,7 @@ class KNeighborsMixin(object):
             else:
                 result = np.vstack(result)
         else:
-            dist = pairwise_distances(X, self._fit_X,
-                                      self.effective_metric_,
-                                      **self.effective_metric_params_)
-
-        neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
-        neigh_ind = neigh_ind[:, :n_neighbors]
-        # argpartition doesn't guarantee sorted order, so we sort again
-        j = np.arange(neigh_ind.shape[0])[:, None]
-        neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
-        if return_distance:
-            if self.effective_metric_ == 'euclidean':
-                return np.sqrt(dist[j, neigh_ind]), neigh_ind
-            else:
-                return dist[j, neigh_ind], neigh_ind
-        else:
-            return neigh_ind
+            raise ValueError("internal: _fit_method not recognized")
 
         if not query_is_train:
             return result
@@ -638,16 +634,7 @@ class RadiusNeighborsMixin(object):
             if return_distance:
                 results = results[::-1]
         else:
-            return neigh_ind
-
-    def _array_of_arrays(self, list_of_arrays):
-        """Creates an array of arrays from a list of arrays
-
-        This ensures a 2d array will not be returned in some cases.
-        """
-        out = np.empty(len(list_of_arrays), dtype=object)
-        out[:] = list_of_arrays
-        return out
+            raise ValueError("internal: _fit_method not recognized")
 
         if not query_is_train:
             return results

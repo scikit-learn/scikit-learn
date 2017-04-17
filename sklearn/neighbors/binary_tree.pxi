@@ -1232,19 +1232,8 @@ cdef class BinaryTree:
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
               sort_results=True):
-        """Alias of kneighbors
-
-        This alias is maintained for compatibility with
-        scipy.spatial.KDTree.
         """
-        return self.kneighbors(X, k, return_distance, dualtree,
-                               breadth_first, sort_results)
-
-    def kneighbors(self, X, k=1, return_distance=True,
-                   dualtree=False, breadth_first=False,
-                   sort_results=True):
-        """
-        kneighbors(X, k=1, return_distance=True,
+        query(X, k=1, return_distance=True,
               dualtree=False, breadth_first=False)
 
         query the tree for the k nearest neighbors
@@ -1366,34 +1355,12 @@ cdef class BinaryTree:
         else:
             return indices.reshape(X.shape[:X.ndim - 1] + (k,))
 
-    def query_ball_point(self, X, r):
-        """Alias of radius_neighbors
-
-        For compatibility with scipy.spatial.KDTree
-        """
-        return self.radius_neighbors(X, r)
-
     def query_radius(self, X, r, return_distance=False,
                      int count_only=False, int sort_results=False):
-        """Deprecated alias of radius_neighbors
         """
-        warnings.warn('query_radius is deprecated and will be removed in '
-                      'the future. Please use radius_neighbors.',
-                      DeprecationWarning)
-        out = self.radius_neighbors(X, r, return_distance, count_only,
-                                    sort_results)
-        if return_distance:
-            dist, ind = out
-            return ind, dist
-        return out
+        query_radius(self, X, r, count_only = False):
 
-    def radius_neighbors(self, X, r, return_distance=False,
-                         int count_only=False, int sort_results=False):
-        """
-        radius_neighbors(self, X, r, count_only = False):
-
-        query the tree for neighbors within a radius r. This is also known
-        as a ball query or epsilon query.
+        query the tree for neighbors within a radius r
 
         Parameters
         ----------
@@ -1430,15 +1397,15 @@ cdef class BinaryTree:
             each entry gives the number of neighbors within
             a distance r of the corresponding point.
 
-        dist : array of objects, shape = X.shape[:-1]
-            each element is a numpy double array
-            listing the distances corresponding to indices in i.
-
         ind : array of objects, shape = X.shape[:-1]
             each element is a numpy integer array listing the indices of
             neighbors of the corresponding point.  Note that unlike
             the results of a k-neighbors query, the returned neighbors
             are not sorted by distance by default.
+
+        dist : array of objects, shape = X.shape[:-1]
+            each element is a numpy double array
+            listing the distances corresponding to indices in i.
 
         Examples
         --------
@@ -1529,8 +1496,8 @@ cdef class BinaryTree:
         if count_only:
             return counts_arr.reshape(X.shape[:X.ndim - 1])
         elif return_distance:
-            return (distances.reshape(X.shape[:X.ndim - 1]),
-                    indices.reshape(X.shape[:X.ndim - 1]))
+            return (indices.reshape(X.shape[:X.ndim - 1]),
+                    distances.reshape(X.shape[:X.ndim - 1]))
         else:
             return indices.reshape(X.shape[:X.ndim - 1])
 

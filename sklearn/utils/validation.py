@@ -193,15 +193,7 @@ def indexable(*iterables):
     return result
 
 
-<<<<<<< HEAD
 def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
-=======
-class SparseTypeError(TypeError):
-    pass
-
-
-def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
                           force_all_finite):
     """Convert a sparse matrix to a given format.
 
@@ -234,7 +226,6 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
     spmatrix_converted : scipy sparse matrix.
         Matrix that is ensured to have an allowed type.
     """
-<<<<<<< HEAD
     if dtype is None:
         dtype = spmatrix.dtype
 
@@ -270,27 +261,6 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
         # force copy
         spmatrix = spmatrix.copy()
 
-=======
-    if accept_sparse is None:
-        raise SparseTypeError('A sparse matrix was passed, but dense '
-                              'data is required. Use X.toarray() to '
-                              'convert to a dense numpy array.')
-    sparse_type = spmatrix.format
-    if dtype is None:
-        dtype = spmatrix.dtype
-    if sparse_type in accept_sparse:
-        # correct type
-        if dtype == spmatrix.dtype:
-            # correct dtype
-            if copy:
-                spmatrix = spmatrix.copy()
-        else:
-            # convert dtype
-            spmatrix = spmatrix.astype(dtype)
-    else:
-        # create new
-        spmatrix = spmatrix.asformat(accept_sparse[0]).astype(dtype)
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
     if force_all_finite:
         if not hasattr(spmatrix, "data"):
             warnings.warn("Can't check %s sparse matrix for nan or inf."

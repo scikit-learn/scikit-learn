@@ -12,7 +12,7 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, SparseTypeError)
+                         check_symmetric)
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
@@ -25,8 +25,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric", "indices_to_mask", "deprecated",
-           "SparseTypeError"]
+           "check_symmetric", "indices_to_mask", "deprecated"]
 
 
 class Bunch(dict):
