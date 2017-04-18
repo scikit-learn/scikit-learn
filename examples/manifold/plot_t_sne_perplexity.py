@@ -12,7 +12,7 @@ clearer shapes as the value increases.
 The size, the distance and the shape of clusters may vary upon initialization,
 perplexity values and does not always convey a meaning.
 
-As shown below, t-SNE for higher perplexities finds meaningful topology of 
+As shown below, t-SNE for higher perplexities finds meaningful topology of
 two concentric circles, however the size and the distance of the circles varies
 slightly from the original. In contrary to two circles dataset, the shapes
 visually diverge from S-curve topology on S-curve dateset even for larger
@@ -52,11 +52,12 @@ ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
 
 for i, perplexity in enumerate(perplexities):
-    subplot_index += 1	
+    subplot_index += 1
     ax = fig.add_subplot(subplot_index)
 
     t0 = time()
-    tsne = manifold.TSNE(n_components=n_components, init='random', random_state=0, perplexity=perplexity)
+    tsne = manifold.TSNE(n_components=n_components, init='random',
+                         random_state=0, perplexity=perplexity)
     Y = tsne.fit_transform(X)
     t1 = time()
 
@@ -81,15 +82,16 @@ for i, perplexity in enumerate(perplexities):
     if subplot_index < 260:
         ax = fig.add_subplot(subplot_index)
     else:
-        ax = fig.add_subplot(2, 5, 10)	
+        ax = fig.add_subplot(2, 5, 10)
 
     t0 = time()
-    tsne = manifold.TSNE(n_components=n_components, init='random', random_state=0, perplexity=perplexity)
+    tsne = manifold.TSNE(n_components=n_components, init='random',
+                         random_state=0, perplexity=perplexity)
     Y = tsne.fit_transform(X)
     t1 = time()
 
     plt.title("%s %d (%.2g sec)" % ("Perplexity ", perplexity, t1 - t0))
-    plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)	
+    plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
     plt.axis('tight')
