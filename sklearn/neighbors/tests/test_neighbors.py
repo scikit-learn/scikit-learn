@@ -1224,39 +1224,48 @@ def test_pairwise_boolean_distance():
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
 
 
-class _MyAlgorithmBase(BaseEstimator):
+class MyRadiusAlgorithm(object):
     def fit(self, X):
         self._fitted = True
 
-    def _get_neighbors(self, X, param, return_distance):
-        dist = np.empty(len(X), dtype=object)
-        ind = np.empty(len(X), dtype=object)
-        for i in range(len(X)):
-            # distances all set to param to test that it is passed
-            dist[i] = np.array([param])
-            ind[i] = np.array([0], dtype=int)
+    def query_radius(self, X, r, return_distance=True):
+        """ Compute radius KNN with brute force"""
+        D = pairwise_distances(X, X)
+        ind = D.argsort(axis=1)
+        D_mask = (D <= r)
+        ind_res = np.empty(D.shape[0], dtype='object')
+        dist = np.empty(D.shape[0], dtype='object')
+        for k in range(D.shape[0]):
+            ind_mask = D_mask[k, ind[k]]
+            ind_res[k] = ind[k, ind_mask]
+            dist[k] = D[k, ind_res[k]]
+
+        if return_distance:
+            return ind, dist
+        return ind
+
+
+class MyKNNAlgorithm(object):
+    def fit(self, X):
+        self._fitted = True
+
+    def query(self, X, k, return_distance=True):
+        """ Compute KNN with brute force"""
+        D = pairwise_distances(X, X)
+        ind = D.argsort(axis=1)
+        ind = ind[:k]
+        dist = D[np.arange(D.shape[0], ind)]
         if return_distance:
             return dist, ind
         return ind
 
 
-class MyRadiusAlgorithm(_MyAlgorithmBase):
-    def radius_neighbors(self, X, r, return_distance=True):
-        return self._get_neighbors(X, r, return_distance=return_distance)
-
-
-class MyKNNAlgorithm(_MyAlgorithmBase):
-    def kneighbors(self, X, k, return_distance=True):
-        return self._get_neighbors(X, k, return_distance=return_distance)
-
-
 @ignore_warnings
 def test_neighbors_estimator_as_algorithm():
     alg = MyRadiusAlgorithm()
-    est = neighbors.NearestNeighbors(algorithm=alg)
+    est = neighbors.NearestNeighbors(n_neighbors=1, algorithm=alg)
     est.fit([[0], [1]])
-    # check alg is a clone
-    assert not hasattr(alg, '_fitted')
+    assert hasattr(alg, '_fitted')
     for radius in [5, 100]:
         # check algorithm is queried and parameter is passed
         dist, ind = est.radius_neighbors([[0]], radius=radius,
@@ -1284,9 +1293,12 @@ def test_neighbors_estimator_as_algorithm():
 @ignore_warnings
 def test_lshforest_as_algorithm():
     centers = [[-10, -10], [10, 10]]
-    X, y = make_blobs(centers=centers)
+    X, y = make_blobs(centers=centers, random_state=41)
     assert_array_equal(np.unique(y), [0, 1])
     algorithm = neighbors.LSHForest()
+    # monkeypatch LSHForest with "*query" methods
+    algorithm.query = algorithm.kneighbors
+    algorithm.radius_query = algorithm.radius_neighbors
     # not fitted should raise exception
     assert_raises(Exception, algorithm.kneighbors, centers)
 
@@ -1300,4 +1312,4 @@ def test_lshforest_as_algorithm():
         assert_array_almost_equal(prediction, [0, 1])
 
         # algorithm should have been cloned, hence still not fitted
-        assert_raises(Exception, algorithm.kneighbors, centers)
+        assert_raises(Exception, algorithm.query, centers)
