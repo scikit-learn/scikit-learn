@@ -682,16 +682,16 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     Examples
     --------
     >>> from sklearn.metrics import f1_score
-    >>> y_true = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
-    >>> y_pred = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0]
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.50292397660818711
+    0.26...
     >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.73333333333333328
+    0.33...
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-    0.68304093567251456
+    0.26...
     >>> f1_score(y_true, y_pred, average=None)
-    array([ 0.84210526,  0.66666667,  0.        ])
+    array([ 0.8,  0. ,  0. ])
 
 
     """
@@ -798,20 +798,20 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     Examples
     --------
     >>> from sklearn.metrics import fbeta_score
-    >>> y_true = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
-    >>> y_pred = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0]
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.48044217687074831
+    0.23...
     >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.73333333333333328
+    0.33...
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.65646258503401356
+    0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
-    array([ 0.81632653,  0.625     ,  0.        ])
+    array([ 0.71...,  0.        ,  0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
