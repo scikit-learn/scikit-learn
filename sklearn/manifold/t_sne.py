@@ -654,7 +654,8 @@ class TSNE(BaseEstimator):
     """
 
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate="200 (new default)",
+                 early_exaggeration=4.0,
+                 learning_rate="200 (new default in 0.19)",
                  n_iter=1000, n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
@@ -812,12 +813,14 @@ class TSNE(BaseEstimator):
         # * early exaggeration with momentum 0.8
         # * final optimization with momentum 0.8
 
-        # TODO sklearn 0.20: remove this warning
-        if self.learning_rate == "200 (new default)":
+        # TODO sklearn 0.21: remove this warning
+        if self.learning_rate == "200 (new default in 0.19)":
             import warnings
-            warnings.warn("The default learning rate of TSNE has changed " +
-                          "from 1000 to 200 in sklearn 0.19. Set the " +
-                          "learning rate explicitely to avoid this message.")
+            warnings.warn(
+                "The default learning rate of TSNE has changed from 1000 "
+                "to 200 in sklearn 0.19. Set the learning rate explicitely "
+                "to avoid this message. This warning will be removed in "
+                "version 0.21")
             learning_rate = 200.0
         else:
             learning_rate = self.learning_rate

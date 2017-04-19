@@ -428,8 +428,9 @@ API changes summary
      only if the underlying estimator does.  By `Andreas Müller`_. 
     - Change the default value for ``learning_rate`` in the
       `sklearn.manifold.TSNE` constructor from 1000 to 200 (with a warning
-      message if not set explicitely). This fixes :issue:`6204` by
-      :user:`John Joseph Valletta <jjvalletta>`.
+      message if not set explicitely).
+      :issue:`8752` by :user:`Fabio Zanini <iosonofabio>` and
+      :user:`Alexander Fabisch <AlexanderFabisch>`
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
