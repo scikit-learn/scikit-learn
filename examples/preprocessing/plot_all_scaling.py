@@ -88,7 +88,7 @@ distributions = OrderedDict((
 y = minmax_scale(y_full)  # To make colors corresponding to the target),
 
 
-def create_axes(figsize=(8, 8)):
+def create_axes(figsize=(8, 6)):
     plt.figure(figsize=figsize)
 
     # define the axis for the first plot
