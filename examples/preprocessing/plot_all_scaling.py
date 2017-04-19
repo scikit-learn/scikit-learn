@@ -88,13 +88,14 @@ distributions = OrderedDict((
 y = minmax_scale(y_full)  # To make colors corresponding to the target),
 
 
-def create_axes(figsize=(24, 24)):
+def create_axes(figsize=(8, 8)):
     plt.figure(figsize=figsize)
 
     # define the axis for the first plot
     left, width = 0.1, 0.22
-    bottom, height = 0.1, 0.2
-    bottom_h = left_h = left + width + 0.02
+    bottom, height = 0.1, 0.7
+    bottom_h = height + 0.15
+    left_h = left + width + 0.02
 
     rect_scatter = [left, bottom, width, height]
     rect_histx = [left, bottom_h, width, 0.1]
