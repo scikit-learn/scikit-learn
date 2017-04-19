@@ -17,6 +17,11 @@ two concentric circles, however the size and the distance of the circles varies
 slightly from the original. In contrary to two circles dataset, the shapes
 visually diverge from S-curve topology on S-curve dateset even for larger
 perplexity values.
+
+For further details, "How to Use t-SNE Effectively"
+http://distill.pub/2016/misread-tsne/ provides a good discussion of the
+effects of various parameters, as well as interactive plots to explore
+those effects.
 """
 
 # License: BSD 3 clause
