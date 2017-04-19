@@ -156,10 +156,9 @@ If any of the above seems like magic to you, then look up the `Git documentation
 web.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
-to merge ``master`` into your branch with the explicit ``--no-ff`` flag. The
-command will be::
+to merge ``master``. The command will be::
 
-  $ git merge --no-ff master
+  $ git merge master
 
 with ``master`` being synchronized with the ``upstream``.
 
