@@ -1,4 +1,4 @@
-.. _feature_extraction:
+﻿.. _feature_extraction:
 
 ==================
 Feature extraction
@@ -42,7 +42,7 @@ is a traditional numerical feature::
   >>> measurements = [
   ...     {'city': 'Dubai', 'temperature': 33.},
   ...     {'city': 'London', 'temperature': 12.},
-  ...     {'city': 'San Fransisco', 'temperature': 18.},
+  ...     {'city': 'San Francisco', 'temperature': 18.},
   ... ]
 
   >>> from sklearn.feature_extraction import DictVectorizer
@@ -54,7 +54,7 @@ is a traditional numerical feature::
          [  0.,   0.,   1.,  18.]])
 
   >>> vec.get_feature_names()
-  ['city=Dubai', 'city=London', 'city=San Fransisco', 'temperature']
+  ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
 
 :class:`DictVectorizer` is also a useful representation transformation
 for training sequence classifiers in Natural Language Processing models
