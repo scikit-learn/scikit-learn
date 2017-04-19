@@ -92,7 +92,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     if beta == 2:
         # Avoid the creation of the dense np.dot(W, H) if X is sparse.
         if sp.issparse(X):
-            norm_X = np.dot(X.data, X.data)
+            norm_X = pow(np.linalg.norm(X.data), 2)
             norm_WH = trace_dot(np.dot(np.dot(W.T, W), H), H)
             cross_prod = trace_dot((X * H.T), W)
             res = (norm_X + norm_WH - 2. * cross_prod) / 2.
