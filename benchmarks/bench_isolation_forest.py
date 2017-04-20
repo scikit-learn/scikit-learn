@@ -8,6 +8,7 @@ A test of IsolationForest on classical anomaly detection datasets.
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
+
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
