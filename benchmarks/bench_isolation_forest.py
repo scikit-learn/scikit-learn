@@ -2,32 +2,51 @@
 ==========================================
 IsolationForest benchmark
 ==========================================
-
 A test of IsolationForest on classical anomaly detection datasets.
-
 """
-print(__doc__)
 
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
+
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.utils import shuffle as sh
 
+print(__doc__)
+
+
+def print_outlier_ratio(y):
+    """
+    Helper function to show the distinct value count of element in the target.
+    Useful indicator for the datasets used in bench_isolation_forest.py.
+    """
+    uniq, cnt = np.unique(y, return_counts=True)
+    print("----- Target count values: ")
+    for u, c in zip(uniq, cnt):
+        print("------ %s -> %d occurences" % (str(u), c))
+    print("----- Outlier ratio: %.5f" % (np.min(cnt) / len(y)))
+
+
 np.random.seed(1)
-
-datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-
 fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
 
+# Set this to true for plotting score histograms for each dataset:
+with_decision_function_histograms = False
 
+# Removed the shuttle dataset because as of 2017-03-23 mldata.org is down:
+# datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
+datasets = ['http', 'smtp', 'SA', 'SF', 'forestcover']
+
+# Loop over all datasets for fitting and scoring the estimator:
 for dat in datasets:
-    # loading and vectorization
-    print('loading data')
-    if dat in ['http', 'smtp', 'SA', 'SF']:
+
+    # Loading and vectorizing the data:
+    print('====== %s ======' % dat)
+    print('--- Fetching data...')
+    if dat in ['http', 'smtp', 'SF', 'SA']:
         dataset = fetch_kddcup99(subset=dat, shuffle=True, percent10=True)
         X = dataset.data
         y = dataset.target
@@ -43,6 +62,7 @@ for dat in datasets:
         X = X[s, :]
         y = y[s]
         y = (y != 1).astype(int)
+        print('----- ')
 
     if dat == 'forestcover':
         dataset = fetch_covtype(shuffle=True)
@@ -54,29 +74,29 @@ for dat in datasets:
         X = X[s, :]
         y = y[s]
         y = (y != 2).astype(int)
+        print_outlier_ratio(y)
 
-    print('vectorizing data')
+    print('--- Vectorizing data...')
 
     if dat == 'SF':
-        lb = LabelBinarizer()
-        lb.fit(X[:, 1])
-        x1 = lb.transform(X[:, 1])
+        lb = MultiLabelBinarizer()
+        x1 = lb.fit_transform(X[:, 1])
         X = np.c_[X[:, :1], x1, X[:, 2:]]
-        y = (y != 'normal.').astype(int)
+        y = (y != b'normal.').astype(int)
+        print_outlier_ratio(y)
 
     if dat == 'SA':
-        lb = LabelBinarizer()
-        lb.fit(X[:, 1])
-        x1 = lb.transform(X[:, 1])
-        lb.fit(X[:, 2])
-        x2 = lb.transform(X[:, 2])
-        lb.fit(X[:, 3])
-        x3 = lb.transform(X[:, 3])
+        lb = MultiLabelBinarizer()
+        x1 = lb.fit_transform(X[:, 1])
+        x2 = lb.fit_transform(X[:, 2])
+        x3 = lb.fit_transform(X[:, 3])
         X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
-        y = (y != 'normal.').astype(int)
+        y = (y != b'normal.').astype(int)
+        print_outlier_ratio(y)
 
-    if dat == 'http' or dat == 'smtp':
-        y = (y != 'normal.').astype(int)
+    if dat in ('http', 'smtp'):
+        y = (y != b'normal.').astype(int)
+        print_outlier_ratio(y)
 
     n_samples, n_features = X.shape
     n_samples_train = n_samples // 2
@@ -87,34 +107,34 @@ for dat in datasets:
     y_train = y[:n_samples_train]
     y_test = y[n_samples_train:]
 
-    print('IsolationForest processing...')
+    print('--- Fitting the IsolationForest estimator...')
     model = IsolationForest(n_jobs=-1)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = - model.decision_function(X_test)  # the lower, the more normal
+    scoring = - model.decision_function(X_test)  # the lower, the more abnormal
 
-    # Show score histograms
-    fig, ax = plt.subplots(3, sharex=True, sharey=True)
-    bins = np.linspace(-0.5, 0.5, 200)
-    ax[0].hist(scoring, bins, color='black')
-    ax[0].set_title('decision function for %s dataset' % dat)
-    ax[0].legend(loc="lower right")
-    ax[1].hist(scoring[y_test == 0], bins, color='b',
-               label='normal data')
-    ax[1].legend(loc="lower right")
-    ax[2].hist(scoring[y_test == 1], bins, color='r',
-               label='outliers')
-    ax[2].legend(loc="lower right")
+    print("--- Preparing the plot elements...")
+    if with_decision_function_histograms:
+        fig, ax = plt.subplots(3, sharex=True, sharey=True)
+        bins = np.linspace(-0.5, 0.5, 200)
+        ax[0].hist(scoring, bins, color='black')
+        ax[0].set_title('Decision function for %s dataset' % dat)
+        ax[1].hist(scoring[y_test == 0], bins, color='b', label='normal data')
+        ax[1].legend(loc="lower right")
+        ax[2].hist(scoring[y_test == 1], bins, color='r', label='outliers')
+        ax[2].legend(loc="lower right")
 
     # Show ROC Curves
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
-    AUC = auc(fpr, tpr)
-    label = ('%s (area: %0.3f, train-time: %0.2fs, '
-             'test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time))
+    auc_score = auc(fpr, tpr)
+    label = ('%s (AUC: %0.3f, train_time= %0.2fs, '
+             'test_time= %0.2fs)' % (dat, auc_score, fit_time, predict_time))
+    # Print AUC score and train/test time:
+    print(label)
     ax_roc.plot(fpr, tpr, lw=1, label=label)
 
 
