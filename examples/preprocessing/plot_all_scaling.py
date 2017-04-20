@@ -7,11 +7,13 @@ Compare the effect of different scalers on data with outliers
 =============================================================
 
 Feature 0 (median income in a block) and feature 5 (number of households) of
-the California housing dataset have very different scales and contain some very
-large outliers. These two characteristics lead to difficulties to visualize the
-data and, more importantly, they can degrade the predictive performance of many
-machine learning algorithms. Unscaled data can also slow down or even prevent
-the convergence of many gradient-based estimators.
+the `California housing dataset
+<http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html>`_ have very
+different scales and contain some very large outliers. These two
+characteristics lead to difficulties to visualize the data and, more
+importantly, they can degrade the predictive performance of many machine
+learning algorithms. Unscaled data can also slow down or even prevent the
+convergence of many gradient-based estimators.
 
 Indeed many estimators are designed with the assumption that each feature takes
 values close to zero or more importantly that all features vary on comparable
@@ -32,6 +34,9 @@ between marginal outliers and inliers are shrunk.
 
 Unlike the previous transformations, normalization refers to a per sample
 transformation instead of a per feature transformation.
+
+The following code is a bit verbose, feel free to jump directly to the analysis
+of the results_.
 
 """
 
@@ -94,7 +99,7 @@ distributions = OrderedDict((
 y = minmax_scale(y_full)  # To make colors corresponding to the target),
 
 
-def create_axes(figsize=(8, 6)):
+def create_axes(figsize=(16, 6)):
     plt.figure(figsize=figsize)
 
     # define the axis for the first plot
@@ -203,12 +208,14 @@ def make_plot(item_idx):
 
 
 ########################################################################
+# .. _results:
+#
 # Original data
 # -------------
 #
 # The following plot displays the original data distribution in the left panel
 # and the zoomed in version in the right panel. A large majority of the samples
-# are compacted to a specific range, [0, 6] for the median income and [0, 10]
+# are compacted to a specific range, [0, 10] for the median income and [0, 6]
 # for the number of households. Note that there are some marginal outliers
 # (some blocks have more than 1200 households). Therefore a specific
 # pre-processing can be very beneficial depending of the application. In the
@@ -217,39 +224,50 @@ def make_plot(item_idx):
 
 make_plot(0)
 
-##############################################################################
+#######################################################################
 # StandardScaler
 # --------------
 #
 # ``StandardScaler`` removes the mean and scale the data to a unit variance.
 # However, the outliers have an influence when computing the empirical mean and
 # standard deviation which shrink the range of the feature values as shown in
-# the left figure below.
+# the left figure below. Note in particular that because the outliers on each
+# features have different magnitudes, the spread of the transformed data on
+# each feature is very different: most of the data lie in the [-2, 4] range for
+# the transformed median income feature while the same data is squeezed in the
+# smaller [-0.2, 0.2] range for the transformed number of households.
+#
+# ``StandardScaler`` therefore cannot guarantee balanced feature scales in the
+# presence of outliers.
 
 make_plot(1)
 
-##############################################################################
+##########################################################################
 # MinMaxScaler
 # ------------
 #
 # ``MinMaxScaler`` rescales the data set such that all feature values are in
 # the range [0, 1] as shown in the right figure below. However, this scaling
-# compress all inliers in the narrow range [0, 0.005].
+# compress all inliers in the narrow range [0, 0.005] for the transformed
+# number of households.
+#
+# As ``StandardScaler``, ``MinMaxScaler`` is very sensitive to the presence of
+# outliers.
 
 make_plot(2)
 
-###############################################################################
+#############################################################################
 # MaxAbsScaler
 # ------------
 #
 # ``MaxAbsScaler`` differs from the previous scaler such that the absolute
-# values are mapped in the range [0, 1]. Therefore, in the current example,
-# there is no observable difference since the feature values are originally
-# positive.
+# values are mapped in the range [0, 1]. On positive only data this scalers
+# behave similarly to ``MinMaxScaler`` and therefore also suffers from the
+# presence of large outliers.
 
 make_plot(3)
 
-#######################################################################
+##############################################################################
 # RobustScaler
 # ------------
 #
@@ -265,14 +283,21 @@ make_plot(3)
 
 make_plot(4)
 
-##############################################################################
-# QuantileTransformer (Uniform output)
-# -----------------------------------
+###################################################################
+# QuantileTransformer (uniform output)
+# ------------------------------------
 #
 # ``QuantileTransformer`` applies a non-linear transformation such that the
 # probability density function of each feature will be mapped to a uniform
 # distribution. In this case, all the data will be mapped in the range [0, 1],
 # even the outliers which cannot be distinguished anymore from the inliers.
+#
+# As ``RobustScaler``, ``QuantileTransformer`` is robust to outliers in the
+# sense that adding or removing outliers in the training set will yield
+# approximately the same transformation on held out data. But contrary to
+# ``RobustScaler``, ``QuantileTransformer`` will also automatically collapse
+# any outlier by setting them to the a priori defined range boundaries (0 and
+# 1).
 
 make_plot(5)
 
