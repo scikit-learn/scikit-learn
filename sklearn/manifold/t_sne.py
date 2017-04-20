@@ -388,11 +388,11 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         new_error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
-        inc = update * grad >= 0.0
+        inc = update * grad < 0.0
         dec = np.invert(inc)
-        gains[inc] += 0.05
-        gains[dec] *= 0.95
-        np.clip(gains, min_gain, np.inf)
+        gains[inc] += 0.2
+        gains[dec] *= 0.8
+        np.clip(gains, min_gain, np.inf, out=gains)
         grad *= gains
         update = momentum * update - learning_rate * grad
         p += update
