@@ -125,7 +125,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
-               verbose=False, return_n_iter=False, positive=False, **params):
+               verbose=False, return_n_iter=False, positive=False, screening=5,
+               **params):
     """Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
@@ -193,6 +194,13 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     return_n_iter : bool
         whether to return the number of iterations or not.
+
+    screening : int, default 5
+        If screening is not zero, variable screening is performed every
+        screening iterations, e.g. every 5 iterations if screening
+        is set to 5. In a vast majority of cases 5 is a good default value.
+
+        .. versionadded:: 0.19
 
     Returns
     -------
@@ -272,7 +280,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
-                     positive=positive, return_n_iter=return_n_iter, **params)
+                     positive=positive, return_n_iter=return_n_iter,
+                     screening=screening, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
