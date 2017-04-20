@@ -14,8 +14,7 @@ In general, learning algorithm benefit from standardization of the data set. If
 some outliers are present in the set, robust scalers or transformers are more
 appropriate. The behaviors of the different scalers, transformers, and
 normalizers on a dataset containing marginal outliers is highlighted in
-ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`. In the
-following, a description of these methods is given.
+:ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
 
 
 .. _preprocessing_scaler:
