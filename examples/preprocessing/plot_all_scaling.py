@@ -17,12 +17,12 @@ convergence of many gradient-based estimators.
 
 Indeed many estimators are designed with the assumption that each feature takes
 values close to zero or more importantly that all features vary on comparable
-scales. In particular metric-based and gradient-based estimators often assume
+scales. In particular, metric-based and gradient-based estimators often assume
 approximately standardized data (centered features with unit variances). A
 notable exception are decision tree-based estimators that are robust to
 arbitrary scaling of the data.
 
-This example uses different scalers, transformers and normalizers to bring the
+This example uses different scalers, transformers, and normalizers to bring the
 data within a pre-defined range.
 
 Scalers are linear (or more exactly affine) transformers and differ from each
@@ -96,7 +96,8 @@ distributions = OrderedDict((
         Normalizer().fit_transform(X)),
 ))
 
-y = minmax_scale(y_full)  # To make colors corresponding to the target),
+# scale the output between 0 and 1 for the colorbar
+y = minmax_scale(y_full)
 
 
 def create_axes(figsize=(16, 6)):
@@ -214,10 +215,10 @@ def make_plot(item_idx):
 # -------------
 #
 # The following plot displays the original data distribution in the left panel
-# and the zoomed in version in the right panel. A large majority of the samples
+# and the zoomed-in version in the right panel. A large majority of the samples
 # are compacted to a specific range, [0, 10] for the median income and [0, 6]
 # for the number of households. Note that there are some marginal outliers
-# (some blocks have more than 1200 households). Therefore a specific
+# (some blocks have more than 1200 households). Therefore, a specific
 # pre-processing can be very beneficial depending of the application. In the
 # following, we present some insights and behaviors of those pre-processing
 # methods in the presence of marginal outliers.
@@ -247,7 +248,7 @@ make_plot(1)
 # ------------
 #
 # ``MinMaxScaler`` rescales the data set such that all feature values are in
-# the range [0, 1] as shown in the right figure below. However, this scaling
+# the range [0, 1] as shown in the right panel below. However, this scaling
 # compress all inliers in the narrow range [0, 0.005] for the transformed
 # number of households.
 #
@@ -261,8 +262,8 @@ make_plot(2)
 # ------------
 #
 # ``MaxAbsScaler`` differs from the previous scaler such that the absolute
-# values are mapped in the range [0, 1]. On positive only data this scalers
-# behave similarly to ``MinMaxScaler`` and therefore also suffers from the
+# values are mapped in the range [0, 1]. On positive only data, this scaler
+# behaves similarly to ``MinMaxScaler`` and therefore also suffers from the
 # presence of large outliers.
 
 make_plot(3)
@@ -274,8 +275,8 @@ make_plot(3)
 # Unlike the previous scalers, the centering and scaling statistics of this
 # scaler are based on percentiles and are therefore not influenced by a few
 # number of very large marginal outliers. Consequently, the resulting range of
-# the transformed feature values is larger than for the previous scalers and
-# more importantly are approximately similar: for both features most of the
+# the transformed feature values is larger than for the previous scalers and,
+# more importantly, are approximately similar: for both features most of the
 # transformed values lie in a [-2, 3] range as seen in the zoomed-in figure.
 # Note that the outliers themselves are still present in the transformed data.
 # If trimming the outliers is desirable, a non-linear transformation is
@@ -306,7 +307,7 @@ make_plot(5)
 # -------------------------------------
 #
 # ``QuantileTransformer`` has an additional ``output_distribution`` parameter
-# allowing to match a Gaussian distribution instead of a normal distribution.
+# allowing to match a Gaussian distribution instead of a uniform distribution.
 # Note that this non-parametetric transformer introduces saturation artifacts
 # for extreme values.
 
@@ -318,10 +319,10 @@ make_plot(6)
 #
 # The ``Normalizer`` rescales the vector for each sample to have unit norm,
 # independently of the distribution of the samples. It can be seen on both
-# figures below where all samples are mapped to the unit circle. In our example
-# the two selected features have only positive values therefore the transformed
-# only lie in the positive quadrant. This would not be the case if some
-# original features had a mix of positive and negative values.
+# figures below where all samples are mapped onto the unit circle. In our
+# example the two selected features have only positive values; therefore the
+# transformed data only lie in the positive quadrant. This would not be the
+# case if some original features had a mix of positive and negative values.
 
 make_plot(7)
 plt.show()
