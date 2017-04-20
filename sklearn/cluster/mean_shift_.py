@@ -387,7 +387,12 @@ class MeanShift(BaseEstimator, ClusterMixin):
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
         """
-        X = check_array(X)
+
+        try:
+            X = check_array(X)
+        except TypeError:
+            raise TypeError("A sparse matrix was passed, but dense data is required.")
+
         self.cluster_centers_, self.labels_ = \
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,
