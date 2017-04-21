@@ -91,6 +91,10 @@ def _check_targets(y_true, y_pred):
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
+        if y_type == "binary":
+            unique_values = np.union1d(y_true, y_pred)
+            if len(unique_values) > 2:
+                y_type = "multiclass"
 
     if y_type.startswith('multilabel'):
         y_true = csr_matrix(y_true)

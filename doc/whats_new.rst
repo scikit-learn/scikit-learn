@@ -260,6 +260,10 @@ Bug fixes
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
+   - Fix a bug in :func:`sklearn.metrics.classification._check_targets`
+     which would return ``'binary'`` if ``y_true`` and ``y_pred`` were
+     both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
+     ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
 
    - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
      ridge parameter `alpha_` and `lambda_` consistent with calculated
