@@ -393,9 +393,18 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
         raise AttributeError('{} not implemented in estimator'
                              .format(method))
 
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        le = LabelEncoder()
-        y = le.fit_transform(y)
+    do_manual_encoding = method in ['decision_function', 'predict_proba',
+                                    'predict_log_proba']
+    if do_manual_encoding:
+        y = np.asarray(y)
+        if y.ndim == 1:
+            le = LabelEncoder()
+            y = le.fit_transform(y)
+        elif y.ndim == 2:
+            y_enc = np.zeros_like(y, dtype=np.int)
+            for i_label in range(y.shape[1]):
+                y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
+            y = y_enc
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -419,9 +428,20 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     # Check for sparse predictions
     if sp.issparse(predictions[0]):
         predictions = sp.vstack(predictions, format=predictions[0].format)
+    elif do_manual_encoding and isinstance(predictions[0], list):
+        n_labels = y.shape[1]
+        concat_pred = []
+        for i_label in range(n_labels):
+            label_preds = np.concatenate([p[i_label] for p in predictions])
+            concat_pred.append(label_preds)
+        predictions = concat_pred
     else:
         predictions = np.concatenate(predictions)
-    return predictions[inv_test_indices]
+
+    if do_manual_encoding and isinstance(predictions, list):
+        return [p[inv_test_indices] for p in predictions]
+    else:
+        return predictions[inv_test_indices]
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
@@ -480,14 +500,40 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     func = getattr(estimator, method)
     predictions = func(X_test)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        n_classes = len(set(y))
-        predictions_ = np.zeros((X_test.shape[0], n_classes))
-        if method == 'decision_function' and len(estimator.classes_) == 2:
-            predictions_[:, estimator.classes_[-1]] = predictions
+        is_dec_func = (method == 'decision_function')
+        if isinstance(predictions, list):
+            predictions = [_enforce_prediction_order(
+                estimator.classes_[i_label], predictions[i_label],
+                n_classes=len(set(y[:, i_label])),
+                one_col_if_binary=is_dec_func)
+                for i_label in range(len(predictions))]
         else:
-            predictions_[:, estimator.classes_] = predictions
-        predictions = predictions_
+            # A 2D y array should be a binary label indicator matrix
+            n_classes = len(set(y)) if y.ndim == 1 else y.shape[1]
+            predictions = _enforce_prediction_order(
+                estimator.classes_, predictions, n_classes, is_dec_func)
+
     return predictions, test
+
+
+def _enforce_prediction_order(classes, predictions, n_classes,
+                              one_col_if_binary=False):
+    """Ensure that prediction arrays have correct column order
+
+    When doing cross-validation, if one or more classes are
+    not present in the subset of data used for training,
+    then the output prediction array might not have the same
+    columns as other folds. Use the list of class names
+    (assumed to be integers) to enforce the correct column order.
+    """
+    predictions_ = np.zeros((predictions.shape[0], n_classes),
+                            dtype=predictions.dtype)
+    if one_col_if_binary and len(classes) == 2:
+        predictions_[:, classes[-1]] = predictions
+    else:
+        predictions_[:, classes] = predictions
+    predictions = predictions_
+    return predictions
 
 
 def _check_is_permutation(indices, n_samples):

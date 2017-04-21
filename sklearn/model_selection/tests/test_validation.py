@@ -46,6 +46,7 @@ from sklearn.metrics import precision_score
 
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
@@ -915,54 +916,101 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def check_cross_val_predict_with_method(est):
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X, y = shuffle(X, y, random_state=0)
-    classes = len(set(y))
+def check_cross_val_predict_with_method(est, X, y, methods):
+    kfold = KFold(X.shape[0])
 
-    kfold = KFold(len(iris.target))
-
-    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
         predictions = cross_val_predict(est, X, y, method=method)
-        assert_equal(len(predictions), len(y))
 
-        expected_predictions = np.zeros([len(y), classes])
+        if isinstance(predictions, list):
+            assert_equal(len(predictions), y.shape[1])
+            for i in range(y.shape[1]):
+                assert_equal(len(predictions[i]), len(y))
+            expected_predictions = [np.zeros([len(y), len(set(y[:, i]))])
+                                    for i in range(y.shape[1])]
+        else:
+            assert_equal(len(predictions), len(y))
+            expected_predictions = np.zeros_like(predictions)
         func = getattr(est, method)
 
         # Naive loop (should be same as cross_val_predict):
         for train, test in kfold.split(X, y):
             est.fit(X[train], y[train])
-            expected_predictions[test] = func(X[test])
+            preds = func(X[test])
+            if isinstance(predictions, list):
+                for i_label in range(y.shape[1]):
+                    expected_predictions[i_label][test] = preds[i_label]
+            else:
+                expected_predictions[test] = func(X[test])
 
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold)
-        assert_array_almost_equal(expected_predictions, predictions)
+        assert_array_equal_maybe_list(expected_predictions, predictions)
 
         # Test alternative representations of y
         predictions_y1 = cross_val_predict(est, X, y + 1, method=method,
                                            cv=kfold)
-        assert_array_equal(predictions, predictions_y1)
+        assert_array_equal_maybe_list(predictions, predictions_y1)
 
         predictions_y2 = cross_val_predict(est, X, y - 2, method=method,
                                            cv=kfold)
-        assert_array_equal(predictions, predictions_y2)
+        assert_array_equal_maybe_list(predictions, predictions_y2)
 
         predictions_ystr = cross_val_predict(est, X, y.astype('str'),
                                              method=method, cv=kfold)
-        assert_array_equal(predictions, predictions_ystr)
+        assert_array_equal_maybe_list(predictions, predictions_ystr)
+
+
+def assert_array_equal_maybe_list(x, y):
+    # If x and y are lists of arrays, compare arrays individually.
+    if isinstance(x, list):
+        for i in range(len(x)):
+            assert_array_equal(x[i], y[i])
+    else:
+        assert_array_equal(x, y)
 
 
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method(LogisticRegression())
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    check_cross_val_predict_with_method(LogisticRegression(), X, y, methods)
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
     est = GridSearchCV(LogisticRegression(random_state=42),
                        {'C': [0.1, 1]},
                        cv=2)
-    check_cross_val_predict_with_method(est)
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    check_cross_val_predict_with_method(est, X, y, methods)
+
+
+def test_cross_val_predict_with_method_multilabel_ovr():
+    # OVR does multilabel predictions, but only arrays of
+    # binary indicator columns. The output of predict_proba
+    # is a 2D array with shape (n_samples, n_labels).
+    X, y = make_multilabel_classification(n_samples=100, n_labels=3,
+                                          n_classes=4, n_features=5,
+                                          random_state=42)
+    est = OneVsRestClassifier(LogisticRegression(random_state=0))
+    check_cross_val_predict_with_method(
+        est, X, y, methods=['predict_proba', 'decision_function'])
+
+
+def test_cross_val_predict_with_method_multilabel_rf():
+    # The RandomForest allows anything for the contents of the labels.
+    # Output of predict_proba is a list of outputs of predict_proba
+    # for each individual label.
+    X, y = make_multilabel_classification(n_samples=100, n_labels=3,
+                                          n_classes=4, n_features=5,
+                                          random_state=42)
+    y[:, 0] += y[:, 1]  # Put three classes in the first column
+    est = RandomForestClassifier(n_estimators=5, random_state=0)
+    check_cross_val_predict_with_method(est, X, y, methods=['predict_proba'])
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
