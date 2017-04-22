@@ -247,11 +247,11 @@ def test_friedman_mse_in_graphviz():
 
 
 def test_decimals():
+    # regression case
     rng = RandomState(2)
     X = rng.random_sample((5, 2))
     y_reg = rng.random_sample((5, ))
 
-    # regression case
     clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
                                 max_depth=1)
     clf.fit(X, y_reg)
@@ -259,13 +259,33 @@ def test_decimals():
         dot_data = StringIO()
         export_graphviz(clf, out_file=dot_data, decimals=decimals)
         # check value
-        print(dot_data.getvalue())
         for finding in finditer("value = \d+\.\d+", dot_data.getvalue()):
-            print(search("\.\d+", finding.group()).group())
             assert_equal(len(search("\.\d+", finding.group()).group()),
                          decimals + 1)
         # check impurity
         for finding in finditer("friedman_mse = \d+\.\d+",
+                                dot_data.getvalue()):
+            assert_equal(len(search("\.\d+", finding.group()).group()),
+                         decimals + 1)
+        # check threshold
+        for finding in finditer("<= \d+\.\d+", dot_data.getvalue()):
+            assert_equal(len(search("\.\d+", finding.group()).group()),
+                         decimals + 1)
+
+    # classification case
+    rng = RandomState(8)
+    X = rng.random_sample((100, 4))
+    y_cla = rng.randint(2, size=(100, ))
+
+    clf = DecisionTreeClassifier(max_depth=1, random_state=0)
+
+    clf.fit(X, y_cla)
+    for decimals in (4, 3):
+        dot_data = StringIO()
+        export_graphviz(clf, out_file=dot_data, decimals=decimals)
+
+        # check impurity
+        for finding in finditer("gini = \d+\.\d+",
                                 dot_data.getvalue()):
             assert_equal(len(search("\.\d+", finding.group()).group()),
                          decimals + 1)
