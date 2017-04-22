@@ -9,7 +9,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import assert_in, assert_equal, assert_raises
-from sklearn.utils.testing import assert_warns_message, assert_raise_message
+from sklearn.utils.testing import assert_raise_message
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
