@@ -533,6 +533,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 else:
                     partition_end -= 1
 
+                    # swap samples[p] and samples[partition_end]
                     tmp = samples[partition_end]
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
