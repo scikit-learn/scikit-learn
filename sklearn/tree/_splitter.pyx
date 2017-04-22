@@ -437,6 +437,11 @@ cdef class BestSplitter(BaseDenseSplitter):
                     sort(Xf + start, samples + start, end - start)
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+
+                    # highest value is not greater than first value
+                    # within tolerance, this is a newly discovered
+                    # constant feature in the sample range [start:end[
+                    # and will be constant in all children of this node
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
