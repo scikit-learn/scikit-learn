@@ -224,7 +224,7 @@ def test_graphviz_errors():
     out = None
     message = "Length of feature_names=3 does not " + \
               "match number of features=2"
-    assert_warns_message(UserWarning, message, export_graphviz, clf, out,
+    assert_raise_message(ValueError, message, export_graphviz, clf, out,
                          feature_names=["a", "b", "c"])
 
     # Check class_names error

@@ -399,21 +399,14 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             out_file = six.StringIO()
 
         # Check length of feature_names before get into the tree node
-        # raise error for too few feature_names
+        # Raise error if length of feature_names does not match
+        # n_features_ in the decision_tree
         if feature_names is not None:
-            if len(feature_names) < decision_tree.n_features_:
+            if len(feature_names) != decision_tree.n_features_:
                 raise ValueError("Length of feature_names=%d "
                                  "does not match number of features=%d"
                                  % (len(feature_names),
                                     decision_tree.n_features_))
-            # for too much feature_names, will use the first n_features
-            # raise an warning for users
-            if len(feature_names) > decision_tree.n_features_:
-                warnings.warn("Length of feature_names=%d "
-                              "does not match number of features=%d"
-                              % (len(feature_names),
-                                 decision_tree.n_features_),
-                              UserWarning)
 
         # The depth of each node for plotting with 'leaf' option
         ranks = {'leaves': []}
