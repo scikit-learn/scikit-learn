@@ -491,7 +491,15 @@ cdef class BestSplitter(BaseDenseSplitter):
                     n_total_constants += 1
 
                 else:
+                    # f_i points to the first feature which has been drawn and isn't constant
+                    # this is at the end of the features array, we fill this part of the
+                    # features array starting from the end
                     f_i -= 1
+
+                    # swap features at f_i (newest feature which has been drawn and isn't constant)
+                    # and f_j (the drawn feature), i.e. put feature at f_j to the
+                    # last area in features which contains drawn features which
+                    # are not constant
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Evaluate all splits
