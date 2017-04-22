@@ -387,15 +387,23 @@ cdef class BestSplitter(BaseDenseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constants[ holds drawn and known constant features;
+            #
+            # - [:n_drawn_constants[                  holds drawn and known constant
+            #                                         features;
+            # 
             # - [n_drawn_constants:n_known_constants[ holds known constant
-            #   features that haven't been drawn yet;
+            #                                         features that haven't been
+            #                                         drawn yet;
+            # 
             # - [n_known_constants:n_total_constants[ holds newly found constant
-            #   features;
-            # - [n_total_constants:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
+            #                                         features;
+            # 
+            # - [n_total_constants:f_i[               holds features that haven't
+            #                                         been drawn yet and aren't
+            #                                         constant apriori.
+            #
+            # - [f_i:n_features[                      holds features that have been
+            #                                         drawn and aren't constant.
 
             # Draw a feature at random
             #
@@ -742,15 +750,23 @@ cdef class RandomSplitter(BaseDenseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constants[ holds drawn and known constant features;
+            # 
+            # - [:n_drawn_constants[                  holds drawn and known constant
+            #                                         features;
+            #
             # - [n_drawn_constants:n_known_constants[ holds known constant
-            #   features that haven't been drawn yet;
+            #                                         features that haven't been
+            #                                         drawn yet;
+            #
             # - [n_known_constants:n_total_constants[ holds newly found constant
-            #   features;
-            # - [n_total_constants:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
+            #                                         features;
+            #
+            # - [n_total_constants:f_i[               holds features that haven't
+            #                                         been drawn yet and aren't
+            #                                         constant apriori.
+            #
+            # - [f_i:n_features[                      holds features that have been
+            #                                         drawn and aren't constant.
 
             # Draw a feature at random
             f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
@@ -1293,15 +1309,23 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constants[ holds drawn and known constant features;
+            #
+            # - [:n_drawn_constants[                  holds drawn and known constant
+            #                                         features;
+            #
             # - [n_drawn_constants:n_known_constants[ holds known constant
-            #   features that haven't been drawn yet;
+            #                                         features that haven't been
+            #                                         drawn yet;
+            #
             # - [n_known_constants:n_total_constants[ holds newly found constant
-            #   features;
-            # - [n_total_constants:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
+            #                                         features;
+            #
+            # - [n_total_constants:f_i[               holds features that haven't
+            #                                         been drawn yet and aren't
+            #                                         constant apriori.
+            #
+            # - [f_i:n_features[                      holds features that have been
+            #                                         drawn and aren't constant.
 
             # Draw a feature at random
             f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
@@ -1526,15 +1550,23 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constants[ holds drawn and known constant features;
+            #
+            # - [:n_drawn_constants[                  holds drawn and known constant
+            #                                         features;
+            #
             # - [n_drawn_constants:n_known_constants[ holds known constant
-            #   features that haven't been drawn yet;
+            #                                         features that haven't been
+            #                                         drawn yet;
+            #
             # - [n_known_constants:n_total_constants[ holds newly found constant
-            #   features;
-            # - [n_total_constants:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
+            #                                         features;
+            #
+            # - [n_total_constants:f_i[               holds features that haven't
+            #                                         been drawn yet and aren't
+            #                                         constant apriori.
+            #
+            # - [f_i:n_features[                      holds features that have been
+            #                                         drawn and aren't constant.
 
             # Draw a feature at random
             f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
