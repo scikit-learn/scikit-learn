@@ -393,7 +393,9 @@ cdef class BestSplitter(BaseDenseSplitter):
             # 
             # - [n_drawn_constants:n_known_constants[ holds known constant
             #                                         features that haven't been
-            #                                         drawn yet;
+            #                                         drawn yet - these are known
+            #                                         to be constant from previous
+            #                                         calls to this function;
             # 
             # - [n_known_constants:n_total_constants[ holds newly found constant
             #                                         features;
@@ -756,7 +758,9 @@ cdef class RandomSplitter(BaseDenseSplitter):
             #
             # - [n_drawn_constants:n_known_constants[ holds known constant
             #                                         features that haven't been
-            #                                         drawn yet;
+            #                                         drawn yet - these are known
+            #                                         to be constant from previous
+            #                                         calls to this function;
             #
             # - [n_known_constants:n_total_constants[ holds newly found constant
             #                                         features;
@@ -1315,7 +1319,9 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             #
             # - [n_drawn_constants:n_known_constants[ holds known constant
             #                                         features that haven't been
-            #                                         drawn yet;
+            #                                         drawn yet - these are known
+            #                                         to be constant from previous
+            #                                         calls to this function;
             #
             # - [n_known_constants:n_total_constants[ holds newly found constant
             #                                         features;
@@ -1556,7 +1562,9 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             #
             # - [n_drawn_constants:n_known_constants[ holds known constant
             #                                         features that haven't been
-            #                                         drawn yet;
+            #                                         drawn yet - these are known
+            #                                         to be constant from previous
+            #                                         calls to this function;
             #
             # - [n_known_constants:n_total_constants[ holds newly found constant
             #                                         features;
