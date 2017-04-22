@@ -398,6 +398,17 @@ cdef class BestSplitter(BaseDenseSplitter):
             #   and aren't constant.
 
             # Draw a feature at random
+            #
+            # we actually want to draw from two usually disjoint ranges
+            # [n_drawn_constants:n_known_constants[ and
+            # [n_total_constants:f_i[ but we shift the second range
+            # down to start at n_known_constants to have one consecutive range
+            #
+            # f_i - n_found_constants (the upper end argument to rand_int) is
+            # equal to (f_i - n_total_constants) + n_known_constants
+            # because n_total_constants = n_known_constants + n_found_constants
+            # (see cdef of n_total_constants)
+
             f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
                            random_state)
 
