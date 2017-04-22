@@ -14,6 +14,7 @@ import numpy as np
 import warnings
 
 from ..externals import six
+from ..exceptions import NotFittedError
 
 from . import _criterion
 from . import _tree
@@ -380,6 +381,12 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
     own_file = False
     return_string = False
     try:
+        if decision_tree.tree_ is None:
+            raise NotFittedError("This %(name)s instance is not fitted yet."
+                                 "Call 'fit' with appropriate arguments"
+                                 "before using this method."
+                                 % {'name': type(decision_tree).__name__})
+
         if out_file == SENTINEL:
             warnings.warn("out_file can be set to None starting from 0.18. "
                           "This will be the default in 0.20.",
