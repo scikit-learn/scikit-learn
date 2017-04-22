@@ -488,6 +488,12 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                                 best = current  # copy
 
+                    # end of loop over values of this feature
+
+                # end if feature is not a newly discovered constant feature
+
+            # end if feature is not a previously known constant feature
+
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
             feature_offset = X_feature_stride * best.feature
