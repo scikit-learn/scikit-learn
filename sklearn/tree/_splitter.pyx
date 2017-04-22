@@ -387,12 +387,12 @@ cdef class BestSplitter(BaseDenseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
+            # - [:n_drawn_constants[ holds drawn and known constant features;
+            # - [n_drawn_constants:n_known_constants[ holds known constant
             #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
+            # - [n_known_constants:n_total_constants[ holds newly found constant
             #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            # - [n_total_constants:f_i[ holds features that haven't been drawn
             #   yet and aren't constant apriori.
             # - [f_i:n_features[ holds features that have been drawn
             #   and aren't constant.
@@ -742,12 +742,12 @@ cdef class RandomSplitter(BaseDenseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
+            # - [:n_drawn_constants[ holds drawn and known constant features;
+            # - [n_drawn_constants:n_known_constants[ holds known constant
             #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
+            # - [n_known_constants:n_total_constants[ holds newly found constant
             #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            # - [n_total_constants:f_i[ holds features that haven't been drawn
             #   yet and aren't constant apriori.
             # - [f_i:n_features[ holds features that have been drawn
             #   and aren't constant.
@@ -1293,12 +1293,12 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
+            # - [:n_drawn_constants[ holds drawn and known constant features;
+            # - [n_drawn_constants:n_known_constants[ holds known constant
             #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
+            # - [n_known_constants:n_total_constants[ holds newly found constant
             #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            # - [n_total_constants:f_i[ holds features that haven't been drawn
             #   yet and aren't constant apriori.
             # - [f_i:n_features[ holds features that have been drawn
             #   and aren't constant.
@@ -1526,12 +1526,12 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             n_visited_features += 1
 
             # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
+            # - [:n_drawn_constants[ holds drawn and known constant features;
+            # - [n_drawn_constants:n_known_constants[ holds known constant
             #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
+            # - [n_known_constants:n_total_constants[ holds newly found constant
             #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            # - [n_total_constants:f_i[ holds features that haven't been drawn
             #   yet and aren't constant apriori.
             # - [f_i:n_features[ holds features that have been drawn
             #   and aren't constant.
