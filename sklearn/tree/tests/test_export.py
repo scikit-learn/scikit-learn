@@ -255,16 +255,21 @@ def test_decimals():
     clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
                                 max_depth=1)
     clf.fit(X, y_reg)
-    for decimals, nb_len in zip((4, 3), (5, 4)):
+    for decimals in (4, 3):
         dot_data = StringIO()
         export_graphviz(clf, out_file=dot_data, decimals=decimals)
         # check value
-        for finding in finditer("nvalue = \d+\.\d+", dot_data.getvalue()):
-            assert_equal(len(search("\.\d+", finding.group()).group()), nb_len)
+        print(dot_data.getvalue())
+        for finding in finditer("value = \d+\.\d+", dot_data.getvalue()):
+            print(search("\.\d+", finding.group()).group())
+            assert_equal(len(search("\.\d+", finding.group()).group()),
+                         decimals + 1)
         # check impurity
         for finding in finditer("friedman_mse = \d+\.\d+",
                                 dot_data.getvalue()):
-            assert_equal(len(search("\.\d+", finding.group()).group()), nb_len)
+            assert_equal(len(search("\.\d+", finding.group()).group()),
+                         decimals + 1)
         # check threshold
         for finding in finditer("<= \d+\.\d+", dot_data.getvalue()):
-            assert_equal(len(search("\.\d+", finding.group()).group()), nb_len)
+            assert_equal(len(search("\.\d+", finding.group()).group()),
+                         decimals + 1)

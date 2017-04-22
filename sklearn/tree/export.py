@@ -407,10 +407,10 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
         if isinstance(decimals, Integral):
             if decimals < 0:
-                raise ValueError("'decimal' should be greater or equal to 0."
+                raise ValueError("'decimals' should be greater or equal to 0."
                                  " Got {} instead.".format(decimals))
         else:
-            raise ValueError("'decimal should be an integer. Got {}"
+            raise ValueError("'decimals' should be an integer. Got {}"
                              " instead.".format(type(decimals)))
 
         # The depth of each node for plotting with 'leaf' option
