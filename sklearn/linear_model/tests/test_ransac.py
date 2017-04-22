@@ -24,7 +24,7 @@ data = np.column_stack([X, y])
 
 # Add some faulty data
 rng = np.random.RandomState(1000)
-outliers = np.unique(rng.randint(len(X), size=80))
+outliers = np.unique(rng.randint(len(X), size=200))
 data[outliers, :] += 50 + rng.rand(len(outliers), 2) * 10
 
 X = data[:, 0][:, np.newaxis]
@@ -89,17 +89,17 @@ def test_ransac_max_trials():
                                        random_state=0)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
 
+    # there is a 1e-9 chance it will take these many trials. No good reason
+    # 1e-2 isn't enough, can still happen
+    # 2 is the what ransac defines  as min_samples = X.shape[1] + 1
+    max_trials = _dynamic_max_trials(
+        len(X) - len(outliers), X.shape[0], 2, 1 - 1e-9)
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2)
     for i in range(50):
-        ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
-                                           random_state=i)
-        assert_true(getattr(ransac_estimator, 'n_trials_', None) is None)
+        ransac_estimator.set_params(min_samples=2,random_state=i)
+        ransac_estimator.n_trials_ = None
         ransac_estimator.fit(X, y)
-        # there is a 1e9 chance it will take these many trials. No good reason
-        # 1e2 isn't enough, can still happen
-        max_trials = _dynamic_max_trials(
-            len(X) - len(outliers), X.shape[0], X.shape[1] + 1, 1 - 1e9)
         assert_less(ransac_estimator.n_trials_, max_trials + 1)
-
 
 def test_ransac_stop_n_inliers():
     base_estimator = LinearRegression()
