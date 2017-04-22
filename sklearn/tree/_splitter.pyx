@@ -424,6 +424,15 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
+                # i.e. this is a feature which is known to be constant
+                # (from previous calls to this function) but has not been
+                # drawn before
+
+                # swap features[f_j] with features[n_drawn_constants]
+                # effectively moving the drawn feature f_j to the first
+                # range in features which has drawn and known constant
+                # features
+
                 tmp = features[f_j]
                 features[f_j] = features[n_drawn_constants]
                 features[n_drawn_constants] = tmp
