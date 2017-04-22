@@ -478,6 +478,12 @@ cdef class BestSplitter(BaseDenseSplitter):
                     # within tolerance, this is a newly discovered
                     # constant feature in the sample range [start:end[
                     # and will be constant in all children of this node
+
+                    # swap features at f_j (which is current.feature)
+                    # and at n_total_constants effectively
+                    # moving feature f_j to the area in features
+                    # which newly found constant features
+
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
