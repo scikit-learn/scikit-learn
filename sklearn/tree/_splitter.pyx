@@ -442,7 +442,11 @@ cdef class BestSplitter(BaseDenseSplitter):
             else:
                 # f_j is in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
-                # f_j in the interval [n_total_constants, f_i[
+
+                # f_j is now in the interval [n_total_constants, f_i[
+                # i.e. in the part of the features array where we keep
+                # features which have not been drawn yet and aren't
+                # constant a priori
                 current.feature = features[f_j]
                 feature_offset = self.X_feature_stride * current.feature
 
