@@ -410,7 +410,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                # f_j is in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
                 current.feature = features[f_j]
