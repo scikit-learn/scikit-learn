@@ -382,8 +382,8 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
     return_string = False
     try:
         if decision_tree.tree_ is None:
-            raise NotFittedError("This %(name)s instance is not fitted yet."
-                                 "Call 'fit' with appropriate arguments"
+            raise NotFittedError("This %(name)s instance is not fitted yet. "
+                                 "Call 'fit' with appropriate arguments "
                                  "before using this method."
                                  % {'name': type(decision_tree).__name__})
 
