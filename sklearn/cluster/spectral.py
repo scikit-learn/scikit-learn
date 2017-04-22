@@ -311,9 +311,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         by the clustering algorithm.
 
     gamma : float, default=1.0
-        Scaling factor of RBF, polynomial, exponential chi^2 and
-        sigmoid affinity kernel. Ignored for
-        ``affinity='nearest_neighbors'``.
+        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Ignored for ``affinity='nearest_neighbors'``.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
