@@ -500,6 +500,9 @@ def r2_score(y_true, y_pred, sample_weight=None,
     ----------
     .. [1] `Wikipedia entry on the Coefficient of determination
             <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_
+       [2] Gelman, Andrew, and Jennifer Hill. Data analysis using regression
+           and multilevel/hierarchical models. Cambridge university press,
+           2006. (pages 41-42)
 
     Examples
     --------
