@@ -9,6 +9,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import assert_in, assert_equal, assert_raises
+from sklearn.exceptions import NotFittedError
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -210,6 +211,11 @@ def test_graphviz_toy():
 def test_graphviz_errors():
     # Check for errors of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
+
+    # Check not-fitted decision tree error
+    out = StringIO()
+    assert_raises(NotFittedError, export_graphviz, clf, out)
+
     clf.fit(X, y)
 
     # Check feature_names error

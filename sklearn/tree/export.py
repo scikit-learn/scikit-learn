@@ -14,6 +14,7 @@ import numpy as np
 import warnings
 
 from ..externals import six
+from ..utils.validation import check_is_fitted
 
 from . import _criterion
 from . import _tree
@@ -377,6 +378,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                 # Add edge to parent
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
+    check_is_fitted(decision_tree, 'tree_')
     own_file = False
     return_string = False
     try:
