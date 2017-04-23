@@ -378,9 +378,9 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                 # Add edge to parent
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
+    check_is_fitted(decision_tree, 'tree_')
     own_file = False
     return_string = False
-    check_is_fitted(decision_tree, 'tree_')
     try:
         if out_file == SENTINEL:
             warnings.warn("out_file can be set to None starting from 0.18. "
