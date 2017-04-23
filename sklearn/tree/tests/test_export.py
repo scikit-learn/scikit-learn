@@ -11,7 +11,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
-                                   assert_raises_regex)
+                                   assert_raises_regex, assert_less_equal)
 from sklearn.exceptions import NotFittedError
 
 # toy sample
@@ -262,40 +262,53 @@ def test_decimals():
                                 max_depth=1)
     clf.fit(X, y_reg)
     for decimals in (4, 3):
-        dot_data = StringIO()
-        export_graphviz(clf, out_file=dot_data, decimals=decimals)
+        dot_data = export_graphviz(clf, out_file=None, decimals=decimals)
+
+        # With the current random state, the value, the impurity and the
+        # threshold will have the number of decimals set in the export_graphviz
+        # function. We will check the number of decimals with a strict
+        # equality.
+
         # check value
-        for finding in finditer("value = \d+\.\d+", dot_data.getvalue()):
+        for finding in finditer("value = \d+\.\d+", dot_data):
             assert_equal(len(search("\.\d+", finding.group()).group()),
                          decimals + 1)
         # check impurity
-        for finding in finditer("friedman_mse = \d+\.\d+",
-                                dot_data.getvalue()):
+        for finding in finditer("friedman_mse = \d+\.\d+", dot_data):
             assert_equal(len(search("\.\d+", finding.group()).group()),
                          decimals + 1)
         # check threshold
-        for finding in finditer("<= \d+\.\d+", dot_data.getvalue()):
+        for finding in finditer("<= \d+\.\d+", dot_data):
             assert_equal(len(search("\.\d+", finding.group()).group()),
                          decimals + 1)
 
     # classification case
     rng = RandomState(8)
-    X = rng.random_sample((100, 4))
-    y_cla = rng.randint(2, size=(100, ))
+    X = rng.random_sample((1000, 4))
+    y_cla = rng.randint(2, size=(1000, ))
 
     clf = DecisionTreeClassifier(max_depth=1, random_state=0)
 
     clf.fit(X, y_cla)
     for decimals in (4, 3):
-        dot_data = StringIO()
-        export_graphviz(clf, out_file=dot_data, decimals=decimals)
+        dot_data = export_graphviz(clf, out_file=None, decimals=decimals,
+                                   proportion=True)
 
+        # With the current random state, the impurity and the threshold will
+        # have the number of decimals set in the export_graphviz function. We
+        # will check the number of decimals with a strict equality. The value
+        # reported will have only 2 decimals and therefore, only a less equal
+        # comparison will be done.
+
+        # check value
+        for finding in finditer("value = \d+\.\d+", dot_data):
+            assert_less_equal(len(search("\.\d+", finding.group()).group()),
+                              decimals + 1)
         # check impurity
-        for finding in finditer("gini = \d+\.\d+",
-                                dot_data.getvalue()):
+        for finding in finditer("gini = \d+\.\d+", dot_data):
             assert_equal(len(search("\.\d+", finding.group()).group()),
                          decimals + 1)
         # check threshold
-        for finding in finditer("<= \d+\.\d+", dot_data.getvalue()):
+        for finding in finditer("<= \d+\.\d+", dot_data):
             assert_equal(len(search("\.\d+", finding.group()).group()),
                          decimals + 1)
