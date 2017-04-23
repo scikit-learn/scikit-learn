@@ -380,9 +380,8 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
     own_file = False
     return_string = False
+    check_is_fitted(decision_tree, 'tree_')
     try:
-        check_is_fitted(decision_tree, 'tree_')
-
         if out_file == SENTINEL:
             warnings.warn("out_file can be set to None starting from 0.18. "
                           "This will be the default in 0.20.",
