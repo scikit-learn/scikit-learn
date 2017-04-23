@@ -56,12 +56,13 @@ New features
      multinomial logistic loss, and behaves marginally better than 'sag'
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
-   - Added :class:`preprocessing.QuantileNormalizer` class for features
-   - Added :class:`preprocessing.QuantileTransformer` class for features
+
+   - Added :class:`preprocessing.QuantileTransformer` class and
+     :func:`preprocessing.quantile_transform` function for features
      normalization based on quantiles.
      :issue:`8363` by :user:`Denis Engemann <dengemann>`,
-     :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_,
-     `Raghav RV`_, and :user:`Thierry Guillemot <tguillemot>`.
+     :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
+     and :user:`Thierry Guillemot <tguillemot>`.
 
 Enhancements
 ............
@@ -167,7 +168,7 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
-   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
 
 Bug fixes
@@ -260,7 +261,7 @@ Bug fixes
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
 
-   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.

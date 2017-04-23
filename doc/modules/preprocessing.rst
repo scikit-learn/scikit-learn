@@ -10,7 +10,7 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
-In general, learning algorithm benefit from standardization of the data set. If
+In general, learning algorithms benefit from standardization of the data set. If
 some outliers are present in the set, robust scalers or transformers are more
 appropriate. The behaviors of the different scalers, transformers, and
 normalizers on a dataset containing marginal outliers is highlighted in
@@ -268,22 +268,38 @@ methods. It does, however, distort correlations and distances within and across
 features.
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
-non-parametric transformation based the quantile function to map the data to a
-uniform distribution with values between 0 and 1::
+non-parametric transformation based on the quantile function to map the data to
+a uniform distribution with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-  >>> quantile_transformer = preprocessing.QuantileTransformer()
+  >>> quantile_transformer = preprocessing.QuantileTransformer(
+  ...     smoothing_noise=1e-12)
   >>> X_train_trans = quantile_transformer.fit_transform(X_train)
   >>> X_test_trans = quantile_transformer.transform(X_test)
+
+  >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100])
+  array([ 4.3,  5.2,  5.8,  6.5,  7.9])
+  >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +ELLIPSIS
+  array([...])
+  >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
+  array([ 4.4 ,  5.  ,  5.65,  6.2 ,  7.7 ])
+  >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +ELLIPSIS
+  array([...])
 
 It is also possible to map the transformed data to a normal distribution by
 setting ``output_distribution='normal'``::
 
-  >>> X_trans = preprocessing.quantile_transform(X, output_distribution='normal')
+  >>> quantile_transformer = preprocessing.QuantileTransformer(
+  ...     smoothing_noise=1e-12, output_distribution='normal')
+  >>> X_trans = quantile_transformer.fit_transform(X)
+  >>> quantile_transformer.quantiles_ # doctest: + ELLIPSIS
+  array([...])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
@@ -291,7 +307,10 @@ corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively --- do not
 become infinite under the transformation.
 
 :class:`QuantileTransformer` provides a ``smoothing_noise`` parameter to make
-the interpretation more intuitive when manually checking the transformation. See
+the interpretation more intuitive when manually checking the transformation
+which particularly useful useful when feature values are replicated
+(e.g. prices, units of time, etc.) rather than truly discrete or truly
+continuous. See
 :ref:`sphx_glr_auto_examples_preprocessing_plot_smoothing_noise_quantile_transform.py`
 
 .. _preprocessing_normalization:

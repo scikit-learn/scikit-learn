@@ -25,7 +25,7 @@ arbitrary scaling of the data.
 This example uses different scalers, transformers, and normalizers to bring the
 data within a pre-defined range.
 
-Scalers are linear (or more exactly affine) transformers and differ from each
+Scalers are linear (or more precisely affine) transformers and differ from each
 other in the way to estimate the parameters used to shift and scale each
 feature.
 
@@ -214,14 +214,15 @@ def make_plot(item_idx):
 # Original data
 # -------------
 #
-# The following plot displays the original data distribution in the left panel
-# and the zoomed-in version in the right panel. A large majority of the samples
-# are compacted to a specific range, [0, 10] for the median income and [0, 6]
-# for the number of households. Note that there are some marginal outliers
-# (some blocks have more than 1200 households). Therefore, a specific
-# pre-processing can be very beneficial depending of the application. In the
-# following, we present some insights and behaviors of those pre-processing
-# methods in the presence of marginal outliers.
+# Each transformation is plotted showing two transformed features, with the
+# left plot showing the entire dataset, and the right zoomed-in to show the
+# dataset without the marginal outliers. A large majority of the samples are
+# compacted to a specific range, [0, 10] for the median income and [0, 6] for
+# the number of households. Note that there are some marginal outliers (some
+# blocks have more than 1200 households). Therefore, a specific pre-processing
+# can be very beneficial depending of the application. In the following, we
+# present some insights and behaviors of those pre-processing methods in the
+# presence of marginal outliers.
 
 make_plot(0)
 
