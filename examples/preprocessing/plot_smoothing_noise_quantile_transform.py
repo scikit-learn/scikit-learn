@@ -7,14 +7,16 @@ Effect of smoothing noise when using QuantileTransformer
 
 The parameter ``smoothing_noise`` can be used if some specific feature values
 are repeated exactly many times to the point of being predominant in the
-dataset.
+dataset which particularly useful useful when feature values are replicated
+(e.g. prices, units of time, etc.) rather than truly discrete or truly
+continuous.
 
 Without smoothing noise, the ``QuantileTransformer`` will map those values to
 some arbitrary value: the highest quantile value for all the inputs with the
 same value. While this is usually not an issue when ``QuantileTransformer`` is
-used as a preprocessing transformer for a subsequent subsequent supervised
-estimator, it can lead to surprising results when manually inspecting the
-transformed values (e.g. for visualization or reporting).
+used as a preprocessing transformer for a subsequent supervised estimator, it
+can lead to surprising results when manually inspecting the transformed values
+(e.g. for visualization or reporting).
 
 The goal of the smoothing noise is to make it possible to map those repeated
 values to some middle quantile value to make interpretation more intuitive as
@@ -37,8 +39,7 @@ FEAT_VAL = 3.0
 
 
 def plot_transform_feat_val(ax, transformer, title):
-    """Plot the full transformation mapping the feature values as well as
-    a single feature."""
+    """Plot the mapping function as well as a specific feature value."""
     ref = np.linspace(0, 1, num=N_QUANTILES)
 
     ax.plot(transformer.quantiles_, ref)
@@ -66,6 +67,24 @@ def plot_transform_feat_val(ax, transformer, title):
 # ratings for a restaurant. The scale used is ranging from 1 to 5 and
 # a large number of customers attributed a grade of 3 to the current
 # restaurant.
+#
+# By default, the ``QuantileTransformer`` does not apply any smoothing
+# noise. When dealing with a data set with a predominant value, this feature
+# value can be affected to several quantiles. When provided to the transformer,
+# this feature value will be mapped to the largest quantile. In practice,
+# machine learning algorithms will usually not be affected by such
+# characteristics. However, manual interpretation might be counter intuitive.
+#
+# From the below plot, we would expect that a vote corresponding to
+# the value 3 would be mapped to the median (e.g., 0.5). However, the
+# default behaviour of the 'interp' numpy function will map this
+# feature value to the greater quantile as shown by the marker in the
+# figure.
+#
+# A solution is to apply a small smoothing noise before computing the
+# quantiles. The parameter ``smoothing_noise`` offers this possibility as
+# illustrated above.  In this case, the marker is centered at the median as
+# expected.
 
 X = np.array([1] * 2000 +
              [2] * 1000 +
@@ -86,22 +105,3 @@ qt.fit(X)
 plot_transform_feat_val(ax2, qt, 'With smoothing')
 plt.tight_layout()
 plt.show()
-
-###############################################################################
-# By default, the ``QuantileTransformer`` does not apply any smoothing
-# noise. Dealing with dataset with a predominant value, the quantile
-# computed for such value will correspond to the largest quantiled. In
-# practise, marchine learning algorithms will usually not be affected
-# by such characteristics. However, manual interpretation might be
-# counter intuitive.
-#
-# From the above plot, we would expect that a vote corresponding to
-# the value 3 would be mapped to the median (e.g., 0.5). However, the
-# default behaviour of the 'interp' numpy function will map this
-# feature value to the greater quantile as show by the marker in the
-# figure.
-#
-# A solution is to apply a small smoothing noise before the
-# computation of the quantiles. The parameter ``smoothing_noise`` offers
-# this possibility as illustrated above.
-# In this case, the marker is centered at the median as expected.

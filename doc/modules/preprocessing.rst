@@ -282,12 +282,14 @@ a uniform distribution with values between 0 and 1::
   >>> X_test_trans = quantile_transformer.transform(X_test)
 
   >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100])
-  array([ 4.3,  5.2,  5.8,  6.5,  7.9])
+  ... # doctest: +ELLIPSIS
+  array([...])
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
   ... # doctest: +ELLIPSIS
   array([...])
   >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
-  array([ 4.4 ,  5.  ,  5.65,  6.2 ,  7.7 ])
+  ... # doctest: +ELLIPSIS
+  array([...])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
   ... # doctest: +ELLIPSIS
   array([...])
@@ -298,7 +300,7 @@ setting ``output_distribution='normal'``::
   >>> quantile_transformer = preprocessing.QuantileTransformer(
   ...     smoothing_noise=1e-12, output_distribution='normal')
   >>> X_trans = quantile_transformer.fit_transform(X)
-  >>> quantile_transformer.quantiles_ # doctest: + ELLIPSIS
+  >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS
   array([...])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The

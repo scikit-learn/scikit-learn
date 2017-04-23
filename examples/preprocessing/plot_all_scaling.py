@@ -230,11 +230,11 @@ make_plot(0)
 # StandardScaler
 # --------------
 #
-# ``StandardScaler`` removes the mean and scale the data to a unit variance.
+# ``StandardScaler`` removes the mean and scales the data to unit variance.
 # However, the outliers have an influence when computing the empirical mean and
 # standard deviation which shrink the range of the feature values as shown in
 # the left figure below. Note in particular that because the outliers on each
-# features have different magnitudes, the spread of the transformed data on
+# feature have different magnitudes, the spread of the transformed data on
 # each feature is very different: most of the data lie in the [-2, 4] range for
 # the transformed median income feature while the same data is squeezed in the
 # smaller [-0.2, 0.2] range for the transformed number of households.
@@ -280,7 +280,7 @@ make_plot(3)
 # more importantly, are approximately similar: for both features most of the
 # transformed values lie in a [-2, 3] range as seen in the zoomed-in figure.
 # Note that the outliers themselves are still present in the transformed data.
-# If trimming the outliers is desirable, a non-linear transformation is
+# If a separate outlier clipping is desirable, a non-linear transformation is
 # required (see below).
 
 make_plot(4)
