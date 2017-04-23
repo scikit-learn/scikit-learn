@@ -640,9 +640,11 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state : numpy.RandomState, optional
-        The generator used to initialize the codebook. Defaults to
-        numpy.random.
+    random_state : int, RandomState instance or None, optional, default: None
+        The generator used to initialize the codebook.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     n_jobs : int, optional, default: 1
         The number of jobs to use for the computation. If -1 all CPUs are used.

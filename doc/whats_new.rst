@@ -163,6 +163,13 @@ Enhancements
 
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
+     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
+
+   - :class:`ensemble.VotingClassifier` now allow changing estimators by using
+     :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
+     removed by setting it to `None`.
+     :issue:`7674` by:user:`Yichuan Liu <yl565>`.
 
 Bug fixes
 .........
@@ -253,6 +260,10 @@ Bug fixes
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
+   - Fix a bug in :func:`sklearn.metrics.classification._check_targets`
+     which would return ``'binary'`` if ``y_true`` and ``y_pred`` were
+     both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
+     ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
 
    - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
      ridge parameter `alpha_` and `lambda_` consistent with calculated
@@ -261,6 +272,9 @@ Bug fixes
 
    - Fixed a bug in :class:`manifold.TSNE` where it stored the incorrect
      ``kl_divergence_``. :issue:`6507` by :user:`Sebastian Saeger <ssaeger>`.
+
+   - Fixed a bug in :class:`svm.OneClassSVM` where it returned floats instead of
+     integer classes. :issue:`8676` by :user:`Vathsala Achar <VathsalaAchar>`.
 
 API changes summary
 -------------------
