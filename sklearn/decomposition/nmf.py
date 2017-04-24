@@ -92,7 +92,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     if beta == 2:
         # Avoid the creation of the dense np.dot(W, H) if X is sparse.
         if sp.issparse(X):
-            norm_X = pow(np.linalg.norm(X.data), 2)
+            norm_X = np.dot(X.data, X.data)
             norm_WH = trace_dot(np.dot(np.dot(W.T, W), H), H)
             cross_prod = trace_dot((X * H.T), W)
             res = (norm_X + norm_WH - 2. * cross_prod) / 2.
@@ -957,7 +957,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
 
-    X = check_array(X, accept_sparse=('csr', 'csc'))
+    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1204,7 +1204,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
