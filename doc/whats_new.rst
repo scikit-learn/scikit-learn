@@ -18,7 +18,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-* *to be listed*
+   * :class:`sklearn.ensemble.IsolationForest` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -41,10 +41,21 @@ New features
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      By `Tom Dupre la Tour`_.
 
+   - Added the :class:`sklearn.model_selection.RepeatedKFold` and
+     :class:`sklearn.model_selection.RepeatedStratifiedKFold`.
+     :issue:`8120` by `Neeraj Gangwar`_.
+
    - Added :func:`metrics.mean_squared_log_error`, which computes
      the mean square error of the logarithmic transformation of targets,
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
+
+   - Added solver ``saga`` that implements the improved version of Stochastic
+     Average Gradient, in :class:`linear_model.LogisticRegression` and
+     :class:`linear_model.Ridge`. It allows the use of L1 penalty with
+     multinomial logistic loss, and behaves marginally better than 'sag'
+     during the first epochs of ridge and logistic regression.
+     By `Arthur Mensch`_.
 
 Enhancements
 ............
@@ -150,9 +161,23 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+     is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
+     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
+
+   - :class:`ensemble.VotingClassifier` now allow changing estimators by using
+     :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
+     removed by setting it to `None`.
+     :issue:`7674` by:user:`Yichuan Liu <yl565>`.
+
 Bug fixes
 .........
-   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect 
+   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
+     an incorrect formula for the average path length
+     :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
+
+   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect
      result when input is a precomputed sparse matrix with initial
      rows all zero.
      :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
@@ -163,7 +188,7 @@ Bug fixes
 
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
-     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>` 
+     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
 
    - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
      :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
@@ -181,6 +206,10 @@ Bug fixes
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
 
+   - Fixed a bug in :class:`sklearn.ensemble.GradientBoostingClassifier`
+     and :class:`sklearn.ensemble.GradientBoostingRegressor`
+     where a float being compared to ``0.0`` using ``==`` caused a divide by zero
+     error. This was fixed in :issue:`7970` by :user:`He Chen <chenhe95>`.
 
    - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
      sparse array X and initial centroids, where X's means were unnecessarily
@@ -231,6 +260,21 @@ Bug fixes
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
+   - Fix a bug in :func:`sklearn.metrics.classification._check_targets`
+     which would return ``'binary'`` if ``y_true`` and ``y_pred`` were
+     both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
+     ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
+
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
+     ridge parameter `alpha_` and `lambda_` consistent with calculated
+     coefficients `coef_` and `intercept_`.
+     :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
+
+   - Fixed a bug in :class:`manifold.TSNE` where it stored the incorrect
+     ``kl_divergence_``. :issue:`6507` by :user:`Sebastian Saeger <ssaeger>`.
+
+   - Fixed a bug in :class:`svm.OneClassSVM` where it returned floats instead of
+     integer classes. :issue:`8676` by :user:`Vathsala Achar <VathsalaAchar>`.
 
    - Fix a bug where :func:`sklearn.tree.export_graphviz` will raise an error
      when the length features_names does not match n_features in the decision
@@ -252,6 +296,12 @@ API changes summary
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
 
+   - Replace attribute ``named_steps`` ``dict`` to :class:`sklearn.utils.Bunch`
+     in :class:`sklearn.pipeline.Pipeline` to enable tab completion in interactive
+     environment. In the case conflict value on ``named_steps`` and ``dict``
+     attribute, ``dict`` behavior will be prioritized.
+     :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
+
    - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
      function used to return a 3d array (``n_samples``, ``n_classes``,
      ``n_outputs``). In the case where different target columns had different
@@ -271,6 +321,19 @@ API changes summary
       selection classes to be used with tools such as
       :func:`sklearn.model_selection.cross_val_predict`.
       :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+
+   - Estimators with both methods ``decision_function`` and ``predict_proba``
+     are now required to have a monotonic relation between them. The
+     method ``check_decision_proba_consistency`` has been added in
+     **sklearn.utils.estimator_checks** to check their consistency.
+     :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
+
+   - All tree based estimators now accept a ``min_impurity_decrease``
+     parameter in lieu of the ``min_impurity_split``, which is now deprecated.
+     The ``min_impurity_decrease`` helps stop splitting the nodes in which
+     the weighted impurity decrease from splitting is no longer alteast
+     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
+
 
 .. _changes_0_18_1:
 
@@ -5009,3 +5072,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vincent Pham: https://github.com/vincentpham1991
 
 .. _Denis Engemann: http://denis-engemann.de
+.. _Anish Shah: https://github.com/AnishShah
+
+.. _Neeraj Gangwar: http://neerajgangwar.in
+.. _Arthur Mensch: https://amensch.fr

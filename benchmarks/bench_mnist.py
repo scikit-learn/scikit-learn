@@ -91,14 +91,17 @@ ESTIMATORS = {
         Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
     'SampledRBF-SVM': make_pipeline(
         RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
-    'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4),
+    'LogisticRegression-SAG': LogisticRegression(solver='sag', tol=1e-1,
+                                                 C=1e4),
+    'LogisticRegression-SAGA': LogisticRegression(solver='saga', tol=1e-1,
+                                                  C=1e4),
     'MultilayerPerceptron': MLPClassifier(
         hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-        algorithm='sgd', learning_rate_init=0.2, momentum=0.9, verbose=1,
+        solver='sgd', learning_rate_init=0.2, momentum=0.9, verbose=1,
         tol=1e-4, random_state=1),
     'MLP-adam': MLPClassifier(
         hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-        algorithm='adam', learning_rate_init=0.001, verbose=1,
+        solver='adam', learning_rate_init=0.001, verbose=1,
         tol=1e-4, random_state=1)
 }
 
