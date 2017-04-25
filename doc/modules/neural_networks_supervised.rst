@@ -173,7 +173,7 @@ which a sample can have more than one target.
 Regularization
 ==============
 
-Both :class:`MLPRegressor` and class:`MLPClassifier` use parameter ``alpha``
+Both :class:`MLPRegressor` and :class:`MLPClassifier` use parameter ``alpha``
 for regularization (L2 regularization) term which helps in avoiding overfitting
 by penalizing weights with large magnitudes. Following plot displays varying
 decision function with value of alpha.
