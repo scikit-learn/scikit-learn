@@ -67,6 +67,10 @@ enhance the functionality of scikit-learn's estimators.
 - `scikit-plot <https://github.com/reiinakano/scikit-plot>`_ A visualization library
   for quick and easy generation of common plots in data analysis and machine learning.
 
+- `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
+  custom matplotlib visualizers for scikit-learn estimators to support visual feature
+  analysis, model selection, evaluation, and diagnostics.
+
 
 **Model export for production**
 
