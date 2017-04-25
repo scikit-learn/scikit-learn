@@ -38,9 +38,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : {int, RandomState}, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
-        if RandomState instance, random_state is the random number generator.
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Notes
     -----
@@ -124,9 +126,11 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : {int, RandomState}, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
-        if RandomState instance, random_state is the random number generator.
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     References
     ----------
@@ -378,8 +382,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         How many data points will be used to construct the mapping.
 
     gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi2 and
-        sigmoid kernels. Interpretation of the default value is left to
+        Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
+        and sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
@@ -394,10 +398,11 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
-    random_state : {int, RandomState}, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
-        if RandomState instance, random_state is the random number generator.
-
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

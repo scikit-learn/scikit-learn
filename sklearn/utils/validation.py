@@ -80,7 +80,11 @@ def as_float_array(X, copy=True, force_all_finite=True):
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
         return X.copy('F' if X.flags['F_CONTIGUOUS'] else 'C') if copy else X
     else:
-        return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
+        if X.dtype.kind in 'uib' and X.dtype.itemsize <= 4:
+            return_dtype = np.float32
+        else:
+            return_dtype = np.float64
+        return X.astype(return_dtype)
 
 
 def _is_arraylike(x):
@@ -92,7 +96,7 @@ def _is_arraylike(x):
 
 def _num_samples(x):
     """Return number of samples in array-like x."""
-    if hasattr(x, 'fit'):
+    if hasattr(x, 'fit') and callable(x.fit):
         # Don't get num_samples from an ensembles length!
         raise TypeError('Expected sequence or array-like, got '
                         'estimator %s' % x)

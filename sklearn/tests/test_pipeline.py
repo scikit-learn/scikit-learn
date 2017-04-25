@@ -509,6 +509,23 @@ def test_set_pipeline_steps():
     assert_raises(TypeError, pipeline.fit_transform, [[1]], [1])
 
 
+def test_pipeline_named_steps():
+    transf = Transf()
+    mult2 = Mult(mult=2)
+    pipeline = Pipeline([('mock', transf), ("mult", mult2)])
+
+    # Test access via named_steps bunch object
+    assert_true('mock' in pipeline.named_steps)
+    assert_true('mock2' not in pipeline.named_steps)
+    assert_true(pipeline.named_steps.mock is transf)
+    assert_true(pipeline.named_steps.mult is mult2)
+
+    # Test bunch with conflict attribute of dict
+    pipeline = Pipeline([('values', transf), ("mult", mult2)])
+    assert_true(pipeline.named_steps.values is not transf)
+    assert_true(pipeline.named_steps.mult is mult2)
+
+
 def test_set_pipeline_step_none():
     # Test setting Pipeline steps to None
     X = np.array([[1]])
@@ -794,9 +811,9 @@ def test_step_name_validation():
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
-            (bad_steps1, "Step names must not contain __: got ['a__q']"),
+            (bad_steps1, "Estimator names must not contain __: got ['a__q']"),
             (bad_steps2, "Names provided are not unique: ['a', 'a']"),
-            (bad_steps3, "Step names conflict with constructor "
+            (bad_steps3, "Estimator names conflict with constructor "
                          "arguments: ['%s']" % param),
         ]:
             # three ways to make invalid:
