@@ -765,6 +765,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> logo = LeaveOneGroupOut()
     >>> logo.get_n_splits(X, y, groups)
     2
+    >>> logo.get_n_splits(None, None, groups) # X, y are always ignored.
+    2
     >>> print(logo)
     LeaveOneGroupOut()
     >>> for train_index, test_index in logo.split(X, y, groups):
@@ -852,6 +854,8 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> groups = np.array([1, 2, 3])
     >>> lpgo = LeavePGroupsOut(n_groups=2)
     >>> lpgo.get_n_splits(X, y, groups)
+    3
+    >>> lpgo.get_n_splits(None, None, groups) # X, y are always ignored.
     3
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
