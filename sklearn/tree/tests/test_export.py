@@ -87,18 +87,42 @@ def test_graphviz_toy():
                 'fontname=helvetica] ;\n' \
                 'edge [fontname=helvetica] ;\n' \
                 '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
-                'value = [0.5, 0.5]>, fillcolor="#e5813900"] ;\n' \
-                '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
+                'proportion = [0.5, 0.5]>, fillcolor="#e5813900"] ;\n' \
+                '1 [label=<samples = 50.0%<br/>proportion = [1.0, 0.0]>, ' \
                 'fillcolor="#e58139ff"] ;\n' \
                 '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
                 'headlabel="True"] ;\n' \
-                '2 [label=<samples = 50.0%<br/>value = [0.0, 1.0]>, ' \
+                '2 [label=<samples = 50.0%<br/>proportion = [0.0, 1.0]>, ' \
                 'fillcolor="#399de5ff"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
                 '}'
 
     assert_equal(contents1, contents2)
+
+    # Test proportions equal 'both'
+    out = StringIO()
+    export_graphviz(clf, out_file=out, filled=True, impurity=False,
+                    proportion='both', special_characters=True, rounded=True)
+    contents1 = out.getvalue()
+    contents2 = 'digraph Tree {\n' \
+                'node [shape=box, style="filled, rounded", color="black", ' \
+                'fontname=helvetica] ;\n' \
+                'edge [fontname=helvetica] ;\n' \
+                '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 6 (100.0%)' \
+                '<br/>value = [3, 3]<br/>proportion = [0.5, 0.5]>, ' \
+                'fillcolor="#e5813900"] ;\n' \
+                '1 [label=<samples = 3 (50.0%)<br/>value = [3, 0]<br/>' \
+                'proportion = [1.0, 0.0]>, fillcolor="#e58139ff"] ;\n' \
+                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
+                'headlabel="True"] ;\n' \
+                '2 [label=<samples = 3 (50.0%)<br/>value = [0, 3]<br/>' \
+                'proportion = [0.0, 1.0]>, fillcolor="#399de5ff"] ;\n' \
+                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
+                'headlabel="False"] ;\n' \
+                '}'
+
+    assert_equal(contents1, contents2)    
 
     # Test max_depth
     contents1 = export_graphviz(clf, max_depth=0,
@@ -207,7 +231,7 @@ def test_graphviz_toy():
 
     assert_equal(contents1, contents2)
 
-
+    
 def test_graphviz_errors():
     # Check for errors of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
