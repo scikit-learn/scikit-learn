@@ -1461,9 +1461,8 @@ def test_one_hot_encoder_sparse():
     # discover max values automatically
     X_trans = enc.fit_transform(X).toarray()
     assert_equal(X_trans.shape, (2, 5))
-    assert_array_equal(enc.active_features_,
-                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
-    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+    assert_array_equal(enc.active_features_, np.arange(5))
+    assert_array_equal(enc.feature_indices_, [0, 2, 4, 5])
 
     # check outcome
     assert_array_equal(X_trans,
@@ -1471,13 +1470,13 @@ def test_one_hot_encoder_sparse():
                         [1., 0., 1., 0., 1.]])
 
     # max value given as 3
-    enc = OneHotEncoder(n_values=4)
+    enc = OneHotEncoder(values=4)
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (2, 4 * 3))
     assert_array_equal(enc.feature_indices_, [0, 4, 8, 12])
 
     # max value given per feature
-    enc = OneHotEncoder(n_values=[3, 2, 2])
+    enc = OneHotEncoder(values=[3, 2, 2])
     X = [[1, 0, 1], [0, 1, 1]]
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (2, 3 + 2 + 2))
@@ -1492,11 +1491,11 @@ def test_one_hot_encoder_sparse():
     error_msg = re.escape("Unknown feature(s) [2] in column 1")
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
 
-    error_msg = re.escape("Value(s) [2] out of bounds for feature(s) [0]")
+    error_msg = re.escape("Value(s) [ 2.] out of bounds for feature(s) [0]")
     assert_raises_regex(ValueError, error_msg,
-                        OneHotEncoder(n_values=2).fit_transform, X)
+                        OneHotEncoder(n_values=2).fit, X)
     assert_raises_regex(ValueError, error_msg,
-                        OneHotEncoder(values=2).fit_transform, X)
+                        OneHotEncoder(values=2).fit, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
@@ -1505,6 +1504,16 @@ def test_one_hot_encoder_sparse():
     assert_raises(ValueError, enc.fit, X[:, :-1])
     # test exception on wrong init param
     assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
+
+
+def test_one_hot_encoder_error_on_negative():
+    # Negative numerical values in inputs should raise an exception
+    X_bad = [[-1, 7, "cat"], [10, 15, "mouse"], [5, 7, "cat"]]
+    X_good = [[1, 7, "cat"], [10, 15, "mouse"], [5, 7, "cat"]]
+    assert_raises(ValueError, OneHotEncoder().fit, X_bad)
+
+    ohe = OneHotEncoder().fit(X_good)
+    assert_raises(ValueError, ohe.transform, X_bad)
 
 
 def test_one_hot_encoder_attr():
@@ -1533,9 +1542,8 @@ def test_one_hot_encoder_dense():
     # discover max values automatically
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (2, 5))
-    assert_array_equal(enc.active_features_,
-                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
-    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+    assert_array_equal(enc.active_features_, np.arange(5))
+    assert_array_equal(enc.feature_indices_, [0, 2, 4, 5])
 
     # check outcome
     assert_array_equal(X_trans,
@@ -1632,12 +1640,14 @@ def test_one_hot_encoder_categorical_features():
 def test_one_hot_encoder_unknown_transform():
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
     y = np.array([[4, 1, 1]])
+    X_orig = X.copy()  # Verify X is not modified
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
     oh = OneHotEncoder(handle_unknown='error-strict')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
+    assert_array_equal(X, X_orig)
 
     # Test the ignore option, ignores unknown features.
     oh = OneHotEncoder(handle_unknown='ignore')
@@ -1645,10 +1655,12 @@ def test_one_hot_encoder_unknown_transform():
     assert_array_equal(
         oh.transform(y).toarray(),
         np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
+    assert_array_equal(X, X_orig)
 
     X = np.array([['cat', 2, 1], ['dog', 0, 3], ['mouse', 0, 2]],
                  dtype=np.object)
     y = np.array([['ET', 1, 1]], dtype=np.object)
+    X_orig = X.copy()  # Verify X is not modified
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
@@ -1672,6 +1684,7 @@ def test_one_hot_encoder_unknown_transform():
     assert_array_equal(
         oh.transform(y).toarray(),
         np.array([[0., 0., 0., 0., 0., 1., 0., 0.]]))
+    assert_array_equal(X, X_orig)
 
     # Raise error if handle_unknown is neither ignore nor error.
     oh = OneHotEncoder(handle_unknown='42')
