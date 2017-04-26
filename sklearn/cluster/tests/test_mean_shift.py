@@ -49,13 +49,11 @@ def test_mean_shift():
     assert_equal(n_clusters_, n_clusters)
 
 
-def test_mean_shift_with_sparse_matrix():
-    # Test MeanShift algorithm with sparse matrix
+def test_estimate_bandwidth_with_sparse_matrix():
+    # Test estimate_bandwidth with sparse matrix
     X = sparse.lil_matrix((1000, 1000))
-
-    ms = MeanShift(bandwidth=1.2)
     msg = "A sparse matrix was passed, but dense data is required."
-    assert_raise_message(TypeError, msg, ms.fit, X,)
+    assert_raise_message(TypeError, msg, estimate_bandwidth, X, 200)
 
 
 def test_parallel():

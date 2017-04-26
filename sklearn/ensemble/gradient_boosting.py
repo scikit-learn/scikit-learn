@@ -1433,7 +1433,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=1e-7, init=None,
+                 min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto'):
@@ -1840,7 +1840,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=1e-7, init=None, random_state=None,
+                 min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
