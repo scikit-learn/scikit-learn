@@ -276,6 +276,11 @@ Bug fixes
    - Fixed a bug in :class:`svm.OneClassSVM` where it returned floats instead of
      integer classes. :issue:`8676` by :user:`Vathsala Achar <VathsalaAchar>`.
 
+   - Fixed a bug where :func:`sklearn.tree.export_graphviz` raised an error
+     when the length of features_names does not match n_features in the decision
+     tree.
+     :issue:`8512` by :user:`Li Li <aikinogard>`.
+
 API changes summary
 -------------------
 
