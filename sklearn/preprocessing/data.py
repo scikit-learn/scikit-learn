@@ -7,7 +7,6 @@
 # License: BSD 3 clause
 
 from itertools import chain, combinations
-import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -27,7 +26,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from .label import LabelEncoder
-from ..utils.fixes import in1d, setdiff1d
+from ..utils.fixes import in1d
 
 
 zip = six.moves.zip
@@ -1983,9 +1982,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             for i, le in enumerate(self._label_encoders):
                 try:
                     X_int[:, i] = le.transform(X[:, i])
-                except ValueError:
-                    diff = setdiff1d(X[:, i], le.classes_)
-                    msg = 'Unknown feature(s) %s in column %d' % (diff, i)
+                except ValueError as err:
+                    orig_msg = str(err)
+                    if not orig_msg.startswith('y contains'):
+                        raise
+                    else:
+                        msg = 'Column %d %s' % (i, orig_msg[2:])
                     raise ValueError(msg)
             mask = slice(None)
         else:

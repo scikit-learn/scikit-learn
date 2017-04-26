@@ -400,7 +400,7 @@ Continuing the example above::
   >>> enc.fit([['female', 'from US', 'uses Chrome'],
   ... ['male', 'from Asia', 'uses Firefox']])  \
   ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  OneHotEncoder(categorical_features='all', copy=True,
+  OneHotEncoder(categorical_features='all',
          dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
          sparse=True, values='auto')
   >>> enc.transform([['female', 'from Asia', 'uses Firefox']]).toarray()

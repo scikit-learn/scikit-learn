@@ -1489,10 +1489,10 @@ def test_one_hot_encoder_sparse():
     # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = re.escape("Unknown feature(s) [2] in column 1")
+    error_msg = re.escape("Column 1 contains new labels: [2]")
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
 
-    error_msg = re.escape("Unknown feature(s) [2] in column 0")
+    error_msg = re.escape("Column 0 contains new labels: [2]")
     assert_raises_regex(ValueError, error_msg,
                         OneHotEncoder(n_values=2).fit_transform, X)
     assert_raises_regex(ValueError, error_msg,
