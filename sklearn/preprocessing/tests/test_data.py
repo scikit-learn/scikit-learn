@@ -1461,8 +1461,9 @@ def test_one_hot_encoder_sparse():
     # discover max values automatically
     X_trans = enc.fit_transform(X).toarray()
     assert_equal(X_trans.shape, (2, 5))
-    assert_array_equal(enc.active_features_, np.arange(5))
-    assert_array_equal(enc.feature_indices_, [0, 2, 4, 5])
+    assert_array_equal(enc.active_features_,
+                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
+    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
 
     # check outcome
     assert_array_equal(X_trans,
@@ -1542,8 +1543,9 @@ def test_one_hot_encoder_dense():
     # discover max values automatically
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (2, 5))
-    assert_array_equal(enc.active_features_, np.arange(5))
-    assert_array_equal(enc.feature_indices_, [0, 2, 4, 5])
+    assert_array_equal(enc.active_features_,
+                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
+    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
 
     # check outcome
     assert_array_equal(X_trans,
