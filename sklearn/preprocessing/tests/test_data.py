@@ -1492,11 +1492,11 @@ def test_one_hot_encoder_sparse():
     error_msg = re.escape("Unknown feature(s) [2] in column 1")
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
 
-    error_msg = re.escape("Value(s) [ 2.] out of bounds for feature(s) [0]")
+    error_msg = re.escape("Unknown feature(s) [2] in column 0")
     assert_raises_regex(ValueError, error_msg,
-                        OneHotEncoder(n_values=2).fit, X)
+                        OneHotEncoder(n_values=2).fit_transform, X)
     assert_raises_regex(ValueError, error_msg,
-                        OneHotEncoder(values=2).fit, X)
+                        OneHotEncoder(values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
@@ -1509,8 +1509,8 @@ def test_one_hot_encoder_sparse():
 
 def test_one_hot_encoder_error_on_negative():
     # Negative numerical values in inputs should raise an exception
-    X_bad = [[-1, 7, "cat"], [10, 15, "mouse"], [5, 7, "cat"]]
-    X_good = [[1, 7, "cat"], [10, 15, "mouse"], [5, 7, "cat"]]
+    X_bad = np.array([[-1, "cat"], [10, "mouse"], [5, "cat"]], dtype=np.object)
+    X_good = np.array([[1, "cat"], [10, "mouse"], [5, "cat"]], dtype=np.object)
     assert_raises(ValueError, OneHotEncoder().fit, X_bad)
 
     ohe = OneHotEncoder().fit(X_good)
@@ -1518,7 +1518,7 @@ def test_one_hot_encoder_error_on_negative():
 
 
 def test_one_hot_encoder_attr():
-    X = [[1, 7, "cat"], [10, 15, "mouse"], [5, 7, "cat"]]
+    X = np.array([[1, 7, "cat"], [10, 15, "mouse"], [5, 7, "cat"]], dtype='O')
 
     enc = OneHotEncoder()
     enc.fit(X)
@@ -1639,14 +1639,14 @@ def test_one_hot_encoder_categorical_features():
     _check_one_hot(X, X2, cat, 5)
 
 
-def test_one_hot_encoder_unknown_transform():
+def test_one_hot_encoder_unknown_transform_int():
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
-    y = np.array([[4, 1, 1]])
+    y = np.array([[0, 3, 1]])
     X_orig = X.copy()  # Verify X is not modified
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
-    oh = OneHotEncoder(handle_unknown='error-strict')
+    oh = OneHotEncoder(handle_unknown='error')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
     assert_array_equal(X, X_orig)
@@ -1656,9 +1656,21 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_array_equal(
         oh.transform(y).toarray(),
-        np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
+        np.array([[1.,  0.,  0.,  0.,  1.,  0.,  0.]]))
     assert_array_equal(X, X_orig)
 
+    # Test that there's no error for integer features in the auto range
+    y = [[0, 1, 1]]
+    assert_array_equal(oh.transform(y).toarray(),
+                       np.array([[1.,  0.,  0.,  0.,  1.,  0.,  0.]]))
+
+    # But we do error when fit with "auto-strict"
+    oh = OneHotEncoder(values='auto-strict', handle_unknown='error')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)
+
+
+def test_one_hot_encoder_unknown_transform_object():
     X = np.array([['cat', 2, 1], ['dog', 0, 3], ['mouse', 0, 2]],
                  dtype=np.object)
     y = np.array([['ET', 1, 1]], dtype=np.object)
@@ -1666,19 +1678,9 @@ def test_one_hot_encoder_unknown_transform():
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
-    oh = OneHotEncoder(handle_unknown='error-strict')
-    oh.fit(X)
-    assert_raises(ValueError, oh.transform, y)
-
-    # Test that one hot encoder raises warning for unknown but in range
-    # features
     oh = OneHotEncoder(handle_unknown='error')
     oh.fit(X)
-    msg = ('Values [0] for feature 2 are unknown but in range. '
-           'This will raise an error in future versions where "error-strict"'
-           ' will be default for `handle_unknown` parameter')
-    assert_warns_message(FutureWarning, msg, oh.transform,
-                         np.array([['mouse', 0, 0]], dtype=np.object))
+    assert_raises(ValueError, oh.transform, y)
 
     # Test the ignore option, ignores unknown features.
     oh = OneHotEncoder(handle_unknown='ignore')

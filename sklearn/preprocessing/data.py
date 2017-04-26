@@ -1693,9 +1693,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     values : 'auto', 'auto-strict', int, List[int], or List[List[objects]]
-        - 'auto' : determine set of values from training data. See the
-          documentation of `handle_unknown` for which values are considered
-          acceptable.
+        - 'auto' : Determine set of values from training data.
+            If values are integers, then allowed values will be between
+            0 and the maximum value in the data.
+        - 'auto-strict' : Determine set of values from the training data.
+            Only values in the original training data are valid.
         - int : values are in ``range(values)`` for all features
         - list of ints : values for feature ``i`` are in ``range(values[i])``
         - list of lists : values for feature ``i`` are in ``values[i]``
@@ -1715,13 +1717,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
 
-    handle_unknown : str, 'error', 'error-strict', or 'ignore'
-
+    handle_unknown : str, 'error' or 'ignore'
         - 'ignore': Ignore all unknown feature values.
-        - 'error': Raise an error when the value of a feature is more than the
-          maximum value seen during fit.
-        - 'error-strict': Raise an error when the value of a feature is unseen
-          during`fit`.
+        - 'error': Raise an error when the value of a feature was not
+            in the original fit data (or given through ``values``).
 
     Attributes
     ----------
@@ -1733,6 +1732,14 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         ``one_hot_feature_index_[i]`` specifies which feature of the input
         is encoded by column `i` in the one-hot encoded array.
 
+    active_features_ : array
+        Indices for active features, meaning values that actually occur
+        in the training set. Only available when n_values is ``'auto'``.
+
+    n_values_ : array of shape (n_features,)
+        Number of categories per feature. Has value `0` for
+        non-categorical features.
+
     Examples
     --------
     Given a dataset with three features and four samples, we let the encoder
@@ -1741,11 +1748,18 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
-    >>> enc.fit([['cat', 4], ['mouse', 15], ['dog', 17]]) \
+    >>> enc.fit(np.array([['cat', 4], ['mouse', 15], ['dog', 17]], dtype='O'))\
         # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         OneHotEncoder(categorical_features='all',
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True, values='auto')
+    >>> enc.n_values_
+    array([3, 18])
+    >>> enc.feature_index_range_
+    array([[ 0, 3],
+           [ 3, 6]])
+    >>> enc.one_hot_feature_index_
+    array([0, 0, 0, 1, 1, 1])
     >>> enc.transform([['dog', 4]]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
@@ -1787,10 +1801,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, dtype=None, accept_sparse='csc', copy=False)
         n_samples, n_features = X.shape
+        self.n_features_ = n_features
 
-        _apply_selected(X, self._fit, dtype=self.dtype,
-                        selected=self.categorical_features, copy=False,
-                        return_val=False)
+        _apply_selected(X, self._fit, dtype=self.dtype, return_val=False,
+                        selected=self.categorical_features, copy=False)
 
         # Record which columns of output data
         # correspond to each column of input data
@@ -1805,8 +1819,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         start, end = 0, 0
         for i_cat, i_feat in enumerate(np.where(categorical)[0]):
-            le = self._label_encoders[i_cat]
-            end = start + len(le.classes_)
+            if np.isscalar(self._values) and self._values == 'auto':
+                end = start + self.n_active_features_[i_cat]
+            else:
+                end = start + len(self._label_encoders[i_cat].classes_)
             self.feature_index_range_[i_feat] = start, end
             start = end
         num_cat = np.sum(categorical)
@@ -1822,17 +1838,24 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             s, e = self.feature_index_range_[i]
             self.one_hot_feature_index_[s:e] = i
 
+        # Count categories per feature
+        n_val = len(non_cat_indices) * [0]
+        if hasattr(self, '_label_encoders'):
+            n_val = [len(le.classes_) for le in self._label_encoders] + n_val
+        self.n_values_ = np.array(n_val)
+
         return self
 
-    def _check_values(self, values, n_features, max_values):
+    def _check_values(self, values, n_features):
         """Verify that the input `values` is valid
 
         Raises ValueError or TypeError for bad `values`.
-        Assume that lists of integers have been converted
-        to lists of arrays before getting here.
+        Assume that integers or lists of integers have been
+        converted to lists of arrays before getting here.
+        This should run after `_initialize_values`.
         """
-        error_msg = ("`values` should be 'auto', an integer, a list of"
-                     " integers or a list of list")
+        error_msg = ("`values` should be 'auto', 'auto-strict', an integer, "
+                     "a list of integers or a list of list")
         if isinstance(values, six.string_types):
             # Input "auto": determine values automatically
             if values not in ['auto', 'auto-strict']:
@@ -1847,47 +1870,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             scalar_vals = [np.isscalar(val) for val in values]
             if any(scalar_vals):
                 raise ValueError(error_msg)
-        elif not np.isscalar(values):
-            raise TypeError(error_msg)
-        """
-        # Validate input data against user-supplied categories
-        if not np.isscalar(values):
-            too_big = np.zeros(n_features, dtype=bool)
-            for i_col in range(n_features):
-                if not np.isfinite(max_values[i_col]):
-                    # String features; don't bounds-check
-                    continue
-                if max_values[i_col] > max(values[i_col]):
-                    too_big[i_col] = True
-
-            if too_big.any():
-                msg = 'Value(s) %s out of bounds for feature(s) %s'
-                raise ValueError(msg % (max_values[too_big],
-                                        np.where(too_big)[0]))
-        """
-    def _check_features_greater_than_zero(self, X):
-        """Raise a ValueError if X has numerical values less than 0"""
-        if X.dtype.kind == 'U':
-            # Don't check string arrays
-            return
-
-        if sparse.issparse(X):
-            min_values, _ = sparse_min_max(X, axis=0)
         else:
-            min_values = np.min(X, axis=0)
-        lt_zero = np.zeros(X.shape[1], dtype=bool)
-        for i_value, value in enumerate(min_values):
-            if isinstance(value, six.string_types):
-                continue
-            elif value < 0:
-                lt_zero[i_value] = True
-
-        if np.any(lt_zero):
-            raise ValueError('Column(s) %s have numerical values less '
-                             'than zero.', np.where(lt_zero)[0])
+            raise TypeError(error_msg)
 
     def _initialize_values(self):
-        # Set up and check user-input categories.
+        """Standardize the `values` input"""
         if self.n_values is not None:
             warnings.warn('`n_values` has been renamed to `values`.'
                           'The parameter `n_values` has been deprecated '
@@ -1901,7 +1888,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         # Convert `int` and `Sequence[int]` inputs to `List[Array[int]]`
         if (not isinstance(values, six.string_types) and
                 np.isscalar(values)):
-            values = np.ones(self._n_features, dtype=int) * values
+            values = np.ones(self.n_features_cat_, dtype=int) * values
         if (not isinstance(values, six.string_types) and
                 np.isscalar(values[0])):
             values = [np.arange(v, dtype=np.int) for v in values]
@@ -1911,32 +1898,41 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def _fit(self, X):
         """Assumes `X` contains only categorical features"""
         n_samples, n_features = X.shape
-
-        self._n_features = n_features
+        self.n_features_cat_ = n_features
         self._label_encoders = [LabelEncoder() for i in range(n_features)]
-        self._set_max_values(X)
-        self._check_features_greater_than_zero(X)
-        self._values = self._initialize_values()
-        self._check_values(self._values, n_features, self._max_values)
 
-        _auto_int_classes = n_features * [None]
+        self._values = self._initialize_values()
+        self._check_values(self._values, n_features)
 
         # Fit on categorical features in the data
+        _auto_int_classes = n_features * [None]
         for i in range(n_features):
             le = self._label_encoders[i]
 
             if np.isscalar(self._values) and self._values == 'auto':
+                # For integer features, allow integers between
+                # 0 and column max. The transform will still only
+                # return dummy columns for integers present in training data.
                 if (not isinstance(X[0, i], six.string_types) and
                         int(X[0, i]) == X[0, i]):
-                    _auto_int_classes[i] = np.unique(X[:, i])
+                    _auto_int_classes[i] = np.unique(X[:, i]).astype(int)
+                    if np.min(_auto_int_classes[i]) < 0:
+                        msg = ('Column %s has value(s) less than zero; all '
+                               'integer columns must have minimum value '
+                               '0 when value="auto".')
+                        raise ValueError(msg)
                     n_classes = np.max(_auto_int_classes[i]) + 1
                     le.fit(np.arange(n_classes))
                 else:
                     le.fit(X[:, i])
+            elif np.isscalar(self._values) and self._values == 'auto-strict':
+                le.fit(X[:, i])
             else:
                 le.fit(self._values[i])
 
         if np.isscalar(self._values) and self._values == 'auto':
+            # Record which integer features were present in training
+            # data so we can restrict output columns.
             active_features = []
             for i_col, int_classes in enumerate(_auto_int_classes):
                 if int_classes is None:
@@ -1947,19 +1943,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                     this_col_mask = np.zeros(n_classes, dtype=bool)
                     this_col_mask[int_classes] = True
                     active_features.append(this_col_mask)
+            self.n_active_features_ = np.array([a.sum()
+                                                for a in active_features])
             self.active_features_ = np.where(np.hstack(active_features))[0]
-
-    def _set_max_values(self, X):
-        """Inspect input data to determine the maximum value in each column"""
-        if sparse.issparse(X):
-            min_values, max_values = sparse_min_max(X, axis=0)
-        else:
-            max_values = np.max(X, axis=0)
-        self._max_values = np.zeros(len(max_values)) + np.nan
-        for i_value, value in enumerate(max_values):
-            if isinstance(value, six.string_types):
-                continue
-            self._max_values[i_value] = value
 
     def transform(self, X, y=None):
         """Encode the selected categorical features using the one-hot scheme.
@@ -1974,12 +1960,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         out : array, shape[n_samples, n_features_new]
             `X` encoded using the one-hot scheme.
         """
-        if self.handle_unknown not in ['ignore', 'error', 'error-strict']:
-            template = ("handle_unknown should be either 'error', "
-                        "'error-strict', or 'ignore', got %s")
+        if self.handle_unknown not in ['ignore', 'error']:
+            template = ("handle_unknown should be either 'error' "
+                        "or 'ignore', got %s")
             raise ValueError(template % self.handle_unknown)
 
         X = check_array(X, accept_sparse='csc', dtype=None, copy=False)
+        if X.shape[1] != self.n_features_:
+            raise ValueError("Input data must have %s "
+                             "features." % self.n_features_)
 
         return _apply_selected(X, self._transform, dtype=self.dtype,
                                selected=self.categorical_features, copy=False)
@@ -1987,44 +1976,37 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def _transform(self, X):
         """Assumes `X` contains only categorical features."""
         n_samples, n_features = X.shape
-        X_int = np.zeros_like(X, dtype=np.int)
-        X_mask = np.ones_like(X, dtype=np.bool)
+        X_int = np.zeros_like(X, dtype=np.int32)
 
-        for i in range(n_features):
-            le = self._label_encoders[i]
-            valid_mask = in1d(X[:, i], le.classes_)
-            if not np.all(valid_mask):
-                if self.handle_unknown in ['error', 'error-strict']:
+        # Recode all columns of input data as integers
+        if self.handle_unknown == 'error':
+            for i, le in enumerate(self._label_encoders):
+                try:
+                    X_int[:, i] = le.transform(X[:, i])
+                except ValueError:
                     diff = setdiff1d(X[:, i], le.classes_)
-                    if (self.handle_unknown == 'error-strict' or
-                            np.isfinite(self._max_values[i]) and
-                            np.any(diff >= self._max_values[i]) or
-                            np.any(diff < 0)):
-                        msg = 'Unknown feature(s) %s in column %d' % (diff, i)
-                        raise ValueError(msg)
-                    else:
-                        msg = ('Values %s for feature %d are unknown but '
-                               'in range. This will raise an error in '
-                               'future versions where "error-strict" will '
-                               'be default for `handle_unknown` parameter'
-                               % (str(diff), i))
-                        warnings.warn(FutureWarning(msg))
+                    msg = 'Unknown feature(s) %s in column %d' % (diff, i)
+                    raise ValueError(msg)
+            mask = slice(None)
+        else:
+            X_mask = np.ones_like(X, dtype=np.bool)
+            for i, le in enumerate(self._label_encoders):
+                valid_mask = in1d(X[:, i], le.classes_)
+                if not np.all(valid_mask):
+                    X_mask[:, i] = valid_mask
+                    X_int[valid_mask, i] = le.transform(X[valid_mask, i])
+                else:
+                    X_int[:, i] = le.transform(X[:, i])
+            mask = X_mask.ravel()
 
-                X_mask[:, i] = valid_mask
-                X_int[valid_mask, i] = (self._label_encoders[i]
-                                        .transform(X[valid_mask, i]))
-            else:
-                X_int[:, i] = self._label_encoders[i].transform(X[:, i])
-
-        mask = X_mask.ravel()
-        n_values = [le.classes_.shape[0] for le in self._label_encoders]
-        n_values = np.hstack([[0], n_values])
+        # Convert integer columns to sparse array of binary indicators
+        n_values = [0] + [le.classes_.shape[0] for le in self._label_encoders]
         indices = np.cumsum(n_values)
 
         column_indices = (X_int + indices[:-1]).ravel()[mask]
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)[mask]
-        data = np.ones(np.sum(mask))
+        data = np.ones(len(row_indices), dtype=self.dtype)
 
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
@@ -2037,20 +2019,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     @property
     def feature_indices_(self):
+        # This is very similar to the current attribute
+        # `feature_index_range_`, but only applies to the
+        # subset of categorical features.
         warnings.warn('The property `feature_indices_` is deprecated and'
                       ' will be removed in version 0.21')
         n_categories = [len(le.classes_) for le in self._label_encoders]
         return np.cumsum([0] + n_categories)
-
-    @property
-    def n_values_(self):
-        warnings.warn('The property `n_values_` is deprecated and'
-                      ' will be removed in version 0.21')
-        # The effective number of categories is different depending on
-        # whether or not we're using the old-style behavior
-        if self.handle_unknown == 'error':
-            return np.array([np.max(le.classes_) + 1
-                             for le in self._label_encoders])
-        else:
-            return np.array([le.classes_.shape[0]
-                             for le in self._label_encoders])
