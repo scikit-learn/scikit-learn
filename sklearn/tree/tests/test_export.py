@@ -213,18 +213,16 @@ def test_graphviz_errors():
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
     clf.fit(X, y)
 
-    # Check feature_names less than number of features error
-    out = None
-    message = "Length of feature_names=1 does not " + \
-              "match number of features=2"
-    assert_raise_message(ValueError, message, export_graphviz, clf, out,
+    # Check if it errors when length of feature_names 
+    # mismatches with number of features
+    message = ("Length of feature_names, "
+               "1 does not match number of features, 2")
+    assert_raise_message(ValueError, message, export_graphviz, clf, None,
                          feature_names=["a"])
 
-    # Check feature_names greater than number of features warning
-    out = None
-    message = "Length of feature_names=3 does not " + \
-              "match number of features=2"
-    assert_raise_message(ValueError, message, export_graphviz, clf, out,
+    message = ("Length of feature_names, "
+               "3 does not match number of features, 2")
+    assert_raise_message(ValueError, message, export_graphviz, clf, None,
                          feature_names=["a", "b", "c"])
 
     # Check class_names error
