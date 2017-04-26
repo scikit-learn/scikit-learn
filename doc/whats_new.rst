@@ -235,7 +235,7 @@ Bug fixes
    - Fixed a bug where :func:`sklearn.tree.export_graphviz` raised an error
      when the length of features_names does not match n_features in the decision
      tree.
-     :issue:`8512` by `Li Li <aikinogard>`_.
+     :issue:`8512` by :user:`Li Li <aikinogard>`.
 
 API changes summary
 -------------------
