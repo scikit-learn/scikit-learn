@@ -997,6 +997,16 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             for train_index, test_index in cv.split(X, y, groups):
                 yield train_index, test_index
 
+    def get_n_splits(self):
+        """Returns the number of splitting iterations in the cross-validator
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
+        return self.cvargs["n_splits"] * self.n_repeats
+
 
 class RepeatedKFold(_RepeatedSplits):
     """Repeated K-Fold cross validator.

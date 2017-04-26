@@ -844,6 +844,22 @@ def test_repeated_kfold_determinstic_split():
         assert_raises(StopIteration, next, splits)
 
 
+def test_get_n_splits_for_repeated_kfold():
+    n_splits = 3
+    n_repeats = 4
+    rkf = RepeatedKFold(n_splits, n_repeats)
+    expected_n_splits = n_splits * n_repeats
+    assert_equal(expected_n_splits, rkf.get_n_splits())
+
+
+def test_get_n_splits_for_repeated_stratified_kfold():
+    n_splits = 3
+    n_repeats = 4
+    rskf = RepeatedStratifiedKFold(n_splits, n_repeats)
+    expected_n_splits = n_splits * n_repeats
+    assert_equal(expected_n_splits, rskf.get_n_splits())
+
+
 def test_repeated_stratified_kfold_determinstic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 1, 1, 0, 0]
