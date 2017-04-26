@@ -332,7 +332,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                         # Find max and min impurities for multi-output
                         colors['bounds'] = (np.min(-tree.impurity),
                                             np.max(-tree.impurity))
-                    elif (tree.n_classes[0] == 1 and 
+                    elif (tree.n_classes[0] == 1 and
                           len(np.unique(tree.value)) != 1):
                         # Find max and min values in leaf nodes for regression
                         colors['bounds'] = (np.min(tree.value),
