@@ -64,6 +64,13 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
+- `scikit-plot <https://github.com/reiinakano/scikit-plot>`_ A visualization library
+  for quick and easy generation of common plots in data analysis and machine learning.
+
+- `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
+  custom matplotlib visualizers for scikit-learn estimators to support visual feature
+  analysis, model selection, evaluation, and diagnostics.
+
 
 **Model export for production**
 
@@ -174,12 +181,22 @@ and tasks.
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for
   categorical data, and several of its variations.
 
-- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single
+- `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
 
 - `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
+
+**Pre-processing**
+
+- `categorical-encoding
+  <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
+  library of sklearn compatible categorical variable encoders.
+
+- `imbalanced-learn
+  <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
+  methods to under- and over-sample datasets.
 
 Statistical learning with Python
 --------------------------------
