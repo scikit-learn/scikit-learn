@@ -331,8 +331,8 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                         # Find max and min impurities for multi-output
                         colors['bounds'] = (np.min(-tree.impurity),
                                             np.max(-tree.impurity))
-                    elif tree.n_classes[0] == 1 and \
-                            len(np.unique(tree.value)) != 1:
+                    elif (tree.n_classes[0] == 1 and 
+                          len(np.unique(tree.value)) != 1):
                         # Find max and min values in leaf nodes for regression
                         colors['bounds'] = (np.min(tree.value),
                                             np.max(tree.value))
@@ -400,13 +400,13 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             return_string = True
             out_file = six.StringIO()
 
-        # Check length of feature_names before get into the tree node
+        # Check length of feature_names before getting into the tree node
         # Raise error if length of feature_names does not match
         # n_features_ in the decision_tree
         if feature_names is not None:
             if len(feature_names) != decision_tree.n_features_:
-                raise ValueError("Length of feature_names=%d "
-                                 "does not match number of features=%d"
+                raise ValueError("Length of feature_names, %d "
+                                 "does not match number of features, %d"
                                  % (len(feature_names),
                                     decision_tree.n_features_))
 
