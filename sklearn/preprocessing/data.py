@@ -19,7 +19,7 @@ from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import bincount, sparse_min_max
+from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1754,10 +1754,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True, values='auto')
     >>> enc.n_values_
-    array([3, 18])
+    array([ 3, 18])
     >>> enc.feature_index_range_
-    array([[ 0, 3],
-           [ 3, 6]])
+    array([[0, 3],
+           [3, 6]])
     >>> enc.one_hot_feature_index_
     array([0, 0, 0, 1, 1, 1])
     >>> enc.transform([['dog', 4]]).toarray()

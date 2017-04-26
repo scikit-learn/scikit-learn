@@ -240,7 +240,8 @@ if np_version < (1, 8):
         ar1 = np.asarray(ar1).ravel()
         ar2 = np.asarray(ar2).ravel()
 
-        if ar1.dtype == object or ar2.dtype == object:
+        if (ar1.dtype == object or ar2.dtype == object or
+                ar1.dtype.kind == 'U' or ar2.dtype.kind == 'U'):
             return _in1d_object(ar1, ar2, invert)
 
         # This code is significantly faster when the condition is satisfied.
