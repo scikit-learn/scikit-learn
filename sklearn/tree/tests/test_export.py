@@ -219,7 +219,7 @@ def test_graphviz_errors():
 
     clf.fit(X, y)
 
-    # Check if it errors when length of feature_names 
+    # Check if it errors when length of feature_names
     # mismatches with number of features
     message = ("Length of feature_names, "
                "1 does not match number of features, 2")
