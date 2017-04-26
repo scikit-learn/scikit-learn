@@ -232,10 +232,10 @@ Bug fixes
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
 
-   - Fix a bug where :func:`sklearn.tree.export_graphviz` will raise an error
-     when the length features_names does not match n_features in the decision
+   - Fixed a bug where :func:`sklearn.tree.export_graphviz` raised an error
+     when the length of features_names does not match n_features in the decision
      tree.
-     :issue:`8512` by `Li Li <https://github.com/aikinogard>`_.
+     :issue:`8512` by `Li Li <aikinogard>`_.
 
 API changes summary
 -------------------
