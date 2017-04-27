@@ -426,7 +426,7 @@ features, one has to explicitly set ``n_values``. For example,
     >>> enc.fit([['female', 'from US', 'uses Chrome'],
     ... ['male', 'from Asia', 'uses Internet Explorer']]) \
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features='all', copy=True,
+    OneHotEncoder(categorical_features='all',
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True,
            values=[...])

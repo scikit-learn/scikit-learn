@@ -1663,10 +1663,11 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
         # All features selected.
         return transform(X)
     else:
-        X_sel = transform(X[:, sel])
+        ind = np.arange(n_features)
+        X_sel = transform(X[:, ind[sel]])
 
         if return_val:
-            X_not_sel = X[:, not_sel].astype(dtype)
+            X_not_sel = X[:, ind[not_sel]].astype(dtype)
             if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
                 return sparse.hstack((X_sel, X_not_sel))
             else:
