@@ -45,8 +45,8 @@ One-vs-One
 
 Two ROC curves can be drawn per pair of labels because either of the two
 labels can be considered the positive class (and the other the negative
-class). The ROC area of a label pair is approximated taking the average of these
-two ROC AUC scores.
+class). The ROC area of a label pair is approximated taking the average of
+these two ROC AUC scores.
 
 The One-vs-One approximation of a multi-class ROC AUC score is the average--
 unweighted or weighted by class prevalence--across all of the pairwise
@@ -187,7 +187,7 @@ print("One-vs-Rest ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
 for a, b in combinations(range(n_classes), 2):
     # Filter `y_test` and `y_score` to only consider the current
     # `a` and `b` class pair.
-    ab_mask = np.logical_or(y_test == a, y_true == b)
+    ab_mask = np.logical_or(y_test == a, y_test == b)
     y_true_filtered = y_test[ab_mask]
     y_score_filtered = y_score[ab_mask]
 
