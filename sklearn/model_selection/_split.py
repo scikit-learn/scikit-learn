@@ -1000,6 +1000,20 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
+
+        y : object
+            Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
         Returns
         -------
         n_splits : int
