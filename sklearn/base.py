@@ -39,7 +39,7 @@ def clone(estimator, safe=True):
         The estimator or group of estimators to be cloned
 
     safe : boolean, optional
-        If safe is false, clone will fall back to a deepcopy on objects
+        If safe is false, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -259,7 +259,7 @@ class BaseEstimator(object):
         self
         """
         if not params:
-            # Simple optimisation to gain speed (inspect is slow)
+            # Simple optimization to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
         for key, value in six.iteritems(params):
@@ -290,10 +290,15 @@ class BaseEstimator(object):
                                                offset=len(class_name),),)
 
     def __getstate__(self):
+        try:
+            state = super(BaseEstimator, self).__getstate__()
+        except AttributeError:
+            state = self.__dict__.copy()
+
         if type(self).__module__.startswith('sklearn.'):
-            return dict(self.__dict__.items(), _sklearn_version=__version__)
+            return dict(state.items(), _sklearn_version=__version__)
         else:
-            return dict(self.__dict__.items())
+            return state
 
     def __setstate__(self, state):
         if type(self).__module__.startswith('sklearn.'):
@@ -305,7 +310,11 @@ class BaseEstimator(object):
                     "invalid results. Use at your own risk.".format(
                         self.__class__.__name__, pickle_version, __version__),
                     UserWarning)
-        self.__dict__.update(state)
+        try:
+            super(BaseEstimator, self).__setstate__(state)
+        except AttributeError:
+            self.__dict__.update(state)
+
 
 
 ###############################################################################

@@ -24,6 +24,7 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..utils.fixes import astype
 from ..externals.six import string_types
+from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -581,10 +582,12 @@ class TSNE(BaseEstimator):
     verbose : int, optional (default: 0)
         Verbosity level.
 
-    random_state : int or RandomState instance or None (default)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton. Note that different initializations
-        might result in different local minima of the cost function.
+    random_state : int, RandomState instance or None, optional (default: None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.  Note that different initializations might result in
+        different local minima of the cost function.
 
     method : string (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -615,6 +618,9 @@ class TSNE(BaseEstimator):
 
     kl_divergence_ : float
         Kullback-Leibler divergence after optimization.
+
+    n_iter_ : int
+        Number of iterations run.
 
     Examples
     --------
@@ -787,6 +793,12 @@ class TSNE(BaseEstimator):
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
 
+    @property
+    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'n_iter_' instead")
+    def n_iter_final(self):
+        return self.n_iter_
+
     def _tsne(self, P, degrees_of_freedom, n_samples, random_state,
               X_embedded=None, neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
@@ -848,13 +860,14 @@ class TSNE(BaseEstimator):
             print("[t-SNE] KL divergence after %d iterations with early "
                   "exaggeration: %f" % (it + 1, kl_divergence))
         # Save the final number of iterations
-        self.n_iter_final = it
+        self.n_iter_ = it
 
         # Final optimization
         P /= self.early_exaggeration
         opt_args['n_iter'] = self.n_iter
         opt_args['it'] = it + 1
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
 
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f"

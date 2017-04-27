@@ -33,7 +33,6 @@ MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
 LICENSE = 'new BSD'
-DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
@@ -185,7 +184,6 @@ def setup_package():
                     license=LICENSE,
                     url=URL,
                     version=VERSION,
-                    download_url=DOWNLOAD_URL,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',
                                  'Intended Audience :: Developers',
@@ -203,6 +201,7 @@ def setup_package():
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.4',
                                  'Programming Language :: Python :: 3.5',
+                                 'Programming Language :: Python :: 3.6',
                                  ],
                     cmdclass=cmdclass,
                     **extra_setuptools_args)

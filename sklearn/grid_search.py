@@ -200,9 +200,13 @@ class ParameterSampler(object):
     n_iter : integer
         Number of parameter settings that are produced.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional (default=None)
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -670,8 +674,16 @@ class GridSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default=1
-        Number of jobs to run in parallel.
+    n_jobs: int, default: 1 :
+        The maximum number of estimators fit in parallel.
+
+            - If -1 all CPUs are used.
+
+            - If 1 is given, no parallel computing code is used at all,
+              which is useful for debugging.
+
+            - For ``n_jobs`` below -1, ``(n_cpus + n_jobs + 1)`` are used.
+              For example, with ``n_jobs = -2`` all CPUs but one are used.
 
         .. versionchanged:: 0.17
            Upgraded to joblib 0.9.3.
@@ -888,8 +900,16 @@ class RandomizedSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, default=1
-        Number of jobs to run in parallel.
+    n_jobs: int, default: 1 :
+        The maximum number of estimators fit in parallel.
+
+            - If -1 all CPUs are used.
+
+            - If 1 is given, no parallel computing code is used at all,
+              which is useful for debugging.
+
+            - For ``n_jobs`` below -1, ``(n_cpus + n_jobs + 1)`` are used.
+              For example, with ``n_jobs = -2`` all CPUs but one are used.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -938,9 +958,13 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.

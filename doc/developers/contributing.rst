@@ -111,7 +111,8 @@ then submit a "pull request" (PR):
  2. Fork the `project repository
     <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button near the top of the page. This creates a copy of the code under your
-    account on the GitHub server.
+    account on the GitHub server. For more details on how to fork a
+    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
  3. Clone this copy to your local disk::
 
@@ -133,10 +134,11 @@ then submit a "pull request" (PR):
 
         $ git push -u origin my-feature
 
-Finally, go to the web page of the your fork of the scikit-learn repo,
-and click 'Pull request' to send your changes to the maintainers for review.
-You may want to consider sending an email to the mailing list for more
-visibility.
+Finally, follow `these
+<https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+instructions to create a pull request from your fork. This will send an
+email to the committers. You may want to consider sending an email to the
+mailing list for more visibility.
 
 .. note::
 
@@ -153,12 +155,22 @@ If any of the above seems like magic to you, then look up the `Git documentation
 <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
-In particular, if some conflicts arise between your branch and the master
-branch, you will need to `rebase your branch on master
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_.
-Please avoid merging master branch into yours. If you did it anyway, you can fix
-it following `this example
-<https://github.com/scikit-learn/scikit-learn/pull/7111#issuecomment-249175383>`_.
+If some conflicts arise between your branch and the ``master`` branch, you need
+to merge ``master``. The command will be::
+
+  $ git merge master
+
+with ``master`` being synchronized with the ``upstream``.
+
+Subsequently, you need to solve the conflicts. You can refer to the `Git
+documentation related to resolving merge conflict using the command line
+<https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
+
+.. note::
+
+   In the past, the policy to resolve conflicts was to rebase your branch on
+   ``master``. GitHub interface deals with merging ``master`` better than in
+   the past.
 
 
 Contributing pull requests
@@ -187,8 +199,9 @@ rules before submitting a pull request:
       contribution is complete and should be subjected to a detailed review.
       Two core developers will review your code and change the prefix of the pull
       request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
-      for merging. Incomplete contributions should be prefixed ``[WIP]`` to
-      indicate a work in progress (and changed to ``[MRG]`` when it matures).
+      for merging. An incomplete contribution -- where you expect to do more
+      work before receiving a full review -- should be prefixed ``[WIP]`` (to
+      indicate a work in progress) and changed to ``[MRG]`` when it matures.
       WIPs may be useful to: indicate you are working on something to avoid
       duplicated work, request broad review of functionality or API, or seek
       collaborators. WIPs often benefit from the inclusion of a
@@ -956,49 +969,73 @@ adheres to the scikit-learn interface and standards by running
   >>> check_estimator(LinearSVC)  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
-interface might be that you want to use it together with model assessment and
-selection tools such as :class:`model_selection.GridSearchCV`.
+interface might be that you want to use it together with model evaluation and
+selection tools such as :class:`model_selection.GridSearchCV` and
+:class:`pipeline.Pipeline`.
 
-For this to work, you need to implement the following interface.
-If a dependency on scikit-learn is okay for your code,
-you can prevent a lot of boilerplate code
-by deriving a class from ``BaseEstimator``
-and optionally the mixin classes in ``sklearn.base``.
-E.g., below is a custom classifier. For more information on this example, see
-`scikit-learn-contrib <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_::
+Before detailing the required interface below, we describe two ways to achieve
+the correct interface more easily.
 
-  >>> import numpy as np
-  >>> from sklearn.base import BaseEstimator, ClassifierMixin
-  >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-  >>> from sklearn.utils.multiclass import unique_labels
-  >>> from sklearn.metrics import euclidean_distances
-  >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
-  ...
-  ...     def __init__(self, demo_param='demo'):
-  ...         self.demo_param = demo_param
-  ...
-  ...     def fit(self, X, y):
-  ...
-  ...         # Check that X and y have correct shape
-  ...         X, y = check_X_y(X, y)
-  ...         # Store the classes seen during fit
-  ...         self.classes_ = unique_labels(y)
-  ...
-  ...         self.X_ = X
-  ...         self.y_ = y
-  ...         # Return the classifier
-  ...         return self
-  ...
-  ...     def predict(self, X):
-  ...
-  ...         # Check is fit had been called
-  ...         check_is_fitted(self, ['X_', 'y_'])
-  ...
-  ...         # Input validation
-  ...         X = check_array(X)
-  ...
-  ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
-  ...         return self.y_[closest]
+.. topic:: Project template:
+
+    We provide a `project template <https://github.com/scikit-learn-contrib/project-template/>`_
+    which helps in the creation of Python packages containing scikit-learn compatible estimators.
+    It provides:
+
+    * an initial git repository with Python package directory structure
+    * a template of a scikit-learn estimator
+    * an initial test suite including use of ``check_estimator``
+    * directory structures and scripts to compile documentation and example
+      galleries
+    * scripts to manage continuous integration (testing on Linux and Windows)
+    * instructions from getting started to publishing on `PyPi <https://pypi.python.org/pypi>`_
+
+.. topic:: ``BaseEstimator`` and mixins:
+
+    We tend to use use "duck typing", so building an estimator which follows
+    the API suffices for compatibility, without needing to inherit from or
+    even import any scikit-learn classes.
+
+    However, if a dependency on scikit-learn is acceptable in your code,
+    you can prevent a lot of boilerplate code
+    by deriving a class from ``BaseEstimator``
+    and optionally the mixin classes in ``sklearn.base``.
+    For example, below is a custom classifier, with more examples included
+    in the scikit-learn-contrib
+    `project template <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_.
+
+      >>> import numpy as np
+      >>> from sklearn.base import BaseEstimator, ClassifierMixin
+      >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+      >>> from sklearn.utils.multiclass import unique_labels
+      >>> from sklearn.metrics import euclidean_distances
+      >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+      ...
+      ...     def __init__(self, demo_param='demo'):
+      ...         self.demo_param = demo_param
+      ...
+      ...     def fit(self, X, y):
+      ...
+      ...         # Check that X and y have correct shape
+      ...         X, y = check_X_y(X, y)
+      ...         # Store the classes seen during fit
+      ...         self.classes_ = unique_labels(y)
+      ...
+      ...         self.X_ = X
+      ...         self.y_ = y
+      ...         # Return the classifier
+      ...         return self
+      ...
+      ...     def predict(self, X):
+      ...
+      ...         # Check is fit had been called
+      ...         check_is_fitted(self, ['X_', 'y_'])
+      ...
+      ...         # Input validation
+      ...         X = check_array(X)
+      ...
+      ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
+      ...         return self.y_[closest]
 
 
 get_params and set_params

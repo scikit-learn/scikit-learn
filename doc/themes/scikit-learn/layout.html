@@ -102,7 +102,7 @@
                 </div>
             </a>
             <div class="search_form">
-                <div id="cse" style="width: 100%;"></div>
+                <div class="gcse-search" id="cse" style="width: 100%;"></div>
             </div>
         </div> <!-- end navbar -->
 
@@ -275,7 +275,7 @@
       <p class="doc-version"><b>{{project}} v{{ release|e }}</b><br/>
       <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {%- endif %}
-    <p class="citing">Please <b><a href="about.html#citing-scikit-learn" style="font-size: 110%;">cite us </a></b>if you use the software.</p>
+    <p class="citing">Please <b><a href="{{ pathto('about').replace('#', '') }}#citing-scikit-learn" style="font-size: 110%;">cite us </a></b>if you use the software.</p>
     {{ toc }}
     </div>
 </div>
@@ -346,15 +346,12 @@
       })();
     </script>
     {% endif %}
-
-    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
-    <script type="text/javascript"> google.load('search', '1',
-        {language : 'en'}); google.setOnLoadCallback(function() {
-            var customSearchControl = new
-            google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
-            customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-            var options = new google.search.DrawOptions();
-            options.setAutoComplete(true);
-            customSearchControl.draw('cse', options); }, true);
+    <script>
+      (function() {
+        var cx = '016639176250731907682:tjtqbvtvij0';
+        var gcse = document.createElement('script'); gcse.type = 'text/javascript'; gcse.async = true;
+        gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(gcse, s);
+      })();
     </script>
 {%- endblock %}

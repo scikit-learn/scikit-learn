@@ -14,13 +14,13 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import get_data_home
-from .base import Bunch
 from .base import _pkl_filepath
 from .base import _fetch_and_verify_dataset
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
+from ..utils import Bunch
 
 
 FILE_NAMES = [
@@ -77,7 +77,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     ----------
     data_home : string, optional
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     subset : string, 'train', 'test', or 'all', default='all'
         Select the dataset to load: 'train' for the training set

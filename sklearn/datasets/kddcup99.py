@@ -17,8 +17,10 @@ from os.path import exists, join
 
 import numpy as np
 
-from .base import get_data_home, Bunch
+
 from .base import _fetch_and_verify_dataset
+from .base import get_data_home
+from ..utils import Bunch
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -220,7 +222,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
     data_home : string, optional
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available

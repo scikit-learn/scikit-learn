@@ -29,7 +29,12 @@ from os.path import join, exists, isdir
 import logging
 import numpy as np
 
-from .base import get_data_home, Bunch, _fetch_and_verify_dataset
+from .base import get_data_home, _fetch_and_verify_dataset
+from ..utils import Bunch
+try:
+    import urllib.request as urllib  # for backwards compatibility
+except ImportError:
+    import urllib
 from ..externals.joblib import Memory
 
 from ..externals.six import b
@@ -200,7 +205,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
         folder_path = join(data_folder_path, person_name)
         if not isdir(folder_path):
             continue
-        paths = [join(folder_path, f) for f in listdir(folder_path)]
+        paths = [join(folder_path, f) for f in sorted(listdir(folder_path))]
         n_pictures = len(paths)
         if n_pictures >= min_faces_per_person:
             person_name = person_name.replace('_', ' ')
@@ -254,7 +259,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     funneled : boolean, optional, default: True
         Download and use the funneled variant of the dataset.
@@ -417,7 +422,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By
-        default all scikit learn data is stored in '~/scikit_learn_data'
+        default all scikit-learn data is stored in '~/scikit_learn_data'
         subfolders.
 
     funneled : boolean, optional, default: True

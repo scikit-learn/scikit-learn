@@ -10,85 +10,32 @@ estimator, as a chain of transforms and estimators.
 # License: BSD
 
 from collections import defaultdict
+
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import sparse
 
-from .base import BaseEstimator, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .base import clone, BaseEstimator, TransformerMixin
+from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
+from .utils import Bunch
+
+from .utils.metaestimators import _BaseComposition
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
 
-class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
-    """Handles parameter management for classifiers composed of named steps.
-    """
-
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    def _replace_step(self, steps_attr, name, new_val):
-        # assumes `name` is a valid step name
-        new_steps = getattr(self, steps_attr)[:]
-        for i, (step_name, _) in enumerate(new_steps):
-            if step_name == name:
-                new_steps[i] = (name, new_val)
-                break
-        setattr(self, steps_attr, new_steps)
-
-    def _get_params(self, steps_attr, deep=True):
-        out = super(_BasePipeline, self).get_params(deep=False)
-        if not deep:
-            return out
-        steps = getattr(self, steps_attr)
-        out.update(steps)
-        for name, estimator in steps:
-            if estimator is None:
-                continue
-            for key, value in six.iteritems(estimator.get_params(deep=True)):
-                out['%s__%s' % (name, key)] = value
-        return out
-
-    def _set_params(self, steps_attr, **params):
-        # Ensure strict ordering of parameter setting:
-        # 1. All steps
-        if steps_attr in params:
-            setattr(self, steps_attr, params.pop(steps_attr))
-        # 2. Step replacement
-        step_names, _ = zip(*getattr(self, steps_attr))
-        for name in list(six.iterkeys(params)):
-            if '__' not in name and name in step_names:
-                self._replace_step(steps_attr, name, params.pop(name))
-        # 3. Step parameters and other initilisation arguments
-        super(_BasePipeline, self).set_params(**params)
-        return self
-
-    def _validate_names(self, names):
-        if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
-        invalid_names = set(names).intersection(self.get_params(deep=False))
-        if invalid_names:
-            raise ValueError('Step names conflict with constructor arguments: '
-                             '{0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
-        if invalid_names:
-            raise ValueError('Step names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
-
-
-class Pipeline(_BasePipeline):
+class Pipeline(_BaseComposition):
     """Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement fit and transform methods.
     The final estimator only needs to implement fit.
+    The transformers in the pipeline can be cached using ```memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters.
@@ -107,9 +54,19 @@ class Pipeline(_BasePipeline):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
+    memory : Instance of joblib.Memory or string, optional (default=None)
+        Used to cache the fitted transformers of the pipeline. By default,
+        no caching is performed. If a string is given, it is the path to
+        the caching directory. Enabling caching triggers a clone of
+        the transformers before fitting. Therefore, the transformer
+        instance given to the pipeline cannot be inspected
+        directly. Use the attribute ``named_steps`` or ``steps`` to
+        inspect estimators within the pipeline. Caching the
+        transformers is advantageous when fitting is time consuming.
+
     Attributes
     ----------
-    named_steps : dict
+    named_steps : bunch object, a dictionary with attribute access
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
@@ -131,8 +88,10 @@ class Pipeline(_BasePipeline):
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-    ...                                              # doctest: +ELLIPSIS
-    Pipeline(steps=[...])
+    ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Pipeline(memory=None,
+             steps=[('anova', SelectKBest(...)),
+                    ('svc', SVC(...))])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.829...
@@ -142,14 +101,21 @@ class Pipeline(_BasePipeline):
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
            False, False], dtype=bool)
+    >>> # Another way to get selected features chosen by anova_filter
+    >>> anova_svm.named_steps.anova.get_support()
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([False, False,  True,  True, False, False, True,  True, False,
+           True,  False,  True,  True, False, True,  False, True, True,
+           False, False], dtype=bool)
     """
 
     # BaseEstimator interface
 
-    def __init__(self, steps):
+    def __init__(self, steps, memory=None):
         # shallow copy of steps
         self.steps = tosequence(steps)
         self._validate_steps()
+        self.memory = memory
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -210,7 +176,8 @@ class Pipeline(_BasePipeline):
 
     @property
     def named_steps(self):
-        return dict(self.steps)
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.steps))
 
     @property
     def _final_estimator(self):
@@ -220,20 +187,43 @@ class Pipeline(_BasePipeline):
 
     def _fit(self, X, y=None, **fit_params):
         self._validate_steps()
+        # Setup the memory
+        memory = self.memory
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
+            memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError("'memory' should either be a string or"
+                             " a joblib.Memory instance, got"
+                             " 'memory={!r}' instead.".format(memory))
+
+        fit_transform_one_cached = memory.cache(_fit_transform_one)
+
         fit_params_steps = dict((name, {}) for name, step in self.steps
                                 if step is not None)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for name, transform in self.steps[:-1]:
-            if transform is None:
+        for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
+            if transformer is None:
                 pass
-            elif hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
             else:
-                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
-                              .transform(Xt)
+                if memory.cachedir is None:
+                    # we do not clone when caching is disabled to preserve
+                    # backward compatibility
+                    cloned_transformer = transformer
+                else:
+                    cloned_transformer = clone(transformer)
+                # Fit or load from cache the current transfomer
+                Xt, fitted_transformer = fit_transform_one_cached(
+                    cloned_transformer, None, Xt, y,
+                    **fit_params_steps[name])
+                # Replace the transformer of the step with the fitted
+                # transformer. This is necessary when loading the transformer
+                # from the cache.
+                self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator is None:
             return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]
@@ -550,7 +540,8 @@ def make_pipeline(*steps):
     >>> from sklearn.preprocessing import StandardScaler
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
     ...     # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('standardscaler',
+    Pipeline(memory=None,
+             steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
                     ('gaussiannb', GaussianNB(priors=None))])
 
@@ -565,7 +556,7 @@ def _fit_one_transformer(transformer, X, y):
     return transformer.fit(X, y)
 
 
-def _transform_one(transformer, name, weight, X):
+def _transform_one(transformer, weight, X):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -573,7 +564,7 @@ def _transform_one(transformer, name, weight, X):
     return res * weight
 
 
-def _fit_transform_one(transformer, name, weight, X, y,
+def _fit_transform_one(transformer, weight, X, y,
                        **fit_params):
     if hasattr(transformer, 'fit_transform'):
         res = transformer.fit_transform(X, y, **fit_params)
@@ -585,7 +576,7 @@ def _fit_transform_one(transformer, name, weight, X, y,
     return res * weight, transformer
 
 
-class FeatureUnion(_BasePipeline, TransformerMixin):
+class FeatureUnion(_BaseComposition, TransformerMixin):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
@@ -731,7 +722,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, name, weight, X, y,
+            delayed(_fit_transform_one)(trans, weight, X, y,
                                         **fit_params)
             for name, trans, weight in self._iter())
 
@@ -761,7 +752,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, name, weight, X)
+            delayed(_transform_one)(trans, weight, X)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None

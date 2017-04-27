@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.deprecation import deprecated
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
@@ -102,10 +103,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers. If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -140,8 +142,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
+    @property
+    @deprecated("Attribute rng was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def rng(self):
+        return self._rng
+
+    @property
+    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def y_train_mean(self):
+        return self._y_train_mean
+
     def fit(self, X, y):
-        """Fit Gaussian process regression model
+        """Fit Gaussian process regression model.
 
         Parameters
         ----------
@@ -161,17 +175,17 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.kernel_ = clone(self.kernel)
 
-        self.rng = check_random_state(self.random_state)
+        self._rng = check_random_state(self.random_state)
 
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
         # Normalize target value
         if self.normalize_y:
-            self.y_train_mean = np.mean(y, axis=0)
+            self._y_train_mean = np.mean(y, axis=0)
             # demean y
-            y = y - self.y_train_mean
+            y = y - self._y_train_mean
         else:
-            self.y_train_mean = np.zeros(1)
+            self._y_train_mean = np.zeros(1)
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
@@ -211,7 +225,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 bounds = self.kernel_.bounds
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
-                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
+                        self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
@@ -287,7 +301,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self.y_train_mean + y_mean  # undo normal.
+            y_mean = self._y_train_mean + y_mean  # undo normal.
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
@@ -299,7 +313,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 K_inv = L_inv.dot(L_inv.T)
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ki,kj,ij->k", K_trans, K_trans, K_inv)
+                y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -323,8 +337,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         n_samples : int, default: 1
             The number of samples drawn from the Gaussian process
 
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance
+        random_state : int, RandomState instance or None, optional (default=0)
+            If int, random_state is the seed used by the random number
+            generator; If RandomState instance, random_state is the
+            random number generator; If None, the random number
+            generator is the RandomState instance used by `np.random`.
 
         Returns
         -------
