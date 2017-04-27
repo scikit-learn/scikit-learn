@@ -228,8 +228,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_ : array, [n_topics, n_features]
-        Topic word distribution. ``components_[i, j]`` represents word j in
-        topic `i`.
+        Variational parameters for topic word distribution. Since the complete
+        conditional for topic word distribution is a Dirichlet,
+        ``components_[i, j]`` can be viewed as pseudocount that represents the
+        number of times word `j` was assigned to topic `i`.
+        Normalized ``components_`` can be viewed as topic word distribution.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
