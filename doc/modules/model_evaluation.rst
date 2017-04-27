@@ -980,36 +980,36 @@ Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.
 
 The :func:`roc_auc_score` function can also be used in multi-class
-classification. Two averaging strategies are currently supported: the
-[HT2001]_ one-vs-one algorithm computes the average of the pairwise
-ROC AUC scores, and the [PD2000]_ one-vs-rest algorithm
+classification. [F2009]_ Two averaging strategies are currently supported: the
+one-vs-one algorithm computes the average of the pairwise
+ROC AUC scores, and the one-vs-rest algorithm
 computes the average of the ROC AUC scores for each class against
 all other classes. In both cases, the predicted class labels are provided in
 an array with values from 0 to ``n_classes``, and the scores correspond to the
 probability estimates that a sample belongs to a particular class.
 
 **One-vs-one Algorithm**
-[HT2001]_: AUC of each class against each other, computing
+The AUC of each class against each other, computing
 the AUC of all possible pairwise combinations :math:`c(c-1)` for a
 :math:`c`-dimensional classifier.
 
-Using the uniform class distribution:
+[HT2001]_ Using the uniform class distribution:
 
 .. math:: \frac{1}{c(c-1)}\sum_{j=1}^c\sum_{k \neq j}^c \textnormal{AUC}(j, k)
         
-Using the a priori class distribution:
+[F2009]_ Weighted by the prevalence of classes `j` and `k`:
 
-.. math:: \frac{1}{c-1}\sum_{j=1}^c\sum_{k \neq j}^c p(j)\textnormal{AUC}(j, k)
+.. math:: \frac{1}{c-1}\sum_{j=1}^c\sum_{k \neq j}^c p(j \cup k)\textnormal{AUC}(j, k)
 
 **One-vs-rest Algorithm**
-[PD2000]_: AUC of each class against the rest. This treats
+AUC of each class against the rest. This treats
 a :math:`c`-dimensional classifier as :math:`c` two-dimensional classifiers.
 
-Using the uniform class distribution:
+[F2006]_ Using the uniform class distribution:
 
 .. math:: \frac{\sum_{j=1}^c \textnormal{AUC}(j, \textnormal{rest}_j)}{c}
 
-Using the a priori class distribution
+[F2001]_ Weighted by the a priori class distribution:
 
 .. math:: \frac{\sum_{j=1}^c p(j)\textnormal{AUC}(j, \textnormal{rest}_j)}{c}
 
@@ -1034,15 +1034,21 @@ Using the a priori class distribution
 
 .. topic:: References:
 
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize 
+       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       In Data Mining, 2001.
+       Proceedings IEEE International Conference, pp. 131-138.
+    .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
+       <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+       Pattern Recognition Letters, 27(8), pp. 861-874.
+    .. [F2009] Ferri, C., Hernandez-Orallo, J., and Modroiu, R., 2009.
+       `An experimental comparison of performance measures for classification.
+       <http://www.sciencedirect.com/science/article/pii/S0167865508002687>`_
+       Pattern Recognition Letters, 30(1), pp. 27-38.
     .. [HT2001] Hand, D.J. and Till, R.J., 2001. `A simple generalisation
        of the area under the ROC curve for multiple class classification problems.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
-    .. [PD2000] Provost, F. and Domingos, P., 2000.
-       `Well-trained PETs: Improving probability estimation trees.
-       <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.33.309&rep=rep1&type=pdf>`_
-       CeDER Working Paper #IS-00-04, Stern School of Business, New
-       York University, NY 10012.
 
 .. _zero_one_loss:
 
