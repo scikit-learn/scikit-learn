@@ -446,7 +446,7 @@ def test_multi_ovr_auc_toydata():
     out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
     out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:, 1])
     out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:, 2])
-    result_unweighted = (out_0 + out_1 + out_2)/3.
+    result_unweighted = (out_0 + out_1 + out_2) / 3.
 
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovr"),
@@ -491,22 +491,23 @@ def test_auc_score_multi_error():
     rng = check_random_state(404)
     y_pred = rng.rand(10)
     y_true = rng.randint(0, 3, size=10)
-    average_error_msg = ("Parameter 'average' must be one of " +
+    average_error_msg = ("Parameter 'average' must be one of "
                          "('macro', 'weighted') for multiclass problems.")
     assert_raise_message(ValueError, average_error_msg,
                          roc_auc_score, y_true, y_pred, average="sample")
     assert_raise_message(ValueError, average_error_msg,
                          roc_auc_score, y_true, y_pred, average="micro")
-    multiclass_error_msg = ("Parameter multiclass='invalid' is not " +
-                            "supported for multiclass ROC AUC. 'multiclass' " +
+    multiclass_error_msg = ("Parameter multiclass='invalid' is not "
+                            "supported for multiclass ROC AUC. 'multiclass' "
                             "must be one of ('ovo', 'ovr').")
     assert_raise_message(ValueError, multiclass_error_msg,
                          roc_auc_score, y_true, y_pred, multiclass="invalid")
-    sample_weight_error_msg = ("Parameter 'sample_weight' is not supported " +
-                               "for multiclass ROC AUC. 'sample_weight' " +
-                               "must be None.")
+    sample_weight_error_msg = ("Parameter 'sample_weight' is not supported "
+                               "for multiclass one-vs-one ROC AUC. "
+                               "'sample_weight' must be None in this case.")
     assert_raise_message(ValueError, sample_weight_error_msg,
-                         roc_auc_score, y_true, y_pred, sample_weight=[])
+                         roc_auc_score, y_true, y_pred,
+                         multiclass="ovo", sample_weight=[])
 
 
 def test_auc_score_non_binary_class():

@@ -289,8 +289,8 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                                  multiclass, multiclass_options))
         if sample_weight is not None:
             raise ValueError("Parameter 'sample_weight' is not supported"
-                             " for multiclass ROC AUC. 'sample_weight' must"
-                             " be None.")
+                             " for multiclass one-vs-one ROC AUC."
+                             " 'sample_weight' must be None in this case.")
 
         if multiclass == "ovo":
             return _average_multiclass_ovo_score(
@@ -298,8 +298,9 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         else:
             y_true = y_true.reshape((-1, 1))
             y_true_multilabel = LabelBinarizer().fit_transform(y_true)
-            return _average_binary_score(_binary_roc_auc_score,
-                                         y_true_multilabel, y_score, average)
+            return _average_binary_score(
+                 _binary_roc_auc_score, y_true_multilabel, y_score, average,
+                 sample_weight=sample_weight)
     else:
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
