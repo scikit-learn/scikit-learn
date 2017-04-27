@@ -39,7 +39,7 @@ def clone(estimator, safe=True):
         The estimator or group of estimators to be cloned
 
     safe : boolean, optional
-        If safe is false, clone will fall back to a deepcopy on objects
+        If safe is false, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -259,7 +259,7 @@ class BaseEstimator(object):
         self
         """
         if not params:
-            # Simple optimisation to gain speed (inspect is slow)
+            # Simple optimization to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
         for key, value in six.iteritems(params):
