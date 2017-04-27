@@ -30,6 +30,7 @@ import numpy as np
 from .base import get_data_home
 from .base import _fetch_and_verify_dataset
 from .base import _pkl_filepath
+from ..utils import Bunch
 from ..externals import joblib
 
 
