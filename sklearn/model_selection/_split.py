@@ -997,7 +997,7 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             for train_index, test_index in cv.split(X, y, groups):
                 yield train_index, test_index
 
-    def get_n_splits(self):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Returns
@@ -1005,7 +1005,10 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return self.cvargs["n_splits"] * self.n_repeats
+        rng = check_random_state(self.random_state)
+        cv = self.cv(random_state=rng, shuffle=True,
+                     **self.cvargs)
+        return cv.get_n_splits(X, y, groups) * self.n_repeats
 
 
 class RepeatedKFold(_RepeatedSplits):
