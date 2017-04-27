@@ -1524,16 +1524,19 @@ def test_one_hot_encoder_attr():
     enc.fit(X)
     assert_array_equal(enc.feature_index_range_, [[0, 3], [3, 5], [5, 7]])
     assert_array_equal(enc.one_hot_feature_index_, [0, 0, 0, 1, 1, 2, 2])
+    assert_array_equal(enc.n_values_, [11, 16, 2])
 
-    enc = OneHotEncoder(categorical_features=[True, False, True])
-    enc.fit(X)
-    assert_array_equal(enc.feature_index_range_, [[0, 3], [5, 6], [3, 5]])
-    assert_array_equal(enc.one_hot_feature_index_, [0, 0, 0, 2, 2, 1])
+    oh = OneHotEncoder('auto-strict', categorical_features=[True, False, True])
+    oh.fit(X)
+    assert_array_equal(oh.feature_index_range_, [[0, 3], [5, 6], [3, 5]])
+    assert_array_equal(oh.one_hot_feature_index_, [0, 0, 0, 2, 2, 1])
+    assert_array_equal(oh.n_values_, [3, 2, 0])
 
     enc = OneHotEncoder(categorical_features=[False, False, True])
     enc.fit(X)
     assert_array_equal(enc.feature_index_range_, [[2, 3], [3, 4], [0, 2]])
     assert_array_equal(enc.one_hot_feature_index_, [2, 2, 0, 1])
+    assert_array_equal(enc.n_values_, [2, 0, 0])
 
 
 def test_one_hot_encoder_dense():
@@ -1604,7 +1607,7 @@ def _run_one_hot(X, X2, cat):
     return Xtr, X2tr
 
 
-def _check_one_hot(X, X2, cat, n_features):
+def _check_one_hot(X, X2, cat, n_features, X_exp, X2_exp):
     ind = np.where(cat)[0]
     # With mask
     A, B = _run_one_hot(X, X2, cat)
@@ -1618,6 +1621,9 @@ def _check_one_hot(X, X2, cat, n_features):
     # Check that mask and indices give the same results
     assert_array_equal(toarray(A), toarray(C))
     assert_array_equal(toarray(B), toarray(D))
+
+    assert_array_equal(toarray(A), X_exp)
+    assert_array_equal(toarray(B), X2_exp)
 
 
 def test_one_hot_encoder_string():
@@ -1633,15 +1639,30 @@ def test_one_hot_encoder_categorical_features():
     X2 = np.array([[1, 1, 1]])
 
     cat = [True, False, False]
-    _check_one_hot(X, X2, cat, 4)
+    X_exp = [[0, 1, 2, 1], [1, 0, 1, 1]]
+    X2_exp = [[0, 0, 1, 1]]
+    _check_one_hot(X, X2, cat, 4, X_exp, X2_exp)
 
     # Edge case: all non-categorical
     cat = [False, False, False]
-    _check_one_hot(X, X2, cat, 3)
+    _check_one_hot(X, X2, cat, 3, X, X2)
 
     # Edge case: all categorical
+    X_exp = [[0, 1, 0, 1, 1], [1, 0, 1, 0, 1]]
+    X2_exp = [[0, 0, 1, 0, 1]]
     cat = [True, True, True]
-    _check_one_hot(X, X2, cat, 5)
+    _check_one_hot(X, X2, cat, 5, X_exp, X2_exp)
+
+
+def test_one_hot_encoder_dtypes():
+    # Verify that we can control the output dtype of the transform
+    X = np.array([['cat', 2.1, 1], ['dog', 1, 3], ['mouse', 1, 2]], dtype='O')
+
+    for dtype in [np.int8, np.float, np.bool]:
+        for sparse in [True, False]:
+            oh = OneHotEncoder('auto-strict', dtype=dtype, sparse=sparse)
+            X_tr = oh.fit_transform(X)
+            assert_equal(X_tr.dtype, dtype)
 
 
 def test_one_hot_encoder_unknown_transform_int():
@@ -1656,29 +1677,26 @@ def test_one_hot_encoder_unknown_transform_int():
     assert_raises(ValueError, oh.transform, y)
     assert_array_equal(X, X_orig)
 
-    # Test the ignore option, ignores unknown features.
-    oh = OneHotEncoder(handle_unknown='ignore')
-    oh.fit(X)
-    assert_array_equal(
-        oh.transform(y).toarray(),
-        np.array([[1.,  0.,  0.,  0.,  1.,  0.,  0.]]))
-    assert_array_equal(X, X_orig)
-
     # Test that there's no error for integer features in the auto range
     y = [[0, 1, 1]]
-    assert_array_equal(oh.transform(y).toarray(),
-                       np.array([[1.,  0.,  0.,  0.,  1.,  0.,  0.]]))
+    assert_array_equal(toarray(oh.transform(y)), [[1,  0,  0,  0,  1,  0,  0]])
 
     # But we do error when fit with "auto-strict"
     oh = OneHotEncoder(values='auto-strict', handle_unknown='error')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
 
+    # Test the ignore option, ignores unknown features.
+    oh = OneHotEncoder(handle_unknown='ignore')
+    oh.fit(X)
+    assert_array_equal(toarray(oh.transform(y)), [[1,  0,  0,  0,  1,  0,  0]])
+    assert_array_equal(X, X_orig)
+
 
 def test_one_hot_encoder_unknown_transform_object():
-    X = np.array([['cat', 2, 1], ['dog', 0, 3], ['mouse', 0, 2]],
+    X = np.array([['cat', 2.1, 1], ['dog', 1.1, 3], ['mouse', 1.1, 2]],
                  dtype=np.object)
-    y = np.array([['ET', 1, 1]], dtype=np.object)
+    y = np.array([['ET', 2.1, 1]], dtype=np.object)
     X_orig = X.copy()  # Verify X is not modified
 
     # Test that one hot encoder raises error for unknown features
@@ -1686,18 +1704,31 @@ def test_one_hot_encoder_unknown_transform_object():
     oh = OneHotEncoder(handle_unknown='error')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
+    assert_array_equal(X, X_orig)
 
     # Test the ignore option, ignores unknown features.
     oh = OneHotEncoder(handle_unknown='ignore')
     oh.fit(X)
-    assert_array_equal(
-        oh.transform(y).toarray(),
-        np.array([[0., 0., 0., 0., 0., 1., 0., 0.]]))
+    assert_array_equal(oh.transform(y).toarray(), [[0, 0, 0, 0, 1, 1, 0, 0]])
     assert_array_equal(X, X_orig)
 
     # Raise error if handle_unknown is neither ignore nor error.
-    oh = OneHotEncoder(handle_unknown='42')
-    oh.fit(X)
+    oh = OneHotEncoder(handle_unknown='42').fit(X)
+    assert_raises(ValueError, oh.transform, y)
+    assert_array_equal(X, X_orig)
+
+    # Check that in-range integer features are okay in object arrays
+    y = np.array([['cat', 2.1, 0]], dtype=np.object)
+    oh = OneHotEncoder(handle_unknown='error').fit(X)
+    assert_array_equal(oh.transform(y).toarray(), [[1, 0, 0, 0, 1, 0, 0, 0]])
+
+    # "in-range" but not in-training-data float features will error
+    y = np.array([['cat', 1.8, 1]], dtype=np.object)
+    oh = OneHotEncoder(handle_unknown='error').fit(X)
+    assert_raises(ValueError, oh.transform, y)
+
+    # A transform on in-range integers errors in 'auto-strict' mode.
+    oh = OneHotEncoder(values='auto-strict', handle_unknown='error').fit(X)
     assert_raises(ValueError, oh.transform, y)
 
 
