@@ -1629,6 +1629,8 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
         Dense array or sparse matrix.
     transform : callable
         A callable transform(X) -> X_transformed
+    dtype : dtype
+        Cast outputs to this data type
     copy : boolean, optional
         Copy X even if it could be avoided.
     selected: "all" or array of indices or mask
@@ -1678,7 +1680,7 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
-    """Encode categorical integer features using a one-hot aka one-of-K scheme.
+    """Encode categorical features using a one-hot aka one-of-K scheme.
 
     The input to this transformer should be a matrix of integers or strings,
     denoting the values taken on by categorical (discrete) features. The
@@ -1696,7 +1698,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     values : 'auto', 'auto-strict', int, List[int], or List[List[objects]]
-        - 'auto' : Determine set of values from training data.
+        - 'auto' (default) : Determine set of values from training data.
             If values are integers, then allowed values will be between
             0 and the maximum value in the data.
         - 'auto-strict' : Determine set of values from the training data.
@@ -1714,16 +1716,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Non-categorical features are always stacked to the right of the matrix.
 
-    dtype : number type, default=np.float
+    dtype : number type, default=np.float64
         Desired dtype of output.
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
 
     handle_unknown : str, 'error' or 'ignore'
-        - 'ignore': Ignore all unknown feature values.
-        - 'error': Raise an error when the value of a feature was not
-            in the original fit data (or given through ``values``).
+        Whether to raise an error or ignore if an unknown categorical
+        feature is present during transform.
 
     Attributes
     ----------
@@ -1745,8 +1746,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    Given a dataset with three features and four samples, we let the encoder
-    find the maximum value per feature and transform the data to a binary
+    Given a dataset with two features and three samples, we let the encoder
+    find the categories in each feature and transform the data to a binary
     one-hot encoding.
 
     >>> from sklearn.preprocessing import OneHotEncoder
@@ -1863,21 +1864,22 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             # Input "auto": determine values automatically
             if values not in ['auto', 'auto-strict']:
                 raise ValueError(error_msg)
-        elif (isinstance(values, list) or
-                isinstance(values, np.ndarray)):
+        elif isinstance(values, list) or isinstance(values, np.ndarray):
             if len(values) != n_features:
                 raise ValueError("Shape mismatch: if values is a list,"
                                  " it has to be of length (n_features).")
 
-            # All entries are arrays or lists
-            scalar_vals = [np.isscalar(val) for val in values]
-            if any(scalar_vals):
+            # All entries must be either arrays or lists here
+            if any([np.isscalar(val) for val in values]):
                 raise ValueError(error_msg)
         else:
             raise TypeError(error_msg)
 
     def _initialize_values(self):
-        """Standardize the `values` input"""
+        """Standardize the `values` input
+
+        Output is either a string or a list of arrays.
+        """
         if self.n_values is not None:
             warnings.warn('`n_values` has been renamed to `values`.'
                           'The parameter `n_values` has been deprecated '
@@ -1961,7 +1963,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Returns
         -------
         out : array, shape[n_samples, n_features_new]
-            `X` encoded using the one-hot scheme.
+            `X` encoded using the one-hot scheme. Will be a CSR sparse
+            array if `self.sparse` is True.
         """
         if self.handle_unknown not in ['ignore', 'error']:
             template = ("handle_unknown should be either 'error' "

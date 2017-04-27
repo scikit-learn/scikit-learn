@@ -1659,8 +1659,8 @@ def test_one_hot_encoder_dtypes():
     X = np.array([['cat', 2.1, 1], ['dog', 1, 3], ['mouse', 1, 2]], dtype='O')
 
     for dtype in [np.int8, np.float, np.bool]:
-        for sparse in [True, False]:
-            oh = OneHotEncoder('auto-strict', dtype=dtype, sparse=sparse)
+        for sp in [True, False]:
+            oh = OneHotEncoder('auto-strict', dtype=dtype, sparse=sp)
             X_tr = oh.fit_transform(X)
             assert_equal(X_tr.dtype, dtype)
 

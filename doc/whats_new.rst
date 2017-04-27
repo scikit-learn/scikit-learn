@@ -171,6 +171,16 @@ Enhancements
      removed by setting it to `None`.
      :issue:`7674` by:user:`Yichuan Liu <yl565>`.
 
+   - :class:`preprocessing.OneHotEncoder` now fits and transforms inputs of
+     any numerical or string type instead of only integer arrays.
+     It has addtional fitted attributes ``feature_index_range_`` and
+     ``one_hot_feature_index_``. The ``feature_indices_`` has been deprecated.
+     The ``n_values`` parameter is deprecated in favor of ``values``.
+     In addition to previous allowed values, ``values`` accepts "auto-strict"
+     to fit to only observed categories as well as lists of lists of categories.
+     :issue:`7327` and :issue:`8793` by :user:`Vighnesh Birodkar <vighneshbirodkar>`
+     and :user:`Stephen Hoover <stephen-hoover>`.
+
 Bug fixes
 .........
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
