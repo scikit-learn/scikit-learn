@@ -1553,10 +1553,11 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
-def _check_apply_selected(X, X_expected, sel):
+def _check_apply_selected(X, X_expected, sel, dtype=np.float):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _apply_selected(M, Binarizer().transform, sel)
+        Xtr = _apply_selected(M, Binarizer().transform, sel, dtype=dtype)
         assert_array_equal(toarray(Xtr), X_expected)
+        assert_equal(toarray(Xtr).dtype, dtype)
 
 
 def test_transform_selected():
@@ -1565,14 +1566,18 @@ def test_transform_selected():
     X_expected = [[1, 2, 1], [0, 1, 1]]
     _check_apply_selected(X, X_expected, [0])
     _check_apply_selected(X, X_expected, [True, False, False])
+    _check_apply_selected(X, X_expected, [True, False, False], dtype=np.int)
 
     X_expected = [[1, 1, 1], [0, 1, 1]]
     _check_apply_selected(X, X_expected, [0, 1, 2])
+    _check_apply_selected(X, X_expected, [0, 1, 2], dtype=np.int)
     _check_apply_selected(X, X_expected, [True, True, True])
     _check_apply_selected(X, X_expected, "all")
+    _check_apply_selected(X, X_expected, "all", dtype=np.int)
 
     _check_apply_selected(X, X, [])
     _check_apply_selected(X, X, [False, False, False])
+    _check_apply_selected(X, X, [False, False, False], dtype=np.int)
 
 
 def test_transform_selected_copy_arg():

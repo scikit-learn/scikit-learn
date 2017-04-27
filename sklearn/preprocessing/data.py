@@ -1645,10 +1645,11 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
         X = X.copy()
 
     if isinstance(selected, six.string_types) and selected == "all":
-        return transform(X)
+        X_trans = transform(X)
+        return X_trans.astype(dtype) if return_val else None
 
     if len(selected) == 0:
-        return X
+        return X.astype(dtype) if return_val else None
 
     n_features = X.shape[1]
     sel = np.zeros(n_features, dtype=bool)
@@ -1658,15 +1659,17 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
 
     if n_selected == 0:
         # No features selected.
-        return X
+        return X.astype(dtype) if return_val else None
     elif n_selected == n_features:
         # All features selected.
-        return transform(X)
+        X_trans = transform(X)
+        return X_trans.astype(dtype) if return_val else None
     else:
         ind = np.arange(n_features)
         X_sel = transform(X[:, ind[sel]])
 
         if return_val:
+            X_sel = X_sel.astype(dtype)
             X_not_sel = X[:, ind[not_sel]].astype(dtype)
             if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
                 return sparse.hstack((X_sel, X_not_sel))
