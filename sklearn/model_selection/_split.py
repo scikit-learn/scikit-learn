@@ -821,7 +821,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
             Returns the number of splitting iterations in the cross-validator.
         """
         if groups is None:
-            raise ValueError("The groups parameter should not be None")
+            raise ValueError("The 'groups' parameter should not be None")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return len(np.unique(groups))
 
@@ -925,7 +925,7 @@ class LeavePGroupsOut(BaseCrossValidator):
             Returns the number of splitting iterations in the cross-validator.
         """
         if groups is None:
-            raise ValueError("The groups parameter should not be None")
+            raise ValueError("The 'groups' parameter should not be None")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 

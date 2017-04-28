@@ -769,7 +769,7 @@ def test_leave_one_p_group_out():
     with assert_raises(ValueError):
         lpgo_2.get_n_splits(None, None, [0.0, np.inf, 0.0])
 
-    msg = "The groups parameter should not be None"
+    msg = "The 'groups' parameter should not be None"
     assert_raise_message(ValueError, msg,
                          logo.get_n_splits, None, None, None)
     assert_raise_message(ValueError, msg,
