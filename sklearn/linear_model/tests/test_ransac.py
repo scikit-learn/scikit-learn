@@ -97,7 +97,6 @@ def test_ransac_max_trials():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2)
     for i in range(50):
         ransac_estimator.set_params(min_samples=2, random_state=i)
-        #ransac_estimator.n_trials_ = None
         ransac_estimator.fit(X, y)
         assert_less(ransac_estimator.n_trials_, max_trials + 1)
 
