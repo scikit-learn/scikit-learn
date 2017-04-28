@@ -89,10 +89,6 @@ def download_20newsgroups(target_dir, cache_path):
     with open(cache_path, 'wb') as f:
         f.write(compressed_content)
 
-    # check md5 of written file
-    expected_checksum = "4259916082467db1b096c6c05299f17c"
-    _validate_file_md5(expected_checksum, cache_path)
-
     shutil.rmtree(target_dir)
     return cache
 
