@@ -6,6 +6,7 @@ from re import finditer, search
 
 from numpy.random import RandomState
 
+from sklearn.base import ClassifierMixin
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
@@ -238,12 +239,12 @@ def test_graphviz_errors():
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
 
-    # Check decimals error
+    # Check precision error
     out = StringIO()
     assert_raises_regex(ValueError, "should be greater or equal",
-                        export_graphviz, clf, out, decimals=-1)
+                        export_graphviz, clf, out, precision=-1)
     assert_raises_regex(ValueError, "should be an integer",
-                        export_graphviz, clf, out, decimals="1")
+                        export_graphviz, clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
@@ -261,63 +262,46 @@ def test_friedman_mse_in_graphviz():
         assert_in("friedman_mse", finding.group())
 
 
-def test_decimals():
-    # regression case
-    rng = RandomState(2)
-    X = rng.random_sample((5, 2))
-    y_reg = rng.random_sample((5, ))
+def test_precision():
 
-    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
-                                max_depth=1)
-    clf.fit(X, y_reg)
-    for decimals in (4, 3):
-        dot_data = export_graphviz(clf, out_file=None, decimals=decimals)
+    rng_reg = RandomState(2)
+    rng_clf = RandomState(8)
+    for X, y, clf in zip(
+            (rng_reg.random_sample((5, 2)),
+             rng_clf.random_sample((1000, 4))),
+            (rng_reg.random_sample((5, )),
+             rng_clf.randint(2, size=(1000, ))),
+            (DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
+                                   max_depth=1),
+             DecisionTreeClassifier(max_depth=1, random_state=0))):
 
-        # With the current random state, the value, the impurity and the
-        # threshold will have the number of decimals set in the export_graphviz
-        # function. We will check the number of decimals with a strict
-        # equality.
+        clf.fit(X, y)
+        for precision in (4, 3):
+            dot_data = export_graphviz(clf, out_file=None, precision=precision,
+                                       proportion=True)
 
-        # check value
-        for finding in finditer("value = \d+\.\d+", dot_data):
-            assert_equal(len(search("\.\d+", finding.group()).group()),
-                         decimals + 1)
-        # check impurity
-        for finding in finditer("friedman_mse = \d+\.\d+", dot_data):
-            assert_equal(len(search("\.\d+", finding.group()).group()),
-                         decimals + 1)
-        # check threshold
-        for finding in finditer("<= \d+\.\d+", dot_data):
-            assert_equal(len(search("\.\d+", finding.group()).group()),
-                         decimals + 1)
+            # With the current random state, the impurity and the threshold
+            # will have the number of precision set in the export_graphviz
+            # function. We will check the number of precision with a strict
+            # equality. The value reported will have only 2 precision and
+            # therefore, only a less equal comparison will be done.
 
-    # classification case
-    rng = RandomState(8)
-    X = rng.random_sample((1000, 4))
-    y_cla = rng.randint(2, size=(1000, ))
+            # check value
+            for finding in finditer("value = \d+\.\d+", dot_data):
+                assert_less_equal(
+                    len(search("\.\d+", finding.group()).group()),
+                    precision + 1)
+            # check impurity
+            if isinstance(clf, ClassifierMixin):
+                pattern = "gini = \d+\.\d+"
+            else:
+                pattern = "friedman_mse = \d+\.\d+"
 
-    clf = DecisionTreeClassifier(max_depth=1, random_state=0)
-
-    clf.fit(X, y_cla)
-    for decimals in (4, 3):
-        dot_data = export_graphviz(clf, out_file=None, decimals=decimals,
-                                   proportion=True)
-
-        # With the current random state, the impurity and the threshold will
-        # have the number of decimals set in the export_graphviz function. We
-        # will check the number of decimals with a strict equality. The value
-        # reported will have only 2 decimals and therefore, only a less equal
-        # comparison will be done.
-
-        # check value
-        for finding in finditer("value = \d+\.\d+", dot_data):
-            assert_less_equal(len(search("\.\d+", finding.group()).group()),
-                              decimals + 1)
-        # check impurity
-        for finding in finditer("gini = \d+\.\d+", dot_data):
-            assert_equal(len(search("\.\d+", finding.group()).group()),
-                         decimals + 1)
-        # check threshold
-        for finding in finditer("<= \d+\.\d+", dot_data):
-            assert_equal(len(search("\.\d+", finding.group()).group()),
-                         decimals + 1)
+            # check impurity
+            for finding in finditer(pattern, dot_data):
+                assert_equal(len(search("\.\d+", finding.group()).group()),
+                             precision + 1)
+            # check threshold
+            for finding in finditer("<= \d+\.\d+", dot_data):
+                assert_equal(len(search("\.\d+", finding.group()).group()),
+                             precision + 1)

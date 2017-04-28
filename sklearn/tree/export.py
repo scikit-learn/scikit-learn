@@ -75,7 +75,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False, decimals=3):
+                    rounded=False, special_characters=False, precision=3):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -145,9 +145,9 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
         When set to ``False``, ignore special characters for PostScript
         compatibility.
 
-    decimals : int, optional (default=3)
-        The number of decimal reported of the ``impurity``,
-        ``threshold``, and ``value`` parameters at each node.
+    precision : int, optional (default=3)
+        Number of digits of precision for floating point in the values of
+        impurity, threshold and value attributes of each node.
 
     Returns
     -------
@@ -234,7 +234,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             node_string += '%s %s %s%s' % (feature,
                                            characters[3],
                                            round(tree.threshold[node_id],
-                                                 decimals),
+                                                 precision),
                                            characters[4])
 
         # Write impurity
@@ -245,7 +245,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
-            node_string += (str(round(tree.impurity[node_id], decimals)) +
+            node_string += (str(round(tree.impurity[node_id], precision)) +
                             characters[4])
 
         # Write node sample count
@@ -268,16 +268,16 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             node_string += 'value = '
         if tree.n_classes[0] == 1:
             # Regression
-            value_text = np.around(value, decimals)
+            value_text = np.around(value, precision)
         elif proportion:
             # Classification
-            value_text = np.around(value, decimals)
+            value_text = np.around(value, precision)
         elif np.all(np.equal(np.mod(value, 1), 0)):
             # Classification without floating-point weights
             value_text = value.astype(int)
         else:
             # Classification with floating-point weights
-            value_text = np.around(value, decimals)
+            value_text = np.around(value, precision)
         # Strip whitespace
         value_text = str(value_text.astype('S32')).replace("b'", "'")
         value_text = value_text.replace("' '", ", ").replace("'", "")
@@ -410,14 +410,13 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             return_string = True
             out_file = six.StringIO()
 
-
-        if isinstance(decimals, Integral):
-            if decimals < 0:
-                raise ValueError("'decimals' should be greater or equal to 0."
-                                 " Got {} instead.".format(decimals))
+        if isinstance(precision, Integral):
+            if precision < 0:
+                raise ValueError("'precision' should be greater or equal to 0."
+                                 " Got {} instead.".format(precision))
         else:
-            raise ValueError("'decimals' should be an integer. Got {}"
-                             " instead.".format(type(decimals)))
+            raise ValueError("'precision' should be an integer. Got {}"
+                             " instead.".format(type(precision)))
 
         # Check length of feature_names before getting into the tree node
         # Raise error if length of feature_names does not match
