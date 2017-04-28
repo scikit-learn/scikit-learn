@@ -1045,7 +1045,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-            'saga' are faster for large ones.
+            'saga' are faster for large ones. 'liblinear' doesn't work with
+            'n_jobs'. It will use only one process even when 'multi_class' is
+            specified.
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
             handle multinomial loss; 'liblinear' is limited to one-versus-rest
             schemes.
