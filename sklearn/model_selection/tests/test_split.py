@@ -758,10 +758,10 @@ def test_leave_one_p_group_out():
                 assert_true(np.unique(groups_arr[test]).shape[0], p_groups_out)
 
     # check get_n_splits() with dummy parameters
-    assert_equal(
-        logo.get_n_splits(None, None, groups=['a', 'b', 'c', 'b', 'c']),
-        3)
-    assert_equal(lpgo_2.get_n_splits(None, None, groups=np.arange(4)), 6)
+    assert_equal(logo.get_n_splits(None, None, ['a', 'b', 'c', 'b', 'c']), 3)
+    assert_equal(logo.get_n_splits(groups=[1.0, 1.1, 1.0, 1.2]), 3)
+    assert_equal(lpgo_2.get_n_splits(None, None, np.arange(4)), 6)
+    assert_equal(lpgo_1.get_n_splits(groups=np.arange(4)), 4)
 
     # raise ValueError if a `groups` parameter is illegal
     with assert_raises(ValueError):

@@ -798,20 +798,22 @@ class LeaveOneGroupOut(BaseCrossValidator):
         for i in unique_groups:
             yield groups == i
 
-    def get_n_splits(self, X, y, groups):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
         ----------
-        X : object
+        X : object, optional
             Always ignored, exists for compatibility.
 
-        y : object
+        y : object, optional
             Always ignored, exists for compatibility.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
-            train/test set.
+            train/test set.   This 'group' parameter must always be specified 
+            to calculate the number of splits, though the other parameters can 
+            be omitted.
 
         Returns
         -------
@@ -900,20 +902,22 @@ class LeavePGroupsOut(BaseCrossValidator):
                 test_index[groups == l] = True
             yield test_index
 
-    def get_n_splits(self, X, y, groups):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
         ----------
-        X : object
+        X : object, optional
             Always ignored, exists for compatibility.
 
-        y : object
+        y : object, optional
             Always ignored, exists for compatibility.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
-            train/test set.
+            train/test set. This 'group' parameter must always be specified to 
+            calculate the number of splits, though the other parameters can be
+            omitted.
 
         Returns
         -------
