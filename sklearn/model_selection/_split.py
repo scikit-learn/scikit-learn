@@ -765,7 +765,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> logo = LeaveOneGroupOut()
     >>> logo.get_n_splits(X, y, groups)
     2
-    >>> logo.get_n_splits(None, None, groups) # X, y are always ignored.
+    >>> logo.get_n_splits(groups=groups) # 'groups' is always required
     2
     >>> print(logo)
     LeaveOneGroupOut()
@@ -857,7 +857,7 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> lpgo = LeavePGroupsOut(n_groups=2)
     >>> lpgo.get_n_splits(X, y, groups)
     3
-    >>> lpgo.get_n_splits(None, None, groups) # X, y are always ignored.
+    >>> lpgo.get_n_splits(groups=groups)  # 'groups' is always required
     3
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
