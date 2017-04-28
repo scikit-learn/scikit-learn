@@ -12,7 +12,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_true
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 
@@ -29,6 +28,7 @@ data[outliers, :] += 50 + rng.rand(len(outliers), 2) * 10
 
 X = data[:, 0][:, np.newaxis]
 y = data[:, 1]
+
 
 def test_ransac_inliers_outliers():
 
@@ -96,8 +96,8 @@ def test_ransac_max_trials():
         len(X) - len(outliers), X.shape[0], 2, 1 - 1e-9)
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2)
     for i in range(50):
-        ransac_estimator.set_params(min_samples=2,random_state=i)
-        ransac_estimator.n_trials_ = None
+        ransac_estimator.set_params(min_samples=2, random_state=i)
+        #ransac_estimator.n_trials_ = None
         ransac_estimator.fit(X, y)
         assert_less(ransac_estimator.n_trials_, max_trials + 1)
 
