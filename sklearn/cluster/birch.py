@@ -278,7 +278,9 @@ class _CFSubcluster(object):
         pairwise minimum distances are computed.
 
     samples_id_ : list
-        Row number of samples belonging to the subcluster.
+        Row number of samples belonging to the subcluster,
+        if the class initialized with a valid samples_id argument.
+        An empty list otherwise.
     """
     def __init__(self, linear_sum=None, samples_id=None):
         if linear_sum is None:
@@ -291,7 +293,11 @@ class _CFSubcluster(object):
             self.centroid_ = self.linear_sum_ = linear_sum
             self.squared_sum_ = self.sq_norm_ = np.dot(
                 self.linear_sum_, self.linear_sum_)
-            self.samples_id_ = samples_id
+            if samples_id is not None:
+                self.samples_id_ = samples_id
+            else:
+                self.samples_id_ = []
+
         self.child_ = None
 
     def update(self, subcluster):
@@ -377,6 +383,11 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         Whether or not to make a copy of the given data. If set to False,
         the initial data will be overwritten.
 
+    compute_samples_indices : bool, default False
+        Whether the indices of samples belonging to each hierarchical
+        subcluster should be included in the CFSsubcluster.samples_id_
+        attribute. This option can have some memory overhead.
+
     Attributes
     ----------
     root_ : _CFNode
@@ -435,12 +446,13 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
-                 compute_labels=True, copy=True):
+                 compute_labels=True, copy=True, compute_samples_indices=False):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
         self.compute_labels = compute_labels
         self.copy = copy
+        self.compute_samples_indices = compute_samples_indices
 
     def fit(self, X, y=None):
         """
@@ -458,9 +470,15 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X = check_array(X, accept_sparse='csr', copy=self.copy)
         threshold = self.threshold
         branching_factor = self.branching_factor
+        compute_samples_indices = self.compute_samples_indices
 
         if branching_factor <= 1:
             raise ValueError("Branching_factor should be greater than one.")
+        if self.compute_samples_indices and self.partial_fit_:
+            raise ValueError("The option compute_samples_indices=True is not "
+                             "compatible with out of core calculations. "
+                             "Please either set it to False, or dont use the "
+                             "partial_fit method.")
         n_samples, n_features = X.shape
 
         # If partial_fit is called for the first time or fit is called, we
@@ -485,8 +503,13 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             iter_func = _iterate_sparse_X
 
         for row_id, sample in enumerate(iter_func(X)):
+            if compute_samples_indices:
+                samples_id = [row_id]
+            else:
+                samples_id = None
+            
             subcluster = _CFSubcluster(linear_sum=sample,
-                                       samples_id=[row_id])
+                                       samples_id=samples_id)
             split = self.root_.insert_cf_subcluster(subcluster)
 
             if split:

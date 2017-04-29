@@ -161,8 +161,9 @@ def test_threshold():
 
 
 def test_birch_hierarchy():
-    X, y = make_blobs(random_state=42)
-    brc = Birch(n_clusters=None, branching_factor=5, compute_labels=False)
+    X, y = make_blobs(random_state=40)
+    brc = Birch(n_clusters=None, branching_factor=5,
+                compute_samples_indices=True)
     brc.fit(X)
 
     # make sure that leave nodes contain all the samples
@@ -201,3 +202,19 @@ def test_birch_hierarchy():
 
     assert np.argmin(distance_to_centroid) == \
         np.nonzero(document_in_subcluster)[0][0]
+
+    # Make sure that we can recompute labels from tree leaves
+    labels2 = np.zeros(X.shape[0], dtype=int)
+    cluster_id = 0
+    for current_leaf in brc._get_leaves():
+        subclusters = current_leaf.subclusters_
+        for sc in subclusters:
+            labels2[sc.samples_id_] = cluster_id
+            cluster_id += 1
+
+    assert np.unique(brc.labels_).shape == np.unique(labels2).shape
+    # It's not an exact match, this might suggest an issue
+    assert v_measure_score(brc.labels_, labels2) > 0.95
+    assert ((brc.labels_ == labels2).sum() / labels2.size) >= 0.95
+
+    assert_raises(ValueError, brc.partial_fit, X)
