@@ -811,8 +811,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
-            train/test set.   This 'group' parameter must always be specified 
-            to calculate the number of splits, though the other parameters can 
+            train/test set.   This 'group' parameter must always be specified
+            to calculate the number of splits, though the other parameters can
             be omitted.
 
         Returns
@@ -915,7 +915,7 @@ class LeavePGroupsOut(BaseCrossValidator):
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
-            train/test set. This 'group' parameter must always be specified to 
+            train/test set. This 'group' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
             omitted.
 
