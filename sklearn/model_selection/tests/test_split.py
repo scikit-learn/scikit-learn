@@ -189,6 +189,13 @@ def test_cross_validator_with_default_params():
         # Test if the repr works without any errors
         assert_equal(cv_repr, repr(cv))
 
+    # ValueError for get_n_splits methods
+    msg = "The 'X' parameter should not be None."
+    assert_raise_message(ValueError, msg,
+                         loo.get_n_splits, None, y, groups)
+    assert_raise_message(ValueError, msg,
+                         lpo.get_n_splits, None, y, groups)
+
 
 def check_valid_split(train, test, n_samples=None):
     # Use python sets to get more informative assertion failure messages
