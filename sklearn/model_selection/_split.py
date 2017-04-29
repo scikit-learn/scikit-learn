@@ -188,7 +188,7 @@ class LeaveOneOut(BaseCrossValidator):
             Returns the number of splitting iterations in the cross-validator.
         """
         if X is None:
-            raise ValueError("The X parameter should not be None")
+            raise ValueError("The 'X' parameter should not be None")
         return _num_samples(X)
 
 
@@ -259,7 +259,7 @@ class LeavePOut(BaseCrossValidator):
             Always ignored, exists for compatibility.
         """
         if X is None:
-            raise ValueError("The X parameter should not be None")
+            raise ValueError("The 'X' parameter should not be None")
         return int(comb(_num_samples(X), self.p, exact=True))
 
 
@@ -477,7 +477,7 @@ class GroupKFold(_BaseKFold):
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
-            raise ValueError("The groups parameter should not be None")
+            raise ValueError("The 'groups' parameter should not be None")
         groups = check_array(groups, ensure_2d=False, dtype=None)
 
         unique_groups, groups = np.unique(groups, return_inverse=True)
@@ -787,7 +787,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
-            raise ValueError("The groups parameter should not be None")
+            raise ValueError("The 'groups' parameter should not be None")
         # We make a copy of groups to avoid side-effects during iteration
         groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
         unique_groups = np.unique(groups)
@@ -886,7 +886,7 @@ class LeavePGroupsOut(BaseCrossValidator):
 
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
-            raise ValueError("The groups parameter should not be None")
+            raise ValueError("The 'groups' parameter should not be None")
         groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
         unique_groups = np.unique(groups)
         if self.n_groups >= len(unique_groups):
@@ -1297,7 +1297,7 @@ class GroupShuffleSplit(ShuffleSplit):
 
     def _iter_indices(self, X, y, groups):
         if groups is None:
-            raise ValueError("The groups parameter should not be None")
+            raise ValueError("The 'groups' parameter should not be None")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super(
