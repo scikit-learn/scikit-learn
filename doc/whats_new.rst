@@ -145,8 +145,8 @@ Bug fixes
 .........
 
    - Fixed a bug where :func:`sklearn.linear_model.RANSACRegressor.fit` may run until
-     max_iter if finds a large inleer group early
-     :issue:`8251` by :user:`aivision2020 <aivision2020>`.
+  ``max_iter`` if finds a large inlier group early
+     :issue:`8251` by :user:`aivision2020`.
 
    - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
