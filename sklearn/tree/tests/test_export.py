@@ -2,14 +2,18 @@
 Testing for export functions of decision trees (sklearn.tree.export).
 """
 
-from re import finditer
+from re import finditer, search
 
+from numpy.random import RandomState
+
+from sklearn.base import ClassifierMixin
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
-from sklearn.utils.testing import assert_in, assert_equal, assert_raises
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
+                                   assert_less_equal, assert_raises_regex,
+                                   assert_raise_message)
 from sklearn.exceptions import NotFittedError
 
 # toy sample
@@ -235,6 +239,13 @@ def test_graphviz_errors():
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
 
+    # Check precision error
+    out = StringIO()
+    assert_raises_regex(ValueError, "should be greater or equal",
+                        export_graphviz, clf, out, precision=-1)
+    assert_raises_regex(ValueError, "should be an integer",
+                        export_graphviz, clf, out, precision="1")
+
 
 def test_friedman_mse_in_graphviz():
     clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
@@ -249,3 +260,48 @@ def test_friedman_mse_in_graphviz():
 
     for finding in finditer("\[.*?samples.*?\]", dot_data.getvalue()):
         assert_in("friedman_mse", finding.group())
+
+
+def test_precision():
+
+    rng_reg = RandomState(2)
+    rng_clf = RandomState(8)
+    for X, y, clf in zip(
+            (rng_reg.random_sample((5, 2)),
+             rng_clf.random_sample((1000, 4))),
+            (rng_reg.random_sample((5, )),
+             rng_clf.randint(2, size=(1000, ))),
+            (DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
+                                   max_depth=1),
+             DecisionTreeClassifier(max_depth=1, random_state=0))):
+
+        clf.fit(X, y)
+        for precision in (4, 3):
+            dot_data = export_graphviz(clf, out_file=None, precision=precision,
+                                       proportion=True)
+
+            # With the current random state, the impurity and the threshold
+            # will have the number of precision set in the export_graphviz
+            # function. We will check the number of precision with a strict
+            # equality. The value reported will have only 2 precision and
+            # therefore, only a less equal comparison will be done.
+
+            # check value
+            for finding in finditer("value = \d+\.\d+", dot_data):
+                assert_less_equal(
+                    len(search("\.\d+", finding.group()).group()),
+                    precision + 1)
+            # check impurity
+            if isinstance(clf, ClassifierMixin):
+                pattern = "gini = \d+\.\d+"
+            else:
+                pattern = "friedman_mse = \d+\.\d+"
+
+            # check impurity
+            for finding in finditer(pattern, dot_data):
+                assert_equal(len(search("\.\d+", finding.group()).group()),
+                             precision + 1)
+            # check threshold
+            for finding in finditer("<= \d+\.\d+", dot_data):
+                assert_equal(len(search("\.\d+", finding.group()).group()),
+                             precision + 1)
