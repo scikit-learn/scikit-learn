@@ -44,14 +44,14 @@ def test_mcd():
 
 def test_fast_mcd_on_invalid_input():
     X = np.arange(100)
-    assert_raise_message(ValueError, 'fast_mcd expects at least 2 samples',
+    assert_raise_message(ValueError, 'Got X with X.ndim=1',
                          fast_mcd, X)
 
 
 def test_mcd_class_on_invalid_input():
     X = np.arange(100)
     mcd = MinCovDet()
-    assert_raise_message(ValueError, 'MinCovDet expects at least 2 samples',
+    assert_raise_message(ValueError, 'Got X with X.ndim=1',
                          mcd.fit, X)
 
 

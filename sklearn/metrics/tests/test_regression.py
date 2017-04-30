@@ -3,7 +3,7 @@ from __future__ import division, print_function
 import numpy as np
 from itertools import product
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, assert_raises_regex
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_log_error
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 
@@ -23,6 +24,9 @@ def test_regression_metrics(n_samples=50):
     y_pred = y_true + 1
 
     assert_almost_equal(mean_squared_error(y_true, y_pred), 1.)
+    assert_almost_equal(mean_squared_log_error(y_true, y_pred),
+                        mean_squared_error(np.log(1 + y_true),
+                                           np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
@@ -35,6 +39,9 @@ def test_multioutput_regression():
 
     error = mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
+
+    error = mean_squared_log_error(y_true, y_pred)
+    assert_almost_equal(error, 0.200, decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -49,10 +56,14 @@ def test_multioutput_regression():
 
 def test_regression_metrics_at_limits():
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(mean_squared_log_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(median_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
+    assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
+                        "used when targets contain negative values.",
+                        mean_squared_log_error, [-1.], [-1.])
 
 
 def test__check_reg_targets():
@@ -80,6 +91,18 @@ def test__check_reg_targets():
                 assert_array_equal(y_check2, y2)
         else:
             assert_raises(ValueError, _check_reg_targets, y1, y2, None)
+
+
+def test__check_reg_targets_exception():
+    invalid_multioutput = 'this_value_is_not_valid'
+    expected_message = ("Allowed 'multioutput' string values are.+"
+                        "You provided multioutput={!r}".format(
+                            invalid_multioutput))
+    assert_raises_regex(ValueError, expected_message,
+                        _check_reg_targets,
+                        [1, 2, 3],
+                        [[1], [2], [3]],
+                        invalid_multioutput)
 
 
 def test_regression_multioutput_array():
@@ -127,6 +150,14 @@ def test_regression_multioutput_array():
     assert_array_almost_equal(evs, [1., -3.], decimal=2)
     assert_equal(np.mean(evs), explained_variance_score(y_true, y_pred))
 
+    # Handling msle separately as it does not accept negative inputs.
+    y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
+    y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
+    msle = mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
+    msle2 = mean_squared_error(np.log(1 + y_true), np.log(1 + y_pred),
+                               multioutput='raw_values')
+    assert_array_almost_equal(msle, msle2, decimal=2)
+
 
 def test_regression_custom_weights():
     y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
@@ -141,3 +172,11 @@ def test_regression_custom_weights():
     assert_almost_equal(maew, 0.475, decimal=3)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
+
+    # Handling msle separately as it does not accept negative inputs.
+    y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
+    y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
+    msle = mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    msle2 = mean_squared_error(np.log(1 + y_true), np.log(1 + y_pred),
+                               multioutput=[0.3, 0.7])
+    assert_almost_equal(msle, msle2, decimal=2)

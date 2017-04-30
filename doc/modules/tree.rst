@@ -143,11 +143,9 @@ supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
 Alternatively, if we have Python module ``pydotplus`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
-    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
     >>> import pydotplus # doctest: +SKIP
-    >>> dot_data = StringIO() # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
@@ -156,13 +154,12 @@ using explicit variable and class names if desired. IPython notebooks can also
 render these plots inline using the `Image()` function::
 
     >>> from IPython.display import Image  # doctest: +SKIP
-    >>> dot_data = StringIO()  # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data,  # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
                              feature_names=iris.feature_names,  # doctest: +SKIP
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data)  # doctest: +SKIP
     >>> Image(graph.create_png())  # doctest: +SKIP
 
 .. only:: html
@@ -483,12 +480,16 @@ and Misclassification
 
     H(X_m) = 1 - \max(p_{mk})
 
+where :math:`X_m` is the training data in node :math:`m`
+
 Regression criteria
 -------------------
 
 If the target is a continuous value, then for node :math:`m`,
-representing a region :math:`R_m` with :math:`N_m` observations, a common
-criterion to minimise is the Mean Squared Error
+representing a region :math:`R_m` with :math:`N_m` observations, common
+criteria to minimise are
+
+Mean Squared Error:
 
 .. math::
 
@@ -496,6 +497,15 @@ criterion to minimise is the Mean Squared Error
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
 
+Mean Absolute Error:
+
+.. math::
+
+    \bar{y_m} = \frac{1}{N_m} \sum_{i \in N_m} y_i
+
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y_m}|
+
+where :math:`X_m` is the training data in node :math:`m`
 
 .. topic:: References:
 

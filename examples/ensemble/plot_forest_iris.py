@@ -42,6 +42,7 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 from sklearn import clone
 from sklearn.datasets import load_iris
@@ -53,7 +54,6 @@ from sklearn.tree import DecisionTreeClassifier
 # Parameters
 n_classes = 3
 n_estimators = 30
-plot_colors = "ryb"
 cmap = plt.cm.RdYlBu
 plot_step = 0.02  # fine step width for decision surface contours
 plot_step_coarser = 0.5  # step widths for coarse classifier guesses
@@ -139,11 +139,8 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         # Plot the training points, these are clustered together and have a
         # black outline
-        for i, c in zip(xrange(n_classes), plot_colors):
-            idx = np.where(y == i)
-            plt.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i],
-                        cmap=cmap)
-
+        plt.scatter(X[:, 0], X[:, 1], c=y,
+                    cmap=ListedColormap(['r', 'y', 'b']))
         plot_idx += 1  # move on to the next plot in sequence
 
 plt.suptitle("Classifiers on feature subsets of the Iris dataset")

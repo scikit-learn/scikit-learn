@@ -15,7 +15,7 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 
 # License: BSD3
 
@@ -88,9 +88,11 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling. Only used
-        if ``svd_method`` equals 'randomized'
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Only used when ``svd_method`` equals 'randomized'.
 
     Attributes
     ----------
@@ -309,12 +311,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: array, shape (n_samples,)
+        ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self, 'components_')
@@ -333,12 +335,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: float
+        ll : float
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))
