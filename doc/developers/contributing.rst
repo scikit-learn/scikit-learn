@@ -455,7 +455,8 @@ purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code. 
-Please note: Any bug-fix in sklearn needs a regression test.
+
+Regression testing is a type of software testing which verifies that software, which was previously developed and tested, still performs correctly after it was changed or interfaced with other software. Changes may include software enhancements, patches, configuration changes, etc. During regression testing, new software bugs or regressions may be uncovered. Sometimes a software change impact analysis is performed to determine what areas could be affected by the proposed changes. These areas may include functional and non-functional areas of the system. The purpose of regression testing is to ensure that changes such as those mentioned above have not introduced new faults. One of the main reasons for regression testing is to determine whether a change in one part of the software affects other parts of the software. Please note Any bug-fix in sklearn needs a regression test due to the above reasons.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
 Alternatively, running 'nosetests' in a folder will run all the tests of
