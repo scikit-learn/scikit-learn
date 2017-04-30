@@ -5,7 +5,8 @@ from numpy.testing import run_module_suite
 from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
-                                   assert_false, assert_raises, assert_equal)
+                                   assert_false, assert_raises, assert_equal,
+                                   assert_allclose, assert_greater)
 from sklearn.feature_selection.mutual_info_ import (
     mutual_info_regression, mutual_info_classif, _compute_mi)
 
@@ -158,8 +159,19 @@ def test_mutual_info_classif_mixed():
     y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
     X[:, 2] = X[:, 2] > 0.5
 
-    mi = mutual_info_classif(X, y, discrete_features=[2], random_state=0)
+    mi = mutual_info_classif(X, y, discrete_features=[2], n_neighbors=3,
+                             random_state=0)
     assert_array_equal(np.argsort(-mi), [2, 0, 1])
+    for n_neighbors in [5, 7, 9]:
+        mi_nn = mutual_info_classif(X, y, discrete_features=[2],
+                                    n_neighbors=n_neighbors, random_state=0)
+        # Check that the continuous values have an higher MI with greater
+        # n_neighbors
+        assert_greater(mi_nn[0], mi[0])
+        assert_greater(mi_nn[1], mi[1])
+        # The n_neighbors should not have any effect on the discrete value
+        # The MI should be the same
+        assert_equal(mi_nn[2], mi[2])
 
 
 def test_mutual_info_options():

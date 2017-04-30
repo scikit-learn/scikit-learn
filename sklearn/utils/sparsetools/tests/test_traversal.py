@@ -1,9 +1,9 @@
 from __future__ import division, print_function, absolute_import
 
-from nose import SkipTest
-
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+from sklearn.utils.testing import SkipTest
+
 try:
     from scipy.sparse.csgraph import breadth_first_tree, depth_first_tree,\
         csgraph_to_dense, csgraph_from_dense

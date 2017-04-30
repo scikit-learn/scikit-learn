@@ -407,11 +407,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
-        n_neighbors : int, opitonal (default = None)
+        n_neighbors : int, optional (default = None)
             Number of neighbors required. If not provided, this will
             return the number specified at the initialization.
 
-        return_distance : boolean, optional (default = False)
+        return_distance : boolean, optional (default = True)
             Returns the distances of neighbors if set to True.
 
         Returns

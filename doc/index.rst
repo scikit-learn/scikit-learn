@@ -207,6 +207,8 @@
                     <li><em>On-going development:</em>
                     <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
+                    <li><em>September 2016.</em> scikit-learn 0.18.0 is available for download (<a href="whats_new.html#version-0-18">Changelog</a>).
+                    </li>
                     <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new.html#version-0-17">Changelog</a>).
                     </li>
                     <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html#version-0-16">Changelog</a>).
@@ -328,6 +330,7 @@
                    <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
                    <img id="index-funding-logo-small" src="_static/img/nyu_short_color.png" title="NYU CDS">
+                   <img id="index-funding-logo-small" src="_static/img/columbia.png" title="Columbia University" style="max-height: 36px;">
                  </a>
              </div>
              <div class="span3">

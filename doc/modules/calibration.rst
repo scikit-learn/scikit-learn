@@ -57,9 +57,9 @@ with different biases per method:
    ensemble away from 0. We observe this effect most strongly with random
    forests because the base-level trees trained with random forests have
    relatively high variance due to feature subseting." As a result, the
-   calibration curve shows a characteristic sigmoid shape, indicating that the
-   classifier could trust its "intuition" more and return probabilties closer
-   to 0 or 1 typically.
+   calibration curve also referred to as the reliability diagram (Wilks 1995[5]) shows a
+   characteristic sigmoid shape, indicating that the classifier could trust its
+   "intuition" more and return probabilties closer to 0 or 1 typically.
 
 .. currentmodule:: sklearn.svm
 
@@ -118,13 +118,14 @@ is evaluated with Brier score :func:`brier_score_loss`, reported in the legend
    :align: center
 
 One can observe here that logistic regression is well calibrated as its curve is
-nearly diagonal. Linear SVC's calibration curve has a sigmoid curve, which is
-typical for an under-confident classifier. In the case of LinearSVC, this is
-caused by the margin property of the hinge loss, which lets the model focus on
-hard samples that are close to the decision boundary (the support vectors). Both
-kinds of calibration can fix this issue and yield nearly identical results.
-The next figure shows the calibration curve of Gaussian naive Bayes on
-the same data, with both kinds of calibration and also without calibration.
+nearly diagonal. Linear SVC's calibration curve or reliability diagram has a
+sigmoid curve, which is typical for an under-confident classifier. In the case of
+LinearSVC, this is caused by the margin property of the hinge loss, which lets
+the model focus on hard samples that are close to the decision boundary
+(the support vectors). Both kinds of calibration can fix this issue and yield
+nearly identical results. The next figure shows the calibration curve of
+Gaussian naive Bayes on the same data, with both kinds of calibration and also
+without calibration.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_001.png
    :target: ../auto_examples/calibration/plot_calibration_curve.html
@@ -200,3 +201,7 @@ a similar decrease in log-loss.
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
           A. Niculescu-Mizil & R. Caruana, ICML 2005
+
+    .. [5] On the combination of forecast probabilities for
+         consecutive precipitation periods. Wea. Forecasting, 5, 640–
+         650., Wilks, D. S., 1990a

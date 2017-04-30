@@ -4,10 +4,10 @@ Comparing random forests and the multi-output meta estimator
 ============================================================
 
 An example to compare multi-output regression with random forest and
-the :ref:`multioutput.MultiOutputRegressor <_multiclass>` meta-estimator.
+the :ref:`multioutput.MultiOutputRegressor <multiclass>` meta-estimator.
 
 This example illustrates the use of the
-:ref:`multioutput.MultiOutputRegressor <_multiclass>` meta-estimator
+:ref:`multioutput.MultiOutputRegressor <multiclass>` meta-estimator
 to perform multi-output regression. A random forest regressor is used,
 which supports multi-output regression natively, so the results can be
 compared.

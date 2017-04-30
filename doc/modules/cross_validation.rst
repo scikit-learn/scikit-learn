@@ -201,7 +201,8 @@ section.
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
-    * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`.
+    * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
 Cross validation iterators
 ==========================
@@ -260,6 +261,33 @@ Thus, one can create the training/test sets using numpy indexing::
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> y = np.array([0, 1, 0, 1])
   >>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
+
+
+Repeated K-Fold
+---------------
+
+:class:`RepeatedKFold` repeats K-Fold n times. It can be used when one
+requires to run :class:`KFold` n times, producing different splits in
+each repetition.
+
+Example of 2-fold K-Fold repeated 2 times::
+
+  >>> import numpy as np
+  >>> from sklearn.model_selection import RepeatedKFold
+  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+  >>> random_state = 12883823
+  >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=random_state)
+  >>> for train, test in rkf.split(X):
+  ...     print("%s %s" % (train, test))
+  ...
+  [2 3] [0 1]
+  [0 1] [2 3]
+  [0 2] [1 3]
+  [1 3] [0 2]
+
+
+Similarly, :class:`RepeatedStratifiedKFold` repeats Stratified K-Fold n times
+with different randomization in each repetition.
 
 
 Leave One Out (LOO)
@@ -407,6 +435,10 @@ two slightly unbalanced classes::
   [2 3 6 7 8 9] [0 1 4 5]
   [0 1 3 4 5 8 9] [2 6 7]
   [0 1 2 4 5 6 7] [3 8 9]
+
+:class:`RepeatedStratifiedKFold` can be used to repeat Stratified K-Fold n times
+with different randomization in each repetition.
+
 
 Stratified Shuffle Split
 ------------------------

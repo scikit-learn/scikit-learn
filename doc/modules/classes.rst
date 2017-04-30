@@ -170,6 +170,8 @@ Splitter Classes
    model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
+   model_selection.RepeatedKFold
+   model_selection.RepeatedStratifiedKFold
    model_selection.ShuffleSplit
    model_selection.GroupShuffleSplit
    model_selection.StratifiedShuffleSplit
@@ -186,6 +188,7 @@ Splitter Functions
    :template: function.rst
 
    model_selection.train_test_split
+   model_selection.check_cv
 
 Hyper-parameter optimizers
 --------------------------
@@ -200,6 +203,13 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   model_selection.fit_grid_point
 
 Model validation
 ----------------
@@ -259,6 +269,7 @@ Loaders
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
+   datasets.fetch_species_distributions
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.dump_svmlight_file
@@ -313,8 +324,6 @@ Samples generator
 
    decomposition.PCA
    decomposition.IncrementalPCA
-   decomposition.ProjectedGradientNMF
-   decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
@@ -559,13 +568,12 @@ From text
 
   gaussian_process.GaussianProcessRegressor
   gaussian_process.GaussianProcessClassifier
-  gaussian_process.GaussianProcess
 
 Kernels:
 
 .. autosummary::
   :toctree: generated/
-  :template: class.rst
+  :template: class_with_call.rst
 
   gaussian_process.kernels.Kernel
   gaussian_process.kernels.Sum
@@ -763,6 +771,7 @@ Kernels:
 
     manifold.locally_linear_embedding
     manifold.spectral_embedding
+    manifold.smacof
 
 
 .. _metrics_ref:
@@ -836,6 +845,7 @@ details.
    metrics.explained_variance_score
    metrics.mean_absolute_error
    metrics.mean_squared_error
+   metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
 
@@ -955,7 +965,6 @@ See the :ref:`metrics` section of the user guide for further details.
 
    mixture.GaussianMixture
    mixture.BayesianGaussianMixture
-   mixture.DPGMM
 
 
 .. _multiclass_ref:
@@ -1049,6 +1058,7 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.LSHForest
    neighbors.DistanceMetric
    neighbors.KernelDensity
+   neighbors.LocalOutlierFactor
 
 .. autosummary::
    :toctree: generated/
@@ -1347,3 +1357,50 @@ Low-level methods
    utils.estimator_checks.check_estimator
    utils.resample
    utils.shuffle
+
+
+Recently deprecated
+===================
+
+
+To be removed in 0.20
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
+   grid_search.GridSearchCV
+   grid_search.RandomizedSearchCV
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePOut
+   cross_validation.KFold
+   cross_validation.LabelKFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeavePLabelOut
+   cross_validation.LabelShuffleSplit
+   cross_validation.StratifiedKFold
+   cross_validation.ShuffleSplit
+   cross_validation.StratifiedShuffleSplit
+   cross_validation.PredefinedSplit
+   decomposition.RandomizedPCA
+   gaussian_process.GaussianProcess
+   mixture.GMM
+   mixture.DPGMM
+   mixture.VBGMM
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   grid_search.fit_grid_point
+   learning_curve.learning_curve
+   learning_curve.validation_curve
+   cross_validation.cross_val_predict
+   cross_validation.cross_val_score
+   cross_validation.check_cv
+   cross_validation.permutation_test_score
+   cross_validation.train_test_split
