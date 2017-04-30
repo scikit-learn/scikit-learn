@@ -8,6 +8,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 from math import sqrt
+from collections import deque
 
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
@@ -277,32 +278,35 @@ class _CFSubcluster(object):
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
 
-    samples_id_ : list
+    samples_id_ : {list, None}
         Row number of samples belonging to the subcluster,
         if the class initialized with a valid samples_id argument.
-        An empty list otherwise.
+        None otherwise.
     """
     def __init__(self, linear_sum=None, samples_id=None):
         if linear_sum is None:
             self.n_samples_ = 0
             self.squared_sum_ = 0.0
             self.linear_sum_ = 0
-            self.samples_id_ = []
+            self.samples_id_ = deque()
         else:
             self.n_samples_ = 1
             self.centroid_ = self.linear_sum_ = linear_sum
             self.squared_sum_ = self.sq_norm_ = np.dot(
                 self.linear_sum_, self.linear_sum_)
             if samples_id is not None:
-                self.samples_id_ = samples_id
+                self.samples_id_ = deque(samples_id)
             else:
-                self.samples_id_ = []
+                self.samples_id_ = None
 
         self.child_ = None
 
     def update(self, subcluster):
         self.n_samples_ += subcluster.n_samples_
-        self.samples_id_ += subcluster.samples_id_
+        if self.samples_id_ is None or subcluster.samples_id_ is None:
+            self.samples_id_ = None
+        else:
+            self.samples_id_ += subcluster.samples_id_
         self.linear_sum_ += subcluster.linear_sum_
         self.squared_sum_ += subcluster.squared_sum_
         self.centroid_ = self.linear_sum_ / self.n_samples_
@@ -320,10 +324,14 @@ class _CFSubcluster(object):
         dot_product = (-2 * new_n) * new_norm
         sq_radius = (new_ss + dot_product) / new_n + new_norm
         if sq_radius <= threshold ** 2:
-            new_samples_id = self.samples_id_ + nominee_cluster.samples_id_
-            (self.n_samples_, self.samples_id_, self.linear_sum_,
-             self.squared_sum_, self.centroid_, self.sq_norm_) = \
-                new_n, new_samples_id, new_ls, new_ss, new_centroid, new_norm
+            (self.n_samples_, self.linear_sum_, self.squared_sum_,
+                self.centroid_, self.sq_norm_) = \
+                new_n, new_ls, new_ss, new_centroid, new_norm
+            if self.samples_id_ is None or nominee_cluster.samples_id_ is None:
+                self.samples_id_ = None
+            else:
+                self.samples_id_ = self.samples_id_ \
+                                    + nominee_cluster.samples_id_
             return True
         return False
 
@@ -415,7 +423,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     >>> brc = Birch(branching_factor=50, n_clusters=None, threshold=0.5,
     ... compute_labels=True)
     >>> brc.fit(X)
-    Birch(branching_factor=50, compute_labels=True, copy=True, n_clusters=None,
+    ... # doctest: +NORMALIZE_WHITESPACE
+    Birch(branching_factor=50, compute_labels=True,
+       compute_samples_indices=False, copy=True, n_clusters=None,
        threshold=0.5)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
@@ -507,7 +517,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
                 samples_id = [row_id]
             else:
                 samples_id = None
-            
+
             subcluster = _CFSubcluster(linear_sum=sample,
                                        samples_id=samples_id)
             split = self.root_.insert_cf_subcluster(subcluster)
