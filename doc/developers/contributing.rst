@@ -454,7 +454,8 @@ is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
-different options of the code.
+different options of the code. 
+Please note: Any bug-fix in sklearn needs a regression test.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
 Alternatively, running 'nosetests' in a folder will run all the tests of
