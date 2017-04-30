@@ -163,7 +163,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
-            if len(np.arange(n_features)[support_]) < self.stop_at: break
+            if len(np.arange(n_features)[support_]) < self.stop_at:
+                break
+
             features = np.arange(n_features)[support_]
 
             # Rank the remaining features
@@ -438,7 +440,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step, stop_at=self.stop_at)
+                  n_features_to_select=n_features_to_select,
+                  step=self.step, stop_at=self.stop_at)
 
         rfe.fit(X, y)
 
