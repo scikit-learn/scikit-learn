@@ -67,6 +67,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     verbose : int, default=0
         Controls verbosity of output.
+        
+    stop_at : int (default=1)
+        When the process gets below this number of features to remove it stops
 
     Attributes
     ----------
@@ -110,11 +113,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 verbose=0):
+                 verbose=0, stop_at=1):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
         self.verbose = verbose
+        self.stop_at = stop_at
 
     @property
     def _estimator_type(self):
@@ -159,6 +163,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
+            if len(np.arange(n_features)[support_]) < self.stop_at: break
             features = np.arange(n_features)[support_]
 
             # Rank the remaining features
@@ -312,6 +317,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         Number of cores to run in parallel while fitting across folds.
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
+        
+    stop_at : int (default=1)
+        When the process gets below this number of features to remove it stops
 
     Attributes
     ----------
@@ -367,13 +375,14 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0,
-                 n_jobs=1):
+                 n_jobs=1, stop_at=1):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.scoring = scoring
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.stop_at = stop_at
 
     def fit(self, X, y):
         """Fit the RFE model and automatically tune the number of selected
@@ -398,7 +407,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         n_features_to_select = 1
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select,
-                  step=self.step, verbose=self.verbose - 1)
+                  step=self.step, verbose=self.verbose - 1, stop_at=self.stop_at)
 
 
         # Determine the number of subsets of features by fitting across
@@ -429,7 +438,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step)
+                  n_features_to_select=n_features_to_select, step=self.step, stop_at=self.stop_at)
 
         rfe.fit(X, y)
 
