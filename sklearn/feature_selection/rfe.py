@@ -67,7 +67,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     verbose : int, default=0
         Controls verbosity of output.
-        
+
     stop_at : int (default=1)
         When the process gets below this number of features to remove it stops
 
@@ -319,7 +319,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         Number of cores to run in parallel while fitting across folds.
         Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
         to number of cores.
-        
+
     stop_at : int (default=1)
         When the process gets below this number of features to remove it stops
 
