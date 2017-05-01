@@ -670,8 +670,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                                                   targets[:, k]) + 1
 
         # Compute distances to impostors under L
-        margin_radii = np.add(dist_tn[:, -1], 2)
-
+        margin_radii = dist_tn[:, -1] + 2
         imp_row, imp_col, dist_imp = \
             self._find_impostors(Lx, y, margin_radii, self.use_sparse)
 
@@ -680,11 +679,11 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         A0 = csr_matrix(shape)
         for k in reversed(range(self.n_neighbors_)):
             loss1 = np.maximum(dist_tn[imp_row, k] - dist_imp, 0)
-            ac, = np.where(loss1 != 0)
+            ac, = np.where(loss1 > 0)
             A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
             loss2 = np.maximum(dist_tn[imp_col, k] - dist_imp, 0)
-            ac, = np.where(loss2 != 0)
+            ac, = np.where(loss2 > 0)
             A2 = csr_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
             values = np.squeeze(np.asarray(A2.sum(0) + A1.sum(1).T))
