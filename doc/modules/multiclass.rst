@@ -359,7 +359,7 @@ For a multi-label classification problem with N classes, N binary
 classifiers are assigned an integer between 0 and N-1. These integers
 define the order of models in the chain. Each classifier is then fit on the
 available training data plus the true labels of the classes whose
-models were assigned a low order number.
+models were assigned a lower number.
 
 When predicting, the true labels will not be available. Instead the
 predictions of each model are passed on to the subsequent models in the
