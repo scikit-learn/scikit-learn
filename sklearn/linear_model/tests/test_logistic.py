@@ -1136,3 +1136,14 @@ def test_saga_vs_liblinear():
                 liblinear.fit(X, y)
                 # Convergence for alpha=1e-3 is very slow
                 assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
+
+def test_dtype_match():
+    # Test that np.float32 input data is not cast to np.float64 when possible
+
+    X_ = np.array(X).astype(np.float32)
+    y_ = np.array(Y1).astype(np.float32)
+
+    for solver in ['newton-cg']:
+        lr = LogisticRegression(solver=solver)
+        lr.fit(X_, y_)
+        assert_equal(lr.coef_.dtype, X_.dtype)
