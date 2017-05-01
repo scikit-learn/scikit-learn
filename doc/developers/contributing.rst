@@ -155,22 +155,12 @@ If any of the above seems like magic to you, then look up the `Git documentation
 <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
-If some conflicts arise between your branch and the ``master`` branch, you need
-to merge ``master``. The command will be::
-
-  $ git merge master
-
-with ``master`` being synchronized with the ``upstream``.
-
-Subsequently, you need to solve the conflicts. You can refer to the `Git
-documentation related to resolving merge conflict using the command line
-<https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
-
-.. note::
-
-   In the past, the policy to resolve conflicts was to rebase your branch on
-   ``master``. GitHub interface deals with merging ``master`` better than in
-   the past.
+In particular, if some conflicts arise between your branch and the master
+branch, you will need to `rebase your branch on master
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_.
+Please avoid merging master branch into yours. If you did it anyway, you can fix
+it following `this example
+<https://github.com/scikit-learn/scikit-learn/pull/7111#issuecomment-249175383>`_.
 
 
 Contributing pull requests
@@ -464,7 +454,9 @@ is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
-different options of the code.
+different options of the code. 
+
+Regression testing is used to identify and validate any code committed to the repository and see if it does not break any existing code. Any changes made to the existing code in repository such as feature enhancements, bug fixes, document changes, hot fixes, config changes or any other changes to the scikit-learn repository are tested using regression tests. During these tests both functional and non-functional areas of the features are tested. Regression testing also ensures that the change being proposed works well with other parts of the software as a whole in an integrated way. Any bug-fix or change in sklearn repository needs a regression test due to the above reasons.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
 Alternatively, running 'nosetests' in a folder will run all the tests of
@@ -1171,3 +1163,4 @@ that implement common linear model patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
