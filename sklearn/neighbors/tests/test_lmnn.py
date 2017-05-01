@@ -299,3 +299,31 @@ def test_random_state():
 
     diff = np.sum(np.abs(L_2, L_3))
     assert_true(diff > 0.2)
+
+
+def test_singleton_class():
+    X = iris.data
+    y = iris.target
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
+
+    # one singleton class
+    singleton_class = 1
+    ind_singleton, = np.where(np.equal(y_tr, singleton_class))
+    y_tr[ind_singleton] = 2
+    y_tr[ind_singleton[0]] = singleton_class
+
+    clf = LMNN(n_neighbors=3, max_iter=30)
+    clf.fit(X_tr, y_tr)
+    clf.score(X_te, y_te)
+
+    # One non-singleton class
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
+    ind_1, = np.where(np.equal(y_tr, 1))
+    ind_2, = np.where(np.equal(y_tr, 2))
+    y_tr[ind_1] = 0
+    y_tr[ind_1[0]] = 1
+    y_tr[ind_2] = 0
+    y_tr[ind_2[0]] = 2
+
+    clf = LMNN(n_neighbors=3, max_iter=30)
+    assert_raises(ValueError, clf.fit, X_tr, y_tr)
