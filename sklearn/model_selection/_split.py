@@ -364,9 +364,11 @@ class KFold(_BaseKFold):
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -531,9 +533,11 @@ class StratifiedKFold(_BaseKFold):
         Whether to shuffle each stratification of the data before splitting
         into batches.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -934,9 +938,11 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : None, int or RandomState, default=None
-        Random state to be used to generate random state for each
-        repetition.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
@@ -991,6 +997,33 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
             for train_index, test_index in cv.split(X, y, groups):
                 yield train_index, test_index
 
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator
+
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
+
+        y : object
+            Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
+        rng = check_random_state(self.random_state)
+        cv = self.cv(random_state=rng, shuffle=True,
+                     **self.cvargs)
+        return cv.get_n_splits(X, y, groups) * self.n_repeats
+
 
 class RepeatedKFold(_RepeatedSplits):
     """Repeated K-Fold cross validator.
@@ -1007,9 +1040,11 @@ class RepeatedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : None, int or RandomState, default=None
-        Random state to be used to generate random state for each
-        repetition.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -1180,8 +1215,11 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -1262,8 +1300,12 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
     '''
 
     def __init__(self, n_splits=5, test_size=0.2, train_size=None,
@@ -1389,8 +1431,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
 
     Examples
     --------
@@ -1795,8 +1841,11 @@ def train_test_split(*arrays, **options):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
