@@ -450,12 +450,13 @@ class ClassifierChain(BaseEstimator):
 
         random_state = check_random_state(self.random_state)
 
-        if self.order is None:
+        self.order_ = self.order
+        if self.order_ is None:
             self.order_ = np.array(range(Y.shape[1]))
-        elif isinstance(self.order, str):
-            if self.order == 'random':
+        elif isinstance(self.order_, str):
+            if self.order_ == 'random':
                 self.order_ = random_state.permutation(Y.shape[1])
-        elif sorted(self.order) != list(range(Y.shape[1])):
+        elif sorted(self.order_) != list(range(Y.shape[1])):
                 raise ValueError("invalid order")
 
         self.estimators_ = [clone(self.base_estimator)
@@ -487,7 +488,7 @@ class ClassifierChain(BaseEstimator):
                     X_aug[:, col_idx] = cv_result
 
             self.classes_.append(estimator.classes_)
-            return self
+        return self
 
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.

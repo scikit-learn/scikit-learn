@@ -365,15 +365,18 @@ def test_classifier_chain_fit_and_predict_with_logistic_regression():
     X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain = ClassifierChain(LogisticRegression())
     classifier_chain.fit(X, Y)
+
     Y_pred = classifier_chain.predict(X)
     assert_equal(Y_pred.shape, Y.shape)
     assert_greater(jaccard_similarity_score(Y, Y_pred), 0.4)
 
     Y_prob = classifier_chain.predict_proba(X)
+    Y_binary = (Y_prob >= .5)
     assert_equal(Y_prob.shape, Y.shape)
+    assert_greater(jaccard_similarity_score(Y, Y_binary), 0.4)
 
-    Y_pred_binary = (Y_prob >= .5)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.4)
+    assert_equal([c.coef_.size for c in classifier_chain.estimators_],
+                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
 
 def test_classifier_chain_fit_and_predict_with_linear_svc():
@@ -387,9 +390,9 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert_greater(jaccard_similarity_score(Y, Y_pred), 0.4)
 
     Y_decision = classifier_chain.decision_function(X)
+    Y_binary = (Y_decision >= 0)
     assert_equal(Y_decision.shape, Y.shape)
-    Y_pred_binary = (Y_decision >= 0)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_binary), 0.4)
+    assert_greater(jaccard_similarity_score(Y, Y_binary), 0.4)
 
 
 def test_classifier_chain_fit_and_predict_with_sparse_data():
@@ -420,28 +423,8 @@ def test_classifier_chain_random_order():
                                        order='random')
     classifier_chain.fit(X, Y)
     assert_not_equal(list(classifier_chain.order), list(range(4)))
-    assert_equal(len(classifier_chain.order), 4)
-    assert_equal(len(set(classifier_chain.order)), 4)
-
-
-def test_classifier_chain_parameter_and_output_sizes():
-    # Test classifier chain parameter and output sizes
-
-    X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X, Y)
-
-    Y_pred = classifier_chain.predict(X)
-    assert_equal(Y_pred.shape, Y.shape)
-
-    Y_prob = classifier_chain.predict_proba(X)
-    assert_equal(Y_prob.shape, Y.shape)
-
-    Y_decision = classifier_chain.decision_function(X)
-    assert_equal(Y_decision.shape, Y.shape)
-
-    assert_equal([c.coef_.size for c in classifier_chain.estimators_],
-                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+    assert_equal(len(classifier_chain.order_), 4)
+    assert_equal(len(set(classifier_chain.order_)), 4)
 
 
 def test_classifier_chain_crossval_fit_and_predict():
