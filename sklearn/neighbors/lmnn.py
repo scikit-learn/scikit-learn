@@ -8,7 +8,7 @@ Large Margin Nearest Neighbor Classification
 # License: BSD 3 clause
 
 from __future__ import print_function
-import warnings
+from warnings import warn
 
 import numpy as np
 import time
@@ -207,19 +207,23 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self : returns a trained LargeMarginNearestNeighbor model.
         """
 
+        # Check training data
+        X, y = check_X_y(X, y, ensure_min_samples=2)
+        check_classification_targets(y)
+
         # Check inputs consistency
-        X, y_valid = self._validate_params(X, y)
+        X_valid, y_valid = self._validate_params(X, y)
 
         self.random_state_ = check_random_state(self.random_state)
 
         # Initialize transformer
-        L, self.n_features_out_ = self._init_transformer(X)
+        L, self.n_features_out_ = self._init_transformer(X_valid)
 
         # Find the target neighbors
-        targets = self._select_target_neighbors(X, y_valid)
+        targets = self._select_target_neighbors(X_valid, y_valid)
 
         # Compute gradient component of target neighbors
-        grad_static = self._compute_grad_static(X, targets, self.verbose)
+        grad_static = self._compute_grad_static(X_valid, targets, self.verbose)
 
         # Initialize number of optimizer iterations and objective funcalls
         self.n_iter_ = 0
@@ -232,7 +236,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # Create parameters dict for optimizer
         optimizer_params = {'func': self._loss_grad, 'x0': L, 'iprint': iprint,
                             'm': self.max_corrections, 'pgtol': self.tol,
-                            'args': (X, y_valid, targets, grad_static)}
+                            'args': (X_valid, y_valid, targets, grad_static)}
 
         if sp_version >= (0, 12, 0):
             optimizer_params['maxiter'] = self.max_iter
@@ -405,26 +409,27 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             combination of two or more given parameters is incompatible.
         """
 
-        # Check training data
-        X, y = check_X_y(X, y, ensure_min_samples=2)
-        check_classification_targets(y)
-
         # Find the appearing classes and the class index for each sample
         classes, y_inverse = np.unique(y, return_inverse=True)
+        classes = np.arange(len(classes))
 
         # Ignore classes that have less than 2 samples
         class_sizes = bincount(y_inverse)
         is_class_singleton = np.array(np.equal(class_sizes, 1))
-        singletons, = np.where(is_class_singleton)
-        if len(singletons):
-            warnings.warn('There are {} singleton classes that will be '
-                          'ignored during training.'.format(len(singletons)))
-            is_sample_single = [yi in singletons for yi in y_inverse]
-            y = y.copy()
-            y[is_sample_single] = -1
+        singleton_classes, = np.where(is_class_singleton)
+        if len(singleton_classes):
+            warn('There are {} singleton classes that will be ignored during '
+                 'training. A copy of the inputs will be made.'
+                 .format(len(singleton_classes)))
+            is_sample_single = np.asarray([yi in singleton_classes for yi in
+                                           y_inverse])
+            # -1 is used by semisupervised algorithms
+            # y_inverse[is_sample_single] = -2
+            X = X[~is_sample_single].copy()
+            y_inverse = y_inverse[~is_sample_single].copy()
 
         # Check number of non-singleton classes > 1
-        n_classes_non_singleton = len(classes) - len(singletons)
+        n_classes_non_singleton = len(classes) - len(singleton_classes)
         if n_classes_non_singleton < 2:
             raise ValueError("LargeMarginNearestNeighbor needs at least 2 "
                              "non-singleton classes, got {}."
@@ -495,17 +500,20 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                                     self.n_features_out, n_features))
 
         # Check preferred number of neighbors
-        max_neighbors = class_sizes[~is_class_singleton].min() - 1
-        if self.n_neighbors > max_neighbors:
-            warnings.warn('n_neighbors(={}) too high. Setting to {}.'.
-                          format(self.n_neighbors, max_neighbors))
-        self.n_neighbors_ = min(self.n_neighbors, max_neighbors)
+        min_non_singleton_size = class_sizes[~is_class_singleton].min()
+        if self.n_neighbors >= min_non_singleton_size:
+            warn("n_neighbors {} is not less than the number of samples in "
+                 "the smallest non-singleton class {}. n_neighbors will be set"
+                 " to (min_non_singleton_size - 1) for estimation."
+                 .format(self.n_neighbors, min_non_singleton_size))
+
+        self.n_neighbors_ = min(self.n_neighbors, min_non_singleton_size - 1)
         # TODO: Notify superclass KNeighborsClassifier that n_neighbors
         # might have changed to n_neighbors_
         # super(LargeMarginNearestNeighbor, self).set_params(
         # n_neighbors=self.n_neighbors_)
 
-        return X, y
+        return X, y_inverse
 
     def _init_transformer(self, X):
         """Initialize the linear transformation by setting to user specified
@@ -538,11 +546,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         else:
             n_features_out = self.n_features_out
             if L.shape[0] > n_features_out:
-                warnings.warn('Decreasing the initial linear transformation '
-                              'output dimensionality ({}) to the '
-                              'preferred output dimensionality ({}).'.
-                              format(L.shape[0], n_features_out),
-                              DataDimensionalityWarning)
+                warn('Decreasing the initial linear transformation output '
+                     'dimensionality ({}) to the preferred output '
+                     'dimensionality ({}).'.format(L.shape[0], n_features_out),
+                     DataDimensionalityWarning)
                 L = L[:n_features_out]
 
         return L, n_features_out
@@ -568,7 +575,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         if self.verbose:
             print('Finding the target neighbors...')
 
-        target_neighbors = np.zeros((X.shape[0], self.n_neighbors_), dtype=int)
+        target_neighbors = np.empty((X.shape[0], self.n_neighbors_), dtype=int)
 
         nn = NearestNeighbors(n_neighbors=self.n_neighbors_,
                               n_jobs=self.n_jobs)
@@ -606,7 +613,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             print('Computing static part of the gradient...')
 
         n_samples, n_neighbors = targets.shape
-        row = np.repeat(np.arange(n_samples), n_neighbors)
+        row = np.repeat(range(n_samples), n_neighbors)
         col = targets.ravel()
         targets_sparse = csr_matrix((np.ones(targets.size), (row, col)),
                                     shape=(n_samples, n_samples))
@@ -770,7 +777,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                 ind_in, = np.where(np.equal(y, class_num))
                 ind_out, = np.where(np.greater(y, class_num))
 
-                # Subdivide idx_out x idx_in to chunks of a size that is
+                # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
                 ii, jj, dd = self._find_impostors_batch(
                     Lx[ind_out], Lx[ind_in], margin_radii[ind_out],
