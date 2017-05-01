@@ -1217,6 +1217,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              self.dual)
 
         if self.solver == 'liblinear':
+            if self.n_jobs != -1:
+                warning.warn(
+                    "You're using the liblinear solver, n_jobs "
+                    "(set to {0}) will be ignored".format(self.n_jobs))
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
