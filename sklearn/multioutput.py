@@ -425,7 +425,6 @@ class ClassifierChain(BaseEstimator):
     Chains for Multi-label Classification", 2009.
 
     """
-
     def __init__(self, base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
         self.order = order
@@ -445,7 +444,6 @@ class ClassifierChain(BaseEstimator):
         self : object
             Returns self.
         """
-
         X, Y = check_X_y(X, Y,
                          multi_output=True,
                          accept_sparse=True)
@@ -502,7 +500,6 @@ class ClassifierChain(BaseEstimator):
         -------
         Y_pred : array-like, shape (n_samples, n_classes)
         """
-
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -536,7 +533,6 @@ class ClassifierChain(BaseEstimator):
         -------
         Y_prob : array-like, shape (n_samples, n_classes)
         """
-
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -570,7 +566,6 @@ class ClassifierChain(BaseEstimator):
             Returns the decision function of the sample for each model
             in the chain.
         """
-
         Y_decision_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
