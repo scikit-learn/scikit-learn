@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 import scipy as sp
 from warnings import warn
+from sklearn.utils.fixes import euler_gamma
 
 from scipy.sparse import issparse
 
@@ -300,7 +301,7 @@ def _average_path_length(n_samples_leaf):
         if n_samples_leaf <= 1:
             return 1.
         else:
-            return 2. * (np.log(n_samples_leaf) + 0.5772156649) - 2. * (
+            return 2. * (np.log(n_samples_leaf - 1.) + euler_gamma) - 2. * (
                 n_samples_leaf - 1.) / n_samples_leaf
 
     else:
@@ -314,7 +315,7 @@ def _average_path_length(n_samples_leaf):
 
         average_path_length[mask] = 1.
         average_path_length[not_mask] = 2. * (
-            np.log(n_samples_leaf[not_mask]) + 0.5772156649) - 2. * (
+            np.log(n_samples_leaf[not_mask] - 1.) + euler_gamma) - 2. * (
                 n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
 
         return average_path_length.reshape(n_samples_leaf_shape)

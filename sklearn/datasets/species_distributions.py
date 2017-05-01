@@ -50,7 +50,8 @@ except ImportError:
 
 import numpy as np
 
-from sklearn.datasets.base import get_data_home, Bunch
+from sklearn.datasets.base import get_data_home
+from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
@@ -139,7 +140,7 @@ def fetch_species_distributions(data_home=None,
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available

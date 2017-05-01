@@ -64,7 +64,7 @@ p_grid = {"C": [1, 10, 100],
           "gamma": [.01, .1]}
 
 # We will use a Support Vector Classifier with "rbf" kernel
-svr = SVC(kernel="rbf")
+svm = SVC(kernel="rbf")
 
 # Arrays to store scores
 non_nested_scores = np.zeros(NUM_TRIALS)
@@ -80,7 +80,7 @@ for i in range(NUM_TRIALS):
     outer_cv = KFold(n_splits=4, shuffle=True, random_state=i)
 
     # Non_nested parameter search and scoring
-    clf = GridSearchCV(estimator=svr, param_grid=p_grid, cv=inner_cv)
+    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv)
     clf.fit(X_iris, y_iris)
     non_nested_scores[i] = clf.best_score_
 
