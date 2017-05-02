@@ -39,15 +39,15 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Minimum value per feature in ``X``. An ignored feature at index
         ``i`` will have ``offset_[i] == 0``.
 
-    transformed_features_ : int array, shape (n_features,)
-        Features which are transformed.
-
     n_bins_ : int array, shape (n_features,)
         Number of bins per feature. An ignored feature at index ``i``
         will have ``n_bins_[i] == 0``.
 
     bin_width_ : float array, shape (n_features,)
         The width of each bin. Ignored features will have width ``0``.
+
+    transformed_features_ : int array, shape (n_features,)
+        Features which are transformed.
 
     Example
     -------
@@ -212,9 +212,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             X /= bin_width
         X[needs_correction] += 0.5
         np.floor(X, out=X)
-        np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
 
+        # Used when a feature is constant
         X[~np.isfinite(X)] = 0
+        np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
         return X
 
     def inverse_transform(self, Xt):

@@ -1576,6 +1576,11 @@ def test_transform_selected_retain_order():
                               retain_order=True)
     assert_array_equal(toarray(Xtr), X_expected)
 
+    X_expected = [[0, 1], [1, -2]]
+    Xtr = _transform_selected(X, Binarizer().transform, selected=[0],
+                              retain_order=True)
+    assert_array_equal(toarray(Xtr), X_expected)
+
 
 def test_transform_selected_copy_arg():
     # transformer that alters X

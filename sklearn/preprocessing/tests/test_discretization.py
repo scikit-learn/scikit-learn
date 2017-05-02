@@ -35,7 +35,6 @@ def test_invalid_n_bins():
 
 
 def test_invalid_n_bins_array():
-
     # Bad shape
     n_bins = np.ones((2, 4)) * 2
     est = KBinsDiscretizer(n_bins=n_bins)
@@ -89,7 +88,6 @@ def test_ignored_transform():
 
 
 def test_ignored_invalid():
-
     # Duplicate column
     est = KBinsDiscretizer(ignored_features=[1, 1])
     assert_raise_message(ValueError, "Duplicate ignored column indices found.",

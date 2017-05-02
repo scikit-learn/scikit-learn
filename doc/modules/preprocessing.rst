@@ -464,7 +464,7 @@ in a pipeline.
 
 Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
-bins, whereas discretization focuses on assigning features to these bins.
+bins, whereas discretization focuses on assigning feature values to these bins.
 
 
 .. _imputation:
