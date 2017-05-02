@@ -1203,7 +1203,20 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+        _dtype = np.float64
+        a = (self.solver in ['newton-cg'])
+        b = (isinstance(X, np.ndarray))
+        c = (X.dtype in [np.float32])
+        # if self.solver in ['newton-cg']
+        #                and isinstance(X, np.ndarray)
+        #                and X.dtype in [np.float32]:
+        if a and b and c :
+            _dtype = np.float32
+
+        # X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+        #                  order="C")
+
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
         check_classification_targets(y)
         self.classes_ = np.unique(y)
