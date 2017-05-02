@@ -15,7 +15,7 @@ of these classifiers we predict on a held-out test set and calculate the
 Next we create 10 classifier chains. Each classifier chain contains a
 logistic regression model for each of the 14 classes. The models in each
 chain are arranged into a random order. In addition to the 103 features in
-the dataset, each model gets the predictions of the preceeding models in
+the dataset, each model gets the predictions of the preceding models in
 the chain as features (note that by default at training time each model gets
 the true labels as features). These additional features allow each chain to
 exploit correlations among the classes. The Jaccard similarity score for
@@ -26,8 +26,8 @@ Because the models in each chain are arranged randomly there is significant
 variation in performance among the chains. Presumably there is an optimal
 ordering of the classes in a chain that will yield the best performance.
 However we do not know that ordering a priori. Instead we can construct an
-voting ensemble of classifier chains by averaging the binary prediction of
-the chains and thresholding at 0.5. The Jaccard similarity score of the
+voting ensemble of classifier chains by averaging the binary predictions of
+the chains and apply a threshold of 0.5. The Jaccard similarity score of the
 ensemble is greater than that of the independent models as well as each of the
 chains in the ensemble.
 """
