@@ -13,7 +13,7 @@ from warnings import warn
 import numpy as np
 import time
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.sparse import csr_matrix, spdiags
+from scipy.sparse import csr_matrix, csc_matrix, spdiags
 
 from ..neighbors import KNeighborsClassifier, NearestNeighbors
 from ..metrics.pairwise import euclidean_distances
@@ -242,18 +242,19 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             optimizer_params['maxiter'] = self.max_iter
             if self.verbose:
                 optimizer_params['callback'] = self._lbfgs_callback
-                print('\n{:^10} {:^10} {:^15} {:^8}'.
-                      format('Iteration', 'Func.Call', 'Loss', 'Time(s)'))
-                print('-' * 46)
+                print('\n{:>10} {:>10} {:>15} {:>10}'.
+                      format('Iteration', 'Func.Call', 'Func.Value',
+                             'Time(s)'))
+                print('-' * 48)
                 print('{:>10}'.format(self.n_iter_ + 1))
         else:
             # Type Error caused in old versions of SciPy (<= 0.11.0)
             # because of no maxiter and no callback argument.
             optimizer_params['maxfun'] = self.max_iter
             if self.verbose:
-                print('\n{:^10} {:^15} {:^8}'.
-                      format('Func.Call', 'Loss', 'Time(s)'))
-                print('-' * 35)
+                print('\n{:>10} {:>15} {:>10}'.
+                      format('Func.Call', 'Func.Value', 'Time(s)'))
+                print('-' * 37)
 
         # Call optimizer
         L, loss, info = fmin_l_bfgs_b(**optimizer_params)
@@ -684,9 +685,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
             loss2 = np.maximum(dist_tn[imp_col, k] - dist_imp, 0)
             ac, = np.where(loss2 > 0)
-            A2 = csr_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
+            A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
-            values = np.squeeze(np.asarray(A2.sum(0) + A1.sum(1).T))
+            values = np.squeeze(np.asarray(A1.sum(1).ravel() + A2.sum(0)))
             A0 = A0 - A1 - A2 + csr_matrix((values, (range(n_samples),
                                                      targets[:, k])), shape)
             loss = loss + np.sum(loss1 ** 2) + np.sum(loss2 ** 2)
@@ -700,10 +701,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         self.n_funcalls_ += 1
         if self.verbose:
             if sp_version >= (0, 12, 0):
-                print('{:10} {:>10} {:>15.6e} {:>8.2f}'
+                print('{:10} {:>10} {:>15.6e} {:>10.2f}'
                       .format('', self.n_funcalls_, loss, toc-tic))
             else:
-                print('{:>10} {:>15.6e} {:>8.2f}'
+                print('{:>10} {:>15.6e} {:>10.2f}'
                       .format(self.n_funcalls_, loss, toc-tic))
 
         return loss, grad.ravel()
