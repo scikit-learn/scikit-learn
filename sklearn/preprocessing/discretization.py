@@ -8,6 +8,7 @@ import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing.data import _transform_selected
+from sklearn.utils.fixes import isclose
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
@@ -80,13 +81,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    Bin edges for feature `i` are defined as
+    Bin edges for feature ``i`` are defined as::
 
-    ```
-    np.concatenate([
-        -np.inf, offset_[i] + bin_width_[i] * np.arange(1, n_bins_[i]), np.inf
-    ])
-    ```
+      np.concatenate([
+        -np.inf,
+        offset_[i] + bin_width_[i] * np.arange(1, n_bins_[i]),
+        np.inf
+      ])
     """
 
     def __init__(self, n_bins=2, ignored_features=None):
@@ -114,9 +115,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                                                n_features)
         self.transformed_features_ = np.delete(np.arange(n_features), ignored)
 
-        min = np.min(X, axis=0)
-        min[ignored] = 0
-        self.offset_ = min
+        offset = np.min(X, axis=0)
+        offset[ignored] = 0
+        self.offset_ = offset
 
         n_bins = self._check_n_bins(self.n_bins, n_features, ignored)
         n_bins[ignored] = 0
@@ -208,7 +209,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         # numeric instability. For these values, after normalizing into
         # [-1, n_bins] range, add 0.5 so they are binned correctly.
         with np.errstate(divide='ignore', invalid='ignore'):
-            needs_correction = np.isclose(np.mod(X, bin_width), bin_width)
+            needs_correction = isclose(np.mod(X, bin_width), bin_width)
             X /= bin_width
         X[needs_correction] += 0.5
         np.floor(X, out=X)
