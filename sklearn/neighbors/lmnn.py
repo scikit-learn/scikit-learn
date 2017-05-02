@@ -763,10 +763,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
 
                     imp_row = ind_out[ii]
                     imp_col = ind_in[jj]
-                    new_imps = csr_matrix(([1] * len(imp_row),
-                                           (imp_row, imp_col)), dtype=np.int8,
-                                          shape=(n_samples, n_samples))
-                    impostors_sp = impostors_sp + new_imps
+                    new_imp = csr_matrix((np.ones(len(imp_row), dtype=np.int8),
+                                          (imp_row, imp_col)), dtype=np.int8,
+                                         shape=(n_samples, n_samples))
+                    impostors_sp = impostors_sp + new_imp
 
             imp_row, imp_col = impostors_sp.nonzero()
             dist = pairs_distances_batch(Lx, imp_row, imp_col)
