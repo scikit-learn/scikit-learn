@@ -91,12 +91,12 @@ y_pos = np.arange(len(model_names))
 y_pos[1:] += 1
 y_pos[-1] += 1
 
-colors = ['r'] + ['b']*len(chain_jaccard_scores) + ['g']
+colors = ['r'] + ['b'] * len(chain_jaccard_scores) + ['g']
 
 plt.bar(y_pos, model_scores, align='center', alpha=0.5, color=colors)
 plt.xticks(y_pos, model_names, rotation='vertical')
 plt.ylabel('Jaccard Similarity Score')
 plt.title('Classifier Chain Ensemble')
-plt.ylim([min(model_scores)*.9, max(model_scores)*1.1])
+plt.ylim([min(model_scores) * .9, max(model_scores) * 1.1])
 
 plt.show()
