@@ -70,9 +70,8 @@ Y_pred_ensemble = Y_pred_chains.mean(axis=0)
 ensemble_jaccard_score = jaccard_similarity_score(Y_test,
                                                   Y_pred_ensemble >= .5)
 
-model_scores = [ovr_jaccard_score] + \
-               chain_jaccard_scores + \
-               [ensemble_jaccard_score]
+model_scores = [ovr_jaccard_score] + chain_jaccard_scores
+model_scores = model_scores.append(ensemble_jaccard_score)
 
 model_names = ('Independent Models',
                'Chain 1',
