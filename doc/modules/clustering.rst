@@ -1134,6 +1134,11 @@ and :math:`V` is calculated by:
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
+It also can be expressed in set cardinality formulation:
+
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_{i}\cap V_{j}|}{N}\log\left(\frac{N|U_{i}\cap V_{j}|}{|U_{i}||V_j|}\right)
+
+
 The normalized mutual information is defined as
 
 .. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\sqrt{H(U)H(V)}}

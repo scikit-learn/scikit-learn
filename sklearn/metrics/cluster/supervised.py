@@ -540,6 +540,11 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     .. math::
 
         MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log\\frac{P(i,j)}{P(i)P'(j)}
+    or
+
+    .. math::
+
+        MI(U,V)=\sum_{i=1}^{R} \sum_{j=1}^{C} \frac{|U_{i}\cap V_{j}|}{N}\log \frac{N|U_{i}\cap V_{j}|}{|U_{i}||V_j|}
 
     This is equal to the Kullback-Leibler divergence of the joint distribution
     with the product distribution of the marginals.
