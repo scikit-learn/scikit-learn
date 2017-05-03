@@ -327,3 +327,30 @@ def test_singleton_class():
 
     clf = LMNN(n_neighbors=3, max_iter=30)
     assert_raises(ValueError, clf.fit, X_tr, y_tr)
+
+
+def test_callable():
+    X = iris.data
+    y = iris.target
+    X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.3)
+
+    clf = LMNN(n_neighbors=3, callback='my_cb')
+    assert_raises(ValueError, clf.fit, X_train, y_train)
+
+    max_iter = 10
+
+    def my_cb(L, n_iter):
+        rem_iter = max_iter - n_iter
+        print('{} iterations remaining...'.format(rem_iter))
+
+    clf = LMNN(n_neighbors=3, callback=my_cb, max_iter=max_iter, verbose=1)
+    clf.fit(X_train, y_train)
+
+
+def test_terminate_early():
+    X = iris.data
+    y = iris.target
+    X_train, y_train, X_test, y_test = train_test_split(X, y, test_size=0.3)
+
+    clf = LMNN(n_neighbors=3, callback='my_cb', max_iter=5)
+    clf.fit(X_train, y_train)
