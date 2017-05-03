@@ -165,7 +165,7 @@ for idx, cluster in enumerate(best_idx):
     counter = defaultdict(int)
     for i in cluster_docs:
         counter[document_names[i]] += 1
-    cat_string = ", ".join("{:.0f}% {}".format(float(c) / n_rows * 100, name)
+    cat_string = ", ".join("{:.0%} {}".format(float(c) / n_rows, name)
                            for name, c in most_common(counter)[:3])
 
     # words
