@@ -452,7 +452,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self.constant_ = np.reshape(self.constant_, (1, -1))
         return self
 
-    def predict(self, X):
+    def predict(self, X, return_std=False):
         """
         Perform classification on test vectors X.
 
@@ -462,18 +462,29 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Input vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
+        return_std : boolean, optional
+            Whether to return the standard deviation of posterior prediction.
+
         Returns
         -------
         y : array, shape = [n_samples]  or [n_samples, n_outputs]
             Predicted target values for X.
+
+        y_std : array, shape = [n_samples]  or [n_samples, n_outputs]
+            Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self, "constant_")
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         n_samples = X.shape[0]
 
         y = np.ones((n_samples, 1)) * self.constant_
+        y_std = np.zeros((n_samples, 1))
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
+            y_std = np.ravel(y_std)
 
-        return y
+        if return_std:
+            return y, y_std
+        else:
+            return y
