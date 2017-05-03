@@ -536,7 +536,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         elif self.warm_start and hasattr(self, 'L_'):
             L = self.L_
         elif self.use_pca and X.shape[1] > 1:
-            pca = PCA()
+            pca = PCA(random_state=self.random_state)
             pca.fit(X)
             L = pca.components_
         else:
@@ -939,9 +939,8 @@ def sum_outer_products(X, weights):
     """
 
     weights_sym = weights + weights.T
-    n_samples = weights_sym.shape[0]
-    diag = spdiags(weights_sym.sum(axis=0), 0, n_samples, n_samples)
-    laplacian = diag.tocsr() - weights_sym
+    diag = spdiags(weights_sym.sum(1).ravel(), 0, *weights_sym.shape)
+    laplacian = diag - weights_sym
     sum_outer_prods = X.T.dot(laplacian.dot(X))
 
     return sum_outer_prods
