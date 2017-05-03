@@ -352,5 +352,5 @@ def test_terminate_early():
     y = iris.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    clf = LMNN(n_neighbors=3, callback='my_cb', max_iter=5)
+    clf = LMNN(n_neighbors=3, max_iter=5)
     clf.fit(X_train, y_train)
