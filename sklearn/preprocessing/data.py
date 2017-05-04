@@ -1756,7 +1756,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True, values='auto')
     >>> enc.n_values_
-    array([ 3, 3])
+    array([3, 3])
     >>> enc.feature_index_range_
     array([[0, 3],
            [3, 6]])
