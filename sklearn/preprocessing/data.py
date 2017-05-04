@@ -1698,7 +1698,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     values : 'auto' or List[List[objects]]
-        - 'auto' (default) : Determine set of values from training data.
+        - 'auto' (default) : Encoded values are those found in training data.
         - list of lists : values for feature ``i`` are in ``values[i]``
 
     categorical_features : "all" or array of indices or mask
@@ -1726,16 +1726,20 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    feature_index_range_ : array, shape [n_feature, 2]
+    feature_index_range_ : array, shape (n_feature, 2)
         ``feature_index_range_[i]`` specifies the range of column indices
         occupied by the input feature `i` in the one-hot encoded array.
 
-    one_hot_feature_index_ : array, shape [n_features_new]
+    one_hot_feature_index_ : array, shape (n_features_new,)
         ``one_hot_feature_index_[i]`` specifies which feature of the input
-        is encoded by column `i` in the one-hot encoded array.
+        is encoded by column ``i`` in the one-hot encoded array.
+
+    categories_ : array, shape (n_features_new,)
+        np.object array containing the category encoded in each feature
+        of the output (or None for non-categorical features)
 
     n_values_ : array of shape (n_features,)
-        Number of categories per feature. Has value `0` for
+        Number of encoded categories per feature. Has value `0` for
         non-categorical features.
 
     Examples
@@ -1752,12 +1756,14 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True, values='auto')
     >>> enc.n_values_
-    array([ 3, 18])
+    array([ 3, 3])
     >>> enc.feature_index_range_
     array([[0, 3],
            [3, 6]])
     >>> enc.one_hot_feature_index_
     array([0, 0, 0, 1, 1, 1])
+    >>> enc.categories_
+    array(['cat', 'dog', 'mouse', 4, 15, 17], dtype=object)
     >>> enc.transform([['dog', 4]]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
@@ -1804,7 +1810,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         elif self.handle_unknown == 'error':
             warnings.warn('The behavior of handle_unknown="error" is '
                           'deprecated and will be changed to be the same '
-                          'as "error-strict" in version 0.21')
+                          'as "error-strict" in version 0.21', FutureWarning)
 
         X = check_array(X, dtype=None, accept_sparse='csc', copy=False)
         n_samples, n_features = X.shape
@@ -1832,24 +1838,29 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 end = start + len(self._label_encoders[i_cat].classes_)
             self.feature_index_range_[i_feat] = start, end
             start = end
-        num_cat = np.sum(categorical)
-        non_cat_indices = np.arange(start, start + n_features - num_cat)
+        num_cat_cols = np.sum(categorical)
+        non_cat_indices = np.arange(start, start + n_features - num_cat_cols)
         self.feature_index_range_[~categorical, 0] = non_cat_indices
         self.feature_index_range_[~categorical, 1] = non_cat_indices + 1
 
         # Record which column of input data corresponds
         # to each column of output data
-        n_expanded_cols = end + n_features - num_cat
-        self.one_hot_feature_index_ = np.empty(n_expanded_cols, dtype=np.int)
-        for i in range(n_features):
-            s, e = self.feature_index_range_[i]
-            self.one_hot_feature_index_[s:e] = i
+        n_cats = np.diff(self.feature_index_range_, axis=1).ravel()
+        inp_order = np.argsort(self.feature_index_range_[:, 0])
+        self.one_hot_feature_index_ = np.repeat(inp_order, n_cats[inp_order])
 
         # Count categories per feature
-        n_val = len(non_cat_indices) * [0]
-        if hasattr(self, '_label_encoders'):
-            n_val = [len(le.classes_) for le in self._label_encoders] + n_val
-        self.n_values_ = np.array(n_val)
+        self.n_values_ = n_cats.copy()
+        self.n_values_[~categorical] = 0
+
+        # Store categories for each output feature
+        if num_cat_cols == 0:
+            cats = []
+        else:
+            cats = np.concatenate([le.classes_ for le in self._label_encoders])
+        if hasattr(self, '_active_features_'):
+            cats = cats[self._active_features_]
+        self.categories_ = np.hstack([cats, len(non_cat_indices) * [None]])
 
         return self
 
@@ -1887,7 +1898,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                           'The parameter `n_values` has been deprecated '
                           'and will be removed in version 0.21; use the '
                           'parameter `values` instead and specify the '
-                          'expected values for each feature.')
+                          'expected values for each feature.', FutureWarning)
             values = self.n_values
         else:
             values = self.values
@@ -1897,13 +1908,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 np.isscalar(values)):
             warnings.warn('Integer input to `values` is deprecated and'
                           ' will be removed in version 0.21. Specify a '
-                          'list of allowed values for each feature instead.')
+                          'list of allowed values for each feature instead.',
+                          FutureWarning)
             values = np.ones(self.n_features_cat_, dtype=int) * values
         if (not isinstance(values, six.string_types) and
                 np.isscalar(values[0])):
             warnings.warn('List of integer input to `values` is deprecated and'
                           ' will be removed in version 0.21. Specify a '
-                          'list of allowed values for each feature instead.')
+                          'list of allowed values for each feature instead.',
+                          FutureWarning)
             values = [np.arange(v, dtype=np.int) for v in values]
 
         return values
@@ -2033,7 +2046,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     @property
     def active_features_(self):
         warnings.warn('The property `active_features_` is deprecated and'
-                      ' will be removed in version 0.21')
+                      ' will be removed in version 0.21', FutureWarning)
         if not hasattr(self, '_active_features_'):
             raise AttributeError("'OneHotEncoder' object has no attribute "
                                  "'active_features_'.")
@@ -2045,6 +2058,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         # `feature_index_range_`, but only applies to the
         # subset of categorical features.
         warnings.warn('The property `feature_indices_` is deprecated and'
-                      ' will be removed in version 0.21')
+                      ' will be removed in version 0.21', FutureWarning)
+        if not hasattr(self, '_label_encoders'):
+            raise AttributeError("'OneHotEncoder' object has no attribute "
+                                 "'feature_indices_'.")
         n_categories = [len(le.classes_) for le in self._label_encoders]
         return np.cumsum([0] + n_categories)

@@ -378,10 +378,10 @@ Encoding categorical features
 Often features are not given as continuous values but categorical.
 For example a person could have features ``["male", "female"]``,
 ``["from Europe", "from US", "from Asia"]``,
-``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
+``["Firefox", "Chrome", "Safari", "Internet Explorer"]``.
 Such features can be efficiently coded as integers, for instance
-``["male", "from US", "uses Internet Explorer"]`` could be expressed as
-``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
+``["male", "from US", "Internet Explorer"]`` could be expressed as
+``[0, 1, 3]`` while ``["female", "from Asia", "Chrome"]`` would be
 ``[1, 2, 1]``.
 
 Such integer representation can not be used directly with scikit-learn estimators, as these
@@ -397,13 +397,13 @@ only one active.
 Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
-  >>> enc.fit([['female', 'from US', 'uses Chrome'],
-  ... ['male', 'from Asia', 'uses Firefox']])  \
+  >>> enc.fit([['female', 'from US', 'Chrome'],
+  ... ['male', 'from Asia', 'Firefox']])  \
   ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
   OneHotEncoder(categorical_features='all',
          dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
          sparse=True, values='auto')
-  >>> enc.transform([['female', 'from Asia', 'uses Firefox']]).toarray()
+  >>> enc.transform([['female', 'from Asia', 'Firefox']]).toarray()
   array([[ 1.,  0.,  1.,  0.,  0.,  1.]])
 
 By default, how many values each feature can take is inferred automatically from the dataset.
@@ -417,21 +417,21 @@ values are the continents and the last values are web browsers.
 Note that, if there is a possibilty that the training data might have missing categorical
 features, one has to explicitly set ``n_values``. For example,
 
-    >>> browsers = ['uses Internet Explorer', 'uses Chrome' , 'uses Safari', 'uses Firefox']
+    >>> browsers = ['Internet Explorer', 'Chrome' , 'Safari', 'Firefox']
     >>> genders = ['male', 'female']
     >>> locations = ['from Europe', 'from Asia', 'from US']
     >>> enc = preprocessing.OneHotEncoder(values=[genders, locations, browsers])
-    >>> # Note that for there are missing categorical values for the 2nd and 3rd
-    >>> # feature
-    >>> enc.fit([['female', 'from US', 'uses Chrome'],
-    ... ['male', 'from Asia', 'uses Internet Explorer']]) \
+    >>> # Note that for there are missing categorical values for the
+    >>> # 2nd and 3rd feature
+    >>> enc.fit([['female', 'from US', 'Chrome'],
+    ... ['male', 'from Asia', 'Internet Explorer']]) \
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features='all',
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True,
            values=[...])
 
-    >>> enc.transform([['male', 'from Europe', 'uses Safari']]).toarray()
+    >>> enc.transform([['male', 'from Europe', 'Safari']]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented

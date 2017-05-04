@@ -173,13 +173,13 @@ Enhancements
 
    - :class:`preprocessing.OneHotEncoder` now fits and transforms inputs of
      any numerical or string type instead of only integer arrays.
-     It has addtional fitted attributes ``feature_index_range_`` and
-     ``one_hot_feature_index_``. The ``feature_indices_`` has been deprecated.
-     The ``n_values`` parameter is deprecated in favor of ``values``.
-     In addition to previous allowed values, ``values`` accepts "auto-strict"
-     to fit to only observed categories as well as lists of lists of categories.
-     :issue:`7327` and :issue:`8793` by :user:`Vighnesh Birodkar <vighneshbirodkar>`
-     and :user:`Stephen Hoover <stephen-hoover>`.
+     It has addtional fitted attributes ``feature_index_range_``,
+     ``one_hot_feature_index_``, and ``categories_``.
+     In addition to previous allowed values, ``handle_unknown`` accepts "error-strict"
+     to error if any unknown values are seen during tranformation.
+     :issue:`7327` and :issue:`8793` by
+     :user:`Vighnesh Birodkar <vighneshbirodkar>` and
+     :user:`Stephen Hoover <stephen-hoover>`.
 
 Bug fixes
 .........
@@ -339,6 +339,15 @@ API changes summary
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
 
+   - In :class:`preprocessing.OneHotEncoder`, deprecate the
+     ``feature_indices_`` and ``active_features_`` attributes.
+     Deprecate integer and list of integer inputs to ``values``
+     in favor of lists of lists of categories.
+     The present behavior of ``handle_unknown="error"`` will
+     change to be the same as ``handle_unknown="error-strict"`` in v0.21.
+     :issue:`7327` and :issue:`8793` by
+     :user:`Vighnesh Birodkar <vighneshbirodkar>` and
+     :user:`Stephen Hoover <stephen-hoover>`.
 
 .. _changes_0_18_1:
 

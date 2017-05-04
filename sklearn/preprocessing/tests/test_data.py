@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
@@ -1507,7 +1508,7 @@ def test_one_hot_encoder_sparse():
     assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
 
 
-def test_one_hot_encoder_error_on_negative():
+def test_one_hot_encoder_with_negative_integers():
     # Negative numerical values in inputs should raise an exception
     X_bad = np.array([[-1, "cat"], [10, "mouse"], [5, "cat"]], dtype=np.object)
     X_good = np.array([[1, "cat"], [10, "mouse"], [5, "cat"]], dtype=np.object)
@@ -1515,6 +1516,9 @@ def test_one_hot_encoder_error_on_negative():
 
     ohe = OneHotEncoder().fit(X_good)
     assert_raises(ValueError, ohe.transform, X_bad)
+
+    # Negative values are okay with "error-strict"
+    OneHotEncoder(handle_unknown='error-strict').fit_transform(X_bad)
 
 
 def test_one_hot_encoder_attr():
@@ -1524,20 +1528,56 @@ def test_one_hot_encoder_attr():
     enc.fit(X)
     assert_array_equal(enc.feature_index_range_, [[0, 3], [3, 5], [5, 7]])
     assert_array_equal(enc.one_hot_feature_index_, [0, 0, 0, 1, 1, 2, 2])
-    assert_array_equal(enc.n_values_, [11, 16, 2])
+    assert_array_equal(enc.n_values_, [3, 2, 2])
+    assert_array_equal(enc.categories_,
+                       np.array([1, 5, 10, 7, 15, 'cat', 'mouse'], dtype='O'))
 
-    oh = OneHotEncoder('auto', handle_unknown='error-strict',
-                       categorical_features=[True, False, True])
-    oh.fit(X)
-    assert_array_equal(oh.feature_index_range_, [[0, 3], [5, 6], [3, 5]])
-    assert_array_equal(oh.one_hot_feature_index_, [0, 0, 0, 2, 2, 1])
-    assert_array_equal(oh.n_values_, [3, 2, 0])
+    enc = OneHotEncoder('auto', handle_unknown='error-strict',
+                        categorical_features=[True, False, True])
+    enc.fit(X)
+    assert_array_equal(enc.feature_index_range_, [[0, 3], [5, 6], [3, 5]])
+    assert_array_equal(enc.one_hot_feature_index_, [0, 0, 0, 2, 2, 1])
+    assert_array_equal(enc.n_values_, [3, 0, 2])
+    assert_array_equal(enc.categories_,
+                       np.array([1, 5, 10, 'cat', 'mouse', None], dtype='O'))
 
     enc = OneHotEncoder(categorical_features=[False, False, True])
     enc.fit(X)
     assert_array_equal(enc.feature_index_range_, [[2, 3], [3, 4], [0, 2]])
     assert_array_equal(enc.one_hot_feature_index_, [2, 2, 0, 1])
-    assert_array_equal(enc.n_values_, [2, 0, 0])
+    assert_array_equal(enc.n_values_, [0, 0, 2])
+    assert_array_equal(enc.categories_,
+                       np.array(['cat', 'mouse', None, None], dtype='O'))
+
+
+def test_one_hot_encoder_deprecations():
+    # Check that deprecated features raise warnings
+    X = [[3, 2, 1], [0, 1, 1]]
+
+    # `handle_unknown`="error" will change in v0.21
+    ohe = OneHotEncoder(handle_unknown='error')
+    assert_warns(FutureWarning, ohe.fit, X)
+
+    # `n_values` is deprecated
+    ohe = OneHotEncoder(n_values='auto', handle_unknown='ignore')
+    assert_warns(FutureWarning, ohe.fit, X)
+
+    # Integer input for `values` is deprecated
+    ohe = OneHotEncoder(values=5, handle_unknown='ignore')
+    assert_warns(FutureWarning, ohe.fit, X)
+
+    # List of integer input for `values` is deprecated
+    ohe = OneHotEncoder(values=[5, 5, 5], handle_unknown='ignore')
+    assert_warns(FutureWarning, ohe.fit, X)
+
+    # `active_features_` is deprecated (and is only available
+    # when `handle_unknown`="error")
+    ohe = OneHotEncoder(handle_unknown='error').fit(X)
+    assert_warns(FutureWarning, getattr, ohe, 'active_features_')
+
+    # `feature_indices_` is deprecated
+    ohe = OneHotEncoder(handle_unknown='ignore').fit(X)
+    assert_warns(FutureWarning, getattr, ohe, 'feature_indices_')
 
 
 def test_one_hot_encoder_dense():
