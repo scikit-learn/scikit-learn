@@ -1526,7 +1526,8 @@ def test_one_hot_encoder_attr():
     assert_array_equal(enc.one_hot_feature_index_, [0, 0, 0, 1, 1, 2, 2])
     assert_array_equal(enc.n_values_, [11, 16, 2])
 
-    oh = OneHotEncoder('auto-strict', categorical_features=[True, False, True])
+    oh = OneHotEncoder('auto', handle_unknown='error-strict',
+                       categorical_features=[True, False, True])
     oh.fit(X)
     assert_array_equal(oh.feature_index_range_, [[0, 3], [5, 6], [3, 5]])
     assert_array_equal(oh.one_hot_feature_index_, [0, 0, 0, 2, 2, 1])
@@ -1660,7 +1661,8 @@ def test_one_hot_encoder_dtypes():
 
     for dtype in [np.int8, np.float, np.bool]:
         for sp in [True, False]:
-            oh = OneHotEncoder('auto-strict', dtype=dtype, sparse=sp)
+            oh = OneHotEncoder('auto', handle_unknown='error-strict',
+                               dtype=dtype, sparse=sp)
             X_tr = oh.fit_transform(X)
             assert_equal(X_tr.dtype, dtype)
 
@@ -1681,8 +1683,8 @@ def test_one_hot_encoder_unknown_transform_int():
     y = [[0, 1, 1]]
     assert_array_equal(toarray(oh.transform(y)), [[1,  0,  0,  0,  1,  0,  0]])
 
-    # But we do error when fit with "auto-strict"
-    oh = OneHotEncoder(values='auto-strict', handle_unknown='error')
+    # But we do error when set to "error-strict"
+    oh = OneHotEncoder(values='auto', handle_unknown='error-strict')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
 
@@ -1713,8 +1715,8 @@ def test_one_hot_encoder_unknown_transform_object():
     assert_array_equal(X, X_orig)
 
     # Raise error if handle_unknown is neither ignore nor error.
-    oh = OneHotEncoder(handle_unknown='42').fit(X)
-    assert_raises(ValueError, oh.transform, y)
+    oh = OneHotEncoder(handle_unknown='42')
+    assert_raises(ValueError, oh.fit, X)
     assert_array_equal(X, X_orig)
 
     # Check that in-range integer features are okay in object arrays
@@ -1727,8 +1729,8 @@ def test_one_hot_encoder_unknown_transform_object():
     oh = OneHotEncoder(handle_unknown='error').fit(X)
     assert_raises(ValueError, oh.transform, y)
 
-    # A transform on in-range integers errors in 'auto-strict' mode.
-    oh = OneHotEncoder(values='auto-strict', handle_unknown='error').fit(X)
+    # A transform on in-range integers errors in 'error-strict' mode.
+    oh = OneHotEncoder(values='auto', handle_unknown='error-strict').fit(X)
     assert_raises(ValueError, oh.transform, y)
 
 
