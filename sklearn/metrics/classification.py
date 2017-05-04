@@ -91,10 +91,6 @@ def _check_targets(y_true, y_pred):
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
-        if y_type == "binary":
-            unique_values = np.union1d(y_true, y_pred)
-            if len(unique_values) > 2:
-                y_type = "multiclass"
 
     if y_type.startswith('multilabel'):
         y_true = csr_matrix(y_true)
@@ -241,7 +237,6 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
            [1, 0, 2]])
 
     In the binary case, we can extract true positives, etc as follows:
-
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
@@ -611,8 +606,25 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
         F1 = 2 * (precision * recall) / (precision + recall)
 
-    In the multi-class and multi-label case, this is the weighted average of
-    the F1 score of each class.
+    In the multi-class and multi-label case, depending upon value of 'average' 
+    parameter it gives following output:
+    ``'None'``:
+            Calculate f1 score for each class are returned. 
+    ``'micro'``:
+            Calculate f1 score globally by counting the total true positives,
+            false negatives and false positives.
+    ``'macro'``:
+            Calculate f1 score for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+    ``'weighted'``:
+            Calculate f1 score for each label, and find their average, weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+    ``'samples'``:
+            Calculate f1 score for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
