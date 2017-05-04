@@ -16,9 +16,10 @@ import threading
 import itertools
 from numbers import Integral
 from contextlib import contextmanager
+import warnings
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
 
 from ._multiprocessing_helpers import mp
@@ -30,7 +31,6 @@ from .disk import memstr_to_bytes
 from ._parallel_backends import (FallbackToBackend, MultiprocessingBackend,
                                  ThreadingBackend, SequentialBackend)
 from ._compat import _basestring
-from .func_inspect import getfullargspec
 
 # Make sure that those two classes are part of the public joblib.parallel API
 # so that 3rd party backend implementers can import them from here.
@@ -282,22 +282,24 @@ class Parallel(Logger):
             is used at all, which is useful for debugging. For n_jobs below -1,
             (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all
             CPUs but one are used.
-        backend: str or None, default: 'multiprocessing'
+        backend: str, ParallelBackendBase instance or None, \
+                default: 'multiprocessing'
             Specify the parallelization backend implementation.
             Supported backends are:
-              - "multiprocessing" used by default, can induce some
-                communication and memory overhead when exchanging input and
-                output data with the worker Python processes.
-              - "threading" is a very low-overhead backend but it suffers
-                from the Python Global Interpreter Lock if the called function
-                relies a lot on Python objects. "threading" is mostly useful
-                when the execution bottleneck is a compiled extension that
-                explicitly releases the GIL (for instance a Cython loop wrapped
-                in a "with nogil" block or an expensive call to a library such
-                as NumPy).
-              - finally, you can register backends by calling
-                register_parallel_backend. This will allow you to implement
-                a backend of your liking.
+
+            - "multiprocessing" used by default, can induce some
+              communication and memory overhead when exchanging input and
+              output data with the worker Python processes.
+            - "threading" is a very low-overhead backend but it suffers
+              from the Python Global Interpreter Lock if the called function
+              relies a lot on Python objects. "threading" is mostly useful
+              when the execution bottleneck is a compiled extension that
+              explicitly releases the GIL (for instance a Cython loop wrapped
+              in a "with nogil" block or an expensive call to a library such
+              as NumPy).
+            - finally, you can register backends by calling
+              register_parallel_backend. This will allow you to implement
+              a backend of your liking.
         verbose: int, optional
             The verbosity level: if non zero, progress messages are
             printed. Above 50, the output is sent to stdout.
@@ -327,12 +329,16 @@ class Parallel(Logger):
             Folder to be used by the pool for memmaping large arrays
             for sharing memory with worker processes. If None, this will try in
             order:
-            - a folder pointed by the JOBLIB_TEMP_FOLDER environment variable,
-            - /dev/shm if the folder exists and is writable: this is a RAMdisk
-              filesystem available by default on modern Linux distributions,
-            - the default system temporary folder that can be overridden
-              with TMP, TMPDIR or TEMP environment variables, typically /tmp
-              under Unix operating systems.
+
+            - a folder pointed by the JOBLIB_TEMP_FOLDER environment
+              variable,
+            - /dev/shm if the folder exists and is writable: this is a
+              RAMdisk filesystem available by default on modern Linux
+              distributions,
+            - the default system temporary folder that can be
+              overridden with TMP, TMPDIR or TEMP environment
+              variables, typically /tmp under Unix operating systems.
+
             Only active when backend="multiprocessing".
         max_nbytes int, str, or None, optional, 1M by default
             Threshold on the size of arrays passed to the workers that
@@ -352,25 +358,25 @@ class Parallel(Logger):
         arguments. The main functionality it brings in addition to
         using the raw multiprocessing API are (see examples for details):
 
-            * More readable code, in particular since it avoids
-              constructing list of arguments.
+        * More readable code, in particular since it avoids
+          constructing list of arguments.
 
-            * Easier debugging:
-                - informative tracebacks even when the error happens on
-                  the client side
-                - using 'n_jobs=1' enables to turn off parallel computing
-                  for debugging without changing the codepath
-                - early capture of pickling errors
+        * Easier debugging:
+            - informative tracebacks even when the error happens on
+              the client side
+            - using 'n_jobs=1' enables to turn off parallel computing
+              for debugging without changing the codepath
+            - early capture of pickling errors
 
-            * An optional progress meter.
+        * An optional progress meter.
 
-            * Interruption of multiprocesses jobs with 'Ctrl-C'
+        * Interruption of multiprocesses jobs with 'Ctrl-C'
 
-            * Flexible pickling control for the communication to and from
-              the worker processes.
+        * Flexible pickling control for the communication to and from
+          the worker processes.
 
-            * Ability to use shared memory efficiently with worker
-              processes for large numpy-based datastructures.
+        * Ability to use shared memory efficiently with worker
+          processes for large numpy-based datastructures.
 
         Examples
         --------
@@ -395,76 +401,74 @@ class Parallel(Logger):
         (0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0)
 
         The progress meter: the higher the value of `verbose`, the more
-        messages::
+        messages:
 
-            >>> from time import sleep
-            >>> from sklearn.externals.joblib import Parallel, delayed
-            >>> r = Parallel(n_jobs=2, verbose=5)(delayed(sleep)(.1) for _ in range(10)) #doctest: +SKIP
-            [Parallel(n_jobs=2)]: Done   1 out of  10 | elapsed:    0.1s remaining:    0.9s
-            [Parallel(n_jobs=2)]: Done   3 out of  10 | elapsed:    0.2s remaining:    0.5s
-            [Parallel(n_jobs=2)]: Done   6 out of  10 | elapsed:    0.3s remaining:    0.2s
-            [Parallel(n_jobs=2)]: Done   9 out of  10 | elapsed:    0.5s remaining:    0.1s
-            [Parallel(n_jobs=2)]: Done  10 out of  10 | elapsed:    0.5s finished
+        >>> from time import sleep
+        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> r = Parallel(n_jobs=2, verbose=5)(delayed(sleep)(.1) for _ in range(10)) #doctest: +SKIP
+        [Parallel(n_jobs=2)]: Done   1 out of  10 | elapsed:    0.1s remaining:    0.9s
+        [Parallel(n_jobs=2)]: Done   3 out of  10 | elapsed:    0.2s remaining:    0.5s
+        [Parallel(n_jobs=2)]: Done   6 out of  10 | elapsed:    0.3s remaining:    0.2s
+        [Parallel(n_jobs=2)]: Done   9 out of  10 | elapsed:    0.5s remaining:    0.1s
+        [Parallel(n_jobs=2)]: Done  10 out of  10 | elapsed:    0.5s finished
 
         Traceback example, note how the line of the error is indicated
         as well as the values of the parameter passed to the function that
         triggered the exception, even though the traceback happens in the
-        child process::
+        child process:
 
-         >>> from heapq import nlargest
-         >>> from sklearn.externals.joblib import Parallel, delayed
-         >>> Parallel(n_jobs=2)(delayed(nlargest)(2, n) for n in (range(4), 'abcde', 3)) #doctest: +SKIP
-         #...
-         ---------------------------------------------------------------------------
-         Sub-process traceback:
-         ---------------------------------------------------------------------------
-         TypeError                                          Mon Nov 12 11:37:46 2012
-         PID: 12934                                    Python 2.7.3: /usr/bin/python
-         ...........................................................................
-         /usr/lib/python2.7/heapq.pyc in nlargest(n=2, iterable=3, key=None)
-             419         if n >= size:
-             420             return sorted(iterable, key=key, reverse=True)[:n]
-             421
-             422     # When key is none, use simpler decoration
-             423     if key is None:
-         --> 424         it = izip(iterable, count(0,-1))                    # decorate
-             425         result = _nlargest(n, it)
-             426         return map(itemgetter(0), result)                   # undecorate
-             427
-             428     # General case, slowest method
-
+        >>> from heapq import nlargest
+        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> Parallel(n_jobs=2)(delayed(nlargest)(2, n) for n in (range(4), 'abcde', 3)) #doctest: +SKIP
+        #...
+        ---------------------------------------------------------------------------
+        Sub-process traceback:
+        ---------------------------------------------------------------------------
+        TypeError                                          Mon Nov 12 11:37:46 2012
+        PID: 12934                                    Python 2.7.3: /usr/bin/python
+        ...........................................................................
+        /usr/lib/python2.7/heapq.pyc in nlargest(n=2, iterable=3, key=None)
+            419         if n >= size:
+            420             return sorted(iterable, key=key, reverse=True)[:n]
+            421
+            422     # When key is none, use simpler decoration
+            423     if key is None:
+        --> 424         it = izip(iterable, count(0,-1))                    # decorate
+            425         result = _nlargest(n, it)
+            426         return map(itemgetter(0), result)                   # undecorate
+            427
+            428     # General case, slowest method
          TypeError: izip argument #1 must support iteration
-         ___________________________________________________________________________
+        ___________________________________________________________________________
 
 
         Using pre_dispatch in a producer/consumer situation, where the
         data is generated on the fly. Note how the producer is first
-        called a 3 times before the parallel loop is initiated, and then
+        called 3 times before the parallel loop is initiated, and then
         called to generate new data on the fly. In this case the total
-        number of iterations cannot be reported in the progress messages::
+        number of iterations cannot be reported in the progress messages:
 
-         >>> from math import sqrt
-         >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> from math import sqrt
+        >>> from sklearn.externals.joblib import Parallel, delayed
+        >>> def producer():
+        ...     for i in range(6):
+        ...         print('Produced %s' % i)
+        ...         yield i
+        >>> out = Parallel(n_jobs=2, verbose=100, pre_dispatch='1.5*n_jobs')(
+        ...                delayed(sqrt)(i) for i in producer()) #doctest: +SKIP
+        Produced 0
+        Produced 1
+        Produced 2
+        [Parallel(n_jobs=2)]: Done 1 jobs     | elapsed:  0.0s
+        Produced 3
+        [Parallel(n_jobs=2)]: Done 2 jobs     | elapsed:  0.0s
+        Produced 4
+        [Parallel(n_jobs=2)]: Done 3 jobs     | elapsed:  0.0s
+        Produced 5
+        [Parallel(n_jobs=2)]: Done 4 jobs     | elapsed:  0.0s
+        [Parallel(n_jobs=2)]: Done 5 out of 6 | elapsed:  0.0s remaining: 0.0s
+        [Parallel(n_jobs=2)]: Done 6 out of 6 | elapsed:  0.0s finished
 
-         >>> def producer():
-         ...     for i in range(6):
-         ...         print('Produced %s' % i)
-         ...         yield i
-
-         >>> out = Parallel(n_jobs=2, verbose=100, pre_dispatch='1.5*n_jobs')(
-         ...                         delayed(sqrt)(i) for i in producer()) #doctest: +SKIP
-         Produced 0
-         Produced 1
-         Produced 2
-         [Parallel(n_jobs=2)]: Done 1 jobs     | elapsed:  0.0s
-         Produced 3
-         [Parallel(n_jobs=2)]: Done 2 jobs     | elapsed:  0.0s
-         Produced 4
-         [Parallel(n_jobs=2)]: Done 3 jobs     | elapsed:  0.0s
-         Produced 5
-         [Parallel(n_jobs=2)]: Done 4 jobs     | elapsed:  0.0s
-         [Parallel(n_jobs=2)]: Done 5 out of 6 | elapsed:  0.0s remaining: 0.0s
-         [Parallel(n_jobs=2)]: Done 6 out of 6 | elapsed:  0.0s finished
     '''
     def __init__(self, n_jobs=1, backend=None, verbose=0, timeout=None,
                  pre_dispatch='2 * n_jobs', batch_size='auto',
@@ -493,6 +497,9 @@ class Parallel(Logger):
 
         if backend is None:
             backend = active_backend
+        elif isinstance(backend, ParallelBackendBase):
+            # Use provided backend as is
+            pass
         elif hasattr(backend, 'Pool') and hasattr(backend, 'Lock'):
             # Make it possible to pass a custom multiprocessing context as
             # backend to change the start method to forkserver or spawn or
@@ -536,12 +543,22 @@ class Parallel(Logger):
     def _initialize_backend(self):
         """Build a process or thread pool and return the number of workers"""
         try:
-            return self._backend.configure(n_jobs=self.n_jobs, parallel=self,
-                                           **self._backend_args)
+            n_jobs = self._backend.configure(n_jobs=self.n_jobs, parallel=self,
+                                             **self._backend_args)
+            if self.timeout is not None and not self._backend.supports_timeout:
+                warnings.warn(
+                    'The backend class {!r} does not support timeout. '
+                    "You have set 'timeout={}' in Parallel but "
+                    "the 'timeout' parameter will not be used.".format(
+                        self._backend.__class__.__name__,
+                        self.timeout))
+
         except FallbackToBackend as e:
             # Recursively initialize the backend in case of requested fallback.
             self._backend = e.backend
-            return self._initialize_backend()
+            n_jobs = self._initialize_backend()
+
+        return n_jobs
 
     def _effective_n_jobs(self):
         if self._backend:
@@ -676,12 +693,13 @@ class Parallel(Logger):
             # the use of the lock
             with self._lock:
                 job = self._jobs.pop(0)
+
             try:
-                # check if timeout supported in backend future implementation
-                if 'timeout' in getfullargspec(job.get).args:
+                if getattr(self._backend, 'supports_timeout', False):
                     self._output.extend(job.get(timeout=self.timeout))
                 else:
                     self._output.extend(job.get())
+
             except BaseException as exception:
                 # Note: we catch any BaseException instead of just Exception
                 # instances to also include KeyboardInterrupt.
@@ -689,7 +707,22 @@ class Parallel(Logger):
                 # Stop dispatching any new job in the async callback thread
                 self._aborting = True
 
-                if isinstance(exception, TransportableException):
+                # If the backend allows it, cancel or kill remaining running
+                # tasks without waiting for the results as we will raise
+                # the exception we got back to the caller instead of returning
+                # any result.
+                backend = self._backend
+                if (backend is not None and
+                        hasattr(backend, 'abort_everything')):
+                    # If the backend is managed externally we need to make sure
+                    # to leave it in a working state to allow for future jobs
+                    # scheduling.
+                    ensure_ready = self._managed_backend
+                    backend.abort_everything(ensure_ready=ensure_ready)
+
+                if not isinstance(exception, TransportableException):
+                    raise
+                else:
                     # Capture exception to add information on the local
                     # stack in addition to the distant stack
                     this_report = format_outer_frames(context=10,
@@ -704,19 +737,7 @@ Sub-process traceback:
                     exception_type = _mk_exception(exception.etype)[0]
                     exception = exception_type(report)
 
-                # If the backends allows it, cancel or kill remaining running
-                # tasks without waiting for the results as we will raise
-                # the exception we got back to the caller instead of returning
-                # any result.
-                backend = self._backend
-                if (backend is not None and
-                        hasattr(backend, 'abort_everything')):
-                    # If the backend is managed externally we need to make sure
-                    # to leave it in a working state to allow for future jobs
-                    # scheduling.
-                    ensure_ready = self._managed_backend
-                    backend.abort_everything(ensure_ready=ensure_ready)
-                raise exception
+                    raise exception
 
     def __call__(self, iterable):
         if self._jobs:

@@ -268,9 +268,11 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     eps : float
         Truncate all values less then this in output to zero.
 
-    random_state : int seed, RandomState instance, or None (default)
-        Random number generator seed control, used in 'nndsvdar' and
-        'random' modes.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
 
     Returns
     -------
@@ -445,8 +447,11 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -910,8 +915,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, default: 0
         The verbosity level.
@@ -1097,8 +1105,11 @@ class NMF(BaseEstimator, TransformerMixin):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms. Set it to zero to

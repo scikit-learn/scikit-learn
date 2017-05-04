@@ -192,9 +192,13 @@ class ParameterSampler(object):
     n_iter : integer
         Number of parameter settings that are produced.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional (default=None)
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -814,8 +818,8 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVC()
-    >>> clf = GridSearchCV(svr, parameters)
+    >>> svc = svm.SVC()
+    >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
@@ -1054,9 +1058,13 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
