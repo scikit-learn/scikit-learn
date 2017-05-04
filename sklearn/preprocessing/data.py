@@ -1697,10 +1697,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    values : 'auto', int, List[int], or List[List[objects]]
+    values : 'auto' or List[List[objects]]
         - 'auto' (default) : Determine set of values from training data.
-        - int : values are in ``range(values)`` for all features
-        - list of ints : values for feature ``i`` are in ``range(values[i])``
         - list of lists : values for feature ``i`` are in ``values[i]``
 
     categorical_features : "all" or array of indices or mask
@@ -1887,9 +1885,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if self.n_values is not None:
             warnings.warn('`n_values` has been renamed to `values`.'
                           'The parameter `n_values` has been deprecated '
-                          'and will be removed in version 0.21, use the'
+                          'and will be removed in version 0.21; use the '
                           'parameter `values` instead and specify the '
-                          'expected values for each feature')
+                          'expected values for each feature.')
             values = self.n_values
         else:
             values = self.values
@@ -1897,9 +1895,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         # Convert `int` and `Sequence[int]` inputs to `List[Array[int]]`
         if (not isinstance(values, six.string_types) and
                 np.isscalar(values)):
+            warnings.warn('Integer input to `values` is deprecated and'
+                          ' will be removed in version 0.21. Specify a '
+                          'list of allowed values for each feature instead.')
             values = np.ones(self.n_features_cat_, dtype=int) * values
         if (not isinstance(values, six.string_types) and
                 np.isscalar(values[0])):
+            warnings.warn('List of integer input to `values` is deprecated and'
+                          ' will be removed in version 0.21. Specify a '
+                          'list of allowed values for each feature instead.')
             values = [np.arange(v, dtype=np.int) for v in values]
 
         return values
