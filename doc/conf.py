@@ -96,12 +96,9 @@ release = sklearn.__version__
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
 
-# List of documents that shouldn't be included in the build.
-#unused_docs = []
-
-# List of directories, relative to source directory, that shouldn't be
-# searched for source files.
-exclude_trees = ['_build', 'templates', 'includes']
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build', 'templates', 'includes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -167,10 +164,6 @@ html_static_path = ['images']
 # using the given strftime format.
 #html_last_updated_fmt = '%b %d, %Y'
 
-# If true, SmartyPants will be used to convert quotes and dashes to
-# typographically correct entities.
-#html_use_smartypants = True
-
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 
@@ -203,12 +196,19 @@ htmlhelp_basename = 'scikit-learndoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
 
-# The paper size ('letter' or 'a4').
-#latex_paper_size = 'letter'
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+    # Additional stuff for the LaTeX preamble.
+    'preamble': r"""
+        \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}
+        \usepackage{morefloats}\usepackage{enumitem} \setlistdepth{10}
+        """
+}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
@@ -220,18 +220,8 @@ latex_documents = [('index', 'user_guide.tex', u('scikit-learn user guide'),
 # the title page.
 latex_logo = "logos/scikit-learn-logo.png"
 
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
-
-# Additional stuff for the LaTeX preamble.
-latex_preamble = r"""
-\usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
-\usepackage{enumitem} \setlistdepth{10}
-"""
-
 # Documents to append as an appendix to all manuals.
-#latex_appendices = []
+# latex_appendices = []
 
 # If false, no module index is generated.
 latex_domain_indices = False
