@@ -1762,8 +1762,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
            [3, 6]])
     >>> enc.one_hot_feature_index_
     array([0, 0, 0, 1, 1, 1])
-    >>> enc.categories_
-    array(['cat', 'dog', 'mouse', 4, 15, 17], dtype=object)
+    >>> (enc.categories_ ==
+    ...  np.array(['cat', 'dog', 'mouse', 4, 15, 17], dtype='O')).all()
+    True
     >>> enc.transform([['dog', 4]]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
