@@ -174,7 +174,16 @@ def check_classification_targets(y):
 
 
 def type_of_target(y):
-    """Determine the type of data indicated by target `y`
+    """Determine the type of data indicated by target ``y``
+
+    Note that this type is the most specific type that can be inferred.
+    For example:
+
+        * ``binary`` is more specific but compatible with ``multiclass``.
+        * ``multiclass`` of integers is more specific but compatible with
+          ``continuous``.
+        * ``multilabel-indicator`` is more specific but compatible with
+          ``multiclass-multioutput``.
 
     Parameters
     ----------
@@ -184,6 +193,7 @@ def type_of_target(y):
     -------
     target_type : string
         One of:
+
         * 'continuous': `y` is an array-like of floats that are not all
           integers, and is 1d or a column vector.
         * 'continuous-multioutput': `y` is a 2d array of floats that are

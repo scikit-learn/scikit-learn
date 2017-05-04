@@ -1353,11 +1353,28 @@ Low-level methods
    :toctree: generated/
    :template: function.rst
 
-   utils.check_random_state
-   utils.estimator_checks.check_estimator
-   utils.resample
-   utils.shuffle
 
+   utils.check_random_state
+   utils.class_weight.compute_class_weight
+   utils.class_weight.compute_sample_weight
+   utils.estimator_checks.check_estimator
+   utils.extmath.safe_sparse_dot
+   utils.resample
+   utils.safe_indexing
+   utils.shuffle
+   utils.sparsefuncs.mean_variance_axis
+   utils.sparsefuncs.incr_mean_variance_axis
+   utils.sparsefuncs.inplace_column_scale
+   utils.sparsefuncs.inplace_row_scale
+   utils.sparsefuncs.inplace_swap_row
+   utils.sparsefuncs.inplace_swap_column
+   utils.validation.check_X_y
+   utils.validation.check_array
+   utils.validation.check_consistent_length
+   utils.validation.check_is_fitted
+   utils.validation.check_random_state
+   utils.validation.check_symmetric
+   utils.validation.column_or_1d
 
 Recently deprecated
 ===================

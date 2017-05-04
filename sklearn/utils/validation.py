@@ -677,6 +677,15 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     all_or_any : callable, {all, any}, default all
         Specify whether all or any of the given attributes must exist.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    NotFittedError
+        If the attributes aren not found.
     """
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
