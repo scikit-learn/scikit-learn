@@ -1736,10 +1736,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         ``one_hot_feature_index_[i]`` specifies which feature of the input
         is encoded by column `i` in the one-hot encoded array.
 
-    active_features_ : array
-        Indices for active features, meaning values that actually occur
-        in the training set. Only available when n_values is ``'auto'``.
-
     n_values_ : array of shape (n_features,)
         Number of categories per feature. Has value `0` for
         non-categorical features.
@@ -1824,7 +1820,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         start, end = 0, 0
         for i_cat, i_feat in enumerate(np.where(categorical)[0]):
             if np.isscalar(self._values) and self._values == 'auto':
-                end = start + self.n_active_features_[i_cat]
+                end = start + self._n_active_features_[i_cat]
             else:
                 end = start + len(self._label_encoders[i_cat].classes_)
             self.feature_index_range_[i_feat] = start, end
@@ -1948,9 +1944,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                     this_col_mask = np.zeros(n_classes, dtype=bool)
                     this_col_mask[int_classes] = True
                     active_features.append(this_col_mask)
-            self.n_active_features_ = np.array([a.sum()
-                                                for a in active_features])
-            self.active_features_ = np.where(np.hstack(active_features))[0]
+            self._n_active_features_ = np.array([a.sum()
+                                                 for a in active_features])
+            self._active_features_ = np.where(np.hstack(active_features))[0]
 
     def transform(self, X, y=None):
         """Encode the selected categorical features using the one-hot scheme.
@@ -2022,9 +2018,18 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
 
         if np.isscalar(self._values) and self._values == 'auto':
-            out = out[:, self.active_features_]
+            out = out[:, self._active_features_]
 
         return out if self.sparse else out.toarray()
+
+    @property
+    def active_features_(self):
+        warnings.warn('The property `active_features_` is deprecated and'
+                      ' will be removed in version 0.21')
+        if not hasattr(self, '_active_features_'):
+            raise AttributeError("'OneHotEncoder' object has no attribute "
+                                 "'active_features_'.")
+        return self._active_features_
 
     @property
     def feature_indices_(self):
