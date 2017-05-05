@@ -28,13 +28,14 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
-from .stop_words import ENGLISH_STOP_WORDS
+from .stop_words import ENGLISH_STOP_WORDS, ENGLISH_GENDERED_STOP_WORDS
 from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
+           'ENGLISH_GENDERED_STOP_WORDS',
            'TfidfTransformer',
            'TfidfVectorizer',
            'strip_accents_ascii',
@@ -89,6 +90,8 @@ def strip_tags(s):
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
+    elif stop == "english-gendered":
+        return ENGLISH_STOP_WORDS.union(ENGLISH_GENDERED_STOP_WORDS)
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
@@ -1035,7 +1038,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self
