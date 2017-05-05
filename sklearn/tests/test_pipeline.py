@@ -911,3 +911,13 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)
+
+
+def test_make_pipeline_memory():
+    cachedir = mkdtemp()
+    memory = Memory(cachedir=cachedir)
+    pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
+    assert_true(pipeline.memory is memory)
+    pipeline = make_pipeline(DummyTransf(), SVC())
+    assert_true(pipeline.memory is None)
+    shutil.rmtree(cachedir)
