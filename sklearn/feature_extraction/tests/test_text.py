@@ -10,7 +10,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import (ENGLISH_STOP_WORDS,
+                                             ENGLISH_GENDERED_STOP_WORDS)
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
@@ -271,6 +272,9 @@ def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words='english')
     assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
+    cv.set_params(stop_words='english-gendered')
+    assert_equal(cv.get_stop_words(),
+        set(ENGLISH_STOP_WORDS + ENGLISH_GENDERED_STOP_WORDS))
     cv.set_params(stop_words='_bad_str_stop_')
     assert_raises(ValueError, cv.get_stop_words)
     cv.set_params(stop_words='_bad_unicode_stop_')
