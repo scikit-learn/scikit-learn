@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import SkipTest
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils.mocking import MockDataFrame
@@ -41,16 +42,28 @@ def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
-    # Checks that the return type is ok
     X2 = as_float_array(X, copy=False)
-    np.testing.assert_equal(X2.dtype, np.float32)
+    assert_equal(X2.dtype, np.float32)
     # Another test
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
     assert_true(as_float_array(X, False) is not X)
-    # Checking that the new type is ok
-    np.testing.assert_equal(X2.dtype, np.float64)
+    assert_equal(X2.dtype, np.float64)
+    # Test int dtypes <= 32bit
+    tested_dtypes = [np.bool,
+                     np.int8, np.int16, np.int32,
+                     np.uint8, np.uint16, np.uint32]
+    for dtype in tested_dtypes:
+        X = X.astype(dtype)
+        X2 = as_float_array(X)
+        assert_equal(X2.dtype, np.float32)
+
+    # Test object dtype
+    X = X.astype(object)
+    X2 = as_float_array(X, copy=True)
+    assert_equal(X2.dtype, np.float64)
+
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
     assert_true(as_float_array(X, copy=False) is X)
@@ -122,9 +135,6 @@ def test_check_array():
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
     # ensure_2d
-    assert_warns(DeprecationWarning, check_array, [0, 1, 2])
-    X_array = check_array([0, 1, 2])
-    assert_equal(X_array.ndim, 2)
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
     # don't allow ndim > 3
@@ -324,6 +334,47 @@ def test_check_array_dtype_warning():
     assert_equal(X_checked.format, 'csr')
 
 
+def test_check_array_accept_sparse_type_exception():
+    X = [[1, 2], [3, 4]]
+    X_csr = sp.csr_matrix(X)
+    invalid_type = SVR()
+
+    msg = ("A sparse matrix was passed, but dense data is required. "
+           "Use X.toarray() to convert to a dense numpy array.")
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=False)
+    assert_raise_message(TypeError, msg,
+                         check_array, X_csr, accept_sparse=None)
+
+    msg = ("Parameter 'accept_sparse' should be a string, "
+           "boolean or list of strings. You provided 'accept_sparse={}'.")
+    assert_raise_message(ValueError, msg.format(invalid_type),
+                         check_array, X_csr, accept_sparse=invalid_type)
+
+    msg = ("When providing 'accept_sparse' as a tuple or list, "
+           "it must contain at least one string value.")
+    assert_raise_message(ValueError, msg.format([]),
+                         check_array, X_csr, accept_sparse=[])
+    assert_raise_message(ValueError, msg.format(()),
+                         check_array, X_csr, accept_sparse=())
+
+    assert_raise_message(TypeError, "SVR",
+                         check_array, X_csr, accept_sparse=[invalid_type])
+
+    # Test deprecation of 'None'
+    assert_warns(DeprecationWarning, check_array, X, accept_sparse=None)
+
+
+def test_check_array_accept_sparse_no_exception():
+    X = [[1, 2], [3, 4]]
+    X_csr = sp.csr_matrix(X)
+
+    check_array(X_csr, accept_sparse=True)
+    check_array(X_csr, accept_sparse='csr')
+    check_array(X_csr, accept_sparse=['csr'])
+    check_array(X_csr, accept_sparse=('csr',))
+
+
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
@@ -337,12 +388,6 @@ def test_check_array_min_samples_and_features_messages():
     # Invalid edge case when checking the default minimum sample of a scalar
     msg = "Singleton array array(42) cannot be considered a valid collection."
     assert_raise_message(TypeError, msg, check_array, 42, ensure_2d=False)
-
-    # But this works if the input data is forced to look like a 2 array with
-    # one sample and one feature:
-    X_checked = assert_warns(DeprecationWarning, check_array, [42],
-                             ensure_2d=True)
-    assert_array_equal(np.array([[42]]), X_checked)
 
     # Simulate a model that would need at least 2 samples to be well defined
     X = np.ones((1, 10))
@@ -469,3 +514,15 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+def test_check_dataframe_fit_attribute():
+    # check pandas dataframe with 'fit' column does not raise error
+    # https://github.com/scikit-learn/scikit-learn/issues/8415
+    try:
+        import pandas as pd
+        X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        X_df = pd.DataFrame(X, columns=['a', 'b', 'fit'])
+        check_consistent_length(X_df)
+    except ImportError:
+        raise SkipTest("Pandas not found")

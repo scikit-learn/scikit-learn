@@ -17,7 +17,7 @@ sy-kit learn. sci stands for science!
 
 Why scikit?
 ------------
-There are multiple scikits, which are scientific toolboxes build around SciPy.
+There are multiple scikits, which are scientific toolboxes built around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
 
@@ -248,10 +248,13 @@ Python processes for parallel computing. Unfortunately this is a violation of
 the POSIX standard and therefore some software editors like Apple refuse to
 consider the lack of fork-safety in Accelerate / vecLib as a bug.
 
-In Python 3.4+ it is now possible to configure ``multiprocessing`` to use the
-'forkserver' or 'spawn' start methods (instead of the default 'fork') to manage
-the process pools. This makes it possible to not be subject to this issue
-anymore.
+In Python 3.4+ it is now possible to configure ``multiprocessing`` to
+use the 'forkserver' or 'spawn' start methods (instead of the default
+'fork') to manage the process pools. To work around this issue when
+using scikit-learn, you can set the JOBLIB_START_METHOD environment
+variable to 'forkserver'. However the user should be aware that using
+the 'forkserver' method prevents joblib.Parallel to call function
+interactively defined in a shell session.
 
 If you have custom code that uses ``multiprocessing`` directly instead of using
 it via joblib you can enable the 'forkserver' mode globally for your
@@ -278,6 +281,9 @@ GPUs for efficient computing. However, neither of these fit within
 the design constraints of scikit-learn; as a result, deep learning
 and reinforcement learning are currently out of scope for what
 scikit-learn seeks to achieve.
+
+You can find more information about addition of gpu support at
+`Will you add GPU support?`_.
 
 Why is my pull request not getting any attention?
 -------------------------------------------------

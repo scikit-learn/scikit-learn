@@ -3,7 +3,7 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Kyle Kastner <kastnerkyle@gmail.com>
 #
 # License: BSD 3 clause

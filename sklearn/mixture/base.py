@@ -137,7 +137,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         ----------
         X : array-like, shape  (n_samples, n_features)
 
-        random_state: RandomState
+        random_state : RandomState
             A random number generator instance.
         """
         n_samples, _ = X.shape
@@ -230,7 +230,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 best_n_iter = n_iter
 
         if not self.converged_:
-            warnings.warn('Initialization %d did not converged. '
+            warnings.warn('Initialization %d did not converge. '
                           'Try different init parameters, '
                           'or increase max_iter, tol '
                           'or check for degenerate data.'
@@ -250,8 +250,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        log_prob_norm : array, shape (n_samples,)
-            Logarithm of the probability of each sample in X.
+        log_prob_norm : float
+            Mean of the logarithms of the probabilities of each sample in X
 
         log_responsibility : array, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
@@ -385,7 +385,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         _, n_features = self.means_.shape
         rng = check_random_state(self.random_state)
-        n_samples_comp = np.round(self.weights_ * n_samples).astype(int)
+        n_samples_comp = rng.multinomial(n_samples, self.weights_)
 
         if self.covariance_type == 'full':
             X = np.vstack([

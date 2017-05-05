@@ -28,7 +28,7 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
 
     Parameters
     ----------
-    graph: sparse matrix or 2D array (preferably LIL matrix)
+    graph : sparse matrix or 2D array (preferably LIL matrix)
         Adjacency matrix of the graph
     source : node label
        Starting node for path
@@ -44,10 +44,11 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     ...                   [ 1, 0, 1, 0],
     ...                   [ 0, 1, 0, 1],
     ...                   [ 0, 0, 1, 0]])
-    >>> single_source_shortest_path_length(graph, 0)
-    {0: 0, 1: 1, 2: 2, 3: 3}
-    >>> single_source_shortest_path_length(np.ones((6, 6)), 2)
-    {0: 1, 1: 1, 2: 0, 3: 1, 4: 1, 5: 1}
+    >>> list(sorted(single_source_shortest_path_length(graph, 0).items()))
+    [(0, 0), (1, 1), (2, 2), (3, 3)]
+    >>> graph = np.ones((6, 6))
+    >>> list(sorted(single_source_shortest_path_length(graph, 2).items()))
+    [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
     """
     if sparse.isspmatrix(graph):
         graph = graph.tolil()

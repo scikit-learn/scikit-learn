@@ -6,23 +6,16 @@ language: python
 # Pre-install packages for the ubuntu distribution
 cache:
   apt: true
-  # We use three different cache directory
-  # to work around a Travis bug with multi-platform cache
   directories:
-  - $HOME/sklearn_build_ubuntu
-  - $HOME/sklearn_build_oldest
-  - $HOME/sklearn_build_latest
-  - $HOME/sklearn_build_numpy_dev
   - $HOME/.cache/pip
   - $HOME/download
 addons:
   apt:
     packages:
+      # these only required by the DISTRIB="ubuntu" builds:
+      - python-scipy
       - libatlas3gf-base
       - libatlas-dev
-      # only required by the DISTRIB="ubuntu" build:
-      - python-scipy
-
 env:
   global:
     # Directory where tests are run from
@@ -33,21 +26,25 @@ env:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
     - DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_ubuntu" COVERAGE=true
+      COVERAGE=true
     # This environment tests the oldest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
-      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.21"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_oldest"
+    - DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
+      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.23"
+      COVERAGE=true
     # This environment tests the newest supported anaconda env
     # It also runs tests requiring Pandas.
-    - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" PANDAS_VERSION="0.18.0"
-      CYTHON_VERSION="0.23.4" CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
+    - DISTRIB="conda" PYTHON_VERSION="3.6" INSTALL_MKL="true"
+      NUMPY_VERSION="1.11.2" SCIPY_VERSION="0.18.1" PANDAS_VERSION="0.19.1"
+      CYTHON_VERSION="0.25.2" COVERAGE=true
+    # This environment use pytest to run the tests. It uses the newest
+    # supported anaconda env. It also runs tests requiring Pandas.
+    - USE_PYTEST="true" DISTRIB="conda" PYTHON_VERSION="3.6" INSTALL_MKL="true"
+      NUMPY_VERSION="1.11.2" SCIPY_VERSION="0.18.1" PANDAS_VERSION="0.19.1"
+      CYTHON_VERSION="0.25.2"
     # flake8 linting on diff wrt common ancestor with upstream/master
     - RUN_FLAKE8="true" SKIP_TESTS="true"
       DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
       NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.23.4"
-      CACHED_BUILD_DIR="$HOME/dummy"
 
 
 matrix:
@@ -60,16 +57,8 @@ matrix:
     # This environment tests scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    # Note: libatlas3gf-base is not allowed yet so we need 'sudo':
-    # https://github.com/travis-ci/apt-package-whitelist/issues/2407
-    # Once libatlas3gf-base is on the whitelist it will be possible to replace
-    # the before_install step with and addons/apt/packages declaration.
     -  python: 3.5
        env: DISTRIB="scipy-dev-wheels"
-            CACHED_BUILD_DIR="$HOME/sklearn_build_numpy_dev"
-       sudo: True
-       before_install: sudo apt-get install -yqq libatlas3gf-base libatlas-dev
-
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh

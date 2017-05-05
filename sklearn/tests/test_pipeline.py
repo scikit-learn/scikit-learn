@@ -1,6 +1,11 @@
 """
 Test the pipeline module.
 """
+
+from tempfile import mkdtemp
+import shutil
+import time
+
 import numpy as np
 from scipy import sparse
 
@@ -13,7 +18,6 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_dict_equal
 
 from sklearn.base import clone, BaseEstimator
@@ -27,6 +31,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.externals.joblib import Memory
 
 
 JUNK_FOOD_DOCS = (
@@ -74,6 +79,13 @@ class Transf(NoInvTransf):
         return X
 
 
+class TransfFitParams(Transf):
+
+    def fit(self, X, y, **fit_params):
+        self.fit_params = fit_params
+        return self
+
+
 class Mult(BaseEstimator):
     def __init__(self, mult=1):
         self.mult = mult
@@ -108,6 +120,26 @@ class FitParamT(BaseEstimator):
 
     def predict(self, X):
         return self.successful
+
+    def fit_predict(self, X, y, should_succeed=False):
+        self.fit(X, y, should_succeed=should_succeed)
+        return self.predict(X)
+
+    def score(self, X, y=None, sample_weight=None):
+        if sample_weight is not None:
+            X = X * sample_weight
+        return np.sum(X)
+
+
+class DummyTransf(Transf):
+    """Transformer which store the column means"""
+
+    def fit(self, X, y):
+        self.means_ = np.mean(X, axis=0)
+        # store timestamp to figure out whether the result of 'fit' has been
+        # cached or not
+        self.timestamp_ = time.time()
+        return self
 
 
 def test_pipeline_init():
@@ -201,6 +233,37 @@ def test_pipeline_fit_params():
     # and transformer params should not be changed
     assert_true(pipe.named_steps['transf'].a is None)
     assert_true(pipe.named_steps['transf'].b is None)
+    # invalid parameters should raise an error message
+    assert_raise_message(
+        TypeError,
+        "fit() got an unexpected keyword argument 'bad'",
+        pipe.fit, None, None, clf__bad=True
+    )
+
+
+def test_pipeline_sample_weight_supported():
+    # Pipeline should pass sample_weight
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
+    pipe.fit(X, y=None)
+    assert_equal(pipe.score(X), 3)
+    assert_equal(pipe.score(X, y=None), 3)
+    assert_equal(pipe.score(X, y=None, sample_weight=None), 3)
+    assert_equal(pipe.score(X, sample_weight=np.array([2, 3])), 8)
+
+
+def test_pipeline_sample_weight_unsupported():
+    # When sample_weight is None it shouldn't be passed
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())])
+    pipe.fit(X, y=None)
+    assert_equal(pipe.score(X), 3)
+    assert_equal(pipe.score(X, sample_weight=None), 3)
+    assert_raise_message(
+        TypeError,
+        "score() got an unexpected keyword argument 'sample_weight'",
+        pipe.score, X, sample_weight=np.array([2, 3])
+    )
 
 
 def test_pipeline_raise_set_params_error():
@@ -308,6 +371,19 @@ def test_fit_predict_on_pipeline_without_fit_predict():
                         getattr, pipe, 'fit_predict')
 
 
+def test_fit_predict_with_intermediate_fit_params():
+    # tests that Pipeline passes fit_params to intermediate steps
+    # when fit_predict is invoked
+    pipe = Pipeline([('transf', TransfFitParams()), ('clf', FitParamT())])
+    pipe.fit_predict(X=None,
+                     y=None,
+                     transf__should_get_this=True,
+                     clf__should_succeed=True)
+    assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
+    assert_true(pipe.named_steps['clf'].successful)
+    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+
+
 def test_feature_union():
     # basic sanity check for feature union
     iris = load_iris()
@@ -357,6 +433,20 @@ def test_make_union():
     names, transformers = zip(*fu.transformer_list)
     assert_equal(names, ("pca", "transf"))
     assert_equal(transformers, (pca, mock))
+
+
+def test_make_union_kwargs():
+    pca = PCA(svd_solver='full')
+    mock = Transf()
+    fu = make_union(pca, mock, n_jobs=3)
+    assert_equal(fu.transformer_list, make_union(pca, mock).transformer_list)
+    assert_equal(3, fu.n_jobs)
+    # invalid keyword parameters should raise an error message
+    assert_raise_message(
+        TypeError,
+        'Unknown keyword arguments: "transformer_weights"',
+        make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
+    )
 
 
 def test_pipeline_transform():
@@ -419,6 +509,23 @@ def test_set_pipeline_steps():
     assert_raises(TypeError, pipeline.fit_transform, [[1]], [1])
 
 
+def test_pipeline_named_steps():
+    transf = Transf()
+    mult2 = Mult(mult=2)
+    pipeline = Pipeline([('mock', transf), ("mult", mult2)])
+
+    # Test access via named_steps bunch object
+    assert_true('mock' in pipeline.named_steps)
+    assert_true('mock2' not in pipeline.named_steps)
+    assert_true(pipeline.named_steps.mock is transf)
+    assert_true(pipeline.named_steps.mult is mult2)
+
+    # Test bunch with conflict attribute of dict
+    pipeline = Pipeline([('values', transf), ("mult", mult2)])
+    assert_true(pipeline.named_steps.values is not transf)
+    assert_true(pipeline.named_steps.mult is mult2)
+
+
 def test_set_pipeline_step_none():
     # Test setting Pipeline steps to None
     X = np.array([[1]])
@@ -447,6 +554,7 @@ def test_set_pipeline_step_none():
                        'm2': mult2,
                        'm3': None,
                        'last': mult5,
+                       'memory': None,
                        'm2__mult': 2,
                        'last__mult': 5,
                        })
@@ -640,14 +748,6 @@ def test_classes_property():
     assert_array_equal(clf.classes_, np.unique(y))
 
 
-def test_X1d_inverse_transform():
-    transformer = Transf()
-    pipeline = make_pipeline(transformer)
-    X = np.ones(10)
-    msg = "1d X will not be reshaped in pipeline.inverse_transform"
-    assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)
-
-
 def test_set_feature_union_steps():
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
@@ -711,9 +811,9 @@ def test_step_name_validation():
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
-            (bad_steps1, "Step names must not contain __: got ['a__q']"),
+            (bad_steps1, "Estimator names must not contain __: got ['a__q']"),
             (bad_steps2, "Names provided are not unique: ['a', 'a']"),
-            (bad_steps3, "Step names conflict with constructor "
+            (bad_steps3, "Estimator names conflict with constructor "
                          "arguments: ['%s']" % param),
         ]:
             # three ways to make invalid:
@@ -734,3 +834,80 @@ def test_step_name_validation():
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
             assert_raise_message(ValueError, message, est.fit_transform,
                                  [[1]], [1])
+
+
+def test_pipeline_wrong_memory():
+    # Test that an error is raised when memory is not a string or a Memory
+    # instance
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    # Define memory as an integer
+    memory = 1
+    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
+                           memory=memory)
+    assert_raises_regex(ValueError, "'memory' should either be a string or a"
+                        " joblib.Memory instance, got 'memory=1' instead.",
+                        cached_pipe.fit, X, y)
+
+
+def test_pipeline_memory():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    cachedir = mkdtemp()
+    try:
+        memory = Memory(cachedir=cachedir, verbose=10)
+        # Test with Transformer + SVC
+        clf = SVC(probability=True, random_state=0)
+        transf = DummyTransf()
+        pipe = Pipeline([('transf', clone(transf)), ('svc', clf)])
+        cached_pipe = Pipeline([('transf', transf), ('svc', clf)],
+                               memory=memory)
+
+        # Memoize the transformer at the first fit
+        cached_pipe.fit(X, y)
+        pipe.fit(X, y)
+        # Get the time stamp of the tranformer in the cached pipeline
+        ts = cached_pipe.named_steps['transf'].timestamp_
+        # Check that cached_pipe and pipe yield identical results
+        assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
+        assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
+        assert_array_equal(pipe.predict_log_proba(X),
+                           cached_pipe.predict_log_proba(X))
+        assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
+        assert_array_equal(pipe.named_steps['transf'].means_,
+                           cached_pipe.named_steps['transf'].means_)
+        assert_false(hasattr(transf, 'means_'))
+        # Check that we are reading the cache while fitting
+        # a second time
+        cached_pipe.fit(X, y)
+        # Check that cached_pipe and pipe yield identical results
+        assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
+        assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
+        assert_array_equal(pipe.predict_log_proba(X),
+                           cached_pipe.predict_log_proba(X))
+        assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
+        assert_array_equal(pipe.named_steps['transf'].means_,
+                           cached_pipe.named_steps['transf'].means_)
+        assert_equal(ts, cached_pipe.named_steps['transf'].timestamp_)
+        # Create a new pipeline with cloned estimators
+        # Check that even changing the name step does not affect the cache hit
+        clf_2 = SVC(probability=True, random_state=0)
+        transf_2 = DummyTransf()
+        cached_pipe_2 = Pipeline([('transf_2', transf_2), ('svc', clf_2)],
+                                 memory=memory)
+        cached_pipe_2.fit(X, y)
+
+        # Check that cached_pipe and pipe yield identical results
+        assert_array_equal(pipe.predict(X), cached_pipe_2.predict(X))
+        assert_array_equal(pipe.predict_proba(X),
+                           cached_pipe_2.predict_proba(X))
+        assert_array_equal(pipe.predict_log_proba(X),
+                           cached_pipe_2.predict_log_proba(X))
+        assert_array_equal(pipe.score(X, y), cached_pipe_2.score(X, y))
+        assert_array_equal(pipe.named_steps['transf'].means_,
+                           cached_pipe_2.named_steps['transf_2'].means_)
+        assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
+    finally:
+        shutil.rmtree(cachedir)

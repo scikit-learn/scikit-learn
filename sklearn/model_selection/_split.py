@@ -6,7 +6,7 @@ functions to split the data based on a preset strategy.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-#         Raghav R V <rvraghav93@gmail.com>
+#         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 
@@ -25,6 +25,7 @@ import numpy as np
 from scipy.misc import comb
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
+from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
@@ -32,7 +33,6 @@ from ..utils.fixes import bincount
 from ..utils.fixes import signature
 from ..utils.random import choice
 from ..base import _pprint
-from ..gaussian_process.kernels import Kernel as GPKernel
 
 __all__ = ['BaseCrossValidator',
            'KFold',
@@ -41,6 +41,8 @@ __all__ = ['BaseCrossValidator',
            'LeaveOneOut',
            'LeavePGroupsOut',
            'LeavePOut',
+           'RepeatedStratifiedKFold',
+           'RepeatedKFold',
            'ShuffleSplit',
            'GroupShuffleSplit',
            'StratifiedKFold',
@@ -362,9 +364,11 @@ class KFold(_BaseKFold):
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -397,6 +401,8 @@ class KFold(_BaseKFold):
         classification tasks).
 
     GroupKFold: K-fold iterator variant with non-overlapping groups.
+
+    RepeatedKFold: Repeats K-Fold n times.
     """
 
     def __init__(self, n_splits=3, shuffle=False,
@@ -472,6 +478,7 @@ class GroupKFold(_BaseKFold):
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
 
         unique_groups, groups = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
@@ -526,9 +533,11 @@ class StratifiedKFold(_BaseKFold):
         Whether to shuffle each stratification of the data before splitting
         into batches.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -552,6 +561,9 @@ class StratifiedKFold(_BaseKFold):
     All the folds have size ``trunc(n_samples / n_splits)``, the last one has
     the complementary.
 
+    See also
+    --------
+    RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
 
     def __init__(self, n_splits=3, shuffle=False, random_state=None):
@@ -618,12 +630,16 @@ class StratifiedKFold(_BaseKFold):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
 
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : object
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -633,6 +649,7 @@ class StratifiedKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
+        y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedKFold, self).split(X, y, groups)
 
 
@@ -696,11 +713,10 @@ class TimeSeriesSplit(_BaseKFold):
             and n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            The target variable for supervised learning problems.
+            Always ignored, exists for compatibility.
 
         groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -746,12 +762,12 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
     >>> groups = np.array([1, 1, 2, 2])
-    >>> lol = LeaveOneGroupOut()
-    >>> lol.get_n_splits(X, y, groups)
+    >>> logo = LeaveOneGroupOut()
+    >>> logo.get_n_splits(X, y, groups)
     2
-    >>> print(lol)
+    >>> print(logo)
     LeaveOneGroupOut()
-    >>> for train_index, test_index in lol.split(X, y, groups):
+    >>> for train_index, test_index in logo.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -771,8 +787,12 @@ class LeaveOneGroupOut(BaseCrossValidator):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
         # We make a copy of groups to avoid side-effects during iteration
-        groups = np.array(groups, copy=True)
+        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
         unique_groups = np.unique(groups)
+        if len(unique_groups) <= 1:
+            raise ValueError(
+                "The groups parameter contains fewer than 2 unique groups "
+                "(%s). LeaveOneGroupOut expects at least 2." % unique_groups)
         for i in unique_groups:
             yield groups == i
 
@@ -829,12 +849,12 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
     >>> groups = np.array([1, 2, 3])
-    >>> lpl = LeavePGroupsOut(n_groups=2)
-    >>> lpl.get_n_splits(X, y, groups)
+    >>> lpgo = LeavePGroupsOut(n_groups=2)
+    >>> lpgo.get_n_splits(X, y, groups)
     3
-    >>> print(lpl)
+    >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
-    >>> for train_index, test_index in lpl.split(X, y, groups):
+    >>> for train_index, test_index in lpgo.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -860,8 +880,14 @@ class LeavePGroupsOut(BaseCrossValidator):
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
-        groups = np.array(groups, copy=True)
+        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
         unique_groups = np.unique(groups)
+        if self.n_groups >= len(unique_groups):
+            raise ValueError(
+                "The groups parameter contains fewer than (or equal to) "
+                "n_groups (%d) numbers of unique groups (%s). LeavePGroupsOut "
+                "expects that at least n_groups + 1 (%d) unique groups be "
+                "present" % (self.n_groups, unique_groups, self.n_groups + 1))
         combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
             test_index = np.zeros(_num_samples(X), dtype=np.bool)
@@ -876,9 +902,11 @@ class LeavePGroupsOut(BaseCrossValidator):
         ----------
         X : object
             Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         y : object
             Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -891,7 +919,204 @@ class LeavePGroupsOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
+        X, y, groups = indexable(X, y, groups)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
+
+
+class _RepeatedSplits(with_metaclass(ABCMeta)):
+    """Repeated splits for an arbitrary randomized CV splitter.
+
+    Repeats splits for cross-validators n times with different randomization
+    in each repetition.
+
+    Parameters
+    ----------
+    cv : callable
+        Cross-validator class.
+
+    n_repeats : int, default=10
+        Number of times cross-validator needs to be repeated.
+
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    **cvargs : additional params
+        Constructor parameters for cv. Must not contain random_state
+        and shuffle.
+    """
+    def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
+        if not isinstance(n_repeats, (np.integer, numbers.Integral)):
+            raise ValueError("Number of repetitions must be of Integral type.")
+
+        if n_repeats <= 1:
+            raise ValueError("Number of repetitions must be greater than 1.")
+
+        if any(key in cvargs for key in ('random_state', 'shuffle')):
+            raise ValueError(
+                "cvargs must not contain random_state or shuffle.")
+
+        self.cv = cv
+        self.n_repeats = n_repeats
+        self.random_state = random_state
+        self.cvargs = cvargs
+
+    def split(self, X, y=None, groups=None):
+        """Generates indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, of length n_samples
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        n_repeats = self.n_repeats
+        rng = check_random_state(self.random_state)
+
+        for idx in range(n_repeats):
+            cv = self.cv(random_state=rng, shuffle=True,
+                         **self.cvargs)
+            for train_index, test_index in cv.split(X, y, groups):
+                yield train_index, test_index
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator
+
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
+
+        y : object
+            Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
+        rng = check_random_state(self.random_state)
+        cv = self.cv(random_state=rng, shuffle=True,
+                     **self.cvargs)
+        return cv.get_n_splits(X, y, groups) * self.n_repeats
+
+
+class RepeatedKFold(_RepeatedSplits):
+    """Repeated K-Fold cross validator.
+
+    Repeats K-Fold n times with different randomization in each repetition.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    n_repeats : int, default=10
+        Number of times cross-validator needs to be repeated.
+
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import RepeatedKFold
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652124)
+    >>> for train_index, test_index in rkf.split(X):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...
+    TRAIN: [0 1] TEST: [2 3]
+    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 3] TEST: [1 2]
+
+
+    See also
+    --------
+    RepeatedStratifiedKFold: Repeates Stratified K-Fold n times.
+    """
+    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+        super(RepeatedKFold, self).__init__(
+            KFold, n_repeats, random_state, n_splits=n_splits)
+
+
+class RepeatedStratifiedKFold(_RepeatedSplits):
+    """Repeated Stratified K-Fold cross validator.
+
+    Repeats Stratified K-Fold n times with different randomization in each
+    repetition.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    n_repeats : int, default=10
+        Number of times cross-validator needs to be repeated.
+
+    random_state : None, int or RandomState, default=None
+        Random state to be used to generate random state for each
+        repetition.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import RepeatedStratifiedKFold
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
+    ...     random_state=36851234)
+    >>> for train_index, test_index in rskf.split(X, y):
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...
+    TRAIN: [1 2] TEST: [0 3]
+    TRAIN: [0 3] TEST: [1 2]
+    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [0 2] TEST: [1 3]
+
+
+    See also
+    --------
+    RepeatedKFold: Repeats K-Fold n times.
+    """
+    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+        super(RepeatedStratifiedKFold, self).__init__(
+            StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
 
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
@@ -990,8 +1215,11 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -1072,8 +1300,12 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
     '''
 
     def __init__(self, n_splits=5, test_size=0.2, train_size=None,
@@ -1087,6 +1319,7 @@ class GroupShuffleSplit(ShuffleSplit):
     def _iter_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super(
                 GroupShuffleSplit, self)._iter_indices(X=classes):
@@ -1198,8 +1431,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
 
     Examples
     --------
@@ -1227,6 +1464,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
+        y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         classes, y_indices = np.unique(y, return_inverse=True)
@@ -1280,12 +1518,16 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
 
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : object
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -1295,6 +1537,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         test : ndarray
             The testing set indices for that split.
         """
+        y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 
@@ -1467,7 +1710,7 @@ class PredefinedSplit(BaseCrossValidator):
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""
     def __init__(self, cv):
-        self.cv = cv
+        self.cv = list(cv)
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
@@ -1488,7 +1731,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return len(self.cv)  # Both iterables and old-cv objects support len
+        return len(self.cv)
 
     def split(self, X=None, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1598,12 +1841,15 @@ def train_test_split(*arrays, **options):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
-        the groups array.
+        the class labels.
 
     Returns
     -------

@@ -512,7 +512,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
-    scipy.sparse.coo_matrix.
+    scipy.sparse.csr_matrix.
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
@@ -966,7 +966,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
     containing every term in the collection exactly once, which prevents
-    zero divisions: idf(d, t) = log [ (1 + n) / 1 + df(d, t) ] + 1.
+    zero divisions: idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
 
     Furthermore, the formulas used to compute tf and idf depend
     on parameter settings that correspond to the SMART notation used in IR
