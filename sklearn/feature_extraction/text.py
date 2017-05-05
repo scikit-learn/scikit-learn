@@ -91,7 +91,7 @@ def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
     elif stop == "english-gendered":
-        return set(ENGLISH_STOP_WORDS + ENGLISH_GENDERED_STOP_WORDS)
+        return ENGLISH_STOP_WORDS.union(ENGLISH_GENDERED_STOP_WORDS)
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
