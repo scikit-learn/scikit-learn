@@ -1286,9 +1286,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
-        # TODO: keep _dtype for the multinomial case
         if self.multi_class == 'multinomial':
-            self.coef_ = fold_coefs_[0][0]
+            self.coef_ = fold_coefs_[0][0].astype(np.float32)
         else:
             self.coef_ = np.asarray(fold_coefs_, dtype=_dtype)
             self.coef_ = self.coef_.reshape(n_classes, n_features +
