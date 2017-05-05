@@ -232,7 +232,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         conditional for topic word distribution is a Dirichlet,
         ``components_[i, j]`` can be viewed as pseudocount that represents the
         number of times word `j` was assigned to topic `i`.
-        Normalized ``components_`` can be viewed as topic word distribution.
+        It can also be viewed as distribution over the words for each topic
+        after normalization:
+        ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
