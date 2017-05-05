@@ -1203,18 +1203,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
+        # setup the default dtype
         _dtype = np.float64
-        a = (self.solver in ['newton-cg'])
-        b = (isinstance(X, np.ndarray))
-        c = (X.dtype in [np.float32])
-        # if self.solver in ['newton-cg']
-        #                and isinstance(X, np.ndarray)
-        #                and X.dtype in [np.float32]:
-        if a and b and c :
+        if self.solver in ['newton-cg'] \
+                and isinstance(X, np.ndarray) and X.dtype in [np.float32]:
             _dtype = np.float32
-
-        # X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-        #                  order="C")
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
@@ -1293,10 +1286,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
+        # TODO: keep _dtype for the multinomial case
         if self.multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
         else:
-            self.coef_ = np.asarray(fold_coefs_)
+            self.coef_ = np.asarray(fold_coefs_, dtype=_dtype)
             self.coef_ = self.coef_.reshape(n_classes, n_features +
                                             int(self.fit_intercept))
 
