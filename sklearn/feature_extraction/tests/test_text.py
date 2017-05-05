@@ -274,7 +274,7 @@ def test_countvectorizer_stop_words():
     assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
     cv.set_params(stop_words='english-gendered')
     assert_equal(cv.get_stop_words(),
-        ENGLISH_STOP_WORDS.union(ENGLISH_GENDERED_STOP_WORDS)
+         ENGLISH_STOP_WORDS.union(ENGLISH_GENDERED_STOP_WORDS))
     cv.set_params(stop_words='_bad_str_stop_')
     assert_raises(ValueError, cv.get_stop_words)
     cv.set_params(stop_words='_bad_unicode_stop_')
