@@ -23,7 +23,8 @@ import scipy as sp
 from scipy import io
 from shutil import copyfileobj
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
@@ -61,23 +62,23 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     Parameters
     ----------
 
-    dataname:
+    dataname :
         Name of the data set on mldata.org,
         e.g.: "leukemia", "Whistler Daily Snowfall", etc.
         The raw name is automatically converted to a mldata.org URL .
 
-    target_name: optional, default: 'label'
+    target_name : optional, default: 'label'
         Name or index of the column containing the target values.
 
-    data_name: optional, default: 'data'
+    data_name : optional, default: 'data'
         Name or index of the column containing the data.
 
-    transpose_data: optional, default: True
+    transpose_data : optional, default: True
         If True, transpose the downloaded data array.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify another download and cache folder for the data sets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     Returns
     -------
@@ -215,7 +216,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     return Bunch(**dataset)
 
 
-# The following is used by nosetests to setup the docstring tests fixture
+# The following is used by test runners to setup the docstring tests fixture
 
 def setup_module(module):
     # setup mock urllib2 module to avoid downloading from mldata.org

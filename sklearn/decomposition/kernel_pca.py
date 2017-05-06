@@ -35,7 +35,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Degree for poly kernels. Ignored by other kernels.
 
     gamma : float, default=1/n_features
-        Kernel coefficient for rbf and poly kernels. Ignored by other
+        Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
         kernels.
 
     coef0 : float, default=1
@@ -74,18 +74,26 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int seed, RandomState instance, or None, default=None
-        A pseudo random number generator used for the initialization of the
-        residuals when eigen_solver == 'arpack'.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+
+        .. versionadded:: 0.18
 
     n_jobs : int, default=1
         The number of parallel jobs to run.
         If `-1`, then the number of jobs is set to the number of CPU cores.
 
+        .. versionadded:: 0.18
+
     copy_X : boolean, default=True
         If True, input X is copied and stored by the model in the `X_fit_`
         attribute. If no further changes will be done to X, setting
         `copy_X=False` saves memory by storing a reference.
+
+        .. versionadded:: 0.18
 
     Attributes
     ----------
@@ -217,7 +225,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -243,13 +251,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self.fit(X, **params)
 
@@ -265,11 +273,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         check_is_fitted(self, 'X_fit_')
 
@@ -281,11 +289,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_features)
+        X_new : array-like, shape (n_samples, n_features)
 
         References
         ----------

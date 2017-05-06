@@ -68,12 +68,14 @@ data = digits.data / 16.
 data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
-data_train, targets_train = data[:n_samples / 2], digits.target[:n_samples / 2]
+data_train, targets_train = (data[:n_samples // 2],
+                             digits.target[:n_samples // 2])
 
 
 # Now predict the value of the digit on the second half:
-data_test, targets_test = data[n_samples / 2:], digits.target[n_samples / 2:]
-#data_test = scaler.transform(data_test)
+data_test, targets_test = (data[n_samples // 2:],
+                           digits.target[n_samples // 2:])
+# data_test = scaler.transform(data_test)
 
 # Create a classifier: a support vector classifier
 kernel_svm = svm.SVC(gamma=.2)

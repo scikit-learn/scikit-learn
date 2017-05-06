@@ -2,7 +2,6 @@
 #          Manoj Kumar
 # License: BSD 3 clause
 
-import warnings
 import numpy as np
 from ..externals import six
 from ..utils.fixes import in1d
@@ -48,25 +47,16 @@ def compute_class_weight(class_weight, classes, y):
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-    elif class_weight in ['auto', 'balanced']:
+    elif class_weight == 'balanced':
         # Find the weight of each class as present in y.
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
         if not all(np.in1d(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        # inversely proportional to the number of samples in the class
-        if class_weight == 'auto':
-            recip_freq = 1. / bincount(y_ind)
-            weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
-            warnings.warn("The class_weight='auto' heuristic is deprecated in"
-                          " 0.17 in favor of a new heuristic "
-                          "class_weight='balanced'. 'auto' will be removed in"
-                          " 0.19", DeprecationWarning)
-        else:
-            recip_freq = len(y) / (len(le.classes_) *
-                                   bincount(y_ind).astype(np.float64))
-            weight = recip_freq[le.transform(classes)]
+        recip_freq = len(y) / (len(le.classes_) *
+                               bincount(y_ind).astype(np.float64))
+        weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
@@ -76,7 +66,7 @@ def compute_class_weight(class_weight, classes, y):
         for c in class_weight:
             i = np.searchsorted(classes, c)
             if i >= len(classes) or classes[i] != c:
-                raise ValueError("Class label %d not present." % c)
+                raise ValueError("Class label {} not present.".format(c))
             else:
                 weight[i] = class_weight[c]
 
@@ -107,8 +97,8 @@ def compute_sample_weight(class_weight, y, indices=None):
         Array of indices to be used in a subsample. Can be of length less than
         n_samples in the case of a subsample, or equal to n_samples in the
         case of a bootstrap subsample with repeated indices. If None, the
-        sample weight will be calculated over the full sample. Only "auto" is
-        supported for class_weight if this is provided.
+        sample weight will be calculated over the full sample. Only "balanced"
+        is supported for class_weight if this is provided.
 
     Returns
     -------
@@ -122,7 +112,7 @@ def compute_sample_weight(class_weight, y, indices=None):
     n_outputs = y.shape[1]
 
     if isinstance(class_weight, six.string_types):
-        if class_weight not in ['balanced', 'auto']:
+        if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
@@ -145,7 +135,7 @@ def compute_sample_weight(class_weight, y, indices=None):
         classes_full = np.unique(y_full)
         classes_missing = None
 
-        if class_weight in ['balanced', 'auto'] or n_outputs == 1:
+        if class_weight == 'balanced' or n_outputs == 1:
             class_weight_k = class_weight
         else:
             class_weight_k = class_weight[k]

@@ -28,6 +28,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_32bit
 
@@ -207,12 +208,6 @@ def check_importances(name, criterion, X, y):
     n_important = np.sum(importances > 0.1)
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
-
-    # XXX: Remove this test in 0.19 after transform support to estimators
-    # is removed.
-    X_new = assert_warns(
-        DeprecationWarning, est.transform, X, threshold="mean")
-    assert_less(0 < X_new.shape[1], X.shape[1])
 
     # Check with parallel
     importances = est.feature_importances_
@@ -953,6 +948,12 @@ def check_class_weights(name):
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
+    # Using a Python 2.x list as the sample_weight parameter used to raise
+    # an exception. This test makes sure such code will now run correctly.
+    clf = ForestClassifier()
+    sample_weight = [1.] * len(iris.data)
+    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+
 
 def test_class_weights():
     for name in FOREST_CLASSIFIERS:
@@ -968,11 +969,9 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
     clf.fit(X, _y)
-    # smoke test for subsample and balanced subsample
+    # smoke test for balanced subsample
     clf = ForestClassifier(class_weight='balanced_subsample', random_state=0)
     clf.fit(X, _y)
-    clf = ForestClassifier(class_weight='subsample', random_state=0)
-    ignore_warnings(clf.fit)(X, _y)
 
 
 def test_class_weight_balanced_and_bootstrap_multi_output():
@@ -991,7 +990,7 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
     # Warning warm_start with preset
-    clf = ForestClassifier(class_weight='auto', warm_start=True,
+    clf = ForestClassifier(class_weight='balanced', warm_start=True,
                            random_state=0)
     assert_warns(UserWarning, clf.fit, X, y)
     assert_warns(UserWarning, clf.fit, X, _y)
@@ -1182,3 +1181,32 @@ def test_decision_path():
         yield check_decision_path, name
     for name in FOREST_REGRESSORS:
         yield check_decision_path, name
+
+
+def test_min_impurity_split():
+    # Test if min_impurity_split of base estimators is set
+    # Regression test for #8006
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [RandomForestClassifier, RandomForestRegressor,
+                      ExtraTreesClassifier, ExtraTreesRegressor]
+
+    for Estimator in all_estimators:
+        est = Estimator(min_impurity_split=0.1)
+        est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
+                                   est.fit, X, y)
+        for tree in est.estimators_:
+            assert_equal(tree.min_impurity_split, 0.1)
+
+
+def test_min_impurity_decrease():
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [RandomForestClassifier, RandomForestRegressor,
+                      ExtraTreesClassifier, ExtraTreesRegressor]
+
+    for Estimator in all_estimators:
+        est = Estimator(min_impurity_decrease=0.1)
+        est.fit(X, y)
+        for tree in est.estimators_:
+            # Simply check if the parameter is passed on correctly. Tree tests
+            # will suffice for the actual working of this param
+            assert_equal(tree.min_impurity_decrease, 0.1)

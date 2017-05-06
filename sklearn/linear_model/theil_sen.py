@@ -102,7 +102,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     spatial_median : array, shape = [n_features]
         Spatial median.
 
-    n_iter: int
+    n_iter : int
         Number of iterations needed.
 
     References
@@ -243,9 +243,12 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     tol : float, optional, default 1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : RandomState or an int seed, optional, default None
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional, default None
+        A random number generator instance to define the state of the random
+        permutations generator.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     n_jobs : integer, optional, default 1
         Number of CPUs to use during the cross validation. If ``-1``, use

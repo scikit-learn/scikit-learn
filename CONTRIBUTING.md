@@ -4,21 +4,22 @@ Contributing to scikit-learn
 
 **Note: This document is a 'getting started' summary for contributing code,
 documentation, testing, and filing issues.** Visit the [**Contributing
-page**](http://scikit-learn.org/stable/developers/index.html)
+page**](http://scikit-learn.org/stable/developers/contributing.html)
 for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
-likelihood of your contribution being merged.**
+likelihood of your contribution being merged.
 
 How to contribute
 -----------------
 
-The preferred workflow for contributing to scikit-learn is to fork the 
+The preferred workflow for contributing to scikit-learn is to fork the
 [main repository](https://github.com/scikit-learn/scikit-learn) on
 GitHub, clone, and develop on a branch. Steps:
 
 1. Fork the [project repository](https://github.com/scikit-learn/scikit-learn)
    by clicking on the 'Fork' button near the top right of the page. This creates
-   a copy of the code under your GitHub user account.
+   a copy of the code under your GitHub user account. For more details on
+   how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
 
 2. Clone your fork of the scikit-learn repo from your GitHub account to your local disk:
 
@@ -26,13 +27,13 @@ GitHub, clone, and develop on a branch. Steps:
    $ git clone git@github.com:YourLogin/scikit-learn.git
    $ cd scikit-learn
    ```
-   
+
 3. Create a ``feature`` branch to hold your development changes:
 
    ```bash
    $ git checkout -b my-feature
    ```
-   
+
    Always use a ``feature`` branch. It's good practice to never work on the ``master`` branch!
 
 4. Develop the feature on your feature branch. Add changed files using ``git add`` and then ``git commit`` files:
@@ -48,11 +49,10 @@ GitHub, clone, and develop on a branch. Steps:
    $ git push -u origin my-feature
    ```
 
-5. Go to the GitHub web page of your fork of the scikit-learn repo.
-Click the 'Pull request' button to send your changes to the project's maintainers for
-review. This will send an email to the committers.
+5. Follow [these instructions](https://help.github.com/articles/creating-a-pull-request-from-a-fork)
+to create a pull request from your fork. This will send an email to the committers.
 
-(If any of the above seems like magic to you, please look up the 
+(If any of the above seems like magic to you, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
 
 Pull Request Checklist
@@ -79,7 +79,10 @@ following rules before you submit a pull request:
 
 -  Please prefix the title of your pull request with `[MRG]` (Ready for
    Merge), if the contribution is complete and ready for a detailed review.
-   Incomplete contributions should be prefixed `[WIP]` (to indicate a work
+   Two core developers will review your code and change the prefix of the pull
+   request to `[MRG + 1]` and `[MRG + 2]` on approval, making it eligible
+   for merging. An incomplete contribution -- where you expect to do more work before
+   receiving a full review -- should be prefixed `[WIP]` (to indicate a work
    in progress) and changed to `[MRG]` when it matures. WIPs may be useful
    to: indicate you are working on something to avoid duplicated work,
    request broad review of functionality or API, or seek collaborators.
@@ -179,7 +182,7 @@ following rules before submitting:
   import scipy; print("SciPy", scipy.__version__)
   import sklearn; print("Scikit-Learn", sklearn.__version__)
   ```
-   
+
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
    [reproducible](http://stackoverflow.com/help/mcve) code snippet
@@ -228,5 +231,5 @@ Further Information
 -------------------
 
 Visit the [Contributing Code](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
-section of the website for more information including conforming to the 
+section of the website for more information including conforming to the
 API spec and profiling contributed code.

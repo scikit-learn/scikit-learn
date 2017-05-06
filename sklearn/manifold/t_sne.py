@@ -24,6 +24,7 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..utils.fixes import astype
 from ..externals.six import string_types
+from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -237,7 +238,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    neighbors: int64 array, shape (n_samples, K)
+    neighbors : int64 array, shape (n_samples, K)
         Array with element [i, j] giving the index for the jth
         closest neighbor to point i.
 
@@ -440,7 +441,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     .. math::
 
         T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1}
-            \sum_{j \in U^{(k)}_i (r(i, j) - k)}
+            \sum_{j \in U^{(k)}_i} (r(i, j) - k)
 
     where :math:`r(i, j)` is the rank of the embedded datapoint j
     according to the pairwise distances between the embedded datapoints,
@@ -546,15 +547,19 @@ class TSNE(BaseEstimator):
         least 200.
 
     n_iter_without_progress : int, optional (default: 30)
+        Only used if method='exact'
         Maximum number of iterations without progress before we abort the
-        optimization.
+        optimization. If method='barnes_hut' this parameter is fixed to
+        a value of 30 and cannot be changed.
 
         .. versionadded:: 0.17
            parameter *n_iter_without_progress* to control stopping criteria.
 
-    min_grad_norm : float, optional (default: 1E-7)
+    min_grad_norm : float, optional (default: 1e-7)
+        Only used if method='exact'
         If the gradient norm is below this threshold, the optimization will
-        be aborted.
+        be aborted. If method='barnes_hut' this parameter is fixed to a value
+        of 1e-3 and cannot be changed.
 
     metric : string or callable, optional
         The metric to use when calculating distance between instances in a
@@ -577,10 +582,12 @@ class TSNE(BaseEstimator):
     verbose : int, optional (default: 0)
         Verbosity level.
 
-    random_state : int or RandomState instance or None (default)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton. Note that different initializations
-        might result in different local minima of the cost function.
+    random_state : int, RandomState instance or None, optional (default: None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.  Note that different initializations might result in
+        different local minima of the cost function.
 
     method : string (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -611,6 +618,9 @@ class TSNE(BaseEstimator):
 
     kl_divergence_ : float
         Kullback-Leibler divergence after optimization.
+
+    n_iter_ : int
+        Number of iterations run.
 
     Examples
     --------
@@ -663,7 +673,6 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
-        self.embedding_ = None
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -784,6 +793,12 @@ class TSNE(BaseEstimator):
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
 
+    @property
+    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'n_iter_' instead")
+    def n_iter_final(self):
+        return self.n_iter_
+
     def _tsne(self, P, degrees_of_freedom, n_samples, random_state,
               X_embedded=None, neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
@@ -802,9 +817,9 @@ class TSNE(BaseEstimator):
                                                    self.n_components)
         params = X_embedded.ravel()
 
-        opt_args = {}
         opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
                     "learning_rate": self.learning_rate,
+                    "n_iter_without_progress": self.n_iter_without_progress,
                     "verbose": self.verbose, "n_iter_check": 25,
                     "kwargs": dict(skip_num_points=skip_num_points)}
         if self.method == 'barnes_hut':
@@ -829,7 +844,7 @@ class TSNE(BaseEstimator):
             opt_args['args'] = [P, degrees_of_freedom, n_samples,
                                 self.n_components]
             opt_args['min_error_diff'] = 0.0
-            opt_args['min_grad_norm'] = 0.0
+            opt_args['min_grad_norm'] = self.min_grad_norm
 
         # Early exaggeration
         P *= self.early_exaggeration
@@ -845,13 +860,14 @@ class TSNE(BaseEstimator):
             print("[t-SNE] KL divergence after %d iterations with early "
                   "exaggeration: %f" % (it + 1, kl_divergence))
         # Save the final number of iterations
-        self.n_iter_final = it
+        self.n_iter_ = it
 
         # Final optimization
         P /= self.early_exaggeration
         opt_args['n_iter'] = self.n_iter
         opt_args['it'] = it + 1
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
 
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f"

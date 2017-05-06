@@ -255,7 +255,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
     X : array-like, shape (n_samples, n_features)
         The input data array.
 
-    resp : array-like, shape (n_samples, n_features)
+    resp : array-like, shape (n_samples, n_components)
         The responsibilities for each data sample in X.
 
     reg_covar : float
@@ -450,19 +450,20 @@ class GaussianMixture(BaseMixture):
         The number of mixture components.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'},
-        defaults to 'full'.
+            defaults to 'full'.
         String describing the type of covariance parameters to use.
         Must be one of::
-        'full' (each component has its own general covariance matrix),
-        'tied' (all components share the same general covariance matrix),
-        'diag' (each component has its own diagonal covariance matrix),
-        'spherical' (each component has its own single variance).
+
+            'full' (each component has its own general covariance matrix),
+            'tied' (all components share the same general covariance matrix),
+            'diag' (each component has its own diagonal covariance matrix),
+            'spherical' (each component has its own single variance).
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
 
-    reg_covar : float, defaults to 0.
+    reg_covar : float, defaults to 1e-6.
         Non-negative regularization added to the diagonal of covariance.
         Allows to assure that the covariance matrices are all positive.
 
@@ -476,29 +477,34 @@ class GaussianMixture(BaseMixture):
         The method used to initialize the weights, the means and the
         precisions.
         Must be one of::
-        'kmeans' : responsibilities are initialized using kmeans.
-        'random' : responsibilities are initialized randomly.
+
+            'kmeans' : responsibilities are initialized using kmeans.
+            'random' : responsibilities are initialized randomly.
 
     weights_init : array-like, shape (n_components, ), optional
         The user-provided initial weights, defaults to None.
         If it None, weights are initialized using the `init_params` method.
 
-    means_init: array-like, shape (n_components, n_features), optional
+    means_init : array-like, shape (n_components, n_features), optional
         The user-provided initial means, defaults to None,
         If it None, means are initialized using the `init_params` method.
 
-    precisions_init: array-like, optional.
+    precisions_init : array-like, optional.
         The user-provided initial precisions (inverse of the covariance
         matrices), defaults to None.
         If it None, precisions are initialized using the 'init_params' method.
         The shape depends on 'covariance_type'::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state: RandomState or an int seed, defaults to None.
-        A random number generator instance.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
@@ -525,6 +531,7 @@ class GaussianMixture(BaseMixture):
     covariances_ : array-like
         The covariance of each mixture component.
         The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -538,6 +545,7 @@ class GaussianMixture(BaseMixture):
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
         The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -551,6 +559,7 @@ class GaussianMixture(BaseMixture):
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
         time. The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -720,8 +729,8 @@ class GaussianMixture(BaseMixture):
 
         Returns
         -------
-        bic: float
-            The greater the better.
+        bic : float
+            The lower the better.
         """
         return (-2 * self.score(X) * X.shape[0] +
                 self._n_parameters() * np.log(X.shape[0]))
@@ -731,11 +740,11 @@ class GaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array of shape(n_samples, n_dimensions)
+        X : array of shape (n_samples, n_dimensions)
 
         Returns
         -------
-        aic: float
-            The greater the better.
+        aic : float
+            The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()

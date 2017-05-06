@@ -282,7 +282,7 @@ def test_ridge_individual_penalties():
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag']]
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag', 'saga']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
@@ -297,11 +297,18 @@ def _test_ridge_loo(filter_):
 
     ret = []
 
-    ridge_gcv = _RidgeGCV(fit_intercept=False)
-    ridge = Ridge(alpha=1.0, fit_intercept=False)
+    fit_intercept = filter_ == DENSE_FILTER
+    if fit_intercept:
+        X_diabetes_ = X_diabetes - X_diabetes.mean(0)
+    else:
+        X_diabetes_ = X_diabetes
+    ridge_gcv = _RidgeGCV(fit_intercept=fit_intercept)
+    ridge = Ridge(alpha=1.0, fit_intercept=fit_intercept)
+
+    # because fit_intercept is applied
 
     # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute(X_diabetes_, y_diabetes, fit_intercept)
     errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
     values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
 
@@ -310,10 +317,10 @@ def _test_ridge_loo(filter_):
     values2 = []
     for i in range(n_samples):
         sel = np.arange(n_samples) != i
-        X_new = X_diabetes[sel]
+        X_new = X_diabetes_[sel]
         y_new = y_diabetes[sel]
         ridge.fit(X_new, y_new)
-        value = ridge.predict([X_diabetes[i]])[0]
+        value = ridge.predict([X_diabetes_[i]])[0]
         error = (y_diabetes[i] - value) ** 2
         errors2.append(error)
         values2.append(value)
@@ -324,7 +331,7 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute_svd(X_diabetes_, y_diabetes, fit_intercept)
     errors3, c = ridge_gcv._errors_svd(ridge.alpha, y_diabetes, *decomp)
     values3, c = ridge_gcv._values_svd(ridge.alpha, y_diabetes, *decomp)
 
@@ -597,10 +604,8 @@ def test_ridgecv_sample_weight():
 
         # Check using GridSearchCV directly
         parameters = {'alpha': alphas}
-        fit_params = {'sample_weight': sample_weight}
-        gs = GridSearchCV(Ridge(), parameters, fit_params=fit_params,
-                          cv=cv)
-        gs.fit(X, y)
+        gs = GridSearchCV(Ridge(), parameters, cv=cv)
+        gs.fit(X, y, sample_weight=sample_weight)
 
         assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
         assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
@@ -707,7 +712,7 @@ def test_n_iter():
     y_n = np.tile(y, (n_targets, 1)).T
 
     for max_iter in range(1, 4):
-        for solver in ('sag', 'lsqr'):
+        for solver in ('sag', 'saga', 'lsqr'):
             reg = Ridge(solver=solver, max_iter=max_iter, tol=1e-12)
             reg.fit(X, y_n)
             assert_array_equal(reg.n_iter_, np.tile(max_iter, n_targets))
@@ -723,12 +728,13 @@ def test_ridge_fit_intercept_sparse():
                            bias=10., random_state=42)
     X_csr = sp.csr_matrix(X)
 
-    dense = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    sparse = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    dense.fit(X, y)
-    sparse.fit(X_csr, y)
-    assert_almost_equal(dense.intercept_, sparse.intercept_)
-    assert_array_almost_equal(dense.coef_, sparse.coef_)
+    for solver in ['saga', 'sag']:
+        dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        dense.fit(X, y)
+        sparse.fit(X_csr, y)
+        assert_almost_equal(dense.intercept_, sparse.intercept_)
+        assert_array_almost_equal(dense.coef_, sparse.coef_)
 
     # test the solver switch and the corresponding warning
     sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)

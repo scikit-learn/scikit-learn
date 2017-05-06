@@ -35,7 +35,7 @@ Installing an official release
 
 Scikit-learn requires:
 
-- Python (>= 2.6 or >= 3.3),
+- Python (>= 2.7 or >= 3.3),
 - NumPy (>= 1.6.1),
 - SciPy (>= 0.9).
 
@@ -377,7 +377,7 @@ Testing scikit-learn once installed
 -----------------------------------
 
 Testing requires having the `nose
-<https://somethingaboutorange.com/mrl/projects/nose/>`_ library. After
+<https://nose.readthedocs.io/en/latest/>`_ library. After
 installation, the package can be tested by executing *from outside* the
 source directory::
 
