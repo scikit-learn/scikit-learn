@@ -2232,55 +2232,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X_col
 
-    def _dense_transform(self, X, inverse=False):
-        """Forward and inverse transform for dense matrices.
-
-        Parameters
-        ----------
-        X : ndarray, shape (n_samples, n_features)
-            The data used to scale along the features axis.
-
-        inverse : bool, optional (default=False)
-            If False, apply forward transform. If True, apply
-            inverse transform.
-
-        Returns
-        -------
-        X : ndarray, shape (n_samples, n_features)
-            Projected data
-        """
-        for feature_idx in range(X.shape[1]):
-            X[:, feature_idx] = self._transform_col(
-                X[:, feature_idx], self.quantiles_[:, feature_idx], inverse)
-
-        return X
-
-    def _sparse_transform(self, X, inverse=False):
-        """Forward and inverse transform for sparse matrices.
-
-        Parameters
-        ----------
-        X : sparse matrix CSC, shape (n_samples, n_features)
-            The data used to scale along the features axis. The sparse matrix
-            needs to be nonnegative.
-
-        inverse : bool, optional (default=False)
-            If False, apply forward transform. If True, apply
-            inverse transform.
-
-        Returns
-        -------
-        X : sparse matrix CSC, shape (n_samples, n_features)
-            Projected data.
-        """
-        for feature_idx in range(X.shape[1]):
-            column_slice = slice(X.indptr[feature_idx],
-                                 X.indptr[feature_idx + 1])
-            X.data[column_slice] = self._transform_col(
-                X.data[column_slice], self.quantiles_[:, feature_idx], inverse)
-
-        return X
-
     def _check_inputs(self, X, accept_sparse_negative=False):
         """Check inputs before fit and transform"""
         X = check_array(X, accept_sparse='csc', copy=self.copy,
@@ -2308,7 +2259,40 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             raise ValueError('X does not have the same number of features as'
                              ' the previously fitted data. Got {} instead of'
                              ' {}.'.format(X.shape[1],
-                                          self.quantiles_.shape[1]))
+                                           self.quantiles_.shape[1]))
+
+    def _transform(self, X, inverse=False):
+        """Forward and inverse transform.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            The data used to scale along the features axis.
+
+        inverse : bool, optional (default=False)
+            If False, apply forward transform. If True, apply
+            inverse transform.
+
+        Returns
+        -------
+        X : ndarray, shape (n_samples, n_features)
+            Projected data
+        """
+
+        if sparse.issparse(X):
+            for feature_idx in range(X.shape[1]):
+                column_slice = slice(X.indptr[feature_idx],
+                                     X.indptr[feature_idx + 1])
+                X.data[column_slice] = self._transform_col(
+                    X.data[column_slice], self.quantiles_[:, feature_idx],
+                    inverse)
+        else:
+            for feature_idx in range(X.shape[1]):
+                X[:, feature_idx] = self._transform_col(
+                    X[:, feature_idx], self.quantiles_[:, feature_idx],
+                    inverse)
+
+        return X
 
     def transform(self, X):
         """Feature-wise transformation of the data.
@@ -2329,10 +2313,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X = self._check_inputs(X)
         self._check_is_fitted(X)
 
-        if sparse.issparse(X):
-            return self._sparse_transform(X, inverse=False)
-        else:
-            return self._dense_transform(X, inverse=False)
+        return self._transform(X, inverse=False)
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
@@ -2351,10 +2332,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X = self._check_inputs(X, accept_sparse_negative=True)
         self._check_is_fitted(X)
 
-        if sparse.issparse(X):
-            return self._sparse_transform(X, inverse=True)
-        else:
-            return self._dense_transform(X, inverse=True)
+        return self._transform(X, inverse=True)
 
 
 def quantile_transform(X, axis=0, n_quantiles=1000,
