@@ -282,16 +282,16 @@ a uniform distribution with values between 0 and 1::
   >>> X_test_trans = quantile_transformer.transform(X_test)
 
   >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS
+  ... # doctest: +ELLIPSIS, +SKIP
   array([...])
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS
+  ... # doctest: +ELLIPSIS, +SKIP
   array([...])
   >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS
+  ... # doctest: +ELLIPSIS, +SKIP
   array([...])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS
+  ... # doctest: +ELLIPSIS, +SKIP
   array([...])
 
 It is also possible to map the transformed data to a normal distribution by
