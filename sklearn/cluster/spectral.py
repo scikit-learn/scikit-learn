@@ -160,7 +160,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
-                        eigen_tol=0.0, assign_labels='kmeans'):
+                        eigen_tol=0.0, assign_labels='kmeans', optimize=False):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -222,6 +222,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         the 'Multiclass spectral clustering' paper referenced below for
         more details on the discretization approach.
 
+    optimize : bool, optional, default: False
+        Parameter to opt whether memory optimization needs to be done in
+        the graph_laplacian function.
+
     Returns
     -------
     labels : array of integers, shape: n_samples
@@ -260,7 +264,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
-                              eigen_tol=eigen_tol, drop_first=False)
+                              eigen_tol=eigen_tol, drop_first=False,
+                              optimize=optimize)
 
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
@@ -362,6 +367,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
+    optimize : bool, optional, default: False
+        Parameter to opt whether memory optimization needs to be done in
+        the graph_laplacian function.
+    
     Attributes
     ----------
     affinity_matrix_ : array-like, shape (n_samples, n_samples)
@@ -409,7 +418,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10,
                  eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1,
-                 kernel_params=None, n_jobs=1):
+                 kernel_params=None, n_jobs=1, optimize=False):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.random_state = random_state
@@ -423,6 +432,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.coef0 = coef0
         self.kernel_params = kernel_params
         self.n_jobs = n_jobs
+        self.optimize = optimize
 
     def fit(self, X, y=None):
         """Creates an affinity matrix for X using the selected affinity,
@@ -467,7 +477,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                                            random_state=random_state,
                                            n_init=self.n_init,
                                            eigen_tol=self.eigen_tol,
-                                           assign_labels=self.assign_labels)
+                                           assign_labels=self.assign_labels,
+                                           optimize=self.optimize)
         return self
 
     @property

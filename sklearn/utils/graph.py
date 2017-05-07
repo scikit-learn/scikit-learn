@@ -78,7 +78,7 @@ else:
 
 ###############################################################################
 # Graph laplacian
-def graph_laplacian(csgraph, normed=False, return_diag=False):
+def graph_laplacian(csgraph, normed=False, return_diag=False, optimize=False):
     """ Return the Laplacian matrix of a directed graph.
 
     For non-symmetric graphs the out-degree is used in the computation.
@@ -89,6 +89,8 @@ def graph_laplacian(csgraph, normed=False, return_diag=False):
         compressed-sparse graph, with shape (N, N).
     normed : bool, optional
         If True, then compute normalized Laplacian.
+    optimize : bool, optional
+        If True, then don't create a new copy of the graph
     return_diag : bool, optional
         If True, then return diagonal as well as laplacian.
 
@@ -119,18 +121,26 @@ def graph_laplacian(csgraph, normed=False, return_diag=False):
 
     if sparse.isspmatrix(csgraph):
         return _laplacian_sparse(csgraph, normed=normed,
-                                 return_diag=return_diag)
+                                 return_diag=return_diag,optimize=optimize)
     else:
         return _laplacian_dense(csgraph, normed=normed,
-                                return_diag=return_diag)
+                                return_diag=return_diag,optimize=optimize)
 
 
-def _laplacian_sparse(graph, normed=False, return_diag=False):
+def _laplacian_sparse(graph, normed=False, return_diag=False, optimize=False):
     n_nodes = graph.shape[0]
-    if not graph.format == 'coo':
-        lap = (-graph).tocoo()
+    if optimize:
+        np.negative(graph, out=graph)
+        if not graph.format == 'coo':
+            lap = graph.tocoo(True) # prevent making a new copy
+        else:
+            lap = graph
     else:
-        lap = -graph.copy()
+        if not graph.format == 'coo':
+            lap = (-graph).tocoo()
+        else:
+            lap = -graph.copy()
+    
     diag_mask = (lap.row == lap.col)
     if not diag_mask.sum() == n_nodes:
         # The sparsity pattern of the matrix has holes on the diagonal,
@@ -162,9 +172,13 @@ def _laplacian_sparse(graph, normed=False, return_diag=False):
     return lap
 
 
-def _laplacian_dense(graph, normed=False, return_diag=False):
+def _laplacian_dense(graph, normed=False, return_diag=False, optimize=False):
     n_nodes = graph.shape[0]
-    lap = -np.asarray(graph)  # minus sign leads to a copy
+    if optimize:
+        lap = np.asarray(graph)
+        np.negative(lp, out=lp) # prevent copy during negation
+    else: 
+        lap = -np.asarray(graph) # minus sign leads to a copy
 
     # set diagonal to zero
     lap.flat[::n_nodes + 1] = 0

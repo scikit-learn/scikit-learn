@@ -132,7 +132,8 @@ def _set_diag(laplacian, value, norm_laplacian):
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+                       norm_laplacian=True, drop_first=True,
+                       optimize=False):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -187,6 +188,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     norm_laplacian : bool, optional, default=True
         If True, then compute normalized Laplacian.
 
+    optimize : bool, optional, default: False
+        Parameter to opt whether memory optimization needs to be done in
+        the graph_laplacian function.
+
     Returns
     -------
     embedding : array, shape=(n_samples, n_components)
@@ -235,7 +240,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                       " may not work as expected.")
 
     laplacian, dd = graph_laplacian(adjacency,
-                                    normed=norm_laplacian, return_diag=True)
+                                    normed=norm_laplacian, return_diag=True,optimize=optimize)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -375,6 +380,10 @@ class SpectralEmbedding(BaseEstimator):
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
+    optimize : bool, optional, default : False
+        If set to True, memory is optimized while calculating laplacian matrix
+        by not creating additional memory.
+
     Attributes
     ----------
 
@@ -402,7 +411,7 @@ class SpectralEmbedding(BaseEstimator):
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
-                 n_neighbors=None, n_jobs=1):
+                 n_neighbors=None, n_jobs=1, optimize=False):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
@@ -410,6 +419,7 @@ class SpectralEmbedding(BaseEstimator):
         self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
+        self.optimize = optimize
 
     @property
     def _pairwise(self):
@@ -497,7 +507,8 @@ class SpectralEmbedding(BaseEstimator):
         self.embedding_ = spectral_embedding(affinity_matrix,
                                              n_components=self.n_components,
                                              eigen_solver=self.eigen_solver,
-                                             random_state=random_state)
+                                             random_state=random_state,
+                                             optimize=self.optimize)
         return self
 
     def fit_transform(self, X, y=None):
