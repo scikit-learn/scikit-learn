@@ -91,6 +91,10 @@ def _check_targets(y_true, y_pred):
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
+        if y_type == "binary":
+            unique_values = np.union1d(y_true, y_pred)
+            if len(unique_values) > 2:
+                y_type = "multiclass"
 
     if y_type.startswith('multilabel'):
         y_true = csr_matrix(y_true)
@@ -237,6 +241,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
            [1, 0, 2]])
 
     In the binary case, we can extract true positives, etc as follows:
+
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
