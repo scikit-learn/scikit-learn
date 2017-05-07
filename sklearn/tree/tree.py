@@ -572,6 +572,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
+        Note that for "multiclass-multioutput" or "multilabel-indicator"
+        weights should be defined for each class of every column in its own
+        dict. For example, for four-class multilabel-indicator classification
+        weights should be [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1},
+        {0: 1, 1: 1}] instead of [{1:1}, {2:5}, {3:1}, {4:1}].
+
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
