@@ -11,12 +11,10 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 
-from abc import ABCMeta, abstractmethod
-
 import numpy as np
 from scipy import sparse
 
-from .base import clone, BaseEstimator, TransformerMixin
+from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
@@ -35,7 +33,7 @@ class Pipeline(_BaseComposition):
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement fit and transform methods.
     The final estimator only needs to implement fit.
-    The transformers in the pipeline can be cached using ```memory`` argument.
+    The transformers in the pipeline can be cached using ``memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters.
@@ -527,12 +525,26 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps):
+def make_pipeline(*steps, **kwargs):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
     does not permit, naming the estimators. Instead, their names will be set
     to the lowercase of their types automatically.
+
+    Parameters
+    ----------
+    *steps : list of estimators,
+
+    memory : Instance of joblib.Memory or string, optional (default=None)
+        Used to cache the fitted transformers of the pipeline. By default,
+        no caching is performed. If a string is given, it is the path to
+        the caching directory. Enabling caching triggers a clone of
+        the transformers before fitting. Therefore, the transformer
+        instance given to the pipeline cannot be inspected
+        directly. Use the attribute ``named_steps`` or ``steps`` to
+        inspect estimators within the pipeline. Caching the
+        transformers is advantageous when fitting is time consuming.
 
     Examples
     --------
@@ -549,7 +561,11 @@ def make_pipeline(*steps):
     -------
     p : Pipeline
     """
-    return Pipeline(_name_estimators(steps))
+    memory = kwargs.pop('memory', None)
+    if kwargs:
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
+    return Pipeline(_name_estimators(steps), memory=memory)
 
 
 def _fit_one_transformer(transformer, X, y):
