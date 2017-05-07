@@ -421,7 +421,7 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     return grad, hessp
 
 
-def _check_solver_option(solver, multi_class, penalty, dual):
+def _check_solver_option(solver, multi_class, penalty, dual, n_jobs=1):
     if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']:
         raise ValueError("Logistic Regression supports only liblinear,"
                          " newton-cg, lbfgs and sag solvers, got %s" % solver)
@@ -442,6 +442,9 @@ def _check_solver_option(solver, multi_class, penalty, dual):
         if dual:
             raise ValueError("Solver %s supports only "
                              "dual=False, got dual=%s" % (solver, dual))
+    if solver == 'liblinear' and n_jobs != 1:
+        warnings.warn("With 'solver'='liblinear', 'n_jobs' != 1 "
+                      "has no effect. Got 'n_jobs'=%s." % n_jobs)
 
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
@@ -1045,9 +1048,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-            'saga' are faster for large ones. 'liblinear' doesn't work with
-            'n_jobs'. It will use only one process even when 'multi_class' is
-            specified.
+            'saga' are faster for large ones.
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
             handle multinomial loss; 'liblinear' is limited to one-versus-rest
             schemes.
@@ -1089,11 +1090,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default: 1
-        Number of CPU cores used when parallelizing over classes
-        if multi_class='ovr'".
-        If given a value of -1, all cores are used.
-        This parameter is ignored when the solver is 'liblinear' regardless of
-        whether 'multi_class' is specified or not.
+        Number of CPU cores used when parallelizing over classes if
+        multi_class='ovr'". This parameter is ignored when the
+        ``solver``='liblinear' regardless of whether 'multi_class' is
+        specified or not. If given a value of -1, all cores are used.
 
     Attributes
     ----------
@@ -1151,6 +1151,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
@@ -1214,13 +1215,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         n_samples, n_features = X.shape
 
         _check_solver_option(self.solver, self.multi_class, self.penalty,
-                             self.dual)
+                             self.dual, self.n_jobs)
 
         if self.solver == 'liblinear':
-            if self.n_jobs != -1:
-                warnings.warn(
-                    "You're using the liblinear solver, n_jobs "
-                    "(set to {0}) will be ignored".format(self.n_jobs))
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
@@ -1592,7 +1589,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Returns self.
         """
         _check_solver_option(self.solver, self.multi_class, self.penalty,
-                             self.dual)
+                             self.dual, self.n_jobs)
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
