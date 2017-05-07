@@ -247,7 +247,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    minmax_scale: Equivalent function without the object oriented API.
+    minmax_scale: Equivalent function without the estimator API.
 
     Notes
     -----
@@ -502,7 +502,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    scale: Equivalent function without the object oriented API.
+    scale: Equivalent function without the estimator API.
 
     :class:`sklearn.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
@@ -712,7 +712,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    maxabs_scale: Equivalent function without the object oriented API.
+    maxabs_scale: Equivalent function without the estimator API.
 
     Notes
     -----
@@ -934,7 +934,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    robust_scale: Equivalent function without the object oriented API.
+    robust_scale: Equivalent function without the estimator API.
 
     :class:`sklearn.decomposition.PCA`
         Further removes the linear correlation across features with
@@ -1404,7 +1404,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    normalize: Equivalent function without the object oriented API.
+    normalize: Equivalent function without the estimator API.
     """
 
     def __init__(self, norm='l2', copy=True):
@@ -1515,7 +1515,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    binarize: Equivalent function without the object oriented API.
+    binarize: Equivalent function without the estimator API.
     """
 
     def __init__(self, threshold=0.0, copy=True):
@@ -1968,7 +1968,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
 
-     Read more in the :ref:`User Guide <preprocessing_transformer>`.
+    Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     Parameters
     ----------
@@ -1982,12 +1982,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     ignore_implicit_zeros : bool, optional (default=False)
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If false,
+        matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
     subsample : int, optional (default=1e5)
         Maximum number of samples used to estimate the quantiles for
-        computational efficiency.
+        computational efficiency. Note that the subsamplong procedure may
+        differ for value-identical sparse and dense matrices.
 
     smoothing_noise : float, optional
         Perturbs features at training time before computing quantiles by adding
@@ -2003,8 +2004,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         noise.
 
     copy : boolean, optional, (default=True)
-        Set to False to perform inplace scaling and avoid a copy (if the input
-        is already a numpy array).
+        Set to False to perform inplace transformation and avoid a copy (if the
+        input is already a numpy array).
 
     Attributes
     ----------
@@ -2018,15 +2019,15 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.preprocessing import QuantileTransformer
-    >>> RNG = np.random.RandomState(0)
-    >>> X = np.sort(RNG.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
     >>> qt = QuantileTransformer(n_quantiles=10, random_state=0)
     >>> qt.fit_transform(X) # doctest: +ELLIPSIS
     array([...])
 
     See also
     --------
-    quantile_transform : Equivalent function without the object oriented API.
+    quantile_transform : Equivalent function without the estimator API.
     StandardScaler : perform standardization that is faster, but less robust
         to outliers.
     RobustScaler : perform robust standardization that removes the influence
@@ -2053,8 +2054,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.random_state = random_state
         self.copy = copy
 
-    def _compute_quantile_one_column(self, X_col, references, random_state):
-        """Private function to compute the quantiles for one features."""
+    def _compute_quantiles_one_column(self, X_col, references, random_state):
+        """Private function to compute the quantiles for one feature."""
         if self.smoothing_noise is not None:
             X_col = X_col + random_state.normal(0, self.smoothing_noise,
                                                 size=X_col.shape)
@@ -2076,7 +2077,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
         # for compatibility issue with numpy<=1.8.X, references
         # need to be a list scaled between 0 and 100
-        references = list(map(lambda x: x * 100, self.references_))
+        references = (self.references_ * 100).tolist()
         self.quantiles_ = []
         for col in X.T:
             if self.subsample < n_samples:
@@ -2085,8 +2086,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                        random_state=random_state)
                 col = col.take(subsample_idx, mode='clip')
             self.quantiles_.append(
-                self._compute_quantile_one_column(col, references,
-                                                  random_state))
+                self._compute_quantiles_one_column(col, references,
+                                                   random_state))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2132,8 +2133,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    self._compute_quantile_one_column(column_data, references,
-                                                      random_state))
+                    self._compute_quantiles_one_column(column_data, references,
+                                                       random_state))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2152,9 +2153,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self : object
             Returns self
         """
-        X = check_array(X, accept_sparse='csc')
-        rng = check_random_state(self.random_state)
-
         if self.n_quantiles <= 0:
             raise ValueError("Invalid value for 'n_quantiles': %d. "
                              "The number of quantiles must be at least one."
@@ -2171,12 +2169,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                  "The noise std. dev. should be greater than "
                                  "0." % self.smoothing_noise)
 
-        # we only accept positive sparse matrix when ignore_implicit_zeros is
-        # false
-        if (not self.ignore_implicit_zeros and
-                (sparse.issparse(X) and np.any(X.data < 0))):
-            raise ValueError('QuantileTransformer only accepts non-negative'
-                             ' sparse matrices')
+        X = self._check_inputs(X)
+        rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles,
@@ -2279,7 +2273,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix CSC, shape (n_samples, n_features)
             Projected data.
         """
-
         for feature_idx in range(X.shape[1]):
             column_slice = slice(X.indptr[feature_idx],
                                  X.indptr[feature_idx + 1])
@@ -2288,30 +2281,34 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _check_inputs_transform(self, X):
-        """Private function to check the inputs before transforming"""
+    def _check_inputs(self, X, accept_sparse_negative=False):
+        """Check inputs before fit and transform"""
         X = check_array(X, accept_sparse='csc', copy=self.copy,
                         dtype=[np.float64, np.float32])
         # we only accept positive sparse matrix when ignore_implicit_zeros is
-        # false
-        if (not self.ignore_implicit_zeros and
+        # false and that we call fit or transform.
+        if (not accept_sparse_negative and not self.ignore_implicit_zeros and
                 (sparse.issparse(X) and np.any(X.data < 0))):
             raise ValueError('QuantileTransformer only accepts non-negative'
-                             ' sparse matrices')
-        check_is_fitted(self, 'quantiles_')
-        # check that the dimension of X are adequate with the fitted data
-        if X.shape[1] != self.quantiles_.shape[1]:
-            raise ValueError('X does not have the same number of feature than'
-                             ' the previously fitted data. Got {} instead of'
-                             ' {}'.format(X.shape[1],
-                                          self.quantiles_.shape[1]))
+                             ' sparse matrices.')
+
         # check the output PDF
         if self.output_distribution not in ('normal', 'uniform'):
-            raise ValueError("'output_distribution' has to be either 'norm' or"
-                             " 'uniform'. Got {} instead.".format(
+            raise ValueError("'output_distribution' has to be either 'normal'"
+                             " or 'uniform'. Got '{}' instead.".format(
                                  self.output_distribution))
 
         return X
+
+    def _check_is_fitted(self, X):
+        """Check the inputs before transforming"""
+        check_is_fitted(self, 'quantiles_')
+        # check that the dimension of X are adequate with the fitted data
+        if X.shape[1] != self.quantiles_.shape[1]:
+            raise ValueError('X does not have the same number of features as'
+                             ' the previously fitted data. Got {} instead of'
+                             ' {}.'.format(X.shape[1],
+                                          self.quantiles_.shape[1]))
 
     def transform(self, X):
         """Feature-wise transformation of the data.
@@ -2329,7 +2326,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = self._check_inputs_transform(X)
+        X = self._check_inputs(X)
+        self._check_is_fitted(X)
 
         if sparse.issparse(X):
             return self._sparse_transform(X, inverse=False)
@@ -2350,7 +2348,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         Xt : ndarray or sparse matrix, shape (n_samples, n_features)
             The projected data.
         """
-        X = self._check_inputs_transform(X)
+        X = self._check_inputs(X, accept_sparse_negative=True)
+        self._check_is_fitted(X)
 
         if sparse.issparse(X):
             return self._sparse_transform(X, inverse=True)
@@ -2380,10 +2379,17 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
 
-     Read more in the :ref:`User Guide <preprocessing_transformer>`.
+    Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     Parameters
     ----------
+    X : array-like, sparse matrix
+        The data to transform.
+
+    axis : int, (default=0)
+        Axis used to compute the means and standard deviations along. If 0,
+        transform each feature, otherwise (if 1) transform each sample.
+
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative density function.
@@ -2394,12 +2400,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     ignore_implicit_zeros : bool, optional (default=False)
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If false,
+        matrix are discarded to compute the quantile statistics. If False,
         these entries are treated as zeros.
 
     subsample : int, optional (default=1e5)
         Maximum number of samples used to estimate the quantiles for
-        computational efficiency.
+        computational efficiency. Note that the subsamplong procedure may
+        differ for value-identical sparse and dense matrices.
 
     smoothing_noise : float, optional
         Perturbs features at training time before computing quantiles by adding
@@ -2415,8 +2422,8 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         noise.
 
     copy : boolean, optional, (default=True)
-        Set to False to perform inplace scaling and avoid a copy (if the input
-        is already a numpy array).
+        Set to False to perform inplace transformation and avoid a copy (if the
+        input is already a numpy array).
 
     Attributes
     ----------
@@ -2430,8 +2437,8 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     --------
     >>> import numpy as np
     >>> from sklearn.preprocessing import quantile_transform
-    >>> RNG = np.random.RandomState(0)
-    >>> X = np.sort(RNG.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
+    >>> rng = np.random.RandomState(0)
+    >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
     >>> quantile_transform(X, n_quantiles=10, random_state=0)
     ... # doctest: +ELLIPSIS
     array([...])

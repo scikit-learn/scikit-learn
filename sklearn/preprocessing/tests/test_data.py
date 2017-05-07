@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
@@ -856,66 +857,88 @@ def test_robust_scaler_iris_quantiles():
 
 def test_quantile_transform_iris():
     X = iris.data
+    # uniform output distribution
     transformer = QuantileTransformer(n_quantiles=30)
     X_trans = transformer.fit_transform(X)
-    assert_array_almost_equal(np.min(X_trans, axis=0), 0.)
-    assert_array_almost_equal(np.max(X_trans, axis=0), 1.)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
+    # normal output distribution
+    transformer = QuantileTransformer(n_quantiles=30,
+                                      output_distribution='normal')
+    X_trans = transformer.fit_transform(X)
+    X_trans_inv = transformer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    # make sure it is possible to take the inverse of a sparse matrix
+    # which contain negative value; this is the case in the iris dataset
+    X_sparse = sparse.csc_matrix(X)
+    X_sparse_tran = transformer.fit_transform(X_sparse)
+    X_sparse_tran_inv = transformer.inverse_transform(X_sparse_tran)
+    assert_array_almost_equal(X_sparse.A, X_sparse_tran_inv.A)
 
 
 def test_quantile_transform_check_error():
-    X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-                  [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
-                  [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
+    X = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+                      [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+                      [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
     X = sparse.csc_matrix(X)
-    X_neg = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-                      [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
-                      [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
+    X_neg = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+                          [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+                          [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
     X_neg = sparse.csc_matrix(X_neg)
 
-    assert_raises_regex(ValueError, "Invalid value for 'n_quantiles'",
-                        QuantileTransformer(n_quantiles=0).fit, X_neg)
-    assert_raises_regex(ValueError, "Invalid value for 'subsample'",
-                        QuantileTransformer(subsample=0).fit, X_neg)
-    assert_raises_regex(ValueError, "Invalid value for 'smoothing_noise'",
-                        QuantileTransformer(smoothing_noise=0).fit, X_neg)
+    assert_raises_regex(ValueError, "Invalid value for 'n_quantiles': 0.",
+                        QuantileTransformer(n_quantiles=0).fit, X)
+    assert_raises_regex(ValueError, "Invalid value for 'subsample': 0.",
+                        QuantileTransformer(subsample=0).fit, X)
+    assert_raises_regex(ValueError, "Invalid value for 'smoothing_noise': 0.",
+                        QuantileTransformer(smoothing_noise=0).fit, X)
 
     transformer = QuantileTransformer(n_quantiles=10)
     assert_raises_regex(ValueError, "QuantileTransformer only accepts "
-                        "non-negative sparse matrices", transformer.fit, X_neg)
+                        "non-negative sparse matrices.",
+                        transformer.fit, X_neg)
     transformer.fit(X)
     assert_raises_regex(ValueError, "QuantileTransformer only accepts "
-                        "non-negative sparse matrices",
+                        "non-negative sparse matrices.",
                         transformer.transform, X_neg)
-    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
-                        "non-negative sparse matrices",
-                        transformer.inverse_transform, X_neg)
 
-    X_bad_feat = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-                           [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
+    X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+                               [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
     assert_raises_regex(ValueError, "X does not have the same number of "
-                        "feature than the previously fitted data.",
+                        "features as the previously fitted data. Got 2"
+                        " instead of 3.",
                         transformer.transform, X_bad_feat)
     assert_raises_regex(ValueError, "X does not have the same number of "
-                        "feature than the previously fitted data.",
+                        "features as the previously fitted data. Got 2"
+                        " instead of 3.",
                         transformer.inverse_transform, X_bad_feat)
 
+    transformer = QuantileTransformer(n_quantiles=10,
+                                      output_distribution='rnd')
+    # check that an error is raised at fit time
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                        " 'norm' or 'uniform'. Got rnd instead.",
-                        QuantileTransformer(
-                            n_quantiles=10,
-                            output_distribution='rnd').fit_transform, X)
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        transformer.fit, X)
+    # check that an error is raised at transform time
+    transformer.output_distribution = 'uniform'
+    transformer.fit(X)
+    X_tran = transformer.transform(X)
+    transformer.output_distribution = 'rnd'
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                        " 'norm' or 'uniform'. Got rnd instead.",
-                        QuantileTransformer(n_quantiles=10,
-                                            output_distribution='rnd').fit(
-                            X).inverse_transform, X)
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        transformer.transform, X)
+    # check that an error is raised at inverse_transform time
+    assert_raises_regex(ValueError, "'output_distribution' has to be either"
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        transformer.inverse_transform, X_tran)
 
 
-def test_quantile_transform_ignore_zeros():
-    X = np.array([[0, 0, 0, 0, 0],
-                  [1, 0, 2, 2, 1]]).T
+def test_quantile_transform_sparse_ignore_zeros():
+    X = np.array([[0, 1],
+                  [0, 0],
+                  [0, 2],
+                  [0, 2],
+                  [0, 1]])
     X_sparse = sparse.csc_matrix(X)
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
                                       n_quantiles=5)
@@ -925,10 +948,13 @@ def test_quantile_transform_ignore_zeros():
                          " only with sparse matrix. This parameter has no"
                          " effect.", transformer.fit, X)
 
-    X_gt = np.array([[0, 0, 0, 0, 0],
-                     [0, 0, 1, 1, 0]]).T
+    X_expected = np.array([[0, 0],
+                           [0, 0],
+                           [0, 1],
+                           [0, 1],
+                           [0, 0]])
     X_trans = transformer.fit_transform(X_sparse)
-    assert_almost_equal(X_gt, X_trans.A)
+    assert_almost_equal(X_expected, X_trans.A)
 
     # consider the case where sparse entries are missing values and user-given
     # zeros are to be considered
@@ -937,16 +963,16 @@ def test_quantile_transform_ignore_zeros():
     X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8])
     X_sparse = sparse.csc_matrix((X_data, (X_row, X_col)))
     X_trans = transformer.fit_transform(X_sparse)
-    X_gt = np.array([[0., 0.5],
-                     [0., 0.],
-                     [0., 1.],
-                     [0., 1.],
-                     [0., 0.5],
-                     [0., 0.],
-                     [0., 0.5],
-                     [0., 1.],
-                     [0., 0.]])
-    assert_almost_equal(X_gt, X_trans.A)
+    X_expected = np.array([[0., 0.5],
+                           [0., 0.],
+                           [0., 1.],
+                           [0., 1.],
+                           [0., 0.5],
+                           [0., 0.],
+                           [0., 0.5],
+                           [0., 1.],
+                           [0., 0.]])
+    assert_almost_equal(X_expected, X_trans.A)
 
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
                                       n_quantiles=5)
@@ -955,44 +981,62 @@ def test_quantile_transform_ignore_zeros():
     X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6])
     X_sparse = sparse.csc_matrix((X_data, (X_row, X_col)))
     X_trans = transformer.fit_transform(X_sparse)
-    X_gt = np.array([[0, 1],
-                     [0, 0.5],
-                     [0, 0.5],
-                     [0, 0.5],
-                     [0, 1],
-                     [0, 0],
-                     [0, 1]])
-    assert_almost_equal(X_gt, X_trans.A)
+    X_expected = np.array([[0, 1],
+                           [0, 0.5],
+                           [0, 0.5],
+                           [0, 0.5],
+                           [0, 1],
+                           [0, 0],
+                           [0, 1]])
+    assert_almost_equal(X_expected, X_trans.A)
+    assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
+
+    # check in conjunction with subsampling
+    transformer = QuantileTransformer(ignore_implicit_zeros=True,
+                                      n_quantiles=5,
+                                      subsample=8,
+                                      random_state=0)
+    X_trans = transformer.fit_transform(X_sparse)
+    assert_almost_equal(X_expected, X_trans.A)
     assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
 
 
 def test_quantile_transform_dense_toy():
-    X = np.array([[0, 25, 50, 75, 100],
-                  [2, 4, 6, 8, 10],
-                  [2.6, 4.1, 2.3, 9.5, 0.1]]).T
+    X = np.array([[0, 2, 2.6],
+                  [25, 4, 4.1],
+                  [50, 6, 2.3],
+                  [75, 8, 9.5],
+                  [100, 10, 0.1]])
 
     transformer = QuantileTransformer(n_quantiles=5)
     transformer.fit(X)
 
+    # using the a uniform output, each entry of X should be map between 0 and 1
+    # and equally spaced
     X_trans = transformer.fit_transform(X)
-    X_gt = np.tile(np.linspace(0, 1, num=5), (3, 1)).T
-    assert_almost_equal(np.sort(X_trans, axis=0), X_gt)
+    X_expected = np.tile(np.linspace(0, 1, num=5), (3, 1)).T
+    assert_almost_equal(np.sort(X_trans, axis=0), X_expected)
 
     X_test = np.array([
         [-1,  1,  0],
         [101, 11, 10],
     ])
-    expected = np.array([
+    X_expected = np.array([
         [0, 0, 0],
         [1, 1, 1],
     ])
-    assert_array_almost_equal(transformer.transform(X_test), expected)
+    assert_array_almost_equal(transformer.transform(X_test), X_expected)
 
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
 
 def test_quantile_transform_subsampling():
+    # Test that subsampling the input yield to a consistent results We check
+    # that the computed quantiles are almost mapped to a [0, 1] vector where
+    # values are equally spaced. The infinite norm is checked to be smaller
+    # than a given threshold. This is repeated 5 times.
+
     # dense support
     n_samples = 1000000
     X = np.sort(np.random.sample((n_samples, 1)), axis=0)
@@ -1001,7 +1045,7 @@ def test_quantile_transform_subsampling():
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
                                           n_quantiles=n_samples,
-                                          subsample=n_samples//10)
+                                          subsample=n_samples // 10)
         transformer.fit(X)
         diff = np.linspace(0, 1, n_samples) - np.ravel(transformer.quantiles_)
         inf_norm = np.max(np.abs(diff))
@@ -1020,7 +1064,7 @@ def test_quantile_transform_subsampling():
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
                                           n_quantiles=n_samples,
-                                          subsample=n_samples//10)
+                                          subsample=n_samples // 10)
         transformer.fit(X)
         diff = np.linspace(0, 1, n_samples) - np.ravel(transformer.quantiles_)
         inf_norm = np.max(np.abs(diff))
@@ -1033,9 +1077,16 @@ def test_quantile_transform_subsampling():
 
 
 def test_quantile_transform_sparse_toy():
-    X = np.array([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
-                  [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
-                  [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]]).T
+    X = np.array([[0., 2., 0.],
+                  [25., 4., 0.],
+                  [50., 0., 2.6],
+                  [0., 0., 4.1],
+                  [0., 6., 0.],
+                  [0., 8., 0.],
+                  [75., 0., 2.3],
+                  [0., 10., 0.],
+                  [0., 0., 9.5],
+                  [100., 0., 0.1]])
 
     X = sparse.csc_matrix(X)
 
@@ -1070,6 +1121,8 @@ def test_quantile_transform_axis1():
 
 
 def test_quantile_transform_bounds():
+    # Lower and upper bounds are manually mapped. We checked that in the case
+    # of a constant feature and binary feature, the bounds are properly mapped.
     X_dense = np.array([[0, 0],
                         [0, 0],
                         [1, 0]])
@@ -1084,13 +1137,28 @@ def test_quantile_transform_bounds():
 
     # check the consistency of the bounds by learning on 1 matrix
     # and transforming another
-    X = np.array([[0, 0,  1],
-                  [1, 0.5, 0]]).T
-    X1 = np.array([[0, 0, 1],
-                   [0.1, 0.5, 0.1]]).T
+    X = np.array([[0, 1],
+                  [0, 0.5],
+                  [1, 0]])
+    X1 = np.array([[0, 0.1],
+                   [0, 0.5],
+                   [1, 0.1]])
     transformer = QuantileTransformer(n_quantiles=3).fit(X)
     X_trans = transformer.transform(X1)
     assert_array_almost_equal(X_trans, X1)
+
+    # check that values outside of the range learned will be mapped properly.
+    X = np.random.random((1000, 1))
+    transformer = QuantileTransformer()
+    transformer.fit(X)
+    assert_equal(transformer.transform(-10), transformer.transform(np.min(X)))
+    assert_equal(transformer.transform(10), transformer.transform(np.max(X)))
+    assert_equal(transformer.inverse_transform(-10),
+                 transformer.inverse_transform(
+                     np.min(transformer.references_)))
+    assert_equal(transformer.inverse_transform(10),
+                 transformer.inverse_transform(
+                     np.max(transformer.references_)))
 
 
 def test_quantile_transform_add_noise_subsamples():
