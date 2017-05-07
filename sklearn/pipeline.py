@@ -562,6 +562,9 @@ def make_pipeline(*steps, **kwargs):
     p : Pipeline
     """
     memory = kwargs.pop('memory', None)
+    if kwargs:
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
     return Pipeline(_name_estimators(steps), memory=memory)
 
 
