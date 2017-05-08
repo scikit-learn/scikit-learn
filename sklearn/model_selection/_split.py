@@ -1894,7 +1894,7 @@ def train_test_split(*arrays, **options):
     [1, 4]
 
     >>> train_test_split(y, shuffle=False)
-    [[0,1,2,3], [4,5]]
+    [[0, 1, 2, 3], [4, 5]]
 
     """
     n_arrays = len(arrays)
