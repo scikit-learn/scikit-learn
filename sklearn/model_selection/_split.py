@@ -1915,7 +1915,7 @@ def train_test_split(*arrays, **options):
     arrays = indexable(*arrays)
 
     if shuffle is False:
-        train = range(int(len(arrays[0]) * (1 - test_size)) 
+        train = range(int(len(arrays[0]) * (1 - test_size))) 
         test = range(int(len(data) * (1-test_size), len(data)))
 
     else:
