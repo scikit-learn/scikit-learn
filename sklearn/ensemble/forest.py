@@ -847,7 +847,7 @@ class RandomForestClassifier(ForestClassifier):
 
         Note that for multioutput (including multilabel) weights should be
         defined for each class of every column in its own dict. For example,
-        for four-class multilabel-indicator classification weights should be
+        for four-class multilabel classification weights should be
         [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
         [{1:1}, {2:5}, {3:1}, {4:1}].
 
@@ -1254,7 +1254,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         Note that for multioutput (including multilabel) weights should be
         defined for each class of every column in its own dict. For example,
-        for four-class multilabel-indicator classification weights should be
+        for four-class multilabel classification weights should be
         [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
         [{1:1}, {2:5}, {3:1}, {4:1}].
 
