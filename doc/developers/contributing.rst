@@ -456,7 +456,8 @@ package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code. 
 
-Regression testing is used to identify and validate any code committed to the repository and see if it does not break any existing code. Any changes made to the existing code in repository such as feature enhancements, bug fixes, document changes, hot fixes, config changes or any other changes to the scikit-learn repository are tested using regression tests. During these tests both functional and non-functional areas of the features are tested. Regression testing also ensures that the change being proposed works well with other parts of the software as a whole in an integrated way. Any bug-fix or change in sklearn repository needs a regression test due to the above reasons.
+In addition, a non-regression test should go along each bug-fix to ensure that
+such bug will not occur in the future.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
 Alternatively, running 'nosetests' in a folder will run all the tests of
@@ -1163,4 +1164,3 @@ that implement common linear model patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
-
