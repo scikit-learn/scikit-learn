@@ -161,15 +161,15 @@ to merge ``master``. The command will be::
   $ git merge master
 
 with ``master`` being synchronized with the ``upstream``.
-		
-Subsequently, you need to solve the conflicts. You can refer to the `Git		
-documentation related to resolving merge conflict using the command line		
-<https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.		
-		
-.. note::		
-		
-   In the past, the policy to resolve conflicts was to rebase your branch on		
-   ``master``. GitHub interface deals with merging ``master`` better than in		
+
+Subsequently, you need to solve the conflicts. You can refer to the `Git
+documentation related to resolving merge conflict using the command line
+<https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
+
+.. note::
+
+   In the past, the policy to resolve conflicts was to rebase your branch on
+   ``master``. GitHub interface deals with merging ``master`` better than in
    the past.
 
 
@@ -464,7 +464,7 @@ is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
-different options of the code. 
+different options of the code.
 
 In addition, a non-regression test should go along each bug-fix to ensure that
 such bug will not occur in the future.
