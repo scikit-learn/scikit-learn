@@ -1123,12 +1123,13 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None):
+                 random_state=None, shuffle=True):
         _validate_shuffle_split_init(test_size, train_size)
         self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
+        self.shuffle = shuffle
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1221,6 +1222,9 @@ class ShuffleSplit(BaseShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    shuffle : boolean, optional (default=True)
+        Whether or not to shuffle the data before splitting.
+
     Examples
     --------
     >>> from sklearn.model_selection import ShuffleSplit
@@ -1234,9 +1238,7 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
-    TRAIN: [3 1 0] TEST: [2]
-    TRAIN: [2 1 3] TEST: [0]
-    TRAIN: [0 2 1] TEST: [3]
+    TRAIN: [3 1 0] TEST: [2] TRAIN: [2 1 3] TEST: [0] TRAIN: [0 2 1] TEST: [3]
     >>> rs = ShuffleSplit(n_splits=3, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
@@ -1254,9 +1256,14 @@ class ShuffleSplit(BaseShuffleSplit):
         rng = check_random_state(self.random_state)
         for i in range(self.n_splits):
             # random partition
-            permutation = rng.permutation(n_samples)
-            ind_test = permutation[:n_test]
-            ind_train = permutation[n_test:(n_test + n_train)]
+            if self.shuffle:
+                permutation = rng.permutation(n_samples)
+                ind_test = permutation[:n_test]
+                ind_train = permutation[n_test:(n_test + n_train)]
+            else:
+                ind_test = range(n_train, n_train + n_test)
+                ind_train = range(n_train)
+
             yield ind_train, ind_test
 
 
@@ -1437,6 +1444,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    shuffle : boolean, optional (default=True)
+        Whether or not to shuffle the data before splitting.
 
     Examples
     --------
@@ -1458,9 +1467,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None):
+                 random_state=None, shuffle=True):
         super(StratifiedShuffleSplit, self).__init__(
-            n_splits, test_size, train_size, random_state)
+            n_splits, test_size, train_size, random_state, shuffle)
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
@@ -1499,13 +1508,16 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = []
 
             for i, class_i in enumerate(classes):
-                permutation = rng.permutation(class_counts[i])
+                permutation = range(class_counts[i])
+                if self.shuffle:
+                    permutation = rng.permutation(class_counts[i])
                 perm_indices_class_i = np.where((y == class_i))[0][permutation]
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
-            train = rng.permutation(train)
-            test = rng.permutation(test)
+            if self.shuffle:
+                train = rng.permutation(train)
+                test = rng.permutation(test)
 
             yield train, test
 
@@ -1914,21 +1926,17 @@ def train_test_split(*arrays, **options):
 
     arrays = indexable(*arrays)
 
-    if shuffle is False:
-        train = range(int(len(arrays[0]) * (1 - test_size))) 
-        test = range(int(len(arrays[0]) * (1-test_size)), len(arrays[0]))
-
+    if stratify is not None:
+        CVClass = StratifiedShuffleSplit
     else:
-        if stratify is not None:
-            CVClass = StratifiedShuffleSplit
-        else:
-            CVClass = ShuffleSplit
+        CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=test_size,
-                     train_size=train_size,
-                     random_state=random_state)
+    cv = CVClass(test_size=test_size,
+                 train_size=train_size,
+                 random_state=random_state,
+                 shuffle=shuffle)
 
-        train, test = next(cv.split(X=arrays[0], y=stratify))
+    train, test = next(cv.split(X=arrays[0], y=stratify))
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
