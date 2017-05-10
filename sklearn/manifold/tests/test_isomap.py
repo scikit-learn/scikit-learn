@@ -129,8 +129,7 @@ def test_isomap_simple_grid_radius():
     # Similar to test_isomap_simple_grid, tests the radius mode
     # Isomap should preserve distances when all neighbors are used
     N_per_side = 5
-    Npts = N_per_side ** 2
-    radius = N_per_side**2 + 0.1 # radius containing all neighbors
+    radius = N_per_side**2 + 0.1  # radius containing all neighbors
 
     # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(N_per_side), repeat=2)))
@@ -151,4 +150,3 @@ def test_isomap_simple_grid_radius():
                                                      radius,
                                                      mode='distance').toarray()
             assert_array_almost_equal(G, G_iso)
-
