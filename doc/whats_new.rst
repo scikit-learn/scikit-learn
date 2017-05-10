@@ -195,6 +195,9 @@ Bug fixes
      sparse input.
      :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
 
+   - Fixed a bug where :func:`sklearn.linear_model.RANSACRegressor.fit` may run until
+     ``max_iter`` if finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
+
    - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
@@ -275,6 +278,11 @@ Bug fixes
 
    - Fixed a bug in :class:`svm.OneClassSVM` where it returned floats instead of
      integer classes. :issue:`8676` by :user:`Vathsala Achar <VathsalaAchar>`.
+
+   - Fixed a bug where :func:`sklearn.tree.export_graphviz` raised an error
+     when the length of features_names does not match n_features in the decision
+     tree.
+     :issue:`8512` by :user:`Li Li <aikinogard>`.
 
 API changes summary
 -------------------
