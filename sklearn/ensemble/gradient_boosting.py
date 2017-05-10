@@ -43,6 +43,7 @@ from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from scipy.special import expit
 
 from time import time
 from ..tree.tree import DecisionTreeRegressor
@@ -55,7 +56,6 @@ from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
-from ..utils.fixes import expit
 from ..utils.fixes import bincount
 from ..utils import deprecated
 from ..utils.stats import _weighted_percentile

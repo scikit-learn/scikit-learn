@@ -663,7 +663,7 @@ def log_logistic(X, out=None):
         -log(1 + exp(-x_i))     if x_i > 0
         x_i - log(1 + exp(x_i)) if x_i <= 0
 
-    For the ordinary logistic function, use ``sklearn.utils.fixes.expit``.
+    For the ordinary logistic function, use ``scipy.special.expit``.
 
     Parameters
     ----------

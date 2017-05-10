@@ -177,13 +177,6 @@ Graph Routines
   connectivity matrix is a ``scipy.sparse.csr_matrix``.
 
 
-Backports
-=========
-
-- :func:`fixes.expit`: Logistic sigmoid function. Replacement for SciPy 0.10's
-  ``scipy.special.expit``.
-
-
 ARPACK
 ------
 

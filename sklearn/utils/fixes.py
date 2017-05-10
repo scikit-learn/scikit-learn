@@ -43,31 +43,6 @@ np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
 
-try:
-    from scipy.special import expit     # SciPy >= 0.10
-    with np.errstate(invalid='ignore', over='ignore'):
-        if np.isnan(expit(1000)):       # SciPy < 0.14
-            raise ImportError("no stable expit in scipy.special")
-except ImportError:
-    def expit(x, out=None):
-        """Logistic sigmoid function, ``1 / (1 + exp(-x))``.
-
-        See sklearn.utils.extmath.log_logistic for the log of this function.
-        """
-        if out is None:
-            out = np.empty(np.atleast_1d(x).shape, dtype=np.float64)
-        out[:] = x
-
-        # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
-        # This way of computing the logistic is both fast and stable.
-        out *= .5
-        np.tanh(out, out)
-        out += 1
-        out *= .5
-
-        return out.reshape(np.shape(x))
-
-
 # little danse to see if np.copy has an 'order' keyword argument
 # Supported since numpy 1.7.0
 if 'order' in signature(np.copy).parameters:

@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 from scipy import optimize, sparse
+from scipy.special import expit
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
@@ -28,7 +29,6 @@ from ..utils.extmath import row_norms
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
 from ..exceptions import NotFittedError
-from ..utils.fixes import expit
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
