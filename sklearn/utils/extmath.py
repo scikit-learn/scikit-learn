@@ -18,8 +18,9 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
+from scipy.misc import logsumexp as scipy_logsumexp
 
-from . import check_random_state
+from . import check_random_state, deprecated
 from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
@@ -398,15 +399,14 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
+@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19"
+            "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
 def logsumexp(arr, axis=0):
     """Computes the sum of arr assuming arr is in the log domain.
-
     Returns log(sum(exp(arr))) while minimizing the possibility of
     over/underflow.
-
     Examples
     --------
-
     >>> import numpy as np
     >>> from sklearn.utils.extmath import logsumexp
     >>> a = np.arange(10)
@@ -415,13 +415,7 @@ def logsumexp(arr, axis=0):
     >>> logsumexp(a)
     9.4586297444267107
     """
-    arr = np.rollaxis(arr, axis)
-    # Use the max to normalize, as with the log this is what accumulates
-    # the less errors
-    vmax = arr.max(axis=0)
-    out = np.log(np.sum(np.exp(arr - vmax), axis=0))
-    out += vmax
-    return out
+    return scipy_logsumexp(arr, axis)
 
 
 def weighted_mode(a, w, axis=0):
