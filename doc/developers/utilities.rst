@@ -183,11 +183,6 @@ Backports
 - :func:`fixes.expit`: Logistic sigmoid function. Replacement for SciPy 0.10's
   ``scipy.special.expit``.
 
-- :func:`sparsetools.connected_components`
-  (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
-  Used in ``sklearn.cluster.hierarchical``, as well as in tests for
-  :mod:`sklearn.feature_extraction`.
-
 
 ARPACK
 ------
