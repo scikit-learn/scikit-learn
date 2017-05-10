@@ -36,6 +36,10 @@ GitHub, clone, and develop on a branch. Steps:
 
    Always use a ``feature`` branch. It's good practice to never work on the ``master`` branch!
 
+   Bug-fixes or new features should be provided with non-regression tests. Tests that verify
+   the correct behavior of the fix or feature. In this manner, further modifications on the
+   code base are granted to be consistent with the desired behavior.
+
 4. Develop the feature on your feature branch. Add changed files using ``git add`` and then ``git commit`` files:
 
    ```bash

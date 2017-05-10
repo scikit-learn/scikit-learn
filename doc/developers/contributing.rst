@@ -124,6 +124,11 @@ then submit a "pull request" (PR):
 
     and start making changes. Never work in the ``master`` branch!
 
+    Bug-fixes or new features should be provided with non-regression tests.
+    Tests that verify the correct behavior of the fix or feature. In this
+    manner, further modifications on the code base are granted to be consistent
+    with the desired behavior.
+
  5. Work on this copy, on your computer, using Git to do the version
     control. When you're done editing, do::
 
@@ -465,9 +470,6 @@ purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
-
-In addition, a non-regression test should go along each bug-fix to ensure that
-such bug will not occur in the future.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
 Alternatively, running 'nosetests' in a folder will run all the tests of
