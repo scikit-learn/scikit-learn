@@ -172,6 +172,10 @@ Enhancements
      :issue:`7674` by:user:`Yichuan Liu <yl565>`.
 
 Bug fixes
+
+   - Fixed a bug where :func:`sklearn.grid_search.BaseSearchCV.inverse_transform`
+     returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
+     :issue:`8846` by :user:`Rasmus Eriksson <MrMjauh>`
 .........
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
