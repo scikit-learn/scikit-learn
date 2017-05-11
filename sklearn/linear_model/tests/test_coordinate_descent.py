@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-from sys import version_info
 from math import sqrt
 
 import numpy as np
@@ -14,7 +13,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -25,12 +23,15 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import TempMemmap
+from sklearn.utils.fixes import sp_version
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 from sklearn.utils import check_array
+from sklearn.linear_model.cd_fast import _compute_enet_duality_gap
+from sklearn.linear_model.cd_fast import enet_coordinate_descent
 
 
 def test_lasso_zero():
@@ -668,12 +669,21 @@ def test_enet_path_positive():
 
 def test_sparse_dense_descent_paths():
     # Test that dense and sparse input give the same input for descent paths.
-    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    X, y, _, _ = build_dataset(n_samples=30, n_features=40)
     csr = sparse.csr_matrix(X)
+    max_iter = 10000
     for path in [enet_path, lasso_path]:
-        _, coefs, _ = path(X, y, fit_intercept=False, tol=1e-10)
-        _, sparse_coefs, _ = path(csr, y, fit_intercept=False, tol=1e-10)
+        _, coefs, gaps, n_iters = path(
+            X, y, fit_intercept=False, return_n_iter=True, tol=1e-10,
+            max_iter=max_iter)
+        _, sparse_coefs, sparse_gaps, sparse_n_iters = path(
+            csr, y, fit_intercept=False, return_n_iter=True, tol=1e-10,
+            max_iter=max_iter)
+        assert_greater(max_iter, max(n_iters))
+        assert_greater(max_iter, max(sparse_n_iters))
         assert_array_almost_equal(coefs, sparse_coefs)
+        assert_array_almost_equal(gaps, sparse_gaps)
+        assert_array_almost_equal(gaps, np.zeros_like(gaps), 5)
 
 
 def test_check_input_false():
@@ -804,3 +814,61 @@ def test_enet_l1_ratio():
         est.fit(X, y[:, None])
         est_desired.fit(X, y[:, None])
     assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+
+def test_enet_duality_gap():
+    n_samples = 100
+    n_features = 500
+    rng = np.random.RandomState(42)
+    kwargs = {}
+    if sp_version >= (0, 13):
+        kwargs['random_state'] = 42
+    X_csc = sparse.random(n_samples, n_features, density=0.3, **kwargs).tocsc()
+    X_csc = X_csc.astype(np.float32)
+    X = np.asfortranarray(X_csc.toarray())
+
+    def duality_gap(X, y, w, alpha, beta, positive=False):
+        """Slow numpy based formula for the duality gap of elasticnet"""
+        # TODO: implement positive=True case
+        R = y - np.dot(X, w)
+        primal = (0.5 * (R ** 2).sum()
+                  + alpha * np.abs(w).sum()
+                  + 0.5 * beta * (w ** 2).sum())
+        # realizable dual solution
+        theta = R / max(alpha, np.abs(np.dot(X.T, R)).max())
+        dual = 0.5 * ((y ** 2).sum()
+                      - alpha ** 2 * ((y / alpha - theta) ** 2).sum()
+                      - alpha ** 2 * beta * ((w ** 2).sum()))
+        return primal - dual
+
+    for positive in [False, True]:
+        w_true = rng.randn(n_features).astype(np.float32)
+        if positive:
+            w_true[w_true < 0] = 0
+        y = np.dot(X, w_true)
+
+        alpha = 1e-3
+        beta = 1e-3
+        w = w_true + rng.randn(n_features) * 1e-3
+        w = w.astype(w_true.dtype)
+
+        # Compute the dual gap on non-converged model
+        dense_gap = _compute_enet_duality_gap(
+            w, alpha, beta, positive, X, y)
+        assert dense_gap > 0
+        assert_almost_equal(dense_gap, duality_gap(X, y, w, alpha, beta))
+
+        # Compute the gap for the same problem with weights much closter to
+        # convergence
+        w_fit, gap_fit, _, _ = enet_coordinate_descent(
+            w, alpha, beta, X, y, 10000, 1e-10, rng,
+            random=0, positive=positive, screening=5)
+
+        assert_almost_equal(gap_fit, duality_gap(X, y, w_fit, alpha, beta))
+
+        # Reuse the Cython version on the final params
+        dense_gap = _compute_enet_duality_gap(
+            w_fit, alpha, beta, positive, X, y)
+        assert dense_gap > 0
+        assert_almost_equal(dense_gap, duality_gap(X, y, w_fit, alpha, beta))
+

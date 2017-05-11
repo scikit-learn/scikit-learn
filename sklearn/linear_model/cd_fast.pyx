@@ -184,7 +184,7 @@ cdef inline floating enet_duality_gap(
     cdef floating l1_norm
     cdef floating cst
     cdef floating gap
-    cdef floating yTA
+    cdef floating yTR
     cdef floating dual_norm_XtA
     cdef unsigned int i
 
@@ -209,7 +209,7 @@ cdef inline floating enet_duality_gap(
             # in the present case, XtA[i] will not reach the maximum
             XtA_data[i] = 0
 
-    yTA = dot(n_samples, y_data, 1, R_data, 1)
+    yTR = dot(n_samples, y_data, 1, R_data, 1)
 
     # R_norm2 = np.dot(R, R)
     R_norm2 = dot(n_samples, R_data, 1, R_data, 1)
@@ -226,12 +226,12 @@ cdef inline floating enet_duality_gap(
             if R_norm2 == 0:
                 dual_scaling[0] = 1. / alpha
             else:
-                dual_scaling[0] = yTA / (R_norm2 * alpha)
+                dual_scaling[0] = yTR / (R_norm2 * alpha)
         elif positive:
-            dual_scaling[0] = fmin(yTA / (alpha * R_norm2),
+            dual_scaling[0] = fmin(yTR / (alpha * R_norm2),
                                    1. / dual_norm_XtA)
         else:
-            dual_scaling[0] = fmin(fmax(yTA / (alpha * R_norm2),
+            dual_scaling[0] = fmin(fmax(yTR / (alpha * R_norm2),
                                         -1. / dual_norm_XtA),
                                    1. / dual_norm_XtA)
 
@@ -244,7 +244,7 @@ cdef inline floating enet_duality_gap(
 
     # np.dot(R.T, y)
     cst = alpha / dual_scaling[0]
-    gap = (alpha * l1_norm - cst * yTA +
+    gap = (alpha * l1_norm - cst * yTR +
            0.5 * (1. + cst ** 2) * (R_norm2 + beta * w_norm2))
 
     return gap
@@ -1175,7 +1175,7 @@ cpdef floating _compute_enet_duality_gap(
     floating alpha,
     floating beta,
     bint positive,
-    np.ndarray[floating, ndim=2, mode='fortran'] X,
+    X,
     np.ndarray[floating, ndim=1, mode='c'] y):
     """Compute the duality gap of a linear model
 
@@ -1188,14 +1188,17 @@ cpdef floating _compute_enet_duality_gap(
     else:
         dtype = np.float64
 
-    cdef floating *X_data = <floating*> X.data
     cdef floating *y_data = <floating*> y.data
     cdef floating *w_data = <floating*> w.data
-    cdef int[:] disabled = np.zeros(0, dtype=np.int32)
-    cdef floating* dual_scaling
-
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
+    cdef np.ndarray[floating, ndim=2, mode='fortran'] X_array
+    cdef floating *X_data
+    cdef floating *X_mean
+    cdef int *X_indices
+    cdef int *X_indptr
+    cdef unsigned int n_disabled = 0
+    cdef int[:] disabled = np.zeros(n_disabled, dtype=np.int32)
+    cdef floating dual_scaling = 0
+    cdef unsigned int n_tasks = 1
 
     # Compute residuals
     cdef np.ndarray[floating, ndim=1] R = y - np.dot(X, w)
@@ -1203,13 +1206,21 @@ cpdef floating _compute_enet_duality_gap(
 
     # Preallocate internal buffer required by subroutine:
     cdef np.ndarray[floating, ndim=1] XtA = np.zeros(
-        (n_features, n_tasks), dtype=dtype)
+        (n_features,), dtype=dtype)
     cdef floating *XtA_data = <floating*> XtA.data
 
     if sp.issparse(X):
-        pass
+        return 0
+       # return sparse_enet_duality_gap(
+       #     n_samples, n_features, X_data, X_indices, X_indptr,
+       #     X_mean, y_data, y_sum, R_data, w_data,
+       #                         XtA_data, &dual_scaling, alpha, beta,
+       #                         positive, disabled, n_disabled)
     else:
-        gap = enet_duality_gap(n_samples, n_features, n_tasks,
-                               X_data, y_data, R_data, w_data, XtA_data,
-                               &dual_scaling, alpha, beta, positive,
-                               disabled, 0)
+        X_array = <np.ndarray[floating, ndim=2, mode='fortran']> X
+        X_data = <floating*> X_array.data
+        return enet_duality_gap(n_samples, n_features, n_tasks,
+                                X_data, y_data, R_data, w_data,
+                                XtA_data, &dual_scaling, alpha, beta,
+                                positive, disabled, n_disabled)
+
