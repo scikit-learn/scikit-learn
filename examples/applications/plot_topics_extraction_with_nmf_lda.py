@@ -1,13 +1,14 @@
 """
-=======================================================================================
-Topic extraction with Non-negative Matrix Factorization and Latent Dirichlet Allocation
-=======================================================================================
+========================================================
+Topic extraction with Non-negative Matrix Factorization\
+and Latent Dirichlet Allocation
+========================================================
 
-This is an example of applying :class:`sklearn.decomposition.NMF`
-and :class:`sklearn.decomposition.LatentDirichletAllocation` on a corpus of documents and
-extract additive models of the topic structure of the corpus.
-The output is a list of topics, each represented as a list of terms
-(weights are not shown).
+This is an example of applying :class:`sklearn.decomposition.NMF` and
+:class:`sklearn.decomposition.LatentDirichletAllocation` on a corpus
+of documents and extract additive models of the topic structure of the
+corpus.  The output is a list of topics, each represented as a list of
+terms (weights are not shown).
 
 Non-negative Matrix Factorization is applied with two different objective
 functions: the Frobenius norm, and the generalized Kullback-Leibler divergence.
@@ -18,6 +19,7 @@ the example runnable in a couple of tens of seconds. You can try to
 increase the dimensions of the problem, but be aware that the time
 complexity is polynomial in NMF. In LDA, the time complexity is
 proportional to (n_samples * iterations).
+
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
