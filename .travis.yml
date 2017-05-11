@@ -16,6 +16,7 @@ addons:
       - python-scipy
       - libatlas3gf-base
       - libatlas-dev
+dist: trusty
 env:
   global:
     # Directory where tests are run from
@@ -24,7 +25,7 @@ env:
     - OPENBLAS_NUM_THREADS=4
   matrix:
     # This environment tests that scikit-learn can be built against
-    # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
+    # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
     - DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
       COVERAGE=true
     # This environment tests the oldest supported anaconda env
@@ -34,7 +35,7 @@ env:
     # This environment tests the newest supported anaconda env
     # It also runs tests requiring Pandas.
     - DISTRIB="conda" PYTHON_VERSION="3.6" INSTALL_MKL="true"
-      NUMPY_VERSION="1.11.3" SCIPY_VERSION="0.18.1" PANDAS_VERSION="0.19.2"
+      NUMPY_VERSION="1.11.2" SCIPY_VERSION="0.18.1" PANDAS_VERSION="0.19.2"
       CYTHON_VERSION="0.25.2" COVERAGE=true
     # This environment use pytest to run the tests. It uses the newest
     # supported anaconda env. It also runs tests requiring Pandas.
