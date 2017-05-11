@@ -36,29 +36,26 @@ Notes:
 # License: BSD 3 clause
 
 from io import BytesIO
-from os import makedirs
-from os.path import exists
+from os import makedirs, remove
+from os.path import exists, join
 
-try:
-    # Python 2
-    from urllib2 import urlopen
-    PY2 = True
-except ImportError:
-    # Python 3
-    from urllib.request import urlopen
-    PY2 = False
+import sys
 
 import numpy as np
 
-from sklearn.datasets.base import get_data_home
+from .base import get_data_home
+from .base import _fetch_and_verify_dataset
 from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
-DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
+if sys.version_info[0] < 3:
+    PY2 = True
+else:
+    PY2 = False
 
-SAMPLES_URL = DIRECTORY_URL + "samples.zip"
-COVERAGES_URL = DIRECTORY_URL + "coverages.zip"
+SAMPLES_URL = "https://ndownloader.figshare.com/files/5976075"
+COVERAGES_URL = "https://ndownloader.figshare.com/files/5976078"
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
 
@@ -69,14 +66,17 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
     This will return a numpy array of the given dtype
     """
     header = [F.readline() for i in range(header_length)]
-    make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
-    header = dict([make_tuple(line) for line in header])
+    header = dict([_make_tuple(line) for line in header])
 
     M = np.loadtxt(F, dtype=dtype)
     nodata = int(header[b'NODATA_value'])
     if nodata != -9999:
         M[nodata] = -9999
     return M
+
+
+def _make_tuple(line):
+    return (line.split()[0], float(line.split()[1]))
 
 
 def _load_csv(F):
@@ -228,7 +228,12 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
-        X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
+        expected_samples_checksum = "baa67cf5601507f07a37fdf240ea430c"
+        samples_path = join(data_home, "samples.zip")
+        _fetch_and_verify_dataset(SAMPLES_URL, samples_path,
+                                  expected_samples_checksum)
+        X = np.load(samples_path)
+        remove(samples_path)
 
         for f in X.files:
             fhandle = BytesIO(X[f])
@@ -239,13 +244,17 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
                                                            data_home))
-
-        X = np.load(BytesIO(urlopen(COVERAGES_URL).read()))
+        expected_coverages_checksum = "b3a8b24ec0390285a5f9e2528ad1013e"
+        coverages_path = join(data_home, "coverages.zip")
+        _fetch_and_verify_dataset(COVERAGES_URL, coverages_path,
+                                  expected_coverages_checksum)
+        X = np.load(coverages_path)
+        remove(coverages_path)
 
         coverages = []
         for f in X.files:
             fhandle = BytesIO(X[f])
-            print(' - converting', f)
+            print('converting {}'.format(f))
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages, dtype=dtype)
 

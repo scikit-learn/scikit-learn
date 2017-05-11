@@ -6,21 +6,16 @@
 
 import logging
 
+from os import remove
 from os.path import exists, join
 from gzip import GzipFile
-from io import BytesIO
-from contextlib import closing
-
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 import numpy as np
 import scipy.sparse as sp
 
 from .base import get_data_home
 from .base import _pkl_filepath
+from .base import _fetch_and_verify_dataset
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
@@ -28,10 +23,35 @@ from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
 
-URL = ('http://jmlr.csail.mit.edu/papers/volume5/lewis04a/'
-       'a13-vector-files/lyrl2004_vectors')
-URL_topics = ('http://jmlr.csail.mit.edu/papers/volume5/lewis04a/'
-              'a08-topic-qrels/rcv1-v2.topics.qrels.gz')
+FILE_NAMES = [
+    "lyrl2004_vectors_test_pt0.dat.gz",
+    "lyrl2004_vectors_test_pt1.dat.gz",
+    "lyrl2004_vectors_test_pt2.dat.gz",
+    "lyrl2004_vectors_test_pt3.dat.gz",
+    "lyrl2004_vectors_train.dat.gz"
+]
+
+FILE_URLS = [
+    'https://ndownloader.figshare.com/files/5976069',
+    'https://ndownloader.figshare.com/files/5976066',
+    'https://ndownloader.figshare.com/files/5976063',
+    'https://ndownloader.figshare.com/files/5976060',
+    'https://ndownloader.figshare.com/files/5976057'
+]
+FILE_CHECKSUMS = {
+    "lyrl2004_vectors_test_pt0.dat.gz":
+    'cc918f2d1b6d6c44c68693e99ff72f84',
+    "lyrl2004_vectors_test_pt1.dat.gz":
+    '904a9e58fff311e888871fa20860bd72',
+    "lyrl2004_vectors_test_pt2.dat.gz":
+    '94175b6c28f5a25e345911aaebbb1eef',
+    "lyrl2004_vectors_test_pt3.dat.gz":
+    'b68c8406241a9a7b530840faa99ad0ff',
+    "lyrl2004_vectors_train.dat.gz":
+    '9fabc46abbdd6fd84a0803d837b10bde'
+}
+
+URL_topics = 'https://ndownloader.figshare.com/files/5976048'
 
 logger = logging.getLogger()
 
@@ -124,16 +144,18 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     # load data (X) and sample_id
     if download_if_missing and (not exists(samples_path) or
                                 not exists(sample_id_path)):
-        file_urls = ["%s_test_pt%d.dat.gz" % (URL, i) for i in range(4)]
-        file_urls.append("%s_train.dat.gz" % URL)
         files = []
-        for file_url in file_urls:
+        for file_name, file_url in zip(FILE_NAMES, FILE_URLS):
             logger.warning("Downloading %s" % file_url)
-            with closing(urlopen(file_url)) as online_file:
-                # buffer the full file in memory to make possible to Gzip to
-                # work correctly
-                f = BytesIO(online_file.read())
-            files.append(GzipFile(fileobj=f))
+            archive_path = join(rcv1_dir, file_name)
+            expected_archive_checksum = FILE_CHECKSUMS[file_name]
+            _fetch_and_verify_dataset(file_url, archive_path,
+                                      expected_archive_checksum)
+            files.append(GzipFile(filename=archive_path))
+
+        # delete archives
+        for file_name in FILE_NAMES:
+            remove(join(rcv1_dir, file_name))
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
 
@@ -144,7 +166,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(sample_id, sample_id_path, compress=9)
-
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
@@ -153,8 +174,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if download_if_missing and (not exists(sample_topics_path) or
                                 not exists(topics_path)):
         logger.warning("Downloading %s" % URL_topics)
-        with closing(urlopen(URL_topics)) as online_topics:
-            f = BytesIO(online_topics.read())
+        topics_archive_path = join(rcv1_dir, "rcv1v2.topics.qrels.gz")
+        expected_topics_checksum = "4b932c58566ebfd82065d3946e454a39"
+        _fetch_and_verify_dataset(URL_topics, topics_archive_path,
+                                  expected_topics_checksum)
 
         # parse the target file
         n_cat = -1
@@ -163,7 +186,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         y = np.zeros((N_SAMPLES, N_CATEGORIES), dtype=np.uint8)
         sample_id_bis = np.zeros(N_SAMPLES, dtype=np.int32)
         category_names = {}
-        for line in GzipFile(fileobj=f, mode='rb'):
+        for line in GzipFile(filename=topics_archive_path, mode='rb'):
             line_components = line.decode("ascii").split(u" ")
             if len(line_components) == 3:
                 cat, doc, _ = line_components
@@ -177,6 +200,9 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
                     n_doc += 1
                     sample_id_bis[n_doc] = doc
                 y[n_doc, category_names[cat]] = 1
+
+        # delete archive
+        remove(topics_archive_path)
 
         # Samples in X are ordered with sample_id,
         # whereas in y, they are ordered with sample_id_bis.
@@ -195,7 +221,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
-
     else:
         y = joblib.load(sample_topics_path)
         categories = joblib.load(topics_path)

@@ -22,28 +22,20 @@ consists of 64x64 images.
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from io import BytesIO
-from os.path import exists
-from os import makedirs
-try:
-    # Python 2
-    import urllib2
-    urlopen = urllib2.urlopen
-except ImportError:
-    # Python 3
-    import urllib.request
-    urlopen = urllib.request.urlopen
+from os.path import exists, join
+from os import makedirs, remove
 
 import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home
+from .base import _fetch_and_verify_dataset
 from .base import _pkl_filepath
 from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
 
-DATA_URL = "http://cs.nyu.edu/~roweis/data/olivettifaces.mat"
+DATA_URL = "https://ndownloader.figshare.com/files/5976027"
 TARGET_FILENAME = "olivetti.pkz"
 
 # Grab the module-level docstring to use as a description of the
@@ -120,12 +112,19 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
-        fhandle = urlopen(DATA_URL)
-        buf = BytesIO(fhandle.read())
-        mfile = loadmat(buf)
+        mat_path = join(data_home, "olivettifaces.mat")
+        expected_checksum = "aa1ffbd84a31962b418e672437ea28d3"
+        _fetch_and_verify_dataset(DATA_URL, mat_path, expected_checksum)
+
+        mfile = loadmat(file_name=mat_path)
+        # delete raw .mat data
+        remove(mat_path)
+
         faces = mfile['faces'].T.copy()
         joblib.dump(faces, filepath, compress=6)
+
         del mfile
+
     else:
         faces = joblib.load(filepath)
 
