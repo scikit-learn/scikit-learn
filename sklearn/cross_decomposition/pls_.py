@@ -545,7 +545,9 @@ class PLSRegression(_PLS):
 
     where Xk and Yk are residual matrices at iteration k.
 
-    `Slides explaining PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`
+    `Slides explaining
+    PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
+
 
     For each component k, find weights u, v that optimizes:
     ``max corr(Xk u, Yk v) * std(Xk u) std(Yk u)``, such that ``|u| = 1``
@@ -682,7 +684,8 @@ class PLSCanonical(_PLS):
 
     where Xk and Yk are residual matrices at iteration k.
 
-    `Slides explaining PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`
+    `Slides explaining PLS
+    <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
 
     For each component k, find weights u, v that optimize::
 
