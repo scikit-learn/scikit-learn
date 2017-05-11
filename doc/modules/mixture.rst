@@ -303,7 +303,7 @@ with a finite Gaussian mixture model.
 An important question is how can the Dirichlet process use an infinite,
 unbounded number of clusters and still be consistent. While a full explanation
 doesn't fit this manual, one can think of its `stick breaking process
-<https://en.wikipedia.org/wiki/Dirichlet_process#The_stick-breaking_process>`
+<https://en.wikipedia.org/wiki/Dirichlet_process#The_stick-breaking_process>`_
 analogy to help understanding it. The stick breaking process is a generative
 story for the Dirichlet process. We start with a unit-length stick and in each
 step we break off a portion of the remaining stick. Each time, we associate the
