@@ -306,7 +306,7 @@ class _CFSubcluster(object):
         if self.samples_id_ is None or subcluster.samples_id_ is None:
             self.samples_id_ = None
         else:
-            self.samples_id_ += subcluster.samples_id_
+            self.samples_id_.extend(subcluster.samples_id_)
         self.linear_sum_ += subcluster.linear_sum_
         self.squared_sum_ += subcluster.squared_sum_
         self.centroid_ = self.linear_sum_ / self.n_samples_
@@ -330,8 +330,7 @@ class _CFSubcluster(object):
             if self.samples_id_ is None or nominee_cluster.samples_id_ is None:
                 self.samples_id_ = None
             else:
-                self.samples_id_ = self.samples_id_ \
-                                    + nominee_cluster.samples_id_
+                self.samples_id_.extend(nominee_cluster.samples_id_)
             return True
         return False
 
@@ -456,7 +455,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
-                 compute_labels=True, copy=True, compute_samples_indices=False):
+                 compute_labels=True, copy=True,
+                 compute_samples_indices=False):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
