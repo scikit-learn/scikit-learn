@@ -71,9 +71,16 @@ class MockClassifier(object):
     def predict(self, T):
         return T.shape[0]
 
+    def transform(self,T):
+        T = T - 2;
+        return T;
+
+    def inverse_transform(self,T):
+        T = T + 2;
+        return T;
+
     predict_proba = predict
     decision_function = predict
-    transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -160,6 +167,11 @@ def test_grid_search():
     grid_search.predict_proba(X)
     grid_search.decision_function(X)
     grid_search.transform(X)
+
+    # Test the transform operations
+    transformed = grid_search.transform(X)
+    reverse_transformed = grid_search.inverse_transform(transformed)
+    assert_equal(np.array_equal(reverse_transformed, X), True)
 
     # Test exception handling on scoring
     grid_search.scoring = 'sklearn'
