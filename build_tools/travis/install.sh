@@ -34,6 +34,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     cd
     mkdir -p download
     cd download
+    echo "Cached in $HOME/download :"
+    ls -l
     echo
     wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
         -O miniconda.sh
