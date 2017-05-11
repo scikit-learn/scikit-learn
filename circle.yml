@@ -11,7 +11,6 @@ dependencies:
   cache_directories:
     - "~/scikit_learn_data"
     - "~/scikit-learn.github.io"
-    - "~/download"
   # Check whether the doc build is required, install build dependencies and
   # run sphinx to build the doc.
   override:
