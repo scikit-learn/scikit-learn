@@ -27,7 +27,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         determined by the minimum and maximum of the input data.
         Raises ValueError if ``n_bins < 2``.
 
-        If ``n_bins`` is an array, and there is a ignored feature at
+        If ``n_bins`` is an array, and there is an ignored feature at
         index ``i``, ``n_bins[i]`` will be ignored.
 
     ignored_features : int array-like (default=None)
@@ -151,10 +151,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "of shape (n_features,).")
 
         bad_nbins_value = n_bins < 2
-        is_ignored = np.zeros(n_features).astype(bool)
-        is_ignored[ignored] = True
+        bad_nbins_value[ignored] = False
 
-        violating_indices = np.where(~is_ignored & bad_nbins_value)[0]
+        violating_indices = np.where(bad_nbins_value)[0]
         if violating_indices.shape[0] > 0:
             indices = ", ".join(str(i) for i in violating_indices)
             raise ValueError("Discretizer received an invalid number "
@@ -220,8 +219,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         return X
 
     def inverse_transform(self, Xt):
-        """Given transformed (binned) data, returns a representation of
-        the data in the original feature space.
+        """Transforms discretized data back to original feature space.
 
         Parameters
         ----------
@@ -232,7 +230,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         -------
         Xinv : numeric array-like
             Data in the original feature space.
-
         """
         Xt = self._check_X_post_fit(Xt)
         trans = self.transformed_features_
