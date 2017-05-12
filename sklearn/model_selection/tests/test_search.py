@@ -317,7 +317,7 @@ def test_grid_search_groups():
     for cv in group_cvs:
         gs = GridSearchCV(clf, grid, cv=cv)
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              gs.fit, X, y)
         gs.fit(X, y, groups=groups)
 
