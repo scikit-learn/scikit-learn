@@ -601,7 +601,7 @@ remaining hyperparameters are the parameters of the gamma priors over
 *non-informative*.  The parameters are estimated by maximizing the *marginal
 log likelihood*.
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
