@@ -160,7 +160,7 @@ class VectorizerMixin(object):
 
         Tokenize text_document into a sequence of character n-grams
         operating only inside word boundaries. n-grams at the edges
-        of words are passed with space."""
+        of words are padded with space."""
         # normalize white spaces
         text_document = self._white_spaces.sub(" ", text_document)
 
@@ -355,7 +355,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries; n-grams at the edges of words are passed with space.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -554,7 +554,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries; n-grams at the edges of words are passed with space.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
