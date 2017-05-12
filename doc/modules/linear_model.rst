@@ -533,8 +533,8 @@ This can be done by introducing `uninformative priors
 <https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
-to finding a maximum a-postiori solution under a Gaussian prior over the
-parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
+to finding a maximum a posteriori estimation under a Gaussian prior over the
+parameters :math:`w` with precision :math:`\lambda^{-1}`.  Instead of setting
 `\lambda` manually, it is possible to treat it as a random variable to be
 estimated from the data.
 
