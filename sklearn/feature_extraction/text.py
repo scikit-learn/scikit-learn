@@ -159,7 +159,8 @@ class VectorizerMixin(object):
         """Whitespace sensitive char-n-gram tokenization.
 
         Tokenize text_document into a sequence of character n-grams
-        excluding any whitespace (operating only inside word boundaries)"""
+        operating only inside word boundaries. n-grams at the edges
+        of words are padded with space."""
         # normalize white spaces
         text_document = self._white_spaces.sub(" ", text_document)
 
@@ -354,7 +355,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -397,12 +398,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    binary: boolean, default=False.
+    binary : boolean, default=False.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
 
-    dtype: type, optional
+    dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
     non_negative : boolean, default=False
@@ -512,7 +513,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
-    scipy.sparse.coo_matrix.
+    scipy.sparse.csr_matrix.
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
@@ -553,7 +554,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -966,7 +967,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
     containing every term in the collection exactly once, which prevents
-    zero divisions: idf(d, t) = log [ (1 + n) / 1 + df(d, t) ] + 1.
+    zero divisions: idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
 
     Furthermore, the formulas used to compute tf and idf depend
     on parameter settings that correspond to the SMART notation used in IR

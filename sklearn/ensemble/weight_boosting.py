@@ -38,6 +38,7 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
 from ..utils import check_array, check_X_y, check_random_state
+from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from sklearn.utils.validation import has_fit_parameter, check_is_fitted
 
@@ -115,6 +116,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             sample_weight = np.empty(X.shape[0], dtype=np.float64)
             sample_weight[:] = 1. / X.shape[0]
         else:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
             # Normalize existing weights
             sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
 
@@ -754,6 +756,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
 
+        if n_classes == 1:
+            return np.ones((X.shape[0], 1))
+
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
             proba = sum(_samme_proba(estimator, n_classes, X)
@@ -1002,7 +1007,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # Weighted sampling of the training set with replacement
         # For NumPy >= 1.7.0 use np.random.choice
-        cdf = sample_weight.cumsum()
+        cdf = stable_cumsum(sample_weight)
         cdf /= cdf[-1]
         uniform_samples = random_state.random_sample(X.shape[0])
         bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
@@ -1059,7 +1064,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         sorted_idx = np.argsort(predictions, axis=1)
 
         # Find index of median prediction for each sample
-        weight_cdf = self.estimator_weights_[sorted_idx].cumsum(axis=1)
+        weight_cdf = stable_cumsum(self.estimator_weights_[sorted_idx], axis=1)
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
 

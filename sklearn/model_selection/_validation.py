@@ -1,4 +1,3 @@
-
 """
 The :mod:`sklearn.model_selection._validation` module includes classes and
 functions to validate the model.
@@ -29,6 +28,7 @@ from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
+from ..preprocessing import LabelEncoder
 
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
@@ -265,7 +265,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if verbose > 2:
         msg += ", score=%f" % test_score
     if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(score_time))
+        total_time = score_time + fit_time
+        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     ret = [train_score, test_score] if return_train_score else [test_score]
@@ -364,7 +365,9 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
               as in '2*n_jobs'
 
     method : string, optional, default: 'predict'
-        Invokes the passed method name of the passed estimator.
+        Invokes the passed method name of the passed estimator. For
+        method='predict_proba', the columns correspond to the classes
+        in sorted order.
 
     Returns
     -------
@@ -389,6 +392,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     if not callable(getattr(estimator, method)):
         raise AttributeError('{} not implemented in estimator'
                              .format(method))
+
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        le = LabelEncoder()
+        y = le.fit_transform(y)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -472,6 +479,14 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        n_classes = len(set(y))
+        predictions_ = np.zeros((X_test.shape[0], n_classes))
+        if method == 'decision_function' and len(estimator.classes_) == 2:
+            predictions_[:, estimator.classes_[-1]] = predictions
+        else:
+            predictions_[:, estimator.classes_] = predictions
+        predictions = predictions_
     return predictions, test
 
 
@@ -565,9 +580,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, optional
         The verbosity level.
@@ -581,11 +598,14 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `scoring` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `scoring` is
-        rather a loss function (i.e. when lower is better such as with
-        `mean_squared_error`) then this is actually the complement of the
-        p-value:  1 - p-value.
+        The p-value, which approximates the probability that the score would
+        be obtained by chance. This is calculated as:
+
+        `(C + 1) / (n_permutations + 1)`
+
+        Where C is the number of permutations whose score >= the true score.
+
+        The best possible p-value is 1/(n_permutations + 1), the worst is 1.0.
 
     Notes
     -----
@@ -622,8 +642,10 @@ def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv.split(X, y, groups):
-        estimator.fit(X[train], y[train])
-        avg_score.append(scorer(estimator, X[test], y[test]))
+        X_train, y_train = _safe_split(estimator, X, y, train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train)
+        estimator.fit(X_train, y_train)
+        avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
 
 
@@ -636,13 +658,14 @@ def _shuffle(y, groups, random_state):
         for group in np.unique(groups):
             this_mask = (groups == group)
             indices[this_mask] = random_state.permutation(indices[this_mask])
-    return y[indices]
+    return safe_indexing(y, indices)
 
 
 def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
                    exploit_incremental_learning=False, n_jobs=1,
-                   pre_dispatch="all", verbose=0):
+                   pre_dispatch="all", verbose=0, shuffle=False,
+                   random_state=None):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -718,7 +741,16 @@ def learning_curve(estimator, X, y, groups=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
-    Returns
+    shuffle : boolean, optional
+        Whether to shuffle training data before taking prefixes of it
+        based on``train_sizes``.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` == 'True'.
+
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
@@ -742,9 +774,9 @@ def learning_curve(estimator, X, y, groups=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    cv_iter = cv.split(X, y, groups)
-    # Make a list since we will be iterating multiple times over the folds
-    cv_iter = list(cv_iter)
+    # Store it as list as we will be iterating over the list multiple times
+    cv_iter = list(cv.split(X, y, groups))
+
     scorer = check_scoring(estimator, scoring=scoring)
 
     n_max_training_samples = len(cv_iter[0][0])
@@ -759,17 +791,26 @@ def learning_curve(estimator, X, y, groups=None,
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
+
+    if shuffle:
+        rng = check_random_state(random_state)
+        cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
+
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv.split(X, y, groups))
+            scorer, verbose) for train, test in cv_iter)
     else:
+        train_test_proportions = []
+        for train, test in cv_iter:
+            for n_train_samples in train_sizes_abs:
+                train_test_proportions.append((train[:n_train_samples], test))
+
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            clone(estimator), X, y, scorer, train, test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
-            for train, test in cv_iter
-            for n_train_samples in train_sizes_abs)
+            for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
@@ -943,7 +984,6 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-
     scorer = check_scoring(estimator, scoring=scoring)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
@@ -951,6 +991,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
+        # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
 
     out = np.asarray(out)

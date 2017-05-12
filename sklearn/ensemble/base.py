@@ -6,6 +6,7 @@ Base class for ensemble-based estimators.
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 
 from ..base import clone
 from ..base import BaseEstimator
@@ -28,8 +29,11 @@ def _set_random_states(estimator, random_state=None):
         Estimator with potential randomness managed by random_state
         parameters.
 
-    random_state : numpy.RandomState or int, optional
-        Random state used to generate integer values.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Notes
     -----
@@ -87,12 +91,15 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
 
         # Don't instantiate estimators now! Parameters of base_estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
-        # This needs to be filled by the derived classes.
-        self.estimators_ = []
+        # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute, set the
         `base_estimator_` attribute."""
+        if not isinstance(self.n_estimators, (numbers.Integral, np.integer)):
+            raise ValueError("n_estimators must be an integer, "
+                             "got {0}.".format(type(self.n_estimators)))
+
         if self.n_estimators <= 0:
             raise ValueError("n_estimators must be greater than zero, "
                              "got {0}.".format(self.n_estimators))

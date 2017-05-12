@@ -28,7 +28,8 @@ The advantages of support vector machines are:
 The disadvantages of support vector machines include:
 
     - If the number of features is much greater than the number of
-      samples, the method is likely to give poor performances.
+      samples, avoid over-fitting in choosing :ref:`svm_kernels` and regularization
+      term is crucial.
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
@@ -77,7 +78,7 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
 
@@ -443,7 +444,7 @@ The *kernel function* can be any of the following:
   * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
     :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
+  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
   * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
@@ -516,7 +517,7 @@ test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto',
+        decision_function_shape='ovr', degree=3, gamma='auto',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
@@ -600,8 +601,11 @@ The decision function is:
 .. note::
 
     While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
-    regularization parameter, most other estimators use ``alpha``. The relation
-    between both is :math:`C = \frac{n\_samples}{alpha}`.
+    regularization parameter, most other estimators use ``alpha``. The exact
+    equivalence between the amount of regularization of two models depends on
+    the exact objective function optimized by the model. For example, when the
+    estimator used is :class:`sklearn.linear_model.Ridge <ridge>` regression,
+    the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 

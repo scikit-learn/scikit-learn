@@ -1,7 +1,4 @@
 import numpy as np
-from nose.tools import assert_almost_equal
-from nose.tools import assert_equal
-from numpy.testing import assert_array_almost_equal
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -15,7 +12,12 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.utils.testing import assert_raise_message
+
+from sklearn.utils.testing import (
+        assert_equal, assert_almost_equal, assert_raise_message,
+)
+from numpy.testing import assert_array_almost_equal
+
 
 score_funcs = [
     adjusted_rand_score,
@@ -237,3 +239,26 @@ def test_fowlkes_mallows_score():
     worst_score = fowlkes_mallows_score([0, 0, 0, 0, 0, 0],
                                         [0, 1, 2, 3, 4, 5])
     assert_almost_equal(worst_score, 0.)
+
+
+def test_fowlkes_mallows_score_properties():
+    # handcrafted example
+    labels_a = np.array([0, 0, 0, 1, 1, 2])
+    labels_b = np.array([1, 1, 2, 2, 0, 0])
+    expected = 1. / np.sqrt((1. + 3.) * (1. + 2.))
+    # FMI = TP / sqrt((TP + FP) * (TP + FN))
+
+    score_original = fowlkes_mallows_score(labels_a, labels_b)
+    assert_almost_equal(score_original, expected)
+
+    # symetric property
+    score_symetric = fowlkes_mallows_score(labels_b, labels_a)
+    assert_almost_equal(score_symetric, expected)
+
+    # permutation property
+    score_permuted = fowlkes_mallows_score((labels_a + 1) % 3, labels_b)
+    assert_almost_equal(score_permuted, expected)
+
+    # symetric and permutation(both together)
+    score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
+    assert_almost_equal(score_both, expected)
