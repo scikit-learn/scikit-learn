@@ -19,6 +19,8 @@ import operator
 import warnings
 
 import numpy as np
+import hyperopt
+from hyperopt import fmin, tpe, Trials
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
@@ -1190,3 +1192,172 @@ class RandomizedSearchCV(BaseSearchCV):
         return ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state)
+
+
+class HyperoptSearchCV(BaseSearchCV):
+    """Class for hyper parameter search integrating Hyperopt library (http://jaberg.github.io/hyperopt/)"""
+
+    def __init__(self, estimator,
+                 # Hyperopt Fmin parameters
+                 space, algo=tpe.suggest, max_evals=10, trials=None,
+                 rstate=None, allow_trials_fmin=True, pass_expr_memo_ctrl=None,
+                 catch_eval_exceptions=False, return_argmin=True,
+                 #
+                 scoring=None, fit_params=None, n_jobs=1, iid=True,
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 error_score='raise', return_train_score=True,*args):
+        super(HyperoptSearchCV, self).__init__(
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
+        # Hyperopt Fmin specifications
+        self.space = space
+        #_check_param_grid(param_grid) ->  create equivalent function
+        self.algo=algo
+        self.max_evals=max_evals
+        self.trials=trials
+        self.rstate=rstate
+        self.allow_trials_fmin=allow_trials_fmin
+        self.pass_expr_memo_ctrl=pass_expr_memo_ctrl
+        self.catch_eval_exceptions=catch_eval_exceptions
+        self.return_argmin=return_argmin
+
+    def fit(self, X, y=None, groups=None, **fit_params):
+        """Run fit with all sets of parameters.
+
+         Parameters
+         ----------
+
+         X : array-like, shape = [n_samples, n_features]
+             Training vector, where n_samples is the number of samples and
+             n_features is the number of features.
+
+         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+             Target relative to X for classification or regression;
+             None for unsupervised learning.
+
+         groups : array-like, with shape (n_samples,), optional
+             Group labels for the samples used while splitting the dataset into
+             train/test set.
+
+         **fit_params : dict of string -> object
+             Parameters passed to the ``fit`` method of the estimator
+         """
+        if self.fit_params:
+            warnings.warn('"fit_params" as a constructor argument was '
+                          'deprecated in version 0.19 and will be removed '
+                          'in version 0.21. Pass fit parameters to the '
+                          '"fit" method instead.', DeprecationWarning)
+            if fit_params:
+                warnings.warn('Ignoring fit_params passed as a constructor '
+                              'argument in favor of keyword arguments to '
+                              'the "fit" method.', RuntimeWarning)
+            else:
+                fit_params = self.fit_params
+        estimator = self.estimator
+        cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
+
+        X, y, groups = indexable(X, y, groups)
+        n_splits = cv.get_n_splits(X, y, groups)
+        # Regenerate parameter iterable for each fit
+        base_estimator = clone(self.estimator)
+
+        pre_dispatch = self.pre_dispatch
+
+        report = dict()
+
+        def to_minimize(parameters):
+            out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, pre_dispatch=pre_dispatch)\
+                (delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
+                                         train, test, self.verbose, parameters,
+                                         fit_params=fit_params,
+                                         return_train_score=self.return_train_score,
+                                         return_n_test_samples=True,
+                                         return_times=True, return_parameters=False,
+                                         error_score=self.error_score)
+                 for train, test in cv.split(X, y, groups))
+            if self.return_train_score:
+                (train_scores, test_scores, test_sample_counts, fit_time, score_time) = zip(*out)
+            else:
+                (test_scores, test_sample_counts, fit_time, score_time) = zip(*out)
+
+            report_key = len(report)
+            report[report_key] = dict()
+            if self.return_train_score:
+                report[report_key]['train_scores'] = train_scores
+            report[report_key]['test_scores'] = test_scores
+            report[report_key]['test_sample_counts'] = test_sample_counts
+            report[report_key]['fit_time'] = fit_time
+            report[report_key]['score_time'] = score_time
+            report[report_key]['parameters'] = parameters
+
+            return -1*np.median(test_scores)
+
+        self.trials = Trials()
+        best = fmin(fn=to_minimize, space=self.space, algo=self.algo,
+                    max_evals=self.max_evals, trials=self.trials,
+                    rstate=self.rstate, allow_trials_fmin=self.allow_trials_fmin,
+                    pass_expr_memo_ctrl=self.pass_expr_memo_ctrl,
+                    catch_eval_exceptions=self.catch_eval_exceptions,
+                    return_argmin=self.return_argmin)
+
+        candidate_params = [report[i]['parameters'] for i in range(len(report))]
+        n_candidates = len(candidate_params)
+
+        results = dict()
+
+        '''def _store(key_name, array, weights=None, splits=False, rank=False):
+            """A small helper to store the scores/times to the cv_results_"""
+            # When iterated first by splits, then by parameters
+            array = np.array(array, dtype=np.float64).reshape(n_splits,
+                                                              n_candidates).T
+            if splits:
+                for split_i in range(n_splits):
+                    results["split%d_%s"
+                            % (split_i, key_name)] = array[:, split_i]
+
+            array_means = np.average(array, axis=1, weights=weights)
+            results['mean_%s' % key_name] = array_means
+            # Weighted std is not directly available in numpy
+            array_stds = np.sqrt(np.average((array -
+                                             array_means[:, np.newaxis]) ** 2,
+                                            axis=1, weights=weights))
+            results['std_%s' % key_name] = array_stds
+
+            if rank:
+                results["rank_%s" % key_name] = np.asarray(
+                    rankdata(-array_means, method='min'), dtype=np.int32)
+
+        _store('test_score', test_scores, splits=True, rank=True,
+               weights=test_sample_counts if self.iid else None)
+        if self.return_train_score:
+            _store('train_score', train_scores, splits=True)
+        _store('fit_time', fit_time)
+        _store('score_time', score_time)'''
+
+        best_index = min(report.items(), key=lambda x: -1*np.median(x[1]['test_scores']))[0]
+        best_parameters = report[best_index]['parameters']
+
+        results['params'] = [report[i]['parameters'] for i in range(len(report))]
+
+        self.cv_results_ = results
+        self.best_index_ = best_index
+        self.n_splits_ = n_splits
+
+
+        self.best_parameters=best_parameters
+        self.report = report
+
+        if self.refit:
+            # fit the best estimator using the entire dataset
+            # clone first to work around broken estimators
+            best_estimator = clone(base_estimator).set_params(
+                **best_parameters)
+            if y is not None:
+                best_estimator.fit(X, y, **fit_params)
+            else:
+                best_estimator.fit(X, **fit_params)
+            self.best_estimator_ = best_estimator
+        return self
