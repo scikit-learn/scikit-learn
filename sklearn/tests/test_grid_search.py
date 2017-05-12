@@ -71,9 +71,14 @@ class MockClassifier(object):
     def predict(self, T):
         return T.shape[0]
 
+    def transform(self, X):
+        return X - self.foo_param
+
+    def inverse_transform(self, X):
+        return X + self.foo_param
+
     predict_proba = predict
     decision_function = predict
-    transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -164,6 +169,14 @@ def test_grid_search():
     # Test exception handling on scoring
     grid_search.scoring = 'sklearn'
     assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def test_transform_inverse_transform_round_trip():
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    grid_search.fit(X, y)
+    X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
+    assert_array_equal(X, X_round_trip)
 
 
 @ignore_warnings
