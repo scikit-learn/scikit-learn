@@ -853,8 +853,7 @@ def test_pipeline_wrong_memory():
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
     assert_raises_regex(ValueError, "'memory' should either be a string or a"
-                        " sklearn.externals.joblib.Memory instance, got"
-                        " 'memory=<class 'int'>' instead.",
+                        " sklearn.externals.joblib.Memory instance, got",
                         cached_pipe.fit, X, y)
 
 
