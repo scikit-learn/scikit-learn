@@ -49,16 +49,17 @@ def test_linear_regression():
     assert_array_almost_equal(reg.intercept_, [0])
     assert_array_almost_equal(reg.predict(X), [0])
 
+
 def test_linear_regression_uncertainty():
     # Test with a multivariate set.
     X = [[5.0e-6, 2.5e-1],
-        [2.0e-6, 4.0e-2],
-        [1.0e-6, 1.0e-2],
-        [5.0e-7, 2.5e-3],
-        [2.0e-7, 4.0e-4],
-        [1.0e-7, 1.0e-4]]
-    Y = [-0.5930783034, -0.592875163, -0.5928283259, 
-        -0.5928091337, -0.5928019288, -0.5928014142]
+         [2.0e-6, 4.0e-2],
+         [1.0e-6, 1.0e-2],
+         [5.0e-7, 2.5e-3],
+         [2.0e-7, 4.0e-4],
+         [1.0e-7, 1.0e-4]]
+    Y = [-0.5930783034, -0.592875163, -0.5928283259,
+         -0.5928091337, -0.5928019288, -0.5928014142]
 
     reg = LinearRegression()
     reg.fit(X, Y)
