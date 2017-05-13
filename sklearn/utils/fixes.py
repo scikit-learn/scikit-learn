@@ -43,17 +43,6 @@ np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
 
-# little danse to see if np.copy has an 'order' keyword argument
-# Supported since numpy 1.7.0
-if 'order' in signature(np.copy).parameters:
-    def safe_copy(X):
-        # Copy, but keep the order
-        return np.copy(X, order='K')
-else:
-    # Before an 'order' argument was introduced, numpy wouldn't muck with
-    # the ordering
-    safe_copy = np.copy
-
 try:
     if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
                         np.divide(.4, 1, casting="unsafe", dtype=np.float64))
