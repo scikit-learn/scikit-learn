@@ -19,11 +19,11 @@ xx, yy = np.meshgrid(np.linspace(-3, 3, 500),
                      np.linspace(-3, 3, 500))
 np.random.seed(0)
 X = np.random.randn(300, 2)
-Y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
+y = np.logical_xor(X[:, 0] > 0, X[:, 1] > 0)
 
 # fit the model
 clf = svm.NuSVC()
-clf.fit(X, Y)
+clf.fit(X, y)
 
 # plot the decision function for each datapoint on the grid
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
@@ -34,7 +34,7 @@ plt.imshow(Z, interpolation='nearest',
            origin='lower', cmap=plt.cm.PuOr_r)
 contours = plt.contour(xx, yy, Z, levels=[0], linewidths=2,
                        linetypes='--')
-plt.scatter(X[:, 0], X[:, 1], s=30, c=Y, cmap=plt.cm.Paired,
+plt.scatter(X[:, 0], X[:, 1], s=30, c=y, cmap=plt.cm.Paired,
             edgecolors='k')
 plt.xticks(())
 plt.yticks(())

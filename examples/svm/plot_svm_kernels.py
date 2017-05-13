@@ -41,7 +41,7 @@ X = np.c_[(.4, -.7),
           (.2, -2.3),
           (0, -2.7),
           (1.3, 2.1)].T
-Y = [0] * 8 + [1] * 8
+y = [0] * 8 + [1] * 8
 
 # figure number
 fignum = 1
@@ -49,7 +49,7 @@ fignum = 1
 # fit the model
 for kernel in ('linear', 'poly', 'rbf'):
     clf = svm.SVC(kernel=kernel, gamma=2)
-    clf.fit(X, Y)
+    clf.fit(X, y)
 
     # plot the line, the points, and the nearest vectors to the plane
     plt.figure(fignum, figsize=(4, 3))
@@ -57,7 +57,7 @@ for kernel in ('linear', 'poly', 'rbf'):
 
     plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
                 facecolors='none', zorder=10, edgecolors='k')
-    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired,
+    plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired,
                 edgecolors='k')
 
     plt.axis('tight')

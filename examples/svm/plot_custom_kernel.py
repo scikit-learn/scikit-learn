@@ -17,26 +17,26 @@ from sklearn import svm, datasets
 iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features. We could
                       # avoid this ugly slicing by using a two-dim dataset
-Y = iris.target
+y = iris.target
 
 
-def my_kernel(X, Y):
+def my_kernel(X, y):
     """
     We create a custom kernel:
 
                  (2  0)
-    k(X, Y) = X  (    ) Y.T
+    k(X, y) = X  (    ) y.T
                  (0  1)
     """
     M = np.array([[2, 0], [0, 1.0]])
-    return np.dot(np.dot(X, M), Y.T)
+    return np.dot(np.dot(X, M), y.T)
 
 
 h = .02  # step size in the mesh
 
 # we create an instance of SVM and fit out data.
 clf = svm.SVC(kernel=my_kernel)
-clf.fit(X, Y)
+clf.fit(X, y)
 
 # Plot the decision boundary. For that, we will assign a color to each
 # point in the mesh [x_min, x_max]x[y_min, y_max].
@@ -50,7 +50,7 @@ Z = Z.reshape(xx.shape)
 plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
 # Plot also the training points
-plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired, edgecolors='k')
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors='k')
 plt.title('3-Class classification using Support Vector Machine with custom'
           ' kernel')
 plt.axis('tight')
