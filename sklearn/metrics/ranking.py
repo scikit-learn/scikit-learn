@@ -29,7 +29,6 @@ from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
-from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
@@ -742,10 +741,10 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
         # Sort and bin the label scores
         unique_scores, unique_inverse = np.unique(y_score[i],
                                                   return_inverse=True)
-        true_at_reversed_rank = bincount(
+        true_at_reversed_rank = np.bincount(
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
-        all_at_reversed_rank = bincount(unique_inverse,
+        all_at_reversed_rank = np.bincount(unique_inverse,
                                         minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 

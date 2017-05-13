@@ -31,7 +31,6 @@ from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
-from .utils.fixes import bincount
 from .gaussian_process.kernels import Kernel as GPKernel
 from .exceptions import FitFailedWarning
 
@@ -541,7 +540,7 @@ class StratifiedKFold(_BaseKFold):
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
-        label_counts = bincount(y_inversed)
+        label_counts = np.bincount(y_inversed)
         min_labels = np.min(label_counts)
         if np.all(self.n_folds > label_counts):
             raise ValueError("All the n_labels for individual classes"
@@ -1072,7 +1071,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
-        if np.min(bincount(self.y_indices)) < 2:
+        if np.min(np.bincount(self.y_indices)) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
                              " number of labels for any class cannot"
@@ -1089,7 +1088,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
-        cls_count = bincount(self.y_indices)
+        cls_count = np.bincount(self.y_indices)
 
         for n in range(self.n_iter):
             # if there are ties in the class-counts, we want

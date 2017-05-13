@@ -23,7 +23,6 @@ from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
-from .utils.fixes import bincount
 from .utils.multiclass import check_classification_targets
 from .preprocessing import StandardScaler
 
@@ -431,7 +430,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         if self.priors is None:  # estimate priors from sample
             _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
-            self.priors_ = bincount(y_t) / float(len(y))
+            self.priors_ = np.bincount(y_t) / float(len(y))
         else:
             self.priors_ = np.asarray(self.priors)
 
@@ -642,7 +641,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
         if self.priors is None:
-            self.priors_ = bincount(y) / float(n_samples)
+            self.priors_ = np.bincount(y) / float(n_samples)
         else:
             self.priors_ = self.priors
 
