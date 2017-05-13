@@ -23,29 +23,26 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 # License: BSD 3 clause
 
 from __future__ import print_function
+from __future__ import division
 
-import logging
 import numpy as np
-from optparse import OptionParser
-import sys
-from time import time
 import matplotlib.pyplot as plt
 
+import logging
+import sys
+from time import time
+from optparse import OptionParser
+
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_selection import SelectFromModel
-from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.linear_model import RidgeClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer, HashingVectorizer
+from sklearn.feature_selection import SelectFromModel, SelectKBest, chi2
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import (SGDClassifier, Perceptron, RidgeClassifier,
+                                  PassiveAggressiveClassifier)
+from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
+from sklearn.pipeline import Pipeline
 from sklearn.utils.extmath import density
 from sklearn import metrics
 
@@ -297,7 +294,9 @@ results.append(benchmark(Pipeline([
 
 indices = np.arange(len(results))
 
-results = [[x[i] for x in results] for i in range(4)]
+# Sort results by score (accuracy)
+results = [[x[i] for x in sorted(results, key=lambda x: x[1])]
+           for i in range(4)]
 
 clf_names, score, training_time, test_time = results
 training_time = np.array(training_time) / np.max(training_time)
