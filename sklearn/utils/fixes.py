@@ -141,14 +141,6 @@ else:
                 X.max(axis=axis).toarray().ravel())
 
 
-try:
-    from numpy import argpartition
-except ImportError:
-    # numpy.argpartition was introduced in v 1.8.0
-    def argpartition(a, kth, axis=-1, kind='introselect', order=None):
-        return np.argsort(a, axis=axis, order=order)
-
-
 if sp_version < (0, 15):
     # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
