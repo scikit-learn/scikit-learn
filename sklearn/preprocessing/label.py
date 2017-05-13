@@ -18,7 +18,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
 from ..utils.fixes import astype
-from ..utils.fixes import in1d
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -520,7 +519,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = in1d(y, classes)
+        y_in_classes = np.in1d(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
         indptr = np.hstack((0, np.cumsum(y_in_classes)))

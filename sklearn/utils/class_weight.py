@@ -4,7 +4,6 @@
 
 import numpy as np
 from ..externals import six
-from ..utils.fixes import in1d
 
 from .fixes import bincount
 
@@ -170,7 +169,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         if classes_missing:
             # Make missing classes' weight zero
-            weight_k[in1d(y_full, list(classes_missing))] = 0.
+            weight_k[np.in1d(y_full, list(classes_missing))] = 0.
 
         expanded_class_weight.append(weight_k)
 
