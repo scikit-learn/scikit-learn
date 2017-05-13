@@ -529,7 +529,7 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
-            copy=False, sample_weight=sample_weight)
+            copy=self.copy_X, sample_weight=sample_weight)
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
