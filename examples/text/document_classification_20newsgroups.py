@@ -290,12 +290,12 @@ results.append(benchmark(Pipeline([
                                                   tol=1e-3))),
   ('classification', LinearSVC(penalty="l2"))])))
 
-# make some plots
-
+# Make some plots
+# Compute plot indices for results
 indices = np.arange(len(results))
 
 # Sort results by score (accuracy)
-results = [[x[i] for x in sorted(results, key=lambda x: x[1])]
+results = [[result[i] for result in sorted(results, key=lambda r: r[1])]
            for i in range(4)]
 
 clf_names, score, training_time, test_time = results
