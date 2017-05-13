@@ -20,7 +20,7 @@ import numpy as np
 
 from ..externals.six import string_types
 from .validation import check_array
-from ..utils.fixes import array_equal
+
 
 
 def _unique_multiclass(y):
@@ -298,7 +298,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, 'classes_', None) is not None:
-            if not array_equal(clf.classes_, unique_labels(classes)):
+            if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))

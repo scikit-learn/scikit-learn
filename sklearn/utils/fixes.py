@@ -206,20 +206,6 @@ else:
                 raise
 
 
-if np_version < (1, 8, 1):
-    def array_equal(a1, a2):
-        # copy-paste from numpy 1.8.1
-        try:
-            a1, a2 = np.asarray(a1), np.asarray(a2)
-        except:
-            return False
-        if a1.shape != a2.shape:
-            return False
-        return bool(np.asarray(a1 == a2).all())
-else:
-    from numpy import array_equal
-
-
 if np_version < (1, 12):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
