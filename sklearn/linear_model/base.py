@@ -483,12 +483,10 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         if dof > 0:
             diag = np.diagonal(XTX_inv)
-            var_beta = np.outer(diag, np.sum(
-                residual**2, axis=0)) / dof
+            var_beta = np.outer(diag, np.sum(residual**2, axis=0)) / dof
             stdev = np.sqrt(var_beta).reshape(beta.shape)
             self.stdev_ = \
                 stdev.T if coef.shape[1] > 1 else stdev.reshape(-1,)
-        return self
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -527,6 +525,7 @@ class LinearRegression(LinearModel, RegressorMixin):
             dof = n - p
             if dof >= 0:
                 self.matrix_fit(X, y, n, p, dof, sample_weight)
+                return self
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,

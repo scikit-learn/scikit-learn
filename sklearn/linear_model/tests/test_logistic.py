@@ -1097,3 +1097,42 @@ def test_warm_start():
                     else:
                         assert_greater(cum_diff, 2.0, msg)
 
+
+def test_saga_vs_liblinear():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X = np.concatenate([X] * 10)
+    y = np.concatenate([y] * 10)
+
+    X_bin = X[y <= 1]
+    y_bin = y[y <= 1] * 2 - 1
+
+    X_sparse, y_sparse = make_classification(n_samples=50, n_features=20,
+                                             random_state=0)
+    X_sparse = sparse.csr_matrix(X_sparse)
+
+    for (X, y) in ((X_bin, y_bin), (X_sparse, y_sparse)):
+        for penalty in ['l1', 'l2']:
+            n_samples = X.shape[0]
+            # alpha=1e-3 is time consuming
+            for alpha in np.logspace(-1, 1, 3):
+                saga = LogisticRegression(
+                    C=1. / (n_samples * alpha),
+                    solver='saga',
+                    multi_class='ovr',
+                    max_iter=200,
+                    fit_intercept=False,
+                    penalty=penalty, random_state=0, tol=1e-24)
+
+                liblinear = LogisticRegression(
+                    C=1. / (n_samples * alpha),
+                    solver='liblinear',
+                    multi_class='ovr',
+                    max_iter=200,
+                    fit_intercept=False,
+                    penalty=penalty, random_state=0, tol=1e-24)
+
+                saga.fit(X, y)
+                liblinear.fit(X, y)
+                # Convergence for alpha=1e-3 is very slow
+                assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
