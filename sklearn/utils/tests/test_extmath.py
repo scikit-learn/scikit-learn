@@ -32,7 +32,6 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
-from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
@@ -424,84 +423,6 @@ def test_logistic_sigmoid():
 
     extreme_x = np.array([-100., 100.])
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
-
-
-def test_fast_dot():
-    # Check fast dot blas wrapper function
-    if fast_dot is np.dot:
-        return
-
-    rng = np.random.RandomState(42)
-    A = rng.random_sample([2, 10])
-    B = rng.random_sample([2, 10])
-
-    try:
-        linalg.get_blas_funcs(['gemm'])[0]
-        has_blas = True
-    except (AttributeError, ValueError):
-        has_blas = False
-
-    if has_blas:
-        # Test _fast_dot for invalid input.
-
-        # Maltyped data.
-        for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
-            assert_raises(ValueError, _fast_dot, A.astype(dt1),
-                          B.astype(dt2).T)
-
-        # Malformed data.
-
-        # ndim == 0
-        E = np.empty(0)
-        assert_raises(ValueError, _fast_dot, E, E)
-
-        # ndim == 1
-        assert_raises(ValueError, _fast_dot, A, A[0])
-
-        # ndim > 2
-        assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
-
-        # min(shape) == 1
-        assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
-
-        # test for matrix mismatch error
-        assert_raises(ValueError, _fast_dot, A, A)
-
-    # Test cov-like use case + dtypes.
-    for dtype in ['f8', 'f4']:
-        A = A.astype(dtype)
-        B = B.astype(dtype)
-
-        #  col < row
-        C = np.dot(A.T, A)
-        C_ = fast_dot(A.T, A)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A.T, B)
-        C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A, B.T)
-        C_ = fast_dot(A, B.T)
-        assert_almost_equal(C, C_, decimal=5)
-
-    # Test square matrix * rectangular use case.
-    A = rng.random_sample([2, 2])
-    for dtype in ['f8', 'f4']:
-        A = A.astype(dtype)
-        B = B.astype(dtype)
-
-        C = np.dot(A, B)
-        C_ = fast_dot(A, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A.T, B)
-        C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-    if has_blas:
-        for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
-            assert_raises(ValueError, _fast_dot, x, x.T)
 
 
 def test_incremental_variance_update_formulas():

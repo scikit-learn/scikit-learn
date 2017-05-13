@@ -17,7 +17,6 @@ from ..neighbors import BallTree
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
-from ..utils.extmath import _ravel
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
@@ -158,7 +157,8 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     grad = np.ndarray((n_samples, n_components))
     PQd = squareform((P - Q) * n)
     for i in range(skip_num_points, n_samples):
-        np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded, out=grad[i])
+        np.dot(np.ravel(PQd[i], order='K'), X_embedded[i] - X_embedded,
+               out=grad[i])
     grad = grad.ravel()
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad *= c
