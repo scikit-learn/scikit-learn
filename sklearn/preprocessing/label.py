@@ -38,20 +38,6 @@ __all__ = [
 ]
 
 
-def _check_numpy_unicode_bug(labels):
-    """Check that user is not subject to an old numpy bug
-
-    Fixed in master before 1.7.0:
-
-      https://github.com/numpy/numpy/pull/243
-
-    """
-    if np_version[:3] < (1, 7, 0) and labels.dtype.kind == 'U':
-        raise RuntimeError("NumPy < 1.7.0 does not implement searchsorted"
-                           " on unicode data correctly. Please upgrade"
-                           " NumPy to use LabelEncoder with unicode inputs.")
-
-
 class LabelEncoder(BaseEstimator, TransformerMixin):
     """Encode labels with value between 0 and n_classes-1.
 
@@ -109,7 +95,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
         return self
 
@@ -126,7 +111,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         return y
 
@@ -146,7 +130,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y = column_or_1d(y, warn=True)
 
         classes = np.unique(y)
-        _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
