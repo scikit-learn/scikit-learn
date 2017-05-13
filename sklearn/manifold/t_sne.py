@@ -21,7 +21,6 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..utils.fixes import astype
 from ..externals.six import string_types
 from ..utils import deprecated
 
@@ -52,7 +51,7 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
     """
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
-    distances = astype(distances, np.float32, copy=False)
+    distances = distances.astype(np.float32, copy=False)
     conditional_P = _utils._binary_search_perplexity(
         distances, None, desired_perplexity, verbose)
     P = conditional_P + conditional_P.T
@@ -89,8 +88,8 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
     """
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
-    distances = astype(distances, np.float32, copy=False)
-    neighbors = astype(neighbors, np.int64, copy=False)
+    distances = distances.astype(np.float32, copy=False)
+    neighbors = neighbors.astype(np.int64, copy=False)
     conditional_P = _utils._binary_search_perplexity(
         distances, neighbors, desired_perplexity, verbose)
     m = "All probabilities should be finite"
@@ -277,9 +276,9 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
         Unraveled gradient of the Kullback-Leibler divergence with respect to
         the embedding.
     """
-    params = astype(params, np.float32, copy=False)
+    params = params.astype(np.float32, copy=False)
     X_embedded = params.reshape(n_samples, n_components)
-    neighbors = astype(neighbors, np.int64, copy=False)
+    neighbors = neighbors.astype(np.int64, copy=False)
     if len(P.shape) == 1:
         sP = squareform(P).astype(np.float32)
     else:

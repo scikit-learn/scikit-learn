@@ -72,18 +72,6 @@ except TypeError:
 
 
 try:
-    np.array(5).astype(float, copy=False)
-except TypeError:
-    # Compat where astype accepted no copy argument (numpy < 1.7.0)
-    def astype(array, dtype, copy=True):
-        if not copy and array.dtype == dtype:
-            return array
-        return array.astype(dtype)
-else:
-    astype = np.ndarray.astype
-
-
-try:
     with warnings.catch_warnings(record=True):
         # Don't raise the numpy deprecation warnings that appear in
         # 1.9, but avoid Python bug due to simplefilter('ignore')

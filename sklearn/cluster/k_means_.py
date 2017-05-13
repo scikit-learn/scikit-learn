@@ -22,7 +22,6 @@ from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.fixes import astype
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
@@ -1069,9 +1068,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                       % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
-                assign_rows_csr(X,
-                                astype(new_centers, np.intp),
-                                astype(np.where(to_reassign)[0], np.intp),
+                assign_rows_csr(X, new_centers.astype(np.intp),
+                                np.where(to_reassign)[0].astype(np.intp),
                                 centers)
             else:
                 centers[to_reassign] = X[new_centers]

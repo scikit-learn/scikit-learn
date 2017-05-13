@@ -15,9 +15,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
-from ..utils.fixes import astype
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -523,7 +521,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = astype(Y, int, copy=False)
+        Y = Y.astype(int, copy=False)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -531,7 +529,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         if pos_switch:
             Y[Y == pos_label] = 0
     else:
-        Y.data = astype(Y.data, int, copy=False)
+        Y.data = Y.data.astype(int, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):
