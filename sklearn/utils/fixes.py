@@ -171,15 +171,6 @@ except ImportError:
     def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         return np.argsort(a, axis=axis, order=order)
 
-try:
-    from numpy import partition
-except ImportError:
-    warnings.warn('Using `sort` instead of partition.'
-                  'Upgrade numpy to 1.8 for better performace on large number'
-                  'of clusters')
-    def partition(a, kth, axis=-1, kind='introselect', order=None):
-        return np.sort(a, axis=axis, order=order)
-
 
 if sp_version < (0, 15):
     # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
