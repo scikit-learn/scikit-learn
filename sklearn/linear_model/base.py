@@ -480,15 +480,15 @@ class LinearRegression(LinearModel, RegressorMixin):
         if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
-            copy=self.copy_X, sample_weight=sample_weight)
-
-        if sample_weight is not None:
-            # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
-
         if sp.issparse(X):
+            X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+                X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
+                copy=self.copy_X, sample_weight=sample_weight)
+
+            if sample_weight is not None:
+                # Sample weight can be implemented via a simple rescaling.
+                X, y = _rescale_data(X, y, sample_weight)
+
             if y.ndim < 2:
                 out = sparse_lsqr(X, y)
                 self.coef_ = out[0]
@@ -500,14 +500,53 @@ class LinearRegression(LinearModel, RegressorMixin):
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
                 self._residues = np.vstack(out[3] for out in outs)
-        else:
-            self.coef_, self._residues, self.rank_, self.singular_ = \
-                linalg.lstsq(X, y)
-            self.coef_ = self.coef_.T
 
-        if y.ndim == 1:
-            self.coef_ = np.ravel(self.coef_)
-        self._set_intercept(X_offset, y_offset, X_scale)
+            if y.ndim == 1:
+                self.coef_ = np.ravel(self.coef_)
+            self._set_intercept(X_offset, y_offset, X_scale)
+        else:
+            X = np.array(X, copy=True)
+            n = X.shape[0]
+            p = X.shape[1]
+            y = np.array(y, copy=True).reshape(n, -1)
+            dof = n - p
+
+            # Preprocess data.
+            if self.fit_intercept:
+                X = np.append(X, np.ones((n, 1)), axis=1)
+                dof = dof - 1
+            if sample_weight is not None:
+                sample_weight = np.sqrt(np.array(sample_weight, copy=True))
+                try:
+                    sample_weight = sample_weight.reshape(n, 1)
+                    X = np.multiply(X, sample_weight)
+                    y = np.multiply(y, sample_weight)
+                except:
+                    pass
+
+            # Evaluate coefficients and standard deviation.
+            XT = X.T
+            try:
+                XTX_inv = np.linalg.inv(np.dot(XT, X))
+            except linalg.LinAlgError:
+                self.coef_ = np.zeros(1)
+                self.intercept_ = np.zeros(1)
+                return self
+            beta = np.dot(np.dot(XTX_inv, XT), y)
+            intercept = beta[-1] if self.fit_intercept else np.zeros(
+                y.shape[1])
+            coef = beta[0:-1] if self.fit_intercept else beta
+            residual = y - np.dot(X, beta)
+            self.coef_ = coef.T if coef.shape[1] > 1 else coef.reshape(p,)
+            self.intercept_ = intercept.reshape(-1,)
+
+            if dof > 0:
+                var_beta = np.sum(residual**2) * np.diagonal(XTX_inv) / dof
+                stdev = np.sqrt(var_beta).reshape(beta.shape)
+                t = np.divide(beta, stdev)
+                x = dof / (dof + t**2)
+                self.stdev_ = stdev.T if coef.shape[1] > 1 else stdev.reshape(-1,)
+
         return self
 
 

@@ -49,6 +49,38 @@ def test_linear_regression():
     assert_array_almost_equal(reg.intercept_, [0])
     assert_array_almost_equal(reg.predict(X), [0])
 
+def test_linear_regression_uncertainty():
+    # Test with a multivariate set.
+    X = [[5.0e-6, 2.5e-1],
+        [2.0e-6, 4.0e-2],
+        [1.0e-6, 1.0e-2],
+        [5.0e-7, 2.5e-3],
+        [2.0e-7, 4.0e-4],
+        [1.0e-7, 1.0e-4]]
+    Y = [-0.5930783034, -0.592875163, -0.5928283259, 
+        -0.5928091337, -0.5928019288, -0.5928014142]
+
+    reg = LinearRegression()
+    reg.fit(X, Y)
+
+    # Compare with values from R.
+    assert_array_almost_equal(
+        reg.coef_, [-2.68764200535e+01, -5.90375272820e-04])
+    assert_array_almost_equal(reg.intercept_, [-5.92796478799e-01])
+    assert_array_almost_equal(
+        reg.stdev_, [2.10596119117, 3.97159995702e-05, 1.48683754360e-06])
+
+    # Test with sample weights.
+    X = [[6], [7], [8]]
+    y = [8000, 50000, 116000]
+    weight = [123, 123, 246]
+    reg = LinearRegression()
+    reg.fit(X, y, sample_weight=weight)
+
+    # Compare with values from R.
+    assert_array_almost_equal(reg.coef_, [55090.90909091])
+    assert_array_almost_equal(reg.intercept_, [-326909.09090909])
+    assert_array_almost_equal(reg.stdev_, [6171.11372672, 45032.21987029])
 
 def test_linear_regression_sample_weights():
     # TODO: loop over sparse data as well
