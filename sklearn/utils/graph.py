@@ -78,7 +78,7 @@ else:
 
 ###############################################################################
 # Graph laplacian
-def graph_laplacian(csgraph, normed=False, return_diag=False, optimize=False):
+def graph_laplacian(csgraph, normed=False, return_diag=False, copy=True):
     """ Return the Laplacian matrix of a directed graph.
 
     For non-symmetric graphs the out-degree is used in the computation.
@@ -89,8 +89,9 @@ def graph_laplacian(csgraph, normed=False, return_diag=False, optimize=False):
         compressed-sparse graph, with shape (N, N).
     normed : bool, optional
         If True, then compute normalized Laplacian.
-    optimize : bool, optional
-        If True, then don't create a new copy of the graph
+    copy : bool, optional, Default True
+        If False, then don't create a new copy of the graph.
+        In this process, the input graph/matrix will be lost.
     return_diag : bool, optional
         If True, then return diagonal as well as laplacian.
 
@@ -121,15 +122,15 @@ def graph_laplacian(csgraph, normed=False, return_diag=False, optimize=False):
 
     if sparse.isspmatrix(csgraph):
         return _laplacian_sparse(csgraph, normed=normed,
-                                 return_diag=return_diag,optimize=optimize)
+                                 return_diag=return_diag,copy=copy)
     else:
         return _laplacian_dense(csgraph, normed=normed,
-                                return_diag=return_diag,optimize=optimize)
+                                return_diag=return_diag,copy=copy)
 
 
-def _laplacian_sparse(graph, normed=False, return_diag=False, optimize=False):
+def _laplacian_sparse(graph, normed=False, return_diag=False, copy=True):
     n_nodes = graph.shape[0]
-    if optimize:
+    if not copy: #use the same matrix
         np.negative(graph, out=graph)
         if not graph.format == 'coo':
             lap = graph.tocoo(True) # prevent making a new copy
@@ -172,9 +173,9 @@ def _laplacian_sparse(graph, normed=False, return_diag=False, optimize=False):
     return lap
 
 
-def _laplacian_dense(graph, normed=False, return_diag=False, optimize=False):
+def _laplacian_dense(graph, normed=False, return_diag=False, copy=True):
     n_nodes = graph.shape[0]
-    if optimize:
+    if not copy:
         lap = np.asarray(graph)
         np.negative(lp, out=lp) # prevent copy during negation
     else: 
