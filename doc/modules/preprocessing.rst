@@ -310,67 +310,6 @@ The normalizer instance can then be used on sample vectors as any transformer::
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
 
-.. _preprocessing_binarization:
-
-Binarization
-============
-
-Feature binarization
---------------------
-
-**Feature binarization** is the process of **thresholding numerical
-features to get boolean values**. This can be useful for downstream
-probabilistic estimators that make assumption that the input data
-is distributed according to a multi-variate `Bernoulli distribution
-<https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
-this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
-
-It is also common among the text processing community to use binary
-feature values (probably to simplify the probabilistic reasoning) even
-if normalized counts (a.k.a. term frequencies) or TF-IDF valued features
-often perform slightly better in practice.
-
-As for the :class:`Normalizer`, the utility class
-:class:`Binarizer` is meant to be used in the early stages of
-:class:`sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
-as each sample is treated independently of others::
-
-  >>> X = [[ 1., -1.,  2.],
-  ...      [ 2.,  0.,  0.],
-  ...      [ 0.,  1., -1.]]
-
-  >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
-  >>> binarizer
-  Binarizer(copy=True, threshold=0.0)
-
-  >>> binarizer.transform(X)
-  array([[ 1.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
-
-It is possible to adjust the threshold of the binarizer::
-
-  >>> binarizer = preprocessing.Binarizer(threshold=1.1)
-  >>> binarizer.transform(X)
-  array([[ 0.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  0.,  0.]])
-
-As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
-preprocessing module provides a companion function :func:`binarize`
-to be used when the transformer API is not necessary.
-
-.. topic:: Sparse input
-
-  :func:`binarize` and :class:`Binarizer` accept **both dense array-like
-  and sparse matrices from scipy.sparse as input**.
-
-  For sparse input the data is **converted to the Compressed Sparse Rows
-  representation** (see ``scipy.sparse.csr_matrix``).
-  To avoid unnecessary memory copies, it is recommended to choose the CSR
-  representation upstream.
-
-
 .. _preprocessing_categorical_features:
 
 Encoding categorical features
@@ -437,8 +376,11 @@ features into discrete values. Certain datasets with continuous features
 may benefit from discretization, because discretization can transform the dataset
 of continuous attributes to one with only nominal attributes.
 
-Scikit-learn provides a mechanism way for users to discretize a feature into
-``k`` equal width bins using a :class:`KBinsDiscretizer`::
+K-bins discretization
+---------------------
+
+Scikit-learn allows users to discretize features into ``k``
+equal width bins using a :class:`KBinsDiscretizer`::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
@@ -466,6 +408,63 @@ Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
 bins, whereas discretization focuses on assigning feature values to these bins.
 
+Feature binarization
+--------------------
+
+**Feature binarization** is the process of **thresholding numerical
+features to get boolean values**. This can be useful for downstream
+probabilistic estimators that make assumption that the input data
+is distributed according to a multi-variate `Bernoulli distribution
+<https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
+this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
+
+It is also common among the text processing community to use binary
+feature values (probably to simplify the probabilistic reasoning) even
+if normalized counts (a.k.a. term frequencies) or TF-IDF valued features
+often perform slightly better in practice.
+
+As for the :class:`Normalizer`, the utility class
+:class:`Binarizer` is meant to be used in the early stages of
+:class:`sklearn.pipeline.Pipeline`. The ``fit`` method does nothing
+as each sample is treated independently of others::
+
+  >>> X = [[ 1., -1.,  2.],
+  ...      [ 2.,  0.,  0.],
+  ...      [ 0.,  1., -1.]]
+
+  >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
+  >>> binarizer
+  Binarizer(copy=True, threshold=0.0)
+
+  >>> binarizer.transform(X)
+  array([[ 1.,  0.,  1.],
+         [ 1.,  0.,  0.],
+         [ 0.,  1.,  0.]])
+
+It is possible to adjust the threshold of the binarizer::
+
+  >>> binarizer = preprocessing.Binarizer(threshold=1.1)
+  >>> binarizer.transform(X)
+  array([[ 0.,  0.,  1.],
+         [ 1.,  0.,  0.],
+         [ 0.,  0.,  0.]])
+
+As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
+preprocessing module provides a companion function :func:`binarize`
+to be used when the transformer API is not necessary.
+
+Note that the :class:`Binarizer` is similar to the :class:`KBinsDiscretizer`
+when ``k = 2``, and when our bin edge is at the value ``threshold``.
+
+.. topic:: Sparse input
+
+  :func:`binarize` and :class:`Binarizer` accept **both dense array-like
+  and sparse matrices from scipy.sparse as input**.
+
+  For sparse input the data is **converted to the Compressed Sparse Rows
+  representation** (see ``scipy.sparse.csr_matrix``).
+  To avoid unnecessary memory copies, it is recommended to choose the CSR
+  representation upstream.
 
 .. _imputation:
 

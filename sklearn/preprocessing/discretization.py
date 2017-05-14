@@ -88,6 +88,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         offset_[i] + bin_width_[i] * np.arange(1, n_bins_[i]),
         np.inf
       ])
+
+    See also
+    --------
+     sklearn.preprocessing.Binarizer : class used to bin values as ``0`` or
+        ``1`` based on a parameter ``threshold``.
     """
 
     def __init__(self, n_bins=2, ignored_features=None):
