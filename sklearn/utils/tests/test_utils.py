@@ -103,6 +103,7 @@ def test_safe_mask():
     assert_equal(X_csr[mask].shape[0], 3)
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_pinvh_simple_real():
     a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.float64)
     a = np.dot(a, a.T)
@@ -110,6 +111,7 @@ def test_pinvh_simple_real():
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_pinvh_nonpositive():
     a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float64)
     a = np.dot(a, a.T)
@@ -121,6 +123,7 @@ def test_pinvh_nonpositive():
     assert_almost_equal(a_pinv, a_pinvh)
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_pinvh_simple_complex():
     a = (np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]])
          + 1j * np.array([[10, 8, 7], [6, 5, 4], [3, 2, 1]]))
