@@ -122,18 +122,18 @@ def graph_laplacian(csgraph, normed=False, return_diag=False, copy=True):
 
     if sparse.isspmatrix(csgraph):
         return _laplacian_sparse(csgraph, normed=normed,
-                                 return_diag=return_diag,copy=copy)
+                                 return_diag=return_diag, copy=copy)
     else:
         return _laplacian_dense(csgraph, normed=normed,
-                                return_diag=return_diag,copy=copy)
+                                return_diag=return_diag, copy=copy)
 
 
 def _laplacian_sparse(graph, normed=False, return_diag=False, copy=True):
     n_nodes = graph.shape[0]
-    if not copy: #use the same matrix
+    if not copy:  # use the same matrix
         np.negative(graph, out=graph)
         if not graph.format == 'coo':
-            lap = graph.tocoo(True) # prevent making a new copy
+            lap = graph.tocoo(True)  # prevent making a new copy
         else:
             lap = graph
     else:
@@ -141,7 +141,7 @@ def _laplacian_sparse(graph, normed=False, return_diag=False, copy=True):
             lap = (-graph).tocoo()
         else:
             lap = -graph.copy()
-    
+
     diag_mask = (lap.row == lap.col)
     if not diag_mask.sum() == n_nodes:
         # The sparsity pattern of the matrix has holes on the diagonal,
@@ -177,9 +177,9 @@ def _laplacian_dense(graph, normed=False, return_diag=False, copy=True):
     n_nodes = graph.shape[0]
     if not copy:
         lap = np.asarray(graph)
-        np.negative(lp, out=lp) # prevent copy during negation
-    else: 
-        lap = -np.asarray(graph) # minus sign leads to a copy
+        np.negative(lap, out=lap)  # prevent copy during negation
+    else:
+        lap = -np.asarray(graph)  # minus sign leads to a copy
 
     # set diagonal to zero
     lap.flat[::n_nodes + 1] = 0

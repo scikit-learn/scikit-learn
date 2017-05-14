@@ -370,9 +370,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     copy : bool, optional, default: True
         If copy is False, then the laplacian matrix is copied in the affinity
         matrix, without using additional memory.
-        If affinity is 'precomputed', then the input parameter X to fit() would be 
-        changed after the call if copy is set to False.
-    
+        If affinity is 'precomputed', then the input parameter X to fit()
+        would be changed after the call if copy is set to False.
+
     Attributes
     ----------
     affinity_matrix_ : array-like, shape (n_samples, n_samples)

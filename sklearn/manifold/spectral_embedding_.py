@@ -189,7 +189,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         If True, then compute normalized Laplacian.
 
     copy : bool, optional, default: True
-        If copy is False, then the laplacian matrix is copied in the same 
+        If copy is False, then the laplacian matrix is copied in the same
         input matrix, without using additional memory.
 
     Returns
@@ -240,7 +240,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                       " may not work as expected.")
 
     laplacian, dd = graph_laplacian(adjacency,
-                                    normed=norm_laplacian, return_diag=True,copy=copy)
+                                    normed=norm_laplacian, return_diag=True,
+                                    copy=copy)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -381,7 +382,7 @@ class SpectralEmbedding(BaseEstimator):
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     copy : bool, optional, default: True
-        If copy is False, then the laplacian matrix is copied in the same 
+        If copy is False, then the laplacian matrix is copied in the same
         input matrix, without using additional memory.
 
     Attributes
