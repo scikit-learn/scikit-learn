@@ -154,7 +154,8 @@ def test_numeric_stability():
     X_init = np.array([2., 4., 6., 8., 10.]).reshape(-1, 1)
     Xt_expected = np.array([0, 0, 1, 1, 1]).reshape(-1, 1)
 
-    for i in range(1, 11):
-        X = X_init / i
+    # Test up to discretizing nano units
+    for i in range(1, 9):
+        X = X_init / 10**i
         Xt = KBinsDiscretizer(n_bins=2).fit_transform(X)
         assert_array_equal(Xt_expected, Xt)

@@ -210,17 +210,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         bin_width = self.bin_width_[trans]
 
         # Values which are a multiple of the bin width are susceptible to
-        # numeric instability. If one of these values is a distance epsilon
-        # from the bin width, add epsilon to the value in question.
+        # numeric instability. For these values, after normalizing into
+        # [-1, n_bins] range, add 0.5 so they are binned correctly.
         with np.errstate(divide='ignore', invalid='ignore'):
             needs_correction = isclose(np.mod(X, bin_width), bin_width)
-        dist = abs(X - bin_width)
-        epsilon = np.where(needs_correction, dist, np.zeros_like(X))
-        X += epsilon
-
-        # Rescale into [-1, bin_width] range
-        with np.errstate(divide='ignore', invalid='ignore'):
             X /= bin_width
+        X[needs_correction] += 0.5
         np.floor(X, out=X)
 
         # Used when a feature is constant
