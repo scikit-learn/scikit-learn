@@ -143,6 +143,7 @@ def test_randomized_svd_low_rank():
         assert_almost_equal(s[:rank], sa[:rank])
 
 
+@ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
 def test_norm_squared_norm():
     X = np.random.RandomState(42).randn(50, 63)
     X *= 100        # check stability

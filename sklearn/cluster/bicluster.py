@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
 
@@ -16,7 +17,7 @@ from ..base import BaseEstimator, BiclusterMixin
 from ..externals import six
 from ..utils import check_random_state
 
-from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
+from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
 from ..utils.validation import assert_all_finite, check_array

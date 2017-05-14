@@ -89,11 +89,6 @@ Efficient Linear Algebra & Array Operations
 - :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
   Find the minimum of the positive values within an array.
 
-- :func:`extmath.norm`: computes Euclidean (L2) vector norm
-  by directly calling the BLAS
-  ``nrm2`` function.  This is more stable than ``scipy.linalg.norm``.  See
-  `Fabian's blog post
-  <http://fa.bianp.net/blog/2011/computing-the-vector-norm>`_ for a discussion.
 
 - :func:`extmath.fast_logdet`: efficiently compute the log of the determinant
   of a matrix.

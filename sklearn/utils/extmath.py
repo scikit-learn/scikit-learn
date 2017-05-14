@@ -29,15 +29,15 @@ from .validation import check_array
 from ..exceptions import NonBLASDotWarning
 
 
+@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19"
+            "and will be removed in 0.21. Use scipy.linalg.norm instead.")
 def norm(x):
     """Compute the Euclidean or Frobenius norm of x.
 
     Returns the Euclidean norm when x is a vector, the Frobenius norm when x
     is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
     """
-    x = np.asarray(x)
-    nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
-    return nrm2(x)
+    return linalg.norm(x)
 
 
 # Newer NumPy has a ravel that needs less copying.
