@@ -637,6 +637,12 @@ def test_make_pipeline():
     assert_equal(pipe.steps[1][0], "transf-2")
     assert_equal(pipe.steps[2][0], "fitparamt")
 
+    assert_raise_message(
+        TypeError,
+        'Unknown keyword arguments: "random_parameter"',
+        make_pipeline, t1, t2, random_parameter='rnd'
+    )
+
 
 def test_feature_union_weights():
     # test feature union with transformer weights
@@ -911,3 +917,14 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)
+
+
+def test_make_pipeline_memory():
+    cachedir = mkdtemp()
+    memory = Memory(cachedir=cachedir)
+    pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
+    assert_true(pipeline.memory is memory)
+    pipeline = make_pipeline(DummyTransf(), SVC())
+    assert_true(pipeline.memory is None)
+
+    shutil.rmtree(cachedir)
