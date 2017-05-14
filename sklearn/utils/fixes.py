@@ -43,6 +43,7 @@ np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
 
+# Remove when minimum required NumPy >= 1.10
 try:
     if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
                         np.divide(.4, 1, casting="unsafe", dtype=np.float64))
@@ -83,11 +84,7 @@ except (TypeError, AttributeError):
 
     def _minor_reduce(X, ufunc):
         major_index = np.flatnonzero(np.diff(X.indptr))
-        if X.data.size == 0 and major_index.size == 0:
-            # Numpy < 1.8.0 don't handle empty arrays in reduceat
-            value = np.zeros_like(X.data)
-        else:
-            value = ufunc.reduceat(X.data, X.indptr[major_index])
+        value = ufunc.reduceat(X.data, X.indptr[major_index])
         return major_index, value
 
     def _min_or_max_axis(X, axis, min_or_max):
