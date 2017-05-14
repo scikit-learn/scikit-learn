@@ -28,7 +28,6 @@ from ..utils import as_float_array
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
@@ -1061,8 +1060,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with uniform probability
-            new_centers = choice(X.shape[0], replace=False, size=n_reassigns,
-                                 random_state=random_state)
+            new_centers = random_state.choice(X.shape[0], replace=False,
+                                              size=n_reassigns)
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)

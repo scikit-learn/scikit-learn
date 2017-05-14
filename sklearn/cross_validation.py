@@ -26,7 +26,6 @@ from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
                                column_or_1d)
 from .utils.multiclass import type_of_target
-from .utils.random import choice
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
@@ -989,7 +988,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             # if we need to add more, we add them all and
             # go to the next value
             add_now = min(len(inds), need_to_add)
-            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            inds = rng.choice(inds, size=add_now, replace=False)
             floored[inds] += 1
             need_to_add -= add_now
             if need_to_add == 0:

@@ -30,7 +30,6 @@ from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import signature
-from ..utils.random import choice
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
@@ -1376,6 +1375,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     ...                   n_draws=2, rng=42)
     array([1, 1, 0, 0])
     """
+    rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
     continuous = n_draws * class_counts / class_counts.sum()
@@ -1396,7 +1396,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             # if we need to add more, we add them all and
             # go to the next value
             add_now = min(len(inds), need_to_add)
-            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            inds = rng.choice(inds, size=add_now, replace=False)
             floored[inds] += 1
             need_to_add -= add_now
             if need_to_add == 0:
