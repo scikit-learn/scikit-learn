@@ -394,7 +394,7 @@ for each of the three features are as follows:
  - ``4`` and ``5``
  - ``13``
 
-Based on these bin edges, we transform `X` as follows::
+Based on these bin edges, we transform ``X`` as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
   array([[ 0., 2., 1.],
