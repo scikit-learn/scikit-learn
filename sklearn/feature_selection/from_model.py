@@ -129,20 +129,18 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self.norm_order = norm_order
 
     def _get_support_mask(self):
+        if hasattr(self, "_mask"):
+            return self._mask
         # SelectFromModel can directly call on transform.
         if self.prefit:
             estimator = self.estimator
-        elif hasattr(self, 'estimator_'):
-            estimator = self.estimator_
         else:
             raise ValueError(
-                'Either fit the model before transform or set "prefit=True"'
-                ' while passing the fitted estimator to the constructor.')
-        # XXX duplicate computation if we called fit before
+                'Either fit SelectFromModel before transform or set "prefit='
+                'True" and pass a fitted estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
-        self.threshold_ = _calculate_threshold(estimator, scores,
-                                               self.threshold)
-        return scores >= self.threshold_
+        threshold_ = _calculate_threshold(estimator, scores, self.threshold)
+        return scores >= threshold_
 
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
@@ -171,6 +169,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         scores = _get_feature_importances(self.estimator_, self.norm_order)
         self.threshold_ = _calculate_threshold(self.estimator, scores,
                                                self.threshold)
+        self._mask = scores >= self.threshold_
         return self
 
     @if_delegate_has_method('estimator')
