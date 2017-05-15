@@ -36,10 +36,6 @@ GitHub, clone, and develop on a branch. Steps:
 
    Always use a ``feature`` branch. It's good practice to never work on the ``master`` branch!
 
-   Bug-fixes or new features should be provided with non-regression tests. Tests that verify
-   the correct behavior of the fix or feature. In this manner, further modifications on the
-   code base are granted to be consistent with the desired behavior.
-
 4. Develop the feature on your feature branch. Add changed files using ``git add`` and then ``git commit`` files:
 
    ```bash
@@ -107,8 +103,12 @@ following rules before you submit a pull request:
    functionality is useful in practice and, if possible, compare it
    to other methods available in scikit-learn.
 
--  Documentation and high-coverage tests are necessary for enhancements
-   to be accepted.
+-  Documentation and high-coverage tests are necessary for enhancements to be
+   accepted. Bug-fixes or new features should be provided with non-regression
+   tests. Tests that verify the correct behavior of the fix or feature. In this
+   manner, further modifications on the code base are granted to be consistent
+   with the desired behavior.
+
 
 -  At least one paragraph of narrative documentation with links to
    references in the literature (with PDF links when possible) and

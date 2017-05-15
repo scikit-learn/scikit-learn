@@ -124,11 +124,6 @@ then submit a "pull request" (PR):
 
     and start making changes. Never work in the ``master`` branch!
 
-    Bug-fixes or new features should be provided with non-regression tests.
-    Tests that verify the correct behavior of the fix or feature. In this
-    manner, further modifications on the code base are granted to be consistent
-    with the desired behavior.
-
  5. Work on this copy, on your computer, using Git to do the version
     control. When you're done editing, do::
 
@@ -227,6 +222,11 @@ rules before submitting a pull request:
 
     * Documentation and high-coverage tests are necessary for enhancements
       to be accepted.
+      Bug-fixes or new features should be provided with non-regression tests.
+      Tests that verify the correct behavior of the fix or feature. In this
+      manner, further modifications on the code base are granted to be consistent
+      with the desired behavior.
+
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
