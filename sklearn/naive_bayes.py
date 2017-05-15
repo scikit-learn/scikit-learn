@@ -483,13 +483,13 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        classes : array-like, shape = [n_classes], (default=None)
+        classes : array-like, shape = [n_classes] (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples], (default=None)
+        sample_weight : array-like, shape = [n_samples] (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns

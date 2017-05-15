@@ -10,7 +10,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .utils import check_random_state
-from .utils.validation import check_array, check_X_y
+from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .utils.random import random_choice_csc
@@ -117,7 +117,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         self.sparse_output_ = sp.issparse(y)
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         check_consistent_length(X, y)
 
         if not self.sparse_output_:
@@ -398,8 +397,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              "'mean', 'median', 'quantile' or 'constant'"
                              % self.strategy)
 
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         multi_output=True)
+        y = check_array(y, ensure_2d=False)
+
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 

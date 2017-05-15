@@ -29,8 +29,9 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
+from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -158,7 +159,8 @@ class VectorizerMixin(object):
         """Whitespace sensitive char-n-gram tokenization.
 
         Tokenize text_document into a sequence of character n-grams
-        excluding any whitespace (operating only inside word boundaries)"""
+        operating only inside word boundaries. n-grams at the edges
+        of words are padded with space."""
         # normalize white spaces
         text_document = self._white_spaces.sub(" ", text_document)
 
@@ -353,7 +355,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -552,7 +554,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -1022,8 +1024,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             a matrix of term/token counts
         """
         if not sp.issparse(X):
-            X = sp.csc_matrix(X, dtype=np.float64)
-        X = check_array(X, accept_sparse=["csc", "csr"])
+            X = sp.csc_matrix(X)
         if self.use_idf:
             n_samples, n_features = X.shape
             df = _document_frequency(X)
@@ -1056,19 +1057,18 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors : sparse matrix, [n_samples, n_features]
         """
-        X = check_array(X, accept_sparse=["csr"], copy=copy,
-                        dtype=[np.float64, np.float32])
+        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.float):
+            # preserve float family dtype
+            X = sp.csr_matrix(X, copy=copy)
+        else:
+            # convert counts or binary occurrences to floats
+            X = sp.csr_matrix(X, dtype=np.float64, copy=copy)
 
         n_samples, n_features = X.shape
 
         if self.sublinear_tf:
-            if sp.issparse(X):
-                np.log(X.data, X.data)
-                X.data += 1
-            else:
-                mask = X != 0
-                X[mask] = np.log(X[mask])
-                X[mask] += 1
+            np.log(X.data, X.data)
+            X.data += 1
 
         if self.use_idf:
             check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
