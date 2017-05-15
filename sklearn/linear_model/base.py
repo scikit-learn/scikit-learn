@@ -404,9 +404,9 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, optional, default True
         whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
