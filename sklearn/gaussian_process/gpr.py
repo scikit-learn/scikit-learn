@@ -103,10 +103,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers. If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -312,7 +313,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 K_inv = L_inv.dot(L_inv.T)
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ki,kj,ij->k", K_trans, K_trans, K_inv)
+                y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -336,8 +337,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         n_samples : int, default: 1
             The number of samples drawn from the Gaussian process
 
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance
+        random_state : int, RandomState instance or None, optional (default=0)
+            If int, random_state is the seed used by the random number
+            generator; If RandomState instance, random_state is the
+            random number generator; If None, the random number
+            generator is the RandomState instance used by `np.random`.
 
         Returns
         -------

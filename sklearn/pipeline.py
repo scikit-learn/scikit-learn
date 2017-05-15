@@ -10,86 +10,30 @@ estimator, as a chain of transforms and estimators.
 # License: BSD
 
 from collections import defaultdict
-from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import sparse
 
-from .base import clone, BaseEstimator, TransformerMixin
+from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
+from .utils import Bunch
+
+from .utils.metaestimators import _BaseComposition
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
 
-class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
-    """Handles parameter management for classifiers composed of named steps.
-    """
-
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    def _replace_step(self, steps_attr, name, new_val):
-        # assumes `name` is a valid step name
-        new_steps = getattr(self, steps_attr)[:]
-        for i, (step_name, _) in enumerate(new_steps):
-            if step_name == name:
-                new_steps[i] = (name, new_val)
-                break
-        setattr(self, steps_attr, new_steps)
-
-    def _get_params(self, steps_attr, deep=True):
-        out = super(_BasePipeline, self).get_params(deep=False)
-        if not deep:
-            return out
-        steps = getattr(self, steps_attr)
-        out.update(steps)
-        for name, estimator in steps:
-            if estimator is None:
-                continue
-            for key, value in six.iteritems(estimator.get_params(deep=True)):
-                out['%s__%s' % (name, key)] = value
-        return out
-
-    def _set_params(self, steps_attr, **params):
-        # Ensure strict ordering of parameter setting:
-        # 1. All steps
-        if steps_attr in params:
-            setattr(self, steps_attr, params.pop(steps_attr))
-        # 2. Step replacement
-        step_names, _ = zip(*getattr(self, steps_attr))
-        for name in list(six.iterkeys(params)):
-            if '__' not in name and name in step_names:
-                self._replace_step(steps_attr, name, params.pop(name))
-        # 3. Step parameters and other initilisation arguments
-        super(_BasePipeline, self).set_params(**params)
-        return self
-
-    def _validate_names(self, names):
-        if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
-        invalid_names = set(names).intersection(self.get_params(deep=False))
-        if invalid_names:
-            raise ValueError('Step names conflict with constructor arguments: '
-                             '{0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
-        if invalid_names:
-            raise ValueError('Step names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
-
-
-class Pipeline(_BasePipeline):
+class Pipeline(_BaseComposition):
     """Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement fit and transform methods.
     The final estimator only needs to implement fit.
-    The transformers in the pipeline can be cached using ```memory`` argument.
+    The transformers in the pipeline can be cached using ``memory`` argument.
 
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters.
@@ -109,20 +53,18 @@ class Pipeline(_BasePipeline):
         an estimator.
 
     memory : Instance of joblib.Memory or string, optional (default=None)
-        Used to caching the fitted transformers of the transformer of the
-        pipeline. By default, no cache is performed.
-        If a string is given, it is the path to the caching directory.
-        Enabling caching triggers a clone of the transformers before fitting.
-        Therefore, the transformer instance given to the pipeline cannot be
-        inspected directly. Use the attribute ``named_steps`` or ``steps``
-        to inspect estimators within the pipeline.
-        Caching the transformers is advantageous when fitting is time
-        consuming.
-
+        Used to cache the fitted transformers of the pipeline. By default,
+        no caching is performed. If a string is given, it is the path to
+        the caching directory. Enabling caching triggers a clone of
+        the transformers before fitting. Therefore, the transformer
+        instance given to the pipeline cannot be inspected
+        directly. Use the attribute ``named_steps`` or ``steps`` to
+        inspect estimators within the pipeline. Caching the
+        transformers is advantageous when fitting is time consuming.
 
     Attributes
     ----------
-    named_steps : dict
+    named_steps : bunch object, a dictionary with attribute access
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
@@ -157,7 +99,12 @@ class Pipeline(_BasePipeline):
     array([False, False,  True,  True, False, False, True,  True, False,
            True,  False,  True,  True, False, True,  False, True, True,
            False, False], dtype=bool)
-
+    >>> # Another way to get selected features chosen by anova_filter
+    >>> anova_svm.named_steps.anova.get_support()
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([False, False,  True,  True, False, False, True,  True, False,
+           True,  False,  True,  True, False, True,  False, True, True,
+           False, False], dtype=bool)
     """
 
     # BaseEstimator interface
@@ -227,7 +174,8 @@ class Pipeline(_BasePipeline):
 
     @property
     def named_steps(self):
-        return dict(self.steps)
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.steps))
 
     @property
     def _final_estimator(self):
@@ -577,12 +525,26 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps):
+def make_pipeline(*steps, **kwargs):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
     does not permit, naming the estimators. Instead, their names will be set
     to the lowercase of their types automatically.
+
+    Parameters
+    ----------
+    *steps : list of estimators,
+
+    memory : Instance of joblib.Memory or string, optional (default=None)
+        Used to cache the fitted transformers of the pipeline. By default,
+        no caching is performed. If a string is given, it is the path to
+        the caching directory. Enabling caching triggers a clone of
+        the transformers before fitting. Therefore, the transformer
+        instance given to the pipeline cannot be inspected
+        directly. Use the attribute ``named_steps`` or ``steps`` to
+        inspect estimators within the pipeline. Caching the
+        transformers is advantageous when fitting is time consuming.
 
     Examples
     --------
@@ -599,7 +561,11 @@ def make_pipeline(*steps):
     -------
     p : Pipeline
     """
-    return Pipeline(_name_estimators(steps))
+    memory = kwargs.pop('memory', None)
+    if kwargs:
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
+    return Pipeline(_name_estimators(steps), memory=memory)
 
 
 def _fit_one_transformer(transformer, X, y):
@@ -626,7 +592,7 @@ def _fit_transform_one(transformer, weight, X, y,
     return res * weight, transformer
 
 
-class FeatureUnion(_BasePipeline, TransformerMixin):
+class FeatureUnion(_BaseComposition, TransformerMixin):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
