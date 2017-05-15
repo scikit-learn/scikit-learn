@@ -351,10 +351,6 @@ API changes summary
    - :class:`features_selection.SelectFromModel` now has a ``partial_fit``
      method only if the underlying estimator does. By `Andreas Müller`_.
 
-   - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now do
-     input validation on ``X`` and check whether ``X`` and ``y`` are of the
-     same length, by `Andreas Müller`_.
-
    - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
      only if the underlying estimator does.  By `Andreas Müller`_. 
 
