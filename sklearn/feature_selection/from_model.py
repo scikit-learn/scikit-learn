@@ -129,8 +129,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self.norm_order = norm_order
 
     def _get_support_mask(self):
-        if hasattr(self, "_mask"):
-            return self._mask
         # SelectFromModel can directly call on transform.
         if self.prefit:
             estimator = self.estimator
