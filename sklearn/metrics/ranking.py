@@ -109,9 +109,11 @@ def average_precision_score(y_true, y_score, average="macro",
                             sample_weight=None, interpolation=None):
     """Compute average precision (AP) from prediction scores
 
-    Optionally, this will compute an eleven-point interpolated average
-    precision score, which fixes recall values and averages precisions
-    corresponding to those recall values.
+    Optionally, this will compute an eleven-point interpolated average 
+    precision score: for each of the 11 evenly-spaced target recall values 
+    [0, 0.1, 0.2, ... 1.0], we select the maximum precision possible while 
+    meeting or exceeding the target recall, and average the 11 resulting
+    precision values.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
