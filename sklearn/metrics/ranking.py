@@ -233,7 +233,7 @@ def average_precision_score(y_true, y_score, average="macro",
 
     else:
         raise ValueError("interpolation has to be one of "
-                         "(None, 'eleven_points').")
+                         "(None, 'eleven_point').")
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
