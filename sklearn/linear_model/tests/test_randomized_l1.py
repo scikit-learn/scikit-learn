@@ -1,5 +1,7 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
+from tempfile import mkdtemp
+import shutil
 
 import numpy as np
 from scipy import sparse
@@ -57,6 +59,17 @@ def test_randomized_lasso():
     feature_scores = clf.fit(X, y).scores_
     assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
     assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
+    # test caching
+    try:
+        tempdir = mkdtemp()
+        clf = RandomizedLasso(verbose=False, alpha=[1, 0.8], random_state=42,
+                              scaling=scaling,
+                              selection_threshold=selection_threshold)
+        feature_scores = clf.fit(X, y).scores_
+        assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
+        assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
+    finally:
+        shutil.rmtree(tempdir)
 
     X_r = clf.transform(X)
     X_full = clf.inverse_transform(X_r)

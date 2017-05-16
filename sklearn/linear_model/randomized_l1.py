@@ -315,7 +315,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
+                 memory=None):
         self.alpha = alpha
         self.scaling = scaling
         self.sample_fraction = sample_fraction
