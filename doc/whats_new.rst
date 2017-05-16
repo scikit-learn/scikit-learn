@@ -169,7 +169,7 @@ Enhancements
    - :class:`ensemble.VotingClassifier` now allow changing estimators by using
      :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
      removed by setting it to `None`.
-     :issue:`7674` by:user:`Yichuan Liu <yl565>`.
+     :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
 Bug fixes
 .........
@@ -316,16 +316,16 @@ API changes summary
      (``n_samples``, ``n_classes``) for that particular output.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
-    - Deprecate the ``fit_params`` constructor input to the
-      :class:`sklearn.model_selection.GridSearchCV` and
-      :class:`sklearn.model_selection.RandomizedSearchCV` in favor
-      of passing keyword parameters to the ``fit`` methods
-      of those classes. Data-dependent parameters needed for model
-      training should be passed as keyword arguments to ``fit``,
-      and conforming to this convention will allow the hyperparameter
-      selection classes to be used with tools such as
-      :func:`sklearn.model_selection.cross_val_predict`.
-      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+   - Deprecate the ``fit_params`` constructor input to the
+     :class:`sklearn.model_selection.GridSearchCV` and
+     :class:`sklearn.model_selection.RandomizedSearchCV` in favor
+     of passing keyword parameters to the ``fit`` methods
+     of those classes. Data-dependent parameters needed for model
+     training should be passed as keyword arguments to ``fit``,
+     and conforming to this convention will allow the hyperparameter
+     selection classes to be used with tools such as
+     :func:`sklearn.model_selection.cross_val_predict`.
+     :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
