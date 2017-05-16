@@ -889,6 +889,10 @@ def test_quantile_transform_check_error():
                         QuantileTransformer(n_quantiles=0).fit, X)
     assert_raises_regex(ValueError, "Invalid value for 'subsample': 0.",
                         QuantileTransformer(subsample=0).fit, X)
+    assert_raises_regex(ValueError, "The number of quantiles cannot be"
+                        " greater than the number of samples used. Got"
+                        " 1000 quantiles and 10 samples.",
+                        QuantileTransformer(subsample=10).fit, X)
     assert_raises_regex(ValueError, "Invalid value for 'smoothing_noise': 0.",
                         QuantileTransformer(smoothing_noise=0).fit, X)
 
@@ -1038,15 +1042,17 @@ def test_quantile_transform_subsampling():
 
     # dense support
     n_samples = 1000000
+    n_quantiles = 1000
     X = np.sort(np.random.sample((n_samples, 1)), axis=0)
     ROUND = 5
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
-                                          n_quantiles=n_samples,
+                                          n_quantiles=n_quantiles,
                                           subsample=n_samples // 10)
         transformer.fit(X)
-        diff = np.linspace(0, 1, n_samples) - np.ravel(transformer.quantiles_)
+        diff = (np.linspace(0, 1, n_quantiles) -
+                np.ravel(transformer.quantiles_))
         inf_norm = np.max(np.abs(diff))
         assert_true(inf_norm < 1e-2)
         inf_norm_arr.append(inf_norm)
@@ -1062,12 +1068,12 @@ def test_quantile_transform_subsampling():
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(random_state=random_state,
-                                          n_quantiles=n_samples,
+                                          n_quantiles=n_quantiles,
                                           subsample=n_samples // 10)
         transformer.fit(X)
-        diff = np.linspace(0, 1, n_samples) - np.ravel(transformer.quantiles_)
+        diff = (np.linspace(0, 1, n_quantiles) -
+                np.ravel(transformer.quantiles_))
         inf_norm = np.max(np.abs(diff))
-
         assert_true(inf_norm < 1e-1)
         inf_norm_arr.append(inf_norm)
     # each random subsampling yield a unique approximation to the expected

@@ -2163,6 +2163,12 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                              "The number of subsamples must be at least one."
                              % self.subsample)
 
+        if self.n_quantiles > self.subsample:
+            raise ValueError("The number of quantiles cannot be greater than"
+                             " the number of samples used. Got {} quantiles"
+                             " and {} samples.".format(self.n_quantiles,
+                                                       self.subsample))
+
         if self.smoothing_noise is not None:
             if self.smoothing_noise <= 0:
                 raise ValueError("Invalid value for 'smoothing_noise': %d. "
