@@ -18,6 +18,6 @@ def test_generate_balanced_sample_indices():
     y = np.array([0, 1, 0, 1, 1, 2])
     random_state = 0
     balance_data = _get_class_balance_data(y)
-    sample_indices = _generate_balanced_sample_indices(random_state, 
+    sample_indices = _generate_balanced_sample_indices(random_state,
                                                        balance_data)
     assert_array_equal(sample_indices, [0, 3, 5])

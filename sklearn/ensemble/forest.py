@@ -92,8 +92,9 @@ def _get_class_balance_data(y):
         - class_indices: list of indices of each class
     """
     if len(y.shape) > 1:
-        raise ValueError("Balanced random forest not implemented for multi-output")
-    
+        raise ValueError("Balanced random forest not implemented for "
+                         "multi-output")
+
     classes, class_counts = np.unique(y, return_counts=True)
     class_indices = [np.nonzero(y == cls)[0] for cls in classes]
 
