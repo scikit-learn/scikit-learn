@@ -293,7 +293,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     def predict(self, X):
         """Perform regression on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+        For an one-class model, +1 (inlier) or -1 (outlier) is returned.
 
         Parameters
         ----------
