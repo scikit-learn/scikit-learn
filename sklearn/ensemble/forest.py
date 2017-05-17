@@ -91,21 +91,11 @@ def _get_class_balance_data(y):
         - class_counts: list of count of each class
         - class_indices: list of indices of each class
     """
-    if len(y.shape) == 1:
-        classes, class_counts = np.unique(y, return_counts=True)
-        class_indices = [np.nonzero(y == cls)[0] for cls in classes]
-
-    else:
-        classes, class_counts, class_indices = [], [], []
-        for i in range(y.shape[1]):
-            y_i = y[:, i]
-            classes_i, class_counts_i = np.unique(y_i, return_counts=True)
-            class_indices_i = [np.nonzero(y == cls)[0] for cls in classes_i]
-            classes_i = [(i, cls) for cls in classes_i]
-
-            classes.extend(classes_i)
-            class_counts.extend(class_counts_i)
-            class_indices.extend(class_indices_i)
+    if len(y.shape) > 1:
+        raise ValueError("Balanced random forest not implemented for multi-output")
+    
+    classes, class_counts = np.unique(y, return_counts=True)
+    class_indices = [np.nonzero(y == cls)[0] for cls in classes]
 
     return classes, class_counts, class_indices
 
