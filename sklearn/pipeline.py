@@ -52,7 +52,8 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : Instance of joblib.Memory or string, optional (default=None)
+    memory : Instance of sklearn.external.joblib.Memory or string, optional \
+            (default=None)
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -193,8 +194,9 @@ class Pipeline(_BaseComposition):
             memory = Memory(cachedir=memory, verbose=0)
         elif not isinstance(memory, Memory):
             raise ValueError("'memory' should either be a string or"
-                             " a joblib.Memory instance, got"
-                             " 'memory={!r}' instead.".format(memory))
+                             " a sklearn.externals.joblib.Memory"
+                             " instance, got 'memory={!r}' instead.".format(
+                                 type(memory)))
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
@@ -536,7 +538,8 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators,
 
-    memory : Instance of joblib.Memory or string, optional (default=None)
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
