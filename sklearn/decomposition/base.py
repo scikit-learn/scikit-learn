@@ -8,6 +8,7 @@
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -16,6 +17,7 @@ from ..utils import check_array
 from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted
 from ..externals import six
+from ..externals.six import string_types
 from abc import ABCMeta, abstractmethod
 
 
@@ -97,8 +99,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
             Returns the instance itself.
         """
 
-
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply dimensionality reduction to X.
 
         X is projected on the first principal components previously extracted
@@ -109,6 +110,9 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples is the number of samples
             and n_features is the number of features.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
@@ -125,6 +129,11 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         IncrementalPCA(batch_size=3, copy=True, n_components=2, whiten=False)
         >>> ipca.transform(X) # doctest: +SKIP
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+
         check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)
 
         X = check_array(X)

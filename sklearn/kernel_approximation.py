@@ -19,7 +19,7 @@ from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels
-
+from .externals.six import string_types
 
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
@@ -88,7 +88,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
                                                    size=self.n_components)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply the approximate feature map to X.
 
         Parameters
@@ -96,11 +96,18 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
-
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'random_weights_')
 
         X = check_array(X, accept_sparse='csr')
@@ -178,7 +185,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
                                                    size=self.n_components)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply the approximate feature map to X.
 
         Parameters
@@ -186,11 +193,18 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
-
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'random_weights_')
 
         X = as_float_array(X, copy=True)
@@ -276,7 +290,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             self.sample_interval_ = self.sample_interval
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Apply approximate feature map to X.
 
         Parameters
@@ -289,7 +303,15 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
                shape = (n_samples, n_features * (2*sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
         check_is_fitted(self, "sample_interval_", msg=msg)

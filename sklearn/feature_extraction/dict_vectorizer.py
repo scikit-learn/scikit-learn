@@ -6,12 +6,15 @@ from array import array
 from collections import Mapping
 from operator import itemgetter
 
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
+from ..externals.six import string_types
 from ..utils import check_array, tosequence
 from ..utils.fixes import frombuffer_empty
 
@@ -271,7 +274,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         return dicts
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Transform feature->value dicts to array or sparse matrix.
 
         Named features not encountered during fit or fit_transform will be
@@ -283,12 +286,18 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
         y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
         if self.sparse:
             return self._transform(X, fitting=False)
 

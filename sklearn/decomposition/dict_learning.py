@@ -7,6 +7,7 @@ from __future__ import print_function
 import time
 import sys
 import itertools
+import warnings
 
 from math import sqrt, ceil
 
@@ -17,6 +18,7 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
+from ..externals.six import string_types
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches, _get_n_jobs)
 from ..utils.extmath import randomized_svd, row_norms
@@ -800,7 +802,7 @@ class SparseCodingMixin(TransformerMixin):
         self.split_sign = split_sign
         self.n_jobs = n_jobs
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
         """Encode the data as a sparse combination of the dictionary atoms.
 
         Coding method is determined by the object parameter
@@ -811,6 +813,9 @@ class SparseCodingMixin(TransformerMixin):
         X : array of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
 
         Returns
         -------
@@ -818,6 +823,11 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'components_')
 
         # XXX : kwargs is not documented

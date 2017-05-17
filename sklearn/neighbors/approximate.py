@@ -11,6 +11,7 @@ from .base import KNeighborsMixin, RadiusNeighborsMixin
 from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
+from ..externals.six import string_types
 from ..metrics.pairwise import pairwise_distances
 
 from ..random_projection import GaussianRandomProjection
@@ -85,7 +86,11 @@ class ProjectionToHashMixin(object):
         self.fit(X)
         return self.transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X, y='deprecated'):
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 
