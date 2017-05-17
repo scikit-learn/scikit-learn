@@ -83,7 +83,14 @@ def _generate_sample_indices(random_state, n_samples):
 
 
 def _get_class_balance_data(y):
-    """Private function used to fit function."""
+    """Private function used to fit function.
+
+    Args: outcome array y
+    Returns: tuple of
+        - classes: list of classes
+        - class_counts: list of count of each class
+        - class_indices: list of indices of each class
+    """
     if len(y.shape) == 1:
         classes, class_counts = np.unique(y, return_counts=True)
         class_indices = [np.nonzero(y == cls)[0] for cls in classes]
