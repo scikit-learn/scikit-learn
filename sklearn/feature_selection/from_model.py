@@ -139,8 +139,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
                 'Either fit SelectFromModel before transform or set "prefit='
                 'True" and pass a fitted estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
-        threshold = _calculate_threshold(self.estimator, scores,
-                                         self.threshold)
+        threshold = _calculate_threshold(estimator, scores, self.threshold)
         return scores >= threshold
 
     def fit(self, X, y=None, **fit_params):
