@@ -185,7 +185,8 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
-            and n_features is the number of features.
+            and n_features is the number of features. All values of X must be
+            strictly greater than "-skewedness".
 
         Returns
         -------
@@ -195,8 +196,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
-        if (X < 0).any():
-            raise ValueError("X may not contain entries smaller than zero.")
+        if (X <= -self.skewedness).any():
+            raise ValueError("X may not contain entries smaller than"
+                             " -skewedness.")
 
         X += self.skewedness
         np.log(X, X)
