@@ -209,17 +209,20 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X -= self.offset_[trans]
         bin_width = self.bin_width_[trans]
 
-        # Values which are a multiple of the bin width are susceptible to
-        # numeric instability. For these values, after normalizing into
-        # [-1, n_bins] range, add 0.5 so they are binned correctly.
+        # Rescale into [-1, bin_width] range
         with np.errstate(divide='ignore', invalid='ignore'):
-            needs_correction = isclose(np.mod(X, bin_width), bin_width)
             X /= bin_width
-        X[needs_correction] += 0.5
-        np.floor(X, out=X)
 
-        # Used when a feature is constant
-        X[~np.isfinite(X)] = 0
+        # Values which are a multiple of the bin width are susceptible to
+        # numeric instability. Add eps to X so these values are binned
+        # correctly. See documentation for numpy.isclose for an explanation
+        # of ``rtol`` and ``atol``.
+        rtol = 1.e-5
+        atol = 1.e-8
+        eps = atol + rtol * abs(bin_width)
+        np.floor(X + eps, out=X)
+
+        X[~np.isfinite(X)] = 0  # Case when a feature is constant
         np.clip(X, 0, self.n_bins_[trans] - 1, out=X)
         return X
 
