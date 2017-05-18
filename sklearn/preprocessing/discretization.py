@@ -8,7 +8,6 @@ import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing.data import _transform_selected
-from sklearn.utils.fixes import isclose
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
