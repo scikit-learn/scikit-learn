@@ -43,12 +43,16 @@ def _assert_all_finite(X):
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
-    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+    Parameters
+    ----------
+    X : np.ndarray, scipy.sparse
+        ``X`` MUST be an np.ndarray instance or a scipy.sparse matrix.
+    """
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
 def as_float_array(X, copy=True, force_all_finite=True):
-    """Converts an array-like to an array of floats
+    """Converts an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -585,6 +589,20 @@ def check_random_state(seed):
 
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
+
+    Parameters
+    ----------
+    estimator : object,
+        A scikit-learn estimator to introspect.
+
+    parameter: str,
+        The searched parameter.
+
+    Returns
+    -------
+    is_parameter: bool,
+        Whether the parameter was found to be a member variable of the
+        estimator.
 
     Examples
     --------

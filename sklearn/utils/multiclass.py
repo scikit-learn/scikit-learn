@@ -1,4 +1,3 @@
-
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
@@ -172,9 +171,8 @@ def check_classification_targets(y):
         raise ValueError("Unknown label type: %r" % y_type)
 
 
-
 def type_of_target(y):
-    """Determine the type of data indicated by target ``y``
+    """Determine the type of data indicated by the target.
 
     Note that this type is the most specific type that can be inferred.
     For example:
