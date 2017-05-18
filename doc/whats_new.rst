@@ -87,6 +87,13 @@ Enhancements
      by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
      and :user:`Stephen Hoover <stephen-hoover>`.
 
+   - Relax assumption on the data for the ``SkewedChi2Sampler``. Since the
+     Skewed-Chi2 kernel is defined on the open interval :math: `(-skewedness;
+     +\infty)^d`, the transform function should not check whether X < 0 but
+     whether ``X < -self.skewedness``. (`#7573
+     <https://github.com/scikit-learn/scikit-learn/pull/7573>`_) by `Romain
+     Brault`_.
+
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
      is less than 2 * the minimum. Note that the constructed tree will be
