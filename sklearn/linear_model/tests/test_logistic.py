@@ -1146,6 +1146,13 @@ def test_dtype_match():
 
     for solver in ['newton-cg']:
         for multi_class in ['ovr', 'multinomial']:
-            lr = LogisticRegression(solver=solver, multi_class=multi_class)
-            lr.fit(X_, y_)
-            assert_equal(lr.coef_.dtype, X_.dtype)
+
+            # Check type consistency
+            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_32.fit(X_, y_)
+            assert_equal(lr_32.coef_.dtype, X_.dtype)
+
+            # Check accuracy consistency
+            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_64.fit(X, Y1)
+            assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
