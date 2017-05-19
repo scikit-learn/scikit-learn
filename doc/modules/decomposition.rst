@@ -720,10 +720,10 @@ and the intensity of the regularization with the :attr:`alpha`
 and the regularized objective function is:
 
 .. math::
-    d_{Fro}(X, WH)
+    d_{\mathrm{Fro}}(X, WH)
     + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{mathrm{Fro}} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{mathrm{Fro}} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
 :class:`NMF` regularizes both W and H. The public function
 :func:`non_negative_factorization` allows a finer control through the
