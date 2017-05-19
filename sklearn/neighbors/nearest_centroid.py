@@ -95,6 +95,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
+        if self.metric == 'precomputed':
+            raise ValueError("Precomputed is not supported.")
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == 'manhattan':
@@ -133,8 +135,6 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
                     self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
                 else:
                     self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
-            elif self.metric == 'precomputed':
-                raise ValueError("Ambiguous metric.")
             else:
                 if self.metric != 'euclidean':
                     warnings.warn("Averaging for metrics other than "
