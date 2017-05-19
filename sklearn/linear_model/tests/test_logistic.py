@@ -1137,6 +1137,7 @@ def test_saga_vs_liblinear():
                 # Convergence for alpha=1e-3 is very slow
                 assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
 
+
 def test_dtype_match():
     # Test that np.float32 input data is not cast to np.float64 when possible
 
