@@ -822,10 +822,7 @@ div.sprint-wrapper:hover {
 
 /*-----------------------The Examples Gallery-------------------------------*/
 
-div.sphx-glr-download code.download {
-  display: inline-block;
-  white-space: normal;
-}
+div.sphx-glr-footer .container  {width: auto;}
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {
