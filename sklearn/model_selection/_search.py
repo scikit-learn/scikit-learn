@@ -756,7 +756,7 @@ class GridSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-        .. deprecated: 0.19
+        .. deprecated:: 0.19
            ``fit_params`` as a constructor argument was deprecated in version
            0.19 and will be removed in version 0.21. Pass fit parameters to
            the ``fit`` method instead.
@@ -1021,7 +1021,7 @@ class RandomizedSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-        .. deprecated: 0.19
+        .. deprecated:: 0.19
            ``fit_params`` as a constructor argument was deprecated in version
            0.19 and will be removed in version 0.21. Pass fit parameters to
            the ``fit`` method instead.

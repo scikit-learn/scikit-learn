@@ -613,9 +613,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-        ``min_impurity_split`` has been deprecated in favor of
-        ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-        Use ``min_impurity_decrease`` instead.
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
 
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity
@@ -952,9 +952,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
-        ``min_impurity_split`` has been deprecated in favor of
-        ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-        Use ``min_impurity_decrease`` instead.
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
 
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity
