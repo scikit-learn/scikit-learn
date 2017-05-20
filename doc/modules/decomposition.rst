@@ -143,15 +143,15 @@ Note: with the optional parameter ``svd_solver='randomized'``, we also
 need to give :class:`PCA` the size of the lower-dimensional space
 ``n_components`` as a mandatory input parameter.
 
-If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
-:math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
-of the randomized :class:`PCA` is :math:`O(n_{max}^2 \cdot n_{components})`
-instead of :math:`O(n_{max}^2 \cdot n_{min})` for the exact method
+If we note :math:`n_{\max} = \max(n_{\mathrm{samples}}, n_{\mathrm{features}})` and
+:math:`n_{\min} = \min(n_{\mathrm{samples}}, n_{\mathrm{features}})`, the time complexity
+of the randomized :class:`PCA` is :math:`O(n_{\max}^2 \cdot n_{\mathrm{components}})`
+instead of :math:`O(n_{\max}^2 \cdot n_{\min})` for the exact method
 implemented in :class:`PCA`.
 
 The memory footprint of randomized :class:`PCA` is also proportional to
-:math:`2 \cdot n_{max} \cdot n_{components}` instead of :math:`n_{max}
-\cdot n_{min}` for the exact method.
+:math:`2 \cdot n_{\max} \cdot n_{\mathrm{components}}` instead of :math:`n_{\max}
+\cdot n_{\min}` for the exact method.
 
 Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 ``svd_solver='randomized'`` is not the exact inverse transform of
@@ -433,7 +433,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||U||_1 \\
                 \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
-                0 \leq k < n_{atoms}
+                0 \leq k < n_{\mathrm{atoms}}
 
 
 .. |pca_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
@@ -555,7 +555,7 @@ structure of the error covariance :math:`\Psi`:
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
   the probabilistic model of :class:`PCA`.
 
-* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
+* :math:`\Psi = \mathrm{diag}(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
   :class:`FactorAnalysis`, a classical statistical model. The matrix W is
   sometimes called the "factor loading matrix".
 
@@ -661,7 +661,7 @@ by optimizing the distance :math:`d` between :math:`X` and the matrix product
 norm, which is an obvious extension of the Euclidean norm to matrices:
 
 .. math::
-    d_{Fro}(X, Y) = \frac{1}{2} ||X - Y||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
+    d_{\mathrm{Fro}}(X, Y) = \frac{1}{2} ||X - Y||_{\mathrm{Fro}}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
@@ -714,16 +714,16 @@ and the intensity of the regularization with the :attr:`alpha`
 
 .. math::
     \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
 and the regularized objective function is:
 
 .. math::
-    d_{Fro}(X, WH)
+    d_{\mathrm{Fro}}(X, WH)
     + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
-    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
-    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
 :class:`NMF` regularizes both W and H. The public function
 :func:`non_negative_factorization` allows a finer control through the
@@ -737,18 +737,18 @@ Frobenius norm, which is an obvious extension of the Euclidean norm to
 matrices:
 
 .. math::
-    d_{Fro}(X, Y) = \frac{1}{2} ||X - Y||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
+    d_{\mathrm{Fro}}(X, Y) = \frac{1}{2} ||X - Y||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
 
 Other distance functions can be used in NMF as, for example, the (generalized)
 Kullback-Leibler (KL) divergence, also referred as I-divergence:
 
 .. math::
-    d_{KL}(X, Y) = \sum_{i,j} (X_{ij} log(\frac{X_{ij}}{Y_{ij}}) - X_{ij} + Y_{ij})
+    d_{KL}(X, Y) = \sum_{i,j} (X_{ij} \log(\frac{X_{ij}}{Y_{ij}}) - X_{ij} + Y_{ij})
 
 Or, the Itakura-Saito (IS) divergence:
 
 .. math::
-    d_{IS}(X, Y) = \sum_{i,j} (\frac{X_{ij}}{Y_{ij}} - log(\frac{X_{ij}}{Y_{ij}}) - 1)
+    d_{IS}(X, Y) = \sum_{i,j} (\frac{X_{ij}}{Y_{ij}} - \log(\frac{X_{ij}}{Y_{ij}}) - 1)
 
 These three distances are special cases of the beta-divergence family, with
 :math:`\beta = 2, 1, 0` respectively [6]_. The beta-divergence are
@@ -841,14 +841,14 @@ The graphical model of LDA is a three-level Bayesian model:
 When modeling text corpora, the model assumes the following generative process for
 a corpus with :math:`D` documents and :math:`K` topics:
 
-  1. For each topic :math:`k`, draw :math:`\beta_k \sim Dirichlet(\eta),\: k =1...K`
+  1. For each topic :math:`k`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta),\: k =1...K`
 
-  2. For each document :math:`d`, draw :math:`\theta_d \sim Dirichlet(\alpha), \: d=1...D`
+  2. For each document :math:`d`, draw :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha), \: d=1...D`
 
   3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw a topic index :math:`z_{di} \sim Multinomial(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim Multinomial(beta_{z_{di}}.)`
+    a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(beta_{z_{di}}.)`
 
 For parameter estimation, the posterior distribution is:
 
@@ -862,8 +862,8 @@ to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi
 :math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
 
 .. math::
-  log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
-    E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
+  \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
+    E_{q}[\log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[\log\:q(z, \theta, \beta)]
 
 Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
