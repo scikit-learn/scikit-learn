@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.fixes import np_version
@@ -148,6 +149,11 @@ def test_norm_squared_norm():
     assert_almost_equal(np.linalg.norm(X.ravel()), norm(X))
     assert_almost_equal(norm(X) ** 2, squared_norm(X), decimal=6)
     assert_almost_equal(np.linalg.norm(X), np.sqrt(squared_norm(X)), decimal=6)
+    # Check the warning with an int array and np.dot potential overflow
+    assert_warns_message(
+                    UserWarning, 'Array type is integer, np.dot may '
+                    'overflow. Data should be float type to avoid this issue',
+                    squared_norm, X.astype(int))
 
 
 def test_row_norms():
