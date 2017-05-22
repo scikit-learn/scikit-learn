@@ -1069,11 +1069,11 @@ Bad (e.g. independent labelings) have non-positive scores::
   >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
   -0.10526...
 
-Mutual Information  has a problem that it does not penalizes large cardinalities.It 
+Mutual Information  has a problem that it does not penalizes large cardinalities. It 
 increases with increase in number of clusters and its value is maximum when number
-of clusters is equal to number of samples.NMI fixes this problem by dividing MI
-with square root of entropies of both partitions (predicted as well as true partition).
-Since entropy increases with increase in number of clusters.Hence with everything else 
+of clusters is equal to number of samples. NMI fixes this problem by dividing MI
+with square root of entropies of both partitions (predicted as well as true partition). 
+Since entropy increases with increase in number of clusters. Hence with everything else 
 constant NMI decreases with increase in number of clusters::
 
   >>> labels_true=[5, 0, 3, 3, 7, 9, 3, 5, 2, 4]
@@ -1083,8 +1083,8 @@ constant NMI decreases with increase in number of clusters::
   >>> normalized_mutual_info_score(labels_true,labels_pred)
   0.7423...
 
-Value of NMI and MI does not take a constant value for random assignment of labels to sample data.
-AMI is **corrected-for-chance** version of MI.Its value is close to zero for randowm assignment of labels
+Value of NMI and MI does not take a constant value for random assignment of labels to sample data. 
+AMI is **corrected-for-chance** version of MI. Its value is close to zero for randowm assignment of labels
 to sample data and takes a value 1 when two partitions are identical::
 
   >>> rng = np.random.RandomState(0)
