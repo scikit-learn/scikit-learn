@@ -559,7 +559,7 @@ div.body p, div.body dd, div.body li {
     line-height: 1.5em;
 }
 
-div.admonition p.admonition-title + p {
+div.admonition p.admonition-title + p, div.deprecated p {
     display: inline;
 }
 
@@ -615,7 +615,7 @@ div.topic {
     -moz-border-radius: 4px;
 }
 
-div.admonition {
+div.admonition, div.deprecated {
     margin-bottom: 10px;
     margin-top: 10px;
     padding: 7px;
