@@ -1915,8 +1915,16 @@ def train_test_split(*arrays, **options):
     arrays = indexable(*arrays)
 
     if shuffle is False:
-        train = range(int(len(arrays[0]) * (1 - test_size))) 
-        test = range(int(len(arrays[0]) * (1-test_size)), len(arrays[0]))
+        if stratify is not None:
+            raise NotImplementedError()
+        
+        n_samples = _num_samples(arrays[0])
+        n_train, n_test = _validate_shuffle_split(n_samples, test_size,
+                                                       train_size)
+
+        print(n_train, n_test)
+        train = range(n_train)
+        test = range(n_train, n_train + n_test)
 
     else:
         if stratify is not None:
