@@ -1190,41 +1190,30 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
 class ShuffleSplit(BaseShuffleSplit):
     """Random permutation cross-validator
-
     Yields indices to split data into training and test sets.
-
     Note: contrary to other cross-validation strategies, random splits
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
-
     Read more in the :ref:`User Guide <cross_validation>`.
-
     Parameters
     ----------
     n_splits : int (default 10)
         Number of re-shuffling & splitting iterations.
-
     test_size : float, int, or None, default 0.1
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
         int, represents the absolute number of test samples. If None,
         the value is automatically set to the complement of the train size.
-
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    shuffle : boolean, optional (default=True)
-        Whether or not to shuffle the data before splitting.
-
     Examples
     --------
     >>> from sklearn.model_selection import ShuffleSplit
@@ -1238,7 +1227,9 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
-    TRAIN: [3 1 0] TEST: [2] TRAIN: [2 1 3] TEST: [0] TRAIN: [0 2 1] TEST: [3]
+    TRAIN: [3 1 0] TEST: [2]
+    TRAIN: [2 1 3] TEST: [0]
+    TRAIN: [0 2 1] TEST: [3]
     >>> rs = ShuffleSplit(n_splits=3, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
@@ -1256,14 +1247,9 @@ class ShuffleSplit(BaseShuffleSplit):
         rng = check_random_state(self.random_state)
         for i in range(self.n_splits):
             # random partition
-            if self.shuffle:
-                permutation = rng.permutation(n_samples)
-                ind_test = permutation[:n_test]
-                ind_train = permutation[n_test:(n_test + n_train)]
-            else:
-                ind_test = range(n_train, n_train + n_test)
-                ind_train = range(n_train)
-
+            permutation = rng.permutation(n_samples)
+            ind_test = permutation[:n_test]
+            ind_train = permutation[n_test:(n_test + n_train)]
             yield ind_train, ind_test
 
 
@@ -1916,7 +1902,7 @@ def train_test_split(*arrays, **options):
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     stratify = options.pop('stratify', None)
-    shuffle = options.pop('shuffle', None)
+    shuffle = options.pop('shuffle', True)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
