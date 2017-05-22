@@ -104,8 +104,9 @@ following rules before you submit a pull request:
    to other methods available in scikit-learn.
 
 -  Documentation and high-coverage tests are necessary for enhancements to be
-   accepted. Bug-fixes or new features should be provided with non-regression
-   tests. These tests verify the correct behavior of the fix or feature. In this
+   accepted. Bug-fixes or new features should be provided with 
+   [non-regression tests](https://en.wikipedia.org/wiki/Non-regression_testing).
+   These tests verify the correct behavior of the fix or feature. In this
    manner, further modifications on the code base are granted to be consistent
    with the desired behavior.
 
