@@ -168,7 +168,7 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
-   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
@@ -277,7 +277,7 @@ Bug fixes
      both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
      ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
 
-   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
@@ -337,14 +337,14 @@ API changes summary
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
      method ``check_decision_proba_consistency`` has been added in
-     :func:`sklearn.utils.estimator_checks` to check their consistency.
+     **sklearn.utils.estimator_checks** to check their consistency.
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
 
    - All tree based estimators now accept a ``min_impurity_decrease``
      parameter in lieu of the ``min_impurity_split``, which is now deprecated.
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
-     ``min_impurity_decrease``.  :issue:`8449` by  `Raghav RV`_.
+     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`.
 
 
 .. _changes_0_18_1:
