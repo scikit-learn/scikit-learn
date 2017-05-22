@@ -344,7 +344,7 @@ API changes summary
      parameter in lieu of the ``min_impurity_split``, which is now deprecated.
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
-     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`.
+     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
 
 
 .. _changes_0_18_1:
