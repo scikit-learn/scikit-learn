@@ -242,7 +242,8 @@ sphinx_gallery_conf = {
         'matplotlib': 'http://matplotlib.org',
         'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
         'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
-        'nibabel': 'http://nipy.org/nibabel'}
+        'nibabel': 'http://nipy.org/nibabel'},
+    'expected_failing_examples': ['../examples/applications/plot_stock_market.py']
 }
 
 
