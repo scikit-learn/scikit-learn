@@ -1926,17 +1926,29 @@ def train_test_split(*arrays, **options):
 
     arrays = indexable(*arrays)
 
-    if stratify is not None:
-        CVClass = StratifiedShuffleSplit
+    if shuffle is False:
+        if stratify is not None:
+            raise NotImplementedError()
+        
+        n_samples = _num_samples(arrays[0])
+        n_train, n_test = _validate_shuffle_split(n_samples, test_size,
+                                                       train_size)
+
+        train = range(n_train)
+        test = range(n_train, n_train + n_test)
+
     else:
-        CVClass = ShuffleSplit
+        if stratify is not None:
+            CVClass = StratifiedShuffleSplit
+        else:
+            CVClass = ShuffleSplit
 
-    cv = CVClass(test_size=test_size,
-                 train_size=train_size,
-                 random_state=random_state,
-                 shuffle=shuffle)
+        cv = CVClass(test_size=test_size,
+                     train_size=train_size,
+                     random_state=random_state,
+                     shuffle=shuffle)
 
-    train, test = next(cv.split(X=arrays[0], y=stratify))
+        train, test = next(cv.split(X=arrays[0], y=stratify))
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
