@@ -742,7 +742,7 @@ and the old behavior will be removed in version 0.20.
 
 In addition, a deprecation note should be added in the docstring, recalling the
 same information as the deprecation warning as explained above. Use the
-``.. deprecated::`` tag::
+``.. deprecated::`` directive::
 
   .. deprecated:: 0.13
      ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
