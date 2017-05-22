@@ -162,7 +162,7 @@ def test_cross_validator_with_default_params():
     skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
-    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, shuffle=True, " 
+    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, shuffle=True, "
                "test_size=0.1,\n       train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
@@ -956,6 +956,7 @@ def test_train_test_split():
         train, test = train_test_split(y, shuffle=False, test_size=test_size)
         assert_array_equal(test, [8, 9])
         assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
+
 
 @ignore_warnings
 def train_test_split_pandas():

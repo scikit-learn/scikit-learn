@@ -1929,10 +1929,10 @@ def train_test_split(*arrays, **options):
     if shuffle is False:
         if stratify is not None:
             raise NotImplementedError()
-        
+
         n_samples = _num_samples(arrays[0])
         n_train, n_test = _validate_shuffle_split(n_samples, test_size,
-                                                       train_size)
+                                                  train_size)
 
         train = range(n_train)
         test = range(n_train, n_train + n_test)
@@ -1955,6 +1955,7 @@ def train_test_split(*arrays, **options):
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests
+
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params
