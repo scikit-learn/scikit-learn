@@ -292,6 +292,11 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         to be any format. False means that a sparse matrix input will
         raise an error.
 
+        .. deprecated:: 0.19
+           Passing 'None' to parameter ``accept_sparse`` in methods is
+           deprecated in version 0.19 "and will be removed in 0.21. Use
+           ``accept_sparse=False`` instead.
+
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
@@ -340,6 +345,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     -------
     X_converted : object
         The converted and validated X.
+
     """
     # accept_sparse 'None' deprecation check
     if accept_sparse is None:
@@ -459,6 +465,11 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
+
+        .. deprecated:: 0.19
+           Passing 'None' to parameter ``accept_sparse`` in methods is
+           deprecated in version 0.19 "and will be removed in 0.21. Use
+           ``accept_sparse=False`` instead.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.

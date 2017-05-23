@@ -740,6 +740,14 @@ the removal will be in 0.(x+2). For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
+In addition, a deprecation note should be added in the docstring, recalling the
+same information as the deprecation warning as explained above. Use the
+``.. deprecated::`` directive::
+
+  .. deprecated:: 0.13
+     ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
+     in 0.15.
+
 
 .. currentmodule:: sklearn
 
