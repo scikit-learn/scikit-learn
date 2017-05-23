@@ -1123,13 +1123,12 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None, shuffle=True):
+                 random_state=None):
         _validate_shuffle_split_init(test_size, train_size)
         self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
-        self.shuffle = shuffle
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
