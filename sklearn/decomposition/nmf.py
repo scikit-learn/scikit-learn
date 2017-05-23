@@ -957,7 +957,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
 
-    X = check_array(X, accept_sparse=('csr', 'csc'))
+    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1204,7 +1204,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,

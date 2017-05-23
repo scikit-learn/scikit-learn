@@ -921,7 +921,7 @@ def check_cross_val_predict_with_method(est):
     X, y = shuffle(X, y, random_state=0)
     classes = len(set(y))
 
-    kfold = KFold(len(iris.target))
+    kfold = KFold()
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
