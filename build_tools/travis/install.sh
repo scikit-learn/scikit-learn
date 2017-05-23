@@ -45,7 +45,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
+        # libgfortran=1 needs to be specified explicitly. This is a work-around for
+        # https://github.com/ContinuumIO/anaconda-issues/issues/445
+        # with numpy=1.8.1, python=2.7
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
+            libgfortran=1 \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
