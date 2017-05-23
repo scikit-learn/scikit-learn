@@ -1503,8 +1503,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
-	    train = rng.permutation(train)
-	    test = rng.permutation(test)
+            train = rng.permutation(train)
+            test = rng.permutation(test)
 
             yield train, test
 
