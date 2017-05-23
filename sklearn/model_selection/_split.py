@@ -1933,8 +1933,7 @@ def train_test_split(*arrays, **options):
 
         cv = CVClass(test_size=test_size,
                      train_size=train_size,
-                     random_state=random_state,
-                     shuffle=shuffle)
+                     random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
