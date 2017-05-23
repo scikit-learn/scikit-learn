@@ -227,6 +227,8 @@ rules before submitting a pull request:
       These tests verify the correct behavior of the fix or feature. In this
       manner, further modifications on the code base are granted to be consistent
       with the desired behavior.
+      For the Bug-fixes case, at the time of the PR, this tests should fail for
+      the code base in master and pass for the PR code.
 
 
     * At least one paragraph of narrative documentation with links to
