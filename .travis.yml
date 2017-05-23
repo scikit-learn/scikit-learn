@@ -8,7 +8,6 @@ cache:
   apt: true
   directories:
   - $HOME/.cache/pip
-  - $HOME/download
 addons:
   apt:
     packages:

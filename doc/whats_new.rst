@@ -87,6 +87,13 @@ Enhancements
      by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
      and :user:`Stephen Hoover <stephen-hoover>`.
 
+   - Relax assumption on the data for the ``SkewedChi2Sampler``. Since the
+     Skewed-Chi2 kernel is defined on the open interval :math: `(-skewedness;
+     +\infty)^d`, the transform function should not check whether X < 0 but
+     whether ``X < -self.skewedness``. (`#7573
+     <https://github.com/scikit-learn/scikit-learn/pull/7573>`_) by `Romain
+     Brault`_.
+
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
      is less than 2 * the minimum. Note that the constructed tree will be
@@ -169,7 +176,7 @@ Enhancements
    - :class:`ensemble.VotingClassifier` now allow changing estimators by using
      :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
      removed by setting it to `None`.
-     :issue:`7674` by:user:`Yichuan Liu <yl565>`.
+     :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
 Bug fixes
 .........
@@ -189,6 +196,8 @@ Bug fixes
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
+   - Fixed same issue in :func:`sklearn.grid_search.BaseSearchCV.inverse_transform`
+     :issue:`8846` by :user:`Rasmus Eriksson <MrMjauh>`
 
    - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
      :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
@@ -314,16 +323,16 @@ API changes summary
      (``n_samples``, ``n_classes``) for that particular output.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
-    - Deprecate the ``fit_params`` constructor input to the
-      :class:`sklearn.model_selection.GridSearchCV` and
-      :class:`sklearn.model_selection.RandomizedSearchCV` in favor
-      of passing keyword parameters to the ``fit`` methods
-      of those classes. Data-dependent parameters needed for model
-      training should be passed as keyword arguments to ``fit``,
-      and conforming to this convention will allow the hyperparameter
-      selection classes to be used with tools such as
-      :func:`sklearn.model_selection.cross_val_predict`.
-      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+   - Deprecate the ``fit_params`` constructor input to the
+     :class:`sklearn.model_selection.GridSearchCV` and
+     :class:`sklearn.model_selection.RandomizedSearchCV` in favor
+     of passing keyword parameters to the ``fit`` methods
+     of those classes. Data-dependent parameters needed for model
+     training should be passed as keyword arguments to ``fit``,
+     and conforming to this convention will allow the hyperparameter
+     selection classes to be used with tools such as
+     :func:`sklearn.model_selection.cross_val_predict`.
+     :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The

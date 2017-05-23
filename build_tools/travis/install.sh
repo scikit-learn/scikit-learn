@@ -28,25 +28,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # conda-based environment instead
     deactivate
 
-    # Use the miniconda installer for faster download / install of conda
-    # itself
-    pushd .
-    cd
-    mkdir -p download
-    cd download
-    echo "Cached in $HOME/download :"
-    ls -l
-    echo
-    if [[ ! -f miniconda.sh ]]
-        then
-        wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
-            -O miniconda.sh
-        fi
-    chmod +x miniconda.sh && ./miniconda.sh -b
-    cd ..
-    export PATH=/home/travis/miniconda/bin:$PATH
+    # Install miniconda
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        -O miniconda.sh
+    MINICONDA_PATH=/home/travis/miniconda
+    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+    export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
-    popd
 
     # Configure the conda environment and put it in the path using the
     # provided versions
