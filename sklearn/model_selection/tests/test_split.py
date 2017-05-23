@@ -163,7 +163,7 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, shuffle=True, "
-               "test_size=0.1,\n       train_size=None)")
+               "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,

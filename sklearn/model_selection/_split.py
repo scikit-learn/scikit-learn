@@ -1189,30 +1189,38 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
 class ShuffleSplit(BaseShuffleSplit):
     """Random permutation cross-validator
+
     Yields indices to split data into training and test sets.
+
     Note: contrary to other cross-validation strategies, random splits
     do not guarantee that all folds will be different, although this is
     still very likely for sizeable datasets.
+
     Read more in the :ref:`User Guide <cross_validation>`.
+
     Parameters
     ----------
     n_splits : int (default 10)
         Number of re-shuffling & splitting iterations.
+
     test_size : float, int, or None, default 0.1
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
         int, represents the absolute number of test samples. If None,
         the value is automatically set to the complement of the train size.
+
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
     Examples
     --------
     >>> from sklearn.model_selection import ShuffleSplit
@@ -1429,9 +1437,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    shuffle : boolean, optional (default=True)
-        Whether or not to shuffle the data before splitting.
-
     Examples
     --------
     >>> from sklearn.model_selection import StratifiedShuffleSplit
@@ -1452,9 +1457,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, n_splits=10, test_size=0.1, train_size=None,
-                 random_state=None, shuffle=True):
+                 random_state=None):
         super(StratifiedShuffleSplit, self).__init__(
-            n_splits, test_size, train_size, random_state, shuffle)
+            n_splits, test_size, train_size, random_state)
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
@@ -1493,18 +1498,16 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = []
 
             for i, class_i in enumerate(classes):
-                permutation = range(class_counts[i])
-                if self.shuffle:
-                    permutation = rng.permutation(class_counts[i])
+                permutation = rng.permutation(class_counts[i])
                 perm_indices_class_i = np.where((y == class_i))[0][permutation]
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
-            if self.shuffle:
-                train = rng.permutation(train)
-                test = rng.permutation(test)
+	    train = rng.permutation(train)
+	    test = rng.permutation(test)
 
             yield train, test
+
 
     def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
