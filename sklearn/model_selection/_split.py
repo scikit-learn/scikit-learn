@@ -1508,7 +1508,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
             yield train, test
 
-
     def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
@@ -1916,7 +1915,9 @@ def train_test_split(*arrays, **options):
 
     if shuffle is False:
         if stratify is not None:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                "Stratified train/test split is not implemented for "
+                "shuffle=False")
 
         n_samples = _num_samples(arrays[0])
         n_train, n_test = _validate_shuffle_split(n_samples, test_size,
