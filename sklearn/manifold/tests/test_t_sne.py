@@ -568,7 +568,7 @@ def test_n_iter_without_progress():
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     tsne = TSNE(n_iter_without_progress=-1, verbose=2,
-                random_state=0, method='exact')
+                random_state=1, method='exact')
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
