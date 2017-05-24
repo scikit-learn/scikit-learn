@@ -69,6 +69,18 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     n_neighbors : int, optional (default=3)
         Number of target neighbors.
 
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        Algorithm used to compute the nearest neighbors:
+
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method.
+
+        Note: fitting on sparse input will override the setting of
+        this parameter, using brute force.
+
     max_iter : int, optional (default=200)
         Maximum number of iterations in the optimization.
 
@@ -167,12 +179,13 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     """
 
     def __init__(self, L=None, warm_start=False, use_pca=True,
-                 n_features_out=None, n_neighbors=3, max_iter=200, tol=1e-5,
-                 max_constraints=500000, use_sparse=True, callback=None,
-                 max_corrections=100, verbose=0, random_state=None, n_jobs=1):
+                 n_features_out=None, n_neighbors=3, algorithm='auto',
+                 max_iter=200, tol=1e-5, max_constraints=500000,
+                 use_sparse=True, callback=None, max_corrections=100,
+                 verbose=0, random_state=None, n_jobs=1):
 
         super(LargeMarginNearestNeighbor, self).__init__(
-            n_neighbors=n_neighbors, n_jobs=n_jobs)
+            n_neighbors=n_neighbors, algorithm=algorithm, n_jobs=n_jobs)
 
         # Parameters
         self.L = L
@@ -579,10 +592,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         target_neighbors = np.empty((X.shape[0], self.n_neighbors_), dtype=int)
 
         nn = NearestNeighbors(n_neighbors=self.n_neighbors_,
-                              n_jobs=self.n_jobs)
+                              algorithm=self.algorithm, n_jobs=self.n_jobs)
 
-        for class_num in self.classes_non_singleton_:
-            ind_class, = np.where(np.equal(y, class_num))
+        for class_id in self.classes_non_singleton_:
+            ind_class, = np.where(np.equal(y, class_id))
             nn.fit(X[ind_class])
             neigh_ind = nn.kneighbors(return_distance=False)
             target_neighbors[ind_class] = ind_class[neigh_ind]
@@ -667,8 +680,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # Compute distances to target neighbors under L (plus margin)
         dist_tn = np.zeros((n_samples, self.n_neighbors_))
         for k in range(self.n_neighbors_):
-            dist_tn[:, k] = pairs_distances_batch(Lx, np.arange(n_samples),
-                                                  targets[:, k]) + 1
+            dist_tn[:, k] = row_norms(Lx - Lx[targets[:, k]], True) + 1
 
         # Compute distances to impostors under L
         margin_radii = dist_tn[:, -1] + 2
@@ -741,9 +753,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             # Initialize impostors matrix
             impostors_sp = csr_matrix((n_samples, n_samples), dtype=np.int8)
 
-            for class_num in self.classes_non_singleton_[:-1]:
-                ind_in, = np.where(np.equal(y, class_num))
-                ind_out, = np.where(np.greater(y, class_num))
+            for class_id in self.classes_non_singleton_[:-1]:
+                ind_in, = np.where(np.equal(y, class_id))
+                ind_out, = np.where(np.greater(y, class_id))
 
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
@@ -769,13 +781,14 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                     impostors_sp = impostors_sp + new_imp
 
             imp_row, imp_col = impostors_sp.nonzero()
-            dist = pairs_distances_batch(Lx, imp_row, imp_col)
+            dist = row_norms(Lx[imp_row] - Lx[imp_col], True)
+
         else:
             # Initialize impostors vectors
             imp_row, imp_col, dist = [], [], []
-            for class_num in self.classes_non_singleton_[:-1]:
-                ind_in, = np.where(np.equal(y, class_num))
-                ind_out, = np.where(np.greater(y, class_num))
+            for class_id in self.classes_non_singleton_[:-1]:
+                ind_in, = np.where(np.equal(y, class_id))
+                ind_out, = np.where(np.greater(y, class_id))
 
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
@@ -944,37 +957,3 @@ def sum_outer_products(X, weights):
     sum_outer_prods = X.T.dot(laplacian.dot(X))
 
     return sum_outer_prods
-
-
-def pairs_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
-    """Equivalent to  np.sum(np.square(X[ind_a] - X[ind_b]), axis=1)
-
-    Parameters
-    ----------
-    X : array, shape (n_samples, n_features_in)
-        An array of data samples.
-
-    ind_a : array, shape (n_indices,)
-        An array of sample indices.
-
-    ind_b : array, shape (n_indices,)
-        Another array of sample indices.
-
-    mem_budget : int, optional (default=int(1e7))
-        Memory budget (in bytes) for computing distances.
-
-    Returns
-    -------
-    dist: array, shape (n_indices,)
-        An array of pairwise distances.
-    """
-
-    bytes_per_row = X.shape[1] * X.itemsize
-    batch_size = int(mem_budget // bytes_per_row)
-
-    n_indices = len(ind_a)
-    dist = np.zeros(n_indices)
-    for chunk in gen_batches(n_indices, batch_size):
-        dist[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
-
-    return dist
