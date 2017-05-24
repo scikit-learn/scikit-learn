@@ -1078,9 +1078,9 @@ constant NMI decreases with increase in number of clusters::
 
   >>> labels_true=[5, 0, 3, 3, 7, 9, 3, 5, 2, 4]
   >>> labels_pred=[7, 6, 8, 8, 1, 6, 7, 7, 8, 1]
-  >>> metrics.mutual_info_score(labels_true, labels_pred)
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
   1.1752...
-  >>> normalized_mutual_info_score(labels_true,labels_pred)
+  >>> metrics.normalized_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
   0.7423...
 
 Value of NMI and MI does not take a constant value for random assignment of labels to sample data. 
@@ -1090,12 +1090,12 @@ to sample data and takes a value 1 when two partitions are identical::
   >>> rng = np.random.RandomState(0)
   >>> labels_true=rng.randint(0, 10, size=100)
   >>> labels_pred=rng.randint(0, 10, size=100)
-  >>> mutual_info_score(labels_true, labels_pred)
-  0.48124891493865468
-  >>> normalized_mutual_info_score(labels_true,labels_pred)
-  0.21639589743402465
-  >>> adjusted_mutual_info_score(labels_true,labels_pred)
-  0.010162801288211593
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.4812...
+  >>> metrics.normalized_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
+  0.2163...
+  >>> metrics.adjusted_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
+  0.0101...
 
 Advantages
 ~~~~~~~~~~
