@@ -41,7 +41,7 @@ import sklearn
 VERSION = sklearn.__version__
 
 SCIPY_MIN_VERSION = '0.13.3'
-NUMPY_MIN_VERSION = '1.8.1'
+NUMPY_MIN_VERSION = '1.8.2'
 
 
 # Optional setuptools features
