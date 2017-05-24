@@ -1923,8 +1923,8 @@ def train_test_split(*arrays, **options):
         n_train, n_test = _validate_shuffle_split(n_samples, test_size,
                                                   train_size)
 
-        train = range(n_train)
-        test = range(n_train, n_train + n_test)
+        train = np.arange(n_train)
+        test = np.arange(n_train, n_train + n_test)
 
     else:
         if stratify is not None:
