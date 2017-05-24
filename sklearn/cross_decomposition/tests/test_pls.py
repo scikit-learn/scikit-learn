@@ -284,6 +284,10 @@ def test_univariate_pls_regression():
     model1 = clf.fit(X, Y[:, 0]).coef_
     model2 = clf.fit(X, Y[:, :1]).coef_
     assert_array_almost_equal(model1, model2)
+    
+    # issue #8856.
+    # check that the result is a 1D array
+    assert_equal(clf.predict(X).ndim, 1)
 
 
 def test_predict_transform_copy():
