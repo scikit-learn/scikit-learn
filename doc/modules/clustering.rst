@@ -1085,17 +1085,17 @@ constant NMI decreases with increase in number of clusters::
 
 Value of NMI and MI does not take a constant value for random assignment of labels to sample data. 
 AMI is **corrected-for-chance** version of MI. Its value is close to zero for randowm assignment of labels
-to sample data and takes a value 1 when two partitions are identical::
-
-  >>> rng = np.random.RandomState(0)
-  >>> labels_true=rng.randint(0, 10, size=100)
-  >>> labels_pred=rng.randint(0, 10, size=100)
+to sample data and takes a value 1 when two partitions are identical.Please note in below example ``labels_true``
+and ``labels_pred`` are randomly generated ::
+  
+  >>> labels_true=[5, 0, 3, 3, 7, 9, 3, 5, 2, 4, 7, 6, 8, 8, 1, 6, 7, 7, 8, 1]
+  >>> labels_pred=[5, 9, 8, 9, 4, 3, 0, 3, 5, 0, 2, 3, 8, 1, 3, 3, 3, 7, 0, 1]
   >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
-  0.4812...
+  1.2706...
   >>> metrics.normalized_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
-  0.2163...
+  0.6059...
   >>> metrics.adjusted_mutual_info_score(labels_true,labels_pred)  # doctest: +ELLIPSIS
-  0.0101...
+  -0.0537...
 
 Advantages
 ~~~~~~~~~~
