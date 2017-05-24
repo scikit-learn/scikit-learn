@@ -433,8 +433,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         X /= self.x_std_
         Ypred = np.dot(X, self.coef_)
         output = Ypred + self.y_mean_
-        if output.shape[1]==1:
-            output=output.ravel()
+        if output.shape[1] == 1:
+            output = output.ravel()
         return output
 
     def fit_transform(self, X, y=None):
