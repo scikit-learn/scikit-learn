@@ -224,7 +224,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
+         
+    n_topics : int, optional (default=10)
+        This parameter has been renamed to n_components and will
+        be removed in version 0.21.
+        .. deprecated:: 0.19
+        
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -241,11 +246,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     n_iter_ : int
         Number of passes over the dataset.
-         
-    n_topics : int, optional (default=10)
-        .. deprecated:: 0.19
-        This parameter will be removed in 0.21.
-        Use :param:`n_components` instead.
 
     References
     ----------
