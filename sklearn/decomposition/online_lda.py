@@ -243,7 +243,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Number of passes over the dataset.
          
     n_topics : int, optional (default=10)
-        Same as n_components, kept for backward compatibility
+        .. deprecated:: 0.19
+        This parameter will be removed in 0.21.
+        Use :param:`n_components` instead.
 
     References
     ----------
@@ -263,7 +265,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
-                 n_jobs=1, verbose=0, random_state=None, n_topics=10):
+                 n_jobs=1, verbose=0, random_state=None, n_topics=None):
         self.n_components = n_components
         self.doc_topic_prior = doc_topic_prior
         self.topic_word_prior = topic_word_prior
@@ -280,18 +282,18 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.random_state = random_state
-        if n_components == 10 and n_topics != 10:
-            self.n_components = n_topics
-            warnings.warn("n_topics has been deprecated in favor of n_components", DeprecationWarning)
-
+        self.n_topics = n_topics
 
     def _check_params(self):
         """Check model parameters."""
+        if self.n_topics is not None:
+            self.n_components = self.n_topics
+            warnings.warn("n_topics has been renamed to n_components in version 0.19 "
+                          "and will be removed in 0.21", DeprecationWarning)
 
         if self.n_components <= 0:
             raise ValueError("Invalid 'n_components' parameter: %r"
                              % self.n_components)
-
 
         if self.total_samples <= 0:
             raise ValueError("Invalid 'total_samples' parameter: %r"
