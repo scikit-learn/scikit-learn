@@ -8,13 +8,16 @@ sparse matrices.
 # Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
+#          Lucas David <ld492@drexel.edu>
 # License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse
 
-from .validation import check_array
-from .graph_shortest_path import graph_shortest_path
+from sklearn.utils.validation import check_array
+
+from ._shortest_path import (shortest_path, floyd_warshall, dijkstra,
+                             bellman_ford, johnson, NegativeCycleError)
 
 
 ###############################################################################
@@ -54,26 +57,20 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
         graph = graph.tolil()
     else:
         graph = sparse.lil_matrix(graph)
-    seen = {}                   # level (number of hops) when seen in BFS
-    level = 0                   # the current level
-    next_level = [source]       # dict of nodes to check at next level
+    seen = {}  # level (number of hops) when seen in BFS
+    level = 0  # the current level
+    next_level = [source]  # dict of nodes to check at next level
     while next_level:
-        this_level = next_level     # advance to next level
-        next_level = set()          # and start a new list (fringe)
+        this_level = next_level  # advance to next level
+        next_level = set()  # and start a new list (fringe)
         for v in this_level:
             if v not in seen:
-                seen[v] = level     # set the level of vertex v
+                seen[v] = level  # set the level of vertex v
                 next_level.update(graph.rows[v])
         if cutoff is not None and cutoff <= level:
             break
         level += 1
     return seen  # return all path lengths as dictionary
-
-
-if hasattr(sparse, 'connected_components'):
-    connected_components = sparse.connected_components
-else:
-    from .sparsetools import connected_components
 
 
 ###############################################################################
@@ -113,8 +110,8 @@ def graph_laplacian(csgraph, normed=False, return_diag=False):
     if csgraph.ndim != 2 or csgraph.shape[0] != csgraph.shape[1]:
         raise ValueError('csgraph must be a square matrix or array')
 
-    if normed and (np.issubdtype(csgraph.dtype, np.int)
-                   or np.issubdtype(csgraph.dtype, np.uint)):
+    if normed and (np.issubdtype(csgraph.dtype, np.int) or
+                   np.issubdtype(csgraph.dtype, np.uint)):
         csgraph = check_array(csgraph, dtype=np.float64, accept_sparse=True)
 
     if sparse.isspmatrix(csgraph):
@@ -182,3 +179,8 @@ def _laplacian_dense(graph, normed=False, return_diag=False):
     if return_diag:
         return lap, w
     return lap
+
+
+__all__ = ['shortest_path', 'floyd_warshall', 'dijkstra', 'bellman_ford',
+           'johnson', 'NegativeCycleError', 'graph_laplacian',
+           'single_source_shortest_path_length']

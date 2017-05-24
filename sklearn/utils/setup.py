@@ -10,6 +10,7 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('utils', parent_package, top_path)
     config.add_subpackage('sparsetools')
+    config.add_subpackage('graph')
 
     cblas_libs, blas_info = get_blas_info()
     cblas_compile_args = blas_info.pop('extra_compile_args', [])
@@ -43,10 +44,6 @@ def configuration(parent_package='', top_path=None):
                          sources=['lgamma.pyx', join('src', 'gamma.c')],
                          include_dirs=['src'],
                          libraries=libraries)
-
-    config.add_extension('graph_shortest_path',
-                         sources=['graph_shortest_path.pyx'],
-                         include_dirs=[numpy.get_include()])
 
     config.add_extension('fast_dict',
                          sources=['fast_dict.pyx'],
