@@ -1847,7 +1847,8 @@ def train_test_split(*arrays, **options):
         by `np.random`.
 
     shuffle : boolean, optional (default=True)
-        Whether or not to shuffle the data before splitting.
+        Whether or not to shuffle the data before splitting. If shuffle=False
+        then stratify must be None.
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
