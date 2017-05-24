@@ -432,7 +432,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         X -= self.x_mean_
         X /= self.x_std_
         Ypred = np.dot(X, self.coef_)
-        return Ypred + self.y_mean_
+        output = Ypred + self.y_mean_
+        if output.shape[1]==1:
+            output=output.ravel()
+        return output
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
