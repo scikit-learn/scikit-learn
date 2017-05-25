@@ -66,14 +66,14 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+    plt.contourf(xx, yy, Z,cmap='tab20')
     plt.axis('off')
 
     # Plot also the training points
     colors = [color_map[y] for y in y_train]
-    plt.scatter(X[:, 0], X[:, 1], c=colors, cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=colors, edgecolors='black')
 
     plt.title(titles[i])
 
-plt.text(.90, 0, "Unlabeled points are colored white")
+plt.suptitle("Unlabeled points are colored white",y=0.1)
 plt.show()
