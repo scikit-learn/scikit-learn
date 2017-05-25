@@ -372,9 +372,5 @@ def test_dirichlet_expectation():
 
 def test_lda_n_topics_deprecation():
     n_components, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=10)
-    with warnings.catch_warnings(record=True) as warning:
-        warnings.simplefilter("always")
-        lda.fit(X)
-        assert len(warning) == 1
-        assert issubclass(warning[-1].category, DeprecationWarning)
+    lda = LatentDirichletAllocation(n_topics=10, learning_method='batch')
+    assert_warns(DeprecationWarning, lda.fit, X)
