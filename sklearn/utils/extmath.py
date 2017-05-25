@@ -53,6 +53,10 @@ def squared_norm(x):
     is a matrix (2-d array). Faster than norm(x) ** 2.
     """
     x = _ravel(x)
+    if np.issubdtype(x.dtype, np.integer):
+        warnings.warn('Array type is integer, np.dot may overflow. '
+                      'Data should be float type to avoid this issue',
+                      UserWarning)
     return np.dot(x, x)
 
 
