@@ -724,6 +724,7 @@ def test_max_samples_consistency():
     bagging.fit(X, y)
     assert_equal(bagging._max_samples, max_samples)
 
+
 def test_set_oob_score():
     # Make sure the oob_score doesn't change when the labels change
     # See: https://github.com/scikit-learn/scikit-learn/issues/8933
@@ -764,4 +765,3 @@ def test_set_oob_score():
         y.append(x[0])
 
     assert_equal(x, y)
-
