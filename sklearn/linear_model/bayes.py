@@ -64,14 +64,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is True.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -201,6 +199,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 
+            # Preserve the alpha and lambda values that were used to
+            # calculate the final coefficients
+            self.alpha_ = alpha_
+            self.lambda_ = lambda_
+
             # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = (np.sum((alpha_ * eigen_vals_) /
@@ -229,8 +232,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
                 break
             coef_old_ = np.copy(coef_)
 
-        self.alpha_ = alpha_
-        self.lambda_ = lambda_
         self.coef_ = coef_
         sigma_ = np.dot(Vh.T,
                         Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis])
@@ -326,14 +327,12 @@ class ARDRegression(LinearModel, RegressorMixin):
         Default is True.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True.
         If True, X will be copied; else, it may be overwritten.

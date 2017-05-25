@@ -6,11 +6,12 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.linear_model import Ridge
 from sklearn import datasets
-
-from sklearn.utils.testing import assert_array_almost_equal
 
 
 def test_bayesian_on_diabetes():
@@ -32,6 +33,19 @@ def test_bayesian_on_diabetes():
     clf.fit(X, y)
     # Test that scores are increasing at each iteration
     assert_array_equal(np.diff(clf.scores_) > 0, True)
+
+
+def test_bayesian_ridge_parameter():
+    # Test correctness of lambda_ and alpha_ parameters (Github issue #8224)
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+
+    # A Ridge regression model using an alpha value equal to the ratio of
+    # lambda_ and alpha_ from the Bayesian Ridge model must be identical
+    br_model = BayesianRidge(compute_score=True).fit(X, y)
+    rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(X, y)
+    assert_array_almost_equal(rr_model.coef_, br_model.coef_)
+    assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
 def test_toy_bayesian_ridge_object():
@@ -64,7 +78,7 @@ def test_return_std():
         return np.dot(X, w) + b
 
     def f_noise(X, noise_mult):
-        return f(X) + np.random.randn(X.shape[0])*noise_mult
+        return f(X) + np.random.randn(X.shape[0]) * noise_mult
 
     d = 5
     n_train = 50

@@ -510,7 +510,8 @@ class BinomialDeviance(ClassificationLossFunction):
         numerator = np.sum(sample_weight * residual)
         denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -576,7 +577,8 @@ class MultinomialDeviance(ClassificationLossFunction):
         denominator = np.sum(sample_weight * (y - residual) *
                              (1.0 - y + residual))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -633,7 +635,8 @@ class ExponentialLoss(ClassificationLossFunction):
         numerator = np.sum(y_ * sample_weight * np.exp(-y_ * pred))
         denominator = np.sum(sample_weight * np.exp(-y_ * pred))
 
-        if denominator == 0.0:
+        # prevents overflow and division by zero
+        if abs(denominator) < 1e-150:
             tree.value[leaf, 0, 0] = 0.0
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
@@ -720,7 +723,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
-                 max_depth, min_impurity_split, init, subsample, max_features,
+                 max_depth, min_impurity_decrease, min_impurity_split,
+                 init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
@@ -734,6 +738,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.subsample = subsample
         self.max_features = max_features
         self.max_depth = max_depth
+        self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.init = init
         self.random_state = random_state
@@ -766,6 +771,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+                min_impurity_decrease=self.min_impurity_decrease,
                 min_impurity_split=self.min_impurity_split,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
@@ -1321,11 +1327,32 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_split : float, optional (default=1e-7)
+    min_impurity_split : float,
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
-        .. versionadded:: 0.18
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
 
     init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial
@@ -1384,6 +1411,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
@@ -1406,7 +1441,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_split=1e-7, init=None,
+                 max_depth=3, min_impurity_decrease=0.,
+                 min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto'):
@@ -1420,6 +1456,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_features=max_features,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             warm_start=warm_start,
             presort=presort)
@@ -1704,11 +1741,32 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_split : float, optional (default=1e-7)
+    min_impurity_split : float,
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
-        .. versionadded:: 0.18
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
 
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
@@ -1763,12 +1821,21 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    `init` : BaseEstimator
+    init : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
     estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, 1]
         The collection of fitted sub-estimators.
+
+    Notes
+    -----
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
 
     See also
     --------
@@ -1790,7 +1857,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_split=1e-7, init=None, random_state=None,
+                 max_depth=3, min_impurity_decrease=0.,
+                 min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
@@ -1800,7 +1868,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features, min_impurity_split=min_impurity_split,
+            max_features=max_features,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort)

@@ -66,7 +66,7 @@ def compute_class_weight(class_weight, classes, y):
         for c in class_weight:
             i = np.searchsorted(classes, c)
             if i >= len(classes) or classes[i] != c:
-                raise ValueError("Class label %d not present." % c)
+                raise ValueError("Class label {} not present.".format(c))
             else:
                 weight[i] = class_weight[c]
 
@@ -83,6 +83,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
+
+        Note that for multioutput (including multilabel) weights should be
+        defined for each class of every column in its own dict. For example,
+        for four-class multilabel classification weights should be
+        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
+        [{1:1}, {2:5}, {3:1}, {4:1}].
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data:
