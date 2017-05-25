@@ -225,7 +225,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
          
-    n_topics : int, optional (default=10)
+    n_topics : int, optional (default=None)
         This parameter has been renamed to n_components and will
         be removed in version 0.21.
         .. deprecated:: 0.19
@@ -266,7 +266,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
                  n_jobs=1, verbose=0, random_state=None, n_topics=None):
-        self._n_components = n_components
+        self.n_components = n_components
         self.doc_topic_prior = doc_topic_prior
         self.topic_word_prior = topic_word_prior
         self.learning_method = learning_method
@@ -291,7 +291,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             warnings.warn("n_topics has been renamed to n_components in version 0.19 "
                           "and will be removed in 0.21", DeprecationWarning)
         else:
-            self._n_components = self._n_components
+            self._n_components = self.n_components
 
         if self._n_components <= 0:
             raise ValueError("Invalid 'n_components' parameter: %r"
