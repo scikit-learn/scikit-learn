@@ -734,7 +734,8 @@ def test_set_oob_score():
     x = []
     y = []
     dfs = []
-    # Needs to maintain order of labels in case there are cases of equal predictions when running argmax
+    # Needs to maintain order of labels in case there are
+    # cases of equal predictions when running argmax
     dict1 = {-1: 0, 0: 1, 1: 2}
     dict2 = {-1: 'a', 0: 'b', 1: 'c'}
 
@@ -748,13 +749,14 @@ def test_set_oob_score():
     df2[:, label] = [dict1[l] for l in df2[:, label]]
     dfs.append(df2)
     df3 = df1.copy()
-    df3[:, label] = [dict1[l] for l in df3[:, label]]
+    df3[:, label] = [dict2[l] for l in df3[:, label]]
     dfs.append(df3)
 
     # Try 3 possibilities
     for df in dfs:
         clf = BaggingClassifier(base_estimator=KNeighborsClassifier(),
-                    n_estimators=10, oob_score=True, random_state=randState)
+                                n_estimators=10, oob_score=True,
+                                random_state=randState)
         clf.fit(df[:, features], df[:, label])
         x.append(clf.oob_score_)
 
@@ -762,3 +764,4 @@ def test_set_oob_score():
         y.append(x[0])
 
     assert_equal(x, y)
+
