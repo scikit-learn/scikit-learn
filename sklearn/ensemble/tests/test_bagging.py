@@ -6,7 +6,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # License: BSD 3 clause
 
 import numpy as np
-
+import pandas as pd
 from sklearn.base import BaseEstimator
 
 from sklearn.utils.testing import assert_array_equal
@@ -723,3 +723,41 @@ def test_max_samples_consistency():
                                 max_features=0.5, random_state=1)
     bagging.fit(X, y)
     assert_equal(bagging._max_samples, max_samples)
+
+def test_set_oob_score():
+    # Make sure the oob_score doesn't change when the labels change
+    # See: https://github.com/scikit-learn/scikit-learn/issues/8933
+    N         = 50
+    randState = 5
+    label     = 'Label'
+    features  = ['A','B','C']
+    x         = []
+    y         = []
+    dfs       = []
+    # Needs to maintain order of labels in case there are cases of equal predictions when running argmax
+    dict1     = {-1:0, 0:1, 1:2}
+    dict2     = {-1:'a', 0:'b', 1:'c'}
+
+    labels = np.random.randint(3, size=N) - 1
+    df1 = pd.DataFrame(labels, index=range(N), columns=[label])
+    for col in features:
+        df1[col] = df1[label] + 2 * np.random.rand(N)
+
+    dfs.append(df1)
+    df2 = df1.copy()
+    df2[label] = df2.apply(lambda row: dict1[row[label]], axis=1)
+    dfs.append(df2)
+    df3 = df1.copy()
+    df3[label] = df3.apply(lambda row: dict2[row[label]], axis=1)
+    dfs.append(df3)
+
+    # Try 3 possibilities
+    for df in dfs:
+       clf = BaggingClassifier(base_estimator=KNeighborsClassifier(), n_estimators=10, oob_score=True, random_state=randState)
+       clf.fit(df[features], df[label])
+       x.append(clf.oob_score_)
+
+    for i in range(len(x)):
+       y.append(x[0])
+
+    assert_equal(x, y)
