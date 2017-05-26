@@ -746,7 +746,7 @@ def test_set_oob_score():
         df[:, col] = df[:, col] + 2 * np.random.rand(N)
 
     # Try 3 possibilities
-    for label in [ label1, label2, label3]:
+    for label in [label1, label2, label3]:
         clf = BaggingClassifier(base_estimator=KNeighborsClassifier(),
                                 n_estimators=10, oob_score=True,
                                 random_state=randState)
