@@ -729,8 +729,14 @@ def test_set_oob_score_label_encoding():
     # Make sure the oob_score doesn't change when the labels change
     # See: https://github.com/scikit-learn/scikit-learn/issues/8933
     randState = 5
-    x1 = BaggingClassifier(oob_score=True, random_state = randState).fit([[-1], [0], [1]] * 5, ['A', 'B', 'C'] * 5).oob_score_
-    x2 = BaggingClassifier(oob_score=True, random_state = randState).fit([[-1], [0], [1]] * 5, [-1, 0, 1] * 5).oob_score_
-    x3 = BaggingClassifier(oob_score=True, random_state = randState).fit([[-1], [0], [1]] * 5, [0, 1, 2] * 5).oob_score_
+    x1 = BaggingClassifier(oob_score=True,
+                           random_state=randState).fit([[-1], [0], [1]] * 5,
+                                                       ['A', 'B', 'C'] * 5).oob_score_
+    x2 = BaggingClassifier(oob_score=True,
+                           random_state=randState).fit([[-1], [0], [1]] * 5,
+                                                       [-1, 0, 1] * 5).oob_score_
+    x3 = BaggingClassifier(oob_score=True,
+                           random_state=randState).fit([[-1], [0], [1]] * 5,
+                                                       [0, 1, 2] * 5).oob_score_
     
     assert_equal([x1, x2], [x3, x3])
