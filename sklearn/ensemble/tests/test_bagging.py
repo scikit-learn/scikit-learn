@@ -725,35 +725,12 @@ def test_max_samples_consistency():
     assert_equal(bagging._max_samples, max_samples)
 
 
-def test_set_oob_score():
+def test_set_oob_score_label_encoding():
     # Make sure the oob_score doesn't change when the labels change
     # See: https://github.com/scikit-learn/scikit-learn/issues/8933
-    N = 50
     randState = 5
-    x = []
-    y = []
-    # Needs to maintain order of labels in case there are
-    # cases of equal predictions when running argmax
-    dict1 = {-1: 0, 0: 1, 1: 2}
-    dict2 = {-1: 'a', 0: 'b', 1: 'c'}
-
-    label1 = np.random.randint(3, size=N) - 1
-    label2 = [dict1[l] for l in label1]
-    label3 = [dict2[l] for l in label1]
-
-    df = np.tile(label1, (3, 1)).T
-    for col in range(3):
-        df[:, col] = df[:, col] + 2 * np.random.rand(N)
-
-    # Try 3 possibilities
-    for label in [label1, label2, label3]:
-        clf = BaggingClassifier(base_estimator=KNeighborsClassifier(),
-                                n_estimators=10, oob_score=True,
-                                random_state=randState)
-        clf.fit(df, label)
-        x.append(clf.oob_score_)
-
-    for i in range(len(x)):
-        y.append(x[0])
-
-    assert_equal(x, y)
+    x1 = BaggingClassifier(oob_score=True, random_state = randState).fit([[-1], [0], [1]] * 5, ['A', 'B', 'C'] * 5).oob_score_
+    x2 = BaggingClassifier(oob_score=True, random_state = randState).fit([[-1], [0], [1]] * 5, [-1, 0, 1] * 5).oob_score_
+    x3 = BaggingClassifier(oob_score=True, random_state = randState).fit([[-1], [0], [1]] * 5, [0, 1, 2] * 5).oob_score_
+    
+    assert_equal([x1, x2], [x3, x3])
