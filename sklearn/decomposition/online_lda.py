@@ -160,7 +160,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
-        The default learning method is going to be changed to 'batch' in the 0.20 release.
+        The default learning method is going to be changed to 'batch' in the
+        0.20 release.
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -224,12 +225,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-         
+
     n_topics : int, optional (default=None)
         This parameter has been renamed to n_components and will
         be removed in version 0.21.
         .. deprecated:: 0.19
-        
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -288,8 +289,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """Check model parameters."""
         if self.n_topics is not None:
             self._n_components = self.n_topics
-            warnings.warn("n_topics has been renamed to n_components in version 0.19 "
-                          "and will be removed in 0.21", DeprecationWarning)
+            warnings.warn("n_topics has been renamed to n_components in "
+                          "version 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
         else:
             self._n_components = self.n_components
 
@@ -372,7 +374,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # TODO: make Parallel._effective_n_jobs public instead?
         n_jobs = _get_n_jobs(self.n_jobs)
         if parallel is None:
-            parallel = Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1))
+            parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
+                                self.verbose - 1))
         results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
@@ -491,7 +494,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 (n_features, self.components_.shape[1]))
 
         n_jobs = _get_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=n_jobs, verbose=max(0,
+                      self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
                 self._em_step(X[idx_slice, :],
                               total_samples=self.total_samples,
@@ -521,10 +525,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
-        if learning_method == None:
+        if learning_method is None:
             warnings.warn("The default value for 'learning_method' will be "
-                          "changed from 'online' to 'batch' in the release 0.20. "
-                          "This warning was introduced in 0.18.",
+                          "changed from 'online' to 'batch' in the release "
+                          "0.20. This warning was introduced in 0.18.",
                           DeprecationWarning)
             learning_method = 'online'
 
@@ -535,7 +539,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # change to perplexity later
         last_bound = None
         n_jobs = _get_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=n_jobs, verbose=max(0,
+                      self.verbose - 1)) as parallel:
             for i in xrange(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):
