@@ -739,5 +739,4 @@ def test_set_oob_score_label_encoding():
                            random_state=randState).fit(X, Y2).oob_score_
     x3 = BaggingClassifier(oob_score=True,
                            random_state=randState).fit(X, Y3).oob_score_
-    
     assert_equal([x1, x2], [x3, x3])
