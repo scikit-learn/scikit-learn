@@ -14,7 +14,7 @@ Non-negative Matrix Factorization is applied with two different objective
 functions: the Frobenius norm, and the generalized Kullback-Leibler divergence.
 The latter is equivalent to Probabilistic Latent Semantic Indexing.
 
-The default parameters (n_samples / n_features / n_topics) should make
+The default parameters (n_samples / n_features / n_components) should make
 the example runnable in a couple of tens of seconds. You can try to
 increase the dimensions of the problem, but be aware that the time
 complexity is polynomial in NMF. In LDA, the time complexity is
@@ -36,7 +36,7 @@ from sklearn.datasets import fetch_20newsgroups
 
 n_samples = 2000
 n_features = 1000
-n_topics = 10
+n_components = 10
 n_top_words = 20
 
 
@@ -85,7 +85,7 @@ print("Fitting the NMF model (Frobenius norm) with tf-idf features, "
       "n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 t0 = time()
-nmf = NMF(n_components=n_topics, random_state=1,
+nmf = NMF(n_components=n_components, random_state=1,
           alpha=.1, l1_ratio=.5).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
@@ -98,7 +98,7 @@ print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
       "tf-idf features, n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 t0 = time()
-nmf = NMF(n_components=n_topics, random_state=1, beta_loss='kullback-leibler',
+nmf = NMF(n_components=n_components, random_state=1, beta_loss='kullback-leibler',
           solver='mu', max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
@@ -109,7 +109,7 @@ print_top_words(nmf, tfidf_feature_names, n_top_words)
 print("Fitting LDA models with tf features, "
       "n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
-lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=5,
+lda = LatentDirichletAllocation(n_components=n_components, max_iter=5,
                                 learning_method='online',
                                 learning_offset=50.,
                                 random_state=0)
