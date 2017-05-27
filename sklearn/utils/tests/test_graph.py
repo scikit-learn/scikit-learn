@@ -28,7 +28,6 @@ def test_graph_laplacian_with_copy():
                 np.ones((7, 7)),
                 np.eye(19),
                 np.vander(np.arange(4)) + np.vander(np.arange(4)).T,):
-        sp_mat = sparse.csr_matrix(mat)
         for normed in (True, False):
             laplacian = graph_laplacian(mat, normed=normed)
             laplacian_no_copy = graph_laplacian(mat, normed=normed, copy=False)
