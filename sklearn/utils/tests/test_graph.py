@@ -22,3 +22,14 @@ def test_graph_laplacian():
             np.testing.assert_array_almost_equal(laplacian.T, laplacian)
             np.testing.assert_array_almost_equal(
                 laplacian, graph_laplacian(sp_mat, normed=normed).toarray())
+
+def test_graph_laplacian_with_copy():
+    for mat in (np.arange(10) * np.arange(10)[:, np.newaxis],
+                np.ones((7, 7)),
+                np.eye(19),
+                np.vander(np.arange(4)) + np.vander(np.arange(4)).T,):
+        sp_mat = sparse.csr_matrix(mat)
+        for normed in (True, False):
+            laplacian = graph_laplacian(mat, normed=normed)
+            laplacian_no_copy = graph_laplacian(mat, normed=normed, copy=False)
+            np.testing.assert_array_equal(laplacian, laplacian_no_copy)
