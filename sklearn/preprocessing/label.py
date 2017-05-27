@@ -18,7 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
 from ..utils.fixes import astype
-from ..utils.fixes import in1d
+from ..utils.fixes import in1d, setdiff1d
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -149,7 +149,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
+            diff = setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
         return np.searchsorted(self.classes_, y)
 
