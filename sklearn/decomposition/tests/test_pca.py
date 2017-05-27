@@ -352,6 +352,12 @@ def test_pca_validation():
                                 "n_samples, n_features\)\=.* with svd_solver"
                                 "\=\'(?:full|arpack|randomized|auto)\'$",
                                 PCA(n_components, svd_solver=solver).fit, X)
+            # We conduct the same test on X.T so that it is invariant to axis.
+            assert_raises_regex(ValueError,
+                                "n_components\=.* must be between .* and min\("
+                                "n_samples, n_features\)\=.* with svd_solver"
+                                "\=\'(?:full|arpack|randomized|auto)\'$",
+                                PCA(n_components, svd_solver=solver).fit, X.T)
 
 
 def test_n_components_none():
@@ -361,7 +367,7 @@ def test_n_components_none():
         pca = PCA(svd_solver=solver)
         pca.fit(X)
         if solver == 'arpack':
-            assert_equal(pca.n_components_, min(X.shape)-1)
+            assert_equal(pca.n_components_, min(X.shape) - 1)
         else:
             assert_equal(pca.n_components_, min(X.shape))
 
