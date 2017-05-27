@@ -160,7 +160,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
-                        eigen_tol=0.0, assign_labels='kmeans', copy=False):
+                        eigen_tol=0.0, assign_labels='kmeans', copy=True):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -222,9 +222,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         the 'Multiclass spectral clustering' paper referenced below for
         more details on the discretization approach.
 
-    copy : bool, optional, default: False
+    copy : bool, optional, default: True
         Parameter to opt whether memory optimization needs to be done in
-        the graph_laplacian function.
+        the graph_laplacian function. If False, the values in affinity
+        matrix will be changed, saving memory.
 
     Returns
     -------
@@ -368,8 +369,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     copy : bool, optional, default: True
-        If copy is False, then the laplacian matrix is copied in the affinity
-        matrix, without using additional memory.
+        If copy is False, then the laplacian matrix is constructed into the
+        affinity matrix, without using additional memory.
         If affinity is 'precomputed', then the input parameter X to fit()
         would be changed after the call if copy is set to False.
 
