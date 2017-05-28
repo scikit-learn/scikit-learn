@@ -1,5 +1,4 @@
 import sys
-import io
 
 import numpy as np
 from scipy.linalg import block_diag
@@ -22,6 +21,7 @@ from sklearn.utils.testing import assert_warns
 
 from sklearn.exceptions import NotFittedError
 from sklearn.externals.six.moves import xrange
+from sklearn.externals.six import StringIO
 
 
 def _build_sparse_mtx():
@@ -389,7 +389,7 @@ def check_verbosity(verbose, evaluate_every, expected_lines,
                                     verbose=verbose,
                                     evaluate_every=evaluate_every,
                                     random_state=0)
-    out = io.StringIO()
+    out = StringIO()
     old_out, sys.stdout = sys.stdout, out
     try:
         lda.fit(X)
