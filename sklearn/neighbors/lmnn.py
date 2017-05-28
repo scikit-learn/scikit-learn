@@ -43,7 +43,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
     problem, finding a linear transformation with L-BFGS instead of solving the
     constrained problem that finds the globally optimal metric. Different from
     the paper, the problem solved by this implementation (and the original
-    MATLAB code) is with the squared LMNN loss (to make the problem
+    MATLAB code) is with the squared hinge loss (to make the problem
     differentiable).
 
 
@@ -55,8 +55,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         ``use_pca`` is True.
 
     warm_start : bool, optional (default=False)
-        If True and :meth:`fit` has been called before, use the solution of the
-        previous call to :meth:`fit` to initialize the linear transformation.
+        If True and :meth:`fit` has been called before, the solution of the
+        previous call to :meth:`fit` is used as the initial linear
+        transformation.
 
     use_pca : bool, optional (default=True)
         Whether to use PCA to initialize the linear transformation.
@@ -67,7 +68,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         If None it is inferred from ``use_pca`` and ``L``.
 
     n_neighbors : int, optional (default=3)
-        Number of target neighbors.
+        Number of neighbors to use as target neighbors for each sample.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -116,7 +117,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         iterations (needs `scipy` >= 0.12.0).
 
     random_state : int or numpy.RandomState or None, optional (default=None)
-        A pseudo random number generator used for sampling the constraints.
+        A pseudo random number generator used to sample from the constraints.
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -129,8 +130,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         The linear transformation used during fitting.
 
     n_neighbors_ : int
-        The provided n_neighbors is decreased when >= min(number of
-        elements in each class).
+        The provided n_neighbors is decreased when >= min(number of elements
+        in each class).
 
     n_features_out_ : int
         The dimensionality of a sample's vector after applying to it the
@@ -550,7 +551,15 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             L = self.L_
         elif self.use_pca and X.shape[1] > 1:
             pca = PCA(random_state=self.random_state)
+            if self.verbose:
+                print('Finding principal components...', end='')
+                t = time.time()
+
             pca.fit(X)
+
+            if self.verbose:
+                print('done in {:5.2f}s'.format(time.time() - t))
+
             L = pca.components_
         else:
             L = np.eye(X.shape[1])
@@ -587,7 +596,8 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         """
 
         if self.verbose:
-            print('Finding the target neighbors...')
+            print('Finding the target neighbors...', end='')
+            t = time.time()
 
         target_neighbors = np.empty((X.shape[0], self.n_neighbors_), dtype=int)
 
@@ -599,6 +609,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
             nn.fit(X[ind_class])
             neigh_ind = nn.kneighbors(return_distance=False)
             target_neighbors[ind_class] = ind_class[neigh_ind]
+
+        if self.verbose:
+            print('done in {:5.2f}s'.format(time.time()-t))
 
         return target_neighbors
 
@@ -780,9 +793,10 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
                                          shape=(n_samples, n_samples))
                     impostors_sp = impostors_sp + new_imp
 
-            imp_row, imp_col = impostors_sp.nonzero()
-            dist = row_norms(Lx[imp_row] - Lx[imp_col], True)
-
+            impostors_sp = impostors_sp.tocoo(copy=False)
+            imp_row = impostors_sp.row
+            imp_col = impostors_sp.col
+            dist = pairs_distances_batch(Lx, imp_row, imp_col)
         else:
             # Initialize impostors vectors
             imp_row, imp_col, dist = [], [], []
@@ -957,3 +971,33 @@ def sum_outer_products(X, weights):
     sum_outer_prods = X.T.dot(laplacian.dot(X))
 
     return sum_outer_prods
+
+
+def pairs_distances_batch(X, ind_a, ind_b, mem_budget=int(1e8)):
+    """Equivalent to  row_norms(X[ind_a] - X[ind_b], True)
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_features_in)
+        An array of data samples.
+    ind_a : array, shape (n_indices,)
+        An array of sample indices.
+    ind_b : array, shape (n_indices,)
+        Another array of sample indices.
+    mem_budget : int, optional (default=int(1e7))
+        Memory budget (in bytes) for computing distances.
+    Returns
+    -------
+    dist: array, shape (n_indices,)
+        An array of pairwise distances.
+    """
+
+    bytes_per_row = X.shape[1] * X.itemsize
+    batch_size = int(mem_budget // bytes_per_row)
+
+    n_pairs = len(ind_a)
+    dist = np.zeros(n_pairs)
+    for chunk in gen_batches(n_pairs, batch_size):
+        dist[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
+
+    return dist
