@@ -297,8 +297,8 @@ def test_random_state():
     clf.fit(X, y)
     L_3 = clf.L_
 
-    diff = np.sum(np.abs(L_2, L_3))
-    assert_true(diff > 0.2)
+    abs_diff = np.abs(L_2 - L_3).sum()
+    assert_true(abs_diff > 0.2)
 
 
 def test_singleton_class():

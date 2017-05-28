@@ -517,9 +517,9 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         # Check preferred number of neighbors
         min_non_singleton_size = class_sizes[~is_class_singleton].min()
         if self.n_neighbors >= min_non_singleton_size:
-            warn("n_neighbors {} is not less than the number of samples in "
-                 "the smallest non-singleton class {}. n_neighbors will be set"
-                 " to (min_non_singleton_size - 1) for estimation."
+            warn("n_neighbors (={}) is not less than the number of samples in "
+                 "the smallest non-singleton class (={}). n_neighbors will be "
+                 "set to (min_non_singleton_size - 1) for estimation."
                  .format(self.n_neighbors, min_non_singleton_size))
 
         self.n_neighbors_ = min(self.n_neighbors, min_non_singleton_size - 1)
@@ -550,7 +550,7 @@ class LargeMarginNearestNeighbor(KNeighborsClassifier):
         elif self.warm_start and hasattr(self, 'L_'):
             L = self.L_
         elif self.use_pca and X.shape[1] > 1:
-            pca = PCA(random_state=self.random_state)
+            pca = PCA(random_state=self.random_state_)
             if self.verbose:
                 print('Finding principal components...', end='')
                 t = time.time()
