@@ -222,6 +222,14 @@ rules before submitting a pull request:
 
     * Documentation and high-coverage tests are necessary for enhancements
       to be accepted.
+      Bug-fixes or new features should be provided with
+      [non-regression tests](https://en.wikipedia.org/wiki/Non-regression_testing).
+      These tests verify the correct behavior of the fix or feature. In this
+      manner, further modifications on the code base are granted to be consistent
+      with the desired behavior.
+      For the Bug-fixes case, at the time of the PR, this tests should fail for
+      the code base in master and pass for the PR code.
+
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
@@ -740,16 +748,23 @@ the removal will be in 0.(x+2). For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
+In addition, a deprecation note should be added in the docstring, recalling the
+same information as the deprecation warning as explained above. Use the
+``.. deprecated::`` directive::
+
+  .. deprecated:: 0.13
+     ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
+     in 0.15.
+
 
 .. currentmodule:: sklearn
 
-Python 3.x support
-------------------
+Python versions supported
+-------------------------
 
-All scikit-learn code should work unchanged in both Python 2.[67]
-and 3.2 or newer. Since Python 3.x is not backwards compatible,
-that may require changes to code and it certainly requires testing
-on both 2.7 and 3.2 or newer.
+All scikit-learn code should work unchanged in both Python 2.7 and 3.4 or
+newer. Since Python 3.x is not backwards compatible, that may require changes
+to code and it certainly requires testing on both 2.7 and 3.4 or newer.
 
 For most numerical algorithms, Python 3.x support is easy:
 just remember that ``print`` is a function and
