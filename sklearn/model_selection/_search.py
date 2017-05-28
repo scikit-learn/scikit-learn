@@ -753,6 +753,14 @@ class GridSearchCV(BaseSearchCV):
         ``scorer(estimator, X, y)``.
         If ``None``, the ``score`` method of the estimator is used.
 
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+        .. deprecated:: 0.19
+           ``fit_params`` as a constructor argument was deprecated in version
+           0.19 and will be removed in version 0.21. Pass fit parameters to
+           the ``fit`` method instead.
+
     n_jobs : int, default=1
         Number of jobs to run in parallel.
 
@@ -818,8 +826,8 @@ class GridSearchCV(BaseSearchCV):
     >>> from sklearn.model_selection import GridSearchCV
     >>> iris = datasets.load_iris()
     >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVC()
-    >>> clf = GridSearchCV(svr, parameters)
+    >>> svc = svm.SVC()
+    >>> clf = GridSearchCV(svc, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None, error_score=...,
@@ -1009,6 +1017,14 @@ class RandomizedSearchCV(BaseSearchCV):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
         If ``None``, the ``score`` method of the estimator is used.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+        .. deprecated:: 0.19
+           ``fit_params`` as a constructor argument was deprecated in version
+           0.19 and will be removed in version 0.21. Pass fit parameters to
+           the ``fit`` method instead.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.

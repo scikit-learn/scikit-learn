@@ -189,6 +189,13 @@ def test_cross_validator_with_default_params():
         # Test if the repr works without any errors
         assert_equal(cv_repr, repr(cv))
 
+    # ValueError for get_n_splits methods
+    msg = "The 'X' parameter should not be None."
+    assert_raise_message(ValueError, msg,
+                         loo.get_n_splits, None, y, groups)
+    assert_raise_message(ValueError, msg,
+                         lpo.get_n_splits, None, y, groups)
+
 
 def check_valid_split(train, test, n_samples=None):
     # Use python sets to get more informative assertion failure messages
@@ -757,6 +764,24 @@ def test_leave_one_p_group_out():
                 # The number of groups in test must be equal to p_groups_out
                 assert_true(np.unique(groups_arr[test]).shape[0], p_groups_out)
 
+    # check get_n_splits() with dummy parameters
+    assert_equal(logo.get_n_splits(None, None, ['a', 'b', 'c', 'b', 'c']), 3)
+    assert_equal(logo.get_n_splits(groups=[1.0, 1.1, 1.0, 1.2]), 3)
+    assert_equal(lpgo_2.get_n_splits(None, None, np.arange(4)), 6)
+    assert_equal(lpgo_1.get_n_splits(groups=np.arange(4)), 4)
+
+    # raise ValueError if a `groups` parameter is illegal
+    with assert_raises(ValueError):
+        logo.get_n_splits(None, None, [0.0, np.nan, 0.0])
+    with assert_raises(ValueError):
+        lpgo_2.get_n_splits(None, None, [0.0, np.inf, 0.0])
+
+    msg = "The 'groups' parameter should not be None."
+    assert_raise_message(ValueError, msg,
+                         logo.get_n_splits, None, None, None)
+    assert_raise_message(ValueError, msg,
+                         lpgo_1.get_n_splits, None, None, None)
+
 
 def test_leave_group_out_changing_groups():
     # Check that LeaveOneGroupOut and LeavePGroupsOut work normally if
@@ -842,6 +867,22 @@ def test_repeated_kfold_determinstic_split():
         assert_array_equal(test, [0, 1])
 
         assert_raises(StopIteration, next, splits)
+
+
+def test_get_n_splits_for_repeated_kfold():
+    n_splits = 3
+    n_repeats = 4
+    rkf = RepeatedKFold(n_splits, n_repeats)
+    expected_n_splits = n_splits * n_repeats
+    assert_equal(expected_n_splits, rkf.get_n_splits())
+
+
+def test_get_n_splits_for_repeated_stratified_kfold():
+    n_splits = 3
+    n_repeats = 4
+    rskf = RepeatedStratifiedKFold(n_splits, n_repeats)
+    expected_n_splits = n_splits * n_repeats
+    assert_equal(expected_n_splits, rskf.get_n_splits())
 
 
 def test_repeated_stratified_kfold_determinstic_split():
