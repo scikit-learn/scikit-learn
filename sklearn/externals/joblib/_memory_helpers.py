@@ -7,7 +7,7 @@ except ImportError:
     from codecs import lookup, BOM_UTF8
     import re
     from io import TextIOWrapper, open
-    cookie_re = re.compile("coding[:=]\s*([-\w.]+)")
+    cookie_re = re.compile(r"coding[:=]\s*([-\w.]+)")
 
     def _get_normal_name(orig_enc):
         """Imitates get_normal_name in tokenizer.c."""
