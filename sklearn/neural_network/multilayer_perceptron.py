@@ -557,10 +557,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     break
 
                 if self.n_iter_ == self.max_iter:
-                    warnings.warn('Stochastic Optimizer: Maximum iterations'
-                                  ' reached and the optimization hasn\'t '
-                                  'converged yet.'
-                                  % (), ConvergenceWarning)
+                    warnings.warn(
+                        "Stochastic Optimizer: Maximum iterations (%d) "
+                        "reached and the optimization hasn't converged yet."
+                        % self.max_iter, ConvergenceWarning)
         except KeyboardInterrupt:
             warnings.warn("Training interrupted by user.")
 
