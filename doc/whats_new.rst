@@ -346,6 +346,10 @@ API changes summary
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
 
+   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
+     has been renamed to ``n_components`` and will be removed in version 0.21.
+     :issue:`8922` by :user:Attractadore
+
 
 .. _changes_0_18_1:
 
