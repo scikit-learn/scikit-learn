@@ -1,3 +1,6 @@
+import sys
+import io
+
 import numpy as np
 from scipy.linalg import block_diag
 from scipy.sparse import csr_matrix
@@ -9,6 +12,7 @@ from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
 
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater_equal
@@ -367,3 +371,36 @@ def test_dirichlet_expectation():
     assert_allclose(_dirichlet_expectation_2d(x),
                     psi(x) - psi(np.sum(x, axis=1)[:, np.newaxis]),
                     rtol=1e-11, atol=3e-9)
+
+
+def check_verbosity(verbose, evaluate_every, expected_lines,
+                    expected_perplexities):
+    n_topics, X = _build_sparse_mtx()
+    lda = LatentDirichletAllocation(n_topics=n_topics, max_iter=3,
+                                    learning_method='batch',
+                                    verbose=verbose,
+                                    evaluate_every=evaluate_every,
+                                    random_state=0)
+    out = io.StringIO()
+    old_out, sys.stdout = sys.stdout, out
+    try:
+        lda.fit(X)
+    finally:
+        sys.stdout = old_out
+
+    n_lines = out.getvalue().count('\n')
+    n_perplexity = out.getvalue().count('perplexity')
+    assert_equal(expected_lines, n_lines)
+    assert_equal(expected_perplexities, n_perplexity)
+
+
+def test_verbosity():
+    for verbose, evaluate_every, expected_lines, expected_perplexities in [
+        (False, 1, 0, 0),
+        (False, 0, 0, 0),
+        (True, 0, 3, 0),
+        (True, 1, 3, 3),
+        (True, 2, 3, 1),
+    ]:
+        yield (check_verbosity, verbose, evaluate_every, expected_lines,
+               expected_perplexities)
