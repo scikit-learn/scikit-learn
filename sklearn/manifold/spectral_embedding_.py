@@ -132,7 +132,8 @@ def _set_diag(laplacian, value, norm_laplacian):
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+                       norm_laplacian=True, drop_first=True,
+                       return_lap_diag=False):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -321,9 +322,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     embedding = _deterministic_vector_sign_flip(embedding)
     if drop_first:
-        return embedding[1:n_components].T
+        embedding = embedding[1:n_components].T
     else:
-        return embedding[:n_components].T
+        embedding = embedding[:n_components].T
+    if return_lap_diag:
+        return embedding, dd
+    else:
+        return embedding
 
 
 class SpectralEmbedding(BaseEstimator):
@@ -494,10 +499,12 @@ class SpectralEmbedding(BaseEstimator):
                               "name or a callable. Got: %s") % self.affinity)
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(affinity_matrix,
-                                             n_components=self.n_components,
-                                             eigen_solver=self.eigen_solver,
-                                             random_state=random_state)
+        (self.embedding_,
+         self._dd) = spectral_embedding(affinity_matrix,
+                                        n_components=self.n_components,
+                                        eigen_solver=self.eigen_solver,
+                                        random_state=random_state,
+                                        return_lap_diag=True)
         return self
 
     def fit_transform(self, X, y=None):
