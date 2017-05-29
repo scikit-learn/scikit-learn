@@ -676,7 +676,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     return X, y
 
 
-def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
+def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=None):
     """Generate isotropic Gaussian blobs for clustering.
 
@@ -684,19 +684,21 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
     Parameters
     ----------
-    n_samples : int or list, optional (default=100)
-        The total number of points equally divided among clusters if it
-        is an int. Otherwise each element of the list indicates
+    n_samples : int or list or 2-d array, optional (default=100)
+        If int, it is the the total number of points equally divided among
+        clusters.
+        If list or 2-d array, each element of the list indicates
         the number of samples per cluster.
 
     n_features : int, optional (default=2)
         The number of features for each sample.
 
     centers : int or array of shape [n_centers, n_features], optional
-        (default=3)
+        (default=None)
         The number of centers to generate, or the fixed center locations.
-        If n_samples is a list, centers is considered only if it is a list
-        of the same length.
+        If n_samples is an int and centers is None, 3 centers are generated.
+        If n_samples is a list, centers must be either None or an array of
+        length equal to the length of n_samples.
 
     cluster_std : float or sequence of floats, optional (default=1.0)
         The standard deviation of the clusters.
@@ -740,6 +742,9 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
     if isinstance(n_samples, int):
         # n_centers is figured by the centers arg
+        if centers is None:
+            centers = 3
+
         if isinstance(centers, numbers.Integral):
             centers = generator.uniform(center_box[0], center_box[1],
                                         size=(centers, n_features))
@@ -752,18 +757,26 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     else:
         # n_centers is figured by the [n_samples] arg
         n_centers = len(n_samples)
-        if isinstance(centers, int):
+        if centers is None:
             # generate centers based on [n_samples]
             centers = generator.uniform(center_box[0], center_box[1],
                                         size=(n_centers, n_features))
-        elif len(centers) == n_centers:
-            # take into acount [centers] only if it has appropriate length
+            print(centers)
+        elif ((isinstance(centers, np.ndarray) or
+              isinstance(centers, list)) and
+              len(centers) == n_centers):
+            # correct list given
             centers = check_array(centers)
             n_features = centers.shape[1]
+            print(centers)
+        else:
+            raise ValueError("Wrong centers argument")
 
     # stds: if cluster_std is given as list, it must be consistent
     # with the n_centers
-    if isinstance(cluster_std, list) and len(cluster_std) != n_centers:
+    if ((isinstance(cluster_std, list) or
+            isinstance(cluster_std, np.ndarray)) and
+            len(cluster_std) != n_centers):
         raise ValueError("Length of clusters_std not consistent"
                          " with number of centers")
 
@@ -773,7 +786,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     X = []
     y = []
 
-    if isinstance(n_samples, list):
+    if isinstance(n_samples, list) or isinstance(n_samples, np.ndarray):
         n_samples_per_center = n_samples
     else:
         n_samples_per_center = [int(n_samples // n_centers)] * n_centers

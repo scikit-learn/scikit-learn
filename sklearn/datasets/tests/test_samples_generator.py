@@ -263,9 +263,9 @@ def test_make_blobs_n_features_list_with_centers():
         assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
 
-def test_make_blobs_n_features_list_centers_int():
-    n_samples = [5, 3, 0]  # -> two clusters generated
-    centers = 4
+def test_make_blobs_n_features_list_centers_none():
+    n_samples = [5, 3, 0]  
+    centers = None
     X, y = make_blobs(n_samples=n_samples, centers=centers, random_state=0)
 
     assert_equal(X.shape, (sum(n_samples), 2), "X shape mismatch")
