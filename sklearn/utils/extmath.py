@@ -53,6 +53,10 @@ def squared_norm(x):
     is a matrix (2-d array). Faster than norm(x) ** 2.
     """
     x = _ravel(x)
+    if np.issubdtype(x.dtype, np.integer):
+        warnings.warn('Array type is integer, np.dot may overflow. '
+                      'Data should be float type to avoid this issue',
+                      UserWarning)
     return np.dot(x, x)
 
 
@@ -215,8 +219,12 @@ def randomized_range_finder(A, size, n_iter,
 
         .. versionadded:: 0.18
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Returns
     -------
@@ -320,8 +328,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance to make behavior
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Notes
     -----

@@ -70,7 +70,6 @@ This example shows an example usage of the ``split`` method.
 
 The cross-validation can then be performed easily::
 
-    >>> kfold = KFold(n_splits=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in k_fold.split(X_digits)]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
@@ -108,9 +107,9 @@ scoring method.
 
     - :class:`KFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`StratifiedKFold` **(n_iter, test_size, train_size, random_state)**
+    - :class:`StratifiedKFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`GroupKFold` **(n_splits, shuffle, random_state)**
+    - :class:`GroupKFold` **(n_splits)**
 
 
    *
@@ -126,7 +125,7 @@ scoring method.
 
    *
 
-    - :class:`ShuffleSplit` **(n_iter, test_size, train_size, random_state)**
+    - :class:`ShuffleSplit` **(n_splits, test_size, train_size, random_state)**
 
     - :class:`StratifiedShuffleSplit`
 
@@ -147,7 +146,7 @@ scoring method.
 
     - :class:`LeaveOneGroupOut` **()**
 
-    - :class:`LeavePGroupsOut`  **(p)**
+    - :class:`LeavePGroupsOut`  **(n_groups)**
 
     - :class:`LeaveOneOut` **()**
 

@@ -1281,7 +1281,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     else:
         raise ValueError("'%d' is not a supported axis" % axis)
 
-    X = check_array(X, sparse_format, copy=copy, warn_on_dtype=True,
+    X = check_array(X, sparse_format, copy=copy,
                     estimator='the normalize function', dtype=FLOAT_DTYPES)
     if axis == 0:
         X = X.T
@@ -1735,7 +1735,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    Given a dataset with three features and two samples, we let the encoder
+    Given a dataset with three features and four samples, we let the encoder
     find the maximum value per feature and transform the data to a binary
     one-hot encoding.
 

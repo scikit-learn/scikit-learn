@@ -199,8 +199,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_X_mean : bool, optional
         If True, X_mean is returned too.
@@ -415,8 +418,11 @@ class FastICA(BaseEstimator, TransformerMixin):
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

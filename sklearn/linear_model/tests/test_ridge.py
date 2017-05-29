@@ -282,7 +282,7 @@ def test_ridge_individual_penalties():
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag']]
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag', 'saga']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
@@ -604,10 +604,8 @@ def test_ridgecv_sample_weight():
 
         # Check using GridSearchCV directly
         parameters = {'alpha': alphas}
-        fit_params = {'sample_weight': sample_weight}
-        gs = GridSearchCV(Ridge(), parameters, fit_params=fit_params,
-                          cv=cv)
-        gs.fit(X, y)
+        gs = GridSearchCV(Ridge(), parameters, cv=cv)
+        gs.fit(X, y, sample_weight=sample_weight)
 
         assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
         assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
@@ -714,7 +712,7 @@ def test_n_iter():
     y_n = np.tile(y, (n_targets, 1)).T
 
     for max_iter in range(1, 4):
-        for solver in ('sag', 'lsqr'):
+        for solver in ('sag', 'saga', 'lsqr'):
             reg = Ridge(solver=solver, max_iter=max_iter, tol=1e-12)
             reg.fit(X, y_n)
             assert_array_equal(reg.n_iter_, np.tile(max_iter, n_targets))
@@ -730,12 +728,13 @@ def test_ridge_fit_intercept_sparse():
                            bias=10., random_state=42)
     X_csr = sp.csr_matrix(X)
 
-    dense = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    sparse = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    dense.fit(X, y)
-    sparse.fit(X_csr, y)
-    assert_almost_equal(dense.intercept_, sparse.intercept_)
-    assert_array_almost_equal(dense.coef_, sparse.coef_)
+    for solver in ['saga', 'sag']:
+        dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        dense.fit(X, y)
+        sparse.fit(X_csr, y)
+        assert_almost_equal(dense.intercept_, sparse.intercept_)
+        assert_array_almost_equal(dense.coef_, sparse.coef_)
 
     # test the solver switch and the corresponding warning
     sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)

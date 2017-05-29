@@ -4,10 +4,10 @@ Contributing to scikit-learn
 
 **Note: This document is a 'getting started' summary for contributing code,
 documentation, testing, and filing issues.** Visit the [**Contributing
-page**](http://scikit-learn.org/stable/developers/index.html)
+page**](http://scikit-learn.org/stable/developers/contributing.html)
 for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
-likelihood of your contribution being merged.**
+likelihood of your contribution being merged.
 
 How to contribute
 -----------------
@@ -18,7 +18,8 @@ GitHub, clone, and develop on a branch. Steps:
 
 1. Fork the [project repository](https://github.com/scikit-learn/scikit-learn)
    by clicking on the 'Fork' button near the top right of the page. This creates
-   a copy of the code under your GitHub user account.
+   a copy of the code under your GitHub user account. For more details on
+   how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
 
 2. Clone your fork of the scikit-learn repo from your GitHub account to your local disk:
 
@@ -48,9 +49,8 @@ GitHub, clone, and develop on a branch. Steps:
    $ git push -u origin my-feature
    ```
 
-5. Go to the GitHub web page of your fork of the scikit-learn repo.
-Click the 'Pull request' button to send your changes to the project's maintainers for
-review. This will send an email to the committers.
+5. Follow [these instructions](https://help.github.com/articles/creating-a-pull-request-from-a-fork)
+to create a pull request from your fork. This will send an email to the committers.
 
 (If any of the above seems like magic to you, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
@@ -79,7 +79,10 @@ following rules before you submit a pull request:
 
 -  Please prefix the title of your pull request with `[MRG]` (Ready for
    Merge), if the contribution is complete and ready for a detailed review.
-   Incomplete contributions should be prefixed `[WIP]` (to indicate a work
+   Two core developers will review your code and change the prefix of the pull
+   request to `[MRG + 1]` and `[MRG + 2]` on approval, making it eligible
+   for merging. An incomplete contribution -- where you expect to do more work before
+   receiving a full review -- should be prefixed `[WIP]` (to indicate a work
    in progress) and changed to `[MRG]` when it matures. WIPs may be useful
    to: indicate you are working on something to avoid duplicated work,
    request broad review of functionality or API, or seek collaborators.
@@ -100,8 +103,15 @@ following rules before you submit a pull request:
    functionality is useful in practice and, if possible, compare it
    to other methods available in scikit-learn.
 
--  Documentation and high-coverage tests are necessary for enhancements
-   to be accepted.
+-  Documentation and high-coverage tests are necessary for enhancements to be
+   accepted. Bug-fixes or new features should be provided with 
+   [non-regression tests](https://en.wikipedia.org/wiki/Non-regression_testing).
+   These tests verify the correct behavior of the fix or feature. In this
+   manner, further modifications on the code base are granted to be consistent
+   with the desired behavior.
+   For the Bug-fixes case, at the time of the PR, this tests should fail for
+   the code base in master and pass for the PR code.
+
 
 -  At least one paragraph of narrative documentation with links to
    references in the literature (with PDF links when possible) and

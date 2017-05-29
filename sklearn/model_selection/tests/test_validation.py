@@ -62,6 +62,7 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.model_selection import GridSearchCV
 
 
 try:
@@ -258,10 +259,10 @@ def test_cross_val_score_predict_groups():
                  GroupShuffleSplit()]
     for cv in group_cvs:
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_score, estimator=clf, X=X, y=y, cv=cv)
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
@@ -914,18 +915,16 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def test_cross_val_predict_with_method():
+def check_cross_val_predict_with_method(est):
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     classes = len(set(y))
 
-    kfold = KFold(len(iris.target))
+    kfold = KFold()
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
-        est = LogisticRegression()
-
         predictions = cross_val_predict(est, X, y, method=method)
         assert_equal(len(predictions), len(y))
 
@@ -953,6 +952,17 @@ def test_cross_val_predict_with_method():
         predictions_ystr = cross_val_predict(est, X, y.astype('str'),
                                              method=method, cv=kfold)
         assert_array_equal(predictions, predictions_ystr)
+
+
+def test_cross_val_predict_with_method():
+    check_cross_val_predict_with_method(LogisticRegression())
+
+
+def test_gridsearchcv_cross_val_predict_with_method():
+    est = GridSearchCV(LogisticRegression(random_state=42),
+                       {'C': [0.1, 1]},
+                       cv=2)
+    check_cross_val_predict_with_method(est)
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
