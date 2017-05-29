@@ -5,14 +5,14 @@ Efficienct GridSearchCV with use_warm_start
 
 A number of estimators are able to reuse a previously fit model as certain
 parameters change.  This is facilitated by a ``warm_start`` parameter.  For
-:class:`sklearn.ensemble.GradientBoostingClassifier`, for instance, with
+:class:`ensemble.GradientBoostingClassifier`, for instance, with
 ``warm_start=True``, fit can be called repeatedly with the same data while
 increasing its ``n_estimators`` parameter.
 
-:class:`sklearn.model_selection.GridSearchCV` can efficiently search over such
+:class:`model_selection.GridSearchCV` can efficiently search over such
 warm-startable parameters through its ``use_warm_start`` parameter.  This
 example compares ``GridSearchCV`` performance for searching over
-``n_estimators`` in :class:`sklearn.ensemble.GradientBoostingClassifier` with
+``n_estimators`` in :class:`ensemble.GradientBoostingClassifier` with
 and without ``use_warm_start='n_estimators'``.  """
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
