@@ -46,7 +46,7 @@ def compute_class_weight(class_weight, classes, y):
                          "be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
-        weight = np.ones(classes.shape[0], dtype=y.dtype, order='C')
+        weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'balanced':
         # Find the weight of each class as present in y.
         le = LabelEncoder()
@@ -55,11 +55,11 @@ def compute_class_weight(class_weight, classes, y):
             raise ValueError("classes should have valid labels that are in y")
 
         recip_freq = len(y) / (len(le.classes_) *
-                               bincount(y_ind).astype(y.dtype))
+                               bincount(y_ind).astype(np.float64))
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
-        weight = np.ones(classes.shape[0], dtype=y.dtype, order='C')
+        weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
         if not isinstance(class_weight, dict):
             raise ValueError("class_weight must be dict, 'balanced', or None,"
                              " got: %r" % class_weight)
@@ -176,6 +176,6 @@ def compute_sample_weight(class_weight, y, indices=None):
 
     expanded_class_weight = np.prod(expanded_class_weight,
                                     axis=0,
-                                    dtype=y.dtype)
+                                    dtype=np.float64)
 
     return expanded_class_weight
