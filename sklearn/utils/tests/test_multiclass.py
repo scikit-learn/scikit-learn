@@ -292,11 +292,12 @@ def test_type_of_target():
 
     try:
         from pandas import SparseSeries
-        y = SparseSeries([1, 0, 0, 1, 0])
-        msg = "y cannot be class 'SparseSeries'."
-        assert_raises_regex(ValueError, msg, type_of_target, y)
     except ImportError:
-        pass
+        raise SkipTest("Pandas not found")
+    
+    y = SparseSeries([1, 0, 0, 1, 0])
+    msg = "y cannot be class 'SparseSeries'."
+    assert_raises_regex(ValueError, msg, type_of_target, y)
 
 def test_class_distribution():
     y = np.array([[1, 0, 0, 1],
