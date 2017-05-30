@@ -624,10 +624,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # For doing a ovr, we need to mask the labels first. for the
     # multinomial case this is not necessary.
     if multi_class == 'ovr':
-        w0 = np.zeros(n_features + int(fit_intercept))
+        w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
         mask_classes = np.array([-1, 1])
         mask = (y == pos_class)
-        y_bin = np.ones(y.shape, dtype=np.float64)
+        y_bin = np.ones(y.shape, dtype=X.dtype)
         y_bin[~mask] = -1.
         # for compute_class_weight
 
@@ -1203,11 +1203,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        # setup the default dtype
-        _dtype = np.float64
-        if self.solver in ['newton-cg'] \
-                and isinstance(X, np.ndarray) and X.dtype in [np.float32]:
-            _dtype = np.float32
+        if self.solver in ['newton-cg']:
+            _dtype = [np.float32, np.float64]
+        else:
+            _dtype = np.float64
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
@@ -1287,9 +1286,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
         if self.multi_class == 'multinomial':
-            self.coef_ = fold_coefs_[0][0].astype(_dtype)
+            self.coef_ = fold_coefs_[0][0]
         else:
-            self.coef_ = np.asarray(fold_coefs_, dtype=_dtype)
+            self.coef_ = np.asarray(fold_coefs_)
             self.coef_ = self.coef_.reshape(n_classes, n_features +
                                             int(self.fit_intercept))
 
