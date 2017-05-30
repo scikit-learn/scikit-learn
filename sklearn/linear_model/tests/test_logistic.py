@@ -1145,7 +1145,7 @@ def test_dtype_match():
     y_ = np.array(Y1).astype(np.float32)
 
     for solver in ['newton-cg']:
-        for multi_class in ['ovr']:
+        for multi_class in ['ovr', 'multinomial']:
 
             # Check type consistency
             lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
