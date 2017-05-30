@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
