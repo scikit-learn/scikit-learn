@@ -379,11 +379,14 @@ class ClassifierChain(BaseEstimator):
     order : array-like, shape=[n_outputs] or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.
+
             order = [0, 1, 2, ..., Y.shape[1] - 1]
 
         The order of the chain can be explicitly set by providing a list of
         integers. For example, for a chain of length 5
+
             order = [1, 3, 2, 4, 0]
+
         means that the first model in the chain will make predictions for
         column 1 in the Y matrix, the second model will make predictions
         for column 3, etc.
@@ -409,15 +412,15 @@ class ClassifierChain(BaseEstimator):
 
     Attributes
     ----------
-    classes_ : list of arrays of length len(estimators_) containing the
+    classes_ : list
+        A list of arrays of length len(estimators_) containing the
         class labels for each estimator in the chain.
 
     estimators_ : list
-        A list of clones of base_estimator. Once fit the estimators in
-        this list will be ordered as specified by the order attribute.
-        The original order of labels (as specified by Y) is recovered in
-        the predict method by indexing into the predictions with the
-        list of indices in the order attribute.
+        A list of clones of base_estimator.
+
+    order_ : list
+        The order of labels in the classifier chain.
 
     References
     ----------
@@ -437,19 +440,17 @@ class ClassifierChain(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Y : {array-like, sparse matrix}, shape (n_samples, n_classes)
+        Y : array-like, shape (n_samples, n_classes)
 
         Returns
         -------
         self : object
             Returns self.
         """
-        X, Y = check_X_y(X, Y,
-                         multi_output=True,
-                         accept_sparse=True)
+        X, Y = check_X_y(X, Y,  multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
-
+        check_array(X, accept_sparse=True)
         self.order_ = self.order
         if self.order_ is None:
             self.order_ = np.array(range(Y.shape[1]))
@@ -466,13 +467,20 @@ class ClassifierChain(BaseEstimator):
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
-        else:
-            Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
+            if sp.issparse(X):
+                X_aug = sp.hstack((X, Y_pred_chain), format='lil')
+            else:
+                X_aug = np.hstack((X, Y_pred_chain))
 
-        if sp.issparse(X):
+        elif sp.issparse(X):
+            Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
             X_aug = sp.hstack((X, Y_pred_chain), format='lil')
+
         else:
+            Y_pred_chain = np.zeros((X.shape[0], Y.shape[1]))
             X_aug = np.hstack((X, Y_pred_chain))
+
+        del Y_pred_chain
 
         for chain_idx, estimator in enumerate(self.estimators_):
             y = Y[:, self.order_[chain_idx]]

@@ -13,7 +13,7 @@ of these classifiers we predict on a held-out test set and calculate the
 :ref:`User Guide <jaccard_similarity_score>`.
 
 Next we create 10 classifier chains. Each classifier chain contains a
-logistic regression model for each of the 14 classes. The models in each
+logistic regression model for each of the 14 labels. The models in each
 chain are arranged into a random order. In addition to the 103 features in
 the dataset, each model gets the predictions of the preceding models in
 the chain as features (note that by default at training time each model gets
@@ -56,7 +56,7 @@ ovr_jaccard_score = jaccard_similarity_score(Y_test, Y_pred_ovr)
 
 # Fit an ensemble of logistic regression classifier chains and take the
 # take the average prediction of all the chains
-chains = [ClassifierChain(LogisticRegression(), order='random')
+chains = [ClassifierChain(LogisticRegression(), order=i)
           for i in range(10)]
 for chain in chains:
     chain.fit(X_train, Y_train)
