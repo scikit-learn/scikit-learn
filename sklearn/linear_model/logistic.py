@@ -337,10 +337,12 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     n_classes = Y.shape[1]
     n_features = X.shape[1]
     fit_intercept = (w.size == n_classes * (n_features + 1))
-    grad = np.zeros((n_classes, n_features + bool(fit_intercept)))
+    grad = np.zeros((n_classes, n_features + bool(fit_intercept)),
+                    dtype=X.dtype)
     loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
     sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
+    diff = diff.astype(X.dtype)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
     grad[:, :n_features] += alpha * w
     if fit_intercept:
@@ -608,10 +610,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # and check length
     # Otherwise set them to 1 for all examples
     if sample_weight is not None:
-        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
+        sample_weight = np.array(sample_weight, dtype=X.dtype, order='C')
         check_consistent_length(y, sample_weight)
     else:
-        sample_weight = np.ones(X.shape[0])
+        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
@@ -648,7 +650,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             Y_multi = le.fit_transform(y)
 
         w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
-                      order='F')
+                      order='F', dtype=X.dtype)
 
     if coef is not None:
         # it must work both giving the bias term and not
