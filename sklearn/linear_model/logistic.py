@@ -1212,6 +1212,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
+        # Force X and y equal type, this should be moved somewhere else
+        if X.dtype != y.dtype and y.dtype not in ['<U3']:
+            y = y.astype(X.dtype)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
