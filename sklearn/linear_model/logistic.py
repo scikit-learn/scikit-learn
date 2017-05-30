@@ -1206,7 +1206,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              "positive; got (tol=%r)" % self.tol)
 
         if self.solver in ['newton-cg']:
-            _dtype = [np.float32, np.float64]
+            _dtype = [np.float64, np.float32]
         else:
             _dtype = np.float64
 
