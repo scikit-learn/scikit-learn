@@ -378,12 +378,12 @@ class ClassifierChain(BaseEstimator):
 
     order : array-like, shape=[n_outputs] or 'random', optional
         By default the order will be determined by the order of columns in
-        the label matrix Y.
+        the label matrix Y.::
 
             order = [0, 1, 2, ..., Y.shape[1] - 1]
 
         The order of the chain can be explicitly set by providing a list of
-        integers. For example, for a chain of length 5
+        integers. For example, for a chain of length 5.::
 
             order = [1, 3, 2, 4, 0]
 
