@@ -56,7 +56,7 @@ ovr_jaccard_score = jaccard_similarity_score(Y_test, Y_pred_ovr)
 
 # Fit an ensemble of logistic regression classifier chains and take the
 # take the average prediction of all the chains
-chains = [ClassifierChain(LogisticRegression(), order=i)
+chains = [ClassifierChain(LogisticRegression(), order='random', random_state=i)
           for i in range(10)]
 for chain in chains:
     chain.fit(X_train, Y_train)
