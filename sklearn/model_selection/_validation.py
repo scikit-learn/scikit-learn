@@ -393,9 +393,11 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
         raise AttributeError('{} not implemented in estimator'
                              .format(method))
 
-    do_manual_encoding = method in ['decision_function', 'predict_proba',
-                                    'predict_log_proba']
-    if do_manual_encoding:
+    # If classification methods produce multiple columns of output,
+    # we need to manually encode classes to ensure consistent column ordering.
+    encode = method in ['decision_function', 'predict_proba',
+                        'predict_log_proba']
+    if encode:
         y = np.asarray(y)
         if y.ndim == 1:
             le = LabelEncoder()
@@ -425,10 +427,13 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     inv_test_indices = np.empty(len(test_indices), dtype=int)
     inv_test_indices[test_indices] = np.arange(len(test_indices))
 
-    # Check for sparse predictions
     if sp.issparse(predictions[0]):
         predictions = sp.vstack(predictions, format=predictions[0].format)
-    elif do_manual_encoding and isinstance(predictions[0], list):
+    elif encode and isinstance(predictions[0], list):
+        # `predictions` is a list of method outputs from each fold.
+        # If each of those is also a list, then treat this as a
+        # multi-class multi-label task. We need to separately concatenate
+        # the method outputs for each label into an `n_labels` long list.
         n_labels = y.shape[1]
         concat_pred = []
         for i_label in range(n_labels):
@@ -438,7 +443,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     else:
         predictions = np.concatenate(predictions)
 
-    if do_manual_encoding and isinstance(predictions, list):
+    if isinstance(predictions, list):
         return [p[inv_test_indices] for p in predictions]
     else:
         return predictions[inv_test_indices]
