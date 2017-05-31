@@ -89,18 +89,20 @@ def make_stack_layer(*base_estimators, **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.ensemble import make_stack_layer
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> from sklearn.svm import SVC
-    >>> make_stack_layer(KNeighborsClassifier(), SVC())  # doctest:  +NORMALIZE_WHITESPACE
-    FeatureUnion(n_jobs=1,
-           transformer_list=[('blendedestimator-1', BlendedEstimator(base_estimator=KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-               weights='uniform'),
-             cv=3, method='auto')), ('blendedestimator-2', Blended...lse, random_state=None, shrinking=True,
-      tol=0.001, verbose=False),
-             cv=3, method='auto'))],
-           transformer_weights=None)
+    >>> t = make_stack_layer(KNeighborsClassifier(n_neighbors=3), SVC())
+    >>> X = np.array([[1, 3], [.12, 1], [.5, -2], [1, -1], [-2, .1], [7, -84]])
+    >>> y = np.array([1, 0, 0, 1, 0, 1])
+    >>> t.fit_transform(X, y) # doctest: +NORMALIZE_WHITESPACE
+    array([[ 0.66666667,  0.33333333,  0.        ],
+           [ 0.66666667,  0.33333333,  1.        ],
+           [ 0.66666667,  0.33333333,  1.        ],
+           [ 0.66666667,  0.33333333,  0.        ],
+           [ 0.66666667,  0.33333333,  0.        ],
+           [ 0.66666667,  0.33333333,  0.        ]])
     """
 
     return make_union(*[BlendedEstimator(estimator)
@@ -130,20 +132,18 @@ def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.ensemble import stack_estimators
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> from sklearn.svm import SVC
     >>> from sklearn.linear_model import LogisticRegression
-    >>> stack_estimators([[KNeighborsClassifier(), SVC()],
-    ...                   [KNeighborsClassifier(), SVC()]],
-    ...                  LogisticRegression()) # doctest:  +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
-         steps=[('featureunion-1', FeatureUnion(n_jobs=1,
-           transformer_list=[('blendedestimator-1', BlendedEstimator(base_estimator=KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-               weights='uniform'),
-          ...ty='l2', random_state=None, solver='liblinear', tol=0.0001,
-              verbose=0, warm_start=False))])
+    >>> eclf = stack_estimators([[KNeighborsClassifier(n_neighbors=2), SVC()],
+    ...                          [KNeighborsClassifier(n_neighbors=3), SVC()]],
+    ...                         LogisticRegression())
+    >>> X = np.array([[1, 3], [.12, 1], [.5, -2], [1, -1], [-2, .1], [7, -84]])
+    >>> y = np.array([1, 0, 0, 1, 0, 1])
+    >>> eclf.fit(X, y).predict(X)
+    array([0, 1, 1, 0, 1, 0])
     """
     estimators = [make_stack_layer(*row, **kwargs)
                   for row in estimators_matrix]
