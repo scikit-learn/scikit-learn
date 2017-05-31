@@ -88,4 +88,7 @@ def test_classification():
         clf = BlendedEstimator(**params)
         clf.fit_transform(X, y, **fit_params)
         clf.transform(X)
-        clf.fit(X, y, **fit_params).transform(X)
+        Xt = clf.fit(X, y, **fit_params).transform(X)
+
+        # checks that we get a column vector
+        assert_equal(Xt.ndim, 2)
