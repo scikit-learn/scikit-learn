@@ -1327,6 +1327,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
@@ -1433,7 +1442,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=1e-7, init=None,
+                 min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto'):
@@ -1732,6 +1741,15 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
@@ -1840,7 +1858,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=1e-7, init=None, random_state=None,
+                 min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 

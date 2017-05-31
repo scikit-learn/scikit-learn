@@ -3,10 +3,11 @@
 Imputing missing values before building an estimator
 ======================================================
 
-This example shows that imputing the missing values can give better results
-than discarding the samples containing any missing value.
-Imputing does not always improve the predictions, so please check via cross-validation.
-Sometimes dropping rows or using marker values is more effective.
+This example shows that imputing the missing values can give better
+results than discarding the samples containing any missing value.
+Imputing does not always improve the predictions, so please check via
+cross-validation.  Sometimes dropping rows or using marker values is
+more effective.
 
 Missing values can be replaced by the mean, the median or the most frequent
 value using the ``strategy`` hyper-parameter.
@@ -20,7 +21,7 @@ Script output::
   Score after imputation of the missing values = 0.55
 
 In this case, imputing helps the classifier get close to the original score.
-  
+
 """
 import numpy as np
 
@@ -44,7 +45,7 @@ print("Score with the entire dataset = %.2f" % score)
 
 # Add missing values in 75% of the lines
 missing_rate = 0.75
-n_missing_samples = np.floor(n_samples * missing_rate)
+n_missing_samples = int(np.floor(n_samples * missing_rate))
 missing_samples = np.hstack((np.zeros(n_samples - n_missing_samples,
                                       dtype=np.bool),
                              np.ones(n_missing_samples,

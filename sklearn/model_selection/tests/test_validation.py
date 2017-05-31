@@ -260,10 +260,10 @@ def test_cross_val_score_predict_groups():
                  GroupShuffleSplit()]
     for cv in group_cvs:
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_score, estimator=clf, X=X, y=y, cv=cv)
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
@@ -917,7 +917,7 @@ def test_cross_val_predict_sparse_prediction():
 
 
 def check_cross_val_predict_with_method(est, X, y, methods):
-    kfold = KFold(X.shape[0])
+    kfold = KFold()
 
     for method in methods:
         predictions = cross_val_predict(est, X, y, method=method)

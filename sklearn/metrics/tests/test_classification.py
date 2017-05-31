@@ -366,7 +366,8 @@ def test_matthews_corrcoef():
     y_true_inv = ["b" if i == "a" else "a" for i in y_true]
 
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
-    y_true_inv2 = label_binarize(y_true, ["a", "b"]) * -1
+    y_true_inv2 = label_binarize(y_true, ["a", "b"])
+    y_true_inv2 = np.where(y_true_inv2, 'a', 'b')
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
 
     # For the zero vector case, the corrcoef cannot be calculated and should
@@ -379,8 +380,7 @@ def test_matthews_corrcoef():
 
     # And also for any other vector with 0 variance
     mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
-                               matthews_corrcoef, y_true,
-                               rng.randint(-100, 100) * np.ones(20, dtype=int))
+                               matthews_corrcoef, y_true, ['a'] * len(y_true))
 
     # But will output 0
     assert_almost_equal(mcc, 0.)
@@ -1265,6 +1265,13 @@ def test__check_targets():
            'Sequence of sequences are no longer supported; use a binary array'
            ' or sparse matrix instead.')
     assert_raise_message(ValueError, msg, _check_targets, y1, y2)
+
+
+def test__check_targets_multiclass_with_both_y_true_and_y_pred_binary():
+    # https://github.com/scikit-learn/scikit-learn/issues/8098
+    y_true = [0, 1]
+    y_pred = [0, -1]
+    assert_equal(_check_targets(y_true, y_pred)[0], 'multiclass')
 
 
 def test_hinge_loss_binary():

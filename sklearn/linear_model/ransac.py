@@ -142,8 +142,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             lambda dy: np.sum(np.abs(dy), axis=1)
 
-        NOTE: residual_metric is deprecated from 0.18 and will be removed in 0.20
-        Use ``loss`` instead.
+        .. deprecated:: 0.18
+           ``residual_metric`` is deprecated from 0.18 and will be removed in
+           0.20. Use ``loss`` instead.
 
     loss : string, callable, optional, default "absolute_loss"
         String inputs, "absolute_loss" and "squared_loss" are supported which
@@ -342,7 +343,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         n_samples, _ = X.shape
 
-        for self.n_trials_ in range(1, self.max_trials + 1):
+        self.n_trials_ = 0
+        max_trials = self.max_trials
+        while self.n_trials_ < max_trials:
+            self.n_trials_ += 1
 
             if (self.n_skips_no_inliers_ + self.n_skips_invalid_data_ +
                     self.n_skips_invalid_model_) > self.max_skips:
@@ -416,13 +420,14 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             X_inlier_best = X_inlier_subset
             y_inlier_best = y_inlier_subset
 
+            max_trials = min(
+                max_trials,
+                _dynamic_max_trials(n_inliers_best, n_samples,
+                                    min_samples, self.stop_probability))
+
             # break if sufficient number of inliers or score is reached
-            if (n_inliers_best >= self.stop_n_inliers
-                    or score_best >= self.stop_score
-                    or self.n_trials_
-                       >= _dynamic_max_trials(n_inliers_best, n_samples,
-                                              min_samples,
-                                              self.stop_probability)):
+            if n_inliers_best >= self.stop_n_inliers or \
+                            score_best >= self.stop_score:
                 break
 
         # if none of the iterations met the required criteria

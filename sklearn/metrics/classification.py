@@ -91,6 +91,10 @@ def _check_targets(y_true, y_pred):
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
+        if y_type == "binary":
+            unique_values = np.union1d(y_true, y_pred)
+            if len(unique_values) > 2:
+                y_type = "multiclass"
 
     if y_type.startswith('multilabel'):
         y_true = csr_matrix(y_true)
@@ -971,7 +975,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     .. [3] `Discriminative Methods for Multi-labeled Classification Advances
            in Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
            Godbole, Sunita Sarawagi
-           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`
+           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`_
 
     Examples
     --------
@@ -1475,8 +1479,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         .. versionadded:: 0.18
 
     classes : array, shape = [n_labels], optional
-        (deprecated) Integer array of labels. This parameter has been
-         renamed to ``labels`` in version 0.18 and will be removed in 0.20.
+        Integer array of labels.
+
+        .. deprecated:: 0.18
+           This parameter has been deprecated in favor of ``labels`` in
+           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
