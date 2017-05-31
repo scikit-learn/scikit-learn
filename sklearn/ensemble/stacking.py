@@ -87,11 +87,9 @@ def make_stack_layer(*clfs, **kwargs):
     FeatureUnion(n_jobs=1,
            transformer_list=[('blendedclassifiertransformer', BlendedClassifierTransformer(clf=[KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
                metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-               weights='uniform'), SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
+               weights='uniform'), SVC(C=1.0, cache_size=200, class_weight=None, coef...ndom_state=None, shrinking=True,
       tol=0.001, verbose=False)],
-                   cv=3))],
+                   cv=3, method='auto'))],
            transformer_weights=None)
     """
     return make_union(*[BlendedClassifierTransformer(clf) for clf in clfs],
