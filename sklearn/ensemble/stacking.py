@@ -111,7 +111,7 @@ def make_stacked_classifier(clf_matrix, meta_estimator, **kwargs):
     >>> print map(lambda x: x[0], clf.steps)
     ['featureunion-1', 'featureunion-2', 'logisticregression']
     """
-    clfs = [make_stack_layer(row, **kwargs)
+    clfs = [make_stack_layer(*row, **kwargs)
             for row in clf_matrix]
     clfs.append(meta_estimator)
     return make_pipeline(*clfs)
