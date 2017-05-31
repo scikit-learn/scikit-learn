@@ -1,6 +1,6 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-#          Denis Engemann <d.engemann@fz-juelich.de>
+#          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
 
@@ -17,7 +17,8 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.fixes import np_version
@@ -63,8 +64,8 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis)
 
-        assert_true(np.all(mode == mode2))
-        assert_true(np.all(score == score2))
+        assert_array_equal(mode, mode2)
+        assert_array_equal(score, score2)
 
 
 def test_random_weights():
@@ -148,6 +149,11 @@ def test_norm_squared_norm():
     assert_almost_equal(np.linalg.norm(X.ravel()), norm(X))
     assert_almost_equal(norm(X) ** 2, squared_norm(X), decimal=6)
     assert_almost_equal(np.linalg.norm(X), np.sqrt(squared_norm(X)), decimal=6)
+    # Check the warning with an int array and np.dot potential overflow
+    assert_warns_message(
+                    UserWarning, 'Array type is integer, np.dot may '
+                    'overflow. Data should be float type to avoid this issue',
+                    squared_norm, X.astype(int))
 
 
 def test_row_norms():
@@ -654,7 +660,10 @@ def test_stable_cumsum():
         raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
-    assert_raise_message(RuntimeError,
-                         'cumsum was found to be unstable: its last element '
-                         'does not correspond to sum',
-                         stable_cumsum, r, rtol=0, atol=0)
+    assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)
+
+    # test axis parameter
+    A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))
+    assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
+    assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
+    assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))

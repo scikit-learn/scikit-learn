@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import _named_check
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -368,7 +369,6 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
-    "cohen_kappa_score",
     "confusion_matrix", # Left this one here because the tests in this file do
                         # not work for confusion_matrix, as its output is a
                         # matrix instead of a number. Testing of
@@ -716,8 +716,8 @@ def test_multilabel_representation_invariance():
                                            allow_unlabeled=True)
 
     # To make sure at least one empty label is present
-    y1 += [0]*n_classes
-    y2 += [0]*n_classes
+    y1 = np.vstack([y1, [[0] * n_classes]])
+    y2 = np.vstack([y2, [[0] * n_classes]])
 
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
@@ -891,8 +891,8 @@ def test_averaging_multiclass(n_samples=50, n_classes=3):
     y_pred_binarize = lb.transform(y_pred)
 
     for name in METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (_named_check(check_averaging, name), name, y_true,
+               y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
 def test_averaging_multilabel(n_classes=5, n_samples=40):
@@ -906,8 +906,8 @@ def test_averaging_multilabel(n_classes=5, n_samples=40):
     y_pred_binarize = y_pred
 
     for name in METRICS_WITH_AVERAGING + THRESHOLDED_METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (_named_check(check_averaging, name), name, y_true,
+               y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
 def test_averaging_multilabel_all_zeroes():
@@ -918,8 +918,8 @@ def test_averaging_multilabel_all_zeroes():
     y_pred_binarize = y_pred
 
     for name in METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (_named_check(check_averaging, name), name, y_true,
+               y_true_binarize, y_pred, y_pred_binarize, y_score)
 
     # Test _average_binary_score for weight.sum() == 0
     binary_metric = (lambda y_true, y_score, average="macro":
@@ -937,8 +937,8 @@ def test_averaging_multilabel_all_ones():
     y_pred_binarize = y_pred
 
     for name in METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (_named_check(check_averaging, name), name, y_true,
+               y_true_binarize, y_pred, y_pred_binarize, y_score)
 
 
 @ignore_warnings
@@ -1013,6 +1013,17 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
+    # regression
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    for name in ALL_METRICS:
+        if name not in REGRESSION_METRICS:
+            continue
+        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
+            continue
+        metric = ALL_METRICS[name]
+        yield _named_check(check_sample_weight_invariance, name), name,\
+            metric, y_true, y_pred
 
     # binary
     random_state = check_random_state(0)
@@ -1020,14 +1031,18 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY):
             continue
         metric = ALL_METRICS[name]
         if name in THRESHOLDED_METRICS:
-            yield check_sample_weight_invariance, name, metric, y_true, y_score
+            yield _named_check(check_sample_weight_invariance, name), name,\
+                  metric, y_true, y_score
         else:
-            yield check_sample_weight_invariance, name, metric, y_true, y_pred
+            yield _named_check(check_sample_weight_invariance, name), name,\
+                  metric, y_true, y_pred
 
     # multiclass
     random_state = check_random_state(0)
@@ -1035,14 +1050,18 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 5, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY_MULTICLASS):
             continue
         metric = ALL_METRICS[name]
         if name in THRESHOLDED_METRICS:
-            yield check_sample_weight_invariance, name, metric, y_true, y_score
+            yield _named_check(check_sample_weight_invariance, name), name,\
+                  metric, y_true, y_score
         else:
-            yield check_sample_weight_invariance, name, metric, y_true, y_pred
+            yield _named_check(check_sample_weight_invariance, name), name,\
+                  metric, y_true, y_pred
 
     # multilabel indicator
     _, ya = make_multilabel_classification(n_features=1, n_classes=20,
@@ -1062,11 +1081,11 @@ def test_sample_weight_invariance(n_samples=50):
 
         metric = ALL_METRICS[name]
         if name in THRESHOLDED_METRICS:
-            yield (check_sample_weight_invariance, name, metric, y_true,
-                   y_score)
+            yield (_named_check(check_sample_weight_invariance, name), name,
+                   metric, y_true, y_score)
         else:
-            yield (check_sample_weight_invariance, name, metric, y_true,
-                   y_pred)
+            yield (_named_check(check_sample_weight_invariance, name), name,
+                   metric, y_true, y_pred)
 
 
 @ignore_warnings

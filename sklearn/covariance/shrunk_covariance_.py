@@ -92,7 +92,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `shrinkage` : float, 0 <= shrinkage <= 1
+    shrinkage : float, 0 <= shrinkage <= 1
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
@@ -168,7 +168,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
 
     Returns
     -------
-    shrinkage: float
+    shrinkage : float
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
@@ -496,7 +496,7 @@ class OAS(EmpiricalCovariance):
     store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered: bool, default=False
+    assume_centered : bool, default=False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -545,7 +545,7 @@ class OAS(EmpiricalCovariance):
 
         Returns
         -------
-        self: object
+        self : object
             Returns self.
 
         """

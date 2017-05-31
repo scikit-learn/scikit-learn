@@ -5,13 +5,15 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
-from sklearn.metrics.cluster import calinski_harabaz_score
+from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
+from sklearn.metrics.cluster import calinski_harabaz_score
 
 
 def test_silhouette():
@@ -56,16 +58,27 @@ def test_silhouette():
             assert_almost_equal(score_euclidean, score_dense_with_sampling)
 
 
-def test_no_nan():
-    # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-    # This tests for the condition that caused issue 960.
-    # Note that there is only one sample in cluster 0. This used to cause the
-    # silhouette_score to return nan (see bug #960).
-    labels = np.array([1, 0, 1, 1, 1])
-    # The distance matrix doesn't actually matter.
-    D = np.random.RandomState(0).rand(len(labels), len(labels))
-    silhouette = silhouette_score(D, labels, metric='precomputed')
+def test_cluster_size_1():
+    # Assert Silhouette Coefficient == 0 when there is 1 sample in a cluster
+    # (cluster 0). We also test the case where there are identical samples
+    # as the only members of a cluster (cluster 2). To our knowledge, this case
+    # is not discussed in reference material, and we choose for it a sample
+    # score of 1.
+    X = [[0.], [1.], [1.], [2.], [3.], [3.]]
+    labels = np.array([0, 1, 1, 1, 2, 2])
+
+    # Cluster 0: 1 sample -> score of 0 by Rousseeuw's convention
+    # Cluster 1: intra-cluster = [.5, .5, 1]
+    #            inter-cluster = [1, 1, 1]
+    #            silhouette    = [.5, .5, 0]
+    # Cluster 2: intra-cluster = [0, 0]
+    #            inter-cluster = [arbitrary, arbitrary]
+    #            silhouette    = [1., 1.]
+
+    silhouette = silhouette_score(X, labels)
     assert_false(np.isnan(silhouette))
+    ss = silhouette_samples(X, labels)
+    assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
 
 
 def test_correct_labelsize():
@@ -93,7 +106,9 @@ def test_non_encoded_labels():
     X = dataset.data
     labels = dataset.target
     assert_equal(
-        silhouette_score(X, labels + 10), silhouette_score(X, labels))
+        silhouette_score(X, labels * 2 + 10), silhouette_score(X, labels))
+    assert_array_equal(
+        silhouette_samples(X, labels * 2 + 10), silhouette_samples(X, labels))
 
 
 def test_non_numpy_labels():

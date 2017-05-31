@@ -169,13 +169,13 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix, BallTree, KDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree}
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self._fit_transform(X)
         return self.embedding_
@@ -193,11 +193,11 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         X = check_array(X)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)

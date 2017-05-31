@@ -204,7 +204,7 @@ classification tasks (where ``n_features`` is the number of features
 in the data). Good results are often achieved when setting ``max_depth=None``
 in combination with ``min_samples_split=1`` (i.e., when fully developing the
 trees). Bear in mind though that these values are usually not optimal, and
-might result in models that consume a lot of ram. The best parameter values
+might result in models that consume a lot of RAM. The best parameter values
 should always be cross-validated. In addition, note that in random forests,
 bootstrap samples are used by default (``bootstrap=True``)
 while the default strategy for extra-trees is to use the whole dataset
@@ -212,6 +212,13 @@ while the default strategy for extra-trees is to use the whole dataset
 When using bootstrap sampling the generalization accuracy can be estimated
 on the left out or out-of-bag samples. This can be enabled by
 setting ``oob_score=True``.
+
+.. note::
+
+    The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
+    where :math:`M` is the number of trees and :math:`N` is the number of samples.
+    In order to reduce the size of the model, you can change these parameters:
+    ``min_samples_split``, ``min_samples_leaf``, ``max_leaf_nodes`` and ``max_depth``.
 
 Parallelization
 ---------------
