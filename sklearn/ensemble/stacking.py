@@ -52,11 +52,12 @@ class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         t = getattr(self.base_estimator, self._method_name())
         return t(*args, **kwargs)
 
-    def fit_transform(self, X, y):
+    def fit_transform(self, X, y, **fit_params):
         preds = cross_val_predict(self.base_estimator, X, y, cv=self.cv,
-                                  method=self._method_name())
+                                  method=self._method_name(),
+                                  fit_params=fit_params)
 
-        self.base_estimator.fit(X, y)
+        self.base_estimator.fit(X, y, **fit_params)
 
         return preds
 
