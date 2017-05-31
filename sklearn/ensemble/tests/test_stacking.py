@@ -5,11 +5,13 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 # Author: Caio Oliveira
 # License BSD 3 clause
 
-from sklearn.utils.testing import assert_equal, assert_array_equal
+from sklearn.utils.testing import (assert_equal, assert_array_equal,
+                                   assert_almost_equal)
 from sklearn.ensemble import (BlendedClassifierTransformer, make_stack_layer,
                               make_stacked_classifier)
-from sklearn.linear_model import LogisticRegression, RidgeClassifier
-
+from sklearn.linear_model import (LogisticRegression, RidgeClassifier)
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -47,7 +49,17 @@ def test_stacking_api():
 
     assert_array_equal(clf_matrix, matrix_from_pipeline)
 
+    assert_equal(final_clf.steps[-1][1], clf5)
+
 
 def test_classification():
-    pass
+    # Tests classification
+    clf = make_stacked_classifier([[RandomForestClassifier(random_state=1),
+                                    RandomForestClassifier(random_state=2)],
+                                   [RandomForestClassifier(random_state=3),
+                                    RandomForestClassifier(random_state=4)]],
+                                  LogisticRegression(random_state=5))
 
+    clf.fit(X, y)
+
+    assert_almost_equal(.97333333334, accuracy_score(y, clf.predict(X)))
