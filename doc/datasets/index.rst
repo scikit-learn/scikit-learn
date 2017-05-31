@@ -61,6 +61,7 @@ require to download any file from some external website.
    load_digits
    load_linnerud
    load_wine
+   load_breast_cancer
 
 These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in the scikit. They are however often too
