@@ -3,12 +3,13 @@
 # Author: Caio Oliveira <caioaao@gmail.com>
 # License: BSD 3 clause
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin)
 from ..model_selection import cross_val_predict
 from ..pipeline import make_union, make_pipeline
 
 
-class BlendedClassifierTransformer(BaseEstimator, TransformerMixin):
+class BlendedClassifierTransformer(BaseEstimator, MetaEstimatorMixin,
+                                   TransformerMixin):
     """ Transformer to turn estimators into blended estimators
 
     This is used for stacking models. Blending a classifier prevents data leaks
