@@ -509,6 +509,7 @@ class ClassifierChain(BaseEstimator):
         -------
         Y_pred : array-like, shape (n_samples, n_classes)
         """
+        X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
             previous_predictions = Y_pred_chain[:, :chain_idx]
@@ -542,6 +543,7 @@ class ClassifierChain(BaseEstimator):
         -------
         Y_prob : array-like, shape (n_samples, n_classes)
         """
+        X = check_array(X, accept_sparse=True)
         Y_prob_chain = np.zeros((X.shape[0], len(self.estimators_)))
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
