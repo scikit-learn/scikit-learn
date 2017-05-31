@@ -298,7 +298,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
                       n_iter_check=1, n_iter_without_progress=50,
-                      momentum=0.5, learning_rate=1000.0, min_gain=0.01,
+                      momentum=0.5, learning_rate=200.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
     """Batch gradient descent with momentum and individual gains.
@@ -337,9 +337,12 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 1000.0)
-        The learning rate should be extremely high for t-SNE! Values in the
-        range [100.0, 1000.0] are common.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers.
 
     min_gain : float, optional (default: 0.01)
         Minimum individual gain for each parameter.
@@ -535,12 +538,13 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, optional (default: 1000)
-        The learning rate can be a critical parameter. It should be
-        between 100 and 1000. If the cost function increases during initial
-        optimization, the early exaggeration factor or the learning rate
-        might be too high. If the cost function gets stuck in a bad local
-        minimum increasing the learning rate helps sometimes.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers. If the cost function gets stuck in a bad local
+        minimum increasing the learning rate may help.
 
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
@@ -631,10 +635,10 @@ class TSNE(BaseEstimator):
     >>> model = TSNE(n_components=2, random_state=0)
     >>> np.set_printoptions(suppress=True)
     >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[ 0.00017599,  0.00003993],
-           [ 0.00009891,  0.00021913],
-           [ 0.00018554, -0.00009357],
-           [ 0.00009528, -0.00001407]])
+    array([[ 0.00017634,  0.0000401 ],
+           [ 0.00009807,  0.00022288],
+           [ 0.00018649, -0.00009689],
+           [ 0.00009507, -0.00001492]])
 
     References
     ----------
@@ -651,7 +655,7 @@ class TSNE(BaseEstimator):
     """
 
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
+                 early_exaggeration=4.0, learning_rate=None, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
@@ -673,6 +677,14 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
+
+        # TODO sklearn 0.20: remove this warning
+        if learning_rate is None:
+            import warnings
+            warnings.warn("The default learning rate of TSNE has changed " +
+                          "from 1000 to 200 in sklearn 0.19. Set the " +
+                          "learning rate explicitely to avoid this message.")
+            self.learning_rate = 200.0
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.

@@ -334,6 +334,11 @@ API changes summary
      :func:`sklearn.model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+    - Change the default value for ``learning_rate`` in the
+      `sklearn.manifold.TSNE` constructor from 1000 to 200 (with a warning
+      message if not set explicitely). This fixes :issue:`6204` by
+      :user:`John Joseph Valletta <jjvalletta>`.
+
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
      method ``check_decision_proba_consistency`` has been added in
