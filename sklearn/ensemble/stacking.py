@@ -24,21 +24,37 @@ class BlendedClassifierTransformer(BaseEstimator, TransformerMixin):
     clf: the estimator to be blended.
 
     cv: cv to be used. Will be passed to `cross_val_predict`
+
+    method: string, optional, default: 'auto'
+        Invokes the passed method name of the passed estimator. If the method is
+        `auto`, will try to invoke `predict_proba` or `predict` in that order.
     """
-    def __init__(self, clf, cv=3):
+    def __init__(self, clf, cv=3, method='auto'):
         self.clf = clf
         self.cv = cv
+        self.method = method
 
     def fit(self, *args, **kwargs):
         self.clf = self.clf.fit(*args, **kwargs)
         return self
 
+    def _method_name(self):
+        if self.method == 'auto':
+            if getattr(self.clf, 'predict_proba', None):
+                method = 'predict_proba'
+            else:
+                method = 'predict'
+        else:
+            method = self.method
+
+        return method
+
     def transform(self, *args, **kwargs):
-        return self.clf.predict_proba(*args, **kwargs)
+        return getattr(self.clf, self._method_name())(*args, **kwargs)
 
     def fit_transform(self, X, y):
         preds = cross_val_predict(self.clf, X, y, cv=self.cv,
-                                  method='predict_proba')
+                                  method=self._method_name())
 
         self.clf.fit(X, y)
 
