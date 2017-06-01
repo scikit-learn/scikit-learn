@@ -13,15 +13,15 @@
 
 set -e
 
-# Fix the compilers to workaround avoid having the Python 3.4 build
-# lookup for g++44 unexpectedly.
-export CC=gcc
-export CXX=g++
-
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
 
+export CC=/usr/lib/ccache/gcc
+# Useful for debugging how ccache is used
+# export CCACHE_LOGFILE=/tmp/ccache.log
+# ~60M is used by .ccache when compiling from scratch at the time of writing
+export CCACHE_MAXSIZE=100M
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
@@ -99,8 +99,10 @@ try:
 except ImportError:
     pass
 "
-
     python setup.py develop
+    ccache --show-stats
+    # Useful for debugging how ccache is used
+    # cat $CCACHE_LOGFILE
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
