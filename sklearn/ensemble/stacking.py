@@ -84,7 +84,7 @@ def make_stack_layer(*base_estimators, **kwargs):
     ----------
     *base_estimators: list of base estimators.
 
-    **kwargs: Keyword arguments to be passed to `make_union`.
+    **kwargs: Keyword arguments to be passed to `BlendedEstimator`.
 
     Returns
     -------
@@ -109,9 +109,8 @@ def make_stack_layer(*base_estimators, **kwargs):
            [ 0.66666667,  0.33333333,  0.        ]])
     """
 
-    return make_union(*[BlendedEstimator(estimator)
-                        for estimator in base_estimators],
-                      **kwargs)
+    return make_union(*[BlendedEstimator(estimator, **kwargs)
+                        for estimator in base_estimators])
 
 
 def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
@@ -128,7 +127,7 @@ def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
 
     meta_estimator: Estimator that will stay on top of the stack.
 
-    **kwargs: Keyword arguments to be passed to `make_stacked_layer.
+    **kwargs: Keyword arguments to be passed to `make_stacked_layer`.
 
     Returns
     -------
