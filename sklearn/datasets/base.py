@@ -594,7 +594,7 @@ def load_linnerud(return_X_y=False):
     Features          integer
     Targets           integer
     ===============   ============================
-	
+
     Parameters
     ----------
     return_X_y : boolean, default=False.
