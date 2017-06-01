@@ -67,16 +67,20 @@ extension in place::
     python setup.py build_ext --inplace
 
 
-Another option is to use the ``develop`` option if you change your code a lot
-and do not want to have to reinstall every time. This basically builds the
-extension in place and creates a link to the development directory (see
-`the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_)::
+Another option is to install the package in editable mode if you change your
+code a lot and do not want to have to reinstall every time. This basically
+builds the extension in place and creates a link to the development directory
+(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
-    python setup.py develop
+    pip install --editable .
 
 .. note::
 
-    if you decide to do that you have to rerun::
+    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+
+.. note::
+
+    If you decide to do an editable install you have to rerun::
 
         python setup.py build_ext --inplace
 
