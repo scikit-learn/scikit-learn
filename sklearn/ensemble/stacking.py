@@ -20,18 +20,22 @@ class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     base_estimator: the estimator to be blended.
 
     cv: cv to be used, optional, default: 3
-        Will be passed to `cross_val_predict`
+        Will be passed to `cross_val_predict` during `fit_transform`.
 
     method: string, optional, default: 'auto'
         Invokes the passed method name of the passed estimator. If the method
         is `auto`, will try to invoke `predict_proba` or `predict` in that
         order.
 
+    n_jobs: int, optional, default: 1
+        Number of jobs to be passed to `cross_val_predict` during
+        `fit_transform`.
     """
-    def __init__(self, base_estimator, cv=3, method='auto'):
+    def __init__(self, base_estimator, cv=3, method='auto', n_jobs=1):
         self.base_estimator = base_estimator
         self.cv = cv
         self.method = method
+        self.n_jobs = n_jobs
 
     def fit(self, *args, **kwargs):
         self.base_estimator = self.base_estimator.fit(*args, **kwargs)
@@ -60,7 +64,7 @@ class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     def fit_transform(self, X, y, **fit_params):
         preds = cross_val_predict(self.base_estimator, X, y, cv=self.cv,
                                   method=self._method_name(),
-                                  fit_params=fit_params)
+                                  n_jobs=self.n_jobs, fit_params=fit_params)
 
         self.base_estimator.fit(X, y, **fit_params)
 

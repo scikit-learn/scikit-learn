@@ -68,6 +68,7 @@ def test_classification():
                             SVC(random_state=1)],
                            'cv': [2, StratifiedKFold()],
                            'method': ['auto', 'predict'],
+                           'n_jobs': [1, 2],
                            'fit_params': [{},
                                           {'sample_weight': sample_weight}]})
 
@@ -78,6 +79,7 @@ def test_classification():
                                               random_state=1)],
                            'cv': [2, StratifiedKFold()],
                            'method': ['auto', 'predict', 'predict_proba'],
+                           'n_jobs': [1, 2],
                            'fit_params': [{},
                                           {'sample_weight': sample_weight}]})
 
