@@ -412,7 +412,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             Document word matrix.
 
         total_samples : integer
-            Total umber of documents. It is only used when
+            Total number of documents. It is only used when
             batch_update is `False`.
 
         batch_update : boolean
