@@ -16,6 +16,7 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
+from ..metrics import pairwise_distances
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -132,7 +133,8 @@ def _set_diag(laplacian, value, norm_laplacian):
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+                       norm_laplacian=True, drop_first=True,
+                       return_lap_diag=False):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -321,9 +323,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     embedding = _deterministic_vector_sign_flip(embedding)
     if drop_first:
-        return embedding[1:n_components].T
+        embedding = embedding[1:n_components].T
     else:
-        return embedding[:n_components].T
+        embedding = embedding[:n_components].T
+    if return_lap_diag:
+        return embedding, dd
+    else:
+        return embedding
 
 
 class SpectralEmbedding(BaseEstimator):
@@ -481,6 +487,7 @@ class SpectralEmbedding(BaseEstimator):
         """
 
         X = check_array(X, ensure_min_samples=2, estimator=self)
+        self.training_data_ = X
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, six.string_types):
@@ -494,10 +501,12 @@ class SpectralEmbedding(BaseEstimator):
                               "name or a callable. Got: %s") % self.affinity)
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(affinity_matrix,
-                                             n_components=self.n_components,
-                                             eigen_solver=self.eigen_solver,
-                                             random_state=random_state)
+        (self.embedding_,
+         self._dd) = spectral_embedding(affinity_matrix,
+                                        n_components=self.n_components,
+                                        eigen_solver=self.eigen_solver,
+                                        random_state=random_state,
+                                        return_lap_diag=True)
         return self
 
     def fit_transform(self, X, y=None):
@@ -520,3 +529,42 @@ class SpectralEmbedding(BaseEstimator):
         """
         self.fit(X)
         return self.embedding_
+
+    def transform(self, X):
+        """
+        Transform new points into embedding space.
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Vector, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new : array, shape = (n_samples, n_components)
+        """
+        X = check_array(X)
+
+        if (self.affinity == "nearest_neighbors"):
+            d = pairwise_distances(X, self.training_data_, n_jobs=self.n_jobs,
+                                   metric="euclidean")
+            d[(d == 0)] = np.inf
+            M = np.zeros(d.shape)
+            kneighbors = np.argpartition(d, self.n_neighbors - 2,
+                                         axis=1)[:, :self.n_neighbors - 1]
+            for i in range(M.shape[0]):
+                M[i, kneighbors[i]] += 0.5
+            kth_d = np.partition(pairwise_distances(self.training_data_,
+                                                    n_jobs=self.n_jobs,
+                                                    metric="euclidean"),
+                                 self.n_neighbors - 1,
+                                 axis=0)[self.n_neighbors - 1]
+            for i in range(M.shape[1]):
+                M[(d[:, i] <= kth_d[i]), i] += 0.5
+        else:
+            raise NotImplementedError(("%s is not supported. Expected "
+                                      "'nearest_neighbors' affinity."
+                                       ) % self.affinity)
+
+        M /= self._dd * self._dd
+        return np.matmul(M, self.embedding_)
