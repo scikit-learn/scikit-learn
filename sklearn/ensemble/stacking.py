@@ -6,6 +6,7 @@
 from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin)
 from ..model_selection import cross_val_predict
 from ..pipeline import (make_union, make_pipeline)
+from ..preprocessing import FunctionTransformer
 
 
 class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
@@ -74,6 +75,10 @@ class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         return preds
 
 
+def _identity_transformer():
+    """Contructs a transformer that does nothing"""
+    return FunctionTransformer(lambda x: x)
+
 def make_stack_layer(*base_estimators, **kwargs):
     """Construct a single layer for a stacked model.
 
@@ -83,6 +88,9 @@ def make_stack_layer(*base_estimators, **kwargs):
     Parameters
     ----------
     *base_estimators: list of base estimators.
+
+    restacking: optional, bool, default: False
+        When true, the transformer will return the input.
 
     **kwargs: Keyword arguments to be passed to `BlendedEstimator`.
 
@@ -108,9 +116,12 @@ def make_stack_layer(*base_estimators, **kwargs):
            [ 0.66666667,  0.33333333,  0.        ],
            [ 0.66666667,  0.33333333,  0.        ]])
     """
-
-    return make_union(*[BlendedEstimator(estimator, **kwargs)
-                        for estimator in base_estimators])
+    restacking = kwargs.pop('restacking', False)
+    estimators = [BlendedEstimator(estimator, **kwargs)
+                  for estimator in base_estimators]
+    if restacking:
+        estimators.append(_identity_transformer())
+    return make_union(*estimators)
 
 
 def stack_estimators(estimators_matrix, meta_estimator, **kwargs):

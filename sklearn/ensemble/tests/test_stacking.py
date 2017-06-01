@@ -10,7 +10,8 @@ import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal)
 from sklearn.ensemble import (BlendedEstimator, make_stack_layer,
                               stack_estimators)
-from sklearn.linear_model import (LogisticRegression, RidgeClassifier)
+from sklearn.linear_model import (LogisticRegression, RidgeClassifier,
+                                  LinearRegression)
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 from sklearn.svm import SVC
 from sklearn import datasets
@@ -64,6 +65,7 @@ def test_classification():
     grid1 = ParameterGrid({'base_estimator':
                            [RidgeClassifier(random_state=1),
                             LogisticRegression(random_state=1),
+                            LinearRegression(),
                             RandomForestClassifier(random_state=1),
                             SVC(random_state=1)],
                            'cv': [2, StratifiedKFold()],
@@ -94,3 +96,13 @@ def test_classification():
 
         # checks that we get a column vector
         assert_equal(Xt.ndim, 2)
+
+
+def test_restacking():
+    base_estimators = [LinearRegression(), LinearRegression()]
+    blended_layer = make_stack_layer(*base_estimators, restacking=True,
+                                     method='predict')
+    X = np.random.rand(100, 3)
+    y = np.random.rand(100)
+    Xt = blended_layer.fit_transform(X, y)
+    assert_array_equal(X, Xt[:, 2:])
