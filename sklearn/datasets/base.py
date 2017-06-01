@@ -588,12 +588,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    ===============   ============================
+    ==============    ============================
     Samples total     20
-    Dimensionality    3(for both data and target)
+    Dimensionality    3 (for both data and target)
     Features          integer
     Targets           integer
-    ===============   ============================
+    ==============    ============================
 
     Parameters
     ----------
