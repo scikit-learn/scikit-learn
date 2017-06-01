@@ -600,8 +600,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
                                   error_score=self.error_score)
-          for train, test in cv.split(X, y, groups)
-          for parameters in candidate_params)
+          for parameters, (train, test) in product(candidate_params,
+                                                   cv.split(X, y, groups)))
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -615,8 +615,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
-            array = np.array(array, dtype=np.float64).reshape(n_splits,
-                                                              n_candidates).T
+            array = np.array(array, dtype=np.float64).reshape(n_candidates,
+                                                              n_splits)
             if splits:
                 for split_i in range(n_splits):
                     results["split%d_%s"
@@ -636,7 +636,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Computed the (weighted) mean and std for test scores alone
         # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[::n_candidates],
+        test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
 
         _store('test_score', test_scores, splits=True, rank=True,
