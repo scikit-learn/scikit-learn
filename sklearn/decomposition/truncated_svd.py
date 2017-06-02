@@ -8,11 +8,7 @@
 
 import numpy as np
 import scipy.sparse as sp
-
-try:
-    from scipy.sparse.linalg import svds
-except ImportError:
-    from ..utils.arpack import svds
+from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, as_float_array, check_random_state
