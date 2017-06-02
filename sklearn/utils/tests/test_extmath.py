@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
@@ -86,6 +87,7 @@ def test_random_weights():
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_logsumexp():
     # Try to add some smallish numbers in logspace
     x = np.array([1e-40] * 1000000)
@@ -141,6 +143,7 @@ def test_randomized_svd_low_rank():
         assert_almost_equal(s[:rank], sa[:rank])
 
 
+@ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
 def test_norm_squared_norm():
     X = np.random.RandomState(42).randn(50, 63)
     X *= 100        # check stability

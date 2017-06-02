@@ -16,6 +16,7 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
+from scipy.sparse.linalg import svds
 
 from ..externals import six
 
@@ -27,7 +28,6 @@ from ..utils import check_array
 from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils.arpack import svds
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):

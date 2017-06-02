@@ -13,6 +13,7 @@ Link: http://matthewdhoffman.com/code/onlineldavb.tar
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.misc import logsumexp
 from scipy.special import gammaln
 import warnings
 
@@ -20,7 +21,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
 from ..utils.validation import check_non_negative
-from ..utils.extmath import logsumexp
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
@@ -685,7 +685,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 cnts = X[idx_d, ids]
             temp = (dirichlet_doc_topic[idx_d, :, np.newaxis]
                     + dirichlet_component_[:, ids])
-            norm_phi = logsumexp(temp)
+            norm_phi = logsumexp(temp, axis=0)
             score += np.dot(cnts, norm_phi)
 
         # compute E[log p(theta | alpha) - log q(theta | gamma)]

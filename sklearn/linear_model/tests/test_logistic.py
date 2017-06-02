@@ -6,7 +6,6 @@ from sklearn.metrics import log_loss
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import compute_class_weight
-from sklearn.utils.fixes import sp_version
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -997,10 +996,7 @@ def test_max_iter():
     X, y_bin = iris.data, iris.target.copy()
     y_bin[y_bin == 2] = 0
 
-    solvers = ['newton-cg', 'liblinear', 'sag', 'saga']
-    # old scipy doesn't have maxiter
-    if sp_version >= (0, 12):
-        solvers.append('lbfgs')
+    solvers = ['newton-cg', 'liblinear', 'sag', 'saga', 'lbfgs']
 
     for max_iter in range(1, 5):
         for solver in solvers:
@@ -1067,10 +1063,7 @@ def test_warm_start():
     # Warm starting does not work with liblinear solver.
     X, y = iris.data, iris.target
 
-    solvers = ['newton-cg', 'sag', 'saga']
-    # old scipy doesn't have maxiter
-    if sp_version >= (0, 12):
-        solvers.append('lbfgs')
+    solvers = ['newton-cg', 'sag', 'saga', 'lbfgs']
 
     for warm_start in [True, False]:
         for fit_intercept in [True, False]:
