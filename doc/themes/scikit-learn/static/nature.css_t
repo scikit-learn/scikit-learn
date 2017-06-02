@@ -1339,6 +1339,12 @@ li#other-versions {
 }
 
 
+.cite-us {
+  margin: auto;
+  display: block;
+  max-width: 100px;
+}
+
 @media all and (max-width: 780px) {
   .fork-me {
       display: none;
