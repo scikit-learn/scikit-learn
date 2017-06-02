@@ -131,9 +131,8 @@ def graph_laplacian(csgraph, normed=False, return_diag=False, copy=True):
 def _laplacian_sparse(graph, normed=False, return_diag=False, copy=True):
     n_nodes = graph.shape[0]
     if not copy:  # use the same matrix
-        if graph.format != 'coo':
-            lap = graph.tocoo(copy=False)  # prevent making a new copy
-            np.negative(lap.data, out=lap.data)
+        lap = graph.tocoo(copy=False)  # prevent making a new copy
+        np.negative(lap.data, out=lap.data)
     else:
         if graph.format != 'coo':
             lap = (-graph).tocoo()
