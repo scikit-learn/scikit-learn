@@ -24,17 +24,17 @@ class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
 
     Parameters
     ----------
-    base_estimator: the estimator to be blended.
+    base_estimator : the estimator to be blended.
 
-    cv: cv to be used, optional, default: 3
+    cv : cv to be used, optional (default=3)
         Will be passed to `cross_val_predict` during `fit_transform`.
 
-    method: string, optional, default: 'auto'
+    method : string, optional (default='auto')
         Invokes the passed method name of the passed estimator. If the method
         is `auto`, will try to invoke `predict_proba` or `predict` in that
         order.
 
-    n_jobs: int, optional, default: 1
+    n_jobs : int, optional (default=1)
         Number of jobs to be passed to `cross_val_predict` during
         `fit_transform`.
     """
@@ -93,16 +93,16 @@ def make_stack_layer(*base_estimators, **kwargs):
 
     Parameters
     ----------
-    *base_estimators: list of base estimators.
+    *base_estimators : list of base estimators.
 
-    restacking: optional, bool, default: False
+    restacking : bool, optional (default=False)
         When true, the transformer will return the input.
 
-    transformer_weights : dict, optional
+    transformer_weights : dict, optional (default=None)
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
-    **kwargs: Keyword arguments to be passed to `BlendedEstimator`.
+    **kwargs : Keyword arguments to be passed to `BlendedEstimator`.
 
     Returns
     -------
@@ -147,12 +147,12 @@ def stack_estimators(estimators, meta_estimator, **kwargs):
 
     Parameters
     ----------
-    estimators: 2D array with base estimators. Each row will be turned into a
+    estimators : 2D array with base estimators. Each row will be turned into a
         layer in the stack.
 
-    meta_estimator: Estimator that will stay on top of the stack.
+    meta_estimator : Estimator that will stay on top of the stack.
 
-    **kwargs: Keyword arguments to be passed to `make_stacked_layer`.
+    **kwargs : Keyword arguments to be passed to `make_stacked_layer`.
 
     Returns
     -------
