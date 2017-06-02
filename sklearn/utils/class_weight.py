@@ -41,10 +41,7 @@ def compute_class_weight(class_weight, classes, y):
     # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
 
-    if y.dtype == np.float32:
-        _dtype = np.float32
-    else:
-        _dtype = np.float64
+    _dtype = y.dtype
 
     if set(y) - set(classes):
         raise ValueError("classes should include all valid labels that can "
