@@ -790,10 +790,25 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
+    def _binarize(self, X):
+        """check if data is binary and binarize if necessary"""
+        if self.binarize is None:
+            # ensure data is binary
+            if issparse(X):
+                if not (X.data == 1).all():
+                    raise ValueError("Expected binary input, "
+                                     "got non-binary input")
+            else:
+                if not np.logical_or(X == 1, X == 0).all():
+                    raise ValueError("Expected binary input, "
+                                     "got non-binary input")
+        else:
+            X = binarize(X, threshold=self.binarize)
+        return X
+
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
+        X = self._binarize(X)
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
@@ -811,8 +826,7 @@ class BernoulliNB(BaseDiscreteNB):
 
         X = check_array(X, accept_sparse='csr')
 
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
+        X = self._binarize(X)
 
         n_classes, n_features = self.feature_log_prob_.shape
         n_samples, n_features_X = X.shape
