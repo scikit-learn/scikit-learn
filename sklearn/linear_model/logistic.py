@@ -342,7 +342,7 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
     sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
-    diff = diff.astype(X.dtype)
+    diff = diff.astype(X.dtype, copy=False)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
     grad[:, :n_features] += alpha * w
     if fit_intercept:
