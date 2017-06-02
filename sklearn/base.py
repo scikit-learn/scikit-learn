@@ -3,6 +3,7 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
+from abc import ABCMeta, abstractmethod
 import copy
 import warnings
 
@@ -181,6 +182,12 @@ class BaseEstimator(object):
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
+
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def fit(self, X, y=None, *args):
+        """Fit estimator on samples X, with optional labels/output y."""
 
     @classmethod
     def _get_param_names(cls):
