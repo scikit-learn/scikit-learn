@@ -12,9 +12,14 @@ from ..preprocessing import FunctionTransformer
 class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     """Transformer to turn estimators into blended estimators
 
-    This is used for stacking models. Blending an estimator prevents data leaks
-    between the model layers. Blending will happen only when calling
-    `fit_transform`, as it's the only stage where this makes sense.
+    This is used for stacking models. Blending an estimator consists of
+    training an estimator on one part of the dataset and predict to a heldout
+    part, much like a cross-validation. It is necessary to prevent data leaks
+    between the stack layers. Because it is very similar to what is done in
+    cross validation, the splitting method is shared as well.
+
+    Blending will happen only when calling `fit_transform`, as it's the only
+    stage where this makes sense.
 
     Parameters
     ----------
@@ -78,6 +83,7 @@ class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
 def _identity_transformer():
     """Contructs a transformer that does nothing"""
     return FunctionTransformer(lambda x: x)
+
 
 def make_stack_layer(*base_estimators, **kwargs):
     """Construct a single layer for a stacked model.
