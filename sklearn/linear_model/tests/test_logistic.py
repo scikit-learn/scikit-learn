@@ -1141,33 +1141,20 @@ def test_saga_vs_liblinear():
 def test_dtype_match():
     # Test that np.float32 input data is not cast to np.float64 when possible
 
-    X_ = np.array(X).astype(np.float32)
-    y_ = np.array(Y1).astype(np.float32)
+    X_32 = np.array(X).astype(np.float32)
+    y_32 = np.array(Y1).astype(np.float32)
+    X_64 = np.array(X).astype(np.float64)
+    y_64 = np.array(Y1).astype(np.float64)
 
     for solver in ['newton-cg']:
         for multi_class in ['ovr', 'multinomial']:
 
             # Check type consistency
             lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
-            lr_32.fit(X_, y_)
-            assert_equal(lr_32.coef_.dtype, X_.dtype)
+            lr_32.fit(X_32, y_32)
+            assert_equal(lr_32.coef_.dtype, X_32.dtype)
 
             # Check accuracy consistency
             lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
-            lr_64.fit(X, Y1)
+            lr_64.fit(X_64, y_64)
             assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
-
-
-def test_dtype_missmatch_to_profile():
-    # Test that np.float32 input data is not cast to np.float64 when possible
-
-    X_ = np.array(X).astype(np.float32)
-    y_ = np.array(Y1).astype(np.float32)
-
-    for solver in ['newton-cg']:
-        for multi_class in ['ovr', 'multinomial']:
-
-            # Check type consistency
-            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
-            lr_32.fit(X_, y_)
-            assert_equal(lr_32.coef_.dtype, X_.dtype)
