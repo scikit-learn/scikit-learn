@@ -178,7 +178,7 @@ def test_lasso_cv():
 def test_lasso_cv_with_some_model_selection():
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
-    from sklearn.model_selection import KFold
+    from sklearn.model_selection import StratifiedKFold
     from sklearn import datasets
     from sklearn.linear_model import LassoCV
 
@@ -188,7 +188,7 @@ def test_lasso_cv_with_some_model_selection():
 
     pipe = make_pipeline(
         StandardScaler(),
-        LassoCV(cv=KFold(n_splits=5))
+        LassoCV(cv=StratifiedKFold(n_splits=5))
     )
     pipe.fit(X, y)
 
