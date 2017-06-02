@@ -45,8 +45,7 @@ class BlendedEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         self.n_jobs = n_jobs
 
     def fit(self, *args, **kwargs):
-        self.base_estimator = self.base_estimator.fit(*args, **kwargs)
-        return self
+        raise NotImplementedError("Use `fit_transform` instead")
 
     def _method_name(self):
         if self.method == 'auto':

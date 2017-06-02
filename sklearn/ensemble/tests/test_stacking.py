@@ -7,7 +7,8 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 
 
 import numpy as np
-from sklearn.utils.testing import (assert_equal, assert_array_equal)
+from sklearn.utils.testing import (assert_equal, assert_array_equal,
+                                   assert_raises)
 from sklearn.ensemble import (BlendedEstimator, make_stack_layer,
                               stack_estimators)
 from sklearn.linear_model import (LogisticRegression, RidgeClassifier,
@@ -90,12 +91,12 @@ def test_classification():
     for params in params_list:
         fit_params = params.pop('fit_params')
         clf = BlendedEstimator(**params)
-        clf.fit_transform(X, y, **fit_params)
-        clf.transform(X)
-        Xt = clf.fit(X, y, **fit_params).transform(X)
+        Xt = clf.fit_transform(X, y, **fit_params)
 
         # checks that we get a column vector
         assert_equal(Xt.ndim, 2)
+
+        assert_raises(NotImplementedError, clf.fit, X, y, **fit_params)
 
 
 def test_restacking():
