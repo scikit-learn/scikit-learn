@@ -131,17 +131,14 @@ def graph_laplacian(csgraph, normed=False, return_diag=False, copy=True):
 def _laplacian_sparse(graph, normed=False, return_diag=False, copy=True):
     n_nodes = graph.shape[0]
     if not copy:  # use the same matrix
-        if not graph.format == 'coo':
+        if graph.format != 'coo':
             lap = graph.tocoo(copy=False)  # prevent making a new copy
             np.negative(lap.data, out=lap.data)
-        else:
-            lap = graph
-            np.negative(lap, out=lap)
     else:
-        if not graph.format == 'coo':
+        if graph.format != 'coo':
             lap = (-graph).tocoo()
         else:
-            lap = -graph.copy()
+            lap = -graph
 
     diag_mask = (lap.row == lap.col)
     if not diag_mask.sum() == n_nodes:
