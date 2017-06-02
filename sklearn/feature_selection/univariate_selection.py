@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
-from ..utils.extmath import norm, safe_sparse_dot, row_norms
+from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
 
@@ -296,7 +296,7 @@ def f_regression(X, y, center=True):
     # compute the correlation
     corr = safe_sparse_dot(y, X)
     corr /= X_norms
-    corr /= norm(y)
+    corr /= np.linalg.norm(y)
 
     # convert to p-value
     degrees_of_freedom = y.size - (2 if center else 1)

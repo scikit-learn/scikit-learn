@@ -19,6 +19,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from scipy.misc import logsumexp
 from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
@@ -26,7 +27,7 @@ from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, check_consistent_length
-from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
