@@ -130,7 +130,7 @@ def make_stack_layer(*base_estimators, **kwargs):
     return make_union(*estimators)
 
 
-def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
+def stack_estimators(estimators, meta_estimator, **kwargs):
     """Construct a stacked estimator
 
     This is a wrapper around pipelines to provide a more convenient API for
@@ -139,8 +139,8 @@ def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
 
     Parameters
     ----------
-    estimators_matrix: 2D matrix with base estimators. Each row will be
-        turned into a layer in the stack.
+    estimators: 2D array with base estimators. Each row will be turned into a
+        layer in the stack.
 
     meta_estimator: Estimator that will stay on top of the stack.
 
@@ -148,7 +148,7 @@ def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
 
     Returns
     -------
-    p: Pipeline
+    Pipeline
 
     Examples
     --------
@@ -158,7 +158,7 @@ def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
     >>> from sklearn.svm import SVC
     >>> from sklearn.linear_model import LogisticRegression
     >>> eclf = stack_estimators([[KNeighborsClassifier(n_neighbors=2), SVC()],
-    ...                          [KNeighborsClassifier(n_neighbors=3), SVC()]],
+    ...                          [KNeighborsClassifier(n_neighbors=3)]],
     ...                         LogisticRegression())
     >>> X = np.array([[1, 3], [.12, 1], [.5, -2], [1, -1], [-2, .1], [7, -84]])
     >>> y = np.array([1, 0, 0, 1, 0, 1])
@@ -166,7 +166,7 @@ def stack_estimators(estimators_matrix, meta_estimator, **kwargs):
     array([0, 1, 1, 0, 1, 0])
     """
     estimators = [make_stack_layer(*row, **kwargs)
-                  for row in estimators_matrix]
+                  for row in estimators]
     estimators.append(meta_estimator)
 
     return make_pipeline(*estimators)
