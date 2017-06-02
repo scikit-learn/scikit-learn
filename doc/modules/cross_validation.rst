@@ -311,6 +311,31 @@ training set::
   [0 1 3] [2]
   [0 1 2] [3]
 
+Potential users of LOO for model selection should weigh a few known caveats. When compared with *k*-fold cross validation, one builds *n* models from *n* samples instead of *k* models, where *n>k*. Moreover, each is trained on *n-1* samples rather than *(k-1)n/k*. In both ways, LOO is more computationally expensive than *k*-fold cross validation when *k<n*.
+
+In terms of accuracy, LOO often results in an underestimation of the test error, since it overfits to the training data. Intuitively, since *n-1* of the *n* samples are used to build each model, models constructed from folds are virtually identical to each other and to the model built from the entire training set. Below, the ability of several cross validation techniques to predict the generalization error are compared.
+
+In contrast, it can also be shown that if the learning curve has a steep slope at the training size in question, then 5- or 10- fold cross validation tends to overestimate the generalization error.
+
+As a general rule, most authors suggest that 5- or 10- fold cross validation is preferred to LOO. 
+
+    .. figure:: ../images/cross_validation_comparison.svg
+       :align: center
+
+.. topic:: References:
+
+ * http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html
+ * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
+   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
+ * L. Brieman, P. Spector `Submodel selection and evaluation in regression: The X-random case
+   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
+ * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
+   <http://http://pdf.aminer.org/000/389/261/a_study_of_cross_validation_and_bootstrap_for_accuracy_estimation.pdf>`_, Intl. Jnt. Conf. AI   
+ * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
+   <http://http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
+ * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to Statitical Learning
+   <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
+
 
 Potential users of LOO for model selection should weigh a few known caveats.
 When compared with :math:`k`-fold cross validation, one builds :math:`n` models
