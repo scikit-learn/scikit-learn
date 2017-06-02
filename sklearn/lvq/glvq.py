@@ -9,6 +9,7 @@ from sklearn.utils.validation import check_is_fitted
 class GlvqModel(BaseEstimator):
     def __init__(self, random_state=None):
         self.random_state = validation.check_random_state(random_state)
+        self.prototypes_per_class = 1
         self.w = None
         self.c_w = None
 
@@ -22,32 +23,49 @@ class GlvqModel(BaseEstimator):
         train_lab = validation.column_or_1d(validation.check_array(train_lab, ensure_2d=False))
         validation.check_X_y(train_set, train_lab)
         if not isinstance(nb_epochs, int) or nb_epochs <= 0:
-            raise ValueError("nb_epochs must be a number larger than 0")
+            raise ValueError("nb_epochs must be an int greater than 0")
 
         classes = np.unique(train_lab)
         nb_classes = len(classes)
         nb_samples = train_set.shape[0]
         nb_features = train_set.shape[1]
 
+        # set prototypes per class
+        if isinstance(self.prototypes_per_class, int):
+            if self.prototypes_per_class < 0:
+                raise ValueError("prototypes_per_class must be greater than 0")
+            nb_ppc = np.ones([nb_classes], dtype='int') * self.prototypes_per_class
+        else:
+            nb_ppc = validation.column_or_1d(
+                validation.check_array(self.prototypes_per_class, ensure_2d=False, dtype='int'))
+            if nb_ppc.min() <= 0:
+                raise ValueError("Values in prototypes_per_class must be greater than 0")
+            if nb_ppc.shape[0] != nb_classes:
+                raise ValueError("Length of prototypes per class does not fit the number of classes"
+                                 "classes=%d"
+                                 "length=%d" % (nb_classes, nb_ppc.shape[0]))
         # initialize prototypes
         if self.w is None or self.c_w is None:
-            self.w = np.empty([nb_classes, nb_features], dtype='float')
-            self.c_w = np.empty([nb_classes])
+            self.w = np.empty([np.sum(nb_ppc), nb_features], dtype='float')
+            self.c_w = np.empty([np.sum(nb_ppc)])
+            pos = 0
             for actClass in range(nb_classes):
+                nb_prot = nb_ppc[actClass]
                 mean = np.mean(train_set[train_lab == classes[actClass], :], 0)
-                self.w[actClass] = mean + (self.random_state.rand(nb_features) * 2 - 1)
-                self.c_w[actClass] = classes[actClass]
+                self.w[pos:pos+nb_prot] = mean + (self.random_state.rand(nb_prot,nb_features) * 2 - 1)
+                self.c_w[pos:pos+nb_prot] = classes[actClass]
+                pos += nb_prot
         else:
             self.w = validation.check_array(self.w, dtype='float64')
             self.c_w = validation.column_or_1d(validation.check_array(self.c_w, ensure_2d=False))
-            if self.w.shape != (nb_classes, nb_features):
+            if self.w.shape != (np.sum(nb_ppc), nb_features):
                 raise ValueError("The initial prototypes have wrong shape\n"
                                  "found=(%d,%d)\n"
-                                 "expected=(%d,%d)" % (self.w.shape[0], self.w.shape[1], nb_classes, nb_features))
-            if self.c_w.shape[0] != nb_classes:
+                                 "expected=(%d,%d)" % (self.w.shape[0], self.w.shape[1], np.sum(nb_ppc), nb_features))
+            if self.c_w.shape[0] != np.sum(nb_ppc):
                 raise ValueError("Length of prototype labels wrong\n"
                                  "found=%d\n"
-                                 "expected=%d" % (self.c_w.shape[0], nb_classes))
+                                 "expected=%d" % (self.c_w.shape[0], np.sum(nb_ppc)))
             if set(self.c_w) != set(classes):
                 raise ValueError("Prototype labels and test data classes dont match\n"
                                  "classes={}\n"
@@ -57,10 +75,10 @@ class GlvqModel(BaseEstimator):
         if learning_rate_prototypes is not None and len(learning_rate_prototypes) > 2:
             learning_rate_prototypes = validation.column_or_1d(
                 validation.check_array(learning_rate_prototypes, ensure_2d=False, dtype='float'))
-            if learning_rate_prototypes.shape[0]!=nb_epochs:
+            if learning_rate_prototypes.shape[0] != nb_epochs:
                 raise ValueError("The learning rate vector for the prototypes does not fit the nb_epochs\n"
                                  "nb_epochs=%d\n"
-                                 "length of vector=%d" % (nb_epochs,learning_rate_prototypes.shape[0]))
+                                 "length of vector=%d" % (nb_epochs, learning_rate_prototypes.shape[0]))
             alphas = learning_rate_prototypes
         else:
             if learning_rate_prototypes is None or len(learning_rate_prototypes) is not 2:
