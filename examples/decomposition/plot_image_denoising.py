@@ -42,19 +42,13 @@ import scipy as sp
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.fixes import sp_version
 
-if sp_version < (0, 12):
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
-                   "thus does not include the scipy.misc.face() image.")
 
 ###############################################################################
-try:
-    from scipy import misc
-    face = misc.face(gray=True)
-except AttributeError:
-    # Old versions of scipy have face in the top level package
+try:  # SciPy >= 0.16 have face in misc
+    from scipy.misc import face
+    face = face(gray=True)
+except ImportError:
     face = sp.face(gray=True)
 
 # Convert from uint8 representation with values between 0 and 255 to

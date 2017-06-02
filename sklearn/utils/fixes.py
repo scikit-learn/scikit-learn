@@ -43,31 +43,6 @@ np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
 
-try:
-    from scipy.special import expit     # SciPy >= 0.10
-    with np.errstate(invalid='ignore', over='ignore'):
-        if np.isnan(expit(1000)):       # SciPy < 0.14
-            raise ImportError("no stable expit in scipy.special")
-except ImportError:
-    def expit(x, out=None):
-        """Logistic sigmoid function, ``1 / (1 + exp(-x))``.
-
-        See sklearn.utils.extmath.log_logistic for the log of this function.
-        """
-        if out is None:
-            out = np.empty(np.atleast_1d(x).shape, dtype=np.float64)
-        out[:] = x
-
-        # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
-        # This way of computing the logistic is both fast and stable.
-        out *= .5
-        np.tanh(out, out)
-        out += 1
-        out *= .5
-
-        return out.reshape(np.shape(x))
-
-
 # little danse to see if np.copy has an 'order' keyword argument
 # Supported since numpy 1.7.0
 if 'order' in signature(np.copy).parameters:
@@ -324,42 +299,6 @@ if np_version < (1, 8, 1):
         return bool(np.asarray(a1 == a2).all())
 else:
     from numpy import array_equal
-
-if sp_version < (0, 13, 0):
-    def rankdata(a, method='average'):
-        if method not in ('average', 'min', 'max', 'dense', 'ordinal'):
-            raise ValueError('unknown method "{0}"'.format(method))
-
-        arr = np.ravel(np.asarray(a))
-        algo = 'mergesort' if method == 'ordinal' else 'quicksort'
-        sorter = np.argsort(arr, kind=algo)
-
-        inv = np.empty(sorter.size, dtype=np.intp)
-        inv[sorter] = np.arange(sorter.size, dtype=np.intp)
-
-        if method == 'ordinal':
-            return inv + 1
-
-        arr = arr[sorter]
-        obs = np.r_[True, arr[1:] != arr[:-1]]
-        dense = obs.cumsum()[inv]
-
-        if method == 'dense':
-            return dense
-
-        # cumulative counts of each unique value
-        count = np.r_[np.nonzero(obs)[0], len(obs)]
-
-        if method == 'max':
-            return count[dense]
-
-        if method == 'min':
-            return count[dense - 1] + 1
-
-        # average method
-        return .5 * (count[dense] + count[dense - 1] + 1)
-else:
-    from scipy.stats import rankdata
 
 
 if np_version < (1, 12):

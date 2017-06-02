@@ -22,6 +22,7 @@ from __future__ import division
 import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
+from scipy.stats import rankdata
 
 from ..preprocessing import LabelBinarizer
 from ..utils import assert_all_finite
@@ -31,7 +32,6 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
-from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 

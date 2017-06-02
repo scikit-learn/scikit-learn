@@ -15,7 +15,6 @@ cimport numpy as np
 cimport cython
 from cython cimport floating
 
-from ..utils.extmath import norm
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.fixes import bincount
 
