@@ -272,7 +272,7 @@ class BaseEstimator(object):
                                      'Check the list of available parameters '
                                      'with `estimator.get_params().keys()`.' %
                                      (name, self))
-                sub_object = valid_params[name]
+                sub_object = getattr(self, name)
                 sub_object.set_params(**{sub_name: value})
             else:
                 # simple objects case

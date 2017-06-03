@@ -213,6 +213,20 @@ def test_gridsearch():
     clf.fit(boston.data, boston.target)
 
 
+def test_gridsearch_base_estimators():
+    # Check searching base estimators and their parameters
+    from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
+    
+    boost = AdaBoostClassifier(base_estimator=BaggingClassifier(), random_state=2)
+    parameters = {'n_estimators': (1, 2),
+                  'base_estimator__n_estimators': (3, 5),
+                  'base_estimator': [BaggingClassifier(),
+                                     RandomForestClassifier()]}
+    clf = GridSearchCV(boost, parameters)
+    clf.fit(iris.data, iris.target)
+    assert_equal(clf.best_estimator_.base_estimator.n_estimators, 3)
+
+
 def test_pickle():
     # Check pickability.
     import pickle
