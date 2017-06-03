@@ -408,7 +408,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return y_inv
 
 
-def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
+def label_binarize(y, classes=None, neg_label=0, pos_label=1,
+                   sparse_output=False, force_matrix=False):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -424,8 +425,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     y : array-like
         Sequence of integer labels or multilabel data to encode.
 
-    classes : array-like of shape [n_classes]
+    classes : array-like of shape [n_classes] (default: None)
         Uniquely holds the label for each class.
+        If classes is None it assumes classes as sorted set of unique in y
 
     neg_label : int (default: 0)
         Value with which negative labels must be encoded.
@@ -435,6 +437,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
 
     sparse_output : boolean (default: False),
         Set to true if output binary array is desired in CSR sparse format
+
+    force_matrix : boolean (default: False),
+        Set true if even for binary case you require 2 column matrix on output
 
     Returns
     -------
@@ -456,11 +461,49 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
 
     Binary targets transform to a column vector
 
+    >>> label_binarize([0, 1, 1, 0], neg_label=-2, pos_label=0)
+    array([[-2],
+           [ 0],
+           [ 0],
+           [-2]])
+
     >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'])
     array([[1],
            [0],
            [0],
            [1]])
+
+    Binary with example for positive and negative labels
+
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'],
+    ...     neg_label=-1, pos_label=2)
+    array([[ 2],
+           [-1],
+           [-1],
+           [ 2]])
+
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'],
+    ...     pos_label=2, sparse_output=True).toarray()
+    array([[2],
+           [0],
+           [0],
+           [2]])
+
+    Binary targets transform to a two-column matrix
+
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['yes', 'no'],
+    ...     force_matrix=True)
+    array([[1, 0],
+           [0, 1],
+           [0, 1],
+           [1, 0]])
+
+    Single class always as vector
+
+    >>> label_binarize(['a', 'a', 'a'])
+    array([[0],
+           [0],
+           [0]])
 
     See also
     --------
@@ -471,11 +514,10 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         # XXX Workaround that will be removed when list of list format is
         # dropped
         y = check_array(y, accept_sparse='csr', ensure_2d=False, dtype=None)
-    else:
-        if _num_samples(y) == 0:
+    elif _num_samples(y) == 0:
             raise ValueError('y has 0 samples: %r' % y)
-    if neg_label >= pos_label:
-        raise ValueError("neg_label={0} must be strictly less than "
+    if neg_label == pos_label:
+        raise ValueError("neg_label={0} must be different from "
                          "pos_label={1}.".format(neg_label, pos_label))
 
     if (sparse_output and (pos_label == 0 or neg_label != 0)):
@@ -484,11 +526,6 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
                          "pos_label={0} and neg_label={1}"
                          "".format(pos_label, neg_label))
 
-    # To account for pos_label == 0 in the dense case
-    pos_switch = pos_label == 0
-    if pos_switch:
-        pos_label = -neg_label
-
     y_type = type_of_target(y)
     if 'multioutput' in y_type:
         raise ValueError("Multioutput target data is not supported with label "
@@ -496,19 +533,21 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     if y_type == 'unknown':
         raise ValueError("The type of target data is not known")
 
+    if classes is None:
+        classes = sorted(np.unique(y).tolist())
+
     n_samples = y.shape[0] if sp.issparse(y) else len(y)
     n_classes = len(classes)
     classes = np.asarray(classes)
 
     if y_type == "binary":
         if n_classes == 1:
+            y_out = np.empty((len(y), 1))
+            y_out.fill(0)
             if sparse_output:
-                return sp.csr_matrix((n_samples, 1), dtype=int)
-            else:
-                Y = np.zeros((len(y), 1), dtype=np.int)
-                Y += neg_label
-                return Y
-        elif len(classes) >= 3:
+                return sp.csr_matrix(y_out)
+            return y_out
+        elif n_classes >= 3:
             y_type = "multiclass"
 
     sorted_class = np.sort(classes)
@@ -523,46 +562,49 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         y_in_classes = in1d(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
-        indptr = np.hstack((0, np.cumsum(y_in_classes)))
 
-        data = np.empty_like(indices)
-        data.fill(pos_label)
-        Y = sp.csr_matrix((data, indices, indptr),
-                          shape=(n_samples, n_classes))
-    elif y_type == "multilabel-indicator":
-        Y = sp.csr_matrix(y)
-        if pos_label != 1:
-            data = np.empty_like(Y.data)
+        if pos_label != 0:
+            indptr = np.hstack((0, np.cumsum(y_in_classes)))
+            data = np.empty_like(indices)
             data.fill(pos_label)
-            Y.data = data
+            y_out = sp.csr_matrix((data, indices, indptr),
+                                  shape=(n_samples, n_classes))
+        else:
+            indptr = np.arange(len(y_in_classes))
+            data = np.empty((n_samples, n_classes))
+            data.fill(neg_label)
+            data[indptr, indices] = 0
+            y_out = sp.csr_matrix(data)
+
+    elif y_type == "multilabel-indicator":
+        y_out = sp.csr_matrix(y)
+        y_out.data.fill(pos_label)
     else:
         raise ValueError("%s target data is not supported with label "
                          "binarization" % y_type)
 
     if not sparse_output:
-        Y = Y.toarray()
-        Y = astype(Y, int, copy=False)
+        y_out = y_out.toarray()
+        y_out = astype(y_out, int, copy=False)
 
-        if neg_label != 0:
-            Y[Y == 0] = neg_label
+        if neg_label != 0 and pos_label != 0:
+            y_out[y_out == 0] = neg_label
 
-        if pos_switch:
-            Y[Y == pos_label] = 0
     else:
-        Y.data = astype(Y.data, int, copy=False)
+        y_out.data = astype(y_out.data, int, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):
         indices = np.searchsorted(sorted_class, classes)
-        Y = Y[:, indices]
+        y_out = y_out[:, indices]
 
-    if y_type == "binary":
+    if y_type == "binary" and not force_matrix:
         if sparse_output:
-            Y = Y.getcol(-1)
+            y_out = y_out.getcol(-1)
         else:
-            Y = Y[:, -1].reshape((-1, 1))
+            y_out = y_out[:, -1].reshape((-1, 1))
 
-    return Y
+    return y_out
 
 
 def _inverse_binarize_multiclass(y, classes):
