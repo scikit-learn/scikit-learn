@@ -257,8 +257,8 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree contribute to the final prediction decision of a 
-larger fraction of the input samples. The **expected fraction of the 
+the top of the tree contribute to the final prediction decision of a
+larger fraction of the input samples. The **expected fraction of the
 samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**.
 
@@ -1071,3 +1071,72 @@ must support ``predict_proba`` method)::
 Optionally, weights can be provided for the individual classifiers::
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
+
+
+Model Stacking
+==============
+
+Stacked generalization is another method of combining estimators to reduce their
+biases [W1992]_ by combining several estimators (possibly non-linearly) stacked
+together in layers. Each layer will contain estimators and their outputs are
+used as features to the next layer.
+
+The method is as follows [MLW2015]_:
+
+1. Split the training set in 2 parts;
+2. Train the model on the first part and create predictions for the second
+   part;
+3. Train the model on the second part and create predictions for the first
+   part;
+4. Use this predictions to train the models on the next layer;
+5. Fit the model on the whole training set.
+
+For creating the meta estimators, we have `StackMetaEstimator`. It will generate
+the cross validation predictions (steps 1 through 3) automatically.
+
+Usage
+-----
+
+Let's use Iris dataset as an example.
+
+    >>> from sklearn.ensemble import stack_estimators
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.svm import SVC, LinearSVC
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+
+    >>> from sklearn import datasets
+
+    >>> iris = datasets.load_iris()
+    >>> X = iris.data[:, :2]
+    >>> y = iris.target
+
+    >>> base_models = [SVC(kernel='rbf'),
+    ...                RandomForestClassifier(random_state=1),
+    ...                BaggingClassifier(KNeighborsClassifier(), random_state=7,
+    ...                                  max_samples=0.5, max_features=0.5)]
+
+    >>> scores = [cross_val_score(m, X, y).mean()
+    ...           for m in base_models]
+    >>> print scores
+    [0.79983660130718948, 0.73897058823529405, 0.74060457516339862]
+
+    >>> eclf = stack_estimators([base_models], LinearSVC())
+    >>> scores = cross_val_score(eclf, X, y)
+    >>> print scores.mean()
+    0.820261437908
+
+It can be seen that stacking both estimators improved the score.
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stack_iris_001.png
+    :target: ../auto_examples/ensemble/plot_stack_iris.html
+    :align: center
+    :scale: 75%
+
+.. topic:: References
+
+ .. [W1992] D. Wolpert, "Stacked Generalization",
+        Neural Networks, Vol. 5, No. 5, 1992.
+
+ .. [MLW2015] https://mlwave.com/kaggle-ensembling-guide/
