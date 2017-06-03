@@ -96,7 +96,7 @@ for X, y in datasets:
 
         # Plot also the training points
         ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
-                  edgecolors='black', s=25)
+                   edgecolors='black', s=25)
         # and testing points
         ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
                    alpha=0.6, edgecolors='black', s=25)
