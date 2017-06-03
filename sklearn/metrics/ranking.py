@@ -404,7 +404,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     >>> recall
     array([ 1. ,  0.5,  0.5,  0. ])
     >>> thresholds
-    array([ 0.35,  0.4 ,  0.8 ])
+    array([ 0.1 ,  0.35,  0.4 ,  0.8 ])
 
     """
     fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
@@ -418,7 +418,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     # and reverse the outputs so recall is decreasing
     last_ind = tps.searchsorted(tps[-1])
     sl = slice(last_ind, None, -1)
-    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+    thresholds = thresholds[last_ind + 1::-1]
+    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds
 
 
 def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,

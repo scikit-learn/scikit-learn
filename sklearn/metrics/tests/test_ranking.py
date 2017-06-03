@@ -464,7 +464,7 @@ def test_precision_recall_curve_pos_label():
     assert_array_almost_equal(r, r2)
     assert_array_almost_equal(thresholds, thresholds2)
     assert_equal(p.size, r.size)
-    assert_equal(p.size, thresholds.size + 1)
+    assert_equal(p.size, thresholds.size)
 
 
 def _test_precision_recall_curve(y_true, probas_pred):
@@ -477,7 +477,7 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_almost_equal(_average_precision(y_true, probas_pred),
                         precision_recall_auc, 1)
     assert_equal(p.size, r.size)
-    assert_equal(p.size, thresholds.size + 1)
+    assert_equal(p.size, thresholds.size)
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
