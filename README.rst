@@ -76,6 +76,9 @@ or ``conda``::
 
 The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
 
+You can refer to details from the document.
+https://github.com/shopetan/scikit-learn/blob/master/doc/install.rst
+
 
 Development
 -----------
