@@ -570,7 +570,7 @@ def test_predefinedsplit_with_kfold_split():
     folds = -1 * np.ones(10)
     kf_train = []
     kf_test = []
-    for i, (train_ind, test_ind) in enumerate(cval.KFold(10, 5, shuffle=True)):
+    for i, (train_ind, test_ind) in enumerate(cval.KFold(10, 5, shuffle=False)):
         kf_train.append(train_ind)
         kf_test.append(test_ind)
         folds[test_ind] = i
@@ -582,6 +582,20 @@ def test_predefinedsplit_with_kfold_split():
         ps_test.append(test_ind)
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
+
+
+def test_kfold_shuffle():
+
+    # Indices will be returned in ascending order whithout shuffling
+    for (train_idx, test_idx) in cval.KFold(10, 2, shuffle=False):
+        assert (train_idx == np.sort(train_idx)).all()
+        assert (test_idx == np.sort(test_idx)).all()
+
+    # But will be shuffled when shuffle=True
+    for (train_idx, test_idx) in cval.KFold(10, 2, shuffle=True,
+                                            random_state=10):
+        assert not (train_idx == np.sort(train_idx)).all()
+        assert not (test_idx == np.sort(test_idx)).all()
 
 
 def test_label_shuffle_split():

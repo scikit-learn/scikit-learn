@@ -77,12 +77,14 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
             raise ValueError("n must be an integer")
         self.n = int(n)
 
+        self.mask_idxs = np.arange(self.n)
+
     def __iter__(self):
-        ind = np.arange(self.n)
+
         for test_index in self._iter_test_masks():
             train_index = np.logical_not(test_index)
-            train_index = ind[train_index]
-            test_index = ind[test_index]
+            train_index = self.mask_idxs[train_index]
+            test_index = self.mask_idxs[test_index]
             yield train_index, test_index
 
     # Since subclasses must implement either _iter_test_masks or
@@ -337,10 +339,10 @@ class KFold(_BaseKFold):
     def __init__(self, n, n_folds=3, shuffle=False,
                  random_state=None):
         super(KFold, self).__init__(n, n_folds, shuffle, random_state)
-        self.idxs = np.arange(n)
+        self.mask_idxs = np.arange(n)
         if shuffle:
             rng = check_random_state(self.random_state)
-            rng.shuffle(self.idxs)
+            rng.shuffle(self.mask_idxs)
 
     def _iter_test_indices(self):
         n = self.n
@@ -350,7 +352,7 @@ class KFold(_BaseKFold):
         current = 0
         for fold_size in fold_sizes:
             start, stop = current, current + fold_size
-            yield self.idxs[start:stop]
+            yield self.mask_idxs[start:stop]
             current = stop
 
     def __repr__(self):
