@@ -61,7 +61,7 @@ b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white',
 b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='green',
                  s=20, edgecolor='black')
 c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red',
-                 s=20, edgecolor='black')
+                s=20, edgecolor='black')
 plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
