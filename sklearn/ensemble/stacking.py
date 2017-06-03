@@ -5,8 +5,7 @@
 
 from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin)
 from ..model_selection import cross_val_predict
-from ..pipeline import FeatureUnion
-from ..pipeline import (_name_estimators, make_pipeline)
+from ..pipeline import (_name_estimators, FeatureUnion, Pipeline)
 from ..preprocessing import FunctionTransformer
 
 
@@ -136,8 +135,7 @@ def make_stack_layer(*base_estimators, **kwargs):
     return FeatureUnion(named_estimators,
                         transformer_weights=transformer_weights)
 
-
-def stack_estimators(estimators, meta_estimator, **kwargs):
+def stack_estimators(*estimators, **kwargs):
     """Construct a stacked estimator
 
     This is a wrapper around pipelines to provide a more convenient API for
@@ -146,8 +144,10 @@ def stack_estimators(estimators, meta_estimator, **kwargs):
 
     Parameters
     ----------
-    estimators : 2D array with base estimators. Each row will be turned into a
-        layer in the stack.
+    *estimators : Estimators for stacking. Every param but the last one must
+    be a list of estimators that will be wrapped with `StackMetaEstimator`.
+    The last argument on the list of estimators should be a single estimator
+    and will be used as the last estimator of the stack (the combiner).
 
     meta_estimator : Estimator that will stay on top of the stack.
 
@@ -164,16 +164,22 @@ def stack_estimators(estimators, meta_estimator, **kwargs):
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> from sklearn.svm import SVC
     >>> from sklearn.linear_model import LogisticRegression
-    >>> eclf = stack_estimators([[KNeighborsClassifier(n_neighbors=2), SVC()],
-    ...                          [KNeighborsClassifier(n_neighbors=3)]],
+    >>> eclf = stack_estimators([KNeighborsClassifier(n_neighbors=2), SVC()],
+    ...                         [KNeighborsClassifier(n_neighbors=3)],
     ...                         LogisticRegression())
     >>> X = np.array([[1, 3], [.12, 1], [.5, -2], [1, -1], [-2, .1], [7, -84]])
     >>> y = np.array([1, 0, 0, 1, 0, 1])
     >>> eclf.fit(X, y).predict(X)
     array([0, 1, 1, 0, 1, 0])
     """
-    estimators = [make_stack_layer(*row, **kwargs)
-                  for row in estimators]
-    estimators.append(meta_estimator)
+    if len(estimators) < 1:
+        raise ValueError("Invalid number of layers.")
 
-    return make_pipeline(*estimators)
+    meta_estimators = []
+    for i, stack_row in enumerate(estimators[:-1]):
+        meta_estimators.append(("layer%d" % i,
+                                make_stack_layer(*stack_row, **kwargs)))
+
+    meta_estimators.append(("combiner", estimators[-1]))
+
+    return Pipeline(meta_estimators)

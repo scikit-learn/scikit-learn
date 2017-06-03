@@ -45,16 +45,15 @@ def test_stacking_api():
     assert_array_equal([x[1].base_estimator for x in layer.transformer_list],
                        [clf1, clf2, clf3])
 
-    clf_matrix = [[clf1, clf2], [clf3, clf4]]
-    final_clf = stack_estimators(clf_matrix, clf5)
+    clf_layers = [[clf1, clf2], [clf3, clf4], clf5]
+    final_clf = stack_estimators(*clf_layers)
 
-    matrix_from_pipeline = [[x[1].base_estimator
-                             for x in y[1].transformer_list]
-                            for y in final_clf.steps[:-1]]
+    clfs_from_pipeline = [[x[1].base_estimator
+                           for x in y[1].transformer_list]
+                          for y in final_clf.steps[:-1]]
+    clfs_from_pipeline.append(final_clf.steps[-1][1])
 
-    assert_array_equal(clf_matrix, matrix_from_pipeline)
-
-    assert_equal(final_clf.steps[-1][1], clf5)
+    assert_array_equal(clf_layers, clfs_from_pipeline)
 
 
 def test_classification():
