@@ -9,7 +9,7 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_raises)
-from sklearn.ensemble import (BlendedEstimator, make_stack_layer,
+from sklearn.ensemble import (StackMetaEstimator, make_stack_layer,
                               stack_estimators)
 from sklearn.linear_model import (LogisticRegression, RidgeClassifier,
                                   LinearRegression)
@@ -26,7 +26,7 @@ def test_transformer_init():
     # Tests if attributes are set correctly
 
     base_clf = RidgeClassifier(random_state=1)
-    blended = BlendedEstimator(base_clf)
+    blended = StackMetaEstimator(base_clf)
 
     assert_equal(blended.base_estimator, base_clf)
     assert_equal(blended.cv, 3)
@@ -90,7 +90,7 @@ def test_classification():
 
     for params in params_list:
         fit_params = params.pop('fit_params')
-        clf = BlendedEstimator(**params)
+        clf = StackMetaEstimator(**params)
         Xt = clf.fit_transform(X, y, **fit_params)
 
         # checks that we get a column vector
