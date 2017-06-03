@@ -386,6 +386,9 @@ Enhancements
      This also affects the :meth:`datasets.make_classification`
      method.
 
+   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
+     Victor Poughon.
+
 Bug fixes
 .........
 
