@@ -95,7 +95,7 @@ def main():
     XX, YY = np.meshgrid(axes[0], axes[1])
     Z = pdp[0].reshape(list(map(np.size, axes))).T
     ax = Axes3D(fig)
-    surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, 
+    surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
                            cmap=plt.cm.BuPu, edgecolor='black')
     ax.set_xlabel(names[target_feature[0]])
     ax.set_ylabel(names[target_feature[1]])
