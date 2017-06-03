@@ -167,7 +167,6 @@ def test_label_binarizer_errors():
     assert_raises(ValueError, label_binarize, np.array([[1, 3], [2, 1]]),
                   [1, 2, 3])
 
-
 def test_label_encoder():
     # Test LabelEncoder's transform and inverse_transform methods
     le = LabelEncoder()
@@ -184,6 +183,7 @@ def test_label_encoder():
     assert_raise_message(ValueError, msg, le.transform, "apple")
 
 
+
 def test_label_encoder_fit_transform():
     # Test fit_transform
     le = LabelEncoder()
@@ -193,6 +193,24 @@ def test_label_encoder_fit_transform():
     le = LabelEncoder()
     ret = le.fit_transform(["paris", "paris", "tokyo", "amsterdam"])
     assert_array_equal(ret, [1, 1, 2, 0])
+
+
+def test_label_encoder_expand_classes():
+    # Test expand_classes
+    le = LabelEncoder()
+    ret = le.fit_transform([1, 1, 4, 5, -1, 0])
+    assert_array_equal(ret, [2, 2, 3, 4, 0, 1])
+
+    le = LabelEncoder()
+    ret = le.fit_transform(["paris", "paris", "tokyo", "berlin"])
+
+    assert_array_equal(ret, [1, 1, 2, 0])
+    # case where we expand classes 
+    c_ny = le.expand_classes(["new york"])
+    c_sy = le.expand_classes(["sydney"])
+
+    ret = le.inverse_transform([1, 2, c_ny, c_sy])
+    assert_array_equal(ret, ["paris", "tokyo", "new york", "sydney"] )
 
 
 def test_label_encoder_errors():
