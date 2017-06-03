@@ -1747,8 +1747,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
            handle_unknown='error', n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
-    >>> enc.feature_indices_
-    array([0, 2, 5, 9])
+    >>> enc.feature_indices_ # doctest: +ELLIPSIS
+    array([0, 2, 5, 9]...)
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
