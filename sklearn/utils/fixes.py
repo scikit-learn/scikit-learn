@@ -182,50 +182,6 @@ except ImportError:
 
 
 if np_version < (1, 7):
-    # numpy.isclose was introduced in v 1.7.0
-    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
-        def within_tol(x, y, atol, rtol):
-            with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
-            if np.isscalar(a) and np.isscalar(b):
-                result = bool(result)
-            return result
-
-        x = np.array(a, copy=False, subok=True, ndmin=1)
-        y = np.array(b, copy=False, subok=True, ndmin=1)
-
-        # Make sure y is an inexact type to avoid bad behavior on abs(MIN_INT).
-        # This will cause casting of x later. Also, make sure to allow
-        # subclasses (e.g., for numpy.ma).
-        dt = np.core.multiarray.result_type(y, 1.)
-        y = np.array(y, dtype=dt, copy=False, subok=True)
-
-        xfin = np.isfinite(x)
-        yfin = np.isfinite(y)
-        if xfin.all() and yfin.all():
-            return within_tol(x, y, atol, rtol)
-        else:
-            finite = xfin & yfin
-            cond = np.zeros_like(finite, subok=True)
-            # Because we're using boolean indexing, x & y must be the same
-            # shape. Ideally, we'd just do x, y = broadcast_arrays(x, y). It's
-            # in lib.stride_tricks, though, so we can't import it here.
-            x = x * np.ones_like(cond)
-            y = y * np.ones_like(cond)
-            # Avoid subtraction with infinite/nan values...
-            cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
-            # Check for equality of infinite values...
-            cond[~finite] = (x[~finite] == y[~finite])
-            if equal_nan:
-                # Make NaN == NaN
-                both_nan = np.isnan(x) & np.isnan(y)
-                cond[both_nan] = both_nan[both_nan]
-
-            if np.isscalar(a) and np.isscalar(b):
-                return bool(cond)
-            else:
-                return cond
-
     # Prior to 1.7.0, np.frombuffer wouldn't work for empty first arg.
     def frombuffer_empty(buf, dtype):
         if len(buf) == 0:
@@ -234,7 +190,6 @@ if np_version < (1, 7):
             return np.frombuffer(buf, dtype=dtype)
 else:
     frombuffer_empty = np.frombuffer
-    isclose = np.isclose
 
 
 if np_version < (1, 8):
