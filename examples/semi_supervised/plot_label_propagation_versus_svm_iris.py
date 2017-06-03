@@ -66,7 +66,7 @@ for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    plt.contourf(xx, yy, Z, cmap='tab20')
+    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
     plt.axis('off')
 
     # Plot also the training points
