@@ -876,7 +876,7 @@ class TSNE(BaseEstimator):
         X_embedded = params.reshape(n_samples, self.n_components)
         self.kl_divergence_ = kl_divergence
 
-        return X_embedded
+        return X_embedded, error
 
     def fit_transform(self, X, y=None):
         """Fit X into an embedded space and return that transformed
