@@ -56,12 +56,16 @@ width = 0.35  # bar width
 fig, ax = plt.subplots()
 
 # bars for classifier 1-3
-p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width, color='green')
-p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width, color='lightgreen')
+p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width,
+            color='green', edgecolor='black')
+p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width,
+            color='lightgreen', edgecolor='black')
 
 # bars for VotingClassifier
-p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width, color='blue')
-p4 = ax.bar(ind + width, [0, 0, 0, class2_1[-1]], width, color='steelblue')
+p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width,
+            color='blue', edgecolor='black')
+p4 = ax.bar(ind + width, [0, 0, 0, class2_1[-1]], width,
+            color='steelblue', edgecolor='black')
 
 # plot annotations
 plt.axvline(2.8, color='k', linestyle='dashed')
