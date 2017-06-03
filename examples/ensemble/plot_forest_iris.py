@@ -95,11 +95,14 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         scores = clf.score(X, y)
         # Create a title for each column and the console by using str() and
         # slicing away useless parts of the string
-        model_title = str(type(model)).split(".")[-1][:-2][:-len("Classifier")]
+        model_title = str(type(model)).split(
+                                    ".")[-1][:-2][:-len("Classifier")]
         model_details = model_title
         if hasattr(model, "estimators_"):
-            model_details += " with {} estimators".format(len(model.estimators_))
-        print( model_details + " with features", pair, "has a score of", scores )
+            model_details += " with {} estimators".format(
+                                            len(model.estimators_))
+        print( model_details + " with features", pair,
+               "has a score of", scores )
 
         plt.subplot(3, 4, plot_idx)
         if plot_idx <= len(models):
@@ -120,7 +123,8 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             Z = Z.reshape(xx.shape)
             cs = plt.contourf(xx, yy, Z, cmap=cmap)
         else:
-            # Choose alpha blend level with respect to the number of estimators
+            # Choose alpha blend level with respect to the number
+            # of estimators
             # that are in use (noting that AdaBoost can use fewer estimators
             # than its maximum if it achieves a good enough fit early on)
             estimator_alpha = 1.0 / len(model.estimators_)
@@ -131,16 +135,24 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         # Build a coarser grid to plot a set of ensemble classifications
         # to show how these are different to what we see in the decision
-        # surfaces. These points are regularly space and do not have a black outline
-        xx_coarser, yy_coarser = np.meshgrid(np.arange(x_min, x_max, plot_step_coarser),
-                                             np.arange(y_min, y_max, plot_step_coarser))
-        Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(), yy_coarser.ravel()]).reshape(xx_coarser.shape)
-        cs_points = plt.scatter(xx_coarser, yy_coarser, s=15, c=Z_points_coarser, cmap=cmap, edgecolors="none")
+        # surfaces. These points are regularly space and do not have a
+        # black outline
+        xx_coarser, yy_coarser = np.meshgrid(np.arange(x_min, x_max,
+                                                    plot_step_coarser),
+                                             np.arange(y_min, y_max,
+                                                    plot_step_coarser))
+        Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(),
+                            yy_coarser.ravel()]
+                            ).reshape(xx_coarser.shape)
+        cs_points = plt.scatter(xx_coarser, yy_coarser, s=15,
+                                c=Z_points_coarser, cmap=cmap,
+                                edgecolors="none")
 
         # Plot the training points, these are clustered together and have a
         # black outline
         plt.scatter(X[:, 0], X[:, 1], c=y,
-                    cmap=ListedColormap(['r', 'y', 'b']))
+                    cmap=ListedColormap(['r', 'y', 'b']),
+                    edgecolor='black', s=20)
         plot_idx += 1  # move on to the next plot in sequence
 
 plt.suptitle("Classifiers on feature subsets of the Iris dataset")
