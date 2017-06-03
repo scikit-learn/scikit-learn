@@ -14,7 +14,8 @@ non-linear dimensionality reduction or non-linear classification.
 
 Points that are neighboring often share the same leaf of a tree and therefore
 share large parts of their hashed representation. This allows to
-separate two concentric circles simply based on the principal componentsof the transformed data with truncated SVD.
+separate two concentric circles simply based on the principal components
+of the transformed data with truncated SVD.
 
 In high-dimensional spaces, linear classifiers often achieve
 excellent accuracy. For sparse binary data, BernoulliNB
@@ -68,7 +69,8 @@ ax.set_title("Truncated SVD reduction (2d) of transformed data (%dd)" %
 ax.set_xticks(())
 ax.set_yticks(())
 
-# Plot the decision in original space. For that, we will assign a color# to each point in the mesh [x_min, x_max]x[y_min, y_max].
+# Plot the decision in original space. For that, we will assign a color
+# to each point in the mesh [x_min, x_max]x[y_min, y_max].
 h = .01
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
