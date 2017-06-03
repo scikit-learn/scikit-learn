@@ -181,7 +181,7 @@ almost always depends on the data.
 The next figure compares the results obtained for the different type of the
 weight concentration prior (parameter ``weight_concentration_prior_type``)
 for different values of ``weight_concentration_prior``.
-Here, we can see the the value of the ``weight_concentration_prior`` parameter
+Here, we can see the value of the ``weight_concentration_prior`` parameter
 has a strong impact on the effective number of active components obtained. We
 can also notice that large values for the concentration weight prior lead to
 more uniform weights when the type of prior is 'dirichlet_distribution' while
