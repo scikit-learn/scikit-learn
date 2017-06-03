@@ -11,6 +11,7 @@ import inspect
 import warnings
 import re
 import os
+import sys
 
 from ._compat import _basestring
 from .logger import pformat
@@ -168,7 +169,11 @@ def getfullargspec(func):
     try:
         return inspect.getfullargspec(func)
     except AttributeError:
-        arg_spec = inspect.getargspec(func)
+        if 3 > sys.version_info[0]:
+           arg_spec = inspect.getargspec(func)
+        else:
+           # getargspec deprecated in python3
+           arg_spec = inspect.signature(func)
         import collections
         tuple_fields = ('args varargs varkw defaults kwonlyargs '
                         'kwonlydefaults annotations')
