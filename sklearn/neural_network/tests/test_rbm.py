@@ -4,7 +4,7 @@ import re
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
 from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
-                                   assert_true)
+                                   assert_true, assert_raises)
 
 from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -28,71 +28,6 @@ def test_fit():
 
     # in-place tricks shouldn't have modified X
     assert_array_equal(X, Xdigits)
-
-
-def test_partial_fit():
-    X = Xdigits.copy()
-    rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
-                       batch_size=20, random_state=9)
-    n_samples = X.shape[0]
-    n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
-    batch_slices = np.array_split(X, n_batches)
-
-    for i in range(7):
-        for batch in batch_slices:
-            rbm.partial_fit(batch)
-
-    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
-    assert_array_equal(X, Xdigits)
-
-
-def test_transform():
-    X = Xdigits[:100]
-    rbm1 = BernoulliRBM(n_components=16, batch_size=5,
-                        n_iter=5, random_state=42)
-    rbm1.fit(X)
-
-    Xt1 = rbm1.transform(X)
-    Xt2 = rbm1._mean_hiddens(X)
-
-    assert_array_equal(Xt1, Xt2)
-
-
-def test_small_sparse():
-    # BernoulliRBM should work on small sparse matrices.
-    X = csr_matrix(Xdigits[:4])
-    BernoulliRBM().fit(X)       # no exception
-
-
-def test_small_sparse_partial_fit():
-    for sparse in [csc_matrix, csr_matrix]:
-        X_sparse = sparse(Xdigits[:100])
-        X = Xdigits[:100].copy()
-
-        rbm1 = BernoulliRBM(n_components=64, learning_rate=0.1,
-                            batch_size=10, random_state=9)
-        rbm2 = BernoulliRBM(n_components=64, learning_rate=0.1,
-                            batch_size=10, random_state=9)
-
-        rbm1.partial_fit(X_sparse)
-        rbm2.partial_fit(X)
-
-        assert_almost_equal(rbm1.score_samples(X).mean(),
-                            rbm2.score_samples(X).mean(),
-                            decimal=0)
-
-
-def test_sample_hiddens():
-    rng = np.random.RandomState(0)
-    X = Xdigits[:100]
-    rbm1 = BernoulliRBM(n_components=2, batch_size=5,
-                        n_iter=5, random_state=42)
-    rbm1.fit(X)
-
-    h = rbm1._mean_hiddens(X[0])
-    hs = np.mean([rbm1._sample_hiddens(X[0], rng) for i in range(100)], 0)
-
-    assert_almost_equal(h, hs, decimal=1)
 
 
 def test_fit_gibbs():
@@ -139,6 +74,45 @@ def test_gibbs_smoke():
     assert_true(np.all((X_sampled != X_sampled2).max(axis=1)))
 
 
+def test_partial_fit():
+    X = Xdigits.copy()
+    rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
+                       batch_size=20, random_state=9)
+    n_samples = X.shape[0]
+    n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
+    batch_slices = np.array_split(X, n_batches)
+
+    for i in range(7):
+        for batch in batch_slices:
+            rbm.partial_fit(batch)
+
+    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
+    assert_array_equal(X, Xdigits)
+
+
+def test_rbm_verbose():
+    rbm = BernoulliRBM(n_iter=2, verbose=10)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        rbm.fit(Xdigits)
+    finally:
+        sys.stdout = old_stdout
+
+
+def test_sample_hiddens():
+    rng = np.random.RandomState(0)
+    X = Xdigits[:100]
+    rbm1 = BernoulliRBM(n_components=2, batch_size=5,
+                        n_iter=5, random_state=42)
+    rbm1.fit(X)
+
+    h = rbm1._mean_hiddens(X[0])
+    hs = np.mean([rbm1._sample_hiddens(X[0], rng) for i in range(100)], 0)
+
+    assert_almost_equal(h, hs, decimal=1)
+
+
 def test_score_samples():
     # Test score_samples (pseudo-likelihood) method.
     # Assert that pseudo-likelihood is computed without clipping.
@@ -164,14 +138,28 @@ def test_score_samples():
         rbm1.score_samples([np.arange(1000) * 100])
 
 
-def test_rbm_verbose():
-    rbm = BernoulliRBM(n_iter=2, verbose=10)
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        rbm.fit(Xdigits)
-    finally:
-        sys.stdout = old_stdout
+def test_small_sparse():
+    # BernoulliRBM should work on small sparse matrices.
+    X = csr_matrix(Xdigits[:4])
+    BernoulliRBM().fit(X)       # no exception
+
+
+def test_small_sparse_partial_fit():
+    for sparse in [csc_matrix, csr_matrix]:
+        X_sparse = sparse(Xdigits[:100])
+        X = Xdigits[:100].copy()
+
+        rbm1 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
+        rbm2 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
+
+        rbm1.partial_fit(X_sparse)
+        rbm2.partial_fit(X)
+
+        assert_almost_equal(rbm1.score_samples(X).mean(),
+                            rbm2.score_samples(X).mean(),
+                            decimal=0)
 
 
 def test_sparse_and_verbose():
@@ -192,3 +180,31 @@ def test_sparse_and_verbose():
                              s))
     finally:
         sys.stdout = old_stdout
+
+
+def test_transform():
+    X = Xdigits[:100]
+    rbm1 = BernoulliRBM(n_components=16, batch_size=5,
+                        n_iter=5, random_state=42)
+    rbm1.fit(X)
+
+    Xt1 = rbm1.transform(X)
+    Xt2 = rbm1._mean_hiddens(X)
+
+    assert_array_equal(Xt1, Xt2)
+
+
+def test_valid_input():
+    rbm1 = BernoulliRBM()
+    X = Xdigits[:100]
+
+    # test probability and test binary data
+    for Xin in [X, X > 0.5]:
+        rbm1.fit(X)
+        rbm1.fit_transform(X)
+        rbm1.transform(X)
+
+    X = np.random.uniform(low=1.1, high=100.0, size=(100, 64))
+    assert_raises(ValueError, rbm1.fit, X)
+    assert_raises(ValueError, rbm1.fit_transform, X)
+    assert_raises(ValueError, rbm1.transform, X)
