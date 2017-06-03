@@ -135,6 +135,7 @@ def make_stack_layer(*base_estimators, **kwargs):
     return FeatureUnion(named_estimators,
                         transformer_weights=transformer_weights)
 
+
 def stack_estimators(*estimators, **kwargs):
     """Construct a stacked estimator
 

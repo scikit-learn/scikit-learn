@@ -9,7 +9,7 @@ width and sepal length features were used.
 
 The cross_val_score for each classifier was, in decreasing order::
 
-    stack_estimators([base_models], LinearSVC()) # 0.820
+    stack_estimators(base_models, LinearSVC()) # 0.820
     RandomForestClassifier(random_state=1) # 0.738
     BaggingClassifier(KNeighborsClassifier(), random_state=7, # 0.740
                       max_samples=0.5, max_features=0.5)
@@ -39,7 +39,7 @@ base_models = [SVC(kernel='rbf'),
                BaggingClassifier(KNeighborsClassifier(), random_state=7,
                                  max_samples=0.5, max_features=0.5)]
 
-eclf = stack_estimators([base_models], LinearSVC())
+eclf = stack_estimators(base_models, LinearSVC())
 
 eclf.fit(X, y)
 
