@@ -196,7 +196,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         """Compute the loss of prediction ``pred`` and ``y``. """
 
     @abstractmethod
-    def negative_gradient(self, y, y_pred, **kargs):
+    def negative_gradient(self, y, y_pred, sample_weight=None):
         """Compute the negative gradient.
 
         Parameters
@@ -205,6 +205,8 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
             The target labels.
         y_pred : np.ndarray, shape=(n,):
             The predictions.
+        sample_weights : np.ndarray, shape=(n,) optional
+            The weights for each point
         """
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
@@ -283,8 +285,8 @@ class LeastSquaresError(RegressionLossFunction):
             return (1.0 / sample_weight.sum() *
                     np.sum(sample_weight * ((y - pred.ravel()) ** 2.0)))
 
-    def negative_gradient(self, y, pred, **kargs):
-        return y - pred.ravel()
+    def negative_gradient(self, y, pred, sample_weight=None):
+        return 2.0 * (y - pred.ravel())
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
@@ -313,7 +315,7 @@ class LeastAbsoluteError(RegressionLossFunction):
             return (1.0 / sample_weight.sum() *
                     np.sum(sample_weight * np.abs(y - pred.ravel())))
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, pred, sample_weight=None):
         """1.0 if y - pred > 0.0 else -1.0"""
         pred = pred.ravel()
         return 2.0 * (y - pred > 0.0) - 1.0
@@ -368,7 +370,7 @@ class HuberLossFunction(RegressionLossFunction):
             loss = (sq_loss + lin_loss) / sample_weight.sum()
         return loss
 
-    def negative_gradient(self, y, pred, sample_weight=None, **kargs):
+    def negative_gradient(self, y, pred, sample_weight=None):
         pred = pred.ravel()
         diff = y - pred
         if sample_weight is None:
@@ -427,7 +429,7 @@ class QuantileLossFunction(RegressionLossFunction):
                     sample_weight.sum())
         return loss
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, pred, sample_weight=None):
         alpha = self.alpha
         pred = pred.ravel()
         mask = y > pred
@@ -488,7 +490,7 @@ class BinomialDeviance(ClassificationLossFunction):
             return (-2.0 / sample_weight.sum() *
                     np.sum(sample_weight * ((y * pred) - np.logaddexp(0.0, pred))))
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, pred, sample_weight=None):
         """Compute the residual (= negative gradient). """
         return y - expit(pred.ravel())
 
@@ -558,7 +560,7 @@ class MultinomialDeviance(ClassificationLossFunction):
             return np.sum(-1 * sample_weight * (Y * pred).sum(axis=1) +
                           logsumexp(pred, axis=1))
 
-    def negative_gradient(self, y, pred, k=0, **kwargs):
+    def negative_gradient(self, y, pred, sample_weight=None, k=0):
         """Compute negative gradient for the ``k``-th class. """
         return y - np.nan_to_num(np.exp(pred[:, k] -
                                         logsumexp(pred, axis=1)))
@@ -619,7 +621,7 @@ class ExponentialLoss(ClassificationLossFunction):
             return (1.0 / sample_weight.sum() *
                     np.sum(sample_weight * np.exp(-(2 * y - 1) * pred)))
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, pred, sample_weight=None):
         y_ = -(2. * y - 1.)
         return y_ * np.exp(y_ * pred.ravel())
 
@@ -759,9 +761,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         for k in range(loss.K):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
-
-            residual = loss.negative_gradient(y, y_pred, k=k,
-                                              sample_weight=sample_weight)
+                residual = loss.negative_gradient(y, y_pred, sample_weight, k)
+            else:
+                residual = loss.negative_gradient(y, y_pred, sample_weight)
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
