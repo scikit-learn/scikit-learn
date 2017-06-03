@@ -62,7 +62,7 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
                                  for k, v in self._kwargs.items()])
         return ("make_scorer(%s%s%s%s)"
-                % (self._score_func.__name__,
+                % (self._score_func.__repr__,
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
