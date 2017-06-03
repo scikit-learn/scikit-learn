@@ -43,7 +43,15 @@ def _assert_all_finite(X):
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
-    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+    Parameters
+    ----------
+    X : np.ndarray instance or a scipy.sparse matrix.
+
+    Raises
+    ------
+    ValueError
+        If X contains NaN or infinity.
+    """
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
@@ -158,6 +166,16 @@ def check_consistent_length(*arrays):
     ----------
     *arrays : list or tuple of input objects.
         Objects that will be checked for consistent length.
+
+    Raises
+    ------
+    ValueError
+        If the arrays have inconsistent number of samples.
+
+    TypeError
+        If input has estimator or type other than sequence or array-like
+        If input has Singleton array that cannot be considered valid.
+
     """
 
     lengths = [_num_samples(X) for X in arrays if X is not None]
@@ -220,6 +238,14 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     force_all_finite : boolean
         Whether to raise an error on np.inf and np.nan in X.
+
+    Raises
+    ------
+    TypeError
+        If a sparse matrix was passed when ``accept_sparse`` in None or False
+
+    ValueError
+        If X contains NaN or infinity when ``force_all_finite`` is True
 
     Returns
     -------
@@ -341,6 +367,22 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
+    Raises
+    ------
+    TypeError
+        If a sparse matrix was passed when ``accept_sparse`` in None or False
+            when ``array`` is sparse
+
+    ValueError
+        If X contains NaN or infinity when ``force_all_finite`` is True and
+            ``array`` is sparse
+        If less than 2 samples provided in a 1 dimensional array-like input
+            when ensure_2d is Ture and ``ensure_min_samples`` >= 2
+        If array with dim > 2 when ``allow_nd` is ``False``
+        If ``n_samples`` < ``ensure_min_samples``
+            when ``ensure_min_samples`` > 0
+        If ``n_features`` < ``ensure_min_features`` when
+            ``ensure_min_features`` > 0 and array is 2 dimensional
     Returns
     -------
     X_converted : object
@@ -522,6 +564,28 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
+    Raises
+    ------
+    TypeError
+        If a sparse matrix was passed when ``accept_sparse`` in None or False
+            when ``array`` is sparse
+        If input has estimator or type other than sequence or array-like
+        If input has Singleton array that cannot be considered valid.
+
+    ValueError
+        If X contains NaN or infinity when ``force_all_finite`` is True and
+            ``array`` is sparse
+        If less than 2 samples provided in a 1 dimensional array-like input
+            when ensure_2d is Ture and ``ensure_min_samples`` >= 2
+        If array with dim > 2 when ``allow_nd` is ``False``
+        If ``n_samples`` < ``ensure_min_samples``
+            when ``ensure_min_samples`` > 0
+        If ``n_features`` < ``ensure_min_features`` when
+            ``ensure_min_features`` > 0 and array is 2 dimensional
+        If the arrays have inconsistent number of samples.
+        If ``y`` contains NaN or infinity.
+        If ``y`` has greater than 2 dimensions or not a column vector
+            when ``multi_output`` is ``False``
     Returns
     -------
     X_converted : object
@@ -557,10 +621,15 @@ def column_or_1d(y, warn=False):
     warn : boolean, default False
        To control display of warnings.
 
+    Raises
+    ------
+    ValueError
+        If input has greater than 2 dimensions or not a column vector
+
     Returns
     -------
     y : array
-
+        1-D ndarray
     """
     shape = np.shape(y)
     if len(shape) == 1:
@@ -579,10 +648,20 @@ def column_or_1d(y, warn=False):
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance
 
+    Parameters
+    ----------
+    seed : None, int, RandomState
+
+    Returns
+    -------
     If seed is None, return the RandomState singleton used by np.random.
     If seed is an int, return a new RandomState instance seeded with seed.
     If seed is already a RandomState instance, return it.
-    Otherwise raise ValueError.
+
+    Raises
+    ------
+    ValueError
+            If seed is not None or int or RandomState
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -626,6 +705,13 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
         If True then raise a warning if conversion is required.
     raise_exception : boolean (default=False)
         If True then raise an exception if array is not symmetric.
+
+    Raises
+    ------
+    ValueError
+        If array is not 2-dimensional
+        If array is 2-dimensional with unequal dimensions
+        If ``raise_exception`` is True, raised if not symmetric
 
     Returns
     -------
@@ -688,6 +774,14 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     all_or_any : callable, {all, any}, default all
         Specify whether all or any of the given attributes must exist.
+
+    Raises
+    ------
+    TypeError
+        If the estimator is not an ``Estimator`` instance
+
+    _NotFittedError
+        If ``any_or_all`` of the attributes is not present in the ``estimator``
     """
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
@@ -714,6 +808,11 @@ def check_non_negative(X, whom):
 
     whom : string
         Who passed X to this function.
+
+    Raises
+    ------
+    ValueError
+        If there is any negative value in the array ``x``
     """
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
