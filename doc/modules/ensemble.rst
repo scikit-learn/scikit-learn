@@ -1122,7 +1122,7 @@ Let's use Iris dataset as an example.
     >>> print(scores)
     [0.79983660130718948, 0.73897058823529405, 0.74060457516339862]
 
-    >>> eclf = stack_estimators([base_models], LinearSVC())
+    >>> eclf = stack_estimators(base_models, LinearSVC())
     >>> scores = cross_val_score(eclf, X, y)
     >>> print(scores.mean())
     0.820261437908
