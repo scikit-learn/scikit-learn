@@ -22,6 +22,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # License: BSD 3 clause
 
 from io import BytesIO
+import os
 from os.path import exists
 from os import makedirs
 import tarfile
