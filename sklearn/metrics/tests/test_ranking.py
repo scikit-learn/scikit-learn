@@ -838,67 +838,69 @@ def test_label_ranking_avp():
 
 def test_coverage_error():
     # Toy case
-    assert_almost_equal(coverage_error([[0, 1]], [[0.25, 0.75]]), 1)
-    assert_almost_equal(coverage_error([[0, 1]], [[0.75, 0.25]]), 2)
-    assert_almost_equal(coverage_error([[1, 1]], [[0.75, 0.25]]), 2)
-    assert_almost_equal(coverage_error([[0, 0]], [[0.75, 0.25]]), 0)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.25, 0.75]]), 0)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.75, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[1, 1]], [[0.75, 0.25]]), 1)
 
-    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.75]]), 0)
-    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.75]]), 1)
-    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.75]]), 2)
-    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.75]]), 2)
-    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.75]]), 3)
-    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.75]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.75]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.75]]), 3)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.75]]), 0)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.75]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.75]]), 1)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.75]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.75]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.75]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.75]]), 2)
 
-    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.75, 0.5, 0.25]]), 0)
-    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.75, 0.5, 0.25]]), 3)
-    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.75, 0.5, 0.25]]), 2)
-    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.75, 0.5, 0.25]]), 3)
-    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.75, 0.5, 0.25]]), 1)
-    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.75, 0.5, 0.25]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.75, 0.5, 0.25]]), 2)
-    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.75, 0.5, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.75, 0.5, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.75, 0.5, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.75, 0.5, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.75, 0.5, 0.25]]), 0)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.75, 0.5, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.75, 0.5, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.75, 0.5, 0.25]]), 2)
 
-    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.5, 0.75, 0.25]]), 0)
-    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.5, 0.75, 0.25]]), 3)
-    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.5, 0.75, 0.25]]), 1)
-    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
-    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.5, 0.75, 0.25]]), 2)
-    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.5, 0.75, 0.25]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 2)
-    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.5, 0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.5, 0.75, 0.25]]), 0)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.5, 0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.5, 0.75, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.5, 0.75, 0.25]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 1)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 2)
+
+    # Cases with no true label
+    assert_raises(ValueError, coverage_error, [[0, 0]], [[0.75, 0.25]])
+    assert_raises(ValueError, coverage_error, [[0, 0, 0]], [[0.25, 0.5, 0.75]])
+    assert_raises(ValueError, coverage_error, [[0, 0, 0]], [[0.75, 0.5, 0.25]])
+    assert_raises(ValueError, coverage_error, [[0, 0, 0]], [[0.5, 0.75, 0.25]])
 
     # Non trival case
     assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0]],
                                        [[0.1, 10., -3], [0, 1, 3]]),
-                        (1 + 3) / 2.)
+                        ((1 + 3) / 2.) - 1)
 
     assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
                                        [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
-                        (1 + 3 + 3) / 3.)
+                        ((1 + 3 + 3) / 3.) - 1)
 
     assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
                                        [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
-                        (1 + 3 + 3) / 3.)
+                        ((1 + 3 + 3) / 3.) - 1)
 
 
 def test_coverage_tie_handling():
-    assert_almost_equal(coverage_error([[0, 0]], [[0.5, 0.5]]), 0)
-    assert_almost_equal(coverage_error([[1, 0]], [[0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[0, 1]], [[0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[1, 1]], [[0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 0]], [[0.5, 0.5]]), 1)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.5, 0.5]]), 1)
+    assert_almost_equal(coverage_error([[1, 1]], [[0.5, 0.5]]), 1)
 
-    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
-    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 3)
-    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 2)
 
+    assert_raises(ValueError, coverage_error, [[0, 0]], [[0.5, 0.5]])
+    assert_raises(ValueError, coverage_error, [[0, 0, 0]], [[0.25, 0.5, 0.5]])
 
 def test_label_ranking_loss():
     assert_almost_equal(label_ranking_loss([[0, 1]], [[0.25, 0.75]]), 0)
