@@ -354,11 +354,11 @@ class _GMMBase(BaseEstimator):
 
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in X
+        score : int
+            sum of Log probabilities of each data point in X
         """
         logprob, _ = self.score_samples(X)
-        return logprob
+        return np.sum(logprob)
 
     def predict(self, X):
         """Predict label for data.
