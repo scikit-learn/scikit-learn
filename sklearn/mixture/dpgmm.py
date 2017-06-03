@@ -303,7 +303,7 @@ class _DPGMMBase(_GMMBase):
         self.gamma_.T[1] = 1. + sz
         self.gamma_.T[2].fill(0)
         for i in range(self.n_components - 2, -1, -1):
-            self.gamma_[i, 2] = self.gamma_[i + 1, 2] + sz[i]
+            self.gamma_[i, 2] = self.gamma_[i + 1, 2] + sz[i + 1]
         self.gamma_.T[2] += self.alpha
 
     def _update_means(self, X, z):
