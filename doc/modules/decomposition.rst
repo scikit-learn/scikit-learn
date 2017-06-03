@@ -869,6 +869,10 @@ Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
+The :attr:`n_topics` of :class:`LatentDirichletAllocation` can be used to set the number of topics, :math:`K`.
+The :attr:`doc_topic_prior` can be used to set Dirichlet Prior, :math:`\alpha` of the Document-Topic distribution, :math:`\theta`.
+The :attr:`topic_word_prior` can be used to set the Dirichlet Prior, :math:`\eta` of the Topic-Word distribution. :math:`\eta`.
+
 :class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
 both online and batch update method.
 While batch method updates variational variables after each full pass through the data,
@@ -887,6 +891,8 @@ can be calculated from ``transform`` method.
 
 :class:`LatentDirichletAllocation` also implements ``partial_fit`` method. This is used
 when data can be fetched sequentially.
+
+
 
 .. topic:: Examples:
 
