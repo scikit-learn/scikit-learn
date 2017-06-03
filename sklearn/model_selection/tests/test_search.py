@@ -157,7 +157,7 @@ def test_parameter_grid():
 def test_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
     # make sure it selects the smallest parameter in case of ties
     old_stdout = sys.stdout
     sys.stdout = StringIO()
