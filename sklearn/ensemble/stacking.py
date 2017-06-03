@@ -129,7 +129,7 @@ def make_stack_layer(*base_estimators, **kwargs):
     transformer_weights = kwargs.pop('transformer_weights', None)
 
     named_estimators = [(n, StackMetaEstimator(estimator, **kwargs))
-                    for n, estimator in _name_estimators(base_estimators)]
+                        for n, estimator in _name_estimators(base_estimators)]
     if restacking:
         named_estimators.extend(_name_estimators([_identity_transformer()]))
 
