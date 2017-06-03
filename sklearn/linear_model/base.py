@@ -450,6 +450,44 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
+    def matrix_fit(self, X, y, n, p, dof, sample_weight):
+        # Preprocess data.
+        y = np.array(y, copy=True).reshape(n, -1)
+        if self.fit_intercept:
+            X = np.append(X, np.ones((n, 1)), axis=1)
+            dof = dof - 1
+        if sample_weight is not None:
+            sample_weight = np.sqrt(np.array(sample_weight, copy=True))
+            try:
+                sample_weight = sample_weight.reshape(n, 1)
+                X = np.multiply(X, sample_weight)
+                y = np.multiply(y, sample_weight)
+            except:
+                pass
+
+        # Evaluate coefficients and standard deviation.
+        XT = X.T
+        try:
+            XTX_inv = np.linalg.inv(np.dot(XT, X))
+        except linalg.LinAlgError:
+            self.coef_ = np.zeros(1)
+            self.intercept_ = np.zeros(1)
+            return self
+        beta = np.dot(np.dot(XTX_inv, XT), y)
+        intercept = beta[-1] if self.fit_intercept else np.zeros(
+            y.shape[1])
+        coef = beta[0:-1] if self.fit_intercept else beta
+        residual = y - np.dot(X, beta)
+        self.coef_ = coef.T if coef.shape[1] > 1 else coef.reshape(p,)
+        self.intercept_ = intercept.reshape(-1,)
+
+        if dof > 0:
+            diag = np.diagonal(XTX_inv)
+            var_beta = np.outer(diag, np.sum(residual**2, axis=0)) / dof
+            stdev = np.sqrt(var_beta).reshape(beta.shape)
+            self.stdev_ = \
+                stdev.T if coef.shape[1] > 1 else stdev.reshape(-1,)
+
     def fit(self, X, y, sample_weight=None):
         """
         Fit linear model.
@@ -479,6 +517,15 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
+
+        if not sp.issparse(X) and not self.normalize:
+            X = np.array(X)
+            n = X.shape[0]
+            p = X.shape[1]
+            dof = n - p
+            if dof >= 0:
+                self.matrix_fit(X, y, n, p, dof, sample_weight)
+                return self
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
