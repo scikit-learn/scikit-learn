@@ -641,7 +641,7 @@ def label_ranking_average_precision_score(y_true, y_score):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
-    # Handle badly formated array and the degenerate case with one label
+    # Handle badly formatted array and the degenerate case with one label
     y_type = type_of_target(y_true)
     if (y_type != "multilabel-indicator" and
             not (y_type == "binary" and y_true.ndim == 2)):
