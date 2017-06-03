@@ -681,7 +681,7 @@ Kernels:
 
 .. _linear_model_ref:
 
-:mod:`sklearn.linear_model`: Generalized Linear Models
+:mod:`sklearn.linear_model`: General Linear Models
 ======================================================
 
 .. automodule:: sklearn.linear_model

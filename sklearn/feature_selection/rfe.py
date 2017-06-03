@@ -52,7 +52,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         must correspond to high absolute values in the `coef_` array.
 
         For instance, this is the case for most supervised learning
-        algorithms such as Support Vector Classifiers and Generalized
+        algorithms such as Support Vector Classifiers and General
         Linear Models from the `svm` and `linear_model` modules.
 
     n_features_to_select : int or None (default=None)
@@ -274,7 +274,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         must correspond to high absolute values in the `coef_` array.
 
         For instance, this is the case for most supervised learning
-        algorithms such as Support Vector Classifiers and Generalized
+        algorithms such as Support Vector Classifiers and General
         Linear Models from the `svm` and `linear_model` modules.
 
     step : int or float, optional (default=1)

@@ -1,6 +1,6 @@
 .. _linear_examples:
 
-Generalized Linear Models
+General Linear Models
 -------------------------
 
 Examples concerning the :mod:`sklearn.linear_model` module.
