@@ -672,7 +672,11 @@ class GridSearchCV(BaseSearchCV):
         If ``None``, the ``score`` method of the estimator is used.
 
     fit_params : dict, optional
-        Parameters to pass to the fit method.
+        Parameters to pass to the fit method. Individual sample weights for
+        crossvalidation should be passed in using
+        'fit_params'={'sample_weight':weights}. See the documentation for
+        the relevant estimator to see if its fit method supports
+        sample weights.
 
     n_jobs: int, default: 1 :
         The maximum number of estimators fit in parallel.
