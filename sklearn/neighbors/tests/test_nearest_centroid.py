@@ -6,10 +6,10 @@ import numpy as np
 from scipy import sparse as sp
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
+from numpy.testing import assert_raises
 
 from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
-from sklearn.metrics.pairwise import pairwise_distances
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -56,11 +56,10 @@ def test_classification_toy():
 
 
 def test_precomputed():
-    clf = NearestCentroid(metric="precomputed")
-    clf.fit(X, y)
-    S = pairwise_distances(T, clf.centroids_)
-    assert_array_equal(clf.predict(S), true_result)
-
+    clf = NearestCentroid(metric='precomputed')
+    with assert_raises(ValueError) as context:
+        clf.fit(X, y)
+    assert_equal(ValueError, type(context.exception))
 
 def test_iris():
     # Check consistency on dataset iris.
