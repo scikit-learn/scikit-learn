@@ -148,6 +148,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
         y = self._validate_targets(y)
+        y = np.asarray(y).ravel()
 
         sample_weight = np.asarray([]
                                    if sample_weight is None
