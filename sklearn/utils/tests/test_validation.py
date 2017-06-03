@@ -38,6 +38,23 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.utils.testing import assert_raise_message
 
 
+def test_safe_asarray_with_dok_and_lil():
+    """Make sure dok and lil sparse matrices are handled"""
+
+    X = np.ones([4, 5])
+    X_dok = sp.dok_matrix(X)
+    X_lil = sp.lil_matrix(X)
+
+    # Test fails on X_dok due to non-exposure of .data (it is .values)
+    # Test fails on X_lil because .data is an array of dtype object
+    # containing a list of lists of not necessarily the same length
+
+    safe_X_dok = safe_asarray(X_dok)
+    safe_X_lil = safe_asarray(X_lil, X.dtype)
+
+    # Later one could check the type of output, e.g. coo_matrix
+
+
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
