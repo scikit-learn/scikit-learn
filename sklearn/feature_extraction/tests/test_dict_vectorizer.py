@@ -8,9 +8,11 @@ import scipy.sparse as sp
 
 from numpy.testing import assert_array_equal
 from sklearn.utils.testing import (assert_equal, assert_in,
-                                   assert_false, assert_true)
+                                   assert_false, assert_true,
+                                   assert_raises)
 
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.dict_vectorizer import _validate_dictvectorizer_input
 from sklearn.feature_selection import SelectKBest, chi2
 
 
@@ -60,6 +62,28 @@ def test_feature_selection():
         v.restrict(sel.get_support(indices=indices), indices=indices)
         assert_equal(v.get_feature_names(), ["useful1", "useful2"])
 
+
+def test_validate_types():
+    # should not raise (different numerical types and booleans are allowed)
+    _validate_dictvectorizer_input([
+        {"foo": 1, "bar": 3, "baz": 2},
+        {"foo": 1, "bar": 3},
+    ])
+    _validate_dictvectorizer_input([
+        {"foo": 1, "bar": np.int(3)},
+        {"foo": 1.0, "bar": True},
+        {"foo": np.float(1), "bar": 3},
+    ])
+
+    assert_raises(ValueError, _validate_dictvectorizer_input, [
+        {"foo": 1, "bar": 3},
+        {"foo": "1", "bar": 3},
+    ])
+    # also ensure that the types are validated in .fit
+    assert_raises(ValueError, DictVectorizer().fit, [
+        {"foo": 1, "bar": 3},
+        {"foo": "1", "bar": 3},
+    ])
 
 def test_one_of_k():
     D_in = [{"version": "1", "ham": 2},

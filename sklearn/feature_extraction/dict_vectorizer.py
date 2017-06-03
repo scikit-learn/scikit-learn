@@ -4,6 +4,7 @@
 
 from array import array
 from collections import Mapping
+from numbers import Number
 from operator import itemgetter
 
 import numpy as np
@@ -22,6 +23,30 @@ def _tosequence(X):
         return [X]
     else:
         return tosequence(X)
+
+
+def _validate_dictvectorizer_input(X):
+    """Ensure that features have consistent types and raise ValueError if
+    numbers and strings are mixed.
+
+    Parameters
+    ----------
+    X : Mapping or iterable over Mappings
+        Dict(s) or Mapping(s) from feature names (arbitrary Python
+        objects) to feature values (strings or convertible to dtype).
+
+    Raises
+    ------
+    ValueError
+        If any feature in ``X`` has mixed (both numeric and text) types.
+    """
+    numeric_X = {}
+    for f in X:
+        for k, v in six.iteritems(f):
+            if k in numeric_X and numeric_X[k] != isinstance(v, Number):
+                raise ValueError("Multiple types for feature '%s'! Both "
+                                 "numeric and '%s' found." % (k, type(v).__name__))
+            numeric_X[k] = isinstance(v, Number)
 
 
 class DictVectorizer(BaseEstimator, TransformerMixin):
@@ -110,10 +135,18 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             objects) to feature values (strings or convertible to dtype).
         y : (ignored)
 
+        Raises
+        ------
+        ValueError
+            If any feature in ``X`` has mixed (both numeric and text) types.
+
         Returns
         -------
         self
         """
+
+        _validate_dictvectorizer_input(X)
+
         feature_names = []
         vocab = {}
 
