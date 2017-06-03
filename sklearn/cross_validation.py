@@ -238,8 +238,8 @@ class LeavePOut(_PartitionIterator):
         )
 
     def __len__(self):
-        return int(factorial(self.n) / factorial(self.n - self.p)
-                   / factorial(self.p))
+        return int(factorial(self.n) / factorial(self.n - self.p) /
+                   factorial(self.p))
 
 
 class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
@@ -770,13 +770,19 @@ class LeavePLabelOut(_PartitionIterator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, n, n_iter=10, test_size=None, train_size=None,
                  random_state=None):
         self.n = n
         self.n_iter = n_iter
-        self.test_size = test_size
-        self.train_size = train_size
         self.random_state = random_state
+
+        # we will compute the final value of
+        # test_size in _validate_shuffle_split()
+        self.test_size = test_size
+        # we will compute the final value of
+        # test_size in _validate_shuffle_split()
+        self.train_size = train_size
+
         self.n_train, self.n_test = _validate_shuffle_split(n, test_size,
                                                             train_size)
 
@@ -813,17 +819,22 @@ class ShuffleSplit(BaseShuffleSplit):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1), int, or None
+    test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
+        proportion of the dataset to include in the test split.
+        If int, represents the absolute number of test samples.
+        If None, the value is automatically set accroding to train_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
+        If None, the value is automatically set accroding to test_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     random_state : int, RandomState instance or None, optional (default None)
         If int, random_state is the seed used by the random number generator;
@@ -884,63 +895,95 @@ class ShuffleSplit(BaseShuffleSplit):
 
 def _validate_shuffle_split(n, test_size, train_size):
     if test_size is None and train_size is None:
-        raise ValueError(
-            'test_size and train_size can not both be None')
+        # user didn't set test_size
+        # we will use default value
+        test_size = 0.1
+        train_size = 1. - test_size
 
-    if test_size is not None:
-        if np.asarray(test_size).dtype.kind == 'f':
+    if test_size is not None and train_size is None:
+        test_size_kind = np.asarray(test_size).dtype.kind
+        if test_size_kind == 'f':
             if test_size >= 1.:
                 raise ValueError(
                     'test_size=%f should be smaller '
                     'than 1.0 or be an integer' % test_size)
-        elif np.asarray(test_size).dtype.kind == 'i':
+            train_size = 1. - test_size
+        elif test_size_kind == 'i':
             if test_size >= n:
                 raise ValueError(
                     'test_size=%d should be smaller '
                     'than the number of samples %d' % (test_size, n))
+            train_size = n - test_size
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
-
-    if train_size is not None:
-        if np.asarray(train_size).dtype.kind == 'f':
+    elif test_size is None and train_size is not None:
+        train_size_kind = np.asarray(train_size).dtype.kind
+        if train_size_kind == 'f':
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
-            elif np.asarray(test_size).dtype.kind == 'f' and \
-                    train_size + test_size > 1.:
-                raise ValueError('The sum of test_size and train_size = %f, '
-                                 'should be smaller than 1.0. Reduce '
-                                 'test_size and/or train_size.' %
-                                 (train_size + test_size))
-        elif np.asarray(train_size).dtype.kind == 'i':
+            test_size = 1. - train_size
+        elif train_size_kind == 'i':
             if train_size >= n:
                 raise ValueError("train_size=%d should be smaller "
                                  "than the number of samples %d" %
                                  (train_size, n))
+            test_size = n - train_size
         else:
             raise ValueError("Invalid value for train_size: %r" % train_size)
+    else:  # test_size is not None and train_set is not None:
+        test_size_kind = np.array(test_size).dtype.kind
+        train_size_kind = np.array(train_size).dtype.kind
+        if test_size_kind == 'f' and \
+           train_size_kind == 'f':
+            if test_size >= 1.:
+                raise ValueError('test_size=%f should be smaller '
+                                 'than 1.0 or be an integer' % test_size)
+            if train_size >= 1.:
+                raise ValueError('train_size=%f should be smaller '
+                                 'than 1.0 or be an integer' % train_size)
+            if train_size + test_size > 1.:
+                raise ValueError('The sum of test_size and train_size = %f, '
+                                 'should be smaller than 1.0. Reduce '
+                                 'test_size and/or train_size.' %
+                                 (train_size + test_size))
+        elif test_size_kind == 'i' and train_size_kind == 'i':
+            if test_size >= n:
+                raise ValueError('test_size=%d should be smaller '
+                                 'than the number of samples %d' %
+                                 (test_size, n))
+            if train_size >= n:
+                raise ValueError("train_size=%d should be smaller "
+                                 "than the number of samples %d" %
+                                 (train_size, n))
+            if train_size + test_size > n:
+                raise ValueError('The sum of test_size and train_size = %d, '
+                                 'should be smaller than n. Reduce '
+                                 'test_size and/or train_size.' %
+                                 (train_size + test_size))
+        else:
+            # test_size_kind != train_size_kind or
+            # their kinds are nether 'f' nor 'i'
+            if test_size_kind not in ['f', 'i']:
+                raise ValueError("Invalid value for test_size: %r" %
+                                 test_size)
+            if train_size_kind not in ['f', 'i']:
+                raise ValueError("Invalid value for train_size: %r" %
+                                 train_size)
+            raise ValueError(
+                "Type of test_size and train_size is not the same, "
+                "test_size: %r, train_size: %r" %
+                (type(test_size), type(train_size)))
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n)
     elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
 
-    if train_size is None:
-        n_train = n - n_test
-    else:
-        if np.asarray(train_size).dtype.kind == 'f':
-            n_train = floor(train_size * n)
-        else:
-            n_train = float(train_size)
-
-    if test_size is None:
-        n_test = n - n_train
-
-    if n_train + n_test > n:
-        raise ValueError('The sum of train_size and test_size = %d, '
-                         'should be smaller than the number of '
-                         'samples %d. Reduce test_size and/or '
-                         'train_size.' % (n_train + n_test, n))
+    if np.asarray(train_size).dtype.kind == 'f':
+        n_train = floor(train_size * n)
+    elif np.asarray(train_size).dtype.kind == 'i':
+        n_train = float(train_size)
 
     return int(n_train), int(n_test)
 
@@ -1025,17 +1068,22 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1), int, or None
+    test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
+        proportion of the dataset to include in the test split.
+        If int, represents the absolute number of test samples.
+        If None, the value is automatically set accroding  to train_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
+        If None, the value is automatically set accroding to test_size,
+        when test_size and train_size are both None, their values will be
+        computed by default (.1/.9).
 
     random_state : int, RandomState instance or None, optional (default None)
         If int, random_state is the seed used by the random number generator;
@@ -1062,11 +1110,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 2] TEST: [3 1]
     """
 
-    def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, y, n_iter=10, test_size=None, train_size=None,
                  random_state=None):
 
         super(StratifiedShuffleSplit, self).__init__(
-            len(y), n_iter, test_size, train_size, random_state)
+            len(y), n_iter=n_iter, test_size=test_size, train_size=train_size,
+            random_state=random_state)
 
         self.y = np.array(y)
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
