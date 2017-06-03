@@ -886,6 +886,7 @@ toolbox.
 
 .. topic:: References:
 
+  
     * `DACE, A Matlab Kriging Toolbox
       <http://imedea.uib-csic.es/master/cambioglobal/Modulo_V_cod101615/Lab/lab_maps/krigging/DACE-krigingsoft/dace/dace.pdf>`_ S Lophaven, HB Nielsen, J
       Sondergaard 2002,
@@ -893,3 +894,5 @@ toolbox.
     * W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
       Morris (1992). Screening, predicting, and computer experiments.
       Technometrics, 34(1) 15--25.
+
+    .. [RW2006] *Gaussian Processes for Machine Learning*, Carl Edward Rasmussen and Christopher K.I. Williams, MIT Press, 2006 
