@@ -34,4 +34,3 @@ to update the http://scikit-learn.org/dev tree of the website.
 The configuration of this server is managed at:
 
   https://github.com/scikit-learn/sklearn-docbuilder
-
