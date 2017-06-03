@@ -50,19 +50,19 @@ Z_grid = kpca.transform(X_grid)[:, 0].reshape(X1.shape)
 plt.contour(X1, X2, Z_grid, colors='grey', linewidths=1, origin='lower')
 
 plt.subplot(2, 2, 2, aspect='equal')
-plt.(X_pca[reds, 0], X_pca[reds, 1], c="red",
-         s=20, edgecolor='black')
-plt.(X_pca[blues, 0], X_pca[blues, 1], c="blue",
-         s=20, edgecolor='black')
+plt.scatter(X_pca[reds, 0], X_pca[reds, 1], c="red",
+            s=20, edgecolor='black')
+plt.scatter(X_pca[blues, 0], X_pca[blues, 1], c="blue",
+            s=20, edgecolor='black')
 plt.title("Projection by PCA")
 plt.xlabel("1st principal component")
 plt.ylabel("2nd component")
 
 plt.subplot(2, 2, 3, aspect='equal')
-plt.plot(X_kpca[reds, 0], X_kpca[reds, 1], c="red",
-         s=20, edgecolor='black')
-plt.plot(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
-         s=20, edgecolor='black')
+plt.scatter(X_kpca[reds, 0], X_kpca[reds, 1], c="red",
+            s=20, edgecolor='black')
+plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
+            s=20, edgecolor='black')
 plt.title("Projection by KPCA")
 plt.xlabel("1st principal component in space induced by $\phi$")
 plt.ylabel("2nd component")
