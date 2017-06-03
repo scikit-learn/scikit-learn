@@ -307,7 +307,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
-                 random_state=None):
+                 random_state=None, norm=True):
     """Update the dense dictionary factor in place.
 
     Parameters
@@ -333,6 +333,10 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    norm: bool
+        whether we normalize the dictionary elements or simply constrain them to 
+        be of norm inferior of equal to 1.
 
     Returns
     -------
@@ -363,10 +367,15 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
+            # DICTIONARY NORMALIZATION : norm = 1, as it is for a new random vector
             dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
                                             dictionary[:, k]))
         else:
-            dictionary[:, k] /= sqrt(atom_norm_square)
+            # DICTIONARY NORMALIZATION
+            if norm:
+                dictionary[:, k] /= sqrt(atom_norm_square)
+            else:
+                dictionary[:, k] /= np.max((sqrt(atom_norm_square), 1.))
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
@@ -382,7 +391,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
 
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
-                  method='lars', n_jobs=1, dict_init=None, code_init=None,
+                  method='lars', n_jobs=1, dict_init=None, norm=True, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False):
     """Solves a dictionary learning matrix factorization problem.
@@ -392,7 +401,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code.
 
@@ -529,7 +538,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         # Update dictionary
         dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
-                                             random_state=random_state)
+                                             random_state=random_state, norm=norm)
         dictionary = dictionary.T
 
         # Cost function
@@ -556,7 +565,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
 
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
-                         return_code=True, dict_init=None, callback=None,
+                         return_code=True, dict_init=None, norm=True, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
                          method='lars', iter_offset=0, random_state=None,
                          return_inner_stats=False, inner_stats=None,
@@ -568,7 +577,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+                     with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
@@ -711,8 +720,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
 
-    # The covariance of the dictionary
     if inner_stats is None:
+        # The covariance of the dictionary
         A = np.zeros((n_components, n_components))
         # The data approximation
         B = np.zeros((n_features, n_components))
@@ -751,7 +760,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         # Update dictionary
         dictionary = _update_dict(dictionary, B, A, verbose=verbose,
-                                  random_state=random_state)
+                                  random_state=random_state, norm=norm)
         # XXX: Can the residuals be of any use?
 
         # Maybe we need a stopping criteria based on the amount of
@@ -935,7 +944,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
         (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1043,7 +1052,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 n_jobs=1, code_init=None, dict_init=None, verbose=False,
+                 n_jobs=1, code_init=None, dict_init=None, norm=True, verbose=False,
                  split_sign=False, random_state=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
@@ -1055,6 +1064,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.fit_algorithm = fit_algorithm
         self.code_init = code_init
         self.dict_init = dict_init
+        self.norm = norm
         self.verbose = verbose
         self.random_state = random_state
 
@@ -1086,6 +1096,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             n_jobs=self.n_jobs,
             code_init=self.code_init,
             dict_init=self.dict_init,
+            norm=self.norm,
             verbose=self.verbose,
             random_state=random_state,
             return_n_iter=True)
@@ -1104,7 +1115,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+                    with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1211,7 +1222,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     """
     def __init__(self, n_components=None, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
-                 shuffle=True, dict_init=None, transform_algorithm='omp',
+                 shuffle=True, dict_init=None, norm=True, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None):
 
@@ -1222,6 +1233,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.n_iter = n_iter
         self.fit_algorithm = fit_algorithm
         self.dict_init = dict_init
+        self.norm = norm
         self.verbose = verbose
         self.shuffle = shuffle
         self.batch_size = batch_size
@@ -1249,6 +1261,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             X, self.n_components, self.alpha,
             n_iter=self.n_iter, return_code=False,
             method=self.fit_algorithm,
+            norm=self.norm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
@@ -1296,6 +1309,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             n_iter=self.n_iter, method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=dict_init,
             batch_size=len(X), shuffle=False,
+            norm=self.norm,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
             return_inner_stats=True, inner_stats=inner_stats)
