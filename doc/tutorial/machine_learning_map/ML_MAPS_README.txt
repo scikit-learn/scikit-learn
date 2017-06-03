@@ -80,7 +80,7 @@ If you wish to add the green and blue hover effect
 to the area, add
 data-maphilight='{"strokeColor":"0000ff","strokeWidth":5,"fillColor":"66FF66","fillOpacity":0.4}'
 
-to your  area tag, as done in the other <area..> tags above.
+to your area tag, as done in the other <area..> tags above.
 
 Save the file, and you're done.
 
