@@ -92,6 +92,9 @@ def graph_laplacian(csgraph, normed=False, return_diag=False, copy=True):
     copy : bool, optional, Default True
         If False, then don't create a new copy of the graph.
         In this process, the input graph/matrix will be lost.
+        However, in case of finding normalised laplacian for
+        arrays of dtype int or uint, there will be a copy
+        created due to conversion.
     return_diag : bool, optional
         If True, then return diagonal as well as laplacian.
 

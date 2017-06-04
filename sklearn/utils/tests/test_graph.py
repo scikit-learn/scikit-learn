@@ -33,9 +33,11 @@ def test_graph_laplacian_with_copy():
         for normed in (True, False):
             laplacian = graph_laplacian(mat, normed=normed)
             laplacian_no_copy = graph_laplacian(mat, normed=normed, copy=False)
+            if not normed:
+                assert(mat is laplacian_no_copy)
             np.testing.assert_array_equal(laplacian, laplacian_no_copy)
             sparse_laplacian = graph_laplacian(sparse_mat, normed=normed)
             sparse_laplacian_no_copy = graph_laplacian(sparse_mat,
                                                        normed=normed,
                                                        copy=False)
-            assert((sparse_laplacian != sparse_laplacian_no_copy).nnz, 0)
+            assert((sparse_laplacian != sparse_laplacian_no_copy).nnz == 0)
