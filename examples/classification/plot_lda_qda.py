@@ -149,5 +149,5 @@ for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     plot_qda_cov(qda, splot)
     plt.axis('tight')
 plt.suptitle('Linear Discriminant Analysis vs Quadratic Discriminant'
-'Analysis')
+             'Analysis')
 plt.show()
