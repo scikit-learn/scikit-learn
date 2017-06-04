@@ -107,8 +107,10 @@ for i, offset in enumerate(clusters_separation):
                             linewidths=2, colors='red')
         subplot.contourf(xx, yy, Z, levels=[threshold, Z.max()],
                          colors='orange')
-        b = subplot.scatter(X[:-n_outliers, 0], X[:-n_outliers, 1], c='white')
-        c = subplot.scatter(X[-n_outliers:, 0], X[-n_outliers:, 1], c='black')
+        b = subplot.scatter(X[:-n_outliers, 0], X[:-n_outliers, 1], c='white',
+                            s=20, edgecolor='k')
+        c = subplot.scatter(X[-n_outliers:, 0], X[-n_outliers:, 1], c='black',
+                            s=20, edgecolor='k')
         subplot.axis('tight')
         subplot.legend(
             [a.collections[0], b, c],
