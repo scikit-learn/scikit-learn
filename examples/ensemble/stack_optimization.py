@@ -6,8 +6,8 @@ Stack ensemble tuning on a regression problem
 This example shows the flexiblity provided when using `FeatureUnion`/`Pipeline`
 APIs together with the stack's meta estimator.
 
-We are also using a regression dataset, showing the stacking API is really
-flexible.
+It also shows the possibility of using stacked generalization with regression
+problems.
 
 """
 import numpy as np

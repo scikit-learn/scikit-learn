@@ -1134,6 +1134,10 @@ It can be seen that stacking both estimators improved the score.
     :align: center
     :scale: 75%
 
+.. topic:: Examples
+
+ * :ref:`sphx_glr_auto_examples_ensemble_stack_optimization.py`
+
 .. topic:: References
 
  .. [W1992] D. Wolpert, "Stacked Generalization",
