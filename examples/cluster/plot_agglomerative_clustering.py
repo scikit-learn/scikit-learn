@@ -61,7 +61,7 @@ for connectivity in (None, knn_graph):
             model.fit(X)
             elapsed_time = time.time() - t0
             plt.scatter(X[:, 0], X[:, 1], c=model.labels_,
-                        cmap=plt.cm.spectral)
+                        cmap=plt.cm.spectral, s=20, edgecolor='k')
             plt.title('linkage=%s (time %.2fs)' % (linkage, elapsed_time),
                       fontdict=dict(verticalalignment='top'))
             plt.axis('equal')
