@@ -474,6 +474,12 @@ class _GMMBase(BaseEstimator):
             observation.
         """
 
+        if len(self.means_.shape)<2:
+           raise ValueError(
+               'GMM means_ is one dimensional.  use reshape(means_,(-1,1))')
+        if len(X.shape)<2:
+           raise ValueError(
+               'X is one dimensional.  use reshape(X,(-1,1))')
         # initialization step
         X = check_array(X, dtype=np.float64, ensure_min_samples=2,
                         estimator=self)
