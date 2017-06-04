@@ -53,7 +53,7 @@ for config in configs:
     print("Generated %d regressors of type %s"
           % (len(config['parameter_grid']), config['constructor'].__name__))
 
-print "Total number of base regressors: %d" % len(base_regressors)
+print("Total number of base regressors: %d" % len(base_regressors))
 
 # For each regressor, starting from a model made of all regressors, let's try
 # removing one by one and checking if the ensemble performs better. The models
@@ -73,7 +73,7 @@ combiner.fit(initial_Xtrain2, ytrain)
 ypred = combiner.predict(initial_Xtest2)
 baseline = r2_score(ytest, ypred)
 
-print "Baseline is %.7f" % baseline
+print("Baseline is %.7f" % baseline)
 
 removed_metas = []  # we'll store blacklisted models here
 
@@ -84,7 +84,8 @@ for i in range(len(layer0_metas)):
     ypred = combiner.predict(Xtest2)
     score = r2_score(ytest, ypred)
     if score > baseline:
-        print "Removing model #%d improves score by %.7f" % (i, score-baseline)
+        print("Removing model #%d improves score by %.7f"
+              % (i, score-baseline))
         removed_metas.append(i)
 
 layer0_metas = [x for i, x in enumerate(layer0_metas)
@@ -98,4 +99,4 @@ layer0 = make_union(*layer0_metas)
 final_model = make_pipeline(layer0, combiner)
 
 ypred = final_model.predict(Xtest)
-print "Final score: %.7f" % r2_score(ytest, ypred)
+print("Final score: %.7f" % r2_score(ytest, ypred))
