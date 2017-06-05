@@ -958,8 +958,8 @@ class _RepeatedSplits(with_metaclass(ABCMeta)):
         if not isinstance(n_repeats, (np.integer, numbers.Integral)):
             raise ValueError("Number of repetitions must be of Integral type.")
 
-        if n_repeats <= 1:
-            raise ValueError("Number of repetitions must be greater than 1.")
+        if n_repeats <= 0:
+            raise ValueError("Number of repetitions must be greater than 0.")
 
         if any(key in cvargs for key in ('random_state', 'shuffle')):
             raise ValueError(
