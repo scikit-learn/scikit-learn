@@ -118,15 +118,55 @@ class TargetTransformer(BaseEstimator):
         self._estimator_type = estimator._estimator_type
 
     def fit(self, X, y, sample_weight=None):
+        """Fit the model according to the given training data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            Target vector relative to X.
+
+        sample_weight : array-like, shape (n_samples,) optional
+            Array of weights that are assigned to individual samples.
+            If not provided, then each sample is given unit weight.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, self.func(y), sample_weight=sample_weight)
         return self
 
     def predict(self, X):
+        """Predict using the base model, apply inverse_func.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
+
+        Returns
+        -------
+        y_hat : array, shape = (n_samples,)
+            Predicted values.
+        """
         check_is_fitted(self, "estimator_")
         return self.inverse_func(self.estimator_.predict(X))
 
     def score(self, X, y, sample_weight=None):
+        """Computes score for regression and classification models.
+
+        For regression, r2_score is used, for classification accuracy_score.
+        See the docstring of these functions for more details.
+        The ``r2_score`` uses variance-weighted averaging in the multi-output
+        case.
+        """
+
         check_is_fitted(self, "estimator_")
         if is_classifier(self.estimator):
             from ..metrics import accuracy_score
