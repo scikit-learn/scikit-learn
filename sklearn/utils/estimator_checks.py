@@ -248,7 +248,6 @@ def _yield_all_checks(name, estimator):
     yield check_fit1d_1sample
     yield check_get_params_invariance
     yield check_dict_unchanged
-    yield check_no_fit_attributes_set_in_init
     yield check_dont_overwrite_parameters
 
 
@@ -271,6 +270,7 @@ def check_estimator(Estimator):
         # got a class
         name = Estimator.__name__
         check_parameters_default_constructible(name, Estimator)
+        check_no_fit_attributes_set_in_init(name, Estimator)
         estimator = Estimator()
     else:
         # got an instance
@@ -445,10 +445,9 @@ def check_sample_weights_pandas_series(name, estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_sample_weights_list(name, Estimator):
+def check_sample_weights_list(name, estimator):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
-    estimator = Estimator()
     if has_fit_parameter(estimator, "sample_weight"):
         rnd = np.random.RandomState(0)
         X = rnd.uniform(size=(10, 3))
@@ -527,16 +526,12 @@ def is_public_parameter(attr):
     return not (attr.startswith('_') or attr.endswith('_'))
 
 
-def check_dont_overwrite_parameters(name, Estimator):
+def check_dont_overwrite_parameters(name, estimator):
     # check that fit method only changes or sets private attributes
-    if hasattr(Estimator.__init__, "deprecated_original"):
-        # to not check deprecated classes
-        return
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    estimator = Estimator()
     set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
@@ -1501,8 +1496,10 @@ def check_estimators_overwrite_params(name, estimator):
                      % (name, param_name, original_value, new_value))
 
 
-def check_no_fit_attributes_set_in_init(name, estimator):
+def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
+    # STILL ON CLASSES
+    estimator = Estimator()
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):
             # This check is for properties, they can be listed in dir
@@ -1760,7 +1757,7 @@ def check_classifiers_regression_target(name, estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_decision_proba_consistency(name, Estimator):
+def check_decision_proba_consistency(name, estimator):
     # Check whether an estimator having both decision_function and
     # predict_proba methods has outputs with perfect rank correlation.
 
@@ -1768,7 +1765,6 @@ def check_decision_proba_consistency(name, Estimator):
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
     X_test = np.random.randn(20, 2) + 4
-    estimator = Estimator()
 
     set_testing_parameters(estimator)
 
