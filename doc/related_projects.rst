@@ -57,8 +57,8 @@ enhance the functionality of scikit-learn's estimators.
 
 - `Xcessiv <https://github.com/reiinakano/xcessiv>`_ is a notebook-like
   application for quick, scalable, and automated hyperparameter tuning
-  and stacked ensembling. Painlessly keep track of hundreds of model-hyperparameter
-  combinations.
+  and stacked ensembling. Provides a framework for keeping track of 
+  model-hyperparameter combinations.
 
 **Model inspection and visualisation**
 
