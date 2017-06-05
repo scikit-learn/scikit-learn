@@ -94,6 +94,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     if X.ndim == 1:
         X = X[:, np.newaxis]
     n_samples, n_features = X.shape
+    n_components = dictionary.shape[0]
+    if dictionary.shape[1] != X.shape[1]:
+        raise ValueError("Dictionary and X have different numbers of features:"
+                         "dictionary.shape: {} X.shape{}".format(
+                             dictionary.shape, X.shape))
     if cov is None and algorithm != 'lasso_cd':
         # overwriting cov is safe
         copy_cov = False
@@ -157,6 +162,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
                          % algorithm)
+    if new_code.ndim != 2:
+        return new_code.reshape(n_samples, n_components)
     return new_code
 
 
@@ -281,10 +288,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                               max_iter=max_iter,
                               check_input=False,
                               verbose=verbose)
-        # This ensure that dimensionality of code is always 2,
-        # consistent with the case n_jobs > 1
-        if code.ndim == 1:
-            code = code[:, np.newaxis]
         return code
 
     # Enter parallel code block
@@ -905,6 +908,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
     sparse_encode
     """
+    _required_parameters = ["dictionary"]
 
     def __init__(self, dictionary, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,

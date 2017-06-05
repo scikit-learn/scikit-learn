@@ -245,14 +245,18 @@ Bug fixes
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
 
    - Fixes to the input validation in
-     :class:`sklearn.covariance.EllipticEnvelope` by `Andreas Müller`_.
+     :class:`sklearn.covariance.EllipticEnvelope`.
+     :issue:`8086` by `Andreas Müller`_.
 
-   - Fix shape output shape of
-     :class:`sklearn.decomposition.DictionaryLearning` transform for
-     one-dimensional data by `Andreas Müller`_.
+   - Fix output shape and bugs with n_jobs > 1 in  
+     :class:`sklearn.decomposition.SparseEncoder` transform and :func:`sklarn.decomposition.sparse_encode`
+     for one-dimensional data and one component.
+     This also impacts the output shape of :class:`sklearn.decomposition.DictionaryLearning`.
+     :issue:`8086` by `Andreas Müller`_.
 
    - Several fixes to input validation in
-     :class:`multiclass.OutputCodeClassifier` by `Andreas Müller`_
+     :class:`multiclass.OutputCodeClassifier`
+     :issue:`8086` by `Andreas Müller`_.
 
    - Fix a bug where
      :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed

@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -23,6 +24,18 @@ from sklearn.decomposition import sparse_encode
 rng_global = np.random.RandomState(0)
 n_samples, n_features = 10, 8
 X = rng_global.randn(n_samples, n_features)
+
+
+def test_sparse_encode_shapes_omp():
+    rng = np.random.RandomState(0)
+    algorithms = ['omp', 'lasso_lars', 'lasso_cd', 'lars', 'threshold']
+    for n_components, n_samples in itertools.product([1, 5], [1, 9]):
+        X_ = rng.randn(n_samples, n_features)
+        dictionary = rng.randn(n_components, n_features)
+        for algorithm, n_jobs in itertools.product(algorithms, [1, 3]):
+            code = sparse_encode(X_, dictionary, algorithm=algorithm,
+                                 n_jobs=n_jobs)
+            assert_equal(code.shape, (n_samples, n_components))
 
 
 def test_dict_learning_shapes():
