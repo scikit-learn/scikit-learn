@@ -532,9 +532,6 @@ class ClassifierChain(BaseEstimator):
     def predict_proba(self, X):
         """Predict probability estimates.
 
-        Probability estimates will be used as features by subsequent models
-        in the chain.
-
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -562,10 +559,7 @@ class ClassifierChain(BaseEstimator):
 
     @if_delegate_has_method('base_estimator')
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
-
-        Decision function values will be used as features by subsequent
-        models in the chain.
+        """Evaluate the decision_function of the models in the chain.
 
         Parameters
         ----------
