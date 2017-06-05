@@ -244,8 +244,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("max_leaf_nodes must be integral number but was "
                              "%r" % max_leaf_nodes)
         if -1 < max_leaf_nodes < 2:
-            raise ValueError(("max_leaf_nodes {0} must be either smaller than "
-                              "0 or larger than 1").format(max_leaf_nodes))
+            raise ValueError(("max_leaf_nodes {0} must be either None "
+                              "or larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
             if (getattr(sample_weight, "dtype", None) != DOUBLE or
@@ -608,6 +608,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
@@ -937,6 +946,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
 
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity

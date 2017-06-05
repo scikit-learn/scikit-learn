@@ -55,9 +55,9 @@ available as neg_mean_squared_error which return the negated value
 of the metric.
 
 
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 Scoring                         Function                                      Comment
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 **Classification**
 'accuracy'                      :func:`metrics.accuracy_score`
 'average_precision'             :func:`metrics.average_precision_score`
@@ -80,7 +80,7 @@ Scoring                         Function                                      Co
 'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
 'r2'                            :func:`metrics.r2_score`
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 
 Usage examples:
 

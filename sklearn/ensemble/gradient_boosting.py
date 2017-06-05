@@ -40,9 +40,11 @@ import numbers
 import numpy as np
 
 from scipy import stats
+from scipy.misc import logsumexp
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from scipy.special import expit
 
 from time import time
 from ..tree.tree import DecisionTreeRegressor
@@ -54,8 +56,6 @@ from ..utils import check_array
 from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
-from ..utils.extmath import logsumexp
-from ..utils.fixes import expit
 from ..utils.fixes import bincount
 from ..utils import deprecated
 from ..utils.stats import _weighted_percentile
@@ -1327,6 +1327,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
@@ -1731,6 +1740,15 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
 
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity

@@ -87,6 +87,13 @@ Enhancements
      by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
      and :user:`Stephen Hoover <stephen-hoover>`.
 
+   - Relax assumption on the data for the ``SkewedChi2Sampler``. Since the
+     Skewed-Chi2 kernel is defined on the open interval :math: `(-skewedness;
+     +\infty)^d`, the transform function should not check whether X < 0 but
+     whether ``X < -self.skewedness``. (`#7573
+     <https://github.com/scikit-learn/scikit-learn/pull/7573>`_) by `Romain
+     Brault`_.
+
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
      is less than 2 * the minimum. Note that the constructed tree will be
@@ -169,7 +176,7 @@ Enhancements
    - :class:`ensemble.VotingClassifier` now allow changing estimators by using
      :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
      removed by setting it to `None`.
-     :issue:`7674` by:user:`Yichuan Liu <yl565>`.
+     :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
 Bug fixes
 .........
@@ -301,6 +308,8 @@ Bug fixes
      when the length of features_names does not match n_features in the decision
      tree.
      :issue:`8512` by :user:`Li Li <aikinogard>`.
+   - Fixed a bug in :class:`manifold.TSNE` affecting convergence of the
+     gradient descent. :issue:`8768` by :user:`David DeTomaso <deto>`.
 
 API changes summary
 -------------------
@@ -332,16 +341,16 @@ API changes summary
      (``n_samples``, ``n_classes``) for that particular output.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
-    - Deprecate the ``fit_params`` constructor input to the
-      :class:`sklearn.model_selection.GridSearchCV` and
-      :class:`sklearn.model_selection.RandomizedSearchCV` in favor
-      of passing keyword parameters to the ``fit`` methods
-      of those classes. Data-dependent parameters needed for model
-      training should be passed as keyword arguments to ``fit``,
-      and conforming to this convention will allow the hyperparameter
-      selection classes to be used with tools such as
-      :func:`sklearn.model_selection.cross_val_predict`.
-      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+   - Deprecate the ``fit_params`` constructor input to the
+     :class:`sklearn.model_selection.GridSearchCV` and
+     :class:`sklearn.model_selection.RandomizedSearchCV` in favor
+     of passing keyword parameters to the ``fit`` methods
+     of those classes. Data-dependent parameters needed for model
+     training should be passed as keyword arguments to ``fit``,
+     and conforming to this convention will allow the hyperparameter
+     selection classes to be used with tools such as
+     :func:`sklearn.model_selection.cross_val_predict`.
+     :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
 
    - Gradient boosting base models are not longer estimators. By `Andreas Müller`_.
@@ -368,6 +377,10 @@ API changes summary
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
+
+   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
+     has been renamed to ``n_components`` and will be removed in version 0.21.
+     :issue:`8922` by :user:Attractadore
 
 
 .. _changes_0_18_1:
