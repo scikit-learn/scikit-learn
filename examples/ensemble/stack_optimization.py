@@ -12,7 +12,6 @@ problems.
 """
 import numpy as np
 
-from sklearn import datasets
 from sklearn.ensemble import StackMetaEstimator
 from sklearn.pipeline import make_union, make_pipeline
 from sklearn.metrics import r2_score
@@ -85,7 +84,7 @@ for i in range(len(layer0_metas)):
     score = r2_score(ytest, ypred)
     if score > baseline:
         print("Removing model #%d improves score by %.7f"
-              % (i, score-baseline))
+              % (i, score - baseline))
         removed_metas.append(i)
 
 layer0_metas = [x for i, x in enumerate(layer0_metas)

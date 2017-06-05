@@ -4,8 +4,8 @@ Plot decision surfaces of stacked models on the iris dataset
 ============================================================
 
 This plot compares the decision surfaces for different individual classifiers
-and then combined using a Linear SVM. To make it easier to visualize, only sepal
-width and sepal length features were used.
+and then combined using a Linear SVM. To make it easier to visualize, only
+sepal width and sepal length features were used.
 
 The cross_val_score for each classifier was, in decreasing order::
 
