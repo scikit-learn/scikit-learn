@@ -90,18 +90,19 @@ class TargetTransformer(BaseEstimator):
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.preprocessing.label import TargetTransformer
-    >>> tt = TargetTransformer(LinearRegression(), func=np.sqrt,
-    ...                        inverse_func=np.square)
-    >>> X = [[1], [2], [3], [4]]
-    >>> y = [1, 4, 9, 16]
+    >>> tt = TargetTransformer(LinearRegression(), func=np.log,
+    ...                        inverse_func=np.exp)
+    >>> X = np.arange(4).reshape(-1, 1)
+    >>> y = np.exp(2 * X).ravel()
     >>> tt.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     TargetTransformer(estimator=LinearRegression(copy_X=True,
-        fit_intercept=True, n_jobs=1, normalize=False), func=<ufunc 'sqrt'>,
-        inverse_func=<ufunc 'square'>)
-
-    >>> tt.predict(X)
-    array([  1.,   4.,   9.,  16.])
+        fit_intercept=True, n_jobs=1, normalize=False), func=<ufunc 'log'>,
+        inverse_func=<ufunc 'exp'>)
+    >>> tt.score(X, y)
+    1.0
+    >>> tt.estimator_.coef_
+    array([ 2.])
 
 
     Notes
