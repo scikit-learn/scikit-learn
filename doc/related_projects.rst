@@ -55,6 +55,11 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
+- `Xcessiv <https://github.com/reiinakano/xcessiv>`_ is a notebook-like
+  application for quick, scalable, and automated hyperparameter tuning
+  and stacked ensembling. Provides a framework for keeping track of 
+  model-hyperparameter combinations.
+
 **Model inspection and visualisation**
 
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
