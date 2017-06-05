@@ -832,9 +832,9 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
 
 
 def test_repeated_cv_value_errors():
-    # n_repeats is not integer or <= 1
+    # n_repeats is not integer or <= 0
     for cv in (RepeatedKFold, RepeatedStratifiedKFold):
-        assert_raises(ValueError, cv, n_repeats=1)
+        assert_raises(ValueError, cv, n_repeats=0)
         assert_raises(ValueError, cv, n_repeats=1.5)
 
 
