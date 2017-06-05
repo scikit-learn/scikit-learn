@@ -383,18 +383,18 @@ def test_imputation_copy():
 
 def test_missing_indicator():
     X1_orig = np.array([
-             [-1,  -1,   1,   3],
-             [4,  -1,   0,  -1],
-             [8,  -1,   1,  0],
-             [0,  -1,   0,  15],
-             [16,  -1,   1,  19]
+        [-1,  -1,   1,   3],
+        [4,  -1,   0,  -1],
+        [8,  -1,   1,  0],
+        [0,  -1,   0,  15],
+        [16,  -1,   1,  19]
     ])
     X2_orig = np.array([
-             [5,  1,   1,   -1],
-             [-1,  -1,   2,  3],
-             [2,  3,   4,  0],
-             [0,  -1,   5,  -1],
-             [11,  -1,   1,  1]
+        [5,  1,   1,   -1],
+        [-1,  -1,   2,  3],
+        [2,  3,   4,  0],
+        [0,  -1,   5,  -1],
+        [11,  -1,   1,  1]
     ])
 
     def assert_type(actual, is_sparse, sp, missing_values):
@@ -424,7 +424,6 @@ def test_missing_indicator():
         X2_in = retype(X2)
         # features = "train":
         indicator = MissingIndicator(missing_values=missing_values, sparse=sp)
-
         X1_tr = indicator.fit_transform(X1_in)
         X2_tr = indicator.transform(X2_in)
         features = indicator.feat_with_missing_
@@ -444,7 +443,6 @@ def test_missing_indicator():
         assert_mask(X2_tr, mask_X2, features)
         assert_mask(X1_tr, mask_X1, features)
 
-        # features = [1, 2]
         features = [1, 2]
         indicator = clone(indicator).set_params(features=features)
         X1_tr = indicator.fit_transform(X1_in)

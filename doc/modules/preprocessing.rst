@@ -603,12 +603,12 @@ Imputation of missing values
 
 :class:`MissingIndicator` transformer is useful to transform a dataset into corresponding
 binary matrix indicating the presence of missing values in the dataset.
-The knowledge of which features were imputed can be exploited by a downstream
-estimator by adding features that indicate which elements have been imputed.
+This transformation is useful in conjunction with imputation. When using imputation,
+preserving the information which values have been imputed can be informative.
 
-The ``features`` attribute is used to choose the features for which the mask is constructed.
-By default, it is *train* which means the binary matrix has features with missing values
-during fit time. In case it mentioned as *all* the matrix has all the features.
+The ``features`` parameter is used to choose the features for which the mask is constructed.
+By default, it is 'train' which means the binary matrix has features with missing values
+during fit time. When it is *all* the matrix has all the features.
 
     >>> from sklearn.preprocessing import MissingIndicator
     >>> import numpy as np
@@ -616,11 +616,6 @@ during fit time. In case it mentioned as *all* the matrix has all the features.
     ...   [-1, -1,  1,  3],
     ...   [ 4, -1,  0, -1],
     ...   [ 8, -1,  1,  0],
-    ... ])
-    >>> X2 = np.array([
-    ...   [ 5,  1, -1, -1],
-    ...   [-1, -1,  2,  3],
-    ...   [ 2,  3,  4,  0],
     ... ])
     >>> indicator = MissingIndicator(missing_values=-1)
     >>> X1_tr = indicator.fit_transform(X1)
