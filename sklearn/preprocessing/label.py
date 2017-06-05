@@ -13,7 +13,8 @@ import array
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import (BaseEstimator, TransformerMixin, clone, is_classifier,
+                    is_regressor)
 
 from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
@@ -51,6 +52,99 @@ def _check_numpy_unicode_bug(labels):
         raise RuntimeError("NumPy < 1.7.0 does not implement searchsorted"
                            " on unicode data correctly. Please upgrade"
                            " NumPy to use LabelEncoder with unicode inputs.")
+
+
+class TargetTransformer(BaseEstimator):
+    """Meta-estimator to apply a transformation to the target before fitting
+
+    Useful for applying a non-linear transformation like np.log
+    to the target in a regression problem.
+
+    The computation during ``fit`` is::
+
+        estimator.fit(X, func(y))
+
+    The computation during ``predict`` is::
+
+        inverse_func(estimator.predict(X))
+
+
+    Parameter
+    ---------
+    estimator : object
+        Estimator object to wrap.
+
+    func : function
+        Function to apply to y before passing to fit.
+
+    inverse_func : function
+        Function apply to the prediction of the estimator.
+
+    Attributes
+    ----------
+    estimator_ : object
+        Fitted estimator.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.preprocessing.label import TargetTransformer
+    >>> tt = TargetTransformer(LinearRegression(), func=np.sqrt,
+    ...                        inverse_func=np.square)
+    >>> X = [[1], [2], [3], [4]]
+    >>> y = [1, 4, 9, 16]
+    >>> tt.fit(X, y)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    TargetTransformer(estimator=LinearRegression(copy_X=True,
+        fit_intercept=True, n_jobs=1, normalize=False), func=<ufunc 'sqrt'>,
+        inverse_func=<ufunc 'square'>)
+
+    >>> tt.predict(X)
+    array([  1.,   4.,   9.,  16.])
+
+
+    Notes
+    -----
+    It is not checked whether func and inverse_func are actually
+    inverse to each other.
+    """
+    def __init__(self, estimator, func, inverse_func):
+        self.estimator = estimator
+        self.func = func
+        self.inverse_func = inverse_func
+        # we probably need to change this ones we have tags
+        self._estimator_type = estimator._estimator_type
+
+    def fit(self, X, y, sample_weight=None):
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X, self.func(y), sample_weight=sample_weight)
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self, "estimator_")
+        return self.inverse_func(self.estimator_.predict(X))
+
+    def score(self, X, y, sample_weight=None):
+        check_is_fitted(self, "estimator_")
+        if is_classifier(self.estimator):
+            from ..metrics import accuracy_score
+            return accuracy_score(y, self.predict(X),
+                                  sample_weight=sample_weight)
+        elif is_regressor(self.estimator):
+            from ..metrics import r2_score
+            return r2_score(y, self.predict(X), sample_weight=sample_weight,
+                            multioutput='variance_weighted')
+        else:
+            # I'm not sure if this is too many internals for an error message
+            if not hasattr(self.estimator_, "_estimator_type"):
+                err = "estimator has declared no _estimator_type."
+            else:
+                err = "estimator has _estimator_type {}".format(
+                    self.estimator_._estimator_type)
+            raise NotImplementedError(
+                "TargetTransformer only implements a score method if "
+                "estimator is a classifier or regressor, but " + err)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
