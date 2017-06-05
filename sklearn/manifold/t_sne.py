@@ -24,6 +24,7 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..utils.fixes import astype
 from ..externals.six import string_types
+from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -387,11 +388,11 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         new_error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
-        inc = update * grad >= 0.0
+        inc = update * grad < 0.0
         dec = np.invert(inc)
-        gains[inc] += 0.05
-        gains[dec] *= 0.95
-        np.clip(gains, min_gain, np.inf)
+        gains[inc] += 0.2
+        gains[dec] *= 0.8
+        np.clip(gains, min_gain, np.inf, out=gains)
         grad *= gains
         update = momentum * update - learning_rate * grad
         p += update
@@ -440,7 +441,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     .. math::
 
         T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1}
-            \sum_{j \in U^{(k)}_i (r(i, j) - k)}
+            \sum_{j \in U^{(k)}_i} (r(i, j) - k)
 
     where :math:`r(i, j)` is the rank of the embedded datapoint j
     according to the pairwise distances between the embedded datapoints,
@@ -581,10 +582,12 @@ class TSNE(BaseEstimator):
     verbose : int, optional (default: 0)
         Verbosity level.
 
-    random_state : int or RandomState instance or None (default)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton. Note that different initializations
-        might result in different local minima of the cost function.
+    random_state : int, RandomState instance or None, optional (default: None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.  Note that different initializations might result in
+        different local minima of the cost function.
 
     method : string (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
@@ -616,6 +619,9 @@ class TSNE(BaseEstimator):
     kl_divergence_ : float
         Kullback-Leibler divergence after optimization.
 
+    n_iter_ : int
+        Number of iterations run.
+
     Examples
     --------
 
@@ -625,10 +631,10 @@ class TSNE(BaseEstimator):
     >>> model = TSNE(n_components=2, random_state=0)
     >>> np.set_printoptions(suppress=True)
     >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[ 0.00017599,  0.00003993],
-           [ 0.00009891,  0.00021913],
-           [ 0.00018554, -0.00009357],
-           [ 0.00009528, -0.00001407]])
+    array([[ 0.00017619,  0.00004014],
+           [ 0.00010268,  0.00020546],
+           [ 0.00018298, -0.00008335],
+           [ 0.00009501, -0.00001388]])
 
     References
     ----------
@@ -787,6 +793,12 @@ class TSNE(BaseEstimator):
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
 
+    @property
+    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'n_iter_' instead")
+    def n_iter_final(self):
+        return self.n_iter_
+
     def _tsne(self, P, degrees_of_freedom, n_samples, random_state,
               X_embedded=None, neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
@@ -848,13 +860,14 @@ class TSNE(BaseEstimator):
             print("[t-SNE] KL divergence after %d iterations with early "
                   "exaggeration: %f" % (it + 1, kl_divergence))
         # Save the final number of iterations
-        self.n_iter_final = it
+        self.n_iter_ = it
 
         # Final optimization
         P /= self.early_exaggeration
         opt_args['n_iter'] = self.n_iter
         opt_args['it'] = it + 1
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
 
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f"

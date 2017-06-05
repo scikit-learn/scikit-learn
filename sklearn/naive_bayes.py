@@ -19,14 +19,15 @@ are supervised learning methods based on applying Bayes' theorem with strong
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from scipy.misc import logsumexp
 from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin, _update_tags
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array
-from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils import check_X_y, check_array, check_consistent_length
+from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
@@ -333,6 +334,9 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         X, y = check_X_y(X, y)
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            check_consistent_length(y, sample_weight)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially

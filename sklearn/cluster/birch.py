@@ -324,10 +324,11 @@ class _CFSubcluster(object):
 class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """Implements the Birch clustering algorithm.
 
-    Every new sample is inserted into the root of the Clustering Feature
-    Tree. It is then clubbed together with the subcluster that has the
-    centroid closest to the new sample. This is done recursively till it
-    ends up at the subcluster of the leaf of the tree has the closest centroid.
+    It is a memory-efficient, online-learning algorithm provided as an
+    alternative to :class:`MiniBatchKMeans`. It constructs a tree
+    data structure with the cluster centroids being read off the leaf.
+    These can be either the final cluster centroids or can be provided as input
+    to another clustering algorithm such as :class:`AgglomerativeClustering`.
 
     Read more in the :ref:`User Guide <birch>`.
 
@@ -336,23 +337,29 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     threshold : float, default 0.5
         The radius of the subcluster obtained by merging a new sample and the
         closest subcluster should be lesser than the threshold. Otherwise a new
-        subcluster is started.
+        subcluster is started. Setting this value to be very low promotes
+        splitting and vice-versa.
 
     branching_factor : int, default 50
         Maximum number of CF subclusters in each node. If a new samples enters
         such that the number of subclusters exceed the branching_factor then
-        the node has to be split. The corresponding parent also has to be
-        split and if the number of subclusters in the parent is greater than
-        the branching factor, then it has to be split recursively.
+        that node is split into two nodes with the subclusters redistributed
+        in each. The parent subcluster of that node is removed and two new
+        subclusters are added as parents of the 2 split nodes.
 
     n_clusters : int, instance of sklearn.cluster model, default 3
         Number of clusters after the final clustering step, which treats the
-        subclusters from the leaves as new samples. If None, this final
-        clustering step is not performed and the subclusters are returned
-        as they are. If a model is provided, the model is fit treating
-        the subclusters as new samples and the initial data is mapped to the
-        label of the closest subcluster. If an int is provided, the model
-        fit is AgglomerativeClustering with n_clusters set to the int.
+        subclusters from the leaves as new samples.
+
+        - `None` : the final clustering step is not performed and the
+          subclusters are returned as they are.
+
+        - `sklearn.cluster` Estimator : If a model is provided, the model is
+          fit treating the subclusters as new samples and the initial data is
+          mapped to the label of the closest subcluster.
+
+        - `int` : the model fit is :class:`AgglomerativeClustering` with
+          `n_clusters` set to be equal to the int.
 
     compute_labels : bool, default True
         Whether or not to compute labels for each fit.
@@ -402,6 +409,20 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm
       https://code.google.com/archive/p/jbirch
+
+    Notes
+    -----
+    The tree data structure consists of nodes with each node consisting of
+    a number of subclusters. The maximum number of subclusters in a node
+    is determined by the branching factor. Each subcluster maintains a
+    linear sum, squared sum and the number of samples in that subcluster.
+    In addition, each subcluster can also have a node as its child, if the
+    subcluster is not a member of a leaf node.
+
+    For a new point entering the root, it is merged with the subcluster closest
+    to it and the linear sum, squared sum and the number of samples of that
+    subcluster are updated. This is done recursively till the properties of
+    the leaf node are updated.
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,

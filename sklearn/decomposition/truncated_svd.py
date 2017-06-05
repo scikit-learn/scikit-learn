@@ -8,11 +8,7 @@
 
 import numpy as np
 import scipy.sparse as sp
-
-try:
-    from scipy.sparse.linalg import svds
-except ImportError:
-    from ..utils.arpack import svds
+from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
@@ -59,9 +55,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         The default is larger than the default in `randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
-    random_state : int or RandomState, optional
-        (Seed for) pseudo-random number generator. If not given, the
-        numpy.random singleton is used.
+    random_state : int, RandomState instance or None, optional, default = None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized

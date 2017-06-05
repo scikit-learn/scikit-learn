@@ -319,9 +319,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional (default=None)
         Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.
+        `max_patches` is not None.  If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -450,8 +453,11 @@ class PatchExtractor(BaseEstimator):
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     """
     def __init__(self, patch_size=None, max_patches=None, random_state=None):

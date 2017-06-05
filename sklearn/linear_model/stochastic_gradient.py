@@ -22,6 +22,7 @@ from ..externals import six
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils.fixes import astype
 from ..utils import compute_class_weight
+from ..utils import deprecated
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
 from .sgd_fast import Log
@@ -258,7 +259,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
     if not est.average:
-        return plain_sgd(coef, intercept, est.loss_function,
+        return plain_sgd(coef, intercept, est.loss_function_,
                          penalty_type, alpha, C, est.l1_ratio,
                          dataset, n_iter, int(est.fit_intercept),
                          int(est.verbose), int(est.shuffle), seed,
@@ -270,7 +271,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
         standard_coef, standard_intercept, average_coef, \
             average_intercept = average_sgd(coef, intercept, average_coef,
                                             average_intercept,
-                                            est.loss_function, penalty_type,
+                                            est.loss_function_, penalty_type,
                                             alpha, C, est.l1_ratio, dataset,
                                             n_iter, int(est.fit_intercept),
                                             int(est.verbose), int(est.shuffle),
@@ -325,6 +326,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.class_weight = class_weight
         self.n_jobs = int(n_jobs)
 
+    @property
+    @deprecated("Attribute loss_function was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'loss_function_' instead")
+    def loss_function(self):
+        return self.loss_function_
+
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
                      classes, sample_weight,
@@ -350,7 +357,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
 
-        self.loss_function = self._get_loss_function(loss)
+        self.loss_function_ = self._get_loss_function(loss)
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
@@ -601,9 +608,12 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level
@@ -667,6 +677,8 @@ class SGDClassifier(BaseSGDClassifier):
 
     intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
+
+    loss_function_ : concrete ``LossFunction``
 
     Examples
     --------
@@ -1125,9 +1137,12 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level.

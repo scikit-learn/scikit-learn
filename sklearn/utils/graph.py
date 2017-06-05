@@ -15,6 +15,7 @@ from scipy import sparse
 
 from .validation import check_array
 from .graph_shortest_path import graph_shortest_path
+from .deprecation import deprecated
 
 
 ###############################################################################
@@ -44,10 +45,11 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     ...                   [ 1, 0, 1, 0],
     ...                   [ 0, 1, 0, 1],
     ...                   [ 0, 0, 1, 0]])
-    >>> single_source_shortest_path_length(graph, 0)
-    {0: 0, 1: 1, 2: 2, 3: 3}
-    >>> single_source_shortest_path_length(np.ones((6, 6)), 2)
-    {0: 1, 1: 1, 2: 0, 3: 1, 4: 1, 5: 1}
+    >>> list(sorted(single_source_shortest_path_length(graph, 0).items()))
+    [(0, 0), (1, 1), (2, 2), (3, 3)]
+    >>> graph = np.ones((6, 6))
+    >>> list(sorted(single_source_shortest_path_length(graph, 2).items()))
+    [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
     """
     if sparse.isspmatrix(graph):
         graph = graph.tolil()
@@ -69,10 +71,11 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     return seen  # return all path lengths as dictionary
 
 
-if hasattr(sparse, 'connected_components'):
-    connected_components = sparse.connected_components
-else:
-    from .sparsetools import connected_components
+@deprecated("sklearn.utils.graph.connected_components was deprecated in"
+            "version 0.19 and will be removed in 0.21. Use"
+            "scipy.sparse.csgraph.connected_components instead.")
+def connected_components(*args, **kwargs):
+    return sparse.csgraph.connected_components(*args, **kwargs)
 
 
 ###############################################################################

@@ -96,29 +96,16 @@ if [[ `type -t deactivate` ]]; then
 fi
 
 # Install dependencies with miniconda
-pushd .
-cd
-mkdir -p download
-cd download
-echo "Cached in $HOME/download :"
-ls -l
-if [[ ! -f miniconda.sh ]]
-then
-   wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
-fi
-chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
-cd ..
-export PATH="$HOME/miniconda/bin:$PATH"
+chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+export PATH="$MINICONDA_PATH/bin:$PATH"
 conda update --yes --quiet conda
-popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-# Using sphinx 1.4 for now until sphinx-gallery has a fix for sphinx 1.5
-# See https://github.com/sphinx-gallery/sphinx-gallery/pull/178 for more details
-conda create -n testenv --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx=1.4 pillow
+conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
+  cython nose coverage matplotlib sphinx pillow
 source activate testenv
 
 # Build and install scikit-learn in dev mode
@@ -135,7 +122,10 @@ affected_doc_paths() {
 	echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
 	echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
 	sklearn_files=$(echo "$files" | grep '^sklearn/')
-	grep -hlR -f<(echo "$sklearn_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/stable/modules/generated | cut -d/ -f5-
+	if [ -n "$sklearn_files" ]
+	then
+		grep -hlR -f<(echo "$sklearn_files" | sed 's/^/scikit-learn\/blob\/[a-z0-9]*\//') doc/_build/html/stable/modules/generated | cut -d/ -f5-
+	fi
 }
 
 if [ -n "$CI_PULL_REQUEST" ]

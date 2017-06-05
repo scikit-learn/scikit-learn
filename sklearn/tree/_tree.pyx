@@ -19,7 +19,7 @@
 from cpython cimport Py_INCREF, PyObject
 
 from libc.stdlib cimport free
-from libc.stdlib cimport realloc
+from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
 
@@ -52,6 +52,7 @@ from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
 
 cdef double INFINITY = np.inf
+cdef double EPSILON = np.finfo('double').eps
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
@@ -131,12 +132,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  SIZE_t max_depth, double min_impurity_split):
+                  SIZE_t max_depth, double min_impurity_decrease,
+                  double min_impurity_split):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
+        self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
@@ -167,6 +170,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
+        cdef double min_impurity_decrease = self.min_impurity_decrease
         cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
@@ -230,7 +234,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
-                    is_leaf = is_leaf or (split.pos >= end)
+                    # If EPSILON=0 in the below comparison, float precision
+                    # issues stop splitting, producing trees that are
+                    # dissimilar to v0.18
+                    is_leaf = (is_leaf or split.pos >= end or
+                               (split.improvement + EPSILON <
+                                min_impurity_decrease))
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, impurity, n_node_samples,
@@ -272,9 +281,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 # Best first builder ----------------------------------------------------------
 
 cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
-                                 PriorityHeap frontier) nogil:
-    """Adds record ``rec`` to the priority queue ``frontier``; returns -1
-    on memory-error. """
+                                 PriorityHeap frontier) nogil except -1:
+    """Adds record ``rec`` to the priority queue ``frontier``
+
+    Returns -1 in case of failure to allocate memory (and raise MemoryError)
+    or 0 otherwise.
+    """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
                          rec.is_leaf, rec.improvement, rec.impurity,
                          rec.impurity_left, rec.impurity_right)
@@ -291,13 +303,14 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
                   SIZE_t max_depth, SIZE_t max_leaf_nodes,
-                  double min_impurity_split):
+                  double min_impurity_decrease, double min_impurity_split):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
@@ -417,13 +430,14 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t start, SIZE_t end, double impurity,
                                     bint is_first, bint is_left, Node* parent,
                                     SIZE_t depth,
-                                    PriorityHeapRecord* res) nogil:
+                                    PriorityHeapRecord* res) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
         cdef double weighted_n_samples = splitter.weighted_n_samples
+        cdef double min_impurity_decrease = self.min_impurity_decrease
         cdef double min_impurity_split = self.min_impurity_split
         cdef double weighted_n_node_samples
         cdef bint is_leaf
@@ -444,7 +458,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
-            is_leaf = is_leaf or (split.pos >= end)
+            # If EPSILON=0 in the below comparison, float precision issues stop
+            # splitting early, producing trees that are dissimilar to v0.18
+            is_leaf = (is_leaf or split.pos >= end or
+                       split.improvement + EPSILON < min_impurity_decrease)
 
         node_id = tree._add_node(parent - tree.nodes
                                  if parent != NULL
@@ -657,16 +674,26 @@ cdef class Tree:
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef void _resize(self, SIZE_t capacity) except *:
+    cdef int _resize(self, SIZE_t capacity) nogil except -1:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
-           double the size of the inner arrays."""
+           double the size of the inner arrays.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         if self._resize_c(capacity) != 0:
-            raise MemoryError()
+            # Acquire gil only if we need to raise
+            with gil:
+                raise MemoryError()
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
-    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil:
-        """Guts of _resize. Returns 0 for success, -1 for error."""
+    cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil except -1:
+        """Guts of _resize
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         if capacity == self.capacity and self.nodes != NULL:
             return 0
 
@@ -676,16 +703,8 @@ cdef class Tree:
             else:
                 capacity = 2 * self.capacity
 
-        # XXX no safe_realloc here because we need to grab the GIL
-        cdef void* ptr = realloc(self.nodes, capacity * sizeof(Node))
-        if ptr == NULL:
-            return -1
-        self.nodes = <Node*> ptr
-        ptr = realloc(self.value,
-                      capacity * self.value_stride * sizeof(double))
-        if ptr == NULL:
-            return -1
-        self.value = <double*> ptr
+        safe_realloc(&self.nodes, capacity)
+        safe_realloc(&self.value, capacity * self.value_stride)
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
@@ -702,7 +721,8 @@ cdef class Tree:
 
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples, double weighted_n_node_samples) nogil:
+                          SIZE_t n_node_samples,
+                          double weighted_n_node_samples) nogil except -1:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.

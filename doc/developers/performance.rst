@@ -211,41 +211,19 @@ It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
 Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line-prof`` and wire it to IPython::
+us install ``line_profiler`` and wire it to IPython::
 
-  $ pip install line-profiler
+  $ pip install line_profiler
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%lprun`` magic::
-
-    import line_profiler
-    ip.expose_magic('lprun', line_profiler.magic_lprun)
-
-- **Under IPython 0.11+**, first create a configuration profile::
+- **Under IPython 0.13+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/line_profiler_ext.py`` with
-  the following content::
+  Then register the line_profiler extension in
+  ``~/.ipython/profile_default/ipython_config.py``::
 
-    import line_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('lprun', line_profiler.magic_lprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions = [
-        'line_profiler_ext',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'line_profiler_ext',
-    ]
+    c.TerminalIPythonApp.extensions.append('line_profiler')
+    c.InteractiveShellApp.extensions.append('line_profiler')
 
   This will register the ``%lprun`` magic command in the IPython terminal
   application and the other frontends such as qtconsole and notebook.
@@ -311,39 +289,16 @@ install the latest version::
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%memit`` and ``%mprun`` magics::
-
-    import memory_profiler
-    ip.expose_magic('memit', memory_profiler.magic_memit)
-    ip.expose_magic('mprun', memory_profiler.magic_mprun)
-
 - **Under IPython 0.11+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/memory_profiler_ext.py``
-  with the following content::
+  Then register the extension in
+  ``~/.ipython/profile_default/ipython_config.py``
+  alongside the line profiler::
 
-    import memory_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('memit', memory_profiler.magic_memit)
-        ip.define_magic('mprun', memory_profiler.magic_mprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions = [
-        'memory_profiler_ext',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'memory_profiler_ext',
-    ]
+    c.TerminalIPythonApp.extensions.append('memory_profiler')
+    c.InteractiveShellApp.extensions.append('memory_profiler')
 
   This will register the ``%memit`` and ``%mprun`` magic commands in the
   IPython terminal application and the other frontends such as qtconsole and
