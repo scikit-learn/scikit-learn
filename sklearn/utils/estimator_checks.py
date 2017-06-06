@@ -452,7 +452,7 @@ def check_sample_weights_list(name, estimator):
         rnd = np.random.RandomState(0)
         X = rnd.uniform(size=(10, 3))
         y = np.arange(10) % 3
-        y = multioutput_estimator_convert_y_2d(name, y)
+        y = multioutput_estimator_convert_y_2d(estimator, y)
         sample_weight = [3] * 10
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
@@ -531,7 +531,7 @@ def check_dont_overwrite_parameters(name, estimator):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
-    y = multioutput_estimator_convert_y_2d(name, y)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
