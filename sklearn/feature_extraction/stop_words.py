@@ -43,3 +43,8 @@ ENGLISH_STOP_WORDS = frozenset([
     "who", "whoever", "whole", "whom", "whose", "why", "will", "with",
     "within", "without", "would", "yet", "you", "your", "yours", "yourself",
     "yourselves"])
+
+ENGLISH_GENDERED_STOP_WORDS = frozenset([
+    "his", "hers", "him", "her", "he", "she", "man", "woman", "men", "women",
+    "boy", "girl", "gentleman", "lady", "gentlemen", "ladies"
+])
