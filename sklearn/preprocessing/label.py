@@ -155,6 +155,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             self.transformer_ = FunctionTransformer(
                 func=self.func, inverse_func=self.inverse_func, validate=False)
+        self.transformer_.fit(y)
         # XXX: is it a necessary test? one might not want an invertible
         # function.
         if self.check_invertible:
