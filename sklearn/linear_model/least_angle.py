@@ -1456,7 +1456,7 @@ class LassoLarsIC(LassoLars):
 
         R = y[:, np.newaxis] - np.dot(X, coef_path_)  # residuals
         mean_squared_error = np.mean(R ** 2, axis=0)
-        sigma = np.var(y)
+        sigma2 = np.var(y)
 
         df = np.zeros(coef_path_.shape[1], dtype=np.int)  # Degrees of freedom
         for k, coef in enumerate(coef_path_.T):
@@ -1469,8 +1469,9 @@ class LassoLarsIC(LassoLars):
             df[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        with np.errstate(divide='ignore'):
-            self.criterion_ = n_samples * mean_squared_error/sigma + K * df
+        eps64 = np.finfo('float64').eps
+        self.criterion_ = (n_samples * mean_squared_error / (sigma2 + eps64) +
+                           K * df)
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]

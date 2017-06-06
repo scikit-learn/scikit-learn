@@ -414,7 +414,7 @@ def test_lasso_lars_ic():
     rng = np.random.RandomState(42)
     X = diabetes.data
     y = diabetes.target
-    X = np.c_[X, rng.randn(X.shape[0], 4)]  # add 4 bad features
+    X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 4 bad features
     lars_bic.fit(X, y)
     lars_aic.fit(X, y)
     nonzero_bic = np.where(lars_bic.coef_)[0]
@@ -426,15 +426,6 @@ def test_lasso_lars_ic():
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
     assert_raises(ValueError, lars_broken.fit, X, y)
-
-
-def test_no_warning_for_zero_mse():
-    # LassoLarsIC should not warn for log of zero MSE.
-    y = np.arange(10, dtype=float)
-    X = y.reshape(-1, 1)
-    lars = linear_model.LassoLarsIC(normalize=False)
-    assert_no_warnings(lars.fit, X, y)
-    assert_true(np.any(np.isinf(lars.criterion_)))
 
 
 def test_lars_path_readonly_data():
