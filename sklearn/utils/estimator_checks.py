@@ -82,16 +82,18 @@ def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
 
 
 def _yield_non_meta_checks(name, estimator):
+    tags = _safe_tags(estimator)
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
-    yield check_dtype_object
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
     yield check_estimators_fit_returns_self
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
-    yield check_estimators_empty_data_messages
+    if tags.get("input_validation", True):
+        yield check_dtype_object
+        yield check_estimators_empty_data_messages
 
     if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
         # SpectralEmbedding is non-deterministic,
@@ -99,7 +101,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if not _safe_tags(estimator, "missing_values"):
+    if (not tags.get("missing_values")) and tags.get("input_validation", True):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 

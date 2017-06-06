@@ -30,7 +30,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.fixes import frombuffer_empty, bincount
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -938,7 +938,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def _get_tags(self):
         return _update_tags(self, super(CountVectorizer, self),
-                            input_types=["dict"])
+                            input_types=["string"])
 
 
 def _make_int_array():
@@ -1098,6 +1098,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
+
+    def _get_tags(self):
+        return _update_tags(self, super(TfidfTransformer, self),
+                            input_types=["sparse"])
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1389,4 +1393,4 @@ class TfidfVectorizer(CountVectorizer):
 
     def _get_tags(self):
         return _update_tags(self, super(TfidfVectorizer, self),
-                            input_types=["dict"])
+                            input_types=["string"])
