@@ -317,6 +317,8 @@ Bug fixes
 
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
+   - Fix AIC/BIC criterion computation in LassoLarsIC by `Alexandre Gramfort`_
+     and :user:`Mehmet Basbug <mehmetbasbug>`.
 
 API changes summary
 -------------------
