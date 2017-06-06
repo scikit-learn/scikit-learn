@@ -193,6 +193,13 @@ Enhancements
 Bug fixes
 .........
 
+   - :func:`metrics.ranking.average_precision_score` no longer linearly
+     interpolates between operating points, and instead weighs precisions
+     by the change in recall since the last operating point, as per the
+     `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
+     (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
+     `Nick Dingwall`_ and `Gael Varoquaux`_.
+
    - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
      `_c_step` to throw an exception.
