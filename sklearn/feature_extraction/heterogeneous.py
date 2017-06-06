@@ -7,6 +7,24 @@ from ..externals.joblib import Parallel, delayed
 from ..externals.six import iteritems
 
 
+def _getitem(X, column):
+    """
+    Get feature column from input data (array, dataframe, dict)
+
+    """
+    if isinstance(column, int):
+        if hasattr(X, 'iloc'):
+            # pandas dataframes
+            return X.iloc[:, column]
+        else:
+            # numpy arrays
+            return X[:, column]
+    elif isinstance(column, str):
+        return X[column]
+    else:
+        raise ValueError("no valid 'column' type")
+
+
 class ColumnTransformer(BaseEstimator, TransformerMixin):
     """Applies transformers to columns of a dataframe / dict.
 
@@ -90,7 +108,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
             Input data, used to fit transformers.
         """
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans, X[column], y)
+            delayed(_fit_one_transformer)(trans, _getitem(X, column), y)
             for name, (trans, column) in sorted(self.transformers.items()))
         self._update_transformers(transformers)
         return self
@@ -111,7 +129,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, X[column], y,
+            delayed(_fit_transform_one)(trans, weight, _getitem(X, column), y,
                                         **fit_params)
             for name, trans, column, weight in self._iter())
 
@@ -138,7 +156,7 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, weight, X[column])
+            delayed(_transform_one)(trans, weight, _getitem(X, column))
             for name, trans, column, weight in self._iter())
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
