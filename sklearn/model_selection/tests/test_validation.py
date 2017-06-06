@@ -278,6 +278,11 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
                         cross_val_score, estimator, X, y,
                         scoring=('f1_micro', 'f1_micro'))
 
+    # Nested Lists should raise a generic error message
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_val_score, estimator, X, y,
+                        scoring=[[make_scorer(precision_score)]])
+
     error_message_regexp = (".*should either be.*string or callable.*for "
                             "single.*.*dict.*for multi.*")
 

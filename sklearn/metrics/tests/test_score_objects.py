@@ -237,20 +237,12 @@ def test_check_scoring_and_check_multimetric_scoring():
 
     # Make sure it raises errors when scoring parameter is not valid.
 
-    error_message_regexp = ".*must be unique strings.*\n.*use a dict.*"
+    error_message_regexp = ".*must be unique strings.*"
 
+    # More weird corner cases are tested at test_validation.py
     for scoring in ((make_scorer(precision_score),  # Tuple of callables
                      make_scorer(accuracy_score)), [5],
                     (make_scorer(precision_score),), (), ('f1', 'f1')):
-        assert_raises_regexp(ValueError, error_message_regexp,
-                             _check_multimetric_scoring, estimator,
-                             scoring=scoring)
-
-    error_message_regexp = (".*should.*be.*string or callable.*for single"
-                            ".*dict.*for multi.*")
-
-    for scoring in (dict(), 5, {1: 'f1_micro', 'bar': 'precision'},
-                    [['precision']], [[['accuracy']]], {}):
         assert_raises_regexp(ValueError, error_message_regexp,
                              _check_multimetric_scoring, estimator,
                              scoring=scoring)

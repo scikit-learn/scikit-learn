@@ -347,7 +347,14 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
         if isinstance(scoring, (list, tuple, set)):
             err_msg = ("The list/tuple elements must be unique "
                        "strings of predefined scorers. ")
-            keys = set(scoring)
+            invalid=False
+            try:
+                keys = set(scoring)
+            except TypeError:  # For list of lists
+                invalid=True
+            if invalid:
+                raise ValueError(err_msg)
+
             if len(keys) != len(scoring):
                 raise ValueError(err_msg + "Duplicated elements were found in"
                                  " the given list. %r" % repr(scoring))

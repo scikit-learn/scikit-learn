@@ -330,8 +330,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                                   is_multimetric)
 
     if verbose > 2:
-        for scorer_name, score in test_scores.items():
-            msg += ", %s=%s" % (scorer_name, score)
+        if is_multimetric:
+            for scorer_name, score in test_scores.items():
+                msg += ", %s=%s" % (scorer_name, score)
+        else:
+            msg += ", score=%s" % test_scores
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
