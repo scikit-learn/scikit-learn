@@ -259,7 +259,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
-                              eigen_tol=eigen_tol, drop_first=False)
+                              eigen_tol=eigen_tol, drop_first=True)
 
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
