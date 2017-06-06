@@ -352,7 +352,7 @@ API changes summary
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
 
-   - Gradient boosting base models are not longer estimators. By `Andreas Müller`_.
+   - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
    - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
      parameter and sets the ``threshold_`` attribute during the call to
