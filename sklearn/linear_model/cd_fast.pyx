@@ -151,7 +151,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                             np.ndarray[floating, ndim=2, mode='fortran'] X,
                             np.ndarray[floating, ndim=1, mode='c'] y,
                             int max_iter, floating tol,
-                            object rng, bint random=0, bint positive=0):
+                            object rng, bint random=0, bint positive=0,
+                            np.ndarray[floating, ndim=1] l1_weights=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -210,6 +211,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef floating w_alpha = alpha
+    cdef unsigned int use_l1_weight = l1_weights.size > 1
 
     cdef floating *X_data = <floating*> X.data
     cdef floating *y_data = <floating*> y.data
@@ -233,6 +236,9 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
+                if use_l1_weight:
+                    w_alpha = l1_weights[f_iter]
+
                 if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
@@ -254,7 +260,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
-                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - w_alpha, 0)
                              / (norm_cols_X[ii] + beta))
 
                 if w[ii] != 0.0:
@@ -293,8 +299,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = dot(n_features, w_data, 1, w_data, 1)
 
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
+                if (dual_norm_XtA > w_alpha):
+                    const = w_alpha / dual_norm_XtA
                     A_norm2 = R_norm2 * (const ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
@@ -304,7 +310,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                 l1_norm = asum(n_features, w_data, 1)
 
                 # np.dot(R.T, y)
-                gap += (alpha * l1_norm
+                gap += (w_alpha * l1_norm
                         - const * dot(n_samples, R_data, 1, y_data, n_tasks)
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
@@ -544,7 +550,8 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                                  np.ndarray[floating, ndim=1, mode='c'] q,
                                  np.ndarray[floating, ndim=1] y,
                                  int max_iter, floating tol, object rng,
-                                 bint random=0, bint positive=0):
+                                 bint random=0, bint positive=0,
+                                 np.ndarray[floating, ndim=1] l1_weights=None):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -596,6 +603,8 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef floating w_alpha = alpha
+    cdef unsigned int use_l1_weight = l1_weights.size > 1
 
     cdef floating y_norm2 = np.dot(y, y)
     cdef floating* w_ptr = <floating*>&w[0]
@@ -614,6 +623,9 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
+                if use_l1_weight:
+                    w_alpha = l1_weights[f_iter]
+
                 if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
@@ -634,7 +646,7 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - w_alpha, 0) \
                         / (Q[ii, ii] + beta)
 
                 if w[ii] != 0.0:
@@ -674,8 +686,8 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = dot(n_features, &w[0], 1, &w[0], 1)
 
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
+                if (dual_norm_XtA > w_alpha):
+                    const = w_alpha / dual_norm_XtA
                     A_norm2 = R_norm2 * (const ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
@@ -683,7 +695,7 @@ def enet_coordinate_descent_gram(floating[:] w, floating alpha, floating beta,
                     gap = R_norm2
 
                 # The call to dasum is equivalent to the L1 norm of w
-                gap += (alpha * asum(n_features, &w[0], 1) -
+                gap += (w_alpha * asum(n_features, &w[0], 1) -
                         const * y_norm2 +  const * q_dot_w +
                         0.5 * beta * (1 + const ** 2) * w_norm2)
 

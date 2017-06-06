@@ -266,15 +266,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
-              check_input=True, **params):
+              check_input=True, l1_weights=None, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
 
     For mono-output tasks it is::
 
-        1 / (2 * n_samples) * ||y - Xw||^2_2
-        + alpha * l1_ratio * ||w||_1
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        + alpha * l1_ratio * l1_weights * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     For multi-output tasks it is::
@@ -346,6 +346,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     check_input : bool, default True
         Skip input validation checks, including the Gram matrix when provided
         assuming there are handled by the caller when check_input=False.
+
+    l1_weights : array, shape (n_features, ) | None
+        weight to apply on the penalty of each feature
+        If None no weighting is used.
 
     Returns
     -------
@@ -446,6 +450,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
+        if (l1_weights is not None):
+            l1_weights_ = np.asfortranarray(l1_weights * l1_reg)
+        else:
+            l1_weights_ = np.asfortranarray(np.zeros(1))
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
@@ -462,11 +470,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                                          order='C')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, rng, random, positive)
+                tol, rng, random, positive, l1_weights_)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
-                positive)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng,
+                random, positive, l1_weights_)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like. Got %r" % precompute)
@@ -622,7 +630,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', l1_weights=None):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
@@ -635,6 +643,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.l1_weights = l1_weights
 
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
@@ -720,7 +729,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_offset=X_offset, X_scale=X_scale, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
-                          random_state=self.random_state,
+                          random_state=self.random_state, l1_weights=self.l1_weights,
                           selection=self.selection,
                           check_input=False)
             coef_[k] = this_coef[:, 0]
@@ -1514,7 +1523,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', l1_weights=None):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1531,6 +1540,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.l1_weights = l1_weights
 
 
 ###############################################################################
