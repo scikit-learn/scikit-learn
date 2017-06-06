@@ -143,21 +143,6 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> print(scores['r2'])                               # doctest: +ELLIPSIS
     [ 0.33...  0.08...  0.03...]
 
-    >>> # A sample toy binary classification dataset
-    >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
-    >>> svm = LinearSVC(random_state=0)
-    >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> tn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
-    >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
-    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
-    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
-    >>> scores = cross_val_score(svm.fit(X, y), X, y, scoring=scoring)
-    >>> print(scores['tp'])                   # doctest: +NORMALIZE_WHITESPACE
-    [12 13 15]
-    >>> print(scores['fn'])                   # doctest: +NORMALIZE_WHITESPACE
-    [5 4 1]
-
     See Also
     ---------
     :func:`sklearn.metrics.make_scorer`:
@@ -1121,7 +1106,6 @@ def _aggregate_score_dicts(scores, shape=None, transpose=False):
     The aggregated output of _fit_and_score will be a list of dict
     of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
     Convert it to a dict of array {'prec': np.array([0.1 ...]), ...}
-
 
     If shape is set, the individual numpy arrays are reshaped accordingly
 
