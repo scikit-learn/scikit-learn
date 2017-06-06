@@ -213,7 +213,7 @@ Bug fixes
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
-     in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
+     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`.
 
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
@@ -226,8 +226,7 @@ Bug fixes
 
    - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a sparse
      array X and initial centroids, where X's means were unnecessarily being
-     subtracted from the centroids. :issue:`7872` by `Josh Karnofsky
-     <https://github.com/jkarno>`_.
+     subtracted from the centroids. :issue:`7872` by :user:`Josh Karnofsky <jkarno>`.
 
    - Fix estimators to accept a ``sample_weight`` parameter of type
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
@@ -256,7 +255,7 @@ Bug fixes
      :issue:`8086` by `Andreas Müller`_.
 
    - Fix output shape and bugs with n_jobs > 1 in  
-     :class:`sklearn.decomposition.SparseEncoder` transform and :func:`sklarn.decomposition.sparse_encode`
+     :class:`sklearn.decomposition.SparseCoder` transform and :func:`sklarn.decomposition.sparse_encode`
      for one-dimensional data and one component.
      This also impacts the output shape of :class:`sklearn.decomposition.DictionaryLearning`.
      :issue:`8086` by `Andreas Müller`_.
@@ -360,7 +359,7 @@ API changes summary
      ``fit``, and no longer during the call to ``transform```, by `Andreas
      Müller`_.
 
-   - :class:`features_selection.SelectFromModel` now has a ``partial_fit``
+   - :class:`feature_selection.SelectFromModel` now has a ``partial_fit``
      method only if the underlying estimator does. By `Andreas Müller`_.
 
    - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
