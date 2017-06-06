@@ -120,6 +120,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         self.sparse_output_ = sp.issparse(y)
 
+        check_consistent_length(X, y)
+
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
@@ -184,7 +186,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -193,7 +195,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         # Compute probability only once
         if self.strategy == "stratified":
             proba = self.predict_proba(X)
-            if self.n_outputs_ == 1:
+            if self.n_outputs_ == 1 and not self.output_2d_:
                 proba = [proba]
 
         if self.sparse_output_:
@@ -399,6 +401,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              % self.strategy)
 
         y = check_array(y, ensure_2d=False)
+
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 

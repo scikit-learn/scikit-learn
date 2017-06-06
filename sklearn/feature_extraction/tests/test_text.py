@@ -420,7 +420,7 @@ def test_vectorizer():
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = t2.fit(counts_train).transform(counts_train).toarray()
-    assert_equal(t2.idf_, None)
+    assert_false(hasattr(t2, "idf_"))
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
