@@ -1758,9 +1758,6 @@ def _score(estimator, X_test, y_test, scorer):
         except ValueError:
             # non-scalar?
             pass
-    if not isinstance(score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s) instead."
-                         % (str(score), type(score)))
     return score
 
 
