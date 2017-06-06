@@ -324,6 +324,23 @@ def test_tf_idf_smoothing():
     assert_true((tfidf >= 0).all())
 
 
+def test_tfidf_partial_fit():
+    X = [[1, 1, 1],
+         [1, 1, 0],
+         [1, 0, 0]]
+
+    tr_full = TfidfTransformer(smooth_idf=True, norm='l2')
+    tfidf_full = tr_full.fit_transform(X).toarray()
+
+    tr_partial = TfidfTransformer(smooth_idf=True, norm='l2')
+    tr_partial.fit([[1, 1, 1]])
+    tr_partial.partial_fit([[1, 1, 0]])
+    tr_partial.partial_fit([[1, 0, 0]])
+    tfidf_partial = tr_partial.transform(X).toarray()
+
+    assert_array_almost_equal(tfidf_full, tfidf_partial)
+
+
 def test_tfidf_no_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],
