@@ -309,19 +309,45 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     return code
 
 
-def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
+def _project_l2(atom, copy=False):
+    """Projects dictionary atom onto l2 unit ball.
+    """
+    if copy:
+        atom = atom.copy()
+    atom_norm_squared = np.dot(atom, atom)
+    if atom_norm_squared > 1.:
+        atom /= sqrt(atom_norm_squared)
+    return atom
+
+
+def _update_dict(dictionary, B, A, verbose=False, return_r2=False,
                  random_state=None):
-    """Update the dense dictionary factor in place.
+    """Update the dense dictionary factor in place. It does a pass of BCD
+    to update by minimizing
+
+    .5 * ||Xt - DC||_F^2 = .5 * tr(DtDA) - 2 * tr(DtB) + tr(XXt),
+
+    as a function of the dictionary (D), where
+
+    B = XtCt, A = CCt, R = B - DA, C = matrix of codes
+
+    Note that the update of the kth atom is given by (see eqn 10 of
+    ref paper below):
+
+    R = R + D[:, k]A[k, :]  # rank-1 update
+    D[:, k] = R[:, k] / A[k, k]  # = D[:, k] + R[k] / A[k, k]
+    D[:, k] = proj(D[:, k])  # eqn 10
+    R = R - D[:, k]A[k, :]  # rank-1 update
 
     Parameters
     ----------
     dictionary : array of shape (n_features, n_components)
         Value of the dictionary at the previous iteration.
 
-    Y : array of shape (n_features, n_samples)
+    B : array of shape (n_features, n_components)
         Data matrix.
 
-    code : array of shape (n_components, n_samples)
+    A : array of shape (n_components, n_components)
         Sparse coding of the data against which to optimize the dictionary.
 
     verbose:
@@ -342,36 +368,39 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     dictionary : array of shape (n_features, n_components)
         Updated dictionary.
 
+    Notes
+    -----
+    **References:**
+
+    J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009: Online dictionary learning
+    for sparse coding (http://www.di.ens.fr/sierra/pdfs/icml09.pdf)
+
     """
-    n_components = len(code)
-    n_samples = Y.shape[0]
+    n_features, n_components = B.shape
     random_state = check_random_state(random_state)
     # Residuals, computed 'in-place' for efficiency
-    R = -np.dot(dictionary, code)
-    R += Y
+    R = -np.dot(dictionary, A)
+    R += B
     R = np.asfortranarray(R)
-    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
+    ger, = linalg.get_blas_funcs(('ger',), (dictionary, A))
     for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
-        R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-        dictionary[:, k] = np.dot(R, code[k, :].T)
+        R = ger(1.0, dictionary[:, k], A[k, :], a=R, overwrite_a=True)
         # Scale k'th atom
-        atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
-        if atom_norm_square < 1e-20:
+        if A[k, k] < 1e-20:
             if verbose == 1:
                 sys.stdout.write("+")
                 sys.stdout.flush()
             elif verbose:
                 print("Adding new random atom")
-            dictionary[:, k] = random_state.randn(n_samples)
+            dictionary[:, k] = random_state.randn(n_features)
             # Setting corresponding coefs to 0
-            code[k, :] = 0.0
-            dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
-                                            dictionary[:, k]))
+            A[k, :] = 0.
         else:
-            dictionary[:, k] /= sqrt(atom_norm_square)
-            # R <- -1.0 * U_k * V_k^T + R
-            R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
+            dictionary[:, k] = R[:, k] / A[k, k]
+        dictionary[:, k] = _project_l2(dictionary[:, k])
+        # R <- -1.0 * U_k * V_k^T + R
+        R = ger(-1.0, dictionary[:, k], A[k, :], a=R, overwrite_a=True)
     if return_r2:
         R **= 2
         # R is fortran-ordered. For numpy version < 1.6, sum does not
@@ -434,7 +463,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     code_init : array of shape (n_samples, n_components),
         Initial value for the sparse code for warm restart scenarios.
 
-    callback :
+    callback : optional (default=None)
         Callable that gets invoked every five iterations.
 
     verbose :
@@ -472,20 +501,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     SparsePCA
     MiniBatchSparsePCA
     """
-    if method not in ('lars', 'cd'):
-        raise ValueError('Coding method %r not supported as a fit algorithm.'
-                         % method)
-    method = 'lasso_' + method
-
-    t0 = time.time()
-    # Avoid integer division problems
-    alpha = float(alpha)
-    random_state = check_random_state(random_state)
-
-    if n_jobs == -1:
-        n_jobs = cpu_count()
-
-    # Init the code and the dictionary with SVD of Y
+    # Init the code and the dictionary with SVD of X
     if code_init is not None and dict_init is not None:
         code = np.array(code_init, order='F')
         # Don't copy V, it will happen below
@@ -494,7 +510,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         code, S, dictionary = linalg.svd(X, full_matrices=False)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
-    if n_components <= r:  # True even if n_components=None
+    if n_components <= r:  # True even if n_components is None
         code = code[:, :n_components]
         dictionary = dictionary[:n_components, :]
     else:
@@ -502,59 +518,49 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         dictionary = np.r_[dictionary,
                            np.zeros((n_components - r, dictionary.shape[1]))]
 
-    # Fortran-order dict, as we are going to access its row vectors
-    dictionary = np.array(dictionary, order='F')
-
-    residuals = 0
-
     errors = []
-    current_cost = np.nan
 
-    if verbose == 1:
-        print('[dict_learning]', end=' ')
-
-    # If max_iter is 0, number of iterations returned should be zero
-    ii = -1
-
-    for ii in range(max_iter):
-        dt = (time.time() - t0)
-        if verbose == 1:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-        elif verbose:
-            print("Iteration % 3i "
-                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
-                  % (ii, dt, dt / 60, current_cost))
-
-        # Update code
-        code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
-                             init=code, n_jobs=n_jobs)
-        # Update dictionary
-        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
-                                             verbose=verbose, return_r2=True,
-                                             random_state=random_state)
-        dictionary = dictionary.T
-
-        # Cost function
-        current_cost = 0.5 * residuals + alpha * np.sum(np.abs(code))
-        errors.append(current_cost)
-
-        if ii > 0:
+    def _callback(env):
+        """Callback for checking convergence.
+        """
+        residuals = env["dictionary"].dot(env["this_code"])
+        residuals -= env["this_X"].T
+        residuals **= 2
+        residuals = np.sum(residuals)
+        err = .5 * residuals + alpha * np.sum(np.abs(env["this_code"]))
+        errors.append(err)
+        if len(errors) > 1:
             dE = errors[-2] - errors[-1]
             # assert(dE >= -tol * errors[-1])
-            if dE < tol * errors[-1]:
+            if np.abs(dE) < tol * errors[-1]:
                 if verbose == 1:
                     # A line return
                     print("")
                 elif verbose:
-                    print("--- Convergence reached after %d iterations" % ii)
-                break
-        if ii % 5 == 0 and callback is not None:
-            callback(locals())
+                    print(
+                        "--- Convergence reached after %d iterations" % (
+                            env["ii"]))
+                return False
+        return True
 
+    # call unified dict-learning API in batch-mode
+    if min(max_iter, len(X)) < 1:
+        # nothing to do
+        if return_n_iter:
+            return code, dictionary, errors, 0
+        else:
+            return code, dictionary, errors
+    out = dict_learning_online(
+        X, n_components=n_components, alpha=alpha, n_iter=max_iter,
+        return_code=True, dict_init=dictionary, callback=_callback,
+        batch_size=len(X), verbose=verbose, shuffle=False, n_jobs=n_jobs,
+        method=method, random_state=random_state,
+        return_n_iter=return_n_iter)
     if return_n_iter:
-        return code, dictionary, errors, ii + 1
+        code, dictionary, n_iter = out
+        return code, dictionary, errors, n_iter
     else:
+        code, dictionary = out
         return code, dictionary, errors
 
 
@@ -571,11 +577,18 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
         (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                      (U,V)
-                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+                     with || V_k ||_2 <= 1 for all  0 <= k < n_components
 
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
     the input data.
+
+    This function has two modes:
+
+    1. Batch mode, activated when batch_size is None or
+       batch_size >= n_samples. This is the default.
+
+    2. Online mode, activated when batch_size < n_samples.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -600,7 +613,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Initial value for the dictionary for warm restart scenarios.
 
     callback :
-        Callable that gets invoked every five iterations.
+        Callable that gets invoked every five iterations. If it returns
+        non-True, then the main loop (iteration on data) is aborted.
 
     batch_size : int,
         The number of samples to take in each batch.
@@ -668,15 +682,18 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     MiniBatchSparsePCA
 
     """
+    n_samples, n_features = X.shape
     if n_components is None:
-        n_components = X.shape[1]
+        n_components = n_features
+    if batch_size is None:
+        batch_size = n_samples
+    online = batch_size < n_samples
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
     method = 'lasso_' + method
 
     t0 = time.time()
-    n_samples, n_features = X.shape
     # Avoid integer division problems
     alpha = float(alpha)
     random_state = check_random_state(random_state)
@@ -688,8 +705,11 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = randomized_svd(X, n_components,
-                                          random_state=random_state)
+        if online:
+            code, S, dictionary = randomized_svd(X, n_components,
+                                                 random_state=random_state)
+        else:
+            code, S, dictionary = linalg.svd(X, full_matrices=False)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_components <= r:
@@ -741,26 +761,28 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                                   alpha=alpha, n_jobs=n_jobs).T
 
         # Update the auxiliary variables
-        if ii < batch_size - 1:
-            theta = float((ii + 1) * batch_size)
+        if online:
+            if ii < batch_size - 1:
+                theta = float((ii + 1) * batch_size)
+            else:
+                theta = float(batch_size ** 2 + ii + 1 - batch_size)
+            beta = (theta + 1 - batch_size) / (theta + 1)
+            A *= beta
+            A += np.dot(this_code, this_code.T)
+            B *= beta
+            B += np.dot(this_X.T, this_code.T)
         else:
-            theta = float(batch_size ** 2 + ii + 1 - batch_size)
-        beta = (theta + 1 - batch_size) / (theta + 1)
-
-        A *= beta
-        A += np.dot(this_code, this_code.T)
-        B *= beta
-        B += np.dot(this_X.T, this_code.T)
+            A = np.dot(this_code, this_code.T)
+            B = np.dot(this_X.T, this_code.T)
 
         # Update dictionary
         dictionary = _update_dict(dictionary, B, A, verbose=verbose,
-                                  random_state=random_state)
-        # XXX: Can the residuals be of any use?
+                                  random_state=random_state,
+                                  return_r2=False)
 
-        # Maybe we need a stopping criteria based on the amount of
-        # modification in the dictionary
-        if callback is not None:
-            callback(locals())
+        # Check convergence
+        if callback is not None and not callback(locals()):
+            break
 
     if return_inner_stats:
         if return_n_iter:

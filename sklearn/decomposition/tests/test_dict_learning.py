@@ -17,9 +17,11 @@ from sklearn.utils.testing import TempMemmap
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.decomposition import SparseCoder
-from sklearn.decomposition import dict_learning_online
+from sklearn.decomposition.dict_learning import (dict_learning_online,
+                                                 dict_learning)
 from sklearn.decomposition import sparse_encode
 
+from sklearn.decomposition.dict_learning import _update_dict
 
 rng_global = np.random.RandomState(0)
 n_samples, n_features = 10, 8
@@ -262,3 +264,59 @@ def test_sparse_coder_estimator():
                        transform_alpha=0.001).transform(X)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test__update_dict_implements_ref_paper():
+    # The problem to minimize is .5 * tr(DtDA) - tr(DtB) subject
+    # to ||D[:, k]|| <= 1 for all 0 <= k <=n_components,
+    # where D = dictionary, etc. See eqn 9 of ref paper
+    # http://www.di.ens.fr/sierra/pdfs/icml09.pdf
+    #
+    # If n_components = n_features = 1, then this should reduce to a
+    # scalar quadratic problem: minimize .5 AD**2 - BD subject to |D| <= 1
+    # which has unique solution D = B (assuming |B| <= 1)
+    A = np.array([[1.]])
+    B = np.array([[.5]])
+    D = rng_global.randn(1, 1)
+    _update_dict(D, B, A)
+    assert_array_equal(D, B)
+
+
+def test_dict_learning_output_lengths():
+    rng = np.random.RandomState(0)
+    n_components = 8
+    alpha = 1.
+    for return_n_iter in [True, False]:
+        out = dict_learning(X, n_components, alpha, random_state=rng,
+                            return_n_iter=return_n_iter)
+        assert_equal(len(out), 4 if return_n_iter else 3)
+    _, _, errors, n_iter = dict_learning(
+        X, n_components, alpha, random_state=rng, return_n_iter=True)
+    assert_equal(len(errors), n_iter)
+
+
+def test_dict_learning_online_output_lengths():
+    rng = np.random.RandomState(0)
+    n_components = 8
+    alpha = 1.
+    for return_code, return_inner_stats, return_n_iter in itertools.product(
+            [False, True], [False, True], [False, True]):
+        out = dict_learning_online(X, n_components, alpha, random_state=rng,
+                                   return_n_iter=return_n_iter,
+                                   return_code=return_code,
+                                   return_inner_stats=return_inner_stats)
+        l = 1
+        if return_inner_stats:
+            l += 1
+        if return_code:
+            if not return_inner_stats:
+                # dict_learning_online wierdly makes the options
+                # return_inner_stats  and return_code mutually exclusive
+                l += 1
+        if return_n_iter:
+            l += 1
+        if l == 1:
+            assert_true(isinstance(out, np.ndarray))
+            assert_equal(len(out), n_components)
+        else:
+            assert_equal(len(out), l)
