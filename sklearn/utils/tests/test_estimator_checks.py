@@ -204,4 +204,3 @@ def test_check_no_fit_attributes_set_in_init():
                         check_no_fit_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimator)
-    check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())
