@@ -248,7 +248,6 @@ def _yield_all_checks(name, estimator):
     yield check_fit1d_1sample
     yield check_get_params_invariance
     yield check_dict_unchanged
-    yield check_no_fit_attributes_set_in_init
     yield check_dont_overwrite_parameters
 
 
@@ -535,7 +534,7 @@ def is_public_parameter(attr):
 @ignore_warnings(category=DeprecationWarning)
 def check_dont_overwrite_parameters(name, estimator):
     # check that fit method only changes or sets private attributes
-    if hasattr(Estimator.__init__, "deprecated_original"):
+    if hasattr(estimator.__init__, "deprecated_original"):
         # to not check deprecated classes
         return
     rnd = np.random.RandomState(0)
