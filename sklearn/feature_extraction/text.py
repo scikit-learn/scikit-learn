@@ -1098,7 +1098,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     @property
     def idf_(self):
         # if _idf_diag is not set, this will raise an attribute error,
-        # which means hasatt(self, "idf_") is False
+        # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
 
 

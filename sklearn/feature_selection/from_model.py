@@ -136,13 +136,11 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
             estimator = self.estimator_
         else:
             raise ValueError(
-                'Either fit the model before transform or set "prefit=True"'
-                ' while passing the fitted estimator to the constructor.')
-        # XXX duplicate computation if we called fit before
+                'Either fit SelectFromModel before transform or set "prefit='
+                'True" and pass a fitted estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
-        self.threshold_ = _calculate_threshold(estimator, scores,
-                                               self.threshold)
-        return scores >= self.threshold_
+        threshold = _calculate_threshold(estimator, scores, self.threshold)
+        return scores >= threshold
 
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
@@ -172,6 +170,11 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self.threshold_ = _calculate_threshold(self.estimator, scores,
                                                self.threshold)
         return self
+
+    @property
+    def threshold_(self):
+        scores = _get_feature_importances(self.estimator_, self.norm_order)
+        return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y=None, **fit_params):
