@@ -236,6 +236,7 @@ trim_doctests_flags = True
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
+    'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
         'sklearn': None,
         'matplotlib': 'http://matplotlib.org',
