@@ -1164,4 +1164,5 @@ def test_dtype_match():
             # Check accuracy consistency
             lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
             lr_64.fit(X_64, y_64)
+            assert_equal(lr_64.coef_.dtype, X_64.dtype)
             assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
