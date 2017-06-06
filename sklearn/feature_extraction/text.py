@@ -1016,7 +1016,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         self.sublinear_tf = sublinear_tf
 
     def fit(self, X, y=None):
-        """Learn the idf vector (global term weights)
+        """Learn the df vector (global term weights).
+        It is used to calculate the idf scores for the terms.
 
         Parameters
         ----------
@@ -1026,18 +1027,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         if not sp.issparse(X):
             X = sp.csc_matrix(X)
         if self.use_idf:
-            n_samples, n_features = X.shape
-            df = _document_frequency(X)
+            self._n_samples, n_features = X.shape
+            self._df = _document_frequency(X)
 
             # perform idf smoothing if required
-            df += int(self.smooth_idf)
-            n_samples += int(self.smooth_idf)
-
-            # log+1 instead of log makes sure terms with zero idf don't get
-            # suppressed entirely.
-            idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
-                                        n=n_features, format='csr')
+            self._df += int(self.smooth_idf)
+            self._n_samples += int(self.smooth_idf)
 
         return self
 
@@ -1071,15 +1066,22 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
+            check_is_fitted(self, '_df', 'df vector is not fitted')
 
-            expected_n_features = self._idf_diag.shape[0]
+            expected_n_features = self._df.shape[0]
             if n_features != expected_n_features:
                 raise ValueError("Input has n_features=%d while the model"
                                  " has been trained with n_features=%d" % (
                                      n_features, expected_n_features))
+
+            # log+1 instead of log makes sure terms with zero idf don't get
+            # suppressed entirely.
+            idf = np.log(float(self._n_samples) / self._df) + 1.0
+            idf_diag = sp.spdiags(idf, diags=0, m=n_features,
+                                  n=n_features, format='csr')
+
             # *= doesn't work
-            X = X * self._idf_diag
+            X = X * idf_diag
 
         if self.norm:
             X = normalize(X, norm=self.norm, copy=False)
@@ -1088,8 +1090,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     @property
     def idf_(self):
-        if hasattr(self, "_idf_diag"):
-            return np.ravel(self._idf_diag.sum(axis=0))
+        if hasattr(self, "_df"):
+            idf = np.log(float(self._n_samples) / self._df) + 1.0
+            return idf
         else:
             return None
 
