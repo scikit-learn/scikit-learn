@@ -295,7 +295,7 @@ reasonable (please see  the :ref:`reference documentation
           lowercase=True, max_df=1.0, max_features=None, min_df=1,
           ngram_range=(1, 1), preprocessor=None, stop_words=None,
           strip_accents=None, token_pattern=...'(?u)\\b\\w\\w+\\b',
-          token_processor=None, tokenizer=None, vocabulary=None)
+          tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -545,7 +545,7 @@ class called :class:`TfidfVectorizer` that combines all the options of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
-  >>> vectorizer = TfidfVectorizer(min_df=1)
+  >>> vectorizer = TfidfVectorizer()
   >>> vectorizer.fit_transform(corpus)
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x9 sparse matrix of type '<... 'numpy.float64'>'
@@ -695,7 +695,7 @@ A character 2-gram representation, however, would find the documents
 matching in 4 out of 8 features, which may help the preferred classifier
 decide better::
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2), min_df=1)
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2))
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
   >>> ngram_vectorizer.get_feature_names() == (
   ...     [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'])
@@ -709,7 +709,7 @@ only from characters inside word boundaries (padded with space on each
 side). The ``'char'`` analyzer, alternatively, creates n-grams that
 span across words::
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5), min_df=1)
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
@@ -718,7 +718,7 @@ span across words::
   ...     [' fox ', ' jump', 'jumpy', 'umpy '])
   True
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
@@ -877,10 +877,6 @@ In particular we name:
   * ``tokenizer``: a callable that takes the output from the preprocessor
     and splits it into tokens, then returns a list of these.
 
-  * ``token_processor`` a callable that takes an iterable of tokens as
-    input and outputs a processed version of it (useful, e.g., for
-    integrating stemming).
-
   * ``analyzer``: a callable that replaces the preprocessor and tokenizer.
     The default analyzers all call the preprocessor and tokenizer, but custom
     analyzers will skip this. N-gram extraction and stop word filtering take
@@ -892,8 +888,8 @@ concepts may not map one-to-one onto Lucene concepts.)
 
 To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
-``build_preprocessor``, ``build_tokenizer```,  ``build_token_processor``,
-and ``build_analyzer`` factory methods instead of passing custom functions.
+``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
+factory methods instead of passing custom functions.
 
 Some tips and tricks:
 
@@ -903,7 +899,7 @@ Some tips and tricks:
   * Fancy token-level analysis such as stemming, lemmatizing, compound
     splitting, filtering based on part-of-speech, etc. are not included in the
     scikit-learn codebase, but can be added by customizing either the
-    tokenizer, token_processor, or the analyzer.
+    tokenizer or the analyzer.
     Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
     `NLTK <http://www.nltk.org>`_::
 
@@ -932,9 +928,15 @@ Some tips and tricks:
         ...         t = re.sub(r"ogue$", "og", t)
         ...         yield t
         ...
-        >>> vectorizer = CountVectorizer(token_processor=to_british)
-        >>> print(vectorizer.build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        >>> class CustomVectorizer(CountVectorizer):
+        ...     def build_tokenizer(self):
+        ...         base = super(CustomVectorizer, self).build_tokenizer()
+        ...         return lambda doc: list(to_british(base(doc)))
+        ...
+        >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
         [...'color', ...'color']
+
+    The same approach could be used for stemming.
 
 
 Customizing the vectorizer can also be useful when handling Asian languages

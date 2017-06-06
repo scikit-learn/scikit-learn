@@ -33,12 +33,8 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
 from collections import defaultdict, Mapping
 from functools import partial
 import pickle
-import re
 from io import StringIO
 
-A_VOWELS = (
-    "aa aa aa aa aaa aaa aaaa",
-)
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -977,75 +973,3 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.fit, "hello world!")
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
-
-
-def test_token_processor_vowels():
-    # with token_processor
-    def poor_mans_stemmer(tokens):
-        for tok in tokens:
-            yield tok[:3]
-
-    word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word",
-                                token_processor=poor_mans_stemmer)
-    vectorized = word_vect.fit_transform(A_VOWELS)
-
-    feature_names = word_vect.get_feature_names()
-    assert_equal(set(feature_names), set(['aa', 'aaa']))
-
-    counts = vectorized.toarray()[0]
-    assert_equal(counts[word_vect.vocabulary_['aa']], 4)
-    assert_equal(counts[word_vect.vocabulary_['aaa']], 3)
-
-    # without token_processor
-    word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word")
-    vectorized = word_vect.fit_transform(A_VOWELS)
-
-    feature_names = word_vect.get_feature_names()
-    assert_equal(set(feature_names), set(['aa', 'aaa', 'aaaa']))
-
-    counts = vectorized.toarray()[0]
-    assert_equal(counts[word_vect.vocabulary_['aa']], 4)
-    assert_equal(counts[word_vect.vocabulary_['aaa']], 2)
-    assert_equal(counts[word_vect.vocabulary_['aaaa']], 1)
-
-
-def test_token_processor_british2american():
-    def to_british(tokens):
-        """Heuristic British->American spelling converter."""
-        for t in tokens:
-            t = re.sub(r"(...)our$", r"\1or", t)
-            t = re.sub(r"([bt])re$", r"\1er", t)
-            t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
-            t = re.sub(r"ogue$", "og", t)
-            yield t
-
-    word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word",
-                                token_processor=to_british)
-    vectorized = word_vect.fit_transform(["colour color"])
-    assert_equal(['color', 'color'],
-                 word_vect.build_analyzer()(u"color colour"))
-
-    feature_names = word_vect.get_feature_names()
-    assert_equal(set(feature_names), set(['color']))
-
-    counts = vectorized.toarray()[0]
-    assert_equal(counts[word_vect.vocabulary_['color']], 2)
-
-
-def test_token_processor_filter_unwanted_tokens():
-    # with token_processor
-    def filter_short(tokens):
-        for tok in tokens:
-            if len(tok) >= 3:
-                yield tok
-
-    word_vect = CountVectorizer(
-        min_df=0.0, max_df=1.0, analyzer="word", token_processor=filter_short)
-    vectorized = word_vect.fit_transform(A_VOWELS)
-
-    feature_names = word_vect.get_feature_names()
-    assert_equal(set(feature_names), set(['aaa', 'aaaa']))
-
-    counts = vectorized.toarray()[0]
-    assert_equal(counts[word_vect.vocabulary_['aaa']], 2)
-    assert_equal(counts[word_vect.vocabulary_['aaaa']], 1)
