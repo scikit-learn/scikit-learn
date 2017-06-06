@@ -367,6 +367,9 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
 
         elif isinstance(scoring, dict):
             keys = set(scoring)
+            if not all(isinstance(k, six.string_types) for k in keys):
+                raise ValueError("Non-string types were found in the keys of "
+                                 "the given dict. scoring=%r" % scoring)
             if len(keys) == 0:
                 raise ValueError("An empty dict was passed. %r" % scoring)
             scorers = {key: check_scoring(estimator, scoring=scorer)
