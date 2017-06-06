@@ -209,12 +209,15 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
+    valid=True
     if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
             scorers = [scorer for scorer in SCORERS
                        if SCORERS[scorer]._deprecation_msg is None]
+            valid = False  # Don't raise here to make the error message elegant
+        if not valid:
             raise ValueError('%r is not a valid scoring value. '
                              'Valid options are %s'
                              % (scoring, sorted(scorers)))
@@ -336,30 +339,38 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
                            "mapped to the callable for multiple metric "
                            "evaluation. Got %s of type %s"
                            % (repr(scoring), type(scoring)))
-        try:
-            keys = set(scoring)
-            if len(keys) == len(scoring) and len(keys) > 0:
-                valid_keys = all(isinstance(k, six.string_types) for k in keys)
-            else:
-                valid_keys = False
-        except Exception:  # If set(scoring) failed
-            raise ValueError(err_msg_generic)
 
-        if isinstance(scoring, dict):
-            if not valid_keys:
-                raise ValueError(err_msg_generic)
+        if isinstance(scoring, (list, tuple, set)):
+            err_msg = ("The list/tuple elements must be unique "
+                       "strings of predefined scorers. ")
+            keys = set(scoring)
+            if len(keys) != len(scoring):
+                raise ValueError(err_msg + "Duplicated elements were found in"
+                                 " the given list. %r" % scoring)
+            elif len(keys) > 0:
+                if not all(isinstance(k, six.string_types) for k in keys):
+                    if any(callable(k) for k in keys):
+                        raise ValueError(err_msg +
+                                         "One or more of the elements were "
+                                         "callables. Use a dict of score name "
+                                         "mapped to the scorer callable. "
+                                         "Got %r" % scoring)
+                    else:
+                        raise ValueError(err_msg +
+                                         "Non-string types were found in "
+                                         "the given list. Got %r" % scoring)
+                scorers = {scorer: check_scoring(estimator, scoring=scorer)
+                           for scorer in scoring}
+            else:
+                raise ValueError(err_msg +
+                                 "Empty list was given. %r" % scoring)
+
+        elif isinstance(scoring, dict):
+            keys = set(scoring)
+            if len(keys) == 0:
+                raise ValueError("An empty dict was passed. %r" % scoring)
             scorers = {key: check_scoring(estimator, scoring=scorer)
                        for key, scorer in scoring.items()}
-        elif isinstance(scoring, (list, tuple)):
-            if not valid_keys:
-                raise ValueError("The list/tuple elements must be unique "
-                                 "strings of predefined scorers. Got "
-                                 "%s.\nHint: To evaluate on multiple custom "
-                                 "score functions, use a dict mapping the "
-                                 "score name to the callable scorers."
-                                 % repr(scoring))
-            scorers = {scorer: check_scoring(estimator, scoring=scorer)
-                       for scorer in scoring}
         else:
             raise ValueError(err_msg_generic)
         return scorers, True
