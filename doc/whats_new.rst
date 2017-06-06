@@ -328,34 +328,12 @@ API changes summary
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
-
-   - Gradient boosting base models are not longer estimators. By `Andreas Müller`_.
-
-   - `feature_extraction.text.TfidfTransformer` now supports numpy arrays as inputs, and produces numpy
-     arrays for list inputs and numpy array inputs. By `Andreas `Müller_.
-
-   - `feature_selection.SelectFromModel` now validates the ``threshold``
-     parameter and sets the ``threshold_`` attribute during the call to
-     ``fit``, and no longer during the call to ``transform```, by `Andreas Müller`_.
-
-   - `features_selection.SelectFromModel` now has a ``partial_fit`` method only if the underlying
-     estimator does. By `Andreas Müller`_.
-
    - All checks in ``utils.estimator_checks``, in particular :func:`utils.estimator_checks.check_estimator` now
      accept estimator instances. All checks apart from ``check_estimator`` do not accept estimator classes any more.
      By `Andreas Müller`_.
 
    - The ``include_others`` and ``dont_test`` parameters of :func:`utils.testing.all_estimators` are deprecated
      and are assumed ``True``, by  `Andreas Müller`_.
-
-
-   - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor` now do input validation on ``X`` and check
-     whether ``X`` and ``y`` are of the same length, by `Andreas Müller`_.
-
-   - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method only if the underlying estimator does.
-     By `Andreas Müller`_. 
-
-   - FIXME MAYBE changed decision_function shape for OneVsRestClassifier? Breaking change...
 
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
