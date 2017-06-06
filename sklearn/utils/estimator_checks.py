@@ -12,7 +12,6 @@ from scipy.stats import rankdata
 import struct
 
 from sklearn.externals.six.moves import zip
-from sklearn.externals.six import text_type
 from sklearn.externals.joblib import hash, Memory
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -33,14 +32,12 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import Ridge
 
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin, BaseEstimator)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
@@ -216,8 +213,8 @@ def _yield_clustering_checks(name, clusterer):
     yield check_non_transformer_estimators_n_iter
 
 
-def _yield_all_checks(name, Estimator):
-    for check in _yield_non_meta_checks(name, Estimator):
+def _yield_all_checks(name, estimator):
+    for check in _yield_non_meta_checks(name, estimator):
         yield check
     if isinstance(estimator, ClassifierMixin):
         for check in _yield_classifier_checks(name, estimator):
@@ -238,7 +235,6 @@ def _yield_all_checks(name, Estimator):
     yield check_fit1d_1sample
     yield check_get_params_invariance
     yield check_dict_unchanged
-    yield check_no_fit_attributes_set_in_init
     yield check_dont_overwrite_parameters
 
 
@@ -1220,14 +1216,13 @@ def check_estimators_unfitted(name, estimator):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_supervised_y_2d(name, Estimator):
+def check_supervised_y_2d(name, estimator):
     if "MultiTask" in name:
         # These only work on 2d, so this test makes no sense
         return
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
-    estimator = Estimator()
     set_testing_parameters(estimator)
     set_random_state(estimator)
     # fit
@@ -1642,7 +1637,7 @@ def check_parameters_default_constructible(name, Estimator):
 def multioutput_estimator_convert_y_2d(estimator, y):
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
-    if "MultiTask" in name:
+    if "MultiTask" in estimator.__class__.__name__:
         return np.reshape(y, (-1, 1))
     return y
 
