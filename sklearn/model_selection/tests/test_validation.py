@@ -257,7 +257,7 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
     estimator = MockClassifier()
 
     # Test the errors
-    error_message_regexp = ".*must be unique strings.*\n.*use a dict.*"
+    error_message_regexp = ".*must be unique strings.*"
 
     # List/tuple of callables should raise a message advising users to use
     # dict of names to callables mapping
@@ -270,11 +270,11 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
                         scoring=(make_scorer(precision_score),))
 
     # So should empty lists/tuples
-    assert_raises_regex(ValueError, error_message_regexp,
+    assert_raises_regex(ValueError, error_message_regexp + "Empty list.*",
                         cross_val_score, estimator, X, y, scoring=())
 
     # So should duplicated entries
-    assert_raises_regex(ValueError, error_message_regexp,
+    assert_raises_regex(ValueError, error_message_regexp + "Duplicated.*",
                         cross_val_score, estimator, X, y,
                         scoring=('f1_micro', 'f1_micro'))
 
@@ -282,7 +282,7 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
                             "single.*.*dict.*for multi.*")
 
     # Empty dict should raise invalid scoring error
-    assert_raises_regex(ValueError, error_message_regexp,
+    assert_raises_regex(ValueError, "An empty dict",
                         cross_val_score, estimator, X, y, scoring=(dict()))
 
     # And so should any other invalid entry

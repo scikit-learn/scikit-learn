@@ -256,13 +256,12 @@ def check_scoring(estimator, scoring=None, allow_none=False):
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
     """
-    has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     if isinstance(scoring, six.string_types):
         return get_scorer(scoring)
-    elif has_scoring:
+    elif callable(scoring):
         # Heuristic to ensure user has not passed a metric
         module = getattr(scoring, '__module__', None)
         if hasattr(module, 'startswith') and \
@@ -275,14 +274,19 @@ def check_scoring(estimator, scoring=None, allow_none=False):
                              'Please use `make_scorer` to convert a metric '
                              'to a scorer.' % scoring)
         return get_scorer(scoring)
-    elif hasattr(estimator, 'score'):
-        return _passthrough_scorer
-    elif allow_none:
-        return None
+    elif scoring is None:
+        if hasattr(estimator, 'score'):
+            return _passthrough_scorer
+        elif allow_none:
+            return None
+        else:
+            raise TypeError(
+                "If no scoring is specified, the estimator passed should "
+                "have a 'score' method. The estimator %r does not."
+                % estimator)
     else:
-        raise TypeError(
-            "If no scoring is specified, the estimator passed should "
-            "have a 'score' method. The estimator %r does not." % estimator)
+        raise ValueError("scoring value should either be a callable, string or"
+                         " None. %r was passed" % scoring)
 
 
 def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
@@ -346,7 +350,7 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
             keys = set(scoring)
             if len(keys) != len(scoring):
                 raise ValueError(err_msg + "Duplicated elements were found in"
-                                 " the given list. %r" % scoring)
+                                 " the given list. %r" % repr(scoring))
             elif len(keys) > 0:
                 if not all(isinstance(k, six.string_types) for k in keys):
                     if any(callable(k) for k in keys):
@@ -354,24 +358,26 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
                                          "One or more of the elements were "
                                          "callables. Use a dict of score name "
                                          "mapped to the scorer callable. "
-                                         "Got %r" % scoring)
+                                         "Got %r" % repr(scoring))
                     else:
                         raise ValueError(err_msg +
                                          "Non-string types were found in "
-                                         "the given list. Got %r" % scoring)
+                                         "the given list. Got %r"
+                                         % repr(scoring))
                 scorers = {scorer: check_scoring(estimator, scoring=scorer)
                            for scorer in scoring}
             else:
                 raise ValueError(err_msg +
-                                 "Empty list was given. %r" % scoring)
+                                 "Empty list was given. %r" % repr(scoring))
 
         elif isinstance(scoring, dict):
             keys = set(scoring)
             if not all(isinstance(k, six.string_types) for k in keys):
                 raise ValueError("Non-string types were found in the keys of "
-                                 "the given dict. scoring=%r" % scoring)
+                                 "the given dict. scoring=%r" % repr(scoring))
             if len(keys) == 0:
-                raise ValueError("An empty dict was passed. %r" % scoring)
+                raise ValueError("An empty dict was passed. %r"
+                                 % repr(scoring))
             scorers = {key: check_scoring(estimator, scoring=scorer)
                        for key, scorer in scoring.items()}
         else:

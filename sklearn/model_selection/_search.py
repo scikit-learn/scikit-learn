@@ -331,12 +331,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     # validated before. We use check_scoring only to reject multimetric scorer
     check_scoring(estimator, scorer, allow_none=True)
     scores, n_samples_test = _fit_and_score(estimator, X, y,
-                                            {'score': scorer}, train,
+                                            scorer, train,
                                             test, verbose, parameters,
                                             fit_params=fit_params,
                                             return_n_test_samples=True,
                                             error_score=error_score)
-    return scores['score'], parameters, n_samples_test
+    return scores, parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):

@@ -169,6 +169,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorers, is_multimetric = _check_multimetric_scoring(estimator,
                                                          scoring=scoring)
+    if not is_multimetric:
+        scorers = scorers['score']
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -179,13 +181,13 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                               fit_params)
                       for train, test in cv.split(X, y, groups))
     scores = list(zip(*scores))[0]
-    test_scores = _aggregate_score_dicts(scores)
-    if not is_multimetric:
-        test_scores = test_scores['score']
-    return test_scores
+    if is_multimetric:
+        return _aggregate_score_dicts(scores)
+    else:
+        return np.array(scores)
 
 
-def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
+def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, error_score='raise'):
@@ -203,9 +205,15 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scorers : dict mapping scorer name to the callable
-        A dict mapping the scorer name to the scorer callable object / function
-        with signature ``scorer(estimator, X, y)``.
+    scorer : A single callable or dict mapping scorer name to the callable
+        If it is a single callable, the return value for ``train_scores`` and
+        ``test_scores`` is a single float.
+
+        For a dict, it should be one mapping the scorer name to the scorer
+        callable object / function.
+
+        The callable object / fn should have signature
+        ``scorer(estimator, X, y)``.
 
     train : array-like, shape (n_train_samples,)
         Indices of training samples.
@@ -278,7 +286,8 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
-    n_scorers = len(scorers.keys())
+    is_multimetric = not callable(scorer)
+    n_scorers = len(scorer.keys()) if is_multimetric else 1
 
     try:
         if y_train is None:
@@ -293,11 +302,16 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
-            test_scores = dict(zip(scorers.keys(),
-                               [error_score, ] * n_scorers))
-            if return_train_score:
-                train_scores = dict(zip(scorers.keys(),
-                                    [error_score, ] * n_scorers))
+            if is_multimetric:
+                test_scores = dict(zip(scorer.keys(),
+                                   [error_score, ] * n_scorers))
+                if return_train_score:
+                    train_scores = dict(zip(scorer.keys(),
+                                        [error_score, ] * n_scorers))
+            else:
+                test_scores = error_score
+                if return_train_score:
+                    train_scores = error_score
             warnings.warn("Classifier fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%r" % (error_score, e), FitFailedWarning)
@@ -308,10 +322,12 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorers)
+        # _score will return dict if is_multimetric is True
+        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorers)
+            train_scores = _score(estimator, X_train, y_train, scorer,
+                                  is_multimetric)
 
     if verbose > 2:
         for scorer_name, score in test_scores.items():
@@ -332,8 +348,37 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorers):
-    """Compute the score(s) of an estimator on a given test set."""
+def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
+    """Compute the score(s) of an estimator on a given test set.
+
+    Will return a single float if is_multimetric is False and a dict of floats,
+    if is_multimetric is True
+    """
+    if is_multimetric:
+        return _multimetric_score(estimator, X_test, y_test, scorer)
+    else:
+        if y_test is None:
+            score = scorer(estimator, X_test)
+        else:
+            score = scorer(estimator, X_test, y_test)
+
+        if hasattr(score, 'item'):
+            try:
+                # e.g. unwrap memmapped scalars
+                score = score.item()
+            except ValueError:
+                # non-scalar?
+                pass
+
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s) "
+                             "instead. (scorer=%r)"
+                             % (str(score), type(score), scorer))
+    return score
+
+
+def _multimetric_score(estimator, X_test, y_test, scorers):
+    """Return a dict of score for multimetric scoring"""
     scores = {}
 
     for name, scorer in scorers.items():
@@ -960,10 +1005,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         else:
             estimator.partial_fit(X_partial_train, y_partial_train,
                                   classes=classes)
-        train_scores.append(_score(estimator, X_train, y_train,
-                                   {'score': scorer})['score'])
-        test_scores.append(_score(estimator, X_test, y_test,
-                                  {'score': scorer})['score'])
+        train_scores.append(_score(estimator, X_train, y_train, scorer))
+        test_scores.append(_score(estimator, X_test, y_test, scorer))
     return np.array((train_scores, test_scores)).T
 
 
