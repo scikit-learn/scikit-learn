@@ -15,6 +15,7 @@ import sys
 import functools
 import os
 import errno
+import re
 
 import numpy as np
 import scipy.sparse as sp
@@ -33,7 +34,14 @@ def _parse_version(version_string):
             version.append(int(x))
         except ValueError:
             # x may be of the form dev-1ea1592
-            version.append(x)
+            # version.append(x)
+            # x may be of the form dev-1ea1592
+            digits=re.match(r'^(\d)+\D',x)
+            if digits:
+                version.append(int(digits.group(1)))
+            else:
+                # use 0 if no leading digits found
+                version.append(0)
     return tuple(version)
 
 euler_gamma = getattr(np, 'euler_gamma',
