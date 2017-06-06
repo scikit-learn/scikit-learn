@@ -921,14 +921,13 @@ def learning_curve(estimator, X, y, groups=None,
                 train_test_proportions.append((train[:n_train_samples], test))
 
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, {'score': scorer}, train, test,
+            clone(estimator), X, y, scorer, train, test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in train_test_proportions)
         out = list(zip(*out))
-        out = list(_aggregate_score_dicts(out[i], shape=(n_splits,
-                                                         n_unique_ticks),
-                                          transpose=True)['score']
-                   for i in (0, 1))
+
+        out[0] = (np.array(out[0]).reshape(n_splits, n_unique_ticks)).T
+        out[1] = (np.array(out[1]).reshape(n_splits, n_unique_ticks)).T
 
     return train_sizes_abs, out[0], out[1]
 
