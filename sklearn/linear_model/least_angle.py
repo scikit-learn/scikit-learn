@@ -299,7 +299,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'Dropping a regressor, after %i iterations, '
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
-                              'the smallest cholesky pivot element being %.3e'
+                              'the smallest cholesky pivot element being %.3e. '
+                              'Reduce max_iter or increase eps parameters.'
                               % (n_iter, alpha, n_active, diag),
                               ConvergenceWarning)
 
@@ -1159,8 +1160,8 @@ class LarsCV(Lars):
         return self
 
     @property
-    @deprecated("Attribute alpha is deprecated in 0.18 and "
-                "will be removed in 0.20. See 'alpha_' instead")
+    @deprecated("Attribute alpha is deprecated in 0.19 and "
+                "will be removed in 0.21. See 'alpha_' instead")
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
