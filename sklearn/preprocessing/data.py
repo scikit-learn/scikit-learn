@@ -1121,6 +1121,10 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         features is computed by iterating over all suitably sized combinations
         of input features.
 
+    feature_names_ : list, shape [n_input_features_]
+        Represents the names of input features
+        It is of the form ``['X1', 'X2', 'X3'...]``
+
     Notes
     -----
     Be aware that the number of features in the output array scales
@@ -1141,6 +1145,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         start = int(not include_bias)
         return chain.from_iterable(comb(range(n_features), i)
                                    for i in range(start, degree + 1))
+
+    @property
+    def feature_names_(self):
+        features = ['X'+str(i+1) for i in range(degree)]
+        return features
 
     @property
     def powers_(self):
