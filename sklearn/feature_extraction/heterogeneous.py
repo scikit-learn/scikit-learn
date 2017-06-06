@@ -74,6 +74,13 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
             out.update(super(ColumnTransformer, self).get_params(deep=False))
             return out
 
+    def _iter(self):
+        """Generate (name, trans, column, weight) tuples
+        """
+        get_weight = (self.transformer_weights or {}).get
+        return ((name, trans, column, get_weight(name))
+                for name, (trans, column) in sorted(self.transformers.items()))
+
     def fit(self, X, y=None):
         """Fit all transformers using X.
 
@@ -104,10 +111,9 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, name, X[column], y,
-                                        self.transformer_weights,
+            delayed(_fit_transform_one)(trans, weight, X[column], y,
                                         **fit_params)
-            for name, (trans, column) in sorted(self.transformers.items()))
+            for name, trans, column, weight in self._iter())
 
         Xs, transformers = zip(*result)
         self._update_transformers(transformers)
@@ -132,8 +138,8 @@ class ColumnTransformer(BaseEstimator, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, name, X[column], self.transformer_weights)
-            for name, (trans, column) in sorted(self.transformers.items()))
+            delayed(_transform_one)(trans, weight, X[column])
+            for name, trans, column, weight in self._iter())
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:

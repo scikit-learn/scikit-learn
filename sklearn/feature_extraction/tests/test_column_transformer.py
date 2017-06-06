@@ -13,7 +13,8 @@ class Trans(BaseEstimator):
         return self
 
     def transform(self, X, y=None):
-        return check_array(X).reshape(-1, 1)
+        #TODO fix this in ColumnTransformer to always pass 2D data
+        return check_array(np.asarray(X).reshape(-1, 1))
 
 
 class SparseMatrixTrans(BaseEstimator):
