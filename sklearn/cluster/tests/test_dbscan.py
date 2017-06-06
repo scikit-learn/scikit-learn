@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_not_in
+from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
@@ -78,6 +79,22 @@ def test_dbscan_sparse():
     assert_array_equal(labels_dense, labels_sparse)
 
 
+def test_dbscan_sparse_precomputed():
+    D = pairwise_distances(X)
+    nn = NearestNeighbors(radius=.9).fit(X)
+    D_sparse = nn.radius_neighbors_graph(mode='distance')
+    # Ensure it is sparse not merely on diagonals:
+    assert D_sparse.nnz < D.shape[0] * (D.shape[0] - 1)
+    core_sparse, labels_sparse = dbscan(D_sparse,
+                                        eps=.8,
+                                        min_samples=10,
+                                        metric='precomputed')
+    core_dense, labels_dense = dbscan(D, eps=.8, min_samples=10,
+                                      metric='precomputed')
+    assert_array_equal(core_dense, core_sparse)
+    assert_array_equal(labels_dense, labels_sparse)
+
+
 def test_dbscan_no_core_samples():
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
@@ -114,6 +131,34 @@ def test_dbscan_callable():
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)
+
+
+def test_dbscan_metric_params():
+    # Tests that DBSCAN works with the metrics_params argument.
+    eps = 0.8
+    min_samples = 10
+    p = 1
+
+    # Compute DBSCAN with metric_params arg
+    db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps,
+                min_samples=min_samples, algorithm='ball_tree').fit(X)
+    core_sample_1, labels_1 = db.core_sample_indices_, db.labels_
+
+    # Test that sample labels are the same as passing Minkowski 'p' directly
+    db = DBSCAN(metric='minkowski', eps=eps, min_samples=min_samples,
+                algorithm='ball_tree', p=p).fit(X)
+    core_sample_2, labels_2 = db.core_sample_indices_, db.labels_
+
+    assert_array_equal(core_sample_1, core_sample_2)
+    assert_array_equal(labels_1, labels_2)
+
+    # Minkowski with p=1 should be equivalent to Manhattan distance
+    db = DBSCAN(metric='manhattan', eps=eps, min_samples=min_samples,
+                algorithm='ball_tree').fit(X)
+    core_sample_3, labels_3 = db.core_sample_indices_, db.labels_
+
+    assert_array_equal(core_sample_1, core_sample_3)
+    assert_array_equal(labels_1, labels_3)
 
 
 def test_dbscan_balltree():
@@ -298,10 +343,27 @@ def test_dbscan_core_samples_toy():
 def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
     # see https://github.com/scikit-learn/scikit-learn/issues/4641 for
     # more details
-    X = np.ones((10, 2))
+    X = np.eye(10)
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
     assert_equal(len(set(labels)), 1)
 
-    X = np.zeros((10, 2))
+    X = np.zeros((10, 10))
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
     assert_equal(len(set(labels)), 1)
+
+
+def test_dbscan_precomputed_metric_with_initial_rows_zero():
+    # sample matrix with initial two row all zero
+    ar = np.array([
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0],
+        [0.0, 0.0, 0.1, 0.1, 0.0, 0.0, 0.3],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1],
+        [0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.0]
+    ])
+    matrix = sparse.csr_matrix(ar)
+    labels = DBSCAN(eps=0.2, metric='precomputed',
+                    min_samples=2).fit(matrix).labels_
+    assert_array_equal(labels, [-1, -1,  0,  0,  0,  1,  1])

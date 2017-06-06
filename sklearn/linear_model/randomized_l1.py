@@ -15,15 +15,16 @@ from scipy.sparse import issparse
 from scipy import sparse
 from scipy.interpolate import interp1d
 
-from .base import center_data
-from ..base import BaseEstimator, TransformerMixin
+from .base import _preprocess_data
+from ..base import BaseEstimator
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
-from ..utils import (as_float_array, check_random_state, check_X_y,
-                     check_array, safe_mask, ConvergenceWarning)
+from ..feature_selection.base import SelectorMixin
+from ..utils import (as_float_array, check_random_state, check_X_y, safe_mask)
 from ..utils.validation import check_is_fitted
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
+from ..exceptions import ConvergenceWarning
 
 
 ###############################################################################
@@ -45,8 +46,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
             delayed(estimator_func)(
-                X, y, weights=scaling * random_state.random_integers(
-                    0, 1, size=(n_features,)),
+                X, y, weights=scaling * random_state.randint(
+                    0, 2, size=(n_features,)),
                 mask=(random_state.rand(n_samples) < sample_fraction),
                 verbose=max(0, verbose - 1),
                 **params)
@@ -58,7 +59,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
 
 
 class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
-                                                   TransformerMixin)):
+                                                   SelectorMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
@@ -70,14 +71,14 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self):
         pass
 
-    _center_data = staticmethod(center_data)
+    _preprocess_data = staticmethod(_preprocess_data)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         Parameters
         ----------
-        X : array-like, sparse matrix shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training data.
 
         y : array-like, shape = [n_samples]
@@ -86,20 +87,27 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         self : object
-            Returns an instance of self.
+               Returns an instance of self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], y_numeric=True)
+        X, y = check_X_y(X, y, ['csr', 'csc'], y_numeric=True,
+                         ensure_min_samples=2, estimator=self)
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize)
+        X, y, X_offset, y_offset, X_scale = \
+            self._preprocess_data(X, y, self.fit_intercept, self.normalize)
 
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
-        if isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory)
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
+            memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError("'memory' should either be a string or"
+                             " a sklearn.externals.joblib.Memory"
+                             " instance, got 'memory={!r}' instead.".format(
+                                 type(memory)))
 
         scores_ = memory.cache(
             _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch']
@@ -120,31 +128,17 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         """Return the parameters passed to the estimator"""
         raise NotImplementedError
 
-    def get_support(self, indices=False):
-        """Return a mask, or list, of the features/indices selected."""
+    def _get_support_mask(self):
+        """Get the boolean mask indicating which features are selected.
+
+        Returns
+        -------
+        support : boolean array of shape [# input features]
+                  An element is True iff its corresponding feature is selected
+                  for retention.
+        """
         check_is_fitted(self, 'scores_')
-
-        mask = self.scores_ > self.selection_threshold
-        return mask if not indices else np.where(mask)[0]
-
-    # XXX: the two function below are copy/pasted from feature_selection,
-    # Should we add an intermediate base class?
-    def transform(self, X):
-        """Transform a new matrix using the selected features"""
-        mask = self.get_support()
-        X = check_array(X)
-        if len(mask) != X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
-        return check_array(X)[:, safe_mask(X, mask)]
-
-    def inverse_transform(self, X):
-        """Transform a new matrix using the selected features"""
-        support = self.get_support()
-        if X.ndim == 1:
-            X = X[None, :]
-        Xt = np.zeros((X.shape[0], support.size))
-        Xt[:, support] = X
-        return Xt
+        return self.scores_ > self.selection_threshold
 
 
 ###############################################################################
@@ -160,7 +154,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     X -= X.mean(axis=0)
     y -= y.mean()
 
-    alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float))
+    alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float64))
 
     X = (1 - weights) * X
     with warnings.catch_warnings():
@@ -186,9 +180,13 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 class RandomizedLasso(BaseRandomizedLinearModel):
     """Randomized Lasso.
 
-    Randomized Lasso works by resampling the train data and computing
-    a Lasso on each resampling. In short, the features selected more
-    often are good features. It is also known as stability selection.
+    Randomized Lasso works by subsampling the training data and
+    computing a Lasso estimate where the penalty of a random subset of
+    coefficients has been scaled. By performing this double
+    randomization several times, the method assigns high scores to
+    features that are repeatedly selected across randomizations. This
+    is known as stability selection. In short, features selected more
+    often are considered good features.
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 
@@ -200,8 +198,9 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         article which is scaling.
 
     scaling : float, optional
-        The alpha parameter in the stability selection article used to
-        randomly scale the features. Should be between 0 and 1.
+        The s parameter used to randomly scale the penalty of different
+        features (See :ref:`User Guide <randomized_l1>` for details ).
+        Should be between 0 and 1.
 
     sample_fraction : float, optional
         The fraction of samples to be used in each randomized design.
@@ -210,7 +209,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     n_resampling : int, optional
         Number of randomized models.
 
-    selection_threshold: float, optional
+    selection_threshold : float, optional
         The score above which features should be selected.
 
     fit_intercept : boolean, optional
@@ -223,6 +222,13 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     normalize : boolean, optional, default True
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learned more robust and almost independent of
+        the number of samples. The same property is not valid for
+        standardized data. However, if you wish to standardize, please
+        use `preprocessing.StandardScaler` before calling `fit` on an
+        estimator with `normalize=False`.
 
     precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -266,7 +272,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
 
@@ -299,7 +306,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLogisticRegression, LogisticRegression
+    RandomizedLogisticRegression, Lasso, ElasticNet
     """
     def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
                  n_resampling=200, selection_threshold=.25,
@@ -308,7 +315,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
+                 memory=None):
         self.alpha = alpha
         self.scaling = scaling
         self.sample_fraction = sample_fraction
@@ -328,7 +335,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     def _make_estimator_and_params(self, X, y):
         assert self.precompute in (True, False, None, 'auto')
         alpha = self.alpha
-        if alpha in ('aic', 'bic'):
+        if isinstance(alpha, six.string_types) and alpha in ('aic', 'bic'):
             model = LassoLarsIC(precompute=self.precompute,
                                 criterion=self.alpha,
                                 max_iter=self.max_iter,
@@ -354,7 +361,12 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     else:
         X *= (1 - weights)
 
-    C = np.atleast_1d(np.asarray(C, dtype=np.float))
+    C = np.atleast_1d(np.asarray(C, dtype=np.float64))
+    if C.ndim > 1:
+        raise ValueError("C should be 1-dimensional array-like, "
+                         "but got a {}-dimensional array-like instead: {}."
+                         .format(C.ndim, C))
+
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
 
     for this_C, this_scores in zip(C, scores.T):
@@ -370,20 +382,29 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
 class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     """Randomized Logistic Regression
 
-    Randomized Regression works by resampling the train data and computing
-    a LogisticRegression on each resampling. In short, the features selected
-    more often are good features. It is also known as stability selection.
+    Randomized Logistic Regression works by subsampling the training
+    data and fitting a L1-penalized LogisticRegression model where the
+    penalty of a random subset of coefficients has been scaled. By
+    performing this double randomization several times, the method
+    assigns high scores to features that are repeatedly selected across
+    randomizations. This is known as stability selection. In short,
+    features selected more often are considered good features.
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------
-    C : float, optional, default=1
+    C : float or array-like of shape [n_reg_parameter], optional, default=1
         The regularization parameter C in the LogisticRegression.
+        When C is an array, fit will take each regularization parameter in C
+        one by one for LogisticRegression and store results for each one
+        in ``all_scores_``, where columns and rows represent corresponding
+        reg_parameters and features.
 
     scaling : float, optional, default=0.5
-        The alpha parameter in the stability selection article used to
-        randomly scale the features. Should be between 0 and 1.
+        The s parameter used to randomly scale the penalty of different
+        features (See :ref:`User Guide <randomized_l1>` for details ).
+        Should be between 0 and 1.
 
     sample_fraction : float, optional, default=0.75
         The fraction of samples to be used in each randomized design.
@@ -403,8 +424,15 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default=True
+    normalize : boolean, optional, default True
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     tol : float, optional, default=1e-3
          tolerance for stopping criteria of LogisticRegression
@@ -436,7 +464,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
 
@@ -469,7 +498,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLasso, Lasso, ElasticNet
+    RandomizedLasso, LogisticRegression
     """
     def __init__(self, C=1, scaling=.5, sample_fraction=.75,
                  n_resampling=200,
@@ -478,7 +507,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
                  normalize=True,
                  random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
+                 memory=None):
         self.C = C
         self.scaling = scaling
         self.sample_fraction = sample_fraction
@@ -498,11 +527,11 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
                       fit_intercept=self.fit_intercept)
         return _randomized_logistic, params
 
-    def _center_data(self, X, y, fit_intercept, normalize=False):
+    def _preprocess_data(self, X, y, fit_intercept, normalize=False):
         """Center the data in X but not in y"""
-        X, _, Xmean, _, X_std = center_data(X, y, fit_intercept,
-                                            normalize=normalize)
-        return X, y, Xmean, y, X_std
+        X, _, X_offset, _, X_scale = _preprocess_data(X, y, fit_intercept,
+                                                      normalize=normalize)
+        return X, y, X_offset, y, X_scale
 
 
 ###############################################################################
@@ -521,7 +550,7 @@ def _lasso_stability_path(X, y, mask, weights, eps):
                                      alpha_min=alpha_min)
     # Scale alpha by alpha_max
     alphas /= alphas[0]
-    # Sort alphas in assending order
+    # Sort alphas in ascending order
     alphas = alphas[::-1]
     coefs = coefs[:, ::-1]
     # Get rid of the alphas that are too small
@@ -539,7 +568,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          sample_fraction=0.75,
                          eps=4 * np.finfo(np.float).eps, n_jobs=1,
                          verbose=False):
-    """Stabiliy path based on randomized Lasso estimates
+    """Stability path based on randomized Lasso estimates
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 
@@ -555,8 +584,11 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    random_state : integer or numpy.random.RandomState, optional
-        The generator used to randomize the design.
+    random_state : int, RandomState instance or None, optional, default=None
+        The generator used to randomize the design.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     n_resampling : int, optional, default=200
         Number of randomized models.
@@ -591,6 +623,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     -----
     See examples/linear_model/plot_sparse_recovery.py for an example.
     """
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     rng = check_random_state(random_state)
 
     if not (0 < scaling < 1):
@@ -602,8 +635,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     paths = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_lasso_stability_path)(
             X, y, mask=rng.rand(n_samples) < sample_fraction,
-            weights=1. - scaling * rng.random_integers(0, 1,
-                                                       size=(n_features,)),
+            weights=1. - scaling * rng.randint(0, 2, size=(n_features,)),
             eps=eps)
         for k in range(n_resampling))
 

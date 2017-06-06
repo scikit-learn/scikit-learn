@@ -14,7 +14,7 @@ from scipy import linalg
 from scipy.stats import chi2
 
 from . import empirical_covariance, EmpiricalCovariance
-from ..utils.extmath import fast_logdet, pinvh
+from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
 
 
@@ -55,9 +55,11 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     verbose : boolean, optional
         Verbose mode.
 
-    random_state : integer or numpy.RandomState, optional
-        The random generator used. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     cov_computation_method : callable, default empirical_covariance
         The function which will be used to compute the covariance.
@@ -105,7 +107,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         location = initial_estimates[0]
         covariance = initial_estimates[1]
         # run a special iteration for that case (to get an initial support)
-        precision = pinvh(covariance)
+        precision = linalg.pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
@@ -125,7 +127,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         previous_det = det
         previous_support = support
         # compute a new support from the full data set mahalanobis distances
-        precision = pinvh(covariance)
+        precision = linalg.pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # compute new estimates
@@ -214,9 +216,11 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         Maximum number of iterations for the c_step procedure.
         (2 is enough to be close to the final solution. "Never" exceeds 20).
 
-    random_state : integer or numpy.RandomState, default None
-        The random generator used. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     cov_computation_method : callable, default empirical_covariance
         The function which will be used to compute the covariance.
@@ -311,10 +315,11 @@ def fast_mcd(X, support_fraction=None,
           value of support_fraction will be used within the algorithm:
           `[n_sample + n_features + 1] / 2`.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to randomly subsample. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     cov_computation_method : callable, default empirical_covariance
         The function which will be used to compute the covariance.
@@ -361,11 +366,7 @@ def fast_mcd(X, support_fraction=None,
     """
     random_state = check_random_state(random_state)
 
-    X = np.asarray(X)
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. "
-                      "You may want to reshape your data array")
+    X = check_array(X, ensure_min_samples=2, estimator='fast_mcd')
     n_samples, n_features = X.shape
 
     # minimum breakdown value
@@ -392,7 +393,7 @@ def fast_mcd(X, support_fraction=None,
             covariance = np.asarray([[np.var(X[support])]])
             location = np.array([location])
             # get precision matrix in an optimized way
-            precision = pinvh(covariance)
+            precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
         else:
             support = np.ones(n_samples, dtype=bool)
@@ -400,7 +401,7 @@ def fast_mcd(X, support_fraction=None,
             location = np.asarray([np.mean(X)])
             X_centered = X - location
             # get precision matrix in an optimized way
-            precision = pinvh(covariance)
+            precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
 # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
@@ -535,9 +536,11 @@ class MinCovDet(EmpiricalCovariance):
         value of support_fraction will be used within the algorithm:
         [n_sample + n_features + 1] / 2
 
-    random_state : integer or numpy.RandomState, optional
-        The random generator used. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -609,7 +612,7 @@ class MinCovDet(EmpiricalCovariance):
             Returns self.
 
         """
-        X = check_array(X)
+        X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
@@ -626,7 +629,7 @@ class MinCovDet(EmpiricalCovariance):
             raw_covariance = self._nonrobust_covariance(X[raw_support],
                                                         assume_centered=True)
             # get precision matrix in an optimized way
-            precision = pinvh(raw_covariance)
+            precision = linalg.pinvh(raw_covariance)
             raw_dist = np.sum(np.dot(X, precision) * X, 1)
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance

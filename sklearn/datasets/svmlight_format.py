@@ -11,7 +11,7 @@ libsvm command line programs.
 """
 
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
@@ -100,12 +100,12 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     Returns
     -------
-    X: scipy.sparse matrix of shape (n_samples, n_features)
+    X : scipy.sparse matrix of shape (n_samples, n_features)
 
-    y: ndarray of shape (n_samples,), or, in the multilabel a list of
+    y : ndarray of shape (n_samples,), or, in the multilabel a list of
         tuples of length n_samples.
 
-    query_id: array of shape (n_samples,)
+    query_id : array of shape (n_samples,)
        query_id for each sample. Only returned when query_id is set to
        True.
 
@@ -166,7 +166,7 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     data = frombuffer_empty(data, actual_dtype)
     indices = frombuffer_empty(ind, np.intc)
     indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
-    query = frombuffer_empty(query, np.intc)
+    query = frombuffer_empty(query, np.int64)
 
     data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
     return data, indices, indptr, labels, query
@@ -198,7 +198,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         closed by this function. File-like objects must be opened in binary
         mode.
 
-    n_features: int or None
+    n_features : int or None
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
 
@@ -206,11 +206,11 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         in any of the input files, but setting it to a lower value will cause
         an exception to be raised.
 
-    multilabel: boolean, optional
+    multilabel : boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based: boolean or "auto", optional
+    zero_based : boolean or "auto", optional
         Whether column indices in f are zero-based (True) or one-based
         (False). If column indices are one-based, they are transformed to
         zero-based to match Python/NumPy conventions.
@@ -219,13 +219,13 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         are unfortunately not self-identifying. Using "auto" or True should
         always be safe.
 
-    query_id: boolean, defaults to False
+    query_id : boolean, defaults to False
         If True, will return the query_id array for each file.
 
     dtype : numpy data type, default np.float64
         Data type of dataset to be loaded. This will be the data type of the
         output numpy arrays ``X`` and ``y``.
- 
+
     Returns
     -------
     [X1, y1, ..., Xn, yn]
@@ -275,18 +275,20 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     return result
 
 
-def _dump_svmlight(X, y, f, one_based, comment, query_id):
-    is_sp = int(hasattr(X, "tocsr"))
+def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
+    X_is_sp = int(hasattr(X, "tocsr"))
+    y_is_sp = int(hasattr(y, "tocsr"))
     if X.dtype.kind == 'i':
         value_pattern = u("%d:%d")
     else:
         value_pattern = u("%d:%.16g")
 
     if y.dtype.kind == 'i':
-        line_pattern = u("%d")
+        label_pattern = u("%d")
     else:
-        line_pattern = u("%.16g")
+        label_pattern = u("%.16g")
 
+    line_pattern = u("%s")
     if query_id is not None:
         line_pattern += u(" qid:%d")
     line_pattern += u(" %s\n")
@@ -301,7 +303,7 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
         f.writelines(b("# %s\n" % line) for line in comment.splitlines())
 
     for i in range(X.shape[0]):
-        if is_sp:
+        if X_is_sp:
             span = slice(X.indptr[i], X.indptr[i + 1])
             row = zip(X.indices[span], X.data[span])
         else:
@@ -309,14 +311,29 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
             row = zip(np.where(nz)[0], X[i, nz])
 
         s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
-        if query_id is not None:
-            feat = (y[i], query_id[i], s)
+
+        if multilabel:
+            if y_is_sp:
+                nz_labels = y[i].nonzero()[1]
+            else:
+                nz_labels = np.where(y[i] != 0)[0]
+            labels_str = ",".join(label_pattern % j for j in nz_labels)
         else:
-            feat = (y[i], s)
+            if y_is_sp:
+                labels_str = label_pattern % y.data[i]
+            else:
+                labels_str = label_pattern % y[i]
+
+        if query_id is not None:
+            feat = (labels_str, query_id[i], s)
+        else:
+            feat = (labels_str, s)
+
         f.write((line_pattern % feat).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
+def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
+                       multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
 
     This format is a text-based format, with one sample per line. It does
@@ -331,8 +348,10 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape = [n_samples]
-        Target values.
+    y : {array-like, sparse matrix}, shape = [n_samples (, n_labels)]
+        Target values. Class labels must be an
+        integer or float, or array-like objects of integer or float for
+        multilabel classifications.
 
     f : string or file-like in binary mode
         If string, specifies the path that will contain the data.
@@ -354,6 +373,13 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
     query_id : array-like, shape = [n_samples]
         Array containing pairwise preference constraints (qid in svmlight
         format).
+
+    multilabel : boolean, optional
+        Samples may have several labels each (see
+        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+
+        .. versionadded:: 0.17
+           parameter *multilabel* to support multilabel datasets.
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.
@@ -367,19 +393,31 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         if six.b("\0") in comment:
             raise ValueError("comment string contains NUL byte")
 
-    y = np.asarray(y)
-    if y.ndim != 1:
-        raise ValueError("expected y of shape (n_samples,), got %r"
-                         % (y.shape,))
+    yval = check_array(y, accept_sparse='csr', ensure_2d=False)
+    if sp.issparse(yval):
+        if yval.shape[1] != 1 and not multilabel:
+            raise ValueError("expected y of shape (n_samples, 1),"
+                             " got %r" % (yval.shape,))
+    else:
+        if yval.ndim != 1 and not multilabel:
+            raise ValueError("expected y of shape (n_samples,), got %r"
+                             % (yval.shape,))
 
     Xval = check_array(X, accept_sparse='csr')
-    if Xval.shape[0] != y.shape[0]:
+    if Xval.shape[0] != yval.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
-                         " %r and %r instead." % (Xval.shape[0], y.shape[0]))
+                         " %r and %r instead." % (Xval.shape[0], yval.shape[0]))
 
     # We had some issues with CSR matrices with unsorted indices (e.g. #1501),
     # so sort them here, but first make sure we don't modify the user's X.
     # TODO We can do this cheaper; sorted_indices copies the whole matrix.
+    if yval is y and hasattr(yval, "sorted_indices"):
+        y = yval.sorted_indices()
+    else:
+        y = yval
+        if hasattr(y, "sort_indices"):
+            y.sort_indices()
+
     if Xval is X and hasattr(Xval, "sorted_indices"):
         X = Xval.sorted_indices()
     else:
@@ -396,7 +434,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
     one_based = not zero_based
 
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f, one_based, comment, query_id)
+        _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f, one_based, comment, query_id)
+            _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id)

@@ -15,9 +15,10 @@ print(__doc__)
 
 import matplotlib.pyplot as plt
 import numpy as np
+
 from sklearn.datasets import load_digits
 from sklearn.svm import SVC
-from sklearn.learning_curve import validation_curve
+from sklearn.model_selection import validation_curve
 
 digits = load_digits()
 X, y = digits.data, digits.target
@@ -35,12 +36,16 @@ plt.title("Validation Curve with SVM")
 plt.xlabel("$\gamma$")
 plt.ylabel("Score")
 plt.ylim(0.0, 1.1)
-plt.semilogx(param_range, train_scores_mean, label="Training score", color="r")
+lw = 2
+plt.semilogx(param_range, train_scores_mean, label="Training score",
+             color="darkorange", lw=lw)
 plt.fill_between(param_range, train_scores_mean - train_scores_std,
-                 train_scores_mean + train_scores_std, alpha=0.2, color="r")
+                 train_scores_mean + train_scores_std, alpha=0.2,
+                 color="darkorange", lw=lw)
 plt.semilogx(param_range, test_scores_mean, label="Cross-validation score",
-             color="g")
+             color="navy", lw=lw)
 plt.fill_between(param_range, test_scores_mean - test_scores_std,
-                 test_scores_mean + test_scores_std, alpha=0.2, color="g")
+                 test_scores_mean + test_scores_std, alpha=0.2,
+                 color="navy", lw=lw)
 plt.legend(loc="best")
 plt.show()

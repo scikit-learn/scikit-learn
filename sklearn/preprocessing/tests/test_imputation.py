@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy import sparse
 
@@ -5,11 +6,10 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn import grid_search
+from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
 
@@ -91,16 +91,16 @@ def test_imputation_mean_median_only_zero():
     # Test imputation using the mean and median strategies, when
     # missing_values == 0.
     X = np.array([
-        [np.nan, 0, 0,  0,  5],
-        [np.nan, 1, 0,  np.nan,  3],
-        [np.nan, 2, 0,  0, 0],
-        [np.nan, 6, 0,  5,  13],
+        [np.nan, 0, 0, 0, 5],
+        [np.nan, 1, 0, np.nan, 3],
+        [np.nan, 2, 0, 0, 0],
+        [np.nan, 6, 0, 5, 13],
     ])
 
     X_imputed_mean = np.array([
-        [3,  5],
-        [1,  3],
-        [2,  7],
+        [3, 5],
+        [1, 3],
+        [2, 7],
         [6, 13],
     ])
     statistics_mean = [np.nan, 3, np.nan, np.nan, 7]
@@ -121,6 +121,18 @@ def test_imputation_mean_median_only_zero():
                       statistics_median, 0)
 
 
+def safe_median(arr, *args, **kwargs):
+    # np.median([]) raises a TypeError for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.median(arr, *args, **kwargs)
+
+
+def safe_mean(arr, *args, **kwargs):
+    # np.mean([]) raises a RuntimeWarning for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.mean(arr, *args, **kwargs)
+
+
 def test_imputation_mean_median():
     # Test imputation using the mean and median strategies, when
     # missing_values != 0.
@@ -131,12 +143,12 @@ def test_imputation_mean_median():
     shape = (dim * dim, dim + dec)
 
     zeros = np.zeros(shape[0])
-    values = np.arange(1, shape[0]+1)
+    values = np.arange(1, shape[0] + 1)
     values[4::2] = - values[4::2]
 
-    tests = [("mean", "NaN", lambda z, v, p: np.mean(np.hstack((z, v)))),
+    tests = [("mean", "NaN", lambda z, v, p: safe_mean(np.hstack((z, v)))),
              ("mean", 0, lambda z, v, p: np.mean(v)),
-             ("median", "NaN", lambda z, v, p: np.median(np.hstack((z, v)))),
+             ("median", "NaN", lambda z, v, p: safe_median(np.hstack((z, v)))),
              ("median", 0, lambda z, v, p: np.median(v))]
 
     for strategy, test_missing_values, true_value_fun in tests:
@@ -223,17 +235,17 @@ def test_imputation_median_special_cases():
 def test_imputation_most_frequent():
     # Test imputation using the most-frequent strategy.
     X = np.array([
-        [-1, -1,  0,  5],
-        [-1,  2, -1,  3],
-        [-1,  1,  3, -1],
-        [-1,  2,  3,  7],
+        [-1, -1, 0, 5],
+        [-1, 2, -1, 3],
+        [-1, 1, 3, -1],
+        [-1, 2, 3, 7],
     ])
 
     X_true = np.array([
-        [2,  0,  5],
-        [2,  3,  3],
-        [1,  3,  3],
-        [2,  3,  7],
+        [2, 0, 5],
+        [2, 3, 3],
+        [1, 3, 3],
+        [2, 3, 7],
     ])
 
     # scipy.stats.mode, used in Imputer, doesn't return the first most
@@ -256,7 +268,7 @@ def test_imputation_pipeline_grid_search():
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
     Y = sparse_random_matrix(l, 1, density=0.10).toarray()
-    gs = grid_search.GridSearchCV(pipeline, parameters)
+    gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
 
@@ -302,7 +314,7 @@ def test_imputation_copy():
     imputer = Imputer(missing_values=0, strategy="mean", copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
-    assert_true(np.all(X == Xt))
+    assert_array_equal(X, Xt)
 
     # copy=False, sparse csr, axis=1 => no copy
     X = X_orig.copy()
@@ -310,7 +322,7 @@ def test_imputation_copy():
                       copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert_true(np.all(X.data == Xt.data))
+    assert_array_equal(X.data, Xt.data)
 
     # copy=False, sparse csc, axis=0 => no copy
     X = X_orig.copy().tocsc()
@@ -318,7 +330,7 @@ def test_imputation_copy():
                       copy=False, axis=0)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
-    assert_true(np.all(X.data == Xt.data))
+    assert_array_equal(X.data, Xt.data)
 
     # copy=False, sparse csr, axis=0 => copy
     X = X_orig.copy()

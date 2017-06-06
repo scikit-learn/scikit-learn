@@ -42,10 +42,11 @@ distributed data sets:
 
 References
 ----------
-.. [1] P. J. Rousseeuw. Least median of squares regression. J. Am
-    Stat Ass, 79:871, 1984.
-.. [2] Johanna Hardin, David M Rocke. Journal of Computational and
-    Graphical Statistics. December 1, 2005, 14(4): 928-946.
+.. [1] P. J. Rousseeuw. Least median of squares regression. Journal of American
+    Statistical Ass., 79:871, 1984.
+.. [2] Johanna Hardin, David M Rocke. The distribution of robust distances.
+    Journal of Computational and Graphical Statistics. December 1, 2005,
+    14(4): 928-946.
 .. [3] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
     estimation in signal processing: A tutorial-style treatment of
     fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
@@ -66,7 +67,7 @@ repeat = 10
 
 range_n_outliers = np.concatenate(
     (np.linspace(0, n_samples / 8, 5),
-     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1]))
+     np.linspace(n_samples / 8, n_samples / 2, 5)[1:-1])).astype(np.int)
 
 # definition of arrays to store results
 err_loc_mcd = np.zeros((range_n_outliers.size, repeat))
@@ -115,15 +116,16 @@ for i, n_outliers in enumerate(range_n_outliers):
 # Display results
 font_prop = matplotlib.font_manager.FontProperties(size=11)
 plt.subplot(2, 1, 1)
+lw = 2
 plt.errorbar(range_n_outliers, err_loc_mcd.mean(1),
              yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
-             label="Robust location", color='m')
+             label="Robust location", lw=lw, color='m')
 plt.errorbar(range_n_outliers, err_loc_emp_full.mean(1),
              yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
-             label="Full data set mean", color='green')
+             label="Full data set mean", lw=lw, color='green')
 plt.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
              yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
-             label="Pure data set mean", color='black')
+             label="Pure data set mean", lw=lw, color='black')
 plt.title("Influence of outliers on the location estimation")
 plt.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)")
 plt.legend(loc="upper left", prop=font_prop)
@@ -133,13 +135,13 @@ x_size = range_n_outliers.size
 plt.errorbar(range_n_outliers, err_cov_mcd.mean(1),
              yerr=err_cov_mcd.std(1),
              label="Robust covariance (mcd)", color='m')
-plt.errorbar(range_n_outliers[:(x_size / 5 + 1)],
-             err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
-             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
+plt.errorbar(range_n_outliers[:(x_size // 5 + 1)],
+             err_cov_emp_full.mean(1)[:(x_size // 5 + 1)],
+             yerr=err_cov_emp_full.std(1)[:(x_size // 5 + 1)],
              label="Full data set empirical covariance", color='green')
-plt.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
-         err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
-         ls='--')
+plt.plot(range_n_outliers[(x_size // 5):(x_size // 2 - 1)],
+         err_cov_emp_full.mean(1)[(x_size // 5):(x_size // 2 - 1)],
+         color='green', ls='--')
 plt.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
              yerr=err_cov_emp_pure.std(1),
              label="Pure data set empirical covariance", color='black')

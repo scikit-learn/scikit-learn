@@ -17,7 +17,7 @@ def test_zero_variance():
         sel = VarianceThreshold().fit(X)
         assert_array_equal([0, 1, 3, 4], sel.get_support(indices=True))
 
-    assert_raises(ValueError, VarianceThreshold().fit, [0, 1, 2, 3])
+    assert_raises(ValueError, VarianceThreshold().fit, [[0, 1, 2, 3]])
     assert_raises(ValueError, VarianceThreshold().fit, [[0, 1], [0, 1]])
 
 

@@ -2,6 +2,7 @@
 
 import os
 import tarfile
+from contextlib import closing
 
 try:
     from urllib import urlopen
@@ -21,9 +22,10 @@ if not os.path.exists(TRAIN_FOLDER) or not os.path.exists(TEST_FOLDER):
     if not os.path.exists(ARCHIVE_NAME):
         print("Downloading dataset from %s (14 MB)" % URL)
         opener = urlopen(URL)
-        open(ARCHIVE_NAME, 'wb').write(opener.read())
+        with open(ARCHIVE_NAME, 'wb') as archive:
+            archive.write(opener.read())
 
     print("Decompressing %s" % ARCHIVE_NAME)
-    tarfile.open(ARCHIVE_NAME, "r:gz").extractall(path='.')
+    with closing(tarfile.open(ARCHIVE_NAME, "r:gz")) as archive:
+        archive.extractall(path='.')
     os.remove(ARCHIVE_NAME)
-

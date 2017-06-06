@@ -41,14 +41,14 @@ indices = np.argsort(importances)[::-1]
 # Print the feature ranking
 print("Feature ranking:")
 
-for f in range(10):
+for f in range(X.shape[1]):
     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
 # Plot the feature importances of the forest
 plt.figure()
 plt.title("Feature importances")
-plt.bar(range(10), importances[indices],
+plt.bar(range(X.shape[1]), importances[indices],
        color="r", yerr=std[indices], align="center")
-plt.xticks(range(10), indices)
-plt.xlim([-1, 10])
+plt.xticks(range(X.shape[1]), indices)
+plt.xlim([-1, X.shape[1]])
 plt.show()

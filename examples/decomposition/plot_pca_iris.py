@@ -8,7 +8,7 @@ PCA example with Iris Data-set
 
 Principal Component Analysis applied to the Iris dataset.
 
-See `here <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
+See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
 information on this dataset.
 
 """
@@ -50,18 +50,8 @@ for name, label in [('Setosa', 0), ('Versicolour', 1), ('Virginica', 2)]:
               bbox=dict(alpha=.5, edgecolor='w', facecolor='w'))
 # Reorder the labels to have colors matching the cluster results
 y = np.choose(y, [1, 2, 0]).astype(np.float)
-ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.spectral)
-
-x_surf = [X[:, 0].min(), X[:, 0].max(),
-          X[:, 0].min(), X[:, 0].max()]
-y_surf = [X[:, 0].max(), X[:, 0].max(),
-          X[:, 0].min(), X[:, 0].min()]
-x_surf = np.array(x_surf)
-y_surf = np.array(y_surf)
-v0 = pca.transform(pca.components_[0])
-v0 /= v0[-1]
-v1 = pca.transform(pca.components_[1])
-v1 /= v1[-1]
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.spectral,
+           edgecolor='k')
 
 ax.w_xaxis.set_ticklabels([])
 ax.w_yaxis.set_ticklabels([])

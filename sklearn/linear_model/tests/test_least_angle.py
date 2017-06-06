@@ -1,14 +1,8 @@
-import tempfile
-import shutil
-import os.path as op
-import warnings
-from nose.tools import assert_equal
-
 import numpy as np
 from scipy import linalg
 
-from sklearn.cross_validation import train_test_split
-from sklearn.externals import joblib
+from sklearn.model_selection import train_test_split
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
@@ -16,7 +10,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings, assert_warns
-from sklearn.utils import ConvergenceWarning
+from sklearn.utils.testing import TempMemmap
+from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model.least_angle import _lars_path_residues
 
@@ -112,6 +107,7 @@ def test_collinearity():
                   [2., 2., 0.],
                   [1., 1., 0]])
     y = np.array([1., 0., 0])
+    rng = np.random.RandomState(0)
 
     f = ignore_warnings
     _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
@@ -120,7 +116,7 @@ def test_collinearity():
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
 
     n_samples = 10
-    X = np.random.rand(n_samples, 5)
+    X = rng.rand(n_samples, 5)
     y = np.zeros(n_samples)
     _, _, coef_path_ = linear_model.lars_path(X, y, Gram='auto', copy_X=False,
                                               copy_Gram=False, alpha_min=0.,
@@ -157,7 +153,8 @@ def test_no_path_precomputed():
 
 
 def test_no_path_all_precomputed():
-    # Test that the ``return_path=False`` option with Gram and Xy remains correct
+    # Test that the ``return_path=False`` option with Gram and Xy remains
+    # correct
     X, y = 3 * diabetes.data, diabetes.target
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
@@ -185,13 +182,13 @@ def test_rank_deficient_design():
     # deficient input data (with n_features < rank) in the same way
     # as coordinate descent Lasso
     y = [5, 0, 5]
-    for X in ([[5,   0],
-               [0,   5],
+    for X in ([[5, 0],
+               [0, 5],
                [10, 10]],
 
-              [[10,     10,  0],
-               [1e-32,   0,  0],
-               [0,       0,  1]],
+              [[10, 10, 0],
+               [1e-32, 0, 0],
+               [0, 0, 1]],
               ):
         # To be able to use the coefs to compute the objective function,
         # we need to turn off normalization
@@ -249,20 +246,20 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     # same results when early stopping is used.
     # (test : before, in the middle, and in the last part of the path)
     alphas_min = [10, 0.9, 1e-4]
-    for alphas_min in alphas_min:
+
+    for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                       alpha_min=0.9)
+                                                       alpha_min=alpha_min)
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
-    alphas_min = [10, 0.9, 1e-4]
     # same test, with normalization
-    for alphas_min in alphas_min:
+    for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                       alpha_min=0.9)
+                                                       alpha_min=alpha_min)
         lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True,
                                       tol=1e-8)
         lasso_cd.alpha = alphas[-1]
@@ -321,9 +318,9 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     # Note it used to be the case that Lars had to use the drop for good
     # strategy for this but this is no longer the case with the
     # equality_tolerance checks
-    X = [[1e20,  1e20,  0],
-         [-1e-32,  0,  0],
-         [1,       1,  1]]
+    X = [[1e20, 1e20, 0],
+         [-1e-32, 0, 0],
+         [1, 1, 1]]
     y = [10, 10, 1]
     alpha = .0001
 
@@ -336,7 +333,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
-    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
+    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-4, normalize=False)
     cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = objective_function(cd_coef_)
 
@@ -363,17 +360,23 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert_equal(len(lars.alphas_), 7)
 
 
+@ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
     X = diabetes.data
     Y = np.vstack([diabetes.target, diabetes.target ** 2]).T
     n_targets = Y.shape[1]
+    estimators = [
+        linear_model.LassoLars(),
+        linear_model.Lars(),
+        # regression test for gh-1615
+        linear_model.LassoLars(fit_intercept=False),
+        linear_model.Lars(fit_intercept=False),
+    ]
 
-    for estimator in (linear_model.LassoLars(), linear_model.Lars()):
+    for estimator in estimators:
         estimator.fit(X, Y)
         Y_pred = estimator.predict(X)
-        Y_dec = estimator.decision_function(X)
-        assert_array_almost_equal(Y_pred, Y_dec)
         alphas, active, coef, path = (estimator.alphas_, estimator.active_,
                                       estimator.coef_, estimator.coef_path_)
         for k in range(n_targets):
@@ -389,7 +392,7 @@ def test_multitarget():
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
-    # This property is not actually garantied in general and is just a
+    # This property is not actually guaranteed in general and is just a
     # property of the given dataset, with the given steps chosen.
     old_alpha = 0
     lars_cv = linear_model.LassoLarsCV()
@@ -440,19 +443,204 @@ def test_lars_path_readonly_data():
     # This is a non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/4597
     splitted_data = train_test_split(X, y, random_state=42)
-    temp_folder = tempfile.mkdtemp()
-    try:
-        fpath = op.join(temp_folder, 'data.pkl')
-        joblib.dump(splitted_data, fpath)
-        X_train, X_test, y_train, y_test = joblib.load(fpath, mmap_mode='r')
-
+    with TempMemmap(splitted_data) as (X_train, X_test, y_train, y_test):
         # The following should not fail despite copy=False
         _lars_path_residues(X_train, y_train, X_test, y_test, copy=False)
-    finally:
-        # try to release the mmap file handle in time to be able to delete
-        # the temporary folder under windows
-        del X_train, X_test, y_train, y_test
-        try:
-            shutil.rmtree(temp_folder)
-        except shutil.WindowsError:
-            warnings.warn("Could not delete temporary folder %s" % temp_folder)
+
+
+def test_lars_path_positive_constraint():
+    # this is the main test for the positive parameter on the lars_path method
+    # the estimator classes just make use of this function
+
+    # we do the test on the diabetes dataset
+
+    # ensure that we get negative coefficients when positive=False
+    # and all positive when positive=True
+    # for method 'lar' (default) and lasso
+    for method in ['lar', 'lasso']:
+        alpha, active, coefs = \
+            linear_model.lars_path(diabetes['data'], diabetes['target'],
+                                   return_path=True, method=method,
+                                   positive=False)
+        assert_true(coefs.min() < 0)
+
+        alpha, active, coefs = \
+            linear_model.lars_path(diabetes['data'], diabetes['target'],
+                                   return_path=True, method=method,
+                                   positive=True)
+        assert_true(coefs.min() >= 0)
+
+
+# now we gonna test the positive option for all estimator classes
+
+default_parameter = {'fit_intercept': False}
+
+estimator_parameter_map = {'Lars': {'n_nonzero_coefs': 5},
+                           'LassoLars': {'alpha': 0.1},
+                           'LarsCV': {},
+                           'LassoLarsCV': {},
+                           'LassoLarsIC': {}}
+
+
+def test_estimatorclasses_positive_constraint():
+    # testing the transmissibility for the positive option of all estimator
+    # classes in this same function here
+
+    for estname in estimator_parameter_map:
+        params = default_parameter.copy()
+        params.update(estimator_parameter_map[estname])
+        estimator = getattr(linear_model, estname)(positive=False, **params)
+        estimator.fit(diabetes['data'], diabetes['target'])
+        assert_true(estimator.coef_.min() < 0)
+        estimator = getattr(linear_model, estname)(positive=True, **params)
+        estimator.fit(diabetes['data'], diabetes['target'])
+        assert_true(min(estimator.coef_) >= 0)
+
+
+def test_lasso_lars_vs_lasso_cd_positive(verbose=False):
+    # Test that LassoLars and Lasso using coordinate descent give the
+    # same results when using the positive option
+
+    # This test is basically a copy of the above with additional positive
+    # option. However for the middle part, the comparison of coefficient values
+    # for a range of alphas, we had to make an adaptations. See below.
+
+    # not normalized data
+    X = 3 * diabetes.data
+
+    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
+                                                   positive=True)
+    lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8, positive=True)
+    for c, a in zip(lasso_path.T, alphas):
+        if a == 0:
+            continue
+        lasso_cd.alpha = a
+        lasso_cd.fit(X, y)
+        error = linalg.norm(c - lasso_cd.coef_)
+        assert_less(error, 0.01)
+
+    # The range of alphas chosen for coefficient comparison here is restricted
+    # as compared with the above test without the positive option. This is due
+    # to the circumstance that the Lars-Lasso algorithm does not converge to
+    # the least-squares-solution for small alphas, see 'Least Angle Regression'
+    # by Efron et al 2004. The coefficients are typically in congruence up to
+    # the smallest alpha reached by the Lars-Lasso algorithm and start to
+    # diverge thereafter.  See
+    # https://gist.github.com/michigraber/7e7d7c75eca694c7a6ff
+
+    for alpha in np.linspace(6e-1, 1 - 1e-2, 20):
+        clf1 = linear_model.LassoLars(fit_intercept=False, alpha=alpha,
+                                      normalize=False, positive=True).fit(X, y)
+        clf2 = linear_model.Lasso(fit_intercept=False, alpha=alpha, tol=1e-8,
+                                  normalize=False, positive=True).fit(X, y)
+        err = linalg.norm(clf1.coef_ - clf2.coef_)
+        assert_less(err, 1e-3)
+
+    # normalized data
+    X = diabetes.data
+    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
+                                                   positive=True)
+    lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
+                                  tol=1e-8, positive=True)
+    for c, a in zip(lasso_path.T[:-1], alphas[:-1]):  # don't include alpha=0
+        lasso_cd.alpha = a
+        lasso_cd.fit(X, y)
+        error = linalg.norm(c - lasso_cd.coef_)
+        assert_less(error, 0.01)
+
+
+def test_lasso_lars_vs_R_implementation():
+    # Test that sklearn LassoLars implementation agrees with the LassoLars
+    # implementation available in R (lars library) under the following
+    # scenarios:
+    # 1) fit_intercept=False and normalize=False
+    # 2) fit_intercept=True and normalize=True
+
+    # Let's generate the data used in the bug report 7778
+    y = np.array([-6.45006793, -3.51251449, -8.52445396, 6.12277822,
+                  -19.42109366])
+    x = np.array([[0.47299829, 0, 0, 0, 0],
+                  [0.08239882, 0.85784863, 0, 0, 0],
+                  [0.30114139, -0.07501577, 0.80895216, 0, 0],
+                  [-0.01460346, -0.1015233, 0.0407278, 0.80338378, 0],
+                  [-0.69363927, 0.06754067, 0.18064514, -0.0803561,
+                   0.40427291]])
+
+    X = x.T
+
+    ###########################################################################
+    # Scenario 1: Let's compare R vs sklearn when fit_intercept=False and
+    # normalize=False
+    ###########################################################################
+    #
+    # The R result was obtained using the following code:
+    #
+    # library(lars)
+    # model_lasso_lars = lars(X, t(y), type="lasso", intercept=FALSE,
+    #                         trace=TRUE, normalize=FALSE)
+    # r = t(model_lasso_lars$beta)
+    #
+
+    r = np.array([[0, 0, 0, 0, 0, -79.810362809499026, -83.528788732782829,
+                   -83.777653739190711, -83.784156932888934,
+                   -84.033390591756657],
+                  [0, 0, 0, 0, -0.476624256777266, 0, 0, 0, 0,
+                   0.025219751009936],
+                  [0, -3.577397088285891, -4.702795355871871,
+                   -7.016748621359461, -7.614898471899412, -0.336938391359179,
+                   0, 0, 0.001213370600853,  0.048162321585148],
+                  [0, 0, 0, 2.231558436628169, 2.723267514525966,
+                   2.811549786389614, 2.813766976061531, 2.817462468949557,
+                   2.817368178703816, 2.816221090636795],
+                  [0, 0, -1.218422599914637, -3.457726183014808,
+                   -4.021304522060710, -45.827461592423745,
+                   -47.776608869312305,
+                   -47.911561610746404, -47.914845922736234,
+                   -48.039562334265717]])
+
+    model_lasso_lars = linear_model.LassoLars(alpha=0, fit_intercept=False,
+                                              normalize=False)
+    model_lasso_lars.fit(X, y)
+    skl_betas = model_lasso_lars.coef_path_
+
+    assert_array_almost_equal(r, skl_betas, decimal=12)
+    ###########################################################################
+
+    ###########################################################################
+    # Scenario 2: Let's compare R vs sklearn when fit_intercept=True and
+    # normalize=True
+    #
+    # Note: When normalize is equal to True, R returns the coefficients in
+    # their original units, that is, they are rescaled back, whereas sklearn
+    # does not do that, therefore, we need to do this step before comparing
+    # their results.
+    ###########################################################################
+    #
+    # The R result was obtained using the following code:
+    #
+    # library(lars)
+    # model_lasso_lars2 = lars(X, t(y), type="lasso", intercept=TRUE,
+    #                           trace=TRUE, normalize=TRUE)
+    # r2 = t(model_lasso_lars2$beta)
+
+    r2 = np.array([[0, 0, 0, 0, 0],
+                   [0, 0, 0, 8.371887668009453, 19.463768371044026],
+                   [0, 0, 0, 0, 9.901611055290553],
+                   [0, 7.495923132833733, 9.245133544334507,
+                    17.389369207545062, 26.971656815643499],
+                   [0, 0, -1.569380717440311, -5.924804108067312,
+                    -7.996385265061972]])
+
+    model_lasso_lars2 = linear_model.LassoLars(alpha=0, fit_intercept=True,
+                                               normalize=True)
+    model_lasso_lars2.fit(X, y)
+    skl_betas2 = model_lasso_lars2.coef_path_
+
+    # Let's rescale back the coefficients returned by sklearn before comparing
+    # against the R result (read the note above)
+    temp = X - np.mean(X, axis=0)
+    normx = np.sqrt(np.sum(temp ** 2, axis=0))
+    skl_betas2 /= normx[:, np.newaxis]
+
+    assert_array_almost_equal(r2, skl_betas2, decimal=12)
+    ###########################################################################

@@ -12,9 +12,11 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, DataConversionWarning)
+                         check_symmetric)
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
+from ..exceptions import DataConversionWarning
+from .deprecation import deprecated
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -23,89 +25,53 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric"]
+           "check_symmetric", "indices_to_mask", "deprecated"]
 
 
-class deprecated(object):
-    """Decorator to mark a function or class as deprecated.
+class Bunch(dict):
+    """Container object for datasets
 
-    Issue a warning when the function is called/the class is instantiated and
-    adds a warning to the docstring.
+    Dictionary-like object that exposes its keys as attributes.
 
-    The optional extra argument will be appended to the deprecation message
-    and the docstring. Note: to use this with the default value for extra, put
-    in an empty of parentheses:
+    >>> b = Bunch(a=1, b=2)
+    >>> b['b']
+    2
+    >>> b.b
+    2
+    >>> b.a = 3
+    >>> b['a']
+    3
+    >>> b.c = 6
+    >>> b['c']
+    6
 
-    >>> from sklearn.utils import deprecated
-    >>> deprecated() # doctest: +ELLIPSIS
-    <sklearn.utils.deprecated object at ...>
-
-    >>> @deprecated()
-    ... def some_function(): pass
     """
 
-    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
-    # but with many changes.
+    def __init__(self, **kwargs):
+        super(Bunch, self).__init__(kwargs)
 
-    def __init__(self, extra=''):
-        """
-        Parameters
-        ----------
-        extra: string
-          to be added to the deprecation messages
+    def __setattr__(self, key, value):
+        self[key] = value
 
-        """
-        self.extra = extra
+    def __dir__(self):
+        return self.keys()
 
-    def __call__(self, obj):
-        if isinstance(obj, type):
-            return self._decorate_class(obj)
-        else:
-            return self._decorate_fun(obj)
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
 
-    def _decorate_class(self, cls):
-        msg = "Class %s is deprecated" % cls.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
-        # FIXME: we should probably reset __new__ for full generality
-        init = cls.__init__
-
-        def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
-            return init(*args, **kwargs)
-        cls.__init__ = wrapped
-
-        wrapped.__name__ = '__init__'
-        wrapped.__doc__ = self._update_doc(init.__doc__)
-        wrapped.deprecated_original = init
-
-        return cls
-
-    def _decorate_fun(self, fun):
-        """Decorate function fun"""
-
-        msg = "Function %s is deprecated" % fun.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
-        def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
-            return fun(*args, **kwargs)
-
-        wrapped.__name__ = fun.__name__
-        wrapped.__dict__ = fun.__dict__
-        wrapped.__doc__ = self._update_doc(fun.__doc__)
-
-        return wrapped
-
-    def _update_doc(self, olddoc):
-        newdoc = "DEPRECATED"
-        if self.extra:
-            newdoc = "%s: %s" % (newdoc, self.extra)
-        if olddoc:
-            newdoc = "%s\n\n%s" % (newdoc, olddoc)
-        return newdoc
+    def __setstate__(self, state):
+        # Bunch pickles generated with scikit-learn 0.16.* have an non
+        # empty __dict__. This causes a surprising behaviour when
+        # loading these pickles scikit-learn 0.17: reading bunch.key
+        # uses __dict__ but assigning to bunch.key use __setattr__ and
+        # only changes bunch['key']. More details can be found at:
+        # https://github.com/scikit-learn/scikit-learn/issues/6196.
+        # Overriding __setstate__ to be a noop has the effect of
+        # ignoring the pickled __dict__
+        pass
 
 
 def safe_mask(X, mask):
@@ -116,7 +82,7 @@ def safe_mask(X, mask):
     X : {array-like, sparse matrix}
         Data on which to apply mask.
 
-    mask: array
+    mask : array
         Mask to be used on X.
 
     Returns
@@ -131,6 +97,26 @@ def safe_mask(X, mask):
         ind = np.arange(mask.shape[0])
         mask = ind[mask]
     return mask
+
+
+def axis0_safe_slice(X, mask, len_mask):
+    """
+    This mask is safer than safe_mask since it returns an
+    empty array, when a sparse matrix is sliced with a boolean mask
+    with all False, instead of raising an unhelpful error in older
+    versions of SciPy.
+
+    See: https://github.com/scipy/scipy/issues/5361
+
+    Also note that we can avoid doing the dot product by checking if
+    the len_mask is not zero in _huber_loss_and_gradient but this
+    is not going to be the bottleneck, since the number of outliers
+    and non_outliers are typically non-zero and it makes the code
+    tougher to follow.
+    """
+    if len_mask != 0:
+        return X[safe_mask(X, mask), :]
+    return np.zeros(shape=(0, X.shape[1]))
 
 
 def safe_indexing(X, indices):
@@ -193,9 +179,15 @@ def resample(*arrays, **options):
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
+        If replace is False it should not be larger than the length of
+        arrays.
 
-    random_state : int or RandomState instance
-        Control the shuffling for reproducible behavior.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Returns
     -------
@@ -254,10 +246,10 @@ def resample(*arrays, **options):
 
     if max_n_samples is None:
         max_n_samples = n_samples
-
-    if max_n_samples > n_samples:
-        raise ValueError("Cannot sample %d out of arrays with dim %d" % (
-            max_n_samples, n_samples))
+    elif (max_n_samples > n_samples) and (not replace):
+        raise ValueError("Cannot sample %d out of arrays with dim %d "
+                         "when replace is False" % (max_n_samples,
+                                                    n_samples))
 
     check_consistent_length(*arrays)
 
@@ -290,8 +282,12 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    random_state : int or RandomState instance
-        Control the shuffling for reproducible behavior.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
@@ -358,7 +354,7 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()
@@ -416,7 +412,8 @@ def gen_even_slices(n, n_packs, n_samples=None):
     """
     start = 0
     if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
+        raise ValueError("gen_even_slices got n_packs=%s, must be >=1"
+                         % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
@@ -478,9 +475,25 @@ def tosequence(x):
         return list(x)
 
 
-class ConvergenceWarning(UserWarning):
-    """Custom warning to capture convergence problems"""
+def indices_to_mask(indices, mask_length):
+    """Convert list of indices to boolean mask.
 
+    Parameters
+    ----------
+    indices : list-like
+        List of integers treated as indices.
+    mask_length : int
+        Length of boolean mask to be generated.
 
-class DataDimensionalityWarning(UserWarning):
-    """Custom warning to notify potential issues with data dimensionality"""
+    Returns
+    -------
+    mask : 1d boolean nd-array
+        Boolean array that is True where indices are present, else False.
+    """
+    if mask_length <= np.max(indices):
+        raise ValueError("mask_length must be greater than max(indices)")
+
+    mask = np.zeros(mask_length, dtype=np.bool)
+    mask[indices] = True
+
+    return mask

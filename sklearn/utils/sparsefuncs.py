@@ -1,13 +1,16 @@
 # Authors: Manoj Kumar
 #          Thomas Unterthiner
-
+#          Giorgio Patrini
+#
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
 
 from .fixes import sparse_min_max, bincount
-from .sparsefuncs_fast import csr_mean_variance_axis0 as _csr_mean_var_axis0
-from .sparsefuncs_fast import csc_mean_variance_axis0 as _csc_mean_var_axis0
+from .sparsefuncs_fast import (
+    csr_mean_variance_axis0 as _csr_mean_var_axis0,
+    csc_mean_variance_axis0 as _csc_mean_var_axis0,
+    incr_mean_variance_axis0 as _incr_mean_var_axis0)
 
 
 def _raise_typeerror(X):
@@ -15,6 +18,12 @@ def _raise_typeerror(X):
     input_type = X.format if sp.issparse(X) else type(X)
     err = "Expected a CSR or CSC sparse matrix, got %s." % input_type
     raise TypeError(err)
+
+
+def _raise_error_wrong_axis(axis):
+    if axis not in (0, 1):
+        raise ValueError(
+            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
 
 
 def inplace_csr_column_scale(X, scale):
@@ -54,29 +63,27 @@ def inplace_csr_row_scale(X, scale):
 
 
 def mean_variance_axis(X, axis):
-    """Compute mean and variance along axis 0 on a CSR or CSC matrix
+    """Compute mean and variance along an axix on a CSR or CSC matrix
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
     Returns
     -------
 
-    means: float array with shape (n_features,)
+    means : float array with shape (n_features,)
         Feature-wise means
 
-    variances: float array with shape (n_features,)
+    variances : float array with shape (n_features,)
         Feature-wise variances
 
     """
-    if axis not in (0, 1):
-        raise ValueError(
-            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
+    _raise_error_wrong_axis(axis)
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
@@ -92,6 +99,65 @@ def mean_variance_axis(X, axis):
         _raise_typeerror(X)
 
 
+def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
+    """Compute incremental mean and variance along an axix on a CSR or
+    CSC matrix.
+
+    last_mean, last_var are the statistics computed at the last step by this
+    function. Both must be initilized to 0-arrays of the proper size, i.e.
+    the number of features in X. last_n is the number of samples encountered
+    until now.
+
+    Parameters
+    ----------
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    axis : int (either 0 or 1)
+        Axis along which the axis should be computed.
+
+    last_mean : float array with shape (n_features,)
+        Array of feature-wise means to update with the new data X.
+
+    last_var : float array with shape (n_features,)
+        Array of feature-wise var to update with the new data X.
+
+    last_n : int
+        Number of samples seen so far, excluded X.
+
+    Returns
+    -------
+
+    means : float array with shape (n_features,)
+        Updated feature-wise means.
+
+    variances : float array with shape (n_features,)
+        Updated feature-wise variances.
+
+    n : int
+        Updated number of seen samples.
+
+    """
+    _raise_error_wrong_axis(axis)
+
+    if isinstance(X, sp.csr_matrix):
+        if axis == 0:
+            return _incr_mean_var_axis0(X, last_mean=last_mean,
+                                        last_var=last_var, last_n=last_n)
+        else:
+            return _incr_mean_var_axis0(X.T, last_mean=last_mean,
+                                        last_var=last_var, last_n=last_n)
+    elif isinstance(X, sp.csc_matrix):
+        if axis == 0:
+            return _incr_mean_var_axis0(X, last_mean=last_mean,
+                                        last_var=last_var, last_n=last_n)
+        else:
+            return _incr_mean_var_axis0(X.T, last_mean=last_mean,
+                                        last_var=last_var, last_n=last_n)
+    else:
+        _raise_typeerror(X)
+
+
 def inplace_column_scale(X, scale):
     """Inplace column scaling of a CSC/CSR matrix.
 
@@ -100,10 +166,10 @@ def inplace_column_scale(X, scale):
 
     Parameters
     ----------
-    X: CSC or CSR matrix with shape (n_samples, n_features)
+    X : CSC or CSR matrix with shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    scale: float array with shape (n_features,)
+    scale : float array with shape (n_features,)
         Array of precomputed feature-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
@@ -142,13 +208,13 @@ def inplace_swap_row_csc(X, m, n):
 
     Parameters
     ----------
-    X: scipy.sparse.csc_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     for t in [m, n]:
@@ -171,13 +237,13 @@ def inplace_swap_row_csr(X, m, n):
 
     Parameters
     ----------
-    X: scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     for t in [m, n]:
@@ -229,10 +295,10 @@ def inplace_swap_row(X, m, n):
     X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
         Matrix whose two rows are to be swapped.
 
-    m: int
+    m : int
         Index of the row of X to be swapped.
 
-    n: int
+    n : int
         Index of the row of X to be swapped.
     """
     if isinstance(X, sp.csc_matrix):
@@ -252,7 +318,7 @@ def inplace_swap_column(X, m, n):
     X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
         Matrix whose two columns are to be swapped.
 
-    m: int
+    m : int
         Index of the column of X to be swapped.
 
     n : int
@@ -278,16 +344,16 @@ def min_max_axis(X, axis):
     X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    axis: int (either 0 or 1)
+    axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
     Returns
     -------
 
-    mins: float array with shape (n_features,)
+    mins : float array with shape (n_features,)
         Feature-wise minima
 
-    maxs: float array with shape (n_features,)
+    maxs : float array with shape (n_features,)
         Feature-wise maxima
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
@@ -384,7 +450,7 @@ def csc_median_axis_0(X):
     Returns
     -------
     median : ndarray, shape (n_features,)
-        Median. 
+        Median.
 
     """
     if not isinstance(X, sp.csc_matrix):

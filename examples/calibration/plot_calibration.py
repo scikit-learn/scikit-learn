@@ -11,7 +11,7 @@ while others being under-confident. Thus, a separate calibration of predicted
 probabilities is often desirable as a postprocessing. This example illustrates
 two different methods for this calibration and evaluates the quality of the
 returned probabilities using Brier's score
-(see http://en.wikipedia.org/wiki/Brier_score).
+(see https://en.wikipedia.org/wiki/Brier_score).
 
 Compared are the estimated probability using a Gaussian naive Bayes classifier
 without calibration, with a sigmoid calibration, and with a non-parametric
@@ -36,7 +36,7 @@ from sklearn.datasets import make_blobs
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 
 n_samples = 50000

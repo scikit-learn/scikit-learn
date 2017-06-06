@@ -8,6 +8,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
+import warnings
 import sys
 
 import numpy as np
@@ -33,9 +34,6 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler,
-                                 ChangedBehaviorWarning)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -44,7 +42,17 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
+from sklearn.linear_model import Ridge
+
+from sklearn.exceptions import ChangedBehaviorWarning
+from sklearn.exceptions import FitFailedWarning
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
+                                     ParameterGrid, ParameterSampler)
+    from sklearn.cross_validation import KFold, StratifiedKFold
+
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -63,9 +71,14 @@ class MockClassifier(object):
     def predict(self, T):
         return T.shape[0]
 
+    def transform(self, X):
+        return X - self.foo_param
+
+    def inverse_transform(self, X):
+        return X + self.foo_param
+
     predict_proba = predict
     decision_function = predict
-    transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -92,6 +105,10 @@ X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
 
 
+def assert_grid_iter_equals_getitem(grid):
+    assert_equal(list(grid), [grid[i] for i in range(len(grid))])
+
+
 def test_parameter_grid():
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
@@ -99,6 +116,7 @@ def test_parameter_grid():
     assert_true(isinstance(grid1, Iterable))
     assert_true(isinstance(grid1, Sized))
     assert_equal(len(grid1), 3)
+    assert_grid_iter_equals_getitem(grid1)
 
     params2 = {"foo": [4, 2],
                "bar": ["ham", "spam", "eggs"]}
@@ -113,14 +131,19 @@ def test_parameter_grid():
                      set(("bar", x, "foo", y)
                          for x, y in product(params2["bar"], params2["foo"])))
 
+    assert_grid_iter_equals_getitem(grid2)
+
     # Special case: empty grid (useful to get default estimator settings)
     empty = ParameterGrid({})
     assert_equal(len(empty), 1)
     assert_equal(list(empty), [{}])
+    assert_grid_iter_equals_getitem(empty)
+    assert_raises(IndexError, lambda: empty[1])
 
-    has_empty = ParameterGrid([{'C': [1, 10]}, {}])
-    assert_equal(len(has_empty), 3)
-    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}])
+    has_empty = ParameterGrid([{'C': [1, 10]}, {}, {'C': [.5]}])
+    assert_equal(len(has_empty), 4)
+    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}, {'C': .5}])
+    assert_grid_iter_equals_getitem(has_empty)
 
 
 def test_grid_search():
@@ -146,6 +169,14 @@ def test_grid_search():
     # Test exception handling on scoring
     grid_search.scoring = 'sklearn'
     assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def test_transform_inverse_transform_round_trip():
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    grid_search.fit(X, y)
+    X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
+    assert_array_equal(X, X_round_trip)
 
 
 @ignore_warnings
@@ -419,6 +450,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+@ignore_warnings
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with
@@ -619,8 +651,7 @@ def test_pickle():
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
 
-    X, y = make_multilabel_classification(return_indicator=True,
-                                          random_state=0)
+    X, y = make_multilabel_classification(random_state=0)
 
     est_parameters = {"max_depth": [1, 2, 3, 4]}
     cv = KFold(y.shape[0], random_state=0)
@@ -768,3 +799,20 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_classes__property():
+    # Test that classes_ property matches best_esimator_.classes_
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    Cs = [.1, 1, 10]
+
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    grid_search.fit(X, y)
+    assert_array_equal(grid_search.best_estimator_.classes_,
+                       grid_search.classes_)
+
+    # Test that regressors do not have a classes_ attribute
+    grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))

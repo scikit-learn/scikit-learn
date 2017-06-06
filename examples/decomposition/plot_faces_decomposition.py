@@ -66,13 +66,13 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
-    ('Eigenfaces - RandomizedPCA',
-     decomposition.RandomizedPCA(n_components=n_components, whiten=True),
+    ('Eigenfaces - PCA using randomized SVD',
+     decomposition.PCA(n_components=n_components, svd_solver='randomized',
+                       whiten=True),
      True),
 
     ('Non-negative components - NMF',
-     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
-                       tol=5e-3, sparseness='components'),
+     decomposition.NMF(n_components=n_components, init='nndsvda', tol=5e-3),
      False),
 
     ('Independent components - FastICA',
@@ -123,7 +123,14 @@ for name, estimator, center in estimators:
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
-    if hasattr(estimator, 'noise_variance_'):
+
+    # Plot an image representing the pixelwise variance provided by the
+    # estimator e.g its noise_variance_ attribute. The Eigenfaces estimator,
+    # via the PCA decomposition, also provides a scalar noise_variance_
+    # (the mean of pixelwise variance) that cannot be displayed as an image
+    # so we skip it.
+    if (hasattr(estimator, 'noise_variance_') and
+            estimator.noise_variance_.ndim > 0):  # Skip the Eigenfaces case
         plot_gallery("Pixelwise variance",
                      estimator.noise_variance_.reshape(1, -1), n_col=1,
                      n_row=1)

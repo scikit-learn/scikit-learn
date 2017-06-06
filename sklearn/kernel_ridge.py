@@ -9,7 +9,7 @@ import numpy as np
 from .base import BaseEstimator, RegressorMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model.ridge import _solve_cholesky_kernel
-from .utils import check_X_y
+from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 
 
@@ -51,8 +51,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         should return a floating point number.
 
     gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi2 and
-        sigmoid kernels. Interpretation of the default value is left to
+        Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
+        and sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
@@ -69,8 +69,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    dual_coef_ : array, shape = [n_features] or [n_targets, n_features]
-        Weight vector(s) in kernel space
+    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
+        Representation of weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training data, which is also required for prediction
@@ -135,7 +135,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
 
-        sample_weight : float or numpy array of shape [n_samples]
+        sample_weight : float or array-like of shape [n_samples]
             Individual weights for each sample, ignored if None is passed.
 
         Returns
@@ -143,7 +143,10 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         self : returns an instance of self.
         """
         # Convert data
-        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
+                         y_numeric=True)
+        if sample_weight is not None and not isinstance(sample_weight, float):
+            sample_weight = check_array(sample_weight, ensure_2d=False)
 
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
@@ -165,7 +168,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         return self
 
     def predict(self, X):
-        """Predict using the the kernel ridge model
+        """Predict using the kernel ridge model
 
         Parameters
         ----------

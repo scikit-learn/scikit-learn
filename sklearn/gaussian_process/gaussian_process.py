@@ -2,7 +2,7 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from __future__ import print_function
 
@@ -15,10 +15,13 @@ from ..utils import check_random_state, check_array, check_X_y
 from ..utils.validation import check_is_fitted
 from . import regression_models as regression
 from . import correlation_models as correlation
+from ..utils import deprecated
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
+@deprecated("l1_cross_distances was deprecated in version 0.18 "
+            "and will be removed in 0.20.")
 def l1_cross_distances(X):
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
@@ -27,16 +30,16 @@ def l1_cross_distances(X):
     Parameters
     ----------
 
-    X: array_like
+    X : array_like
         An array with shape (n_samples, n_features)
 
     Returns
     -------
 
-    D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
+    D : array with shape (n_samples * (n_samples - 1) / 2, n_features)
         The array of componentwise L1 cross-distances.
 
-    ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
+    ij : arrays with shape (n_samples * (n_samples - 1) / 2, 2)
         The indices i and j of the vectors in X associated to the cross-
         distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
     """
@@ -56,8 +59,14 @@ def l1_cross_distances(X):
     return D, ij
 
 
+@deprecated("GaussianProcess was deprecated in version 0.18 and will be "
+            "removed in 0.20. Use the GaussianProcessRegressor instead.")
 class GaussianProcess(BaseEstimator, RegressorMixin):
-    """The Gaussian Process model class.
+    """The legacy Gaussian Process model class.
+
+    .. deprecated:: 0.18
+        This class will be removed in 0.20.
+        Use the :class:`GaussianProcessRegressor` instead.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -160,11 +169,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         The generator used to shuffle the sequence of coordinates of theta in
-        the Welch optimizer. If an integer is given, it fixes the seed.
-        Defaults to the global numpy random number generator.
-
+        the Welch optimizer. If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -196,12 +206,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     .. [NLNS2002] `H.B. Nielsen, S.N. Lophaven, H. B. Nielsen and J.
         Sondergaard.  DACE - A MATLAB Kriging Toolbox.` (2002)
-        http://www2.imm.dtu.dk/~hbn/dace/dace.pdf
+        http://imedea.uib-csic.es/master/cambioglobal/Modulo_V_cod101615/Lab/lab_maps/krigging/DACE-krigingsoft/dace/dace.pdf
 
     .. [WBSWM1992] `W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell,
         and M.D.  Morris (1992). Screening, predicting, and computer
         experiments.  Technometrics, 34(1) 15--25.`
-        http://www.jstor.org/pss/1269548
+        http://www.jstor.org/stable/1269548
     """
 
     _regression_types = {
@@ -507,7 +517,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
 
                 y, MSE = np.zeros(n_eval), np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                for k in range(max(1, int(n_eval / batch_size))):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to], MSE[batch_from:batch_to] = \
@@ -519,7 +529,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             else:
 
                 y = np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                for k in range(max(1, int(n_eval / batch_size))):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to] = \
@@ -609,15 +619,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Get generalized least squares solution
         Ft = linalg.solve_triangular(C, F, lower=True)
-        try:
-            Q, G = linalg.qr(Ft, econ=True)
-        except:
-            #/usr/lib/python2.6/dist-packages/scipy/linalg/decomp.py:1177:
-            # DeprecationWarning: qr econ argument will be removed after scipy
-            # 0.7. The economy transform will then be available through the
-            # mode='economic' argument.
-            Q, G = linalg.qr(Ft, mode='economic')
-            pass
+        Q, G = linalg.qr(Ft, mode='economic')
 
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]
@@ -718,17 +720,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 else:
                     # Generate a random starting point log10-uniformly
                     # distributed between bounds
-                    log10theta0 = np.log10(self.thetaL) \
-                        + self.random_state.rand(self.theta0.size).reshape(
-                            self.theta0.shape) * np.log10(self.thetaU
-                                                          / self.thetaL)
+                    log10theta0 = (np.log10(self.thetaL)
+                                   + self.random_state.rand(*self.theta0.shape)
+                                   * np.log10(self.thetaU / self.thetaL))
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
                 try:
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0), constraints,
+                                             np.log10(theta0).ravel(), constraints,
                                              iprint=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
@@ -759,7 +760,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         elif self.optimizer == 'Welch':
 
-            # Backup of the given atrributes
+            # Backup of the given attributes
             theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
             corr = self.corr
             verbose = self.verbose
@@ -799,7 +800,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
                     self._arg_max_reduced_likelihood_function()
 
-            # Restore the given atrributes
+            # Restore the given attributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
             self.corr = corr
             self.optimizer = 'Welch'
@@ -826,7 +827,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
-            self.beta0 = check_array(self.beta0)
+            self.beta0 = np.atleast_2d(self.beta0)
             if self.beta0.shape[1] != 1:
                 # Force to column vector
                 self.beta0 = self.beta0.T
@@ -846,12 +847,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = check_array(self.theta0)
+        self.theta0 = np.atleast_2d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = check_array(self.thetaL)
-            self.thetaU = check_array(self.thetaU)
+            self.thetaL = np.atleast_2d(self.thetaL)
+            self.thetaU = np.atleast_2d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                  "same length.")

@@ -20,7 +20,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.svm import SVC
-from sklearn.cross_validation import StratifiedKFold, permutation_test_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import permutation_test_score
 from sklearn import datasets
 
 
@@ -39,7 +40,7 @@ E = random.normal(size=(len(X), 2200))
 X = np.c_[X, E]
 
 svm = SVC(kernel='linear')
-cv = StratifiedKFold(y, 2)
+cv = StratifiedKFold(2)
 
 score, permutation_scores, pvalue = permutation_test_score(
     svm, X, y, scoring="accuracy", cv=cv, n_permutations=100, n_jobs=1)

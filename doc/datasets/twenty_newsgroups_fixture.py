@@ -1,12 +1,13 @@
 """Fixture module to skip the datasets loading when offline
 
-Doctests are skipped if the datasets have not already been dowloaded
+Doctests are skipped if the datasets have not already been downloaded
 and cached in the past.
 """
 from os.path import exists
 from os.path import join
-from nose import SkipTest
+
 from sklearn.datasets import get_data_home
+from sklearn.utils.testing import SkipTest
 
 
 def setup_module(module):

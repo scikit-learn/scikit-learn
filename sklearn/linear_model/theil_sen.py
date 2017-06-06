@@ -19,11 +19,12 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_array, check_random_state, ConvergenceWarning
-from ..utils import check_consistent_length, _get_n_jobs
+from ..utils import check_random_state
+from ..utils import check_X_y, _get_n_jobs
 from ..utils.random import choice
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
+from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
 
@@ -101,7 +102,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     spatial_median : array, shape = [n_features]
         Spatial median.
 
-    n_iter: int
+    n_iter : int
         Number of iterations needed.
 
     References
@@ -242,9 +243,12 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     tol : float, optional, default 1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : RandomState or an int seed, optional, default None
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional, default None
+        A random number generator instance to define the state of the random
+        permutations generator.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     n_jobs : integer, optional, default 1
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -255,16 +259,16 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (median of distribution).
 
-    `intercept_` : float
+    intercept_ : float
         Estimated intercept of regression model.
 
-    `breakdown_` : float
+    breakdown_ : float
         Approximated breakdown point.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations needed for the spatial median.
 
     n_subpopulation_ : int
@@ -275,7 +279,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
-      http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf
+      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
@@ -343,9 +347,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
-        y = check_array(y, ensure_2d=False)
-        check_consistent_length(X, y)
+        X, y = check_X_y(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)

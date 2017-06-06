@@ -3,6 +3,7 @@
 
 
 .. include:: ../includes/big_toc_css.rst
+.. include:: ../tune_toc.rst
 
 ======================
 scikit-learn Tutorials
@@ -14,18 +15,10 @@ scikit-learn Tutorials
    :maxdepth: 2
 
    basic/tutorial.rst
-
-
-.. toctree::
-   :maxdepth: 2
-
    statistical_inference/index.rst
-
-
-.. toctree::
-   :maxdepth: 2
-
    text_analytics/working_with_text_data.rst
+   machine_learning_map/index
+   ../presentations
 
 |
 

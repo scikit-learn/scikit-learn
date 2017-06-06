@@ -34,7 +34,7 @@ def generate_graph(N=20):
     dist_matrix = rng.random_sample((N, N))
 
     #make symmetric: distances are not direction-dependent
-    dist_matrix += dist_matrix.T
+    dist_matrix = dist_matrix + dist_matrix.T
 
     #make graph sparse
     i = (rng.randint(N, size=N * N // 2), rng.randint(N, size=N * N // 2))

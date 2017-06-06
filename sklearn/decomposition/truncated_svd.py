@@ -1,18 +1,14 @@
 """Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
 """
 
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
 import numpy as np
 import scipy.sparse as sp
-
-try:
-    from scipy.sparse.linalg import svds
-except ImportError:
-    from ..utils.arpack import svds
+from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, as_float_array, check_random_state
@@ -26,15 +22,16 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
-    truncated singular value decomposition (SVD). It is very similar to PCA,
-    but operates on sample vectors directly, instead of on a covariance matrix.
-    This means it can work with scipy.sparse matrices efficiently.
+    truncated singular value decomposition (SVD). Contrary to PCA, this
+    estimator does not center the data before computing the singular value
+    decomposition. This means it can work with scipy.sparse matrices
+    efficiently.
 
     In particular, truncated SVD works on term count/tf-idf matrices as
     returned by the vectorizers in sklearn.feature_extraction.text. In that
     context, it is known as latent semantic analysis (LSA).
 
-    This estimator supports two algorithm: a fast randomized SVD solver, and
+    This estimator supports two algorithms: a fast randomized SVD solver, and
     a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
     (X.T * X), whichever is more efficient.
 
@@ -53,12 +50,16 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
 
-    n_iter : int, optional
+    n_iter : int, optional (default 5)
         Number of iterations for randomized SVD solver. Not used by ARPACK.
+        The default is larger than the default in `randomized_svd` to handle
+        sparse matrices that may have large slowly decaying spectrum.
 
-    random_state : int or RandomState, optional
-        (Seed for) pseudo-random number generator. If not given, the
-        numpy.random singleton is used.
+    random_state : int, RandomState instance or None, optional, default = None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
@@ -68,26 +69,33 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     ----------
     components_ : array, shape (n_components, n_features)
 
-    explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components.
-
-    explained_variance_ : array, [n_components]
+    explained_variance_ : array, shape (n_components,)
         The variance of the training samples transformed by a projection to
         each component.
+
+    explained_variance_ratio_ : array, shape (n_components,)
+        Percentage of variance explained by each of the selected components.
+
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
 
     Examples
     --------
     >>> from sklearn.decomposition import TruncatedSVD
     >>> from sklearn.random_projection import sparse_random_matrix
     >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
-    >>> svd = TruncatedSVD(n_components=5, random_state=42)
-    >>> svd.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=5,
+    >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
+    >>> svd.fit(X)  # doctest: +NORMALIZE_WHITESPACE
+    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
             random_state=42, tol=0.0)
-    >>> print(svd.explained_variance_ratio_) # doctest: +ELLIPSIS
-    [ 0.07825... 0.05528... 0.05445... 0.04997... 0.04134...]
-    >>> print(svd.explained_variance_ratio_.sum()) # doctest: +ELLIPSIS
-    0.27930...
+    >>> print(svd.explained_variance_ratio_)  # doctest: +ELLIPSIS
+    [ 0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
+    >>> print(svd.explained_variance_ratio_.sum())  # doctest: +ELLIPSIS
+    0.249...
+    >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
+    [ 2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
 
     See also
     --------
@@ -174,7 +182,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         self.components_ = VT
 
         # Calculate explained variance & explained variance ratio
-        X_transformed = np.dot(U, np.diag(Sigma))
+        X_transformed = U * Sigma
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
             _, full_var = mean_variance_axis(X, axis=0)
@@ -182,6 +190,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         else:
             full_var = np.var(X, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
+        self.singular_values_ = Sigma  # Store the singular values.
+
         return X_transformed
 
     def transform(self, X):

@@ -89,7 +89,7 @@ for n_samples in n_samples_values:
 
     for i in range(n_iter):
         # pick one query at random to study query time variability in LSHForest
-        query = queries[rng.randint(0, n_queries)]
+        query = queries[[rng.randint(0, n_queries)]]
 
         t0 = time.time()
         exact_neighbors = nbrs.kneighbors(query, return_distance=False)
@@ -126,7 +126,7 @@ plt.errorbar(n_samples_values, average_times_approx, yerr=std_times_approx,
              fmt='o-', c='r', label='LSHForest')
 plt.plot(n_samples_values, average_times_exact, c='b',
          label="NearestNeighbors(algorithm='brute', metric='cosine')")
-plt.legend(loc='upper left', fontsize='small')
+plt.legend(loc='upper left', prop=dict(size='small'))
 plt.ylim(0, None)
 plt.ylabel("Average query time in seconds")
 plt.xlabel("n_samples")

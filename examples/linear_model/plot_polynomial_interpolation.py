@@ -54,14 +54,18 @@ y = f(x)
 X = x[:, np.newaxis]
 X_plot = x_plot[:, np.newaxis]
 
-plt.plot(x_plot, f(x_plot), label="ground truth")
-plt.scatter(x, y, label="training points")
+colors = ['teal', 'yellowgreen', 'gold']
+lw = 2
+plt.plot(x_plot, f(x_plot), color='cornflowerblue', linewidth=lw,
+         label="ground truth")
+plt.scatter(x, y, color='navy', s=30, marker='o', label="training points")
 
-for degree in [3, 4, 5]:
+for count, degree in enumerate([3, 4, 5]):
     model = make_pipeline(PolynomialFeatures(degree), Ridge())
     model.fit(X, y)
     y_plot = model.predict(X_plot)
-    plt.plot(x_plot, y_plot, label="degree %d" % degree)
+    plt.plot(x_plot, y_plot, color=colors[count], linewidth=lw,
+             label="degree %d" % degree)
 
 plt.legend(loc='lower left')
 

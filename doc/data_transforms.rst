@@ -10,7 +10,7 @@ scikit-learn provides a library of transformers, which may clean (see
 :ref:`kernel_approximation`) or generate (see :ref:`feature_extraction`)
 feature representations.
 
-Like other estimators, these are represented by classes with ``fit`` method,
+Like other estimators, these are represented by classes with a ``fit`` method,
 which learns model parameters (e.g. mean and standard deviation for
 normalization) from a training set, and a ``transform`` method which applies
 this transformation model to unseen data. ``fit_transform`` may be more

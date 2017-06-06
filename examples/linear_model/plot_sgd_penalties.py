@@ -44,20 +44,25 @@ alpha = 0.501  # 0.5 division throuh zero
 
 cross(1.2)
 
-plt.plot(xs, l1(xs), "r-", label="L1")
-plt.plot(xs, -1.0 * l1(xs), "r-")
-plt.plot(-1 * xs, l1(xs), "r-")
-plt.plot(-1 * xs, -1.0 * l1(xs), "r-")
+l1_color = "navy"
+l2_color = "c"
+elastic_net_color = "darkorange"
+lw = 2
 
-plt.plot(xs, l2(xs), "b-", label="L2")
-plt.plot(xs, -1.0 * l2(xs), "b-")
-plt.plot(-1 * xs, l2(xs), "b-")
-plt.plot(-1 * xs, -1.0 * l2(xs), "b-")
+plt.plot(xs, l1(xs), color=l1_color, label="L1", lw=lw)
+plt.plot(xs, -1.0 * l1(xs), color=l1_color, lw=lw)
+plt.plot(-1 * xs, l1(xs), color=l1_color, lw=lw)
+plt.plot(-1 * xs, -1.0 * l1(xs), color=l1_color, lw=lw)
 
-plt.plot(xs, el(xs, alpha), "y-", label="Elastic Net")
-plt.plot(xs, -1.0 * el(xs, alpha), "y-")
-plt.plot(-1 * xs, el(xs, alpha), "y-")
-plt.plot(-1 * xs, -1.0 * el(xs, alpha), "y-")
+plt.plot(xs, l2(xs), color=l2_color, label="L2", lw=lw)
+plt.plot(xs, -1.0 * l2(xs), color=l2_color, lw=lw)
+plt.plot(-1 * xs, l2(xs), color=l2_color, lw=lw)
+plt.plot(-1 * xs, -1.0 * l2(xs), color=l2_color, lw=lw)
+
+plt.plot(xs, el(xs, alpha), color=elastic_net_color, label="Elastic Net", lw=lw)
+plt.plot(xs, -1.0 * el(xs, alpha), color=elastic_net_color, lw=lw)
+plt.plot(-1 * xs, el(xs, alpha), color=elastic_net_color, lw=lw)
+plt.plot(-1 * xs, -1.0 * el(xs, alpha), color=elastic_net_color, lw=lw)
 
 plt.xlabel(r"$w_0$")
 plt.ylabel(r"$w_1$")

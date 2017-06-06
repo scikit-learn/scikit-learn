@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 from sklearn import linear_model, decomposition, datasets
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 logistic = linear_model.LogisticRegression()
 
@@ -36,7 +36,6 @@ digits = datasets.load_digits()
 X_digits = digits.data
 y_digits = digits.target
 
-###############################################################################
 # Plot the PCA spectrum
 pca.fit(X_digits)
 
@@ -48,14 +47,11 @@ plt.axis('tight')
 plt.xlabel('n_components')
 plt.ylabel('explained_variance_')
 
-###############################################################################
 # Prediction
-
 n_components = [20, 40, 64]
 Cs = np.logspace(-4, 4, 3)
 
-#Parameters of pipelines can be set using ‘__’ separated parameter names:
-
+# Parameters of pipelines can be set using ‘__’ separated parameter names:
 estimator = GridSearchCV(pipe,
                          dict(pca__n_components=n_components,
                               logistic__C=Cs))

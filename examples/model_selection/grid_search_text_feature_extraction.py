@@ -1,3 +1,4 @@
+
 """
 ==========================================================
 Sample pipeline for text feature extraction and evaluation
@@ -56,7 +57,7 @@ from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import SGDClassifier
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
 print(__doc__)

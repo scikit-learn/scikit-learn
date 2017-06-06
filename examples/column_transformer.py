@@ -119,7 +119,7 @@ pipeline = Pipeline([
     ('svc', LinearSVC(dual=False)),
 ])
 
-# limit the list of categories to make running this exmaple faster.
+# limit the list of categories to make running this example faster.
 categories = ['alt.atheism', 'talk.religion.misc']
 train = fetch_20newsgroups(random_state=1,
                            subset='train',

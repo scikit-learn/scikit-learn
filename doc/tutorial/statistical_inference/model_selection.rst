@@ -41,44 +41,62 @@ data in *folds* that we use for training and testing::
     >>> print(scores)
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
-.. currentmodule:: sklearn.cross_validation
+.. currentmodule:: sklearn.model_selection
 
-This is called a :class:`KFold` cross validation
+This is called a :class:`KFold` cross-validation.
 
 .. _cv_generators_tut:
 
 Cross-validation generators
 =============================
 
+Scikit-learn has a collection of classes which can be used to generate lists of
+train/test indices for popular cross-validation strategies.
 
+They expose a ``split`` method which accepts the input
+dataset to be split and yields the train/test set indices for each iteration
+of the chosen cross-validation strategy.
 
-The code above to split data in train and test sets is tedious to write.
-Scikit-learn exposes cross-validation generators to generate list
-of indices for this purpose::
+This example shows an example usage of the ``split`` method.
 
-    >>> from sklearn import cross_validation
-    >>> k_fold = cross_validation.KFold(n=6, n_folds=3)
-    >>> for train_indices, test_indices in k_fold:
+    >>> from sklearn.model_selection import KFold, cross_val_score
+    >>> X = ["a", "a", "b", "c", "c", "c"]
+    >>> k_fold = KFold(n_splits=3)
+    >>> for train_indices, test_indices in k_fold.split(X):
     ...      print('Train: %s | test: %s' % (train_indices, test_indices))
     Train: [2 3 4 5] | test: [0 1]
     Train: [0 1 4 5] | test: [2 3]
     Train: [0 1 2 3] | test: [4 5]
 
-The cross-validation can then be implemented easily::
+The cross-validation can then be performed easily::
 
-    >>> kfold = cross_validation.KFold(len(X_digits), n_folds=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
-    ...          for train, test in kfold]
+    ...          for train, test in k_fold.split(X_digits)]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
-To compute the ``score`` method of an estimator, the sklearn exposes
-a helper function::
+The cross-validation score can be directly calculated using the
+:func:`cross_val_score` helper. Given an estimator, the cross-validation object
+and the input dataset, the :func:`cross_val_score` splits the data repeatedly into
+a training and a testing set, trains the estimator using the training set and
+computes the scores based on the testing set for each iteration of cross-validation.
 
-    >>> cross_validation.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
+By default the estimator's ``score`` method is used to compute the individual scores.
+
+Refer the :ref:`metrics module <metrics>` to learn more on the available scoring
+methods.
+
+    >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold, n_jobs=-1)
     array([ 0.93489149,  0.95659432,  0.93989983])
 
 `n_jobs=-1` means that the computation will be dispatched on all the CPUs
 of the computer.
+
+Alternatively, the ``scoring`` argument can be provided to specify an alternative
+scoring method.
+
+    >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold,
+    ...                 scoring='precision_macro')
+    array([ 0.93969761,  0.95911415,  0.94041254])
 
    **Cross-validation generators**
 
@@ -87,30 +105,84 @@ of the computer.
 
    *
 
-    - :class:`KFold` **(n, k)**
+    - :class:`KFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`StratifiedKFold` **(y, k)**
+    - :class:`StratifiedKFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`LeaveOneOut` **(n)**
+    - :class:`GroupKFold` **(n_splits)**
 
-    - :class:`LeaveOneLabelOut` **(labels)**
 
    *
 
-    - Split it K folds, train on K-1 and then test on left-out
+    - Splits it into K folds, trains on K-1 and then tests on the left-out.
 
-    - It preserves the class ratios / label distribution within each fold.
+    - Same as K-Fold but preserves the class distribution within each fold.
 
-    - Leave one observation out
+    - Ensures that the same group is not in both testing and training sets.
 
-    - Takes a label array to group observations
+
+.. list-table::
+
+   *
+
+    - :class:`ShuffleSplit` **(n_splits, test_size, train_size, random_state)**
+
+    - :class:`StratifiedShuffleSplit`
+
+    - :class:`GroupShuffleSplit`
+
+   *
+
+    - Generates train/test indices based on random permutation.
+
+    - Same as shuffle split but preserves the class distribution within each iteration.
+
+    - Ensures that the same group is not in both testing and training sets.
+
+
+.. list-table::
+
+   *
+
+    - :class:`LeaveOneGroupOut` **()**
+
+    - :class:`LeavePGroupsOut`  **(n_groups)**
+
+    - :class:`LeaveOneOut` **()**
+
+
+
+   *
+
+    - Takes a group array to group observations.
+
+    - Leave P groups out.
+
+    - Leave one observation out.
+
+
+
+.. list-table::
+
+   *
+
+    - :class:`LeavePOut` **(p)**
+
+    - :class:`PredefinedSplit`
+
+   *
+
+    - Leave P observations out.
+
+    - Generates train/test indices based on predefined splits.
+
 
 .. currentmodule:: sklearn.svm
 
 .. topic:: **Exercise**
    :class: green
 
-   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_001.png
+   .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
         :align: right
         :scale: 90
@@ -122,7 +194,7 @@ of the computer.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
 
-   **Solution:** :ref:`example_exercises_plot_cv_digits.py`
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
 
 
 
@@ -132,14 +204,14 @@ Grid-search and cross-validated estimators
 Grid-search
 -------------
 
-.. currentmodule:: sklearn.grid_search
+.. currentmodule:: sklearn.model_selection
 
-The sklearn provides an object that, given data, computes the score
+scikit-learn provides an object that, given data, computes the score
 during the fit of an estimator on a parameter grid and chooses the
 parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
 
-    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.model_selection import GridSearchCV, cross_val_score
     >>> Cs = np.logspace(-6, -1, 10)
     >>> clf = GridSearchCV(estimator=svc, param_grid=dict(C=Cs),
     ...                    n_jobs=-1)
@@ -163,8 +235,8 @@ a stratified 3-fold.
 
     ::
 
-        >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
-        ...                                                  # doctest: +ELLIPSIS
+        >>> cross_val_score(clf, X_digits, y_digits)
+        ...                                               # doctest: +ELLIPSIS
         array([ 0.938...,  0.963...,  0.944...])
 
     Two cross-validation loops are performed in parallel: one by the
@@ -184,9 +256,9 @@ Cross-validated estimators
 ----------------------------
 
 Cross-validation to set a parameter can be done more efficiently on an
-algorithm-by-algorithm basis. This is why for certain estimators the
-sklearn exposes :ref:`cross_validation` estimators that set their parameter
-automatically by cross-validation::
+algorithm-by-algorithm basis. This is why, for certain estimators,
+scikit-learn exposes :ref:`cross_validation` estimators that set their
+parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
     >>> lasso = linear_model.LassoCV()
@@ -216,6 +288,4 @@ appended to their name.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
        :lines: 17-24
 
-   **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
-
-
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_diabetes.py`

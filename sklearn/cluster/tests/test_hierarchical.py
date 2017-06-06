@@ -47,13 +47,13 @@ def test_linkage_misc():
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
 
-    # test hiearchical clustering on a precomputed distances matrix
+    # test hierarchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
 
     res = linkage_tree(dis, affinity="precomputed")
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
-    # test hiearchical clustering on a precomputed distances matrix
+    # test hierarchical clustering on a precomputed distances matrix
     res = linkage_tree(X, affinity=manhattan_distances)
     assert_array_equal(res[0], linkage_tree(X, affinity="manhattan")[0])
 
@@ -113,6 +113,17 @@ def test_height_linkage_tree():
         children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
         n_nodes = 2 * X.shape[1] - 1
         assert_true(len(children) + n_leaves == n_nodes)
+
+
+def test_agglomerative_clustering_wrong_arg_memory():
+    # Test either if an error is raised when memory is not
+    # either a str or a joblib.Memory instance
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    memory = 5
+    clustering = AgglomerativeClustering(memory=memory)
+    assert_raises(ValueError, clustering.fit, X)
 
 
 def test_agglomerative_clustering():

@@ -55,9 +55,13 @@ circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4 ** 2
 ###############################################################################
 # 4 circles
 img = circle1 + circle2 + circle3 + circle4
-mask = img.astype(bool)
-img = img.astype(float)
 
+# We use a mask that limits to the foreground: the problem that we are
+# interested in here is not separating the objects from the background,
+# but separating them one from the other.
+mask = img.astype(bool)
+
+img = img.astype(float)
 img += 1 + 0.2 * np.random.randn(*img.shape)
 
 # Convert the image into a graph with the value of the gradient on the

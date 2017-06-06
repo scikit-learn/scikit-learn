@@ -10,7 +10,7 @@ shifted to avoid overlapping.
 """
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# Licence: BSD
+# License: BSD
 
 print(__doc__)
 import numpy as np
@@ -61,23 +61,25 @@ npos = clf.fit_transform(npos)
 fig = plt.figure(1)
 ax = plt.axes([0., 0., 1., 1.])
 
-plt.scatter(X_true[:, 0], X_true[:, 1], c='r', s=20)
-plt.scatter(pos[:, 0], pos[:, 1], s=20, c='g')
-plt.scatter(npos[:, 0], npos[:, 1], s=20, c='b')
-plt.legend(('True position', 'MDS', 'NMDS'), loc='best')
+s = 100
+plt.scatter(X_true[:, 0], X_true[:, 1], color='navy', s=s, lw=0,
+            label='True Position')
+plt.scatter(pos[:, 0], pos[:, 1], color='turquoise', s=s, lw=0, label='MDS')
+plt.scatter(npos[:, 0], npos[:, 1], color='darkorange', s=s, lw=0, label='NMDS')
+plt.legend(scatterpoints=1, loc='best', shadow=False)
 
 similarities = similarities.max() / similarities * 100
 similarities[np.isinf(similarities)] = 0
 
 # Plot the edges
 start_idx, end_idx = np.where(pos)
-#a sequence of (*line0*, *line1*, *line2*), where::
+# a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [[X_true[i, :], X_true[j, :]]
             for i in range(len(pos)) for j in range(len(pos))]
 values = np.abs(similarities)
 lc = LineCollection(segments,
-                    zorder=0, cmap=plt.cm.hot_r,
+                    zorder=0, cmap=plt.cm.Blues,
                     norm=plt.Normalize(0, values.max()))
 lc.set_array(similarities.flatten())
 lc.set_linewidths(0.5 * np.ones(len(segments)))

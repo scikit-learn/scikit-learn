@@ -56,10 +56,13 @@ fig.suptitle('Coefficient non-zero location')
 
 feature_to_plot = 0
 plt.figure()
-plt.plot(coef[:, feature_to_plot], 'k', label='Ground truth')
-plt.plot(coef_lasso_[:, feature_to_plot], 'g', label='Lasso')
-plt.plot(coef_multi_task_lasso_[:, feature_to_plot],
-         'r', label='MultiTaskLasso')
+lw = 2
+plt.plot(coef[:, feature_to_plot], color='seagreen', linewidth=lw,
+         label='Ground truth')
+plt.plot(coef_lasso_[:, feature_to_plot], color='cornflowerblue', linewidth=lw,
+         label='Lasso')
+plt.plot(coef_multi_task_lasso_[:, feature_to_plot], color='gold', linewidth=lw,
+         label='MultiTaskLasso')
 plt.legend(loc='upper center')
 plt.axis('tight')
 plt.ylim([-1.1, 1.1])

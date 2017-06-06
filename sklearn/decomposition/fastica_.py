@@ -18,6 +18,7 @@ from ..externals.six import moves
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 
 __all__ = ['fastica', 'FastICA']
 
@@ -190,7 +191,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     max_iter : int, optional
         Maximum number of iterations to perform.
 
-    tol: float, optional
+    tol : float, optional
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
@@ -198,8 +199,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_X_mean : bool, optional
         If True, X_mean is returned too.
@@ -261,7 +265,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
-    X = check_array(X, copy=whiten).T
+    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES).T
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
@@ -292,7 +296,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         n_components = min(n, p)
     if (n_components > min(n, p)):
         n_components = min(n, p)
-        print("n_components is too large: it will be set to %s" % n_components)
+        warnings.warn('n_components is too large: it will be set to %s' % n_components)
 
     if whiten:
         # Centering the columns (ie the variables)
@@ -414,8 +418,11 @@ class FastICA(BaseEstimator, TransformerMixin):
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -540,7 +547,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mixing_')
 
-        X = check_array(X, copy=copy)
+        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
             X -= self.mean_
 
@@ -563,8 +570,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mixing_')
 
-        if copy:
-            X = X.copy()
+        X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
         X = fast_dot(X, self.mixing_.T)
         if self.whiten:
             X += self.mean_

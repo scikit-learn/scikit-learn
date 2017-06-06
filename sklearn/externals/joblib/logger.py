@@ -74,14 +74,14 @@ class Logger(object):
         self.depth = depth
 
     def warn(self, msg):
-        logging.warn("[%s]: %s" % (self, msg))
+        logging.warning("[%s]: %s" % (self, msg))
 
     def debug(self, msg):
         # XXX: This conflicts with the debug flag used in children class
         logging.debug("[%s]: %s" % (self, msg))
 
     def format(self, obj, indent=0):
-        """ Return the formated representation of the object.
+        """ Return the formatted representation of the object.
         """
         return pformat(obj, indent=indent, depth=self.depth)
 

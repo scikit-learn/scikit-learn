@@ -110,7 +110,7 @@ for i, n_estimators in enumerate(n_estimators_for_candidate_value):
     plt.errorbar(n_candidates_values, accuracies_c[i, :],
                  stds_accuracies[i, :], c=colors[i])
 
-plt.legend(loc='upper left', fontsize='small')
+plt.legend(loc='upper left', prop=dict(size='small'))
 plt.ylim([0, 1.2])
 plt.xlim(min(n_candidates_values), max(n_candidates_values))
 plt.ylabel("Accuracy")

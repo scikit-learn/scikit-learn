@@ -15,9 +15,9 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 
-# Licence: BSD3
+# License: BSD3
 
 import warnings
 from math import sqrt, log
@@ -30,7 +30,7 @@ from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, fast_dot, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -88,9 +88,11 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling. Only used
-        if ``svd_method`` equals 'randomized'
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Only used when ``svd_method`` equals 'randomized'.
 
     Attributes
     ----------
@@ -151,7 +153,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float)
+        X = check_array(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -309,12 +311,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: array, shape (n_samples,)
+        ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
         check_is_fitted(self, 'components_')
@@ -333,12 +335,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: float
+        ll : float
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))

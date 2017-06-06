@@ -1,12 +1,12 @@
 import numpy as np
 from scipy import sparse as sp
 
-from nose.tools import assert_raises, assert_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection.base import SelectorMixin
 from sklearn.utils import check_array
+from sklearn.utils.testing import assert_raises, assert_equal
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
@@ -50,7 +50,7 @@ def test_transform_dense():
     assert_equal(np.float32, sel.transform(X.astype(np.float32)).dtype)
 
     # Check 1d list and other dtype:
-    names_t_actual = sel.transform(feature_names)
+    names_t_actual = sel.transform([feature_names])
     assert_array_equal(feature_names_t, names_t_actual.ravel())
 
     # Check wrong shape raises error
@@ -85,7 +85,7 @@ def test_inverse_transform_dense():
                  sel.inverse_transform(Xt.astype(np.float32)).dtype)
 
     # Check 1d list and other dtype:
-    names_inv_actual = sel.inverse_transform(feature_names_t)
+    names_inv_actual = sel.inverse_transform([feature_names_t])
     assert_array_equal(feature_names_inv, names_inv_actual.ravel())
 
     # Check wrong shape raises error

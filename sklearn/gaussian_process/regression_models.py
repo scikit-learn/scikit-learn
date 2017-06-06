@@ -2,7 +2,7 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 """
 The built-in regression models submodule for the gaussian_process module.
@@ -30,7 +30,7 @@ def constant(x):
         An array with shape (n_eval, p) with the values of the regression
         model.
     """
-    x = np.asarray(x, dtype=np.float)
+    x = np.asarray(x, dtype=np.float64)
     n_eval = x.shape[0]
     f = np.ones([n_eval, 1])
     return f
@@ -54,7 +54,7 @@ def linear(x):
         An array with shape (n_eval, p) with the values of the regression
         model.
     """
-    x = np.asarray(x, dtype=np.float)
+    x = np.asarray(x, dtype=np.float64)
     n_eval = x.shape[0]
     f = np.hstack([np.ones([n_eval, 1]), x])
     return f
@@ -80,7 +80,7 @@ def quadratic(x):
         model.
     """
 
-    x = np.asarray(x, dtype=np.float)
+    x = np.asarray(x, dtype=np.float64)
     n_eval, n_features = x.shape
     f = np.hstack([np.ones([n_eval, 1]), x])
     for k in range(n_features):

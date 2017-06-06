@@ -1,20 +1,21 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+from __future__ import division
 import numpy as np
 from scipy import sparse
+from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
                                    assert_raises,
-                                   assert_warns_message)
+                                   ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
-from sklearn.linear_model import Ridge
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
 from sklearn.metrics import brier_score_loss, log_loss
@@ -23,6 +24,7 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
+@ignore_warnings
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100
@@ -86,12 +88,6 @@ def test_calibration():
                                brier_score_loss((y_test + 1) % 2,
                                                 prob_pos_pc_clf_relabeled))
 
-        # check that calibration can also deal with regressors that have
-        # a decision_function
-        clf_base_regressor = CalibratedClassifierCV(Ridge())
-        clf_base_regressor.fit(X_train, y_train)
-        clf_base_regressor.predict(X_test)
-
         # Check failure cases:
         # only "isotonic" and "sigmoid" should be accepted as methods
         clf_invalid_method = CalibratedClassifierCV(clf, method="foo")
@@ -104,7 +100,7 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
-def test_sample_weight_warning():
+def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
                                random_state=42)
@@ -117,12 +113,7 @@ def test_sample_weight_warning():
     for method in ['sigmoid', 'isotonic']:
         base_estimator = LinearSVC(random_state=42)
         calibrated_clf = CalibratedClassifierCV(base_estimator, method=method)
-        # LinearSVC does not currently support sample weights but they
-        # can still be used for the calibration step (with a warning)
-        msg = "LinearSVC does not support sample_weight."
-        assert_warns_message(
-            UserWarning, msg,
-            calibrated_clf.fit, X_train, y_train, sample_weight=sw_train)
+        calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
         probs_with_sw = calibrated_clf.predict_proba(X_test)
 
         # As the weights are used for the calibration, they should still yield
@@ -163,6 +154,7 @@ def test_calibration_multiclass():
         def softmax(y_pred):
             e = np.exp(-y_pred)
             return e / e.sum(axis=1).reshape(-1, 1)
+
         uncalibrated_log_loss = \
             log_loss(y_test, softmax(clf.decision_function(X_test)))
         calibrated_log_loss = log_loss(y_test, probas)
@@ -279,3 +271,36 @@ def test_calibration_nan_imputer():
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X, y)
     clf_c.predict(X)
+
+
+def test_calibration_prob_sum():
+    # Test that sum of probabilities is 1. A non-regression test for
+    # issue #7796
+    num_classes = 2
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=num_classes)
+    clf = LinearSVC(C=1.0)
+    clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
+    clf_prob.fit(X, y)
+
+    probs = clf_prob.predict_proba(X)
+    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+
+
+def test_calibration_less_classes():
+    # Test to check calibration works fine when train set in a test-train
+    # split does not contain all classes
+    # Since this test uses LOO, at each iteration train set will not contain a
+    # class label
+    X = np.random.randn(10, 5)
+    y = np.arange(10)
+    clf = LinearSVC(C=1.0)
+    cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
+    cal_clf.fit(X, y)
+
+    for i, calibrated_classifier in \
+            enumerate(cal_clf.calibrated_classifiers_):
+        proba = calibrated_classifier.predict_proba(X)
+        assert_array_equal(proba[:, i], np.zeros(len(y)))
+        assert_equal(np.all(np.hstack([proba[:, :i],
+                                       proba[:, i + 1:]])), True)

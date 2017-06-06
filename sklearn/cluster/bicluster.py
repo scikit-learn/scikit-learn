@@ -8,15 +8,16 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from scipy.sparse import dia_matrix
-from scipy.sparse import issparse
+from scipy.linalg import norm
+from scipy.sparse import dia_matrix, issparse
+from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..externals import six
-from ..utils.arpack import eigsh, svds
+from ..utils import check_random_state
 
-from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
+from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
 from ..utils.validation import assert_all_finite, check_array
@@ -120,6 +121,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
+        return self
 
     def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
@@ -140,12 +142,18 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                 # some eigenvalues of A * A.T are negative, causing
                 # sqrt() to be np.nan. This causes some vectors in vt
                 # to be np.nan.
-                _, v = eigsh(safe_sparse_dot(array.T, array),
-                             ncv=self.n_svd_vecs)
+                A = safe_sparse_dot(array.T, array)
+                random_state = check_random_state(self.random_state)
+                # initialize with [-1,1] as in ARPACK
+                v0 = random_state.uniform(-1, 1, A.shape[0])
+                _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
                 vt = v.T
             if np.any(np.isnan(u)):
-                _, u = eigsh(safe_sparse_dot(array, array.T),
-                             ncv=self.n_svd_vecs)
+                A = safe_sparse_dot(array, array.T)
+                random_state = check_random_state(self.random_state)
+                # initialize with [-1,1] as in ARPACK
+                v0 = random_state.uniform(-1, 1, A.shape[0])
+                _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
 
         assert_all_finite(u)
         assert_all_finite(vt)
@@ -194,7 +202,7 @@ class SpectralCoclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', use
-        :func:`sklearn.utils.arpack.svds`, which is more accurate, but
+        :func:`scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -228,9 +236,11 @@ class SpectralCoclustering(BaseSpectral):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -324,7 +334,7 @@ class SpectralBiclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', uses
         `sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
-        `sklearn.utils.arpack.svds`, which is more accurate, but
+        `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -358,9 +368,11 @@ class SpectralBiclustering(BaseSpectral):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used by the K-Means
-        initialization.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

@@ -7,7 +7,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn import svm
-from sklearn import ensemble
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.random_projection import sparse_random_matrix
@@ -31,7 +30,7 @@ from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from sklearn.metrics.base import UndefinedMetricWarning
+from sklearn.exceptions import UndefinedMetricWarning
 
 
 ###############################################################################
@@ -126,14 +125,16 @@ def _average_precision(y_true, y_score):
 def test_roc_curve():
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
-
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
-    roc_auc = auc(fpr, tpr)
     expected_auc = _auc(y_true, probas_pred)
-    assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-    assert_equal(fpr.shape, tpr.shape)
-    assert_equal(fpr.shape, thresholds.shape)
+
+    for drop in [True, False]:
+        fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+                                         drop_intermediate=drop)
+        roc_auc = auc(fpr, tpr)
+        assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
+        assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+        assert_equal(fpr.shape, tpr.shape)
+        assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_end_points():
@@ -142,7 +143,7 @@ def test_roc_curve_end_points():
     rng = np.random.RandomState(0)
     y_true = np.array([0] * 50 + [1] * 50)
     y_pred = rng.randint(3, size=100)
-    fpr, tpr, thr = roc_curve(y_true, y_pred)
+    fpr, tpr, thr = roc_curve(y_true, y_pred, drop_intermediate=True)
     assert_equal(fpr[0], 0)
     assert_equal(fpr[-1], 1)
     assert_equal(fpr.shape, tpr.shape)
@@ -166,29 +167,6 @@ def test_roc_returns_consistency():
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
-
-
-def test_roc_nonrepeating_thresholds():
-    # Test to ensure that we don't return spurious repeating thresholds.
-    # Duplicated thresholds can arise due to machine precision issues.
-    dataset = datasets.load_digits()
-    X = dataset['data']
-    y = dataset['target']
-
-    # This random forest classifier can only return probabilities
-    # significant to two decimal places
-    clf = ensemble.RandomForestClassifier(n_estimators=100, random_state=0)
-
-    # How well can the classifier predict whether a digit is less than 5?
-    # This task contributes floating point roundoff errors to the probabilities
-    train, test = slice(None, None, 2), slice(1, None, 2)
-    probas_pred = clf.fit(X[train], y[train]).predict_proba(X[test])
-    y_score = probas_pred[:, :5].sum(axis=1)  # roundoff errors begin here
-    y_true = [yy < 5 for yy in y[test]]
-
-    # Check for repeating values in the thresholds
-    fpr, tpr, thresholds = roc_curve(y_true, y_score)
-    assert_equal(thresholds.size, np.unique(np.round(thresholds, 2)).size)
 
 
 def test_roc_curve_multi():
@@ -304,14 +282,16 @@ def test_roc_curve_toydata():
 
     y_true = [0, 0]
     y_score = [0.25, 0.75]
-    tpr, fpr, _ = roc_curve(y_true, y_score)
+    # assert UndefinedMetricWarning because of no positive sample in y_true
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
     y_true = [1, 1]
     y_score = [0.25, 0.75]
-    tpr, fpr, _ = roc_curve(y_true, y_score)
+    # assert UndefinedMetricWarning because of no negative sample in y_true
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan])
     assert_array_almost_equal(fpr, [0.5, 1.])
@@ -346,6 +326,23 @@ def test_roc_curve_toydata():
     assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
+
+
+def test_roc_curve_drop_intermediate():
+    # Test that drop_intermediate drops the correct thresholds
+    y_true = [0, 0, 0, 0, 1, 1]
+    y_score = [0., 0.2, 0.5, 0.6, 0.7, 1.0]
+    tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
+    assert_array_almost_equal(thresholds, [1., 0.7, 0.])
+
+    # Test dropping thresholds with repeating scores
+    y_true = [0, 0, 0, 0, 0, 0, 0,
+              1, 1, 1, 1, 1, 1]
+    y_score = [0., 0.1, 0.6, 0.6, 0.7, 0.8, 0.9,
+               0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
+    tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
+    assert_array_almost_equal(thresholds,
+                              [1.0, 0.9, 0.7, 0.6, 0.])
 
 
 def test_auc():
@@ -600,18 +597,25 @@ def test_precision_recall_curve_toydata():
 def test_score_scale_invariance():
     # Test that average_precision_score and roc_auc_score are invariant by
     # the scaling or shifting of probabilities
+    # This test was expanded (added scaled_down) in response to github
+    # issue #3864 (and others), where overly aggressive rounding was causing
+    # problems for users with very small y_score values
     y_true, _, probas_pred = make_prediction(binary=True)
 
     roc_auc = roc_auc_score(y_true, probas_pred)
-    roc_auc_scaled = roc_auc_score(y_true, 100 * probas_pred)
+    roc_auc_scaled_up = roc_auc_score(y_true, 100 * probas_pred)
+    roc_auc_scaled_down = roc_auc_score(y_true, 1e-6 * probas_pred)
     roc_auc_shifted = roc_auc_score(y_true, probas_pred - 10)
-    assert_equal(roc_auc, roc_auc_scaled)
+    assert_equal(roc_auc, roc_auc_scaled_up)
+    assert_equal(roc_auc, roc_auc_scaled_down)
     assert_equal(roc_auc, roc_auc_shifted)
 
     pr_auc = average_precision_score(y_true, probas_pred)
-    pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
+    pr_auc_scaled_up = average_precision_score(y_true, 100 * probas_pred)
+    pr_auc_scaled_down = average_precision_score(y_true, 1e-6 * probas_pred)
     pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
-    assert_equal(pr_auc, pr_auc_scaled)
+    assert_equal(pr_auc, pr_auc_scaled_up)
+    assert_equal(pr_auc, pr_auc_scaled_down)
     assert_equal(pr_auc, pr_auc_shifted)
 
 
@@ -702,7 +706,7 @@ def check_lrap_error_raised(lrap_score):
     assert_raises(ValueError, lrap_score, [(0), (1), (2)],
                   [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
 
-    # Check that that y_true.shape != y_score.shape raise the proper exception
+    # Check that y_true.shape != y_score.shape raise the proper exception
     assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [0, 1])
     assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0, 1]])
     assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0], [1]])
@@ -793,7 +797,6 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
                                           n_samples=20, random_state=0):
     _, y_true = make_multilabel_classification(n_features=1,
                                                allow_unlabeled=False,
-                                               return_indicator=True,
                                                random_state=random_state,
                                                n_classes=n_classes,
                                                n_samples=n_samples)
@@ -951,7 +954,7 @@ def test_label_ranking_loss():
 
 
 def test_ranking_appropriate_input_shape():
-    # Check that that y_true.shape != y_score.shape raise the proper exception
+    # Check that y_true.shape != y_score.shape raise the proper exception
     assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [0, 1])
     assert_raises(ValueError, label_ranking_loss, [[0, 1], [0, 1]], [[0, 1]])
     assert_raises(ValueError, label_ranking_loss,

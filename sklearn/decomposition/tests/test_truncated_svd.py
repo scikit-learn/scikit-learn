@@ -27,13 +27,13 @@ def test_algorithms():
 
     Xa = svd_a.fit_transform(X)[:, :6]
     Xr = svd_r.fit_transform(X)[:, :6]
-    assert_array_almost_equal(Xa, Xr)
+    assert_array_almost_equal(Xa, Xr, decimal=5)
 
     comp_a = np.abs(svd_a.components_)
     comp_r = np.abs(svd_r.components_)
     # All elements are equal, but some elements are more equal than others.
     assert_array_almost_equal(comp_a[:9], comp_r[:9])
-    assert_array_almost_equal(comp_a[9:], comp_r[9:], decimal=3)
+    assert_array_almost_equal(comp_a[9:], comp_r[9:], decimal=2)
 
 
 def test_attributes():
@@ -45,7 +45,7 @@ def test_attributes():
 
 def test_too_many_components():
     for algorithm in ["arpack", "randomized"]:
-        for n_components in (n_features, n_features+1):
+        for n_components in (n_features, n_features + 1):
             tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
             assert_raises(ValueError, tsvd.fit, X)
 
@@ -64,7 +64,7 @@ def test_inverse_transform():
     for algo in ("arpack", "randomized"):
         # We need a lot of components for the reconstruction to be "almost
         # equal" in all positions. XXX Test means or sums instead?
-        tsvd = TruncatedSVD(n_components=52, random_state=42)
+        tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
         Xt = tsvd.fit_transform(X)
         Xinv = tsvd.inverse_transform(Xt)
         assert_array_almost_equal(Xinv, Xdense, decimal=1)
@@ -150,7 +150,7 @@ def test_explained_variance():
     # Compare sparse vs. dense
     for svd_sparse, svd_dense in svds_sparse_v_dense:
         assert_array_almost_equal(svd_sparse.explained_variance_ratio_,
-                svd_dense.explained_variance_ratio_)
+                                  svd_dense.explained_variance_ratio_)
 
     # Test that explained_variance is correct
     for svd, transformed in svds_trans:
@@ -162,3 +162,61 @@ def test_explained_variance():
             svd.explained_variance_ratio_,
             true_explained_variance_ratio,
         )
+
+
+def test_singular_values():
+    # Check that the TruncatedSVD output has the correct singular values
+
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    n_features = 80
+
+    X = rng.randn(n_samples, n_features)
+
+    apca = TruncatedSVD(n_components=2, algorithm='arpack',
+                        random_state=rng).fit(X)
+    rpca = TruncatedSVD(n_components=2, algorithm='arpack',
+                        random_state=rng).fit(X)
+    assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 12)
+
+    # Compare to the Frobenius norm
+    X_apca = apca.transform(X)
+    X_rpca = rpca.transform(X)
+    assert_array_almost_equal(np.sum(apca.singular_values_**2.0),
+                              np.linalg.norm(X_apca, "fro")**2.0, 12)
+    assert_array_almost_equal(np.sum(rpca.singular_values_**2.0),
+                              np.linalg.norm(X_rpca, "fro")**2.0, 12)
+
+    # Compare to the 2-norms of the score vectors
+    assert_array_almost_equal(apca.singular_values_,
+                              np.sqrt(np.sum(X_apca**2.0, axis=0)), 12)
+    assert_array_almost_equal(rpca.singular_values_,
+                              np.sqrt(np.sum(X_rpca**2.0, axis=0)), 12)
+
+    # Set the singular values and see what we get back
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    n_features = 110
+
+    X = rng.randn(n_samples, n_features)
+
+    apca = TruncatedSVD(n_components=3, algorithm='arpack',
+                        random_state=rng)
+    rpca = TruncatedSVD(n_components=3, algorithm='randomized',
+                        random_state=rng)
+    X_apca = apca.fit_transform(X)
+    X_rpca = rpca.fit_transform(X)
+
+    X_apca /= np.sqrt(np.sum(X_apca**2.0, axis=0))
+    X_rpca /= np.sqrt(np.sum(X_rpca**2.0, axis=0))
+    X_apca[:, 0] *= 3.142
+    X_apca[:, 1] *= 2.718
+    X_rpca[:, 0] *= 3.142
+    X_rpca[:, 1] *= 2.718
+
+    X_hat_apca = np.dot(X_apca, apca.components_)
+    X_hat_rpca = np.dot(X_rpca, rpca.components_)
+    apca.fit(X_hat_apca)
+    rpca.fit(X_hat_rpca)
+    assert_array_almost_equal(apca.singular_values_, [3.142, 2.718, 1.0], 14)
+    assert_array_almost_equal(rpca.singular_values_, [3.142, 2.718, 1.0], 14)

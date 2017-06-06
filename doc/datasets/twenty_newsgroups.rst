@@ -111,7 +111,7 @@ components by sample in a more than 30000-dimensional space
 ready-to-use tfidf features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
-.. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
+.. _`TF-IDF`: https://en.wikipedia.org/wiki/Tf-idf
 
 
 Filtering text for more realistic training
@@ -132,10 +132,10 @@ which is fast to train and achieves a decent F-score::
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='weighted')
-  0.88251152461278892
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
+  0.88213592402729568
 
-(The example :ref:`example_text_document_classification_20newsgroups.py` shuffles
+(The example :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
 multinomial Naive Bayes gets a much higher F-score of 0.88. Are you suspicious
 yet of what's going on inside this classifier?)
@@ -182,8 +182,8 @@ blocks, and quotation blocks respectively.
   ...                                      categories=categories)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(pred, newsgroups_test.target, average='weighted')
-  0.78409163025839435
+  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')
+  0.77310350681274775
 
 This classifier lost over a lot of its F-score, just because we removed
 metadata that has little to do with topic classification.
@@ -193,15 +193,15 @@ It loses even more if we also strip this metadata from the training data:
   ...                                       remove=('headers', 'footers', 'quotes'),
   ...                                       categories=categories)
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
-  >>> clf = BernoulliNB(alpha=.01)
+  >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='weighted')
-  0.73160869205141166
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
+  0.76995175184521725
 
 Some other classifiers cope better with this harder version of the task. Try
-running :ref:`example_model_selection_grid_search_text_feature_extraction.py` with and without
+running :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` with and without
 the ``--filter`` option to compare the results.
 
 .. topic:: Recommendation
@@ -213,6 +213,6 @@ the ``--filter`` option to compare the results.
 
 .. topic:: Examples
 
-   * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
 
-   * :ref:`example_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`

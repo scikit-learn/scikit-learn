@@ -52,7 +52,7 @@ Xte_s = standard_scaler.transform(X_test)
 
 robust_scaler = RobustScaler()
 Xtr_r = robust_scaler.fit_transform(X_train)
-Xte_r = robust_scaler.fit_transform(X_test)
+Xte_r = robust_scaler.transform(X_test)
 
 
 # Plot data

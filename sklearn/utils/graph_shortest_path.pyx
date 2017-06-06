@@ -379,7 +379,9 @@ cdef void link(FibonacciHeap* heap, FibonacciNode* node):
     #              - node is a valid pointer
     #              - node is already within heap
 
-    cdef FibonacciNode *linknode, *parent, *child
+    cdef FibonacciNode *linknode
+    cdef FibonacciNode *parent
+    cdef FibonacciNode *child
 
     if heap.roots_by_rank[node.rank] == NULL:
         heap.roots_by_rank[node.rank] = node
@@ -400,7 +402,9 @@ cdef void link(FibonacciHeap* heap, FibonacciNode* node):
 cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     # Assumptions: - heap is a valid pointer
     #              - heap.min_node is a valid pointer
-    cdef FibonacciNode *temp, *temp_right, *out
+    cdef FibonacciNode *temp
+    cdef FibonacciNode *temp_right
+    cdef FibonacciNode *out
     cdef unsigned int i
 
     # make all min_node children into root nodes
@@ -490,12 +494,13 @@ cdef void dijkstra_directed_one_row(
     graph : array, shape = (N,N)
         on return, graph[i_node] contains the path lengths from
         i_node to each target
-    heap: the Fibonacci heap object to use
+    heap : the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
     cdef unsigned int N = graph.shape[0]
     cdef unsigned int i
-    cdef FibonacciNode *v, *current_neighbor
+    cdef FibonacciNode *v
+    cdef FibonacciNode *current_neighbor
     cdef DTYPE_t dist
 
     # initialize nodes
@@ -554,12 +559,13 @@ cdef void dijkstra_one_row(unsigned int i_node,
     graph : array, shape = (N,)
         on return, graph[i_node] contains the path lengths from
         i_node to each target
-    heap: the Fibonacci heap object to use
+    heap : the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
     cdef unsigned int N = graph.shape[0]
     cdef unsigned int i
-    cdef FibonacciNode *v, *current_neighbor
+    cdef FibonacciNode *v
+    cdef FibonacciNode *current_neighbor
     cdef DTYPE_t dist
 
     # re-initialize nodes

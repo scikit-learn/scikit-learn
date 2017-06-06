@@ -3,14 +3,14 @@
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
-
 descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
 import shutil
 from distutils.command.clean import clean as Clean
-
+from pkg_resources import parse_version
+import traceback
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -33,12 +33,15 @@ MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
 LICENSE = 'new BSD'
-DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
+
 VERSION = sklearn.__version__
+
+SCIPY_MIN_VERSION = '0.13.3'
+NUMPY_MIN_VERSION = '1.8.2'
 
 
 # Optional setuptools features
@@ -53,9 +56,16 @@ SETUPTOOLS_COMMANDS = set([
 ])
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     import setuptools
+
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
+        extras_require={
+            'alldeps': (
+                'numpy >= {0}'.format(NUMPY_MIN_VERSION),
+                'scipy >= {0}'.format(SCIPY_MIN_VERSION),
+            ),
+        },
     )
 else:
     extra_setuptools_args = dict()
@@ -68,20 +78,30 @@ class CleanCommand(Clean):
 
     def run(self):
         Clean.run(self)
+        # Remove c files if we are not within a sdist package
+        cwd = os.path.abspath(os.path.dirname(__file__))
+        remove_c_files = not os.path.exists(os.path.join(cwd, 'PKG-INFO'))
+        if remove_c_files:
+            print('Will remove generated .c files')
         if os.path.exists('build'):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('sklearn'):
             for filename in filenames:
-                if (filename.endswith('.so') or filename.endswith('.pyd')
-                        or filename.endswith('.dll')
-                        or filename.endswith('.pyc')):
+                if any(filename.endswith(suffix) for suffix in
+                       (".so", ".pyd", ".dll", ".pyc")):
                     os.unlink(os.path.join(dirpath, filename))
+                    continue
+                extension = os.path.splitext(filename)[1]
+                if remove_c_files and extension in ['.c', '.cpp']:
+                    pyx_file = str.replace(filename, extension, '.pyx')
+                    if os.path.exists(os.path.join(dirpath, pyx_file)):
+                        os.unlink(os.path.join(dirpath, filename))
             for dirname in dirnames:
                 if dirname == '__pycache__':
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
-cmdclass = {'clean': CleanCommand}
 
+cmdclass = {'clean': CleanCommand}
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool
@@ -93,6 +113,7 @@ cmdclass = {'clean': CleanCommand}
 WHEELHOUSE_UPLOADER_COMMANDS = set(['fetch_artifacts', 'upload_all'])
 if WHEELHOUSE_UPLOADER_COMMANDS.intersection(sys.argv):
     import wheelhouse_uploader.cmd
+
     cmdclass.update(vars(wheelhouse_uploader.cmd))
 
 
@@ -114,19 +135,46 @@ def configuration(parent_package='', top_path=None):
 
     return config
 
-def is_scipy_installed():
+
+def get_scipy_status():
+    """
+    Returns a dictionary containing a boolean specifying whether SciPy
+    is up-to-date, along with the version string (empty string if
+    not installed).
+    """
+    scipy_status = {}
     try:
         import scipy
+        scipy_version = scipy.__version__
+        scipy_status['up_to_date'] = parse_version(
+            scipy_version) >= parse_version(SCIPY_MIN_VERSION)
+        scipy_status['version'] = scipy_version
     except ImportError:
-        return False
-    return True
+        traceback.print_exc()
+        scipy_status['up_to_date'] = False
+        scipy_status['version'] = ""
+    return scipy_status
 
-def is_numpy_installed():
+
+def get_numpy_status():
+    """
+    Returns a dictionary containing a boolean specifying whether NumPy
+    is up-to-date, along with the version string (empty string if
+    not installed).
+    """
+    numpy_status = {}
     try:
         import numpy
+        numpy_version = numpy.__version__
+        numpy_status['up_to_date'] = parse_version(
+            numpy_version) >= parse_version(NUMPY_MIN_VERSION)
+        numpy_status['version'] = numpy_version
     except ImportError:
-        return False
-    return True
+        traceback.print_exc()
+        numpy_status['up_to_date'] = False
+        numpy_status['version'] = ""
+    return numpy_status
+
 
 def setup_package():
     metadata = dict(name=DISTNAME,
@@ -136,7 +184,6 @@ def setup_package():
                     license=LICENSE,
                     url=URL,
                     version=VERSION,
-                    download_url=DOWNLOAD_URL,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',
                                  'Intended Audience :: Developers',
@@ -150,20 +197,22 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 2',
-                                 'Programming Language :: Python :: 2.6',
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.3',
                                  'Programming Language :: Python :: 3.4',
+                                 'Programming Language :: Python :: 3.5',
+                                 'Programming Language :: Python :: 3.6',
                                  ],
                     cmdclass=cmdclass,
                     **extra_setuptools_args)
 
-    if (len(sys.argv) >= 2
-            and ('--help' in sys.argv[1:] or sys.argv[1]
-                 in ('--help-commands', 'egg_info', '--version', 'clean'))):
-
-        # For these actions, NumPy is not required.
+    if len(sys.argv) == 1 or (
+            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
+                                    sys.argv[1] in ('--help-commands',
+                                                    'egg_info',
+                                                    '--version',
+                                                    'clean'))):
+        # For these actions, NumPy is not required
         #
         # They are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
@@ -175,16 +224,38 @@ def setup_package():
 
         metadata['version'] = VERSION
     else:
-        if is_numpy_installed() is False:
-            raise ImportError("Numerical Python (NumPy) is not installed.\n"
-                             "scikit-learn requires NumPy.\n"
-                             "Installation instructions are available on scikit-learn website: "
-                             "http://scikit-learn.org/stable/install.html\n")
-        if is_scipy_installed() is False:
-            raise ImportError("Scientific Python (SciPy) is not installed.\n"
-                             "scikit-learn requires SciPy.\n"
-                             "Installation instructions are available on scikit-learn website: "
-                             "http://scikit-learn.org/stable/install.html\n")
+        numpy_status = get_numpy_status()
+        numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
+            NUMPY_MIN_VERSION)
+        scipy_status = get_scipy_status()
+        scipy_req_str = "scikit-learn requires SciPy >= {0}.\n".format(
+            SCIPY_MIN_VERSION)
+
+        instructions = ("Installation instructions are available on the "
+                        "scikit-learn website: "
+                        "http://scikit-learn.org/stable/install.html\n")
+
+        if numpy_status['up_to_date'] is False:
+            if numpy_status['version']:
+                raise ImportError("Your installation of Numerical Python "
+                                  "(NumPy) {0} is out-of-date.\n{1}{2}"
+                                  .format(numpy_status['version'],
+                                          numpy_req_str, instructions))
+            else:
+                raise ImportError("Numerical Python (NumPy) is not "
+                                  "installed.\n{0}{1}"
+                                  .format(numpy_req_str, instructions))
+        if scipy_status['up_to_date'] is False:
+            if scipy_status['version']:
+                raise ImportError("Your installation of Scientific Python "
+                                  "(SciPy) {0} is out-of-date.\n{1}{2}"
+                                  .format(scipy_status['version'],
+                                          scipy_req_str, instructions))
+            else:
+                raise ImportError("Scientific Python (SciPy) is not "
+                                  "installed.\n{0}{1}"
+                                  .format(scipy_req_str, instructions))
+
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration

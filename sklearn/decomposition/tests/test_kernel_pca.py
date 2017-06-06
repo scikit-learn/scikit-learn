@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
 
 
@@ -39,7 +39,7 @@ def test_kernel_pca():
 
             # non-regression test: previously, gamma would be 0 by default,
             # forcing all eigenvalues to 0 under the poly kernel
-            assert_not_equal(X_fit_transformed, [])
+            assert_not_equal(X_fit_transformed.size, 0)
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
@@ -52,9 +52,22 @@ def test_kernel_pca():
                 assert_equal(X_pred2.shape, X_pred.shape)
 
 
-def test_invalid_parameters():
+def test_kernel_pca_invalid_parameters():
     assert_raises(ValueError, KernelPCA, 10, fit_inverse_transform=True,
                   kernel='precomputed')
+
+
+def test_kernel_pca_consistent_transform():
+    # X_fit_ needs to retain the old, unmodified copy of X
+    state = np.random.RandomState(0)
+    X = state.rand(10, 10)
+    kpca = KernelPCA(random_state=state).fit(X)
+    transformed1 = kpca.transform(X)
+
+    X_copy = X.copy()
+    X[:, 0] = 666
+    transformed2 = kpca.transform(X_copy)
+    assert_array_almost_equal(transformed1, transformed2)
 
 
 def test_kernel_pca_sparse():
