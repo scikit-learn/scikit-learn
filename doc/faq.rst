@@ -23,8 +23,10 @@ Apart from scikit-learn, another popular one is `scikit-image <http://scikit-ima
 
 How can I contribute to scikit-learn?
 -----------------------------------------
-See `Contributing <http://scikit-learn.org/stable/developers/contributing.html>`_.
-It is recommended to start with `Easy issues <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ first before tackling major issues.
+See :ref:`contributing`. Before wanting to add a new algorithm, which is
+usually a major and lengthy undertaking, it is recommended to start with :ref:`known
+issues <easy_issues>`. Please do not contact the contributors of scikit-learn directly
+regarding contrbuting to scikit-learn.
 
 What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
