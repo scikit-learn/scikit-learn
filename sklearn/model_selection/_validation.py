@@ -1086,7 +1086,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, {'score': scorer}, train, test, verbose,
+        estimator, X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
@@ -1094,9 +1094,10 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     n_params = len(param_range)
     n_splits = cv.get_n_splits(X, y)
-    out = list(_aggregate_score_dicts(out[i],
-                                      shape=(n_splits, n_params),
-                                      transpose=True)['score'] for i in (0, 1))
+
+    out[0] = (np.array(out[0]).reshape(n_splits, n_params)).T
+    out[1] = (np.array(out[1]).reshape(n_splits, n_params)).T
+
     return out[0], out[1]
 
 
