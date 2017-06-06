@@ -173,7 +173,7 @@ Here is an example of building custom scorers, and of using the
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1, 1]]
+    >>> ground_truth = [[1], [1]]
     >>> predictions  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
