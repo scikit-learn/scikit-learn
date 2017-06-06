@@ -308,12 +308,13 @@ normal output is clipped so that the input's minimum and maximum ---
 corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively --- do not
 become infinite under the transformation.
 
-:class:`QuantileTransformer` provides a ``smoothing_noise`` parameter to make
-the interpretation more intuitive when manually checking the transformation
-which particularly useful useful when feature values are replicated
-(e.g. prices, units of time, etc.) rather than truly discrete or truly
-continuous. See
+:class:`QuantileTransformer` provides a ``smoothing_noise`` parameter to
+make the interpretation more intuitive when inspecting the
+transformation which is particularly useful when feature values are
+replicated exactly many times in the training set (e.g. prices, ordinal
+values such as user ratings, coarse-grained units of time, etc.). See
 :ref:`sphx_glr_auto_examples_preprocessing_plot_smoothing_noise_quantile_transform.py`
+for more details.
 
 .. _preprocessing_normalization:
 
