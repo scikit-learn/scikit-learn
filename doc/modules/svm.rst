@@ -241,7 +241,11 @@ and use ``decision_function`` instead of ``predict_proba``.
    `"Probability estimates for multi-class classification by pairwise coupling"
    <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
-
+ 
+ 
+ * Platt
+   `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
+   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`.
 
 Unbalanced problems
 --------------------
