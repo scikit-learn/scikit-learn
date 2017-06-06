@@ -278,8 +278,11 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             Note that weights are absolute, and default to 1.
         """
         X = check_array(X, accept_sparse='csr')
-        clust = dbscan(X, sample_weight=sample_weight,
-                       **self.get_params())
+        # Filter out custom algorithm parameters that are already included in
+        # the self.algorithm object
+        pars = {key: val for key, val in self.get_params().items()
+                if not key.startswith('algorithm_')}
+        clust = dbscan(X, sample_weight=sample_weight, **pars)
         self.core_sample_indices_, self.labels_ = clust
         if len(self.core_sample_indices_):
             # fix for scipy sparse indexing issue

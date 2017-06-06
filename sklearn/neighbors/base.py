@@ -126,31 +126,33 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._validate_params()
 
     def _validate_params(self):
-        if self.algorithm not in ['auto', 'brute',
-                                  'kd_tree', 'ball_tree'] \
-           and not hasattr(self.algorithm, 'fit'):
-            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
+        algorithm = self.algorithm
+        metric = self.metric
+        if algorithm not in ['auto', 'brute',
+                             'kd_tree', 'ball_tree'] \
+           and not hasattr(algorithm, 'fit'):
+            raise ValueError("unrecognized algorithm: '%s'" % algorithm)
 
-        if self.algorithm == 'auto':
+        if algorithm == 'auto':
             if self.metric == 'precomputed':
                 alg_check = 'brute'
             else:
                 alg_check = 'ball_tree'
         else:
-            alg_check = self.algorithm
+            alg_check = algorithm
 
         if hasattr(alg_check, 'fit'):
             # metric is ignored
             pass
-        elif callable(self.metric):
-            if self.algorithm == 'kd_tree':
+        elif callable(metric):
+            if algorithm == 'kd_tree':
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
                     "kd_tree algorithm does not support callable metric '%s'"
-                    % self.metric)
-        elif self.metric not in VALID_METRICS[alg_check]:
+                    % metric)
+        elif metric not in VALID_METRICS[alg_check]:
             raise ValueError("Metric '%s' not valid for algorithm '%s'"
-                             % (self.metric, self.algorithm))
+                             % (metric, algorithm))
 
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
@@ -160,7 +162,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         else:
             effective_p = self.p
 
-        if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
+        if metric in ['wminkowski', 'minkowski'] and effective_p < 1:
                 raise ValueError("p must be at least one for minkowski metric")
 
     def _fit(self, X):

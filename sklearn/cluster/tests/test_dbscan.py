@@ -372,4 +372,7 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
 
 def test_dbscan_estimator_as_algorithm():
     # smoke test
-    DBSCAN(algorithm=LSHForest()).fit_predict(np.random.rand(100, 10))
+    import pickle
+
+    db = DBSCAN(algorithm=LSHForest())
+    db.fit_predict(np.random.rand(100, 10))

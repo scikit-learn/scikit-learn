@@ -1224,7 +1224,7 @@ def test_pairwise_boolean_distance():
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
 
 
-class MyRadiusAlgorithm(object):
+class MyRadiusNNAlgorithm(object):
     def fit(self, X):
         self._fitted = True
 
@@ -1262,7 +1262,10 @@ class MyKNNAlgorithm(object):
 
 @ignore_warnings
 def test_neighbors_estimator_as_algorithm():
-    alg = MyRadiusAlgorithm()
+    centers = [[-10, -10], [10, 10]]
+    X, y = make_blobs(centers=centers, random_state=41)
+
+    alg = MyRadiusNNAlgorithm()
     est = neighbors.NearestNeighbors(n_neighbors=1, algorithm=alg)
     est.fit([[0], [1]])
     assert hasattr(alg, '_fitted')
