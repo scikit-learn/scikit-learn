@@ -87,6 +87,13 @@ Enhancements
      by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
      and :user:`Stephen Hoover <stephen-hoover>`.
 
+   - Relax assumption on the data for the ``SkewedChi2Sampler``. Since the
+     Skewed-Chi2 kernel is defined on the open interval :math: `(-skewedness;
+     +\infty)^d`, the transform function should not check whether X < 0 but
+     whether ``X < -self.skewedness``. (`#7573
+     <https://github.com/scikit-learn/scikit-learn/pull/7573>`_) by `Romain
+     Brault`_.
+
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
      is less than 2 * the minimum. Note that the constructed tree will be
@@ -285,6 +292,8 @@ Bug fixes
      when the length of features_names does not match n_features in the decision
      tree.
      :issue:`8512` by :user:`Li Li <aikinogard>`.
+   - Fixed a bug in :class:`manifold.TSNE` affecting convergence of the
+     gradient descent. :issue:`8768` by :user:`David DeTomaso <deto>`.
 
 API changes summary
 -------------------
@@ -338,6 +347,10 @@ API changes summary
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
+
+   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
+     has been renamed to ``n_components`` and will be removed in version 0.21.
+     :issue:`8922` by :user:Attractadore
 
 
 .. _changes_0_18_1:

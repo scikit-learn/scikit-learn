@@ -632,8 +632,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
                                   error_score=self.error_score)
-          for train, test in cv.split(X, y, groups)
-          for parameters in candidate_params)
+          for parameters, (train, test) in product(candidate_params,
+                                                   cv.split(X, y, groups)))
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -656,8 +656,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             # as fit_time / score_time are not dicts and hence do not get
             # passed into _aggregate_score_dicts
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
-            array = np.array(array, dtype=np.float64).reshape(n_splits,
-                                                              n_candidates).T
+            array = np.array(array, dtype=np.float64).reshape(n_candidates,
+                                                              n_splits)
             if splits:
                 for split_i in range(n_splits):
                     # Uses closure to alter the results
@@ -697,7 +697,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         results['params'] = candidate_params
 
         # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[::n_candidates],
+        test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
         for scorer_name in self.scorer_.keys():
             # Computed the (weighted) mean and std for test scores alone
@@ -803,6 +803,14 @@ class GridSearchCV(BaseSearchCV):
         into multiple scorers that return one value each.
 
         If None, the estimator's default scorer, if available, is used.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+        .. deprecated:: 0.19
+           ``fit_params`` as a constructor argument was deprecated in version
+           0.19 and will be removed in version 0.21. Pass fit parameters to
+           the ``fit`` method instead.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.
@@ -1096,6 +1104,14 @@ class RandomizedSearchCV(BaseSearchCV):
         into multiple scorers that return one value each.
 
         If None, the estimator's default scorer, if available, is used.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+        .. deprecated:: 0.19
+           ``fit_params`` as a constructor argument was deprecated in version
+           0.19 and will be removed in version 0.21. Pass fit parameters to
+           the ``fit`` method instead.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.
