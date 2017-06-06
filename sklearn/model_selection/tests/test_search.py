@@ -30,11 +30,13 @@ from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator
+from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 
+from sklearn.model_selection import fit_grid_point
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -1152,6 +1154,33 @@ def test_grid_search_correct_score_results():
                     dec = clf.decision_function(X[test])
                     correct_score = roc_auc_score(y[test], dec)
                 assert_almost_equal(correct_score, cv_scores[i])
+
+
+def test_fit_grid_point():
+    X, y = make_classification(random_state=0)
+    cv = StratifiedKFold(random_state=0)
+    svc = LinearSVC(random_state=0)
+    scorer = make_scorer(accuracy_score)
+
+    for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
+        for train, test in cv.split(X, y):
+            this_scores, this_params, n_test_samples = fit_grid_point(
+                X, y, clone(svc), params, train, test,
+                scorer, verbose=False)
+
+            est = clone(svc).set_params(**params)
+            est.fit(X[train], y[train])
+            expected_score = scorer(est, X[test], y[test])
+
+            # Test the return values of fit_grid_point
+            assert_almost_equal(this_scores, expected_score)
+            assert_equal(params, this_params)
+            assert_equal(n_test_samples, test.size)
+
+    # Should raise an error upon multimetric scorer
+    assert_raise_message(TypeError, "'dict' object is not callable",
+                         fit_grid_point, X, y, svc, params,
+                         train, test, {'score': scorer}, verbose=True)
 
 
 def test_pickle():

@@ -37,6 +37,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import _check_multimetric_scoring
+from ..metrics.scorer import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -297,12 +298,11 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     test : ndarray, dtype int or bool
         Boolean mask or indices for test set.
 
-    scorer : callable or dict of callables or None
-        If it's a single callable / None, it returns scores as a
-        dict which maps the scorer name to the scorer callable.
-
+    scorer : callable or None
         The scorer callable object / function must have its signature as
         ``scorer(estimator, X, y)``.
+
+        If ``None`` the estimator's default scorer is used.
 
     verbose : int
         Verbosity level.
@@ -318,11 +318,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
 
     Returns
     -------
-    score : float or dict
-        A float of the single score value, in case of a single metric; Or
-        a dict mapping the the scorer name to its score value for the given
-        parameter setting on given training / test split, in case of
-        multi-metric evaluation.
+    score : float
+        A float of the single score value
 
     parameters : dict
         The parameters that have been evaluated.
@@ -330,14 +327,16 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    scores, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
-                                               test, verbose, parameters,
-                                               fit_params=fit_params,
-                                               return_n_test_samples=True,
-                                               error_score=error_score)
-    if not isinstance(scorer, (dict, list, tuple)):
-        scores = scores['score']
-    return scores, parameters, n_samples_test
+    # NOTE we are not using the return value as the scorer by itself should be
+    # validated before. We use check_scoring only to reject multimetric scorer
+    check_scoring(estimator, scorer, allow_none=True)
+    scores, n_samples_test = _fit_and_score(estimator, X, y,
+                                            {'score': scorer}, train,
+                                             test, verbose, parameters,
+                                             fit_params=fit_params,
+                                             return_n_test_samples=True,
+                                             error_score=error_score)
+    return scores['score'], parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):
