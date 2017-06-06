@@ -77,7 +77,7 @@ def get_name(func):
 
 # functions to ignore args / docstring of
 _docstring_ignores = [
-    'sklearn.base.BaseEstimator',  # just an example
+    'sklearn.utils.deprecation.load_mlcomp',
 ]
 
 _tab_ignores = [
