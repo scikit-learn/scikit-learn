@@ -14,7 +14,7 @@ estimator classes. Typical examples include ``C``, ``kernel`` and ``gamma``
 for Support Vector Classifier, ``alpha`` for Lasso, etc.
 
 It is possible and recommended to search the hyper-parameter space for the
-best :ref:`cross_validation` score.
+best :ref:`cross validation <cross_validation>` score.
 
 Any parameter provided when constructing an estimator may be optimized in this
 manner. Specifically, to find the names and current values for all parameters
