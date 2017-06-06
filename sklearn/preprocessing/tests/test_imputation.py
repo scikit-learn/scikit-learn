@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.preprocessing.imputation import MissingIndicator
 
@@ -460,7 +461,7 @@ def test_missing_indicator():
                 _check_missing_indicator(X1, X2, retype, sp, missing_values)
 
 
-def test_missing_indicator_warning():
+def test_missing_indicator_error():
     X1 = np.array([
           [-1,  1,  3],
           [4,  0, -1],
@@ -477,17 +478,17 @@ def test_missing_indicator_warning():
     missing_features_tr = np.where(np.any(X2 == -1, axis=0))[0]
     extra_missing_features = np.setdiff1d(missing_features_tr,
                                           missing_features_fit)
-    warn_msg = "The features %s have missing values in transform " \
-               "but have no missing values in fit" % extra_missing_features
-    assert_warns_message(RuntimeWarning, warn_msg, indicator.transform, X2)
+    err_msg = "The features \%s have missing values in transform " \
+              "but have no missing values in fit" % extra_missing_features
+    assert_raises_regexp(Exception, err_msg, indicator.transform, X2)
 
     # features = "all"
     indicator = clone(indicator).set_params(features="all")
     indicator.fit(X1)
-    assert_no_warnings(indicator.transform, X2)
+    indicator.transform(X2)
 
     # features = [0, 2]
     features = [0, 2]
     indicator = clone(indicator).set_params(features=features)
     indicator.fit(X1)
-    assert_no_warnings(indicator.transform, X2)
+    indicator.transform(X2)
