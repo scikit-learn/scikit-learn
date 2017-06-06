@@ -14,19 +14,25 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
 from sklearn.preprocessing.label import MultiLabelBinarizer
 from sklearn.preprocessing.label import LabelEncoder
 from sklearn.preprocessing.label import label_binarize
+from sklearn.preprocessing.label import TransformedTargetRegressor
 
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
 
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+
 from sklearn import datasets
 
 iris = datasets.load_iris()
+friedman = datasets.make_friedman1(random_state=0)
 
 
 def toarray(a):
@@ -511,3 +517,40 @@ def test_inverse_binarize_multiclass():
                                                    [0, 0, 0]]),
                                        np.arange(3))
     assert_array_equal(got, np.array([1, 1, 0]))
+
+
+def test_transformed_target_regressor_error_kwargs():
+    X = friedman[0]
+    y = friedman[1]
+    # provide a transformer and functions at the same time
+    clf = TransformedTargetRegressor(estimator=LinearRegression(),
+                                     transformer=StandardScaler(),
+                                     func=np.exp, inverse_func=np.log)
+    assert_raises_regex(ValueError, "Both 'transformer' and functions"
+                        " 'func'/'inverse_func' cannot be set at the"
+                        " same time.", clf.fit, X, y)
+
+
+def test_transformed_target_regressor_invertible():
+    X = friedman[0]
+    y = friedman[1]
+    clf = TransformedTargetRegressor(estimator=LinearRegression(),
+                                     func=np.exp, inverse_func=np.exp,
+                                     check_invertible=True)
+    assert_raise_message(ValueError, "The provided functions or transformer"
+                         " are not strictly invertible.", clf.fit, X, y)
+    clf = TransformedTargetRegressor(estimator=LinearRegression(),
+                                     func=np.exp, inverse_func=np.exp,
+                                     check_invertible=False)
+    # the transformer/functions are not checked to be invertible the fitting
+    # should pass
+    clf.fit(X, y)
+
+
+def test_target_transformer_friedman():
+    X = friedman[0]
+    y = friedman[1]
+    clf = TransformedTargetRegressor(estimator=LinearRegression(),
+                                     func=np.log, inverse_func=np.exp)
+    clf.fit(X, y).predict(X)
+    clf.score(X, y)
