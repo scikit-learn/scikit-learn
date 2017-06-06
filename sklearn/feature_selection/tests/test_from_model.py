@@ -1,6 +1,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
@@ -120,6 +121,10 @@ def test_partial_fit():
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
     assert_array_equal(X_transform, transformer.transform(data))
 
+    # check that if est doesn't have partial_fit, neither does SelectFromModel
+    transformer = SelectFromModel(estimator=RandomForestClassifier())
+    assert_false(hasattr(transformer, "partial_fit"))
+
 
 def test_calling_fit_reinitializes():
     est = LinearSVC(random_state=0)
@@ -171,10 +176,10 @@ def test_threshold_string():
 def test_threshold_without_refitting():
     """Test that the threshold can be set without refitting the model."""
     clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
-    model = SelectFromModel(clf, threshold=0.1)
+    model = SelectFromModel(clf, threshold="0.1 * mean")
     model.fit(data, y)
     X_transform = model.transform(data)
 
     # Set a higher threshold to filter out more features.
-    model.threshold = 1.0
+    model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])
