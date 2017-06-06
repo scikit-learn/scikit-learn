@@ -293,6 +293,24 @@ Cluster
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
+Outlier Detection models
+
+- More consistent outlier detection API:
+  Add a ``score_samples`` method in :class:`svm.OneClassSVM`,
+  :class:`ensemble.IsolationForest`, :class:`neighbors.LocalOutlierFactor`,
+  :class:`covariance.EllipticEnvelope`. It allows to access raw score
+  functions from original papers. A new ``offset_`` parameter allows to link
+  ``score_samples`` and ``decision_function`` methods.
+  The ``contamination`` parameter of :class:`ensemble.IsolationForest` and
+  :class:`neighbors.LocalOutlierFactor` ``decision_function`` methods is used
+  to define this ``offset_`` such that outliers (resp. inliers) have negative (resp.
+  positive) ``decision_function`` values. By default, ``contamination`` is
+  now set to "auto", thus using method-specific score offsets.
+  In :class:`covariance.EllipticEnvelope` ``decision_function`` method, the
+  ``raw_values`` parameter is deprecated as the shifted Mahalanobis distance
+  will be always returned in 0.22. :issue:`9015` by `Nicolas Goix`_.
+
+
 Changes to estimator checks
 ---------------------------
 

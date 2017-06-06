@@ -92,10 +92,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    contamination : float in (0., 0.5), optional (default=0.1)
+    contamination : float in (0., 0.5), optional (default="auto")
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. When fitting this is used to define the
-        threshold on the decision function.
+        threshold on the decision function. If "auto", the decision function
+        threshold is determined as in the original paper.
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -106,9 +107,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     Attributes
     ----------
     negative_outlier_factor_ : numpy array, shape (n_samples,)
-        The opposite LOF of the training samples. The lower, the more abnormal.
-        Inliers tend to have a LOF score close to 1, while outliers tend
-        to have a larger LOF score.
+        The opposite LOF of the training samples. The higher, the more normal.
+        Inliers tend to have a LOF score close to 1 (negative_outlier_factor_
+        close to -1), while outliers tend to have a larger LOF score.
 
         The local outlier factor (LOF) of a sample captures its
         supposed 'degree of abnormality'.
@@ -118,6 +119,15 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     n_neighbors_ : integer
         The actual number of neighbors used for :meth:`kneighbors` queries.
 
+    offset_ : float
+        Offset used to obtain binary labels from the raw scores.
+        Observations having a negative_outlier_factor smaller than offset_ are
+        detected as abnormal.
+        The offset is set to -1.5 (inliers score around -1), except when a
+        contamination parameter different than "auto" is provided. In that
+        case, the offset is defined in such a way we obtain the expected
+        number of outliers in training.
+
     References
     ----------
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
@@ -125,7 +135,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     """
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
-                 contamination=0.1, n_jobs=1):
+                 contamination="auto", n_jobs=1):
         super(LocalOutlierFactor, self).__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
@@ -168,8 +178,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         self : object
             Returns self.
         """
-        if not (0. < self.contamination <= .5):
-            raise ValueError("contamination must be in (0, 0.5]")
+        if self.contamination != "auto":
+            if not(0. < self.contamination <= .5):
+                raise ValueError("contamination must be in (0, 0.5], "
+                                 "got: %f" % self.contamination)
 
         super(LocalOutlierFactor, self).fit(X)
 
@@ -187,14 +199,18 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_)
 
-        # Compute lof score over training samples to define threshold_:
+        # Compute lof score over training samples to define offset_:
         lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_] /
                             self._lrd[:, np.newaxis])
 
         self.negative_outlier_factor_ = -np.mean(lrd_ratios_array, axis=1)
 
-        self.threshold_ = -scoreatpercentile(
-            -self.negative_outlier_factor_, 100. * (1. - self.contamination))
+        if self.contamination == "auto":
+            # inliers score around -1 (the higher, the less abnormal).
+            self.offset_ = -1.5
+        else:
+            self.offset_ = scoreatpercentile(
+                self.negative_outlier_factor_, 100. * self.contamination)
 
         return self
 
@@ -204,7 +220,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         If X is None, returns the same as fit_predict(X_train).
         This method allows to generalize prediction to new observations (not
         in the training set). As LOF originally does not deal with new data,
-        this method is kept private.
+        this method is kept private. In particular, fit(X)._predict(X) is not
+        the same as fit_predict(X).
 
         Parameters
         ----------
@@ -218,29 +235,57 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         is_inlier : array, shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
+        check_is_fitted(self, ["offset_", "negative_outlier_factor_",
                                "n_neighbors_", "_distances_fit_X_"])
 
         if X is not None:
             X = check_array(X, accept_sparse='csr')
             is_inlier = np.ones(X.shape[0], dtype=int)
-            is_inlier[self._decision_function(X) <= self.threshold_] = -1
+            is_inlier[self._decision_function(X) < 0] = -1
         else:
             is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
-            is_inlier[self.negative_outlier_factor_ <= self.threshold_] = -1
+            is_inlier[self.negative_outlier_factor_ < self.offset_] = -1
 
         return is_inlier
 
     def _decision_function(self, X):
-        """Opposite of the Local Outlier Factor of X (as bigger is better,
-        i.e. large values correspond to inliers).
+        """Shifted opposite of the Local Outlier Factor of X
+
+        Bigger is better, i.e. large values correspond to inliers.
+
+        The shift offset allows a zero threshold for being an outlier.
+        The argument X is supposed to contain *new data*: if X contains a
+        point from training, it consider the later in its own neighborhood.
+        Also, the samples in X are not considered in the neighborhood of any
+        point.
+        This method is kept private as the predict method is.
+        The decision function on training data is available by considering the
+        the negative_outlier_factor_ attribute.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The query sample or samples to compute the Local Outlier Factor
+            w.r.t. the training samples.
+
+        Returns
+        -------
+        shifted_opposite_lof_scores : array, shape (n_samples,)
+            The shifted opposite of the Local Outlier Factor of each input
+            samples. The lower, the more abnormal. Negative scores represent
+            outliers, positive scores represent inliers.
+        """
+        return self._score_samples(X) - self.offset_
+
+    def _score_samples(self, X):
+        """Opposite of the Local Outlier Factor of X (as bigger is
+        better, i.e. large values correspond to inliers).
 
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it consider the later in its own neighborhood.
         Also, the samples in X are not considered in the neighborhood of any
         point.
-        The decision function on training data is available by considering the
-        opposite of the negative_outlier_factor_ attribute.
+        This method is kept private as the predict method is.
 
         Parameters
         ----------
@@ -254,9 +299,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
-        check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
+        check_is_fitted(self, ["offset_", "negative_outlier_factor_",
                                "_distances_fit_X_"])
-
         X = check_array(X, accept_sparse='csr')
 
         distances_X, neighbors_indices_X = (
