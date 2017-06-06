@@ -1158,7 +1158,6 @@ class LarsCV(Lars):
                   Xy=None, fit_path=True)
         return self
 
-    # XXX deprecate?
     @property
     @deprecated("Attribute alpha is deprecated in 0.18 and "
                 "will be removed in 0.20. See 'alpha_' instead")
