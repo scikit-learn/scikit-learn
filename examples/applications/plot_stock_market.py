@@ -142,7 +142,7 @@ symbol_dict = {
     'BA': 'Boeing',
     'KO': 'Coca Cola',
     'MMM': '3M',
-    'MCD': 'Mc Donalds',
+    'MCD': 'McDonald\'s',
     'PEP': 'Pepsi',
     'K': 'Kellogg',
     'UN': 'Unilever',
@@ -159,7 +159,7 @@ symbol_dict = {
     'AAPL': 'Apple',
     'SAP': 'SAP',
     'CSCO': 'Cisco',
-    'TXN': 'Texas instruments',
+    'TXN': 'Texas Instruments',
     'XRX': 'Xerox',
     'WMT': 'Wal-Mart',
     'HD': 'Home Depot',
@@ -181,11 +181,11 @@ quotes = [
     quotes_historical_google(symbol, d1, d2) for symbol in symbols
 ]
 
-close = np.stack([q['close'] for q in quotes])
-open = np.stack([q['open'] for q in quotes])
+close_prices = np.stack([q['close'] for q in quotes])
+open_prices = np.stack([q['open'] for q in quotes])
 
 # The daily variations of the quotes are what carry most information
-variation = close - open
+variation = close_prices - open_prices
 
 
 ###############################################################################
