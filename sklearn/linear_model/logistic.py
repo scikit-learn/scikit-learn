@@ -646,7 +646,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         else:
             # SAG multinomial solver needs LabelEncoder, not LabelBinarizer
             le = LabelEncoder()
-            Y_multi = le.fit_transform(y)
+            Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
 
         w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
                       order='F', dtype=X.dtype)
@@ -720,7 +720,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             except:
                 n_iter_i = info['funcalls'] - 1
         elif solver == 'newton-cg':
-            target = target.astype(X.dtype)
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
                                      maxiter=max_iter, tol=tol)
