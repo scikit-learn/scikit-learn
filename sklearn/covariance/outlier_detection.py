@@ -12,6 +12,7 @@ covariance estimator (the Minimum Covariance Determinant).
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 import scipy as sp
 from . import MinCovDet
@@ -28,6 +29,14 @@ class OutlierDetectionMixin(object):
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 
+    raw_decision : bool
+        Whether or not to consider raw negated Mahalanobis distances as the
+        decision function. Otherwise returns ``-dist**(1/3) + thres**(1/3)``.
+        Must be False (default) for compatibility with the others outlier
+        detection tools, which use a threshold of 0 for outliers.
+
+        .. versionadded:: 0.19
+
     Notes
     -----
     Outlier detection from covariance estimation may break or not
@@ -35,10 +44,11 @@ class OutlierDetectionMixin(object):
     always take care to work with ``n_samples > n_features ** 2``.
 
     """
-    def __init__(self, contamination=0.1):
+    def __init__(self, contamination=0.1, raw_decision=False):
         self.contamination = contamination
+        self.raw_decision = raw_decision
 
-    def decision_function(self, X, raw_values=False):
+    def decision_function(self, X, raw_values=None):
         """Compute the decision function of the given observations.
 
         Parameters
@@ -46,28 +56,43 @@ class OutlierDetectionMixin(object):
         X : array-like, shape (n_samples, n_features)
 
         raw_values : bool
-            Whether or not to consider raw Mahalanobis distances as the
-            decision function. Must be False (default) for compatibility
-            with the others outlier detection tools.
+            Whether or not to consider raw positive Mahalanobis
+            distances as the decision function. Must be False (default) for
+            compatibility with the others outlier detection tools, which use a
+            threshold of 0 for being an outlier.
+
+            .. deprecated:: 0.19
+                set self.raw_decision to return the negated distance values
+                instead
 
         Returns
         -------
         decision : array-like, shape (n_samples, )
             The values of the decision function for each observations.
             It is equal to the Mahalanobis distances if `raw_values`
-            is True. By default (``raw_values=True``), it is equal
+            is True. By default (``raw_values=False``), it is equal
             to the cubic root of the shifted Mahalanobis distances.
             In that case, the threshold for being an outlier is 0, which
             ensures a compatibility with other outlier detection tools
             such as the One-Class SVM.
 
         """
+
+        if raw_values is not None:
+            warnings.warn(
+                'raw_values keyword has been moved to class initialization '
+                'as raw_decision. raw_values will be removed in version 0.21',
+                DeprecationWarning)
+
         check_is_fitted(self, 'threshold_')
         mahal_dist = self.mahalanobis(X)
-        if raw_values:
+        if self.raw_decision:
+            decision = -mahal_dist
+        elif raw_values:
+            # For compatibility with legacy argument
             decision = mahal_dist
-        else:
             check_is_fitted(self, 'threshold_')
+        else:
             transformed_mahal_dist = mahal_dist ** 0.33
             decision = self.threshold_ ** 0.33 - transformed_mahal_dist
 
@@ -93,7 +118,7 @@ class OutlierDetectionMixin(object):
         check_is_fitted(self, 'threshold_')
         is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
-            values = self.decision_function(X, raw_values=True)
+            values = self.mahalanobis(X)
             is_inlier[values <= self.threshold_] = 1
         else:
             raise NotImplementedError("You must provide a contamination rate.")
