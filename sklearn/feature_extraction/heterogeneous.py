@@ -4,7 +4,7 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..pipeline import _fit_one_transformer, _fit_transform_one, _transform_one
 from ..externals.joblib import Parallel, delayed
-from ..externals.six import iteritems
+from ..externals.six import iteritems, string_types
 
 
 def _getitem(X, column):
@@ -12,17 +12,30 @@ def _getitem(X, column):
     Get feature column from input data (array, dataframe, dict)
 
     """
-    if isinstance(column, int):
+    # check whether we have column names or integers
+    if isinstance(column, list):
+        if all(isinstance(col, int) for col in column):
+            column_names = False
+        elif all(isinstance(col, string_types) for col in column):
+            column_names = True
+        else:
+            raise ValueError("no valid 'column' type")
+    elif isinstance(column, int):
+        column_names = False
+    elif isinstance(column, string_types):
+        column_names = True
+    else:
+        raise ValueError("no valid 'column' type")
+
+    if column_names:
+        return X[column]
+    else:
         if hasattr(X, 'iloc'):
             # pandas dataframes
             return X.iloc[:, column]
         else:
             # numpy arrays
             return X[:, column]
-    elif isinstance(column, str):
-        return X[column]
-    else:
-        raise ValueError("no valid 'column' type")
 
 
 class ColumnTransformer(BaseEstimator, TransformerMixin):

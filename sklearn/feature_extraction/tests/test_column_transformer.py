@@ -16,7 +16,13 @@ class Trans(BaseEstimator):
 
     def transform(self, X, y=None):
         #TODO fix this in ColumnTransformer to always pass 2D data
-        return check_array(np.asarray(X).reshape(-1, 1))
+        if isinstance(X, np.recarray):
+            X = np.array(X.tolist())
+        else:
+            X = np.asarray(X)
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+        return check_array(X)
 
 
 class SparseMatrixTrans(BaseEstimator):
@@ -72,8 +78,6 @@ def test_column_selection():
         assert_array_equal(second_feat.fit(X).transform(X), X_res_second)
         assert_array_equal(both.fit(X).transform(X), X_res_both)
 
-
-
     # test with transformer_weights
     transformer_weights = {'trans1': .1, 'trans2': 10}
     for X in Xs_name:
@@ -85,6 +89,31 @@ def test_column_selection():
         assert_array_equal(both.fit_transform(X), res)
         # fit then transform
         assert_array_equal(both.fit(X).transform(X), res)
+
+    # test multiple columns
+    for X in Xs_name:
+        if isinstance(X, dict):
+            continue
+        both = ColumnTransformer({'trans': (Trans(), ['first', 'second'])})
+        assert_array_equal(both.fit_transform(X), X_res_both)
+        assert_array_equal(both.fit(X).transform(X), X_res_both)
+
+        # with weights
+        both = ColumnTransformer({'trans': (Trans(), ['first', 'second'])},
+                                 transformer_weights={'trans': .1})
+        assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
+        assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
+
+    for X in Xs_positional:
+        both = ColumnTransformer({'trans': (Trans(), [0, 1])})
+        assert_array_equal(both.fit_transform(X), X_res_both)
+        assert_array_equal(both.fit(X).transform(X), X_res_both)
+
+        # with weights
+        both = ColumnTransformer({'trans': (Trans(), [0, 1])},
+                                 transformer_weights={'trans': .1})
+        assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
+        assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
 
 
 def test_sparse_stacking():
