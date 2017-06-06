@@ -20,8 +20,8 @@ from matplotlib import pyplot as plt
 
 from sklearn.datasets import make_hastie_10_2
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import precision_score
-from sklearn.metrics.scorer import make_scorer
+from sklearn.metrics import make_scorer
+from sklearn.metrics import f1_score
 from sklearn.tree import DecisionTreeClassifier
 
 
@@ -32,8 +32,7 @@ X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 
 # The scorers can be a standard scorer referenced by its name or one a
 # callable-like returned from make_scorer
-scoring = {'AUC Score': 'roc_auc', 'Precision': make_scorer(precision_score),
-           'Recall': 'recall', 'F1 Score': 'f1'}
+scoring = {'AUC Score': 'roc_auc', 'F1 Score': make_scorer(f1_score)}
 
 # Multiple metric GridSearchCV, best_* attributes are exposed for the scorer
 # with key 'AUC Score' ('roc_auc')
@@ -54,12 +53,12 @@ plt.grid()
 
 ax = plt.axes()
 ax.set_xlim(0, 402)
-ax.set_ylim(0.68, 1)
+ax.set_ylim(0.75, 1)
 
 # Get the regular numpy array from the MaskedArray
 X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
 
-for scorer, color in zip(sorted(scoring), ['g', 'k', 'r', 'b']):
+for scorer, color in zip(sorted(scoring), ['g', 'k']):
     for sample, style in (('train', '--'), ('test', '-')):
         sample_score_mean = results['mean_%s_%s' % (sample, scorer)]
         sample_score_std = results['std_%s_%s' % (sample, scorer)]
@@ -77,9 +76,7 @@ for scorer, color in zip(sorted(scoring), ['g', 'k', 'r', 'b']):
     ax.plot([X_axis[best_index], ] * 2, [0, best_score],
             linestyle='-.', color=color, marker='x', markeredgewidth=3, ms=8)
 
-    # Annotate the score and the min_samples_split chosen by that scorer
-    ax.annotate("%d" % X_axis[best_index],
-                (X_axis[best_index] + 3, 0.685))
+    # Annotate the best score for that scorer
     ax.annotate("%0.2f" % best_score,
                 (X_axis[best_index], best_score + 0.005))
 
