@@ -526,6 +526,7 @@ def is_public_parameter(attr):
     return not (attr.startswith('_') or attr.endswith('_'))
 
 
+@ignore_warnings(category=DeprecationWarning)
 def check_dont_overwrite_parameters(name, estimator):
     # check that fit method only changes or sets private attributes
     rnd = np.random.RandomState(0)
@@ -572,6 +573,7 @@ def check_dont_overwrite_parameters(name, estimator):
                  ' %s changed' % ', '.join(attrs_changed_by_fit)))
 
 
+@ignore_warnings(category=DeprecationWarning)
 def check_fit2d_predict1d(name, estimator):
     # check by fitting a 2d array and predicting with a 1d array
     rnd = np.random.RandomState(0)
@@ -709,6 +711,7 @@ def check_transformer_data_not_an_array(name, Transformer):
     _check_transformer(name, Transformer, this_X, this_y)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def check_transformers_unfitted(name, transformer):
     X, y = _boston_subset()
 
