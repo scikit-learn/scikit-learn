@@ -190,7 +190,7 @@ class VectorizerMixin(object):
         # hundreds of nanoseconds which is negligible when compared to the
         # cost of tokenizing a string of 1000 chars for instance.
         noop = lambda x: x
-
+        
         # accent stripping
         if not self.strip_accents:
             strip_accents = noop
@@ -997,6 +997,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    Attributes
+    ----------
+    idf_ : numpy array of shape [n_features, 1]
+        returns None unless use_idf=True, then
+        returns 1-D matrix containing idf(d,t).
+
     References
     ----------
 
@@ -1036,9 +1042,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
-
         return self
 
     def transform(self, X, copy=True):
