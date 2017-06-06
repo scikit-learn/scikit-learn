@@ -1,8 +1,8 @@
 /*
-Sphinx-Gallery is has compatible CSS to fix default sphinx themes
+Sphinx-Gallery has compatible CSS to fix default sphinx themes
 Tested for Sphinx 1.3.1 for all themes: default, alabaster, sphinxdoc,
 scrolls, agogo, traditional, nature, haiku, pyramid
-Tested for Read the docs theme 0.1.7 */
+Tested for Read the Docs theme 0.1.7 */
 .sphx-glr-thumbcontainer {
   background: #fff;
   border: solid #fff 1px;
@@ -103,9 +103,6 @@ thumbnail with its default link Background color */
 blockquote.sphx-glr-script-out {
   margin-left: 0pt;
 }
-<<<<<<< HEAD
-.sphx-glr-download {
-=======
 
 div.sphx-glr-footer {
     text-align: center;
@@ -118,15 +115,10 @@ div.sphx-glr-download {
 }
 
 div.sphx-glr-download a {
->>>>>>> bddda7bc6... [MRG + 2] [MAINT] Update to Sphinx-Gallery 0.1.7 (#7986)
   background-color: #ffc;
-  border: 1px solid #c2c22d;
-<<<<<<< HEAD
+  background-image: linear-gradient(to bottom, #FFC, #d5d57e);
   border-radius: 4px;
-  margin: 1em auto 1ex auto;
-  max-width: 45ex;
-  padding: 1ex;
-=======
+  border: 1px solid #c2c22d;
   color: #000;
   display: inline-block;
   /* Not valid in old browser, hence we keep the line above to override */
@@ -168,10 +160,13 @@ div.sphx-glr-download code.download {
   /* border and background are given by the enclosing 'a' */
   border: none;
   background: none;
->>>>>>> bddda7bc6... [MRG + 2] [MAINT] Update to Sphinx-Gallery 0.1.7 (#7986)
 }
-.sphx-glr-download a {
-  color: #4b4600;
+
+div.sphx-glr-download a:hover {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 5px rgba(0,0,0,.25);
+  text-decoration: none;
+  background-image: none;
+  background-color: #d5d57e;
 }
 
 ul.sphx-glr-horizontal {
@@ -184,8 +179,6 @@ ul.sphx-glr-horizontal li {
 ul.sphx-glr-horizontal img {
   height: auto !important;
 }
-<<<<<<< HEAD
-=======
 
 p.sphx-glr-signature a.reference.external {
   -moz-border-radius: 5px;
@@ -197,26 +190,3 @@ p.sphx-glr-signature a.reference.external {
   margin-left: auto;
   display: table;
 }
-
-a.sphx-glr-code-links:hover{
-    text-decoration: none;
-}
-
-a.sphx-glr-code-links[tooltip]:hover:before{
-    background: rgba(0,0,0,.8);
-    border-radius: 5px;
-    color: white;
-    content: attr(tooltip);
-    padding: 5px 15px;
-    position: absolute;
-    z-index: 98;
-    width: 16em;
-    word-break: normal;
-    white-space: normal;
-    display: inline-block;
-    text-align: center;
-    text-indent: 0;
-    margin-left: 0; /* Use zero to avoid overlapping with sidebar */
-    margin-top: 1.2em;
-}
->>>>>>> bddda7bc6... [MRG + 2] [MAINT] Update to Sphinx-Gallery 0.1.7 (#7986)
