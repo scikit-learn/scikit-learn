@@ -1036,6 +1036,38 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
+    def partial_fit(self, X, y=None):
+        """Update the df vector (global term weights),
+        which is used to calculate the idf scores for the terms.
+        This method should only be called after `fit` since it
+        is supposed to not change the number of features.
+
+        Parameters
+        ----------
+        X : sparse matrix, [n_samples, n_features]
+            a matrix of term/token counts
+        """
+
+        if not hasattr(self, '_df'):
+            raise ValueError("fit should be called before partial_fit")
+
+        if not sp.issparse(X):
+            X = sp.csc_matrix(X)
+        if self.use_idf:
+            n_samples, n_features = X.shape
+
+            expected_n_features = self._df.shape[0]
+            if n_features != expected_n_features:
+                raise ValueError("The update input has n_features=%d while"
+                                 " the model has been trained with n_features="
+                                 "%d" % (n_features, expected_n_features))
+
+            df = _document_frequency(X)
+            self._df += df
+            self._n_samples += n_samples
+
+        return self
+
     def transform(self, X, copy=True):
         """Transform a count matrix to a tf or tf-idf representation
 
