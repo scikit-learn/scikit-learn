@@ -1240,6 +1240,22 @@ class TfidfVectorizer(CountVectorizer):
 
         This is only available if no vocabulary was given.
 
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import TfidfVectorizer
+    >>> import numpy as np
+    >>> #create document
+    >>> doc_test = ['Every summer our family gathers on the beach.',
+    ...              'Everytime our family has a gathering someone is late.',
+    ...              'Every winter our family goes to a ski resort.',
+    ...              'This fall everyone will run the Pumpkin 10K run.']
+    >>> vectorizer = TfidfVectorizer()
+    >>> X = vectorizer.fit_transform(doc_test)
+    >>> print(type(X))
+    >>> vectorizer.get_feature_names()
+
+
+
     See also
     --------
     CountVectorizer
@@ -1255,8 +1271,9 @@ class TfidfVectorizer(CountVectorizer):
     The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
-    """
 
+
+    """
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
