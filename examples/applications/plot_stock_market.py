@@ -101,7 +101,6 @@ def quotes_historical_google(symbol, date1, date2):
         'output': 'csv'
     })
     url = 'http://www.google.com/finance/historical?' + params
-    print(url)
     with urlopen(url) as response:
         dtype = {
             'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
