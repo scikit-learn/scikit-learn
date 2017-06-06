@@ -166,9 +166,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
                 "Since 'prefit=True', call transform directly")
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X, y, **fit_params)
-        scores = _get_feature_importances(self.estimator_, self.norm_order)
-        self.threshold_ = _calculate_threshold(self.estimator, scores,
-                                               self.threshold)
         return self
 
     @property

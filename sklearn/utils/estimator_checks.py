@@ -248,6 +248,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit1d_1sample
     yield check_get_params_invariance
     yield check_dict_unchanged
+    yield check_no_fit_attributes_set_in_init
     yield check_dont_overwrite_parameters
 
 
@@ -352,9 +353,6 @@ def set_testing_parameters(estimator):
         # greater than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
         estimator.set_params(n_components=8)
-
-    if estimator.__class__.__name__ == "GaussianRandomProjectionHash":
-        estimator.set_params(n_components=32)
 
     if isinstance(estimator, SelectKBest):
         # SelectKBest has a default of k=10
@@ -504,6 +502,14 @@ def check_dict_unchanged(name, estimator):
     y = multioutput_estimator_convert_y_2d(estimator, y)
     estimator = clone(estimator)
     set_testing_parameters(estimator)
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    if hasattr(estimator, "n_best"):
+        estimator.n_best = 1
 
     set_random_state(estimator, 1)
 
@@ -529,6 +535,9 @@ def is_public_parameter(attr):
 @ignore_warnings(category=DeprecationWarning)
 def check_dont_overwrite_parameters(name, estimator):
     # check that fit method only changes or sets private attributes
+    if hasattr(Estimator.__init__, "deprecated_original"):
+        # to not check deprecated classes
+        return
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)

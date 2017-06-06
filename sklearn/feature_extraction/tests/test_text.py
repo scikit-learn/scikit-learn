@@ -310,7 +310,7 @@ def test_tf_idf_smoothing():
          [1, 1, 0],
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
-    tfidf = tr.fit_transform(X)
+    tfidf = tr.fit_transform(X).toarray()
     assert_true((tfidf >= 0).all())
 
     # check normalization
@@ -321,7 +321,7 @@ def test_tf_idf_smoothing():
          [1, 1, 0],
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=True, norm='l2')
-    tfidf = tr.fit_transform(X)
+    tfidf = tr.fit_transform(X).toarray()
     assert_true((tfidf >= 0).all())
 
 
@@ -330,7 +330,7 @@ def test_tfidf_no_smoothing():
          [1, 1, 0],
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
-    tfidf = tr.fit_transform(X)
+    tfidf = tr.fit_transform(X).toarray()
     assert_true((tfidf >= 0).all())
 
     # check normalization
@@ -341,7 +341,6 @@ def test_tfidf_no_smoothing():
     X = [[1, 1, 0],
          [1, 1, 0],
          [1, 0, 0]]
-    X = sparse.csr_matrix(X)
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
     clean_warning_registry()
@@ -359,7 +358,7 @@ def test_tfidf_no_smoothing():
 def test_sublinear_tf():
     X = [[1], [2], [3]]
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
-    tfidf = tr.fit_transform(X)
+    tfidf = tr.fit_transform(X).toarray()
     assert_equal(tfidf[0], 1)
     assert_greater(tfidf[1], tfidf[0])
     assert_greater(tfidf[2], tfidf[1])

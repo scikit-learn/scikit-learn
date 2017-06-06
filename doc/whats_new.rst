@@ -159,6 +159,7 @@ Enhancements
 
    - Added the ``_get_tags`` method to all estimators to return estimator
      tags that describe estimator capabilities for automated testing. By `Andreas Müller`_.
+
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
      boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
@@ -221,9 +222,6 @@ Bug fixes
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
-     in R (lars library). :issue:`7849` by `Jair Montoya Martinez`_
-
-     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
      in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`.
 
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
@@ -260,6 +258,7 @@ Bug fixes
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
    - Fixes to the input validation in :class:`sklearn.covariance.EllipticEnvelope` by
      `Andreas Müller`_.
 
@@ -365,6 +364,7 @@ API changes summary
      By `Andreas Müller`_. 
 
    - FIXME MAYBE changed decision_function shape for OneVsRestClassifier? Breaking change...
+
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
      user no longer has access to the unnormalized document topic distribution
