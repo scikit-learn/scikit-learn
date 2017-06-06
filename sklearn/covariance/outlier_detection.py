@@ -113,10 +113,10 @@ class OutlierDetectionMixin(object):
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like, shape = (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like, shape = (n_samples,), optional
             Sample weights.
 
         Returns
