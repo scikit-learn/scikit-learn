@@ -213,7 +213,8 @@ Bug fixes
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
-     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
+     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`.
+
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
@@ -223,9 +224,9 @@ Bug fixes
      where a float being compared to ``0.0`` using ``==`` caused a divide by zero
      error. This was fixed in :issue:`7970` by :user:`He Chen <chenhe95>`.
 
-   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
-     sparse array X and initial centroids, where X's means were unnecessarily
-     being subtracted from the centroids. :issue:`7872` by `Josh Karnofsky <https://github.com/jkarno>`_.
+   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a sparse
+     array X and initial centroids, where X's means were unnecessarily being
+     subtracted from the centroids. :issue:`7872` by :user:`Josh Karnofsky <jkarno>`.
 
    - Fix estimators to accept a ``sample_weight`` parameter of type
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
@@ -248,6 +249,20 @@ Bug fixes
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
+   - Fixes to the input validation in
+     :class:`sklearn.covariance.EllipticEnvelope`.
+     :issue:`8086` by `Andreas Müller`_.
+
+   - Fix output shape and bugs with n_jobs > 1 in  
+     :class:`sklearn.decomposition.SparseCoder` transform and :func:`sklarn.decomposition.sparse_encode`
+     for one-dimensional data and one component.
+     This also impacts the output shape of :class:`sklearn.decomposition.DictionaryLearning`.
+     :issue:`8086` by `Andreas Müller`_.
+
+   - Several fixes to input validation in
+     :class:`multiclass.OutputCodeClassifier`
+     :issue:`8086` by `Andreas Müller`_.
 
    - Fix a bug where
      :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
@@ -335,6 +350,20 @@ API changes summary
      selection classes to be used with tools such as
      :func:`sklearn.model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
+
+
+   - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
+
+   - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
+     parameter and sets the ``threshold_`` attribute during the call to
+     ``fit``, and no longer during the call to ``transform```, by `Andreas
+     Müller`_.
+
+   - :class:`feature_selection.SelectFromModel` now has a ``partial_fit``
+     method only if the underlying estimator does. By `Andreas Müller`_.
+
+   - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
+     only if the underlying estimator does.  By `Andreas Müller`_. 
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The

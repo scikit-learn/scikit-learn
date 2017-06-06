@@ -29,7 +29,6 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
 
@@ -1119,13 +1118,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     @property
     def idf_(self):
-        if hasattr(self, "_df"):
-            # log+1 instead of log makes sure terms with zero idf don't get
-            # suppressed entirely.
-            idf = np.log(float(self._n_samples) / self._df) + 1.0
-            return idf
-        else:
-            return None
+        return np.log(float(self._n_samples) / self._df) + 1.0
 
 
 class TfidfVectorizer(CountVectorizer):
