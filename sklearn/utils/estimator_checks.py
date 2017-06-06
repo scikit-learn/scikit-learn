@@ -1223,6 +1223,7 @@ def check_supervised_y_2d(name, estimator):
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
     set_random_state(estimator)
     # fit
