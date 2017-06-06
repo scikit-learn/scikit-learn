@@ -21,7 +21,7 @@ export CC=/usr/lib/ccache/gcc
 # Useful for debugging how ccache is used
 # export CCACHE_LOGFILE=/tmp/ccache.log
 # ~60M is used by .ccache when compiling from scratch at the time of writing
-export CCACHE_MAXSIZE=100M
+ccache --max-size 100M --show-stats
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
