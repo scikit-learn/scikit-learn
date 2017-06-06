@@ -1106,10 +1106,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
                                  " has been trained with n_features=%d" % (
                                      n_features, expected_n_features))
 
-            # log+1 instead of log makes sure terms with zero idf don't get
-            # suppressed entirely.
-            idf = np.log(float(self._n_samples) / self._df) + 1.0
-            idf_diag = sp.spdiags(idf, diags=0, m=n_features,
+            idf_diag = sp.spdiags(self.idf_, diags=0, m=n_features,
                                   n=n_features, format='csr')
 
             # *= doesn't work
@@ -1123,6 +1120,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     @property
     def idf_(self):
         if hasattr(self, "_df"):
+            # log+1 instead of log makes sure terms with zero idf don't get
+            # suppressed entirely.
             idf = np.log(float(self._n_samples) / self._df) + 1.0
             return idf
         else:
