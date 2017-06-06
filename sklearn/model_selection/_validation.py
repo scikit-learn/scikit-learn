@@ -333,7 +333,7 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
 
 
 def _score(estimator, X_test, y_test, scorers):
-    """Compute the score of an estimator on a given test set."""
+    """Compute the score(s) of an estimator on a given test set."""
     scores = {}
 
     for name, scorer in scorers.items():
@@ -862,6 +862,9 @@ def learning_curve(estimator, X, y, groups=None,
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv_iter)
+        # out, at this point, is of shape (n_splits, n_unique_ticks, 2)
+        # (where 2 is for train/test scores)
+        # We need it to be of shape (2, n_unique_ticks, n_splits)
         out = np.asarray(out).transpose((2, 1, 0))
     else:
         train_test_proportions = []

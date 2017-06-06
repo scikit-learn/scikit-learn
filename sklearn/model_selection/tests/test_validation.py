@@ -257,7 +257,6 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
     estimator = MockClassifier()
 
     # Test the errors
-
     error_message_regexp = ".*must be unique strings.*\n.*use a dict.*"
 
     # List/tuple of callables should raise a message advising users to use
@@ -337,7 +336,6 @@ def test_cross_val_score_multiple_metric():
     for scoring in all_scoring:
         multi_scores = cross_val_score(reg, X, y, cv=5, scoring=scoring)
         assert_true(isinstance(multi_scores, dict))
-        print(multi_scores)
         assert_equal(len(multi_scores), 2)
         assert_array_almost_equal(multi_scores['r2'], r2_scores)
         assert_array_almost_equal(multi_scores['neg_mean_squared_error'],

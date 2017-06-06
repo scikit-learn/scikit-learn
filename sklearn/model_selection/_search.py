@@ -313,7 +313,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
-        FitFailedWarning is raised. This parameter does not affect the eefit
+        FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
     Returns
@@ -332,10 +332,10 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     check_scoring(estimator, scorer, allow_none=True)
     scores, n_samples_test = _fit_and_score(estimator, X, y,
                                             {'score': scorer}, train,
-                                             test, verbose, parameters,
-                                             fit_params=fit_params,
-                                             return_n_test_samples=True,
-                                             error_score=error_score)
+                                            test, verbose, parameters,
+                                            fit_params=fit_params,
+                                            return_n_test_samples=True,
+                                            error_score=error_score)
     return scores['score'], parameters, n_samples_test
 
 

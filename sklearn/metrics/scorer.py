@@ -287,7 +287,6 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
 
     Parameters
     ----------
-
     estimator : sklearn estimator instance
         The estimator for which the scoring will be applied.
 
@@ -312,7 +311,6 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
 
     Returns
     -------
-
     scorers_dict : dict
         A dict mapping each scorer name to its validated scorer.
 
