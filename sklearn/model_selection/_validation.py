@@ -68,7 +68,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         value. Metric functions returning a list/array of values may be wrapped
         into multiple scorers that return one value each.
 
-        If None the estimator's default scorer, if available is used.
+        If None the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -165,7 +165,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                               train, test, verbose, None,
                                               fit_params)
                       for train, test in cv.split(X, y, groups))
-    scores = list(zip(*scores))[0]
+    scores = next(zip(*scores))
     if is_multimetric:
         return _aggregate_score_dicts(scores)
     else:
