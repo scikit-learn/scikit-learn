@@ -26,12 +26,10 @@ from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
                                column_or_1d)
 from .utils.multiclass import type_of_target
-from .utils.random import choice
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
-from .utils.fixes import bincount
 from .gaussian_process.kernels import Kernel as GPKernel
 from .exceptions import FitFailedWarning
 
@@ -541,7 +539,7 @@ class StratifiedKFold(_BaseKFold):
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
-        label_counts = bincount(y_inversed)
+        label_counts = np.bincount(y_inversed)
         min_labels = np.min(label_counts)
         if np.all(self.n_folds > label_counts):
             raise ValueError("All the n_labels for individual classes"
@@ -990,7 +988,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             # if we need to add more, we add them all and
             # go to the next value
             add_now = min(len(inds), need_to_add)
-            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            inds = rng.choice(inds, size=add_now, replace=False)
             floored[inds] += 1
             need_to_add -= add_now
             if need_to_add == 0:
@@ -1072,7 +1070,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
-        if np.min(bincount(self.y_indices)) < 2:
+        if np.min(np.bincount(self.y_indices)) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
                              " number of labels for any class cannot"
@@ -1089,7 +1087,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
-        cls_count = bincount(self.y_indices)
+        cls_count = np.bincount(self.y_indices)
 
         for n in range(self.n_iter):
             # if there are ties in the class-counts, we want

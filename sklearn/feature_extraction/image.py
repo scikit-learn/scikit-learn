@@ -16,7 +16,6 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils.fixes import astype
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -108,7 +107,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
         n_voxels = diag.size
     else:
         if mask is not None:
-            mask = astype(mask, dtype=np.bool, copy=False)
+            mask = mask.astype(dtype=np.bool, copy=False)
             mask = np.asarray(mask, dtype=np.bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)

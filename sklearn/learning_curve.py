@@ -14,7 +14,6 @@ from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
 from .utils import indexable
-from .utils.fixes import astype
 
 
 warnings.warn("This module was deprecated in version 0.18 in favor of the "
@@ -214,7 +213,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
+        train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
                                  dtype=np.int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)

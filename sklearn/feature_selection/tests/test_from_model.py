@@ -17,7 +17,6 @@ from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.utils.fixes import norm
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
@@ -101,7 +100,7 @@ def test_feature_importances_2d_coef():
 
             # Manually check that the norm is correctly performed
             est.fit(X, y)
-            importances = norm(est.coef_, axis=0, ord=order)
+            importances = np.linalg.norm(est.coef_, axis=0, ord=order)
             feature_mask = importances > func(importances)
             assert_array_equal(X_new, X[:, feature_mask])
 

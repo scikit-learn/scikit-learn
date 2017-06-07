@@ -6,7 +6,7 @@
 import scipy.sparse as sp
 import numpy as np
 
-from .fixes import sparse_min_max, bincount
+from .fixes import sparse_min_max
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
@@ -401,10 +401,10 @@ def count_nonzero(X, axis=None, sample_weight=None):
         return out * sample_weight
     elif axis == 0:
         if sample_weight is None:
-            return bincount(X.indices, minlength=X.shape[1])
+            return np.bincount(X.indices, minlength=X.shape[1])
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
-            return bincount(X.indices, minlength=X.shape[1],
+            return np.bincount(X.indices, minlength=X.shape[1],
                             weights=weights)
     else:
         raise ValueError('Unsupported axis: {0}'.format(axis))
