@@ -1372,6 +1372,12 @@ def test_binarizer():
     assert_raises(ValueError, binarizer.transform, sparse.csc_matrix(X))
 
 
+def test_binarizer_feature_names():
+    binarizer = Binarizer()
+    feature_names = binarizer.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c'], feature_names)
+
+
 def test_center_kernel():
     # Test that KernelCenterer is equivalent to StandardScaler
     # in feature space

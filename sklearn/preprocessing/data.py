@@ -1473,6 +1473,23 @@ class Binarizer(BaseEstimator, TransformerMixin):
         self.threshold = threshold
         self.copy = copy
 
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length len(input_features), optional
+            String names for input features if available. By default,
+            None is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length len(input_features)
+
+        """
+        return input_features
+
     def fit(self, X, y=None):
         """Do nothing and return the estimator unchanged
 
