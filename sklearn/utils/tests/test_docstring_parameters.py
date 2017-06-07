@@ -10,6 +10,7 @@ from inspect import getsource
 
 import sklearn
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_raise_message
 
 _doc_special_members = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__call__', '__add__', '__sub__', '__mul__', '__div__',
@@ -124,6 +125,119 @@ def check_parameters_match(func, doc=None):
             if n1 != n2:
                 incorrect += [name_ + ' ' + n1 + ' != ' + n2]
     return incorrect
+
+
+def f_ok(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_sections(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Results
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_order(b, a):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_missing(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+class Klass(object):
+    def f_missing(self, X, y):
+        pass
+
+    def f_bad_sections(self, X, y):
+        """Function f
+
+        Parameter
+        ----------
+        a : int
+            Parameter a
+        b : float
+            Parameter b
+
+        Results
+        -------
+        c : list
+            Parameter c
+        """
+        pass
+
+
+def test_check_parameters_match():
+    check_parameters_match(f_ok)
+    assert_raise_message(RuntimeError, 'Unknown section Results',
+                         check_parameters_match, f_bad_sections)
+    assert_raise_message(RuntimeError, 'Unknown section Parameter',
+                         check_parameters_match, Klass.f_bad_sections)
+
+    messages = ['a != b']
+    messages += ["arg mismatch: ['b']"]
+    messages += ["arg mismatch: ['X', 'y']"]
+    for mess, f in zip(messages, [f_bad_order, f_missing, Klass.f_missing]):
+        incorrect = check_parameters_match(f)
+        assert_true(len(incorrect) >= 1)
+        assert_true(mess in incorrect[0],
+                    '"%s" not in "%s"' % (mess, incorrect[0]))
 
 
 def test_docstring_parameters():
