@@ -50,7 +50,6 @@ from sklearn import clone
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               AdaBoostClassifier)
-# from sklearn.externals.six.moves import xrange
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
@@ -140,10 +139,9 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         # to show how these are different to what we see in the decision
         # surfaces. These points are regularly space and do not have a
         # black outline
-        xx_coarser, yy_coarser = np.meshgrid(np.arange(x_min, x_max,
-                                                       plot_step_coarser),
-                                             np.arange(y_min, y_max,
-                                                       plot_step_coarser))
+        xx_coarser, yy_coarser = np.meshgrid(
+            np.arange(x_min, x_max, plot_step_coarser),
+            np.arange(y_min, y_max, plot_step_coarser))
         Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(),
                                          yy_coarser.ravel()]
                                          ).reshape(xx_coarser.shape)
