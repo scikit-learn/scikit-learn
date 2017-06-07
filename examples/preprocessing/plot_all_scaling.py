@@ -76,7 +76,7 @@ X_full, y_full = dataset.data, dataset.target
 
 X = X_full[:, [0, 5]]
 
-distributions = OrderedDict((
+distributions = [
     ('Unscaled data', X),
     ('Data after standard scaling',
         StandardScaler().fit_transform(X)),
@@ -93,8 +93,8 @@ distributions = OrderedDict((
         QuantileTransformer(output_distribution='normal')
         .fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
-        Normalizer().fit_transform(X)),
-))
+        Normalizer().fit_transform(X))
+]
 
 # scale the output between 0 and 1 for the colorbar
 y = minmax_scale(y_full)
@@ -182,12 +182,13 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
 
 
 def make_plot(item_idx):
-    _, X = list(distributions.items())[item_idx]
+    title, X = distributions[item_idx]
     ax_zoom_out, ax_zoom_in, ax_colorbar = create_axes()
     axarr = (ax_zoom_out, ax_zoom_in)
     plot_distribution(axarr[0], X, y, hist_nbins=200,
                       x0_label="Median Income",
-                      x1_label="Number of households")
+                      x1_label="Number of households",
+                      title=title)
 
     # zoom-in
     zoom_in_percentile_range = (0, 99)
@@ -200,7 +201,8 @@ def make_plot(item_idx):
     plot_distribution(axarr[1], X[non_outliers_mask], y[non_outliers_mask],
                       hist_nbins=50,
                       x0_label="Median Income",
-                      x1_label="Number of households")
+                      x1_label="Number of households",
+                      title="Zoom-in")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
     mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cm.plasma_r,
