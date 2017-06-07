@@ -67,11 +67,11 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
 
-def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
+def assert_almost_equal_dense_sparse(x, y, err_msg=''):
     if sparse.issparse(x):
-        assert_allclose(x.data, y.data, decimal=decimal, err_msg=err_msg)
+        assert_allclose(x.data, y.data, err_msg=err_msg)
     else:
-        assert_allclose(x, y, decimal=decimal, err_msg=err_msg)
+        assert_allclose(x, y, err_msg=err_msg)
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -1290,7 +1290,7 @@ def check_regressors_int(name, regressor_orig):
     pred1 = regressor_1.predict(X)
     regressor_2.fit(X, y_.astype(np.float))
     pred2 = regressor_2.predict(X)
-    assert_allclose(pred1, pred2, 2, name)
+    assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1547,7 +1547,7 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     pred1 = estimator_1.predict(X_)
     estimator_2.fit(X, y)
     pred2 = estimator_2.predict(X)
-    assert_allclose(pred1, pred2, 2, name)
+    assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
 def check_parameters_default_constructible(name, Estimator):
