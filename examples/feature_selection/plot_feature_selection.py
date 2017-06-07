@@ -54,7 +54,8 @@ selector.fit(X, y)
 scores = -np.log10(selector.pvalues_)
 scores /= scores.max()
 plt.bar(X_indices - .45, scores, width=.2,
-        label=r'Univariate score ($-Log(p_{value})$)', color='darkorange')
+        label=r'Univariate score ($-Log(p_{value})$)', color='darkorange',
+        edgecolor='black')
 
 ###############################################################################
 # Compare to the weights of an SVM
@@ -65,7 +66,7 @@ svm_weights = (clf.coef_ ** 2).sum(axis=0)
 svm_weights /= svm_weights.max()
 
 plt.bar(X_indices - .25, svm_weights, width=.2, label='SVM weight',
-        color='navy')
+        color='navy', edgecolor='black')
 
 clf_selected = svm.SVC(kernel='linear')
 clf_selected.fit(selector.transform(X), y)
@@ -74,7 +75,8 @@ svm_weights_selected = (clf_selected.coef_ ** 2).sum(axis=0)
 svm_weights_selected /= svm_weights_selected.max()
 
 plt.bar(X_indices[selector.get_support()] - .05, svm_weights_selected,
-        width=.2, label='SVM weights after selection', color='c')
+        width=.2, label='SVM weights after selection', color='c',
+        edgecolor='black')
 
 
 plt.title("Comparing feature selection")
