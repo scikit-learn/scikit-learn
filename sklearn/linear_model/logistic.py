@@ -15,6 +15,8 @@ import warnings
 
 import numpy as np
 from scipy import optimize, sparse
+from scipy.misc import logsumexp
+from scipy.special import expit
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
@@ -22,13 +24,12 @@ from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
-from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
-                             softmax, squared_norm)
+from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
+                             squared_norm)
 from ..utils.extmath import row_norms
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
 from ..exceptions import NotFittedError
-from ..utils.fixes import expit
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
@@ -1535,6 +1536,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Array of C that maps to the best scores across every class. If refit is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
+        `C_` is of shape(n_classes,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.

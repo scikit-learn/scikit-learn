@@ -22,6 +22,7 @@ from __future__ import division
 import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
+from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
@@ -30,7 +31,6 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
-from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
@@ -594,7 +594,7 @@ def label_ranking_average_precision_score(y_true, y_score):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
-    # Handle badly formated array and the degenerate case with one label
+    # Handle badly formatted array and the degenerate case with one label
     y_type = type_of_target(y_true)
     if (y_type != "multilabel-indicator" and
             not (y_type == "binary" and y_true.ndim == 2)):
