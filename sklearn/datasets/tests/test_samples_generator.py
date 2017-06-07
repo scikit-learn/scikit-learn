@@ -50,6 +50,14 @@ def test_make_classification():
     assert_equal(sum(y == 1), 25, "Unexpected number of samples in class #1")
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
 
+    # Test for n_features > 30
+    X, y = make_classification(n_samples=2000, n_features=31, n_informative=31,
+                               n_redundant=0, n_repeated=0, hypercube=True,
+                               scale=0.5, random_state=0)
+
+    assert_equal(X.shape, (2000, 31), "X shape mismatch")
+    assert_equal(y.shape, (2000,), "y shape mismatch")
+
 
 def test_make_classification_informative_features():
     """Test the construction of informative features in make_classification
