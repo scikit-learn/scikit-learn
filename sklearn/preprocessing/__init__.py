@@ -4,7 +4,7 @@ normalization, binarization and imputation methods.
 """
 
 from ._function_transformer import FunctionTransformer
-
+from .discretization import MDLP
 from .data import Binarizer
 from .data import KernelCenterer
 from .data import MinMaxScaler
