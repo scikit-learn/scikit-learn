@@ -50,7 +50,7 @@ from sklearn import clone
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               AdaBoostClassifier)
-from sklearn.externals.six.moves import xrange
+# from sklearn.externals.six.moves import xrange
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
@@ -98,7 +98,8 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         # Create a title for each column and the console by using str() and
         # slicing away useless parts of the string
         model_title = str(type(model)).split(
-                                    ".")[-1][:-2][:-len("Classifier")]
+            ".")[-1][:-2][:-len("Classifier")]
+
         model_details = model_title
         if hasattr(model, "estimators_"):
             model_details += " with {} estimators".format(
