@@ -311,8 +311,12 @@ Bug fixes
      when the length of features_names does not match n_features in the decision
      tree.
      :issue:`8512` by :user:`Li Li <aikinogard>`.
+
    - Fixed a bug in :class:`manifold.TSNE` affecting convergence of the
      gradient descent. :issue:`8768` by :user:`David DeTomaso <deto>`.
+
+   - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
+     :user:`Sergei Lebedev <superbobry>`
 
 API changes summary
 -------------------
