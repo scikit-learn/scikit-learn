@@ -129,6 +129,7 @@ cdef class SequentialDataset:
         cdef int* x_indices_ptr
         cdef int nnz, j
         cdef double y, sample_weight
+        cdef long long sample_index
 
         # call _sample in cython
         self._sample(&x_data_ptr, &x_indices_ptr, &nnz, &y, &sample_weight,
@@ -144,9 +145,8 @@ cdef class SequentialDataset:
             x_data[j] = x_data_ptr[j]
             x_indices[j] = x_indices_ptr[j]
 
-        cdef int sample_idx = self.index_data_ptr[current_index]
-
-        return (x_data, x_indices, x_indptr), y, sample_weight, sample_idx
+        sample_index = self.sample_index
+        return (x_data, x_indices, x_indptr), y, sample_weight, sample_index
 
 cdef class ArrayDataset(SequentialDataset):
     """Dataset backed by a two-dimensional numpy array.
@@ -207,14 +207,14 @@ cdef class ArrayDataset(SequentialDataset):
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
                       int current_index) nogil:
-        cdef long long sample_idx = self.index_data_ptr[current_index]
-        cdef long long offset = sample_idx * self.X_stride
+        self.sample_index = self.index_data_ptr[current_index]
+        cdef long long offset = self.sample_index * self.X_stride
 
-        y[0] = self.Y_data_ptr[sample_idx]
+        y[0] = self.Y_data_ptr[self.sample_index]
         x_data_ptr[0] = self.X_data_ptr + offset
         x_ind_ptr[0] = self.feature_indices_ptr
         nnz[0] = self.n_features
-        sample_weight[0] = self.sample_weight_data[sample_idx]
+        sample_weight[0] = self.sample_weight_data[self.sample_index]
 
 
 cdef class CSRDataset(SequentialDataset):
@@ -276,13 +276,13 @@ cdef class CSRDataset(SequentialDataset):
     cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
                       int *nnz, double *y, double *sample_weight,
                       int current_index) nogil:
-        cdef long long sample_idx = self.index_data_ptr[current_index]
-        cdef long long offset = self.X_indptr_ptr[sample_idx]
-        y[0] = self.Y_data_ptr[sample_idx]
+        self.sample_index = self.index_data_ptr[current_index]
+        cdef long long offset = self.X_indptr_ptr[self.sample_index]
+        y[0] = self.Y_data_ptr[self.sample_index]
         x_data_ptr[0] = self.X_data_ptr + offset
         x_ind_ptr[0] = self.X_indices_ptr + offset
-        nnz[0] = self.X_indptr_ptr[sample_idx + 1] - offset
-        sample_weight[0] = self.sample_weight_data[sample_idx]
+        nnz[0] = self.X_indptr_ptr[self.sample_index + 1] - offset
+        sample_weight[0] = self.sample_weight_data[self.sample_index]
 
 
 cdef enum:

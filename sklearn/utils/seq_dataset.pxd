@@ -7,6 +7,7 @@ cimport numpy as np
 
 cdef class SequentialDataset:
     cdef int current_index
+    cdef long long sample_index
     cdef np.ndarray index
     cdef int *index_data_ptr
     cdef Py_ssize_t n_samples

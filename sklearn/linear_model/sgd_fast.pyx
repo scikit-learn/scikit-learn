@@ -36,8 +36,10 @@ DEF ELASTICNET = 3
 DEF CONSTANT = 1
 DEF OPTIMAL = 2
 DEF INVSCALING = 3
-DEF PA1 = 4
-DEF PA2 = 5
+DEF ADAPTIVE = 4
+DEF PA1 = 5
+DEF PA2 = 6
+
 
 
 # ----------------------------------------
@@ -337,6 +339,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double alpha, double C,
               double l1_ratio,
               SequentialDataset dataset,
+              np.ndarray[short, ndim=1, mode='c'] validation_set,
+              bint early_stopping, estimator,
               int max_iter, double tol, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
@@ -365,6 +369,13 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
+    validation_set : ndarray[short, ndim=1]
+        Equal to True on the validation set
+    early_stopping : boolean
+        Whether to use a stopping criterion based on the validation set
+    estimator : BaseSGD
+        A concrete object inheriting ``BaseSGD``
+        Used only if early_stopping is True.
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
@@ -386,8 +397,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (4) adaptive decrease
+        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
+        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -416,6 +428,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                                    alpha, C,
                                    l1_ratio,
                                    dataset,
+                                   validation_set,
+                                   early_stopping,
+                                   estimator,
                                    max_iter, tol, fit_intercept,
                                    verbose, shuffle, seed,
                                    weight_pos, weight_neg,
@@ -436,6 +451,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double alpha, double C,
                 double l1_ratio,
                 SequentialDataset dataset,
+                np.ndarray[short, ndim=1, mode='c'] validation_set,
+                bint early_stopping, estimator,
                 int max_iter, double tol, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
                 double weight_pos, double weight_neg,
@@ -469,6 +486,13 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
+    validation_set : ndarray[short, ndim=1]
+        Equal to True on the validation set
+    early_stopping : boolean
+        Whether to use a stopping criterion based on the validation set
+    estimator : BaseSGD
+        A concrete object inheriting ``BaseSGD``
+        Used only if early_stopping is True.
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
@@ -490,8 +514,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (4) adaptive decrease
+        (5) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
+        (6) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -526,6 +551,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       alpha, C,
                       l1_ratio,
                       dataset,
+                      validation_set,
+                      early_stopping,
+                      estimator,
                       max_iter, tol, fit_intercept,
                       verbose, shuffle, seed,
                       weight_pos, weight_neg,
@@ -545,6 +573,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
+               np.ndarray[short, ndim=1, mode='c'] validation_set,
+               bint early_stopping, estimator,
                int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
                double weight_pos, double weight_neg,
@@ -565,13 +595,16 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double* ps_ptr = NULL
 
     # helper variables
+    cdef int no_improvement_count = 0
     cdef bint infinity = False
     cdef int xnnz
     cdef double eta = 0.0
     cdef double p = 0.0
     cdef double update = 0.0
     cdef double sumloss = 0.0
-    cdef double previous_loss = np.inf
+    cdef double score = 0.0
+    cdef double previous_loss = INFINITY
+    cdef double previous_score = -INFINITY
     cdef double y = 0.0
     cdef double sample_weight
     cdef double class_weight = 1.0
@@ -584,6 +617,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double MAX_DLOSS = 1e12
     cdef double max_change = 0.0
     cdef double max_weight = 0.0
+
+    cdef short * validation_set_ptr = <short *> validation_set.data
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -620,13 +655,18 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
                              &y, &sample_weight)
 
+                if validation_set_ptr[dataset.sample_index]:
+                    # do not learn on the validation set
+                    continue
+
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:
                     eta = 1.0 / (alpha * (optimal_init + t - 1))
                 elif learning_rate == INVSCALING:
                     eta = eta0 / pow(t, power_t)
 
-                sumloss += loss.loss(p, y)
+                if verbose or not early_stopping:
+                    sumloss += loss.loss(p, y)
 
                 if y > 0.0:
                     class_weight = weight_pos
@@ -703,13 +743,31 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 infinity = True
                 break
 
-            if tol > -INFINITY and sumloss > previous_loss - tol * n_samples:
-                if verbose:
-                    with gil:
-                        print("Convergence after %d epochs took %.2f seconds"
-                              % (epoch + 1, time() - t_start))
-                break
-            previous_loss = sumloss
+            # evaluate the score on the validation set
+            if early_stopping:
+                with gil:
+                    score = estimator._validation_score(weights, intercept)
+                if tol > -INFINITY and score < previous_score + tol:
+                    no_improvement_count += 1
+                previous_score = score
+            # or evaluate the loss on the training set
+            else:
+                if (tol > -INFINITY and
+                        sumloss > previous_loss - tol * n_samples):
+                    no_improvement_count += 1
+                previous_loss = sumloss
+
+            # if there is no improvement twice in a row
+            if no_improvement_count >= 2:
+                if learning_rate == ADAPTIVE and eta > 1e-6:
+                    eta = eta / 5
+                    no_improvement_count = 0
+                else:
+                    if verbose:
+                        with gil:
+                            print("Convergence after %d epochs took %.2f "
+                                  "seconds" % (epoch + 1, time() - t_start))
+                    break
 
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"

@@ -1,3 +1,4 @@
+
 import pickle
 import unittest
 
@@ -24,7 +25,7 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
-
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import sgd_fast
 
 
@@ -186,6 +187,9 @@ class CommonTest(object):
     def test_warm_start_optimal(self):
         self._test_warm_start(X, Y, "optimal")
 
+    def test_warm_start_adaptive(self):
+        self._test_warm_start(X, Y, "adaptive")
+
     def test_input_format(self):
         # Input format tests.
         clf = self.factory(alpha=0.01, shuffle=False)
@@ -320,6 +324,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Test parameter validity check
         assert_raises(ValueError, self.factory, shuffle="false")
 
+    def test_sgd_early_stopping_param(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, early_stopping="false")
+
+    def test_sgd_validation_fraction(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, validation_fraction=-.1)
+
     def test_argument_coef(self):
         # Checks coef_init not allowed as model argument (only fit)
         # Provided coef_ does not match dataset
@@ -385,15 +397,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_partial_fit_weight_class_balanced(self):
         # partial_fit with class_weight='balanced' not supported"""
-        assert_raises_regexp(ValueError,
-                             "class_weight 'balanced' is not supported for "
-                             "partial_fit. In order to use 'balanced' weights, "
-                             "use compute_class_weight\('balanced', classes, y\). "
-                             "In place of y you can us a large enough sample "
-                             "of the full training set target to properly "
-                             "estimate the class frequency distributions. "
-                             "Pass the resulting weights as the class_weight "
-                             "parameter.",
+        msg = ("class_weight 'balanced' is not supported for partial_fit. "
+               "In order to use 'balanced' weights, use "
+               "compute_class_weight\('balanced', classes, y\). "
+               "In place of y you can us a large enough sample of the full "
+               "training set target to properly estimate the class frequency "
+               "distributions. Pass the resulting weights as the class_weight "
+               "parameter.")
+        assert_raises_regexp(ValueError, msg,
                              self.factory(class_weight='balanced').partial_fit,
                              X, Y, classes=np.unique(Y))
 
@@ -784,6 +795,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
 
+    def test_partial_fit_equal_fit_adaptive(self):
+        self._test_partial_fit_equal_fit("adaptive")
+
     def test_regression_losses(self):
         clf = self.factory(alpha=0.01, learning_rate="constant",
                            eta0=0.1, loss="epsilon_insensitive")
@@ -816,6 +830,38 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Non-regression test: try fitting with a different label set.
         y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
         clf.fit(X[:, :-1], y)
+
+    def test_adaptive_longer_than_constant(self):
+        clf1 = self.factory(learning_rate="adaptive", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf1.fit(iris.data, iris.target)
+        clf2 = self.factory(learning_rate="constant", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf2.fit(iris.data, iris.target)
+        assert_greater(clf1.n_iter_, clf2.n_iter_)
+
+    def test_validation_fraction(self):
+        # test that the validation set is not used for training
+        validation_fraction = 0.4
+        random_state = 42
+        shuffle = False
+        clf1 = self.factory(early_stopping=True, random_state=random_state,
+                            validation_fraction=validation_fraction,
+                            learning_rate='constant', eta0=0.01,
+                            tol=-np.inf, max_iter=1000, shuffle=shuffle)
+        clf1.fit(X, Y)
+
+        idx_train, idx_val = train_test_split(
+            np.arange(X.shape[0]), test_size=validation_fraction,
+            random_state=random_state)
+        clf2 = self.factory(early_stopping=False,
+                            random_state=random_state,
+                            learning_rate='constant', eta0=0.01,
+                            tol=-np.inf, max_iter=1000, shuffle=shuffle)
+        idx_train = np.sort(idx_train)  # remove shuffling
+        clf2.fit(X[idx_train], np.array(Y)[idx_train])
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
 
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
@@ -1068,10 +1114,47 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
 
+    def test_partial_fit_equal_fit_adaptive(self):
+        self._test_partial_fit_equal_fit("adaptive")
+
     def test_loss_function_epsilon(self):
         clf = self.factory(epsilon=0.9)
         clf.set_params(epsilon=0.1)
         assert clf.loss_functions['huber'][1] == 0.1
+
+    def test_early_stopping(self):
+        clf = self.factory(early_stopping=True, tol=1e-3, max_iter=100)
+        clf.fit(X, Y)
+
+    def test_adaptive_longer_than_constant(self):
+        clf1 = self.factory(learning_rate="adaptive", tol=1e-3, max_iter=100)
+        clf1.fit(iris.data, iris.target)
+        clf2 = self.factory(learning_rate="constant", tol=1e-3, max_iter=100)
+        clf2.fit(iris.data, iris.target)
+        assert_greater(clf1.n_iter_, clf2.n_iter_)
+
+    def test_validation_fraction(self):
+        # test that the validation set is not used for training
+        validation_fraction = 0.4
+        random_state = 42
+        shuffle = False
+        clf1 = self.factory(early_stopping=True, random_state=random_state,
+                            validation_fraction=validation_fraction,
+                            learning_rate='constant',
+                            tol=-np.inf, max_iter=1000, shuffle=shuffle)
+        clf1.fit(X, Y)
+
+        idx_train, idx_val = train_test_split(
+            np.arange(X.shape[0]), test_size=validation_fraction,
+            random_state=random_state)
+        clf2 = self.factory(early_stopping=False,
+                            random_state=random_state,
+                            learning_rate='constant',
+                            tol=-np.inf, max_iter=1000, shuffle=shuffle)
+        idx_train = np.sort(idx_train)  # remove shuffling
+        clf2.fit(X[idx_train], np.array(Y)[idx_train])
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
 
 
 class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):

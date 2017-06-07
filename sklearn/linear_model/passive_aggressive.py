@@ -36,6 +36,22 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
+    early_stopping : bool, default False
+        Whether to use early stopping to terminate training when validation
+        score is not improving. If set to true, it will automatically set aside
+        a fraction of training data as validation and terminate training when
+        validation score is not improving by at least tol for two consecutive
+        epochs.
+
+        .. versionadded:: 0.19
+
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True
+
+        .. versionadded:: 0.19
+
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
@@ -114,8 +130,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> clf = PassiveAggressiveClassifier(random_state=0)
     >>> clf.fit(X, y)
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
-                  fit_intercept=True, loss='hinge', max_iter=None, n_iter=None,
-                  n_jobs=1, random_state=0, shuffle=True, tol=None, verbose=0,
+                  early_stopping=False, fit_intercept=True, loss='hinge',
+                  max_iter=None, n_iter=None, n_jobs=1, random_state=0,
+                  shuffle=True, tol=None, validation_fraction=0.1, verbose=0,
                   warm_start=False)
     >>> print(clf.coef_)
     [[ 0.49324685  1.0552176   1.49519589  1.33798314]]
@@ -138,6 +155,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     """
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
+                 early_stopping=False, validation_fraction=0.1,
                  shuffle=True, verbose=0, loss="hinge", n_jobs=1,
                  random_state=None, warm_start=False, class_weight=None,
                  average=False, n_iter=None):
@@ -146,6 +164,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             fit_intercept=fit_intercept,
             max_iter=max_iter,
             tol=tol,
+            early_stopping=early_stopping,
+            validation_fraction=validation_fraction,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
@@ -255,6 +275,22 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.19
 
+    early_stopping : bool, default False
+        Whether to use early stopping to terminate training when validation
+        score is not improving. If set to true, it will automatically set aside
+        a fraction of training data as validation and terminate training when
+        validation score is not improving by at least tol for two consecutive
+        epochs.
+
+        .. versionadded:: 0.20
+
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True
+
+        .. versionadded:: 0.20
+
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
@@ -318,10 +354,11 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = PassiveAggressiveRegressor(random_state=0)
     >>> regr.fit(X, y)
-    PassiveAggressiveRegressor(C=1.0, average=False, epsilon=0.1,
-                  fit_intercept=True, loss='epsilon_insensitive',
+    PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
+                  epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
                   max_iter=None, n_iter=None, random_state=0, shuffle=True,
-                  tol=None, verbose=0, warm_start=False)
+                  tol=None, validation_fraction=0.1, verbose=0,
+                  warm_start=False)
     >>> print(regr.coef_)
     [ 20.48736655  34.18818427  67.59122734  87.94731329]
     >>> print(regr.intercept_)
@@ -342,6 +379,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     """
     def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
+                 early_stopping=False, validation_fraction=0.1,
                  shuffle=True, verbose=0, loss="epsilon_insensitive",
                  epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False,
                  average=False, n_iter=None):
@@ -353,6 +391,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             fit_intercept=fit_intercept,
             max_iter=max_iter,
             tol=tol,
+            early_stopping=early_stopping,
+            validation_fraction=validation_fraction,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
