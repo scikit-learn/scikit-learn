@@ -26,10 +26,10 @@ class EllipticEnvelope(MinCovDet):
 
     Parameters
     ----------
-    store_precision : bool
+    store_precision : boolean, optional (default=True)
         Specify if the estimated precision is stored.
 
-    assume_centered : Boolean
+    assume_centered : boolean, optional (default=False)
         If True, the support of robust location and covariance estimates
         is computed, and a covariance estimate is recomputed from it,
         without centering the data.
@@ -38,13 +38,12 @@ class EllipticEnvelope(MinCovDet):
         If False, the robust location and covariance are directly computed
         with the FastMCD algorithm without additional treatment.
 
-    support_fraction : float, 0 < support_fraction < 1
+    support_fraction : float in (0., 1.), optional (default=None)
         The proportion of points to be included in the support of the raw
-        MCD estimate. Default is ``None``, which implies that the minimum
-        value of support_fraction will be used within the algorithm:
-        `[n_sample + n_features + 1] / 2`.
+        MCD estimate. If None, the minimum value of support_fraction will
+        be used within the algorithm: `[n_sample + n_features + 1] / 2`.
 
-    contamination : float, 0. < contamination < 0.5
+    contamination : float in (0., 0.5), optional (default=0.1)
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 
@@ -83,14 +82,15 @@ class EllipticEnvelope(MinCovDet):
     def __init__(self, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
-        MinCovDet.__init__(self, store_precision=store_precision,
-                           assume_centered=assume_centered,
-                           support_fraction=support_fraction,
-                           random_state=random_state)
+        super(EllipticEnvelope, self).__init__(
+            store_precision=store_precision,
+            assume_centered=assume_centered,
+            support_fraction=support_fraction,
+            random_state=random_state)
         self.contamination = contamination
 
     def fit(self, X, y=None):
-        MinCovDet.fit(self, X)
+        super(EllipticEnvelope, self).fit(X)
         self.threshold_ = sp.stats.scoreatpercentile(
             self.dist_, 100. * (1. - self.contamination))
         return self
@@ -110,7 +110,7 @@ class EllipticEnvelope(MinCovDet):
         Returns
         -------
         decision : array-like, shape (n_samples, )
-            The values of the decision function for each observations.
+            The values of the decision function for each observation.
             It is equal to the Mahalanobis distances if `raw_values`
             is True. By default (``raw_values=False``), it is equal
             to the cubic root of the shifted Mahalanobis distances.
@@ -140,7 +140,7 @@ class EllipticEnvelope(MinCovDet):
         Returns
         -------
         is_outliers : array, shape = (n_samples, ), dtype = bool
-            For each observations, tells whether or not it should be considered
+            For each observation, tells whether or not it should be considered
             as an outlier according to the fitted model.
 
         threshold : float,
