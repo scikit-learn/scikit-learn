@@ -398,7 +398,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         _, n_outputs = y.shape
 
     if multi_output and positive:
-        raise ValueError('positive=True is not possible for multi-output'
+        raise ValueError('positive=True is not allowed for multi-output'
                          ' (y.ndim != 1)')
 
     # MultiTaskElasticNet does not support sparse matrices

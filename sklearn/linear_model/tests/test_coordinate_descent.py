@@ -612,16 +612,16 @@ def test_random_descent():
 def test_enet_path_positive():
     # Test positive parameter
 
+    X, Y, _, _ = build_dataset(n_samples=50, n_features=50, n_targets=2)
+
     # For mono output
     # Test that the coefs returned by positive=True in enet_path are positive
-    X, y, _, _ = build_dataset(n_samples=50, n_features=50)
     for path in [enet_path, lasso_path]:
-        pos_path_coef = path(X, y, positive=True)[1]
+        pos_path_coef = path(X, Y[:, 0], positive=True)[1]
         assert_true(np.all(pos_path_coef >= 0))
 
-    # For multi output positive parameter is ignored
+    # For multi output, positive parameter is not allowed
     # Test that an error is raised
-    X, Y, _, _ = build_dataset(n_samples=50, n_features=50, n_targets=2)
     for path in [enet_path, lasso_path]:
         assert_raises(ValueError, path, X, Y, positive=True)
 
