@@ -231,9 +231,9 @@ def test_svd_whiten():
     Xinv = tsvd.inverse_transform(Xt)
     # Xdense is a sparse array in dense format (check zeros separately)
     # The below equality is approximate since n_components < n_features
-    #mask = Xdense == 0.0
-    #assert_allclose(Xinv[mask], 0, atol=0.1)
-    #assert_allclose(Xinv[~mask], Xdense[~mask], rtol=0.04)
+    mask = Xdense == 0.0
+    assert_allclose(Xinv[mask], 0, atol=0.08)
+    assert_allclose(Xinv[~mask], Xdense[~mask], rtol=0.04)
 
 
 def test_svd_consistency():
@@ -251,7 +251,6 @@ def test_truncated_svd_eq_pca():
     pars = dict(n_components=52, random_state=42)
 
     for whiten in [False, True]:
-        print(whiten)
         svd = TruncatedSVD(whiten=whiten, **pars)
         pca = PCA(whiten=whiten, **pars)
 
@@ -261,14 +260,9 @@ def test_truncated_svd_eq_pca():
 
         assert_allclose(pca.mean_, 0, atol=1e-9)
 
-        assert_allclose(svd.explained_variance_,
-                        pca.explained_variance_)
-
         assert_allclose(svd.components_, pca.components_)
 
         # transform only a subset of the data
-        svd.whiten = False
-        pca.whiten = False
         Xt2_svd = svd.transform(X_c[:10])
         Xt2_pca = pca.transform(X_c[:10])
         assert_allclose(Xt2_svd, Xt2_pca)
@@ -291,8 +285,6 @@ def test_lsi():
     n_components = 2
     # Expected similarity scores between the documents and the query,
     scores_ref = [-0.0541, 0.9910, 0.4478]
-    # expected query vector projected into the SVD space.
-    q_proj_ref = [[0.2140, 0.1821]]
 
     vect = CountVectorizer()
     vect.fit(documents)
@@ -303,5 +295,4 @@ def test_lsi():
     X_proj = svd.fit_transform(X)
     q_proj = svd.transform(q)
     scores = cosine_similarity(X_proj, q_proj)[:, 0]
-    assert_array_almost_equal(q_proj, q_proj_ref, decimal=2)
     assert_array_almost_equal(scores, scores_ref, decimal=2)
