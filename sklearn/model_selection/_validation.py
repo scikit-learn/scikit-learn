@@ -38,7 +38,7 @@ __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs'):
+                    pre_dispatch='2*n_jobs', return_train_score=False):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -71,6 +71,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         into multiple scorers that return one value each.
 
         If None the estimator's default scorer (if available) is used.
+
+        For multimetric scoring the return value is a dict. Refer the doc of
+        return parameter ``scores`` to know more.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -114,13 +117,30 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    return_train_score : boolean, default False
+        Whether to include train scores in the return dict if ``scoring`` is
+        of multimetric type.
+
+        Note that this parameter has no effect for single metric ``scoring``.
+
     Returns
     -------
-    scores : array of float or dict of such arrays, array shape=(n_splits,)
+    scores : array of float or dict of float arrays, array shape=(n_splits,)
         Array of scores of the estimator for each run of the cross validation.
 
-        For multi-metric evaluation, a dict of arrays containing the score
-        arrays for each scorer is returned.
+        For multi-metric evaluation, a dict of arrays containing the score/time
+        arrays for each scorer is returned. The possible keys for this ``dict``
+        are:
+
+            - ``test_scores`` The score array for test scores on each cv split.
+            - ``train_scores`` The score array for train scores on each cv
+              split. This is available only if ``return_train_score`` parameter
+              is ``True``.
+            - ``fit_times`` The time for fitting the estimator on the train
+              set for each cv split.
+            - ``score_times`` The time for scoring the estimator on the test
+              set for each cv split. (Note time for scoring on the train set
+              is not included even if ``return_train_score`` is set to ``True``
 
     Examples
     --------
@@ -138,12 +158,12 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     >>> # Multi-metric evaluation using cross_val_score
     >>> # (Please refer the ``scoring`` parameter doc for more information)
-    >>> scores = cross_val_score(lasso, X, y,
+    >>> scores = cross_val_score(lasso, X, y, return_train_score=True,
     ...                          scoring=('r2', 'neg_mean_squared_error'))
-    >>> print(scores['neg_mean_squared_error'])           # doctest: +ELLIPSIS
+    >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
     [-3635.5... -3573.3... -6114.7...]
-    >>> print(scores['r2'])                               # doctest: +ELLIPSIS
-    [ 0.33...  0.08...  0.03...]
+    >>> print(scores['train_r2'])                         # doctest: +ELLIPSIS
+    [ 0.28...  0.39...  0.22...]
 
     See Also
     ---------
@@ -163,15 +183,34 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorers,
-                                              train, test, verbose, None,
-                                              fit_params)
-                      for train, test in cv.split(X, y, groups))
-    scores = next(zip(*scores))
-    if is_multimetric:
-        return _aggregate_score_dicts(scores)
+    scores = parallel(delayed(_fit_and_score)(
+            clone(estimator), X, y, scorers, train, test, verbose, None,
+            fit_params, return_train_score=return_train_score,
+            # We need the times only for multimetric scoring
+            return_times=is_multimetric)
+        for train, test in cv.split(X, y, groups))
+
+    if not is_multimetric:
+        return np.array(next(zip(*scores)))
+
+    if return_train_score:
+        train_scores, test_scores, fit_times, score_times = zip(*scores)
+        train_scores = _aggregate_score_dicts(train_scores)
     else:
-        return np.array(scores)
+        test_scores, fit_times, score_times = zip(*scores)
+    test_scores = _aggregate_score_dicts(test_scores)
+
+    ret = dict()
+
+    ret['fit_times'] = np.array(fit_times)
+    ret['score_times'] = np.array(score_times)
+
+    for name in scorers:
+        ret['test_%s' % name] = test_scores[name]
+        if return_train_score:
+            ret['train_%s' % name] = train_scores[name]
+
+    return ret
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
@@ -228,6 +267,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
+
+    return_n_test_samples : boolean, optional, default: False
+        Whether to return the ``n_test_samples``
+
+    return_times : boolean, optional, default: False
+        Whether to return the fit/score times.
 
     Returns
     -------

@@ -48,6 +48,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
+from sklearn.metrics.scorer import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
@@ -61,6 +62,7 @@ from sklearn.pipeline import Pipeline
 
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.base import BaseEstimator
+from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
@@ -324,27 +326,60 @@ def test_cross_val_score_multiple_metric():
     X, y = make_regression(n_samples=30, random_state=0)
     reg = Ridge(random_state=0)
 
-    mse_scores = cross_val_score(reg, X, y, cv=5,
-                                 scoring='neg_mean_squared_error')
-    r2_scores = cross_val_score(reg, X, y, cv=5, scoring='r2')
+    # Compute train and test mse/r2 scores
+    cv=KFold(n_splits=5)
+    mse_scorer = check_scoring(reg, 'neg_mean_squared_error')
+    r2_scorer = check_scoring(reg, 'r2')
+    train_mse_scores = []
+    test_mse_scores = []
+    train_r2_scores = []
+    test_r2_scores = []
+    for train, test in cv.split(X, y):
+        est = clone(reg).fit(X[train], y[train])
+        train_mse_scores.append(mse_scorer(est, X[train], y[train]))
+        train_r2_scores.append(r2_scorer(est, X[train], y[train]))
+        test_mse_scores.append(mse_scorer(est, X[test], y[test]))
+        test_r2_scores.append(r2_scorer(est, X[test], y[test]))
+
+    train_mse_scores = np.array(train_mse_scores)
+    test_mse_scores = np.array(test_mse_scores)
+    train_r2_scores = np.array(train_r2_scores)
+    test_r2_scores = np.array(test_r2_scores)
 
     # Single metric passed as a list
     r2_scores_dict = cross_val_score(reg, X, y, cv=5, scoring=['r2'])
     assert_true(isinstance(r2_scores_dict, dict))
-    assert_equal(len(r2_scores_dict), 1)
-    assert_array_almost_equal(r2_scores_dict['r2'], r2_scores)
+    assert_equal(len(r2_scores_dict), 3)
+    assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
     # Multimetric passed as a list / dict
     all_scoring = (('r2', 'neg_mean_squared_error'),
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
-    for scoring in all_scoring:
-        multi_scores = cross_val_score(reg, X, y, cv=5, scoring=scoring)
-        assert_true(isinstance(multi_scores, dict))
-        assert_equal(len(multi_scores), 2)
-        assert_array_almost_equal(multi_scores['r2'], r2_scores)
-        assert_array_almost_equal(multi_scores['neg_mean_squared_error'],
-                                  mse_scores)
+
+    keys_sans_train = set(('test_r2', 'test_neg_mean_squared_error',
+                           'fit_times', 'score_times'))
+    keys_with_train = keys_sans_train.union(
+        set(('train_r2', 'train_neg_mean_squared_error')))
+
+    for return_train_score in (True, False):
+        for scoring in all_scoring:
+            cv_results = cross_val_score(reg, X, y, cv=5, scoring=scoring,
+                                         return_train_score=return_train_score)
+            assert_true(isinstance(cv_results, dict))
+            assert_equal(set(cv_results.keys()),
+                         keys_with_train if return_train_score
+                         else keys_sans_train)
+            assert_array_almost_equal(cv_results['test_r2'], test_r2_scores)
+            assert_array_almost_equal(
+                cv_results['test_neg_mean_squared_error'], test_mse_scores)
+
+            if return_train_score:
+                assert_array_almost_equal(cv_results['train_r2'],
+                                          train_r2_scores)
+                assert_array_almost_equal(
+                    cv_results['train_neg_mean_squared_error'],
+                    train_mse_scores)
 
 
 def test_cross_val_score_predict_groups():
