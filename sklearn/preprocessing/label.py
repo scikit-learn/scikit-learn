@@ -89,13 +89,13 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     transformer : object, (default=None)
         Estimator object derived from ``TransformerMixin``. Cannot be set at
         the same time as ``func`` and ``inverse_func``. If ``None`` and
-        ``func`` and ``inverse_func`` as well, the transformer will be an
-        identity transformer.
+        ``func`` and ``inverse_func`` are ``None`` as well, the transformer will
+        be an identity transformer.
 
     func : function, (default=None)
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
-        the same time than ``transformer``. If ``None`` and ``transformer`` as
-        well, the function used will be the identity function.
+        the same time than ``transformer``. If ``None`` and ``transformer`` is
+        ``None`` as well, the function used will be the identity function.
 
     inverse_func : function, (default=None)
         Function apply to the prediction of the estimator. Cannot be set at
@@ -160,13 +160,13 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         # function.
         if self.check_invertible:
             n_subsample = min(1000, y.shape[0])
-            subsample_idx = np.random.randint(y.shape[0], size=n_subsample)
+            subsample_idx = np.random.permutation(y.shape[0], size=n_subsample)
             diff = np.abs((y[subsample_idx] -
                            self.transformer_.inverse_transform(
                                self.transformer_.transform(y[subsample_idx]))))
             if np.sum(diff) > 1e-7:
                 raise ValueError("The provided functions or transformer are"
-                                 " not strictly invertible.")
+                                 " not strictly inverse of each other.")
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -190,8 +190,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
         # memorize if y should be a multi-output
-        self.y_shape_ = y.shape
-        if len(y.shape) == 1:
+        self.y_ndim_ = y.ndim
+        if y.ndim == 1:
             y_2d = y.reshape(-1, 1)
         else:
             y_2d = y
@@ -221,7 +221,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "estimator_")
         pred = self.transformer_.inverse_transform(self.estimator_.predict(X))
         # if y is not a multi-output, it should be ravel
-        if len(self.y_shape_) == 1:
+        if self.y_ndim_ == 1:
             return pred.ravel()
         else:
             return pred

@@ -538,7 +538,8 @@ def test_transformed_target_regressor_invertible():
                                      func=np.exp, inverse_func=np.exp,
                                      check_invertible=True)
     assert_raise_message(ValueError, "The provided functions or transformer"
-                         " are not strictly invertible.", clf.fit, X, y)
+                         " are not strictly inverse of each other.",
+                         clf.fit, X, y)
     clf = TransformedTargetRegressor(estimator=LinearRegression(),
                                      func=np.exp, inverse_func=np.exp,
                                      check_invertible=False)
