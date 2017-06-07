@@ -18,7 +18,6 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
-from ..utils.fixes import argpartition
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
@@ -356,7 +355,7 @@ class KNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
                     **self.effective_metric_params_)
 
-            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
+            neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             # argpartition doesn't guarantee sorted order, so we sort again
             neigh_ind = neigh_ind[

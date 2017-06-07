@@ -9,7 +9,6 @@ from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
 from .utils import deprecated
-from .utils.fixes import astype
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
@@ -291,7 +290,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = np.ones(len(y))
 
         order = np.lexsort((y, X))
-        X, y, sample_weight = [astype(array[order], np.float64, copy=False)
+        X, y, sample_weight = [array[order].astype(np.float64, copy=False)
                                for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)

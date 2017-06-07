@@ -56,7 +56,6 @@ from ..utils import check_array
 from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
-from ..utils.fixes import bincount
 from ..utils import deprecated
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
@@ -139,7 +138,7 @@ class PriorProbabilityEstimator(object):
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
-        class_counts = bincount(y, weights=sample_weight)
+        class_counts = np.bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):

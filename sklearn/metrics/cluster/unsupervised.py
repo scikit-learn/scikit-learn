@@ -9,7 +9,6 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
-from ...utils.fixes import bincount
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
@@ -169,7 +168,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     distances = pairwise_distances(X, metric=metric, **kwds)
     unique_labels = le.classes_
-    n_samples_per_label = bincount(labels, minlength=len(unique_labels))
+    n_samples_per_label = np.bincount(labels, minlength=len(unique_labels))
 
     # For sample i, store the mean distance of the cluster to which
     # it belongs in intra_clust_dists[i]

@@ -10,7 +10,6 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.fixes import astype
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -226,7 +225,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                                     X.indptr[1:-1])
 
             # astype necessary for bug in numpy.hsplit before v1.9
-            columns = [col[astype(mask, bool, copy=False)]
+            columns = [col[mask.astype(bool, copy=False)]
                        for col, mask in zip(columns_all, mask_valids)]
 
             # Median
@@ -357,8 +356,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
-            X.data[mask] = astype(valid_statistics[indexes], X.dtype,
-                                  copy=False)
+            X.data[mask] = valid_statistics[indexes].astype(X.dtype,
+                                                            copy=False)
         else:
             if sparse.issparse(X):
                 X = X.toarray()

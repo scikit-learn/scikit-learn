@@ -16,7 +16,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.extmath import squared_norm, fast_dot
+from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
@@ -241,7 +241,7 @@ def _beta_divergence_dense(X, W, H, beta):
         H = np.array([[H]])
         X = np.array([[X]])
 
-    WH = fast_dot(W, H)
+    WH = np.dot(W, H)
 
     if beta == 2:
         return squared_norm(X - WH) / 2

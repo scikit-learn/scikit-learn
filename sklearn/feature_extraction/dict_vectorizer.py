@@ -13,7 +13,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
-from ..utils.fixes import frombuffer_empty
 
 
 def _tosequence(X):
@@ -183,7 +182,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         if len(indptr) == 1:
             raise ValueError("Sample sequence X is empty.")
 
-        indices = frombuffer_empty(indices, dtype=np.intc)
+        indices = np.frombuffer(indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 
