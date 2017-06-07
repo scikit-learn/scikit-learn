@@ -31,7 +31,7 @@ from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, Normalizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.externals.joblib import Memory
 from sklearn.utils.validation import check_array
@@ -1035,6 +1035,17 @@ def test_column_transformer():
                                  transformer_weights={'trans': .1})
         assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
         assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
+
+
+def test_column_transformer_2D_dict_items():
+    union = ColumnTransformer(
+        [("norm1", Normalizer(norm='l1'), 'subset1'),
+         ("norm2", Normalizer(norm='l1'), 'subset2')])
+    X = {'subset1': [[0., 1.], [2., 2.]],
+         'subset2': [[1., 1.], [0., 1.]]}
+    X_res = np.array([[0., 1., 0.5, 0.5],
+                      [0.5, 0.5, 0., 1.]])
+    assert_array_equal(union.fit_transform(X), X_res)
 
 
 def test_column_transformer_sparse_stacking():

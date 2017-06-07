@@ -928,9 +928,9 @@ def _getitem(X, column):
         else:
             # dicts or numpy recarrays
             if not isinstance(column, list):
-                return np.asarray(X[column]).reshape(-1, 1)
+                return _ensure_2d(X[column])
             else:
-                return np.vstack([X[col] for col in column]).T
+                return np.hstack([_ensure_2d(X[col]) for col in column])
 
     else:
         if isinstance(column, int):
@@ -941,3 +941,14 @@ def _getitem(X, column):
         else:
             # numpy arrays
             return X[:, column]
+
+
+def _ensure_2d(X):
+    """
+    Ensure X is 2D array (pass through 2D arrays, reshape 1D arrays to 2D)
+
+    """
+    X = np.asarray(X)
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    return X
