@@ -13,6 +13,33 @@ from .utils.fixes import signature
 from . import __version__
 
 
+_PRINTOPTIONS = {'parameters': 'all'}
+
+
+def set_print(parameters=None):
+    """Set estimator print options.
+
+    WARNING: This functionality is experimental and might be removed or changed
+    at any time.
+
+    Parameters
+    ----------
+    parameters : None, 'all' or 'changed', default=None
+        Which parameters to show when printing estimators.
+        If None, this setting is not changed, if 'all',
+        all parameters are shown, if 'changed', only the
+        parameters that are not at their default value are shown.
+
+    Returns
+    -------
+    printoptions : dict
+        Current print options.
+    """
+    if parameters is not None:
+        _PRINTOPTIONS['parameters'] = parameters
+    return _PRINTOPTIONS
+
+
 ##############################################################################
 def _first_and_last_element(arr):
     """Returns first and last element of numpy array or sparse matrix."""
@@ -286,19 +313,18 @@ class BaseEstimator(object):
 
     def _changed_params(self):
         params = self.get_params(deep=False)
-        filtered_params = {}
-        default_params = {}
-        init_params = signature(self.__init__).parameters
-        for k, v in params.items():
-            if v == init_params[k].default:
-                default_params[k] = v
-            else:
-                filtered_params[k] = v
-        return filtered_params, default_params
+        if _PRINTOPTIONS['parameters'] == 'changed':
+            filtered_params = {}
+            init_params = signature(self.__init__).parameters
+            for k, v in params.items():
+                if v != init_params[k].default:
+                    filtered_params[k] = v
+            return filtered_params
+        return params
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        params = self.get_params(deep=False)
+        params = self._changed_params()
         return '%s(%s)' % (class_name, _pprint(params,
                                                offset=len(class_name),),)
 
