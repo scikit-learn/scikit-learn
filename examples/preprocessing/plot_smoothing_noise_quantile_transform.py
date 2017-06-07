@@ -7,8 +7,9 @@ Effect of smoothing noise when using QuantileTransformer
 
 The parameter ``smoothing_noise`` can be used if some specific feature values
 are repeated identically many times to the point of being predominant in the
-dataset. This is can typically be observed when the feature encode ordinal
-values such as user ratings, prices, coarse-grained units of time, etc.
+dataset. This is typically be observed when the feature encode ordinal
+values such as user ratings, prices, coarse-grained units of time, etc. By
+default, a small Gaussian noise is added during ``fit`` time.
 
 Without smoothing noise, the ``QuantileTransformer`` will map those values to
 some arbitrary value: the highest quantile value for all the inputs with the
@@ -17,9 +18,9 @@ used as a preprocessing transformer for a subsequent supervised estimator, it
 can lead to surprising results when manually inspecting the transformed values
 (e.g. for visualization or reporting).
 
-The goal of the smoothing noise is to make it possible to map those repeated
-values to some middle quantile value to make interpretation more intuitive as
-demonstrated in the following.
+The goal of the ``smoothing_noise`` is to make it possible to map those
+repeated values to some middle quantile value to make interpretation more
+intuitive as demonstrated in the following.
 
 """
 
@@ -67,8 +68,8 @@ def plot_transform_feat_val(ax, transformer, title):
 # a large number of customers attributed a grade of 3 to the current
 # restaurant.
 #
-# By default, the ``QuantileTransformer`` does not apply any smoothing
-# noise. When dealing with a data set with a predominant value, this feature
+# The ``smoothing_noise`` can be disabled in ``QuantileTransformer``.
+# When dealing with a data set with a predominant value, this feature
 # value can be affected to several quantiles. When provided to the transformer,
 # this feature value will be mapped to the largest quantile. In practice,
 # machine learning algorithms will usually not be affected by such
@@ -81,9 +82,9 @@ def plot_transform_feat_val(ax, transformer, title):
 # figure.
 #
 # A solution is to apply a small smoothing noise before computing the
-# quantiles. The parameter ``smoothing_noise`` offers this possibility as
-# illustrated above.  In this case, the marker is centered at the median as
-# expected.
+# quantiles. The parameter ``smoothing_noise=True`` (default behaviour) offers
+# this possibility as illustrated above.  In this case, the marker is centered
+# at the median as expected.
 
 X = np.array([1] * 2000 +
              [2] * 1000 +
@@ -94,12 +95,13 @@ X = np.array([1] * 2000 +
 # create the subplots
 _, (ax1, ax2) = plt.subplots(1, 2)
 
-qt = QuantileTransformer(n_quantiles=N_QUANTILES)
+qt = QuantileTransformer(n_quantiles=N_QUANTILES,
+                         smoothing_noise=False)
 qt.fit(X)
 plot_transform_feat_val(ax1, qt, 'Without smoothing')
 
 qt = QuantileTransformer(n_quantiles=N_QUANTILES,
-                         smoothing_noise=1e-7)
+                         smoothing_noise=True)
 qt.fit(X)
 plot_transform_feat_val(ax2, qt, 'With smoothing')
 plt.tight_layout()

@@ -893,8 +893,6 @@ def test_quantile_transform_check_error():
                         " greater than the number of samples used. Got"
                         " 1000 quantiles and 10 samples.",
                         QuantileTransformer(subsample=10).fit, X)
-    assert_raises_regex(ValueError, "Invalid value for 'smoothing_noise': 0.",
-                        QuantileTransformer(smoothing_noise=0).fit, X)
 
     transformer = QuantileTransformer(n_quantiles=10)
     assert_raises_regex(ValueError, "QuantileTransformer only accepts "
@@ -944,7 +942,7 @@ def test_quantile_transform_sparse_ignore_zeros():
                   [0, 1]])
     X_sparse = sparse.csc_matrix(X)
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
-                                      n_quantiles=5)
+                                      n_quantiles=5, smoothing_noise=False)
 
     # dense case -> warning raise
     assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
@@ -978,7 +976,7 @@ def test_quantile_transform_sparse_ignore_zeros():
     assert_almost_equal(X_expected, X_trans.A)
 
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
-                                      n_quantiles=5)
+                                      n_quantiles=5, smoothing_noise=False)
     X_data = np.array([-1, -1, 1, 0, 0, 0, 1, -1, 1])
     X_col = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1])
     X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6])
@@ -998,7 +996,8 @@ def test_quantile_transform_sparse_ignore_zeros():
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
                                       n_quantiles=5,
                                       subsample=8,
-                                      random_state=0)
+                                      random_state=0,
+                                      smoothing_noise=False)
     X_trans = transformer.fit_transform(X_sparse)
     assert_almost_equal(X_expected, X_trans.A)
     assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
@@ -1134,9 +1133,11 @@ def test_quantile_transform_bounds():
     X_sparse = sparse.csc_matrix(X_dense)
 
     # check sparse and dense are consistent
-    X_trans = QuantileTransformer(n_quantiles=3).fit_transform(X_dense)
+    X_trans = QuantileTransformer(
+        n_quantiles=3, smoothing_noise=False).fit_transform(X_dense)
     assert_array_almost_equal(X_trans, X_dense)
-    X_trans_sp = QuantileTransformer(n_quantiles=3).fit_transform(X_sparse)
+    X_trans_sp = QuantileTransformer(
+        n_quantiles=3, smoothing_noise=False).fit_transform(X_sparse)
     assert_array_almost_equal(X_trans_sp.A, X_dense)
     assert_array_almost_equal(X_trans, X_trans_sp.A)
 
@@ -1172,7 +1173,7 @@ def test_quantile_transform_add_noise_subsamples():
     X = np.transpose([[unique_feature[0]] * 1 +
                       [unique_feature[1]] * 7 +
                       [unique_feature[2]] * 2])
-    transformer = QuantileTransformer(n_quantiles=100, smoothing_noise=1e-7,
+    transformer = QuantileTransformer(n_quantiles=100, smoothing_noise=True,
                                       random_state=0)
     transformer.fit(X)
     # check that the feature values associated to quantiles are strictly
@@ -1181,7 +1182,7 @@ def test_quantile_transform_add_noise_subsamples():
     map(assert_greater, diff_quantiles, [0] * len(diff_quantiles))
     # iris dataset
     X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, smoothing_noise=1e-7,
+    transformer = QuantileTransformer(n_quantiles=1000, smoothing_noise=True,
                                       random_state=0)
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
@@ -1208,7 +1209,7 @@ def test_quantile_transform_numpy_interp_behaviour():
     X = np.transpose([[unique_feature[0]] * 1 +
                       [unique_feature[1]] * 7 +
                       [unique_feature[2]] * 2])
-    qt = QuantileTransformer(n_quantiles=100)
+    qt = QuantileTransformer(n_quantiles=100, smoothing_noise=False)
     qt.fit(X)
     ref = np.linspace(0., 1., num=qt.n_quantiles)
     max_quantiles_idx = [np.flatnonzero(qt.quantiles_ == unique_feature[i])[-1]

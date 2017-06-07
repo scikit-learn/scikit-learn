@@ -47,8 +47,6 @@ of the results_.
 
 from __future__ import print_function
 
-from collections import OrderedDict
-
 import numpy as np
 
 import matplotlib as mpl
@@ -100,8 +98,9 @@ distributions = [
 y = minmax_scale(y_full)
 
 
-def create_axes(figsize=(16, 6)):
-    plt.figure(figsize=figsize)
+def create_axes(title, figsize=(16, 6)):
+    fig = plt.figure(figsize=figsize)
+    fig.suptitle(title)
 
     # define the axis for the first plot
     left, width = 0.1, 0.22
@@ -183,12 +182,11 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
 
 def make_plot(item_idx):
     title, X = distributions[item_idx]
-    ax_zoom_out, ax_zoom_in, ax_colorbar = create_axes()
+    ax_zoom_out, ax_zoom_in, ax_colorbar = create_axes(title)
     axarr = (ax_zoom_out, ax_zoom_in)
     plot_distribution(axarr[0], X, y, hist_nbins=200,
                       x0_label="Median Income",
-                      x1_label="Number of households",
-                      title=title)
+                      x1_label="Number of households")
 
     # zoom-in
     zoom_in_percentile_range = (0, 99)
@@ -201,8 +199,7 @@ def make_plot(item_idx):
     plot_distribution(axarr[1], X[non_outliers_mask], y[non_outliers_mask],
                       hist_nbins=50,
                       x0_label="Median Income",
-                      x1_label="Number of households",
-                      title="Zoom-in")
+                      x1_label="Number of households")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
     mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cm.plasma_r,

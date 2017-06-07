@@ -1990,11 +1990,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         computational efficiency. Note that the subsamplong procedure may
         differ for value-identical sparse and dense matrices.
 
-    smoothing_noise : float, optional
+    smoothing_noise : bool, optional (default=True)
         Perturbs features at training time before computing quantiles by adding
-        Gaussian noise with standard deviation ``smoothing_noise``. It eases
-        the interpratation of the computed ``quantiles_`` when a particular
-        feature value is predominant.
+        Gaussian noise. It eases interpratation of the computed ``quantiles_``
+        when a particular feature value is predominant.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -2045,7 +2044,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
-                 smoothing_noise=None, random_state=None, copy=True):
+                 smoothing_noise=True, random_state=None, copy=True):
         self.n_quantiles = n_quantiles
         self.output_distribution = output_distribution
         self.ignore_implicit_zeros = ignore_implicit_zeros
@@ -2056,9 +2055,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def _compute_quantiles_one_column(self, X_col, references, random_state):
         """Private function to compute the quantiles for one feature."""
-        if self.smoothing_noise is not None:
-            X_col = X_col + random_state.normal(0, self.smoothing_noise,
-                                                size=X_col.shape)
+        if self.smoothing_noise is True:
+            X_col = X_col + random_state.normal(0, 1e-7, size=X_col.shape)
 
         return np.percentile(X_col, references)
 
@@ -2168,12 +2166,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                              " the number of samples used. Got {} quantiles"
                              " and {} samples.".format(self.n_quantiles,
                                                        self.subsample))
-
-        if self.smoothing_noise is not None:
-            if self.smoothing_noise <= 0:
-                raise ValueError("Invalid value for 'smoothing_noise': %d. "
-                                 "The noise std. dev. should be greater than "
-                                 "0." % self.smoothing_noise)
 
         X = self._check_inputs(X)
         rng = check_random_state(self.random_state)
@@ -2345,7 +2337,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
-                       smoothing_noise=None,
+                       smoothing_noise=True,
                        random_state=None,
                        copy=False):
     """Transform features using quantiles information.
@@ -2392,11 +2384,10 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         computational efficiency. Note that the subsamplong procedure may
         differ for value-identical sparse and dense matrices.
 
-    smoothing_noise : float, optional
+    smoothing_noise : bool, optional (default=True)
         Perturbs features at training time before computing quantiles by adding
-        Gaussian noise with standard deviation ``smoothing_noise``. It eases
-        the interpratation of the computed ``quantiles_`` when a particular
-        feature value is predominant.
+        Gaussian noise. It eases interpratation of the computed ``quantiles_``
+        when a particular feature value is predominant.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

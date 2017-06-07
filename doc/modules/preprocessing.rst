@@ -298,7 +298,7 @@ It is also possible to map the transformed data to a normal distribution by
 setting ``output_distribution='normal'``::
 
   >>> quantile_transformer = preprocessing.QuantileTransformer(
-  ...     smoothing_noise=1e-12, output_distribution='normal')
+  ...     smoothing_noise=True, output_distribution='normal')
   >>> X_trans = quantile_transformer.fit_transform(X)
   >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS
   array([...])
@@ -310,7 +310,7 @@ become infinite under the transformation.
 
 :class:`QuantileTransformer` provides a ``smoothing_noise`` parameter to
 make the interpretation more intuitive when inspecting the
-transformation which is particularly useful when feature values are
+transformation. This is particularly useful when feature values are
 replicated identically many times in the training set (e.g. prices, ordinal
 values such as user ratings, coarse-grained units of time, etc.). See
 :ref:`sphx_glr_auto_examples_preprocessing_plot_smoothing_noise_quantile_transform.py`
