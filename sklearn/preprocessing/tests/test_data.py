@@ -857,13 +857,14 @@ def test_robust_scaler_iris_quantiles():
 def test_quantile_transform_iris():
     X = iris.data
     # uniform output distribution
-    transformer = QuantileTransformer(n_quantiles=30)
+    transformer = QuantileTransformer(n_quantiles=30, smoothing_noise=False)
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
     # normal output distribution
     transformer = QuantileTransformer(n_quantiles=30,
-                                      output_distribution='normal')
+                                      output_distribution='normal',
+                                      smoothing_noise=False)
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
@@ -1010,7 +1011,7 @@ def test_quantile_transform_dense_toy():
                   [75, 8, 9.5],
                   [100, 10, 0.1]])
 
-    transformer = QuantileTransformer(n_quantiles=5)
+    transformer = QuantileTransformer(n_quantiles=5, smoothing_noise=False)
     transformer.fit(X)
 
     # using the a uniform output, each entry of X should be map between 0 and 1
@@ -1094,7 +1095,7 @@ def test_quantile_transform_sparse_toy():
 
     X = sparse.csc_matrix(X)
 
-    transformer = QuantileTransformer(n_quantiles=10)
+    transformer = QuantileTransformer(n_quantiles=10, smoothing_noise=False)
     transformer.fit(X)
 
     X_trans = transformer.fit_transform(X)
@@ -1104,7 +1105,9 @@ def test_quantile_transform_sparse_toy():
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
-    transformer_dense = QuantileTransformer(n_quantiles=10).fit(X.toarray())
+    transformer_dense = QuantileTransformer(n_quantiles=10,
+                                            smoothing_noise=False).fit(
+                                                X.toarray())
 
     X_trans = transformer_dense.transform(X)
     assert_array_almost_equal(np.min(X_trans.toarray(), axis=0), 0.)
@@ -1133,11 +1136,13 @@ def test_quantile_transform_bounds():
     X_sparse = sparse.csc_matrix(X_dense)
 
     # check sparse and dense are consistent
-    X_trans = QuantileTransformer(
-        n_quantiles=3, smoothing_noise=False).fit_transform(X_dense)
+    X_trans = QuantileTransformer(n_quantiles=3,
+                                  smoothing_noise=False,
+                                  random_state=0).fit_transform(X_dense)
     assert_array_almost_equal(X_trans, X_dense)
-    X_trans_sp = QuantileTransformer(
-        n_quantiles=3, smoothing_noise=False).fit_transform(X_sparse)
+    X_trans_sp = QuantileTransformer(n_quantiles=3,
+                                     smoothing_noise=False,
+                                     random_state=0).fit_transform(X_sparse)
     assert_array_almost_equal(X_trans_sp.A, X_dense)
     assert_array_almost_equal(X_trans, X_trans_sp.A)
 
@@ -1149,13 +1154,14 @@ def test_quantile_transform_bounds():
     X1 = np.array([[0, 0.1],
                    [0, 0.5],
                    [1, 0.1]])
-    transformer = QuantileTransformer(n_quantiles=3).fit(X)
+    transformer = QuantileTransformer(n_quantiles=3,
+                                      smoothing_noise=False).fit(X)
     X_trans = transformer.transform(X1)
     assert_array_almost_equal(X_trans, X1)
 
     # check that values outside of the range learned will be mapped properly.
     X = np.random.random((1000, 1))
-    transformer = QuantileTransformer()
+    transformer = QuantileTransformer(smoothing_noise=False)
     transformer.fit(X)
     assert_equal(transformer.transform(-10), transformer.transform(np.min(X)))
     assert_equal(transformer.transform(10), transformer.transform(np.max(X)))

@@ -1986,7 +1986,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     subsample : int, optional (default=1e5)
         Maximum number of samples used to estimate the quantiles for
-        computational efficiency. Note that the subsamplong procedure may
+        computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
     smoothing_noise : bool, optional (default=True)
@@ -2078,9 +2078,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         self.quantiles_ = []
         for col in X.T:
             if self.subsample < n_samples:
-                subsample_idx = choice(n_samples, size=self.subsample,
-                                       replace=False,
-                                       random_state=random_state)
+                subsample_idx = random_state.choice(n_samples,
+                                                    size=self.subsample,
+                                                    replace=False)
                 col = col.take(subsample_idx, mode='clip')
             self.quantiles_.append(
                 self._compute_quantiles_one_column(col, references,
@@ -2113,9 +2113,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                            dtype=X.dtype)
                 else:
                     column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_data[:column_subsample] = choice(
-                    column_nnz_data, size=column_subsample,
-                    replace=False, random_state=random_state)
+                column_data[:column_subsample] = random_state.choice(
+                    column_nnz_data, size=column_subsample, replace=False)
             else:
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=len(column_nnz_data),
@@ -2380,7 +2379,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     subsample : int, optional (default=1e5)
         Maximum number of samples used to estimate the quantiles for
-        computational efficiency. Note that the subsamplong procedure may
+        computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
     smoothing_noise : bool, optional (default=True)

@@ -275,44 +275,44 @@ a uniform distribution with values between 0 and 1::
   >>> from sklearn.model_selection import train_test_split
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
-  >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-  >>> quantile_transformer = preprocessing.QuantileTransformer(
-  ...     smoothing_noise=1e-12)
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+  >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
   >>> X_train_trans = quantile_transformer.fit_transform(X_train)
   >>> X_test_trans = quantile_transformer.transform(X_test)
-
   >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS, +SKIP
-  array([...])
+  array([ 4.3,  5.1,  5.8,  6.5,  7.9])
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS, +SKIP
-  array([...])
+  array([ 0.0000001 ,  0.24608042,  0.49100792,  0.73162701,  0.9999999 ])
   >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS, +SKIP
-  array([...])
+  array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS, +SKIP
-  array([...])
+  array([ 0.01801802,  0.25653626,  0.46157383,  0.6081081 ,  0.94144144])
 
 It is also possible to map the transformed data to a normal distribution by
 setting ``output_distribution='normal'``::
 
   >>> quantile_transformer = preprocessing.QuantileTransformer(
-  ...     smoothing_noise=True, output_distribution='normal')
+  ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
-  >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS
-  array([...])
+  >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  array([[ 4.30000001,  2.00000009,  1.00000003,  0.09999991],
+         [ 4.3149149 ,  2.02982991,  1.01491493,  0.09999992],
+         [ 4.32982979,  2.05965973,  1.02982983,  0.09999992],
+         ...,
+         [ 7.8403404 ,  4.34034033,  6.84034045,  2.50000003],
+         [ 7.87017023,  4.37017021,  6.8701703 ,  2.50000003],
+         [ 7.90000005,  4.40000008,  6.90000015,  2.50000004]])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
 corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively --- do not
 become infinite under the transformation.
 
-:class:`QuantileTransformer` provides a ``smoothing_noise`` parameter to
-make the interpretation more intuitive when inspecting the
-transformation. This is particularly useful when feature values are
-replicated identically many times in the training set (e.g. prices, ordinal
-values such as user ratings, coarse-grained units of time, etc.). See
+:class:`QuantileTransformer` provides a ``smoothing_noise`` parameter (set to
+True by default) to make the interpretation more intuitive when inspecting the
+transformation. This is particularly useful when feature values are replicated
+identically many times in the training set (e.g. prices, ordinal values such as
+user ratings, coarse-grained units of time, etc.). See
 :ref:`sphx_glr_auto_examples_preprocessing_plot_smoothing_noise_quantile_transform.py`
 for more details.
 

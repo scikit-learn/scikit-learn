@@ -186,7 +186,8 @@ def make_plot(item_idx):
     axarr = (ax_zoom_out, ax_zoom_in)
     plot_distribution(axarr[0], X, y, hist_nbins=200,
                       x0_label="Median Income",
-                      x1_label="Number of households")
+                      x1_label="Number of households",
+                      title="Full data")
 
     # zoom-in
     zoom_in_percentile_range = (0, 99)
@@ -199,7 +200,8 @@ def make_plot(item_idx):
     plot_distribution(axarr[1], X[non_outliers_mask], y[non_outliers_mask],
                       hist_nbins=50,
                       x0_label="Median Income",
-                      x1_label="Number of households")
+                      x1_label="Number of households",
+                      title="Zoom-in")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
     mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cm.plasma_r,
