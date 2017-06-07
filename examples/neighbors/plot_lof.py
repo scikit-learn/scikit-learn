@@ -17,11 +17,11 @@ local outliers.
 In practice, such informations are generally not available, and taking
 n_neighbors=20 appears to work well in general.
 """
+print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
-print(__doc__)
 
 np.random.seed(42)
 
@@ -44,8 +44,10 @@ Z = Z.reshape(xx.shape)
 plt.title("Local Outlier Factor (LOF)")
 plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
 
-a = plt.scatter(X[:200, 0], X[:200, 1], c='white')
-b = plt.scatter(X[200:, 0], X[200:, 1], c='red')
+a = plt.scatter(X[:200, 0], X[:200, 1], c='white',
+                edgecolor='k', s=20)
+b = plt.scatter(X[200:, 0], X[200:, 1], c='red',
+                edgecolor='k', s=20)
 plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))

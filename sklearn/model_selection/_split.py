@@ -29,9 +29,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
-from ..utils.fixes import bincount
 from ..utils.fixes import signature
-from ..utils.random import choice
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
@@ -577,7 +575,7 @@ class StratifiedKFold(_BaseKFold):
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
-        y_counts = bincount(y_inversed)
+        y_counts = np.bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
             raise ValueError("All the n_groups for individual classes"
@@ -1377,6 +1375,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     ...                   n_draws=2, rng=42)
     array([1, 1, 0, 0])
     """
+    rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
     continuous = n_draws * class_counts / class_counts.sum()
@@ -1397,7 +1396,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             # if we need to add more, we add them all and
             # go to the next value
             add_now = min(len(inds), need_to_add)
-            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            inds = rng.choice(inds, size=add_now, replace=False)
             floored[inds] += 1
             need_to_add -= add_now
             if need_to_add == 0:
@@ -1476,7 +1475,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
 
-        class_counts = bincount(y_indices)
+        class_counts = np.bincount(y_indices)
         if np.min(class_counts) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"

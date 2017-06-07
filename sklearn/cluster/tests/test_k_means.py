@@ -404,7 +404,7 @@ def test_minibatch_sensible_reassign_partial_fit():
 def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
-    # should not longer be good
+    # should no longer be good
     for this_X in (X, X_csr):
         mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)

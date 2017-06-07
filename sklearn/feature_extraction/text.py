@@ -29,8 +29,6 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils import deprecated
-from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
@@ -504,7 +502,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
     if sp.isspmatrix_csr(X):
-        return bincount(X.indices, minlength=X.shape[1])
+        return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(sp.csc_matrix(X, copy=False).indptr)
 
@@ -784,7 +782,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         j_indices = np.asarray(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = frombuffer_empty(values, dtype=np.intc)
+        values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
@@ -1036,7 +1034,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self
@@ -1088,10 +1086,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     @property
     def idf_(self):
-        if hasattr(self, "_idf_diag"):
-            return np.ravel(self._idf_diag.sum(axis=0))
-        else:
-            return None
+        # if _idf_diag is not set, this will raise an attribute error,
+        # which means hasattr(self, "idf_") is False
+        return np.ravel(self._idf_diag.sum(axis=0))
 
 
 class TfidfVectorizer(CountVectorizer):
