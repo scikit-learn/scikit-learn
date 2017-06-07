@@ -178,6 +178,10 @@ Enhancements
      removed by setting it to `None`.
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
+   - Prevent cast from float32 to float64 in
+   :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
+   by :user:`Joan Massich <massich>`
+
 Bug fixes
 .........
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
