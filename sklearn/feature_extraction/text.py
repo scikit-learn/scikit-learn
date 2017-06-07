@@ -11,7 +11,7 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
-from __future__ import unicode_literals
+from __future__ import unicode_literals, division
 
 import array
 from collections import Mapping, defaultdict
@@ -1118,7 +1118,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     @property
     def idf_(self):
-        return np.log(float(self._n_samples) / self._df) + 1.0
+        return np.log(self._n_samples / self._df) + 1.0
 
 
 class TfidfVectorizer(CountVectorizer):
