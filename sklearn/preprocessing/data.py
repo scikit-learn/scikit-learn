@@ -26,6 +26,8 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from .label import LabelEncoder
+from ..utils.fixes import in1d, setdiff1d
 
 
 zip = six.moves.zip
@@ -1618,28 +1620,31 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True):
-    """Apply a transform function to portion of selected features
+def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
+                    return_val=True):
+    """Apply a function to portion of selected features
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape [n_samples, n_features]
+    X : {array, sparse matrix}, shape [n_samples, n_features]
         Dense array or sparse matrix.
-
     transform : callable
         A callable transform(X) -> X_transformed
-
     copy : boolean, optional
         Copy X even if it could be avoided.
-
     selected: "all" or array of indices or mask
         Specify which features to apply the transform to.
+    return_val : boolean, optional
+        Whether to return the transformed matrix. If not set `None` is
+        returned.
 
     Returns
     -------
     X : array or sparse matrix, shape=(n_samples, n_features_new)
     """
-    X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
+
+    if copy:
+        X = X.copy()
 
     if isinstance(selected, six.string_types) and selected == "all":
         return transform(X)
@@ -1662,22 +1667,22 @@ def _transform_selected(X, transform, selected="all", copy=True):
         return transform(X)
     else:
         X_sel = transform(X[:, ind[sel]])
-        X_not_sel = X[:, ind[not_sel]]
+        X_not_sel = X[:, ind[not_sel]].astype(dtype)
 
-        if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
-            return sparse.hstack((X_sel, X_not_sel))
-        else:
-            return np.hstack((X_sel, X_not_sel))
+        if return_val:
+            if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
+                return sparse.hstack((X_sel, X_not_sel))
+            else:
+                return np.hstack((X_sel, X_not_sel))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
-    The input to this transformer should be a matrix of integers, denoting
-    the values taken on by categorical (discrete) features. The output will be
-    a sparse matrix where each column corresponds to one possible value of one
-    feature. It is assumed that input features take on values in the range
-    [0, n_values).
+    The input to this transformer should be a matrix of integers or strings,
+    denoting the values taken on by categorical (discrete) features. The
+    output will be a sparse matrix where each column corresponds to one
+    possible value of one feature.
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
@@ -1689,15 +1694,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_values : 'auto', int or array of ints
-        Number of values per feature.
-
-        - 'auto' : determine value range from training data.
-        - int : number of categorical values per feature.
-                Each feature value should be in ``range(n_values)``
-        - array : ``n_values[i]`` is the number of categorical values in
-                  ``X[:, i]``. Each feature value should be
-                  in ``range(n_values[i])``
+    values : 'auto', int, list of ints, or list of lists of objects
+        - 'auto' : determine set of values from training data. See the
+          documentation of `handle_unknown` for which values are considered
+          acceptable.
+        - int : values are in ``range(values)`` for all features
+        - list of ints : values for feature ``i`` are in ``range(values[i])``
+        - list of lists : values for feature ``i`` are in ``values[i]``
 
     categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
@@ -1715,23 +1718,25 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Will return sparse matrix if set True else will return an array.
 
     handle_unknown : str, 'error' or 'ignore'
-        Whether to raise an error or ignore if a unknown categorical feature is
-        present during transform.
+
+        - 'ignore': Ignore all unknown feature values.
+        - 'error': Raise an error when the value of a feature is more than the
+          maximum value seen during fit.
+        - 'error-strict': Raise an error when the value of a feature is unseen
+          during`fit`.
+
+    copy : bool, default=True
+        If unset, `X` maybe modified in space.
 
     Attributes
     ----------
-    active_features_ : array
-        Indices for active features, meaning values that actually occur
-        in the training set. Only available when n_values is ``'auto'``.
+    feature_index_range_ : array, shape [n_feature, 2]
+        ``feature_index_range_[i]`` specifies the range of column indices
+        occupied by the input feature `i` in the one-hot encoded array.
 
-    feature_indices_ : array of shape (n_features,)
-        Indices to feature ranges.
-        Feature ``i`` in the original data is mapped to features
-        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
-        (and then potentially masked by `active_features_` afterwards)
-
-    n_values_ : array of shape (n_features,)
-        Maximum number of values per feature.
+    one_hot_feature_index_ : array, shape [n_features_new]
+        ``one_hot_feature_index_[i]`` specifies which feature of the input
+        is encoded by column `i` in the one-hot encoded array.
 
     Examples
     --------
@@ -1741,16 +1746,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
-[1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values='auto', sparse=True)
-    >>> enc.n_values_
-    array([2, 3, 4])
-    >>> enc.feature_indices_
-    array([0, 2, 5, 9])
-    >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+    >>> enc.fit([['cat', 4], ['mouse', 15], ['dog', 17]]) \
+        # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        OneHotEncoder(categorical_features='all', copy=True,
+           dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
+           sparse=True, values='auto')
+    >>> enc.transform([['dog', 4]]).toarray()
+    array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
     See also
     --------
@@ -1766,138 +1768,245 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
-    def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float64, sparse=True, handle_unknown='error'):
-        self.n_values = n_values
+
+    def __init__(self, values='auto', categorical_features="all",
+                 n_values=None, dtype=np.float64, sparse=True,
+                 handle_unknown='error', copy=True):
+        self.values = values
         self.categorical_features = categorical_features
         self.dtype = dtype
         self.sparse = sparse
         self.handle_unknown = handle_unknown
+        self.n_values = n_values
+        self.copy = copy
 
     def fit(self, X, y=None):
-        """Fit OneHotEncoder to X.
+        """Fit the CategoricalEncoder to X.
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_feature]
-            Input array of type int.
+            Array of ints or strings or both.
 
         Returns
         -------
         self
         """
-        self.fit_transform(X)
+
+        X = check_array(X, dtype=np.object, accept_sparse='csc',
+                        copy=self.copy)
+        n_samples, n_features = X.shape
+
+        _apply_selected(X, self._fit, dtype=self.dtype,
+                        selected=self.categorical_features, copy=True,
+                        return_val=False)
+
+        self.feature_index_range_ = np.zeros((n_features, 2), dtype=np.int)
+
+        if isinstance(self.categorical_features, six.string_types) and \
+           self.categorical_features == "all":
+
+            categorical = np.ones(n_features, dtype=bool)
+        else:
+            categorical = np.zeros(n_features, dtype=bool)
+            categorical[np.asarray(self.categorical_features)] = True
+
+        num_cat = np.sum(categorical)
+        start = 0
+        cat_index = 0
+
+        for i in range(n_features):
+            if categorical[i]:
+                le = self._label_encoders[cat_index]
+                end = start + len(le.classes_)
+                self.feature_index_range_[i] = start, end
+                start = end
+                cat_index += 1
+
+        indices = np.arange(start, start + n_features - num_cat)
+        self.feature_index_range_[~categorical, 0] = indices
+        indices += 1
+        self.feature_index_range_[~categorical, 1] = indices
+
+        if len(indices) > 0:
+            output_cols = indices[-1]
+        else:
+            output_cols = start
+
+        self.one_hot_feature_index_ = np.empty(output_cols, dtype=np.int)
+
+        for i in range(n_features):
+            s, e = self.feature_index_range_[i]
+            self.one_hot_feature_index_[s:e] = i
+
         return self
 
-    def _fit_transform(self, X):
-        """Assumes X contains only categorical features."""
-        X = check_array(X, dtype=np.int)
-        if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers.")
+    def _fit(self, X):
+        "Assumes `X` contains only catergorical features."
+
+        if not np.issubdtype(X.dtype.type, np.integer):
+            X = check_array(X, dtype=np.object)
         n_samples, n_features = X.shape
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
-            n_values = np.max(X, axis=0) + 1
-        elif isinstance(self.n_values, numbers.Integral):
-            if (np.max(X, axis=0) >= self.n_values).any():
-                raise ValueError("Feature out of bounds for n_values=%d"
-                                 % self.n_values)
-            n_values = np.empty(n_features, dtype=np.int)
-            n_values.fill(self.n_values)
+
+        self._n_features = n_features
+        self._label_encoders = [LabelEncoder() for i in range(n_features)]
+        # Maximum value for each featue
+        self._max_values = [None] * n_features
+
+        if self.n_values is not None:
+            warnings.warn('`n_values` has been renamed to `values`.'
+                          'The parameter `n_values` is deprecated, use the'
+                          'parameter `values` instead and specify the '
+                          'expected values for each feature')
+
+            self._values = self.n_values
         else:
-            try:
-                n_values = np.asarray(self.n_values, dtype=int)
-            except (ValueError, TypeError):
-                raise TypeError("Wrong type for parameter `n_values`. Expected"
-                                " 'auto', int or array of ints, got %r"
-                                % type(X))
-            if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
-                raise ValueError("Shape mismatch: if n_values is an array,"
-                                 " it has to be of shape (n_features,).")
+            self._values = self.values
 
-        self.n_values_ = n_values
-        n_values = np.hstack([[0], n_values])
-        indices = np.cumsum(n_values)
-        self.feature_indices_ = indices
+        error_msg = ("`values` should be 'auto', an integer, a list of"
+                     " integers or a list of list")
 
-        column_indices = (X + indices[:-1]).ravel()
-        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                n_features)
-        data = np.ones(n_samples * n_features)
-        out = sparse.coo_matrix((data, (row_indices, column_indices)),
-                                shape=(n_samples, indices[-1]),
-                                dtype=self.dtype).tocsr()
+        for i in range(n_features):
+            le = self._label_encoders[i]
 
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
-            mask = np.array(out.sum(axis=0)).ravel() != 0
-            active_features = np.where(mask)[0]
-            out = out[:, active_features]
-            self.active_features_ = active_features
+            self._max_values[i] = np.max(X[:, i])
 
-        return out if self.sparse else out.toarray()
+            if isinstance(self._values, numbers.Integral):
+                self._values = np.ones(n_features, dtype=np.int) * self._values
 
-    def fit_transform(self, X, y=None):
-        """Fit OneHotEncoder to X, then transform X.
+            if self._values == 'auto':
+                le.fit(X[:, i])
 
-        Equivalent to self.fit(X).transform(X), but more convenient and more
-        efficient. See fit for the parameters, transform for the return value.
+            elif (isinstance(self._values, list) or
+                  isinstance(self._values, np.ndarray)):
+                if len(self._values) != X.shape[1]:
+                    raise ValueError("Shape mismatch: if values is a list,"
+                                     " it has to be of length (n_features).")
+                if isinstance(self._values[i], list):
+                    le.fit(self._values[i])
+                elif np.isscalar(self._values[i]):
+                    le.fit(np.arange(self._values[i], dtype=np.int))
+                    X_feature_max = np.max(X, axis=0)
+                    mask = X_feature_max >= self._values
+                    if mask.any():
+                        msg = 'Value(s) %s out of bounds for feature(s) %s'
+                        raise ValueError(msg % (X_feature_max[mask],
+                                                np.where(mask)[0]))
+                else:
+                    raise ValueError(error_msg)
+            else:
+                raise TypeError(error_msg)
+
+    def transform(self, X, y=None):
+        """Encode the selected categorical features using the one-hot scheme.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_feature]
+            Array of ints or strings or both.
+
+        Returns
+        -------
+        out : array, shape[n_samples, n_features_new]
+            `X` encoded using the one-hot scheme.
         """
-        return _transform_selected(X, self._fit_transform,
-                                   self.categorical_features, copy=True)
+        X = check_array(X, dtype=np.object)
+
+        return _apply_selected(X, self._transform, copy=True,
+                               selected=self.categorical_features)
 
     def _transform(self, X):
-        """Assumes X contains only categorical features."""
-        X = check_array(X, dtype=np.int)
-        if np.any(X < 0):
-            raise ValueError("X needs to contain only non-negative integers.")
+        "Assumes `X` contains only categorical features."
+
+        X = check_array(X, accept_sparse='csc', dtype=np.object)
         n_samples, n_features = X.shape
+        X_int = np.zeros_like(X, dtype=np.int)
+        X_mask = np.ones_like(X, dtype=np.bool)
 
-        indices = self.feature_indices_
-        if n_features != indices.shape[0] - 1:
-            raise ValueError("X has different shape than during fitting."
-                             " Expected %d, got %d."
-                             % (indices.shape[0] - 1, n_features))
+        for i in range(n_features):
 
-        # We use only those categorical features of X that are known using fit.
-        # i.e lesser than n_values_ using mask.
-        # This means, if self.handle_unknown is "ignore", the row_indices and
-        # col_indices corresponding to the unknown categorical feature are
-        # ignored.
-        mask = (X < self.n_values_).ravel()
-        if np.any(~mask):
-            if self.handle_unknown not in ['error', 'ignore']:
-                raise ValueError("handle_unknown should be either error or "
-                                 "unknown got %s" % self.handle_unknown)
-            if self.handle_unknown == 'error':
-                raise ValueError("unknown categorical feature present %s "
-                                 "during transform." % X.ravel()[~mask])
+            valid_mask = in1d(X[:, i], self._label_encoders[i].classes_)
 
-        column_indices = (X + indices[:-1]).ravel()[mask]
+            if not np.all(valid_mask):
+                if self.handle_unknown in ['error', 'error-strict']:
+                    le = self._label_encoders[i]
+                    diff = setdiff1d(X[:, i], le.classes_)
+                    if self.handle_unknown == 'error-strict':
+                        msg = 'Unknown feature(s) %s in column %d' % (diff, i)
+                        raise ValueError(msg)
+                    else:
+                        if np.all(diff <= self._max_values[i]):
+                            msg = ('Values %s for feature %d are unknown but '
+                                   'in range. This will raise an error in '
+                                   'future versions where "error-strict" will '
+                                   'be default for `handle_unknown` parameter'
+                                   % (str(diff), i))
+                            warnings.warn(FutureWarning(msg))
+                            X_mask[:, i] = valid_mask
+                            le = self._label_encoders[i]
+                            X[:, i][~valid_mask] = le.classes_[0]
+                        else:
+                            msg = ('Unknown feature(s) %s in column %d' %
+                                   (diff, i))
+                            raise ValueError(msg)
+                elif self.handle_unknown == 'ignore':
+                    # Set the problematic rows to an acceptable value and
+                    # continue. The rows are marked in `X_mask` and will be
+                    # removed later.
+                    X_mask[:, i] = valid_mask
+                    X[:, i][~valid_mask] = self._label_encoders[i].classes_[0]
+                else:
+                    template = ("handle_unknown should be either 'error' or "
+                                "'ignore', got %s")
+                    raise ValueError(template % self.handle_unknown)
+
+            X_int[:, i] = self._label_encoders[i].transform(X[:, i])
+
+        mask = X_mask.ravel()
+        n_values = [le.classes_.shape[0] for le in self._label_encoders]
+        n_values = np.hstack([[0], n_values])
+        indices = np.cumsum(n_values)
+
+        column_indices = (X_int + indices[:-1]).ravel()[mask]
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)[mask]
-        data = np.ones(np.sum(mask))
+        data = np.ones(n_samples * n_features)[mask]
+
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
+
         if (isinstance(self.n_values, six.string_types) and
                 self.n_values == 'auto'):
             out = out[:, self.active_features_]
 
         return out if self.sparse else out.toarray()
 
-    def transform(self, X):
-        """Transform X using one-hot encoding.
+    @property
+    def active_features_(self):
+        warnings.warn('The property `active_features_` is deprecated and'
+                      ' will be removed in version 0.20')
+        if self.n_values is None:
+            classes = [le.classes_ for le in self._label_encoders]
+            classes_max = [np.max(cls) + 1 for cls in classes]
+            cum_idx = np.cumsum([0] + classes_max)
+            active_idx = [self._label_encoders[i].classes_.astype(np.int) +
+                          cum_idx[i]
+                          for i in range(self._n_features)]
 
-        Parameters
-        ----------
-        X : array-like, shape [n_samples, n_features]
-            Input array of type int.
+            return np.concatenate(active_idx, axis=0).astype(np.int)
+        else:
+            raise AttributeError()
 
-        Returns
-        -------
-        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
-            Transformed input.
-        """
-        return _transform_selected(X, self._transform,
-                                   self.categorical_features, copy=True)
+    @property
+    def feature_indices_(self):
+        warnings.warn('The property `feature_indices_` is deprecated and'
+                      ' will be removed in version 0.20')
+        classes_max = [np.max(le.classes_) + 1 for le in self._label_encoders]
+        return np.cumsum([0] + classes_max)
+
+    @property
+    def n_values_(self):
+        warnings.warn('The property `n_values_` is deprecated and'
+                      ' will be removed in version 0.20')
+        return np.array([le.classes_.shape[0] for le in self._label_encoders])
