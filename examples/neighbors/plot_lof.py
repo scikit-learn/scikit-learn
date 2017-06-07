@@ -45,9 +45,9 @@ plt.title("Local Outlier Factor (LOF)")
 plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
 
 a = plt.scatter(X[:200, 0], X[:200, 1], c='white',
-                edgecolor='b', s=20)
+                edgecolor='k', s=20)
 b = plt.scatter(X[200:, 0], X[200:, 1], c='red',
-                edgecolor='b', s=20)
+                edgecolor='k', s=20)
 plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
