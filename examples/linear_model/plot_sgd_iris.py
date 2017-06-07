@@ -17,8 +17,10 @@ from sklearn.linear_model import SGDClassifier
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+
+# we only take the first two features. We could
+# avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]
 y = iris.target
 colors = "bry"
 
@@ -56,7 +58,7 @@ plt.axis('tight')
 for i, color in zip(clf.classes_, colors):
     idx = np.where(y == i)
     plt.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
-                cmap=plt.cm.Paired)
+                cmap=plt.cm.Paired, edgecolor='black', s=20)
 plt.title("Decision surface of multi-class SGD")
 plt.axis('tight')
 
