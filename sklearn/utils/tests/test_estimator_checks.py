@@ -120,12 +120,15 @@ def test_check_estimator():
     # check that we have a set_params and can clone
     msg = "it does not implement a 'get_params' methods"
     assert_raises_regex(TypeError, msg, check_estimator, object)
+    assert_raises_regex(TypeError, msg, check_estimator, object())
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
+    assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
     msg = "TypeError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
+    assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
     try:
         from pandas import Series  # noqa
@@ -138,6 +141,7 @@ def test_check_estimator():
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
+    assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict())
     # check that estimator state does not change
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
@@ -175,7 +179,9 @@ def test_check_estimator():
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
+    check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
+    check_estimator(MultiTaskElasticNet())
 
 
 def test_check_estimators_unfitted():

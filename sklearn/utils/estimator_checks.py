@@ -1475,7 +1475,6 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     # this check works on classes, not instances
     estimator = Estimator()
-    set_testing_parameters(estimator)
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):
             # This check is for properties, they can be listed in dir
@@ -1551,7 +1550,7 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
 
 
 def check_parameters_default_constructible(name, Estimator):
-    # THIS ONE IS STILL ON CLASSES
+    # this check works on classes, not instances
     classifier = LinearDiscriminantAnalysis()
     # test default-constructibility
     # get rid of deprecation warnings
