@@ -386,7 +386,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.fit_params = fit_params if fit_params is not None else {}
+        self.fit_params = fit_params
         self.iid = iid
         self.refit = refit
         self.cv = cv
@@ -836,7 +836,7 @@ class GridSearchCV(BaseSearchCV):
                          kernel='rbf', max_iter=-1, probability=False,
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
-           fit_params={}, iid=..., n_jobs=1,
+           fit_params=None, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
     >>> sorted(clf.cv_results_.keys())
@@ -1196,10 +1196,10 @@ class RandomizedSearchCV(BaseSearchCV):
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
-             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-             pre_dispatch=pre_dispatch, error_score=error_score,
-             return_train_score=return_train_score)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
 
     def _get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""

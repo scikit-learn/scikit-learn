@@ -121,7 +121,7 @@ def clone(estimator, safe=True):
 
 
 ###############################################################################
-def _pprint(params, offset=0, printer=repr):
+def _pprint(params, offset=0, printer=repr, cutoff=500):
     """Pretty print the dictionary 'params'
 
     Parameters
@@ -150,9 +150,9 @@ def _pprint(params, offset=0, printer=repr):
             # architectures and versions.
             this_repr = '%s=%s' % (k, str(v))
         else:
-            # use repr of the rest
+            # use printer of the rest
             this_repr = '%s=%s' % (k, printer(v))
-        if len(this_repr) > 500:
+        if cutoff is not None and len(this_repr) > cutoff:
             this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
             if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
@@ -284,9 +284,22 @@ class BaseEstimator(object):
                 setattr(self, key, value)
         return self
 
+    def _changed_params(self):
+        params = self.get_params(deep=False)
+        filtered_params = {}
+        default_params = {}
+        init_params = signature(self.__init__).parameters
+        for k, v in params.items():
+            if v == init_params[k].default:
+                default_params[k] = v
+            else:
+                filtered_params[k] = v
+        return filtered_params, default_params
+
     def __repr__(self):
         class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
+        params = self.get_params(deep=False)
+        return '%s(%s)' % (class_name, _pprint(params,
                                                offset=len(class_name),),)
 
     def __getstate__(self):
@@ -314,7 +327,6 @@ class BaseEstimator(object):
             super(BaseEstimator, self).__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
-
 
 
 ###############################################################################
