@@ -23,7 +23,7 @@ from .utils import Bunch
 
 from .utils.metaestimators import _BaseComposition
 
-__all__ = ['Pipeline', 'FeatureUnion']
+__all__ = ['Pipeline', 'FeatureUnion', 'ColumnTransformer']
 
 
 class Pipeline(_BaseComposition):
@@ -667,7 +667,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         return self
 
     def _validate_transformers(self):
-        names, transformers, _, _ = zip(*self._iter())
+        names, transformers, _, _ = zip(*self._iter(skip_none=False))
 
         # validate names
         self._validate_names(names)
@@ -682,13 +682,13 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
 
-    def _iter(self, X=None):
+    def _iter(self, X=None, skip_none=True):
         """Generate (name, est, weight) tuples excluding None transformers
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, X, get_weight(name))
                 for name, trans in self.transformer_list
-                if trans is not None)
+                if not skip_none or trans is not None)
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -726,8 +726,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans, Xsubset, y)
-            for _, trans, Xsubset, _ in self._iter(X=X))
+            delayed(_fit_one_transformer)(trans,  X_sel, y)
+            for _, trans, X_sel, _ in self._iter(X=X))
         self._update_transformer_list(transformers)
         return self
 
@@ -750,9 +750,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, Xsubset, y,
+            delayed(_fit_transform_one)(trans, weight, X_sel, y,
                                         **fit_params)
-            for name, trans, Xsubset, weight in self._iter(X=X))
+            for name, trans, X_sel, weight in self._iter(X=X))
 
         if not result:
             # All transformers are None
@@ -780,8 +780,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, weight, Xsubset)
-            for name, trans, Xsubset, weight in self._iter(X=X))
+            delayed(_transform_one)(trans, weight, X_sel)
+            for name, trans, X_sel, weight in self._iter(X=X))
         if not Xs:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
@@ -882,12 +882,13 @@ class ColumnTransformer(FeatureUnion):
 
     """
 
-    def _iter(self, X=None):
+    def _iter(self, X=None, skip_none=True):
         """Generate (name, trans, column, weight) tuples
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, _getitem(X, column), get_weight(name))
-                for name, trans, column in self.transformer_list)
+                for name, trans, column in self.transformer_list
+                if not skip_none or trans is not None)
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
