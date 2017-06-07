@@ -3,6 +3,7 @@ import unittest
 import sys
 
 from sklearn.utils.testing import (
+    assert_true,
     assert_raises,
     assert_less,
     assert_greater,
@@ -13,7 +14,9 @@ from sklearn.utils.testing import (
     assert_equal,
     set_random_state,
     assert_raise_message,
-    ignore_warnings)
+    ignore_warnings,
+    check_parameters_match
+    )
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -212,3 +215,118 @@ class TestWarns(unittest.TestCase):
 
         if failed:
             raise AssertionError("wrong warning caught by assert_warn")
+
+
+# Tests for docstrings:
+
+def f_ok(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_sections(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Results
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_order(b, a):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_missing(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+class Klass(object):
+    def f_missing(self, X, y):
+        pass
+
+    def f_bad_sections(self, X, y):
+        """Function f
+
+        Parameter
+        ----------
+        a : int
+            Parameter a
+        b : float
+            Parameter b
+
+        Results
+        -------
+        c : list
+            Parameter c
+        """
+        pass
+
+
+def test_check_parameters_match():
+    check_parameters_match(f_ok)
+    assert_raise_message(RuntimeError, 'Unknown section Results',
+                         check_parameters_match, f_bad_sections)
+    assert_raise_message(RuntimeError, 'Unknown section Parameter',
+                         check_parameters_match, Klass.f_bad_sections)
+
+    messages = ['a != b']
+    messages += ["arg mismatch: ['b']"]
+    messages += ["arg mismatch: ['X', 'y']"]
+    for mess, f in zip(messages, [f_bad_order, f_missing, Klass.f_missing]):
+        incorrect = check_parameters_match(f)
+        assert_true(len(incorrect) >= 1)
+        assert_true(mess in incorrect[0],
+                    '"%s" not in "%s"' % (mess, incorrect[0]))
