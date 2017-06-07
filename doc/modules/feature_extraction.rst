@@ -107,18 +107,18 @@ Columnar Data
 Many datasets contain features of different types, say text, floats and dates,
 where each type of feature requires separate preprocessing.
 Often it is easiest to preprocess data before applying scikit-learn methods, for example using
-pandas.
-If the preprocessing has parameters that you want to adjust within a
-grid-search, however, they need to be inside a transformer. This can be
-achieved very simply with the :class:`ColumnTransformer`.  The
-:class:`ColumnTransformer` works on pandas dataframe, dictionaries, and other
-objects that implement ``getattr`` so select a certain attribute or column.
+:ref:`pandas <http://pandas.pydata.org/>`__.
+The :class:ColumnTransformer is a convenient way to perform heterogeneous
+preprocessing on data columns within a scikit-learn pipeline (for example,
+when you want to adjust preprocessing parameters within a grid search).
+The :class:`ColumnTransformer` works on pandas dataframes, dictionaries, and other
+objects that implement ``getitem`` so select a certain attribute or column.
 
 .. note::
     :class:`ColumnTransformer` expects a very different data format from the numpy arrays usually used in scikit-learn.
-    For a numpy array ``X_array``, ``X_array[1]`` will give a single sample (``X_array[1].shape == (n_samples.)``), but all features.
-    For columnar data like a dict or pandas dataframe ``X_columns``, ``X_columns[1]`` is expected to give a feature called
-    ``1`` for each sample (``X_columns[1].shape == (n_samples,)``).
+    For a numpy array ``X_array``, ``X_array[1]`` will give all feature values for a single sample (``X_array[1].shape == (n_features,)``).
+    For columnar data like a dict or a pandas dataframe ``X_columns``, ``X_columns[1]`` is expected to give the values of a single feature called
+    ``1`` for all samples (``X_columns[1].shape == (n_samples,)``).
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -127,7 +127,7 @@ preprocessing or a specific feature extraction method::
   ...      'title': ["His Last Bow", "How Watson Learned the Trick", "A Moveable Feast", "The Great Gatsby"]}
 
 In contrast to the :class:`DictVectorizer` here the whole dataset is a dict,
-with each value having the same lenght ``n_samples``.
+with each value having the same length ``n_samples``.
 For this data, we might want to apply a :class:`OneHotEncoder` to the
 ``'city'`` column, but a :class:`CountVectorizer` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give each
