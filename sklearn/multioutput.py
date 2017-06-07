@@ -220,6 +220,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     def __init__(self, estimator, n_jobs=1):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
 
+    @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
