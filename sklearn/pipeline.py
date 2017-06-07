@@ -919,12 +919,27 @@ def _getitem(X, column):
         raise ValueError("no valid 'column' type")
 
     if column_names:
-        return X[column]
-        # TODO support multiple columns for dicts
+        if hasattr(X, 'loc'):
+            # pandas dataframes
+            if not isinstance(column, list):
+                column = [column]
+            return X.loc[:, column]
+        else:
+            # dicts or numpy recarrays
+            if not isinstance(column, list):
+                return np.asarray(X[column]).reshape(-1, 1)
+            else:
+                return np.vstack([X[col] for col in column]).T
+
     else:
         if hasattr(X, 'iloc'):
             # pandas dataframes
+            if not isinstance(column, list):
+                column = [column]
             return X.iloc[:, column]
         else:
             # numpy arrays
-            return X[:, column]
+            X_sel = X[:, column]
+            if X_sel.ndim == 1:
+                X_sel = X_sel.reshape(-1, 1)
+            return X_sel

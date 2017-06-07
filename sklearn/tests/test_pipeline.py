@@ -150,13 +150,6 @@ class Trans(BaseEstimator):
         return self
 
     def transform(self, X, y=None):
-        #TODO fix this in ColumnTransformer to always pass 2D data
-        if isinstance(X, np.recarray):
-            X = np.array(X.tolist())
-        else:
-            X = np.asarray(X)
-        if X.ndim == 1:
-            X = X.reshape(-1, 1)
         return check_array(X)
 
 
@@ -1015,8 +1008,6 @@ def test_column_transformer():
 
     # test multiple columns
     for X in Xs_name:
-        if isinstance(X, dict):
-            continue
         both = ColumnTransformer([('trans', Trans(), ['first', 'second'])])
         assert_array_equal(both.fit_transform(X), X_res_both)
         assert_array_equal(both.fit(X).transform(X), X_res_both)
