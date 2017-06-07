@@ -180,6 +180,9 @@ Enhancements
 
 Bug fixes
 .........
+   - Fixed a bug where :class:`_PLS` returns a 2D-array when a 1D-array is expected
+     :issue:`8856` by :user:`Jean-Baptiste Delafosse <jbDelafosse>`.
+
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
