@@ -467,7 +467,6 @@ partial dependence
 
    feature_extraction.DictVectorizer
    feature_extraction.FeatureHasher
-   feature_extraction.ColumnTransformer
 
 From images
 -----------
@@ -1158,6 +1157,7 @@ See the :ref:`metrics` section of the user guide for further details.
 
    pipeline.Pipeline
    pipeline.FeatureUnion
+   pipleline.ColumnTransformer
 
 .. autosummary::
    :toctree: generated/

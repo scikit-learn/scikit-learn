@@ -100,63 +100,6 @@ of the time. So as to make the resulting data structure able to fit in
 memory the ``DictVectorizer`` class uses a ``scipy.sparse`` matrix by
 default instead of a ``numpy.ndarray``.
 
-.. _column_transformer:
-
-Columnar Data
-=============
-Many datasets contain features of different types, say text, floats and dates,
-where each type of feature requires separate preprocessing.
-Often it is easiest to preprocess data before applying scikit-learn methods, for example using
-:ref:`pandas <http://pandas.pydata.org/>`__.
-The :class:ColumnTransformer is a convenient way to perform heterogeneous
-preprocessing on data columns within a scikit-learn pipeline (for example,
-when you want to adjust preprocessing parameters within a grid search).
-The :class:`ColumnTransformer` works on pandas dataframes, dictionaries, and other
-objects that implement ``getitem`` so select a certain attribute or column.
-
-.. note::
-    :class:`ColumnTransformer` expects a very different data format from the numpy arrays usually used in scikit-learn.
-    For a numpy array ``X_array``, ``X_array[1]`` will give all feature values for a single sample (``X_array[1].shape == (n_features,)``).
-    For columnar data like a dict or a pandas dataframe ``X_columns``, ``X_columns[1]`` is expected to give the values of a single feature called
-    ``1`` for all samples (``X_columns[1].shape == (n_samples,)``).
-
-To each column, a different transformation can be applied, such as
-preprocessing or a specific feature extraction method::
-
-  >>> X = {'city': ['London', 'London', 'Paris', 'New York'],
-  ...      'title': ["His Last Bow", "How Watson Learned the Trick", "A Moveable Feast", "The Great Gatsby"]}
-
-In contrast to the :class:`DictVectorizer` here the whole dataset is a dict,
-with each value having the same length ``n_samples``.
-For this data, we might want to apply a :class:`OneHotEncoder` to the
-``'city'`` column, but a :class:`CountVectorizer` to the ``'title'`` column.
-As we might use multiple feature extraction methods on the same column, we give each
-transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
-
-  >>> from sklearn.feature_extraction import ColumnTransformer
-  >>> from sklearn.preprocessing import OneHotEncoder
-  >>> from sklearn.feature_extraction.text import CountVectorizer
-  >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
-  ...      ('title_bow', CountVectorizer(), 'title')])
-
-  >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, transformer_weights=None,
-      transformers=...)
-
-  >>> column_trans.get_feature_names() == [
-  ...    'city_category__London', 'city_category__New York', 'city_category__Paris',
-  ...    'title_bow__bow', 'title_bow__feast', 'title_bow__gatsby',
-  ...    'title_bow__great', 'title_bow__his', 'title_bow__how', 'title_bow__last',
-  ...    'title_bow__learned', 'title_bow__moveable', 'title_bow__the',
-  ...    'title_bow__trick', 'title_bow__watson']
-  True
-
-  >>> column_trans.transform(X).toarray() # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  array([[1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-         [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1],
-         [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-         [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]]...)
 
 .. _feature_hashing:
 

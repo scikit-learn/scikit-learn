@@ -624,6 +624,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     Examples
     --------
+    >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> union = FeatureUnion([("pca", PCA()),  \
                               ("svd", TruncatedSVD())])
@@ -870,7 +871,7 @@ class ColumnTransformer(FeatureUnion):
 
     Examples
     --------
-    >>> from sklearn.feature_extraction import ColumnTransformer
+    >>> from sklearn.pipeline import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
     >>> union = ColumnTransformer(
     ...     [("norm1", Normalizer(norm='l1'), 'subset1'),
@@ -881,7 +882,6 @@ class ColumnTransformer(FeatureUnion):
            [ 0.5,  0.5,  0. ,  1. ]])
 
     """
-
     def _iter(self, X=None, skip_none=True):
         """Generate (name, trans, column, weight) tuples
         """
