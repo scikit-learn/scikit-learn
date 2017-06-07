@@ -3,7 +3,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_raises, assert_greater,
@@ -223,12 +223,59 @@ def test_singular_values():
 
 
 def test_svd_whiten():
-    tsvd = TruncatedSVD(n_components=52, random_state=42, whiten=True)
+    tsvd = TruncatedSVD(n_components=X.shape[1] - 1, random_state=42,
+                        whiten=True, algorithm='arpack')
     Xt = tsvd.fit_transform(X)
     Xt_2 = tsvd.transform(X)
-    assert_allclose(Xt, Xt_2, atol=1e-1)
+    assert_allclose(Xt, Xt_2)
     Xinv = tsvd.inverse_transform(Xt)
-    assert_array_almost_equal(Xinv, Xdense, decimal=1)
+    # Xdense is a sparse array in dense format (check zeros separately)
+    # The below equality is approximate since n_components < n_features
+    #mask = Xdense == 0.0
+    #assert_allclose(Xinv[mask], 0, atol=0.1)
+    #assert_allclose(Xinv[~mask], Xdense[~mask], rtol=0.04)
+
+
+def test_svd_consistency():
+    X_c = X - X.mean(axis=0)
+    svd = TruncatedSVD(n_components=5, whiten=True, random_state=0)
+    assert_allclose(svd.fit(X_c).explained_variance_,
+                    np.ones(5))
+
+
+def test_truncated_svd_eq_pca():
+    # TruncatedSVD should be equal to PCA on centered data
+
+    X_c = X - X.mean(axis=0)
+
+    pars = dict(n_components=52, random_state=42)
+
+    for whiten in [False, True]:
+        print(whiten)
+        svd = TruncatedSVD(whiten=whiten, **pars)
+        pca = PCA(whiten=whiten, **pars)
+
+        Xt_svd = svd.fit_transform(X_c)
+        Xt_pca = pca.fit_transform(X_c)
+        assert_allclose(Xt_svd, Xt_pca)
+
+        assert_allclose(pca.mean_, 0, atol=1e-9)
+
+        assert_allclose(svd.explained_variance_,
+                        pca.explained_variance_)
+
+        assert_allclose(svd.components_, pca.components_)
+
+        # transform only a subset of the data
+        svd.whiten = False
+        pca.whiten = False
+        Xt2_svd = svd.transform(X_c[:10])
+        Xt2_pca = pca.transform(X_c[:10])
+        assert_allclose(Xt2_svd, Xt2_pca)
+
+        X2_svd = svd.inverse_transform(Xt2_svd)
+        X2_pca = pca.inverse_transform(Xt2_svd)
+        assert_allclose(X2_svd, X2_pca)
 
 
 def test_lsi():
@@ -252,8 +299,8 @@ def test_lsi():
     X = vect.transform(documents)
     q = vect.transform([query])
     svd = TruncatedSVD(n_components=n_components, whiten=True)
-    svd.fit(X)
-    X_proj = svd.transform(X)
+
+    X_proj = svd.fit_transform(X)
     q_proj = svd.transform(q)
     scores = cosine_similarity(X_proj, q_proj)[:, 0]
     assert_array_almost_equal(q_proj, q_proj_ref, decimal=2)

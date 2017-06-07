@@ -6,6 +6,8 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
+from math import sqrt
+
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import svds
@@ -13,7 +15,9 @@ from scipy.sparse.linalg import svds
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
+from ..utils.extmath import fast_dot
 from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.validation import check_is_fitted
 
 __all__ = ["TruncatedSVD"]
 
@@ -51,7 +55,14 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         algorithm due to Halko (2009).
 
     whiten : bool, default = False
-        When True, the components_ are divided by the singular values.
+        When True (False by default) the `components_` vectors are multiplied
+        by the square root of (n_samples) and divided by the singular values to
+        ensure uncorrelated outputs with unit component-wise variances.
+
+        Whitening will remove some information from the transformed signal
+        (the relative variance scales of the components) but can sometime
+        improve the predictive accuracy of the downstream estimators by
+        making their data respect some hard-wired assumptions.
 
     n_iter : int, optional (default 5)
         Number of iterations for randomized SVD solver. Not used by ARPACK.
@@ -179,11 +190,12 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
 
+        self.components_ = VT
+        n_samples = X.shape
+
         if self.whiten:
-            self.components_ = VT / Sigma[:, None]
-            X_transformed = U
+            X_transformed = U * sqrt(n_samples)
         else:
-            self.components_ = VT
             X_transformed = U * Sigma
 
         # Calculate explained variance & explained variance ratio
@@ -211,8 +223,13 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
+        check_is_fitted(self, ['components_'])
+
         X = check_array(X, accept_sparse='csr')
-        return safe_sparse_dot(X, self.components_.T)
+        X_transformed = safe_sparse_dot(X, self.components_.T)
+        if self.whiten:
+            X_transformed /= np.sqrt(self.explained_variance_)
+        return X_transformed
 
     def inverse_transform(self, X):
         """Transform X back to its original space.
@@ -228,10 +245,19 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         -------
         X_original : array, shape (n_samples, n_features)
             Note that this is always a dense array.
+
+        Notes
+        -----
+        If whitening is enabled, inverse_transform does not compute the
+        exact inverse operation of transform.
         """
         X = check_array(X)
+        components = self.components_
+
         if self.whiten:
-            return np.dot(X,
-                          self.components_*self.singular_values_[:, None]**2)
+            components = self.components_ \
+                      * np.sqrt(self.explained_variance_[:, np.newaxis])
         else:
-            return np.dot(X, self.components_)
+            components = self.components_
+
+        return fast_dot(X, components)

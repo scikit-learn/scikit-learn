@@ -44,8 +44,8 @@ if __name__ == "__main__":
     # more useful.
     # Fit the pipeline on the training set using grid search for the parameters
 
-    # TASK: print the cross-validated scores for the each parameters set
-    # explored by the grid search
+    # TASK: print the mean and std for each candidate along with the parameter
+    # settings for all the candidates explored by grid search.
 
     # TASK: Predict the outcome on the testing set and store it in a variable
     # named y_predicted
