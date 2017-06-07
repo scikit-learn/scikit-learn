@@ -408,6 +408,8 @@ Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
 bins, whereas discretization focuses on assigning feature values to these bins.
 
+.. _preprocessing_binarization:
+
 Feature binarization
 --------------------
 
