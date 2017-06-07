@@ -84,6 +84,10 @@ if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage codecov
 fi
 
+if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
+    pip install numpydoc
+fi
+
 if [[ "$SKIP_TESTS" == "true" ]]; then
     echo "No need to build scikit-learn when not running the tests"
 else
