@@ -15,8 +15,8 @@ covariance estimator (the Minimum Covariance Determinant).
 import numpy as np
 import scipy as sp
 from . import MinCovDet
-from ..base import ClassifierMixin
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_array
+from ..metrics import accuracy_score
 
 
 class OutlierDetectionMixin(object):
@@ -63,11 +63,11 @@ class OutlierDetectionMixin(object):
 
         """
         check_is_fitted(self, 'threshold_')
+        X = check_array(X)
         mahal_dist = self.mahalanobis(X)
         if raw_values:
             decision = mahal_dist
         else:
-            check_is_fitted(self, 'threshold_')
             transformed_mahal_dist = mahal_dist ** 0.33
             decision = self.threshold_ ** 0.33 - transformed_mahal_dist
 
@@ -91,6 +91,7 @@ class OutlierDetectionMixin(object):
 
         """
         check_is_fitted(self, 'threshold_')
+        X = check_array(X)
         is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
             values = self.decision_function(X, raw_values=True)
@@ -100,8 +101,34 @@ class OutlierDetectionMixin(object):
 
         return is_inlier
 
+    def score(self, X, y, sample_weight=None):
+        """Returns the mean accuracy on the given test data and labels.
 
-class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples,) or (n_samples, n_outputs)
+            True labels for X.
+
+        sample_weight : array-like, shape = (n_samples,), optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+
+        """
+        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
+
+
+class EllipticEnvelope(OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Read more in the :ref:`User Guide <outlier_detection>`.

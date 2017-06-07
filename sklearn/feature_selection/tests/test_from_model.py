@@ -1,6 +1,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
@@ -16,7 +17,6 @@ from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.utils.fixes import norm
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
@@ -100,7 +100,7 @@ def test_feature_importances_2d_coef():
 
             # Manually check that the norm is correctly performed
             est.fit(X, y)
-            importances = norm(est.coef_, axis=0, ord=order)
+            importances = np.linalg.norm(est.coef_, axis=0, ord=order)
             feature_mask = importances > func(importances)
             assert_array_equal(X_new, X[:, feature_mask])
 
@@ -119,6 +119,10 @@ def test_partial_fit():
     X_transform = transformer.transform(data)
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
     assert_array_equal(X_transform, transformer.transform(data))
+
+    # check that if est doesn't have partial_fit, neither does SelectFromModel
+    transformer = SelectFromModel(estimator=RandomForestClassifier())
+    assert_false(hasattr(transformer, "partial_fit"))
 
 
 def test_calling_fit_reinitializes():
@@ -171,10 +175,10 @@ def test_threshold_string():
 def test_threshold_without_refitting():
     """Test that the threshold can be set without refitting the model."""
     clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
-    model = SelectFromModel(clf, threshold=0.1)
+    model = SelectFromModel(clf, threshold="0.1 * mean")
     model.fit(data, y)
     X_transform = model.transform(data)
 
     # Set a higher threshold to filter out more features.
-    model.threshold = 1.0
+    model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])

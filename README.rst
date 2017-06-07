@@ -50,8 +50,8 @@ Dependencies
 scikit-learn requires:
 
 - Python (>= 2.7 or >= 3.3)
-- NumPy (>= 1.6.1)
-- SciPy (>= 0.9)
+- NumPy (>= 1.8.2)
+- SciPy (>= 0.13.3)
 
 For running the examples Matplotlib >= 1.1.1 is required.
 

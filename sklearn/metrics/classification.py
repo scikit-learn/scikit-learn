@@ -38,7 +38,6 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.fixes import bincount
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -1088,16 +1087,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             tp_bins_weights = None
 
         if len(tp_bins):
-            tp_sum = bincount(tp_bins, weights=tp_bins_weights,
+            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
                               minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
-            pred_sum = bincount(y_pred, weights=sample_weight,
+            pred_sum = np.bincount(y_pred, weights=sample_weight,
                                 minlength=len(labels))
         if len(y_true):
-            true_sum = bincount(y_true, weights=sample_weight,
+            true_sum = np.bincount(y_true, weights=sample_weight,
                                 minlength=len(labels))
 
         # Retain only selected labels
@@ -1479,8 +1478,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         .. versionadded:: 0.18
 
     classes : array, shape = [n_labels], optional
-        (deprecated) Integer array of labels. This parameter has been
-         renamed to ``labels`` in version 0.18 and will be removed in 0.20.
+        Integer array of labels.
+
+        .. deprecated:: 0.18
+           This parameter has been deprecated in favor of ``labels`` in
+           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
