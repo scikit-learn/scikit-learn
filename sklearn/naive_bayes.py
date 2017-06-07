@@ -29,7 +29,6 @@ from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
 from .externals import six
 
@@ -387,7 +386,7 @@ class GaussianNB(BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = in1d(unique_y, classes)
+        unique_y_in_classes = np.in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError("The target label(s) %s in y do not exist in the "

@@ -20,8 +20,7 @@ import numpy as np
 
 from ..externals.six import string_types
 from .validation import check_array
-from ..utils.fixes import bincount
-from ..utils.fixes import array_equal
+
 
 
 def _unique_multiclass(y):
@@ -299,7 +298,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, 'classes_', None) is not None:
-            if not array_equal(clf.classes_, unique_labels(classes)):
+            if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))
@@ -360,7 +359,7 @@ def class_distribution(y, sample_weight=None):
 
             classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k + 1]],
                                        return_inverse=True)
-            class_prior_k = bincount(y_k, weights=nz_samp_weight)
+            class_prior_k = np.bincount(y_k, weights=nz_samp_weight)
 
             # An explicit zero was found, combine its weight with the weight
             # of the implicit zeros
@@ -382,7 +381,7 @@ def class_distribution(y, sample_weight=None):
             classes_k, y_k = np.unique(y[:, k], return_inverse=True)
             classes.append(classes_k)
             n_classes.append(classes_k.shape[0])
-            class_prior_k = bincount(y_k, weights=sample_weight)
+            class_prior_k = np.bincount(y_k, weights=sample_weight)
             class_prior.append(class_prior_k / class_prior_k.sum())
 
     return (classes, n_classes, class_prior)

@@ -21,7 +21,6 @@ from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils import indices_to_mask, check_consistent_length
-from ..utils.fixes import bincount
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 
@@ -104,7 +103,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 curr_sample_weight = sample_weight.copy()
 
             if bootstrap:
-                sample_counts = bincount(indices, minlength=n_samples)
+                sample_counts = np.bincount(indices, minlength=n_samples)
                 curr_sample_weight *= sample_counts
             else:
                 not_indices_mask = ~indices_to_mask(indices, n_samples)

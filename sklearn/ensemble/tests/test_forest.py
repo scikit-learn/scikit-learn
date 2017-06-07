@@ -41,7 +41,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
-from sklearn.utils.fixes import bincount
 from sklearn.utils.validation import check_random_state
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
@@ -255,7 +254,7 @@ def test_importances_asymptotic():
         n_samples = len(samples)
         entropy = 0.
 
-        for count in bincount(samples):
+        for count in np.bincount(samples):
             p = 1. * count / n_samples
             if p > 0:
                 entropy -= p * np.log2(p)
@@ -735,7 +734,7 @@ def check_min_samples_leaf(name):
     est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
     est.fit(X, y)
     out = est.estimators_[0].tree_.apply(X)
-    node_counts = bincount(out)
+    node_counts = np.bincount(out)
     # drop inner nodes
     leaf_count = node_counts[node_counts != 0]
     assert_greater(np.min(leaf_count), 4,
@@ -777,7 +776,7 @@ def check_min_weight_fraction_leaf(name):
 
         est.fit(X, y, sample_weight=weights)
         out = est.estimators_[0].tree_.apply(X)
-        node_weights = bincount(out, weights=weights)
+        node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
         assert_greater_equal(

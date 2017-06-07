@@ -25,7 +25,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
-from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 
@@ -749,7 +749,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         if self.mean_ is not None:
             X = X - self.mean_
 
-        X = fast_dot(X, self.components_.T)
+        X = np.dot(X, self.components_.T)
         return X
 
     def fit_transform(self, X, y=None):
@@ -768,7 +768,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         X = check_array(X)
         X = self._fit(X)
-        return fast_dot(X, self.components_.T)
+        return np.dot(X, self.components_.T)
 
     def inverse_transform(self, X, y=None):
         """Transform data back to its original space.
@@ -792,7 +792,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mean_')
 
-        X_original = fast_dot(X, self.components_)
+        X_original = np.dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_
         return X_original

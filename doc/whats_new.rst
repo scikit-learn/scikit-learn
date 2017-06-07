@@ -389,6 +389,37 @@ API changes summary
      has been renamed to ``n_components`` and will be removed in version 0.21.
      :issue:`8922` by :user:Attractadore
 
+   - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
+     for scikit-learn. The following backported functions in ``sklearn.utils``
+     have been removed or deprecated accordingly.
+     :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
+     
+     Removed in 0.19:
+     
+     - ``utils.fixes.argpartition``
+     - ``utils.fixes.array_equal``
+     - ``utils.fixes.astype``
+     - ``utils.fixes.bincount``
+     - ``utils.fixes.expit``
+     - ``utils.fixes.frombuffer_empty``
+     - ``utils.fixes.in1d``
+     - ``utils.fixes.norm``
+     - ``utils.fixes.rankdata``
+     - ``utils.fixes.safe_copy``
+     
+     Deprecated in 0.19, to be removed in 0.21:
+     
+     - ``utils.arpack.eigs``
+     - ``utils.arpack.eigsh``
+     - ``utils.arpack.svds``
+     - ``utils.extmath.fast_dot``
+     - ``utils.extmath.logsumexp``
+     - ``utils.extmath.norm``
+     - ``utils.extmath.pinvh``
+     - ``utils.random.choice``
+     - ``utils.sparsetools.connected_components``
+     - ``utils.stats.rankdata``
+
 
 .. _changes_0_18_1:
 

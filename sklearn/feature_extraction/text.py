@@ -29,7 +29,6 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
@@ -503,7 +502,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
     if sp.isspmatrix_csr(X):
-        return bincount(X.indices, minlength=X.shape[1])
+        return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(sp.csc_matrix(X, copy=False).indptr)
 
@@ -783,7 +782,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         j_indices = np.asarray(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = frombuffer_empty(values, dtype=np.intc)
+        values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),

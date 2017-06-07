@@ -16,7 +16,6 @@ from libc.math cimport sqrt
 
 from ..metrics import euclidean_distances
 from ._k_means import _centers_dense
-from ..utils.fixes import partition
 
 
 cdef floating euclidian_dist(floating* a, floating* b, int n_features) nogil:
@@ -169,7 +168,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
             print("start iteration")
 
         cd =  np.asarray(center_half_distances)
-        distance_next_center = partition(cd, kth=1, axis=0)[1]
+        distance_next_center = np.partition(cd, kth=1, axis=0)[1]
 
         if verbose:
             print("done sorting")
