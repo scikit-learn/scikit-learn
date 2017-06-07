@@ -67,11 +67,12 @@ print(__doc__)
 from datetime import datetime
 
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urlencode
 from sklearn import cluster, covariance, manifold
+
 
 ###############################################################################
 # Retrieve the data from Internet
@@ -239,7 +240,7 @@ plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
-#a sequence of (*line0*, *line1*, *line2*), where::
+# a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]
