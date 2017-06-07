@@ -28,6 +28,7 @@ from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
+    set_testing_parameters,
     check_parameters_default_constructible,
     check_no_fit_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
@@ -66,9 +67,11 @@ def test_non_meta_estimators():
             continue
         estimator = Estimator()
         # check this on class
-        yield check_no_fit_attributes_set_in_init, name, Estimator
+        yield _named_check(
+            check_no_fit_attributes_set_in_init, name), name, Estimator
 
         for check in _yield_all_checks(name, estimator):
+            set_testing_parameters(estimator)
             yield _named_check(check, name), name, estimator
 
 

@@ -250,7 +250,7 @@ def check_estimator(Estimator):
 
     Parameters
     ----------
-    Estimator : class
+    estimator : estimator object or class
         Estimator to check. Estimator is a class object or instance.
 
     """
@@ -374,7 +374,6 @@ def check_estimator_sparse_data(name, estimator_orig):
                 estimator = clone(estimator).set_params(with_mean=False)
             else:
                 estimator = clone(estimator)
-        set_testing_parameters(estimator)
         # fit and predict
         try:
             with ignore_warnings(category=DeprecationWarning):
@@ -444,7 +443,6 @@ def check_dtype_object(name, estimator_orig):
     y = (X[:, 0] * 4).astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
 
     estimator.fit(X, y)
     if hasattr(estimator, "predict"):
@@ -481,7 +479,6 @@ def check_dict_unchanged(name, estimator_orig):
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
 
@@ -523,7 +520,6 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -571,7 +567,6 @@ def check_fit2d_predict1d(name, estimator_orig):
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -596,7 +591,6 @@ def check_fit2d_1sample(name, estimator_orig):
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -618,7 +612,6 @@ def check_fit2d_1feature(name, estimator_orig):
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -640,7 +633,6 @@ def check_fit1d_1feature(name, estimator_orig):
     y = X.astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -663,7 +655,6 @@ def check_fit1d_1sample(name, estimator_orig):
     y = np.array([1])
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
 
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -722,7 +713,6 @@ def _check_transformer(name, transformer_orig, X, y):
     n_samples, n_features = np.asarray(X).shape
     transformer = clone(transformer_orig)
     set_random_state(transformer)
-    set_testing_parameters(transformer)
 
     # fit
 
@@ -796,7 +786,6 @@ def check_pipeline_consistency(name, estimator_orig):
     X -= X.min()
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
     set_random_state(estimator)
     pipeline = make_pipeline(estimator)
     estimator.fit(X, y)
@@ -822,7 +811,6 @@ def check_fit_score_takes_y(name, estimator_orig):
     y = np.arange(10) % 3
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
-    set_testing_parameters(estimator)
     set_random_state(estimator)
 
     funcs = ["fit", "score", "partial_fit", "fit_predict", "fit_transform"]
@@ -855,7 +843,6 @@ def check_estimators_dtypes(name, estimator_orig):
 
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         estimator = clone(estimator_orig)
-        set_testing_parameters(estimator)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
 
@@ -867,7 +854,6 @@ def check_estimators_dtypes(name, estimator_orig):
 @ignore_warnings(category=DeprecationWarning)
 def check_estimators_empty_data_messages(name, estimator_orig):
     e = clone(estimator_orig)
-    set_testing_parameters(e)
     set_random_state(e, 1)
 
     X_zero_samples = np.empty(0).reshape(0, 3)
@@ -905,7 +891,6 @@ def check_estimators_nan_inf(name, estimator_orig):
         # catch deprecation warnings
         with ignore_warnings(category=DeprecationWarning):
             estimator = clone(estimator_orig)
-            set_testing_parameters(estimator)
             set_random_state(estimator, 1)
             # try to fit
             try:
@@ -973,7 +958,6 @@ def check_estimators_pickle(name, estimator_orig):
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     set_random_state(estimator)
-    set_testing_parameters(estimator)
     estimator.fit(X, y)
 
     result = dict()
@@ -1001,7 +985,6 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
 
-    set_testing_parameters(estimator)
     try:
         if isinstance(estimator, ClassifierMixin):
             classes = np.unique(y)
@@ -1022,7 +1005,6 @@ def check_clustering(name, alg_orig):
     X = StandardScaler().fit_transform(X)
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
-    set_testing_parameters(alg)
     if hasattr(alg, "n_clusters"):
         alg.set_params(n_clusters=3)
     set_random_state(alg)
@@ -1077,7 +1059,6 @@ def check_classifiers_one_label(name, classifier_orig):
     # catch deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
         classifier = clone(classifier_orig)
-        set_testing_parameters(classifier)
         # try to fit
         try:
             classifier.fit(X_train, y)
@@ -1115,7 +1096,6 @@ def check_classifiers_train(name, classifier_orig):
         classifier = clone(classifier_orig)
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
-        set_testing_parameters(classifier)
         set_random_state(classifier)
         # raises error on malformed input for fit
         assert_raises(ValueError, classifier.fit, X, y[:-1])
@@ -1182,7 +1162,6 @@ def check_estimators_fit_returns_self(name, estimator_orig):
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
-    set_testing_parameters(estimator)
     set_random_state(estimator)
 
     assert_true(estimator.fit(X, y) is estimator)
@@ -1229,7 +1208,6 @@ def check_supervised_y_2d(name, estimator_orig):
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
     estimator = clone(estimator_orig)
-    set_testing_parameters(estimator)
     set_random_state(estimator)
     # fit
     estimator.fit(X, y)
@@ -1274,7 +1252,6 @@ def check_classifiers_classes(name, classifier_orig):
         classifier = clone(classifier_orig)
         if name == 'BernoulliNB':
             classifier.set_params(binarize=X.mean())
-        set_testing_parameters(classifier)
         set_random_state(classifier)
         # fit
         classifier.fit(X, y_)
@@ -1299,8 +1276,6 @@ def check_regressors_int(name, regressor_orig):
     # separate estimators to control random seeds
     regressor_1 = clone(regressor_orig)
     regressor_2 = clone(regressor_orig)
-    set_testing_parameters(regressor_1)
-    set_testing_parameters(regressor_2)
     set_random_state(regressor_1)
     set_random_state(regressor_2)
 
@@ -1326,7 +1301,6 @@ def check_regressors_train(name, regressor_orig):
     regressor = clone(regressor_orig)
     y = multioutput_estimator_convert_y_2d(regressor, y)
     rnd = np.random.RandomState(0)
-    set_testing_parameters(regressor)
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
@@ -1362,7 +1336,6 @@ def check_regressors_no_decision_function(name, regressor_orig):
     regressor = clone(regressor_orig)
     y = multioutput_estimator_convert_y_2d(regressor, X[:, 0])
 
-    set_testing_parameters(regressor)
     if hasattr(regressor, "n_components"):
         # FIXME CCA, PLS is not robust to rank 1 effects
         regressor.n_components = 1
@@ -1471,7 +1444,6 @@ def check_estimators_overwrite_params(name, estimator_orig):
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
-    set_testing_parameters(estimator)
     set_random_state(estimator)
 
     # Make a physical copy of the original estimator parameters before fitting.
@@ -1501,8 +1473,9 @@ def check_estimators_overwrite_params(name, estimator_orig):
 @ignore_warnings(category=DeprecationWarning)
 def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
-    # STILL ON CLASSES
+    # this check works on classes, not instances
     estimator = Estimator()
+    set_testing_parameters(estimator)
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):
             # This check is for properties, they can be listed in dir
@@ -1563,8 +1536,6 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     # separate estimators to control random seeds
     estimator_1 = clone(estimator_orig)
     estimator_2 = clone(estimator_orig)
-    set_testing_parameters(estimator_1)
-    set_testing_parameters(estimator_2)
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 
@@ -1761,7 +1732,6 @@ def check_decision_proba_consistency(name, estimator_orig):
                       centers=centers, cluster_std=1.0, shuffle=True)
     X_test = np.random.randn(20, 2) + 4
     estimator = clone(estimator_orig)
-    set_testing_parameters(estimator)
 
     if (hasattr(estimator, "decision_function") and
             hasattr(estimator, "predict_proba")):

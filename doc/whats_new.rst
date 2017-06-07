@@ -321,7 +321,7 @@ API changes summary
 
    - All checks in ``utils.estimator_checks``, in particular
      :func:`utils.estimator_checks.check_estimator` now accept estimator
-     instances. Checks other than ``check_estimator`` do not accept
+     instances. Most other checks do not accept
      estimator classes any more. :issue:`9019` by `Andreas Müller`_.
 
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
