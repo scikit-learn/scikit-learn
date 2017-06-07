@@ -98,9 +98,9 @@ def test_classification():
         assert_raises(NotImplementedError, clf.fit, X, y, **fit_params)
 
 
-def test_restacking():
+def test_restack():
     base_estimators = [LinearRegression(), LinearRegression()]
-    blended_layer = make_stack_layer(*base_estimators, restacking=True,
+    blended_layer = make_stack_layer(*base_estimators, restack=True,
                                      method='predict')
     X = np.random.rand(100, 3)
     y = np.random.rand(100)

@@ -112,11 +112,14 @@ class StackLayer(FeatureUnion):
     Example
     -------
     >>> from sklearn.ensemble import StackLayer
-    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> from sklearn.linear_model import Ridge
     >>> from sklearn.svm import SVC
-    >>> l = StackMetaEstimator([('svc', SVC()),
-    ...                         ('knn', KNeighborsClassifier())])
+    >>> l = StackLayer([('svc', SVC()), ('ridge', Ridge())])
     >>> l # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    StackLayer(base_estimators=[('svc', SVC(C=1.0, ...)),
+                                ('ridge', Ridge(alpha=1.0, ...))],
+               cv=3, method='auto', n_jobs=1, restack=False,
+               transformer_weights=None)
     """
     def __init__(self, base_estimators=[], restack=False, cv=3, method='auto',
                  n_jobs=1, transformer_weights=None):
@@ -136,7 +139,8 @@ class StackLayer(FeatureUnion):
         self.transformer_list = [(name, self._wrap_estimator(x))
                                  for name, x in self.base_estimators]
         if self.restack:
-            self.transformer_list.append(_identity_transformer())
+            self.transformer_list.append(('restacker',
+                                          _identity_transformer()))
 
     def get_params(self, deep=True):
         return self._get_params('base_estimators', deep=deep)
@@ -147,30 +151,21 @@ class StackLayer(FeatureUnion):
         return self
 
 
-
 def make_stack_layer(*base_estimators, **kwargs):
     """Construct a single layer for a stacked model.
 
-    This is a wrapper around pipelines to provide a more convenient API for
-    stacking models.
+    This is a shorthand for the StackLayer constructor to automatically name
+    the estimators.
 
     Parameters
     ----------
     *base_estimators : list of base estimators.
 
-    restacking : bool, optional (default=False)
-        When true, the transformer will return the input.
-
-    transformer_weights : dict, optional (default=None)
-        Multiplicative weights for features per transformer.
-        Keys are transformer names, values the weights.
-
-    **kwargs : Keyword arguments to be passed to `StackMetaEstimator`.
+    **kwargs : Keyword arguments to be passed to `StackLayer`.
 
     Returns
     -------
-    f : FeatureUnion with every base estimator wrapped in a
-         `StackMetaEstimator`.
+    StackLayer
 
     Examples
     --------
@@ -188,17 +183,9 @@ def make_stack_layer(*base_estimators, **kwargs):
            [ 0.66666667,  0.33333333,  0.        ],
            [ 0.66666667,  0.33333333,  0.        ],
            [ 0.66666667,  0.33333333,  0.        ]])
+
     """
-    restacking = kwargs.pop('restacking', False)
-    transformer_weights = kwargs.pop('transformer_weights', None)
-
-    named_estimators = [(n, StackMetaEstimator(estimator, **kwargs))
-                        for n, estimator in _name_estimators(base_estimators)]
-    if restacking:
-        named_estimators.extend(_name_estimators([_identity_transformer()]))
-
-    return FeatureUnion(named_estimators,
-                        transformer_weights=transformer_weights)
+    return StackLayer(_name_estimators(base_estimators), **kwargs)
 
 
 def stack_estimators(*estimators, **kwargs):
