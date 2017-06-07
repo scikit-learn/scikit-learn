@@ -189,9 +189,15 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
-        self._validate_transformer(y)
+        # memorize if y should be a multi-output
+        self.y_shape_ = y.shape
+        if len(y.shape) == 1:
+            y_2d = y.reshape(-1, 1)
+        else:
+            y_2d = y
+        self._validate_transformer(y_2d)
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X, self.transformer_.transform(y),
+        self.estimator_.fit(X, self.transformer_.transform(y_2d),
                             sample_weight=sample_weight)
         return self
 
@@ -213,7 +219,12 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
         """
         check_is_fitted(self, "estimator_")
-        return self.transformer_.inverse_transform(self.estimator_.predict(X))
+        pred = self.transformer_.inverse_transform(self.estimator_.predict(X))
+        # if y is not a multi-output, it should be ravel
+        if len(self.y_shape_) == 1:
+            return pred.ravel()
+        else:
+            return pred
 
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.

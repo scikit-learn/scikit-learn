@@ -552,5 +552,9 @@ def test_target_transformer_friedman():
     y = friedman[1]
     clf = TransformedTargetRegressor(estimator=LinearRegression(),
                                      func=np.log, inverse_func=np.exp)
-    clf.fit(X, y).predict(X)
-    clf.score(X, y)
+    pred = clf.fit(X, y).predict(X)
+    assert_equal(y.shape, pred.shape)
+    clf = TransformedTargetRegressor(estimator=LinearRegression(),
+                                     transformer=StandardScaler())
+    pred = clf.fit(X, y).predict(X)
+    assert_equal(y.shape, pred.shape)
