@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
@@ -69,12 +69,9 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
 
 def assert_almost_equal_dense_sparse(x, y, decimal=6, err_msg=''):
     if sparse.issparse(x):
-        assert_array_almost_equal(x.data, y.data,
-                                  decimal=decimal,
-                                  err_msg=err_msg)
+        assert_allclose(x.data, y.data, decimal=decimal, err_msg=err_msg)
     else:
-        assert_array_almost_equal(x, y, decimal=decimal,
-                                  err_msg=err_msg)
+        assert_allclose(x, y, decimal=decimal, err_msg=err_msg)
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -428,7 +425,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
 def check_sample_weights_list(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
-    if has_fit_parameter(estimator_org, "sample_weight"):
+    if has_fit_parameter(estimator_orig, "sample_weight"):
         estimator = clone(estimator_orig)
         rnd = np.random.RandomState(0)
         X = rnd.uniform(size=(10, 3))
@@ -518,7 +515,7 @@ def is_public_parameter(attr):
 @ignore_warnings(category=DeprecationWarning)
 def check_dont_overwrite_parameters(name, estimator_orig):
     # check that fit method only changes or sets private attributes
-    if hasattr(estimator_org.__init__, "deprecated_original"):
+    if hasattr(estimator_orig.__init__, "deprecated_original"):
         # to not check deprecated classes
         return
     estimator = clone(estimator_orig)
@@ -713,7 +710,7 @@ def check_transformers_unfitted(name, transformer):
     assert_raises((AttributeError, ValueError), transformer.transform, X)
 
 
-def _check_transformer(name, transformer_org, X, y):
+def _check_transformer(name, transformer_orig, X, y):
     if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
@@ -852,7 +849,7 @@ def check_estimators_dtypes(name, estimator_orig):
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
     y = X_train_int_64[:, 0]
-    y = multioutput_estimator_convert_y_2d(estimator_org, y)
+    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
@@ -898,7 +895,7 @@ def check_estimators_nan_inf(name, estimator_orig):
     X_train_inf[0, 0] = np.inf
     y = np.ones(10)
     y[:5] = 0
-    y = multioutput_estimator_convert_y_2d(estimator_org, y)
+    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
     error_string_fit = "Estimator doesn't check for NaN and inf in fit."
     error_string_predict = ("Estimator doesn't check for NaN and inf in"
                             " predict.")
@@ -996,25 +993,25 @@ def check_estimators_pickle(name, estimator_orig):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_estimators_partial_fit_n_features(name, alg_orig):
+def check_estimators_partial_fit_n_features(name, estimator_orig):
     # check if number of features changes between calls to partial_fit.
-    if not hasattr(alg_org, 'partial_fit'):
+    if not hasattr(estimator_orig, 'partial_fit'):
         return
-    alg = clone(alg_orig)
+    estimator = clone(estimator_orig)
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
 
-    set_testing_parameters(alg)
+    set_testing_parameters(estimator)
     try:
-        if isinstance(alg, ClassifierMixin):
+        if isinstance(estimator, ClassifierMixin):
             classes = np.unique(y)
-            alg.partial_fit(X, y, classes=classes)
+            estimator.partial_fit(X, y, classes=classes)
         else:
-            alg.partial_fit(X, y)
+            estimator.partial_fit(X, y)
     except NotImplementedError:
         return
 
-    assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
+    assert_raises(ValueError, estimator.partial_fit, X[:, :-1], y)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1163,8 +1160,7 @@ def check_classifiers_train(name, classifier_orig):
             assert_equal(y_prob.shape, (n_samples, n_classes))
             assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
             # check that probas for all classes sum to one
-            assert_array_almost_equal(np.sum(y_prob, axis=1),
-                                      np.ones(n_samples))
+            assert_allclose(np.sum(y_prob, axis=1), np.ones(n_samples))
             # raises error on malformed input
             assert_raises(ValueError, classifier.predict_proba, X.T)
             # raises error on malformed input for predict_proba
@@ -1172,7 +1168,7 @@ def check_classifiers_train(name, classifier_orig):
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
                 y_log_prob = classifier.predict_log_proba(X)
-                assert_array_almost_equal(y_log_prob, np.log(y_prob), 8)
+                assert_allclose(y_log_prob, np.log(y_prob), 8)
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
@@ -1254,7 +1250,7 @@ def check_supervised_y_2d(name, estimator_orig):
         assert_greater(len(w), 0, msg)
         assert_true("DataConversionWarning('A column-vector y"
                     " was passed when a 1d array was expected" in msg)
-    assert_array_almost_equal(y_pred.ravel(), y_pred_2d.ravel())
+    assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1298,7 +1294,7 @@ def check_regressors_int(name, regressor_orig):
     X = X[:50]
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
-    y = multioutput_estimator_convert_y_2d(regressor_org, y)
+    y = multioutput_estimator_convert_y_2d(regressor_orig, y)
     rnd = np.random.RandomState(0)
     # separate estimators to control random seeds
     regressor_1 = clone(regressor_orig)
@@ -1319,7 +1315,7 @@ def check_regressors_int(name, regressor_orig):
     pred1 = regressor_1.predict(X)
     regressor_2.fit(X, y_.astype(np.float))
     pred2 = regressor_2.predict(X)
-    assert_array_almost_equal(pred1, pred2, 2, name)
+    assert_allclose(pred1, pred2, 2, name)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1419,7 +1415,7 @@ def check_class_weight_classifiers(name, classifier_orig):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_class_weight_balanced_classifiers(name, classifier_org, X_train,
+def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
                                             y_train, X_test, y_test, weights):
     classifier = clone(classifier_orig)
     if hasattr(classifier, "n_iter"):
@@ -1464,7 +1460,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     classifier.set_params(class_weight=class_weight)
     coef_manual = classifier.fit(X, y).coef_.copy()
 
-    assert_array_almost_equal(coef_balanced, coef_manual)
+    assert_allclose(coef_balanced, coef_manual)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1548,19 +1544,19 @@ def check_sparsify_coefficients(name, estimator_orig):
 def check_classifier_data_not_an_array(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
     y = [1, 1, 1, 2, 2, 2]
-    y = multioutput_estimator_convert_y_2d(estimator_org, y)
-    check_estimators_data_not_an_array(name, estimator_org, X, y)
+    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+    check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
 
 @ignore_warnings(category=DeprecationWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
-    y = multioutput_estimator_convert_y_2d(estimator_org, y)
-    check_estimators_data_not_an_array(name, estimator_org, X, y)
+    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+    check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_estimators_data_not_an_array(name, estimator_org, X, y):
+def check_estimators_data_not_an_array(name, estimator_orig, X, y):
 
     if name in CROSS_DECOMPOSITION:
         raise SkipTest
@@ -1580,7 +1576,7 @@ def check_estimators_data_not_an_array(name, estimator_org, X, y):
     pred1 = estimator_1.predict(X_)
     estimator_2.fit(X, y)
     pred2 = estimator_2.predict(X)
-    assert_array_almost_equal(pred1, pred2, 2, name)
+    assert_allclose(pred1, pred2, 2, name)
 
 
 def check_parameters_default_constructible(name, Estimator):
