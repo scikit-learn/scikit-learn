@@ -73,7 +73,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.preprocessing.label import TransformedTargetRegressor
+    >>> from sklearn.preprocessing import TransformedTargetRegressor
     >>> tt = TransformedTargetRegressor(estimator=LinearRegression(),
     ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
@@ -87,7 +87,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     >>> tt.score(X, y)
     1.0
     >>> tt.estimator_.coef_
-    array([ 2.])
+    array([[ 2.]])
 
     """
     def __init__(self, estimator=LinearRegression(), transformer=None,
