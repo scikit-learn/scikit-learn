@@ -1765,7 +1765,7 @@ def _score(estimator, X_test, y_test, scorer):
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
-    """Auxiliary function for permutation_test_score"""
+    """Auxiliary function for permutation_test_score and permutation_test2_score"""
     avg_score = []
     for train, test in cv:
         X_train, y_train = _safe_split(estimator, X, y, train)
@@ -1773,7 +1773,6 @@ def _permutation_test_score(estimator, X, y, cv, scorer):
         estimator.fit(X_train, y_train)
         avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
-
 
 def _shuffle(y, labels, random_state):
     """Return a shuffled copy of y eventually shuffle among same labels."""
@@ -1948,6 +1947,122 @@ def permutation_test_score(estimator, X, y, cv=None,
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_permutation_test_score)(
             clone(estimator), X, _shuffle(y, labels, random_state), cv,
+            scorer)
+        for _ in range(n_permutations))
+    permutation_scores = np.array(permutation_scores)
+    pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
+    return score, permutation_scores, pvalue
+
+
+permutation_test_score.__test__ = False  # to avoid a pb with nosetests
+
+def permutation_test2_score(estimator, X, y, cv=None,
+                           n_permutations=100, n_jobs=1, labels=None,
+                           random_state=0, verbose=0, scoring=None):
+    """Evaluate the significance of a cross-validated score with permutations
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    n_permutations : integer, optional
+        Number of times to permute ``y``.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+
+    labels : array-like of shape [n_samples] (optional)
+        Labels constrain the permutation among groups of samples with
+        a same label.
+
+    random_state : RandomState or an int seed (0 by default)
+        A random number generator instance to define the state of the
+        random permutations generator.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    Returns
+    -------
+    score : float
+        The true score without permuting targets.
+
+    permutation_scores : array, shape (n_permutations,)
+        The scores obtained for each permutations.
+
+    pvalue : float
+        The returned value equals p-value if `scoring` returns bigger
+        numbers for better scores (e.g., accuracy_score). If `scoring` is
+        rather a loss function (i.e. when lower is better such as with
+        `mean_squared_error`) then this is actually the complement of the
+        p-value:  1 - p-value.
+
+    Notes
+    -----
+    This function implements Test 2 in:
+
+        Ojala and Garriga. Permutation Tests for Studying Classifier
+        Performance.  The Journal of Machine Learning Research (2010)
+        vol. 11
+
+    """
+    X, y = indexable(X, y)
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+    scorer = check_scoring(estimator, scoring=scoring)
+    random_state = check_random_state(random_state)
+
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickle-able.
+    score = _permutation_test_score(clone(estimator), X, y, cv, scorer)
+    def shuffledX(X,y,random_state):
+        Xs = []
+        for label in np.unique(y):
+            index = np.where(y == label)[0]
+            X.append(X[index])
+            
+        
+        newX = Xs[y[0]]
+        Xs.pop(y[0])
+        for Xc in Xs:
+            Xc = X
+            newX = np.vstack((newX,Xc))
+        return newX
+    
+    permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+        delayed(_permutation_test_score)(
+            clone(estimator), shuffledX(X,y,random_state), y, cv,
             scorer)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
