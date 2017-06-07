@@ -902,3 +902,69 @@ def merge_pipelines(*pipelines, **kwargs):
                   for _, estimator in steps]
 
     return Pipeline(zip(names, estimators), **kwargs)
+
+
+def merge_unions(*feature_unions, **kwargs):
+    """Join feature unions into a single one.
+
+    The new feature union won't inherit the old parameters: only the
+    transformer lists will be used.
+
+    Parameters
+    ----------
+    *feature_unions : list of feature_unions to be merged.
+        If there are repeated transformer names, the next parameters will have
+        an index appended. Eg: if there is `"foo"` in feature unions `t1` and
+        `t2`, `merge_unions(t1, t2)` will result in transformer names `"foo"`
+        and `"foo2"`.
+
+    clone: bool, optional (default : False)
+        If transformers should be cloned
+
+    **kwargs : keyword arguments to be passed to the new feature union
+
+    Returns
+    -------
+    Pipeline
+
+    Examples
+    --------
+    >>> from sklearn.pipeline import make_union, merge_unions
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> from sklearn.preprocessing import StandardScaler, MinMaxScaler
+    >>> transformer1 = make_union(PCA(), TruncatedSVD())
+    >>> transformer2 = make_union(StandardScaler(), MinMaxScaler())
+    >>> merge_unions(transformer1, transformer2)
+    ... # doctest: +NORMALIZE_WHITESPACE
+    FeatureUnion(n_jobs=1,
+                 transformer_list=[('pca', PCA(copy=True,
+                                               iterated_power='auto',
+                                               n_components=None,
+                                               random_state=None,
+                                               svd_solver='auto',
+                                               tol=0.0,
+                                               whiten=False)),
+                                   ('truncatedsvd',
+                                    TruncatedSVD(algorithm='randomized',
+                                                 n_components=2,
+                                                 n_iter=5,
+                                                 random_state=None,
+                                                 tol=0.0)),
+                                   ('standardscaler',
+                                    StandardScaler(copy=True,
+                                                   with_mean=True,
+                                                   with_std=True)),
+                                   ('minmaxscaler',
+                                    MinMaxScaler(copy=True,
+                                                 feature_range=(0, 1)))],
+                 transformer_weights=None)
+    """
+    should_clone = kwargs.pop("clone", False)
+    transformer_wrapper = clone if should_clone else lambda x: x
+
+    transformer_list = [x for f in feature_unions for x in f.transformer_list]
+    names = _unique_names(*[name for name, _ in transformer_list])
+    transformers = [transformer_wrapper(transformer)
+                    for _, transformer in transformer_list]
+
+    return FeatureUnion(zip(names, transformers), **kwargs)
