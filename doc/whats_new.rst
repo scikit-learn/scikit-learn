@@ -823,8 +823,8 @@ Model evaluation and meta-estimators
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
      and :class:`pipeline.FeatureUnion` components using the ``set_params``
      interface that powers :mod:`sklearn.grid_search`.
-     See :ref:`sphx_glr_plot_compare_reduction.py`. By `Joel Nothman`_ and
-     :user:`Robert McGibbon <rmcgibbo>`.
+     See :ref:`sphx_glr_auto_examples_plot_compare_reduction.py`
+     By `Joel Nothman`_ and :user:`Robert McGibbon <rmcgibbo>`.
 
    - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
