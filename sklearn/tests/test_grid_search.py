@@ -217,15 +217,13 @@ def test_grid_search_score_method():
                                               scoring='roc_auc').fit(X, y)
     search_auc = GridSearchCV(clf, grid, scoring='roc_auc').fit(X, y)
 
-    # Check warning only occurs in situation where behavior changed:
-    # estimator requires score method to compete with scoring parameter
+    # ChangedBehaviourWarning occurred previously (prior to #9005)
     score_no_scoring = assert_no_warnings(search_no_scoring.score, X, y)
-    score_accuracy = assert_warns(ChangedBehaviorWarning,
-                                  search_accuracy.score, X, y)
+    score_accuracy = assert_no_warnings(search_accuracy.score, X, y)
     score_no_score_auc = assert_no_warnings(search_no_score_method_auc.score,
                                             X, y)
-    score_auc = assert_warns(ChangedBehaviorWarning,
-                             search_auc.score, X, y)
+    score_auc = assert_no_warnings(search_auc.score, X, y)
+
     # ensure the test is sane
     assert_true(score_auc < 1.0)
     assert_true(score_accuracy < 1.0)
