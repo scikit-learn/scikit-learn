@@ -592,17 +592,17 @@ def has_fit_parameter(estimator, parameter):
 
     Parameters
     ----------
-    estimator : object,
-        A scikit-learn estimator to introspect.
+    estimator : object
+        An estimator to inspect.
 
-    parameter: str,
+    parameter: str
         The searched parameter.
 
     Returns
     -------
-    is_parameter: bool,
-        Whether the parameter was found to be a member variable of the
-        estimator.
+    is_parameter: bool
+        Whether the parameter was found to be a a named parameter of the
+        estimator's fit method.
 
     Examples
     --------
