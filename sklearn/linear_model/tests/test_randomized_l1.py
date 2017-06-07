@@ -94,7 +94,7 @@ def test_randomized_lasso():
     clf = RandomizedLasso(verbose=False, alpha='aic', random_state=42,
                           scaling=scaling)
     feature_scores = clf.fit(X, y).scores_
-    assert_array_equal(feature_scores, X.shape[1] * [1.])
+    assert_array_equal(feature_scores, [1.,  1., 1., 0.225, 1.])
 
     clf = RandomizedLasso(verbose=False, scaling=-0.1)
     assert_raises(ValueError, clf.fit, X, y)
