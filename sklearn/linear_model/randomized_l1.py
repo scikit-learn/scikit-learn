@@ -99,8 +99,15 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
-        if isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory)
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
+            memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError("'memory' should either be a string or"
+                             " a sklearn.externals.joblib.Memory"
+                             " instance, got 'memory={!r}' instead.".format(
+                                 type(memory)))
 
         scores_ = memory.cache(
             _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch']
@@ -265,7 +272,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
 
@@ -307,7 +315,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
+                 memory=None):
         self.alpha = alpha
         self.scaling = scaling
         self.sample_fraction = sample_fraction
@@ -416,7 +424,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional, default True
         If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
         When the regressors are normalized, note that this makes the
@@ -456,7 +464,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
 
@@ -498,7 +507,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
                  normalize=True,
                  random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
+                 memory=None):
         self.C = C
         self.scaling = scaling
         self.sample_fraction = sample_fraction
@@ -575,8 +584,11 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    random_state : integer or numpy.random.RandomState, optional
-        The generator used to randomize the design.
+    random_state : int, RandomState instance or None, optional, default=None
+        The generator used to randomize the design.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     n_resampling : int, optional, default=200
         Number of randomized models.
