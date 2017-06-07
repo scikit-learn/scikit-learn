@@ -1536,6 +1536,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Array of C that maps to the best scores across every class. If refit is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
+        `C_` is of shape(n_classes,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
