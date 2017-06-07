@@ -682,17 +682,17 @@ def check_fit1d_1sample(name, estimator_org):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_transformer_general(name, Transformer):
+def check_transformer_general(name, transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
-    _check_transformer(name, Transformer, X, y)
-    _check_transformer(name, Transformer, X.tolist(), y.tolist())
+    _check_transformer(name, transformer, X, y)
+    _check_transformer(name, transformer, X.tolist(), y.tolist())
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_transformer_data_not_an_array(name, Transformer):
+def check_transformer_data_not_an_array(name, transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
@@ -701,7 +701,7 @@ def check_transformer_data_not_an_array(name, Transformer):
     X -= X.min() - .1
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
-    _check_transformer(name, Transformer, this_X, this_y)
+    _check_transformer(name, transformer, this_X, this_y)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -713,7 +713,7 @@ def check_transformers_unfitted(name, transformer):
     assert_raises((AttributeError, ValueError), transformer.transform, X)
 
 
-def _check_transformer(name, transformer, X, y):
+def _check_transformer(name, transformer_org, X, y):
     if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
         # Those transformers yield non-deterministic output when executed on
         # a 32bit Python. The same transformers are stable on 64bit Python.
@@ -723,7 +723,7 @@ def _check_transformer(name, transformer, X, y):
         msg = name + ' is non deterministic on 32bit Python'
         raise SkipTest(msg)
     n_samples, n_features = np.asarray(X).shape
-    transformer = clone(transformer)
+    transformer = clone(transformer_org)
     set_random_state(transformer)
     set_testing_parameters(transformer)
 
@@ -996,11 +996,11 @@ def check_estimators_pickle(name, estimator_org):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_estimators_partial_fit_n_features(name, alg):
+def check_estimators_partial_fit_n_features(name, alg_org):
     # check if number of features changes between calls to partial_fit.
-    if not hasattr(alg, 'partial_fit'):
+    if not hasattr(alg_org, 'partial_fit'):
         return
-    alg = clone(alg)
+    alg = clone(alg_org)
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
 
@@ -1018,8 +1018,8 @@ def check_estimators_partial_fit_n_features(name, alg):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_clustering(name, alg):
-    alg = clone(alg)
+def check_clustering(name, alg_org):
+    alg = clone(alg_org)
     X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
@@ -1052,10 +1052,10 @@ def check_clustering(name, alg):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_clusterer_compute_labels_predict(name, clusterer):
+def check_clusterer_compute_labels_predict(name, clusterer_org):
     """Check that predict is invariant of compute_labels"""
     X, y = make_blobs(n_samples=20, random_state=0)
-    clusterer = clone(clusterer)
+    clusterer = clone(clusterer_org)
 
     if hasattr(clusterer, "compute_labels"):
         # MiniBatchKMeans
@@ -1069,7 +1069,7 @@ def check_clusterer_compute_labels_predict(name, clusterer):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_classifiers_one_label(name, classifier):
+def check_classifiers_one_label(name, classifier_org):
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "
                             "present.")
@@ -1079,7 +1079,7 @@ def check_classifiers_one_label(name, classifier):
     y = np.ones(10)
     # catch deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
-        classifier = clone(classifier)
+        classifier = clone(classifier_org)
         set_testing_parameters(classifier)
         # try to fit
         try:
@@ -1104,7 +1104,7 @@ def check_classifiers_one_label(name, classifier):
 
 
 @ignore_warnings  # Warnings are raised by decision function
-def check_classifiers_train(name, classifier):
+def check_classifiers_train(name, classifier_org):
     X_m, y_m = make_blobs(n_samples=300, random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
@@ -1115,7 +1115,7 @@ def check_classifiers_train(name, classifier):
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
-        classifier = clone(classifier)
+        classifier = clone(classifier_org)
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
         set_testing_parameters(classifier)
@@ -1258,7 +1258,7 @@ def check_supervised_y_2d(name, estimator_org):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_classifiers_classes(name, classifier):
+def check_classifiers_classes(name, classifier_org):
     X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
@@ -1275,7 +1275,7 @@ def check_classifiers_classes(name, classifier):
             y_ = y_names
 
         classes = np.unique(y_)
-        classifier = clone(classifier)
+        classifier = clone(classifier_org)
         if name == 'BernoulliNB':
             classifier.set_params(binarize=X.mean())
         set_testing_parameters(classifier)
@@ -1293,16 +1293,16 @@ def check_classifiers_classes(name, classifier):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_regressors_int(name, regressor):
+def check_regressors_int(name, regressor_org):
     X, _ = _boston_subset()
     X = X[:50]
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
-    y = multioutput_estimator_convert_y_2d(regressor, y)
+    y = multioutput_estimator_convert_y_2d(regressor_org, y)
     rnd = np.random.RandomState(0)
     # separate estimators to control random seeds
-    regressor_1 = clone(regressor)
-    regressor_2 = clone(regressor)
+    regressor_1 = clone(regressor_org)
+    regressor_2 = clone(regressor_org)
     set_testing_parameters(regressor_1)
     set_testing_parameters(regressor_2)
     set_random_state(regressor_1)
@@ -1323,13 +1323,13 @@ def check_regressors_int(name, regressor):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_regressors_train(name, regressor):
+def check_regressors_train(name, regressor_org):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
+    regressor = clone(regressor_org)
     y = multioutput_estimator_convert_y_2d(regressor, y)
     rnd = np.random.RandomState(0)
-    regressor = clone(regressor)
     set_testing_parameters(regressor)
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -1359,12 +1359,12 @@ def check_regressors_train(name, regressor):
 
 
 @ignore_warnings
-def check_regressors_no_decision_function(name, regressor):
+def check_regressors_no_decision_function(name, regressor_org):
     # checks whether regressors have decision_function or predict_proba
     rng = np.random.RandomState(0)
     X = rng.normal(size=(10, 4))
+    regressor = clone(regressor_org)
     y = multioutput_estimator_convert_y_2d(regressor, X[:, 0])
-    regressor = clone(regressor)
 
     set_testing_parameters(regressor)
     if hasattr(regressor, "n_components"):
@@ -1384,7 +1384,7 @@ def check_regressors_no_decision_function(name, regressor):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_class_weight_classifiers(name, classifier):
+def check_class_weight_classifiers(name, classifier_org):
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
         raise SkipTest
@@ -1405,7 +1405,8 @@ def check_class_weight_classifiers(name, classifier):
         else:
             class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
 
-        classifier = clone(classifier).set_params(class_weight=class_weight)
+        classifier = clone(classifier_org).set_params(
+            class_weight=class_weight)
         if hasattr(classifier, "n_iter"):
             classifier.set_params(n_iter=100)
         if hasattr(classifier, "min_weight_fraction_leaf"):
@@ -1418,9 +1419,9 @@ def check_class_weight_classifiers(name, classifier):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_class_weight_balanced_classifiers(name, classifier, X_train, y_train,
-                                            X_test, y_test, weights):
-    classifier = clone(classifier)
+def check_class_weight_balanced_classifiers(name, classifier_org, X_train,
+                                            y_train, X_test, y_test, weights):
+    classifier = clone(classifier_org)
     if hasattr(classifier, "n_iter"):
         classifier.set_params(n_iter=100)
 
@@ -1438,6 +1439,7 @@ def check_class_weight_balanced_classifiers(name, classifier, X_train, y_train,
 @ignore_warnings(category=DeprecationWarning)
 def check_class_weight_balanced_linear_classifier(name, Classifier):
     """Test class weights with non-contiguous class labels."""
+    # STILL ON CLASSES?
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
