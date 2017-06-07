@@ -1150,7 +1150,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         cv = check_cv(self.cv)
 
         # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv.split(X))
+        folds = list(cv.split(X, y))
         best_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
