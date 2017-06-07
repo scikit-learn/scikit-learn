@@ -38,8 +38,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
-from sklearn.feature_extraction import ColumnTransformer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, ColumnTransformer
 from sklearn.svm import LinearSVC
 
 

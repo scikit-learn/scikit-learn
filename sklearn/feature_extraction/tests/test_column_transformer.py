@@ -4,7 +4,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator
-from sklearn.feature_extraction import ColumnTransformer
+from sklearn.pipeline import ColumnTransformer
 
 from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.validation import check_array

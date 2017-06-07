@@ -667,7 +667,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         return self
 
     def _validate_transformers(self):
-        names, transformers = zip(*self.transformer_list)
+        names, transformers, _, _ = zip(*self._iter())
 
         # validate names
         self._validate_names(names)
@@ -682,11 +682,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
 
-    def _iter(self):
+    def _iter(self, X=None):
         """Generate (name, est, weight) tuples excluding None transformers
         """
         get_weight = (self.transformer_weights or {}).get
-        return ((name, trans, get_weight(name))
+        return ((name, trans, X, get_weight(name))
                 for name, trans in self.transformer_list
                 if trans is not None)
 
@@ -699,7 +699,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             Names of the features produced by transform.
         """
         feature_names = []
-        for name, trans, weight in self._iter():
+        for name, trans, _, _ in self._iter():
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
@@ -726,8 +726,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans, X, y)
-            for _, trans, _ in self._iter())
+            delayed(_fit_one_transformer)(trans, Xsubset, y)
+            for _, trans, Xsubset, _ in self._iter(X=X))
         self._update_transformer_list(transformers)
         return self
 
@@ -750,9 +750,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, X, y,
+            delayed(_fit_transform_one)(trans, weight, Xsubset, y,
                                         **fit_params)
-            for name, trans, weight in self._iter())
+            for name, trans, Xsubset, weight in self._iter(X=X))
 
         if not result:
             # All transformers are None
@@ -780,8 +780,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, weight, X)
-            for name, trans, weight in self._iter())
+            delayed(_transform_one)(trans, weight, Xsubset)
+            for name, trans, Xsubset, weight in self._iter(X=X))
         if not Xs:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
@@ -840,3 +840,90 @@ def make_union(*transformers, **kwargs):
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
     return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs)
+
+
+class ColumnTransformer(FeatureUnion):
+    """Applies transformers to columns of a array / dataframe / dict.
+
+    This estimator applies transformer objects to columns or fields of the
+    input, then concatenates the results. This is useful for heterogeneous or
+    columnar data, to combine several feature extraction mechanisms into a
+    single transformer.
+
+    Read more in the :ref:`User Guide <column_transformer>`.
+
+    Parameters
+    ----------
+    transformers : list of tuples
+        List of (name, transformer, column) tuples specifying the transformer
+        objects to be applied to subsets of the data. The columns can be
+        specified as a scalar or list (for multiple columns) of integer or
+        string values. Integers are interpreted as the positional columns,
+        strings as the keys of `X`.
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1).
+
+    transformer_weights : dict, optional
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction import ColumnTransformer
+    >>> from sklearn.preprocessing import Normalizer
+    >>> union = ColumnTransformer(
+    ...     [("norm1", Normalizer(norm='l1'), 'subset1'),
+    ...      ("norm2", Normalizer(norm='l1'), 'subset2')])
+    >>> X = {'subset1': [[0., 1.], [2., 2.]], 'subset2': [[1., 1.], [0., 1.]]}
+    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
+    array([[ 0. ,  1. ,  0.5,  0.5],
+           [ 0.5,  0.5,  0. ,  1. ]])
+
+    """
+
+    def _iter(self, X=None):
+        """Generate (name, trans, column, weight) tuples
+        """
+        get_weight = (self.transformer_weights or {}).get
+        return ((name, trans, _getitem(X, column), get_weight(name))
+                for name, trans, column in self.transformer_list)
+
+    def _update_transformer_list(self, transformers):
+        transformers = iter(transformers)
+        self.transformer_list[:] = [
+            (name, None if old is None else next(transformers), column)
+            for name, old, column in self.transformer_list
+        ]
+
+
+def _getitem(X, column):
+    """
+    Get feature column from input data (array, dataframe, dict)
+
+    """
+    if X is None:
+        return X
+
+    # check whether we have string column names or integers
+    if (isinstance(column, int)
+            or (isinstance(column, list)
+                and all(isinstance(col, int) for col in column))):
+        column_names = False
+    elif (isinstance(column, six.string_types)
+          or (isinstance(column, list)
+              and all(isinstance(col, six.string_types) for col in column))):
+        column_names = True
+    else:
+        raise ValueError("no valid 'column' type")
+
+    if column_names:
+        return X[column]
+        # TODO support multiple columns for dicts
+    else:
+        if hasattr(X, 'iloc'):
+            # pandas dataframes
+            return X.iloc[:, column]
+        else:
+            # numpy arrays
+            return X[:, column]
