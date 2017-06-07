@@ -136,8 +136,9 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
   >>> from sklearn.feature_extraction import ColumnTransformer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> from sklearn.feature_extraction.text import CountVectorizer
-  >>> column_trans = ColumnTransformer({'city_category': (CountVectorizer(analyzer=lambda x: [x]), 'city'),
-  ...                                   'title_bow': (CountVectorizer(), 'title')})
+  >>> column_trans = ColumnTransformer(
+  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...      ('title_bow', CountVectorizer(), 'title')])
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=1, transformer_weights=None,

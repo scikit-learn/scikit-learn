@@ -66,10 +66,10 @@ def test_column_selection():
     for X, (first, second) in chain(product(Xs_name, [('first', 'second')]),
                                     product(Xs_positional, [(0, 1)])):
 
-        first_feat = ColumnTransformer({'trans': (Trans(), first)})
-        second_feat = ColumnTransformer({'trans': (Trans(), second)})
-        both = ColumnTransformer({'trans1': (Trans(), first),
-                                  'trans2': (Trans(), second)})
+        first_feat = ColumnTransformer([('trans', Trans(), first)])
+        second_feat = ColumnTransformer([('trans', Trans(), second)])
+        both = ColumnTransformer([('trans1', Trans(), first),
+                                  ('trans2', Trans(), second)])
         assert_array_equal(first_feat.fit_transform(X), X_res_first)
         assert_array_equal(second_feat.fit_transform(X), X_res_second)
         assert_array_equal(both.fit_transform(X), X_res_both)
@@ -81,8 +81,8 @@ def test_column_selection():
     # test with transformer_weights
     transformer_weights = {'trans1': .1, 'trans2': 10}
     for X in Xs_name:
-        both = ColumnTransformer({'trans1': (Trans(), 'first'),
-                                  'trans2': (Trans(), 'second')},
+        both = ColumnTransformer([('trans1', Trans(), 'first'),
+                                  ('trans2', Trans(), 'second')],
                                  transformer_weights=transformer_weights)
         res = np.vstack([transformer_weights['trans1'] * np.array(X['first']),
                          transformer_weights['trans2'] * np.array(X['second'])]).T
@@ -94,23 +94,23 @@ def test_column_selection():
     for X in Xs_name:
         if isinstance(X, dict):
             continue
-        both = ColumnTransformer({'trans': (Trans(), ['first', 'second'])})
+        both = ColumnTransformer([('trans', Trans(), ['first', 'second'])])
         assert_array_equal(both.fit_transform(X), X_res_both)
         assert_array_equal(both.fit(X).transform(X), X_res_both)
 
         # with weights
-        both = ColumnTransformer({'trans': (Trans(), ['first', 'second'])},
+        both = ColumnTransformer([('trans', Trans(), ['first', 'second'])],
                                  transformer_weights={'trans': .1})
         assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
         assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
 
     for X in Xs_positional:
-        both = ColumnTransformer({'trans': (Trans(), [0, 1])})
+        both = ColumnTransformer([('trans', Trans(), [0, 1])])
         assert_array_equal(both.fit_transform(X), X_res_both)
         assert_array_equal(both.fit(X).transform(X), X_res_both)
 
         # with weights
-        both = ColumnTransformer({'trans': (Trans(), [0, 1])},
+        both = ColumnTransformer([('trans', Trans(), [0, 1])],
                                  transformer_weights={'trans': .1})
         assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
         assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
@@ -119,8 +119,8 @@ def test_column_selection():
 def test_sparse_stacking():
     X_dict = {'first': [0, 1, 2],
               'second': [2, 4, 6]}
-    col_trans = ColumnTransformer({'trans1': (Trans(), 'first'), 'trans2':
-                                   (SparseMatrixTrans(), 'second')})
+    col_trans = ColumnTransformer([('trans1', Trans(), 'first'),
+                                   ('trans2', SparseMatrixTrans(), 'second')])
     col_trans.fit(X_dict)
     X_trans = col_trans.transform(X_dict)
     assert_true(sp.issparse(X_trans))
