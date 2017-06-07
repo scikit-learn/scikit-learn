@@ -620,12 +620,10 @@ def test_enet_path_positive():
         assert_true(np.all(pos_path_coef >= 0))
 
     # For multi output positive parameter is ignored
-    # Test that a warning is displayed
+    # Test that an error is raised
     X, Y, _, _ = build_dataset(n_samples=50, n_features=50, n_targets=2)
     for path in [enet_path, lasso_path]:
-        assert_warns_message(UserWarning,
-                             'positive=True is ignored for multi-output'
-                             ' (y.ndim != 1)', path, X, Y, positive=True)
+        assert_raises(ValueError, path, X, Y, positive=True)
 
 
 def test_sparse_dense_descent_paths():
