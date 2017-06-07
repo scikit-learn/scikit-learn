@@ -165,6 +165,19 @@ scoring function can be specified via the ``scoring`` parameter to
 specialized cross-validation tools described below.
 See :ref:`scoring_parameter` for more details.
 
+Specifying multiple metrics for evaluation
+------------------------------------------
+
+From version 0.19, ``GridSearchCV`` and ``RandomSearchCV`` allows specifying
+multiple metrics for the ``scoring`` parameter.
+
+Multimetric scoring can either be specified as a list of strings of predefined
+scores names or a dict mapping the scorer name to the scorer function and/or
+the predefined scorer name(s).
+
+See :ref:`sphx_glr_auto_examples_model_selection_plot_multiple_metric_evaluation`
+for an example usage.
+
 Composite estimators and parameter spaces
 -----------------------------------------
 
