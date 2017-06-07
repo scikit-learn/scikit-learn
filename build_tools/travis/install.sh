@@ -18,6 +18,7 @@ echo 'pip:'
 ls $HOME/.cache/pip
 
 export CC=/usr/lib/ccache/gcc
+export CXX=/usr/lib/ccache/g++
 # Useful for debugging how ccache is used
 # export CCACHE_LOGFILE=/tmp/ccache.log
 # ~60M is used by .ccache when compiling from scratch at the time of writing
