@@ -6,7 +6,7 @@ Effect of smoothing noise when using QuantileTransformer
 ========================================================
 
 The parameter ``smoothing_noise`` can be used if some specific feature values
-are repeated exactly many times to the point of being predominant in the
+are repeated identically many times to the point of being predominant in the
 dataset. This is can typically be observed when the feature encode ordinal
 values such as user ratings, prices, coarse-grained units of time, etc.
 
