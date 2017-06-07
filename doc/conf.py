@@ -236,12 +236,12 @@ trim_doctests_flags = True
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
+    'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
         'sklearn': None,
         'matplotlib': 'http://matplotlib.org',
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
-        'nibabel': 'http://nipy.org/nibabel'}
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.8.1',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'}
 }
 
 

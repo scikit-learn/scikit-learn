@@ -12,7 +12,6 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import check_array
-from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
 from ..manifold import spectral_embedding
@@ -90,7 +89,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     # search easier.
     norm_ones = np.sqrt(n_samples)
     for i in range(vectors.shape[1]):
-        vectors[:, i] = (vectors[:, i] / norm(vectors[:, i])) \
+        vectors[:, i] = (vectors[:, i] / np.linalg.norm(vectors[:, i])) \
             * norm_ones
         if vectors[0, i] != 0:
             vectors[:, i] = -1 * vectors[:, i] * np.sign(vectors[0, i])
@@ -311,9 +310,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         by the clustering algorithm.
 
     gamma : float, default=1.0
-        Scaling factor of RBF, polynomial, exponential chi^2 and
-        sigmoid affinity kernel. Ignored for
-        ``affinity='nearest_neighbors'``.
+        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Ignored for ``affinity='nearest_neighbors'``.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.

@@ -637,6 +637,12 @@ def test_make_pipeline():
     assert_equal(pipe.steps[1][0], "transf-2")
     assert_equal(pipe.steps[2][0], "fitparamt")
 
+    assert_raise_message(
+        TypeError,
+        'Unknown keyword arguments: "random_parameter"',
+        make_pipeline, t1, t2, random_parameter='rnd'
+    )
+
 
 def test_feature_union_weights():
     # test feature union with transformer weights
@@ -811,9 +817,9 @@ def test_step_name_validation():
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
-            (bad_steps1, "Step names must not contain __: got ['a__q']"),
+            (bad_steps1, "Estimator names must not contain __: got ['a__q']"),
             (bad_steps2, "Names provided are not unique: ['a', 'a']"),
-            (bad_steps3, "Step names conflict with constructor "
+            (bad_steps3, "Estimator names conflict with constructor "
                          "arguments: ['%s']" % param),
         ]:
             # three ways to make invalid:
@@ -847,7 +853,7 @@ def test_pipeline_wrong_memory():
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
     assert_raises_regex(ValueError, "'memory' should either be a string or a"
-                        " joblib.Memory instance, got 'memory=1' instead.",
+                        " sklearn.externals.joblib.Memory instance, got",
                         cached_pipe.fit, X, y)
 
 
@@ -911,3 +917,14 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)
+
+
+def test_make_pipeline_memory():
+    cachedir = mkdtemp()
+    memory = Memory(cachedir=cachedir)
+    pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
+    assert_true(pipeline.memory is memory)
+    pipeline = make_pipeline(DummyTransf(), SVC())
+    assert_true(pipeline.memory is None)
+
+    shutil.rmtree(cachedir)
