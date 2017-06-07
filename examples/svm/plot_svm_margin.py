@@ -29,7 +29,7 @@ from sklearn import svm
 # we create 40 separable points
 np.random.seed(0)
 X = np.r_[np.random.randn(20, 2) - [2, 2], np.random.randn(20, 2) + [2, 2]]
-y = [0] * 20 + [1] * 20
+Y = [0] * 20 + [1] * 20
 
 # figure number
 fignum = 1
@@ -38,7 +38,7 @@ fignum = 1
 for name, penalty in (('unreg', 1), ('reg', 0.05)):
 
     clf = svm.SVC(kernel='linear', C=penalty)
-    clf.fit(X, y)
+    clf.fit(X, Y)
 
     # get the separating hyperplane
     w = clf.coef_[0]
@@ -63,7 +63,7 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
 
     plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
                 facecolors='none', zorder=10, edgecolors='k')
-    plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired,
+    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired,
                 edgecolors='k')
 
     plt.axis('tight')

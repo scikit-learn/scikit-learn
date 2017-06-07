@@ -30,7 +30,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
 
-
 # we create 40 separable points
 rng = np.random.RandomState(0)
 n_samples_1 = 1000
@@ -66,18 +65,12 @@ xy = np.vstack([XX.ravel(), YY.ravel()]).T
 Z = clf.decision_function(xy).reshape(XX.shape)
 
 # plot decision boundary and margins
-a = ax.contour(XX, YY, Z, colors='k',
-           levels=[0], alpha=0.5,
-           linestyles=['-'])
+a = ax.contour(XX, YY, Z, colors='k', levels=[0], alpha=0.5, linestyles=['-'])
 
 # get the separating hyperplane for weighted classes
 Z = wclf.decision_function(xy).reshape(XX.shape)
 
 # plot decision boundary and margins for weighted classes
-b = ax.contour(XX, YY, Z, colors='r',
-           levels=[0], alpha=0.5,
-           linestyles=['-'])
+b = ax.contour(XX, YY, Z, colors='r', levels=[0], alpha=0.5, linestyles=['-'])
 
-plt.legend([a.collections[0], b.collections[0]],
-           ["non weighted", "weighted"],
-           loc="upper right");
+plt.legend([a.collections[0], b.collections[0]], ["non weighted", "weighted"], loc="upper right")

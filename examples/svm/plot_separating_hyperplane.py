@@ -16,7 +16,7 @@ from sklearn.datasets import make_blobs
 
 
 # we create 40 separable points
-X, y = make_blobs(n_samples=40, centers=2, random_state=7)
+X, y = make_blobs(n_samples=40, centers=2, random_state=12, cluster_std=0.35)
 
 # fit the model
 clf = svm.SVC(kernel='linear')
@@ -37,10 +37,6 @@ xy = np.vstack([XX.ravel(), YY.ravel()]).T
 Z = clf.decision_function(xy).reshape(XX.shape)
 
 # plot decision boundary and margins
-ax.contour(XX, YY, Z, colors='k',
-           levels=[-1, 0, 1], alpha=0.5,
-           linestyles=['--', '-', '--'])
+ax.contour(XX, YY, Z, colors='k', levels=[-1, 0, 1], alpha=0.5, linestyles=['--', '-', '--'])
 # plot support vectors
-ax.scatter(clf.support_vectors_[:, 0],
-           clf.support_vectors_[:, 1],
-           s=100, linewidth=1, facecolors='none');
+ax.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=100, linewidth=1, facecolors='none')
