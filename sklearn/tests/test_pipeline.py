@@ -1008,6 +1008,7 @@ def test_column_transformer():
 
     # test multiple columns
     for X in Xs_name:
+        # list
         both = ColumnTransformer([('trans', Trans(), ['first', 'second'])])
         assert_array_equal(both.fit_transform(X), X_res_both)
         assert_array_equal(both.fit(X).transform(X), X_res_both)
@@ -1019,7 +1020,13 @@ def test_column_transformer():
         assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
 
     for X in Xs_positional:
+        # list
         both = ColumnTransformer([('trans', Trans(), [0, 1])])
+        assert_array_equal(both.fit_transform(X), X_res_both)
+        assert_array_equal(both.fit(X).transform(X), X_res_both)
+
+        # slice
+        both = ColumnTransformer([('trans', Trans(), slice(0, 2))])
         assert_array_equal(both.fit_transform(X), X_res_both)
         assert_array_equal(both.fit(X).transform(X), X_res_both)
 

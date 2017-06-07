@@ -860,7 +860,8 @@ class ColumnTransformer(FeatureUnion):
         objects to be applied to subsets of the data. The columns can be
         specified as a scalar or list (for multiple columns) of integer or
         string values. Integers are interpreted as the positional columns,
-        strings as the keys of `X`.
+        strings as the keys of `X`. In case of positional integers, also
+        a slice object is accepted.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -907,7 +908,7 @@ def _getitem(X, column):
         return X
 
     # check whether we have string column names or integers
-    if (isinstance(column, int)
+    if (isinstance(column, int) or isinstance(column, slice)
             or (isinstance(column, list)
                 and all(isinstance(col, int) for col in column))):
         column_names = False
@@ -932,14 +933,11 @@ def _getitem(X, column):
                 return np.vstack([X[col] for col in column]).T
 
     else:
+        if isinstance(column, int):
+            column = slice(column, column + 1)
         if hasattr(X, 'iloc'):
             # pandas dataframes
-            if not isinstance(column, list):
-                column = [column]
             return X.iloc[:, column]
         else:
             # numpy arrays
-            X_sel = X[:, column]
-            if X_sel.ndim == 1:
-                X_sel = X_sel.reshape(-1, 1)
-            return X_sel
+            return X[:, column]
