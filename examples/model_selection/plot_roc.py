@@ -126,7 +126,8 @@ plt.show()
 # Plot ROC curves for the multiclass problem using One vs. Rest classification.
 
 # Compute micro-average ROC curve and ROC area
-fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
+fpr["micro"], tpr["micro"], _ = roc_curve(
+    y_test_binarized.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 # Compute macro-average ROC curve and ROC area
@@ -169,7 +170,7 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('An extension of Receiver operating characteristic to multi-class '
+plt.title('An extension of ROC to multi-class '
           'using One-vs-Rest')
 plt.legend(loc="lower right")
 plt.show()
@@ -206,11 +207,11 @@ for a, b in combinations(range(n_classes), 2):
 plt.figure()
 for a, b in combinations(range(n_classes), 2):
     plt.plot(fpr[(a, b)], tpr[(a, b)], lw=lw,
-             label='ROC curve of class {0} against class {1} '
+             label='ROC curve: class {0} vs. {1} '
                    '(area = {2:0.2f})'.format(
         a, b, roc_auc[(a, b)]))
     plt.plot(fpr[(b, a)], tpr[(b, a)], lw=lw,
-             label='ROC curve of class {0} against class {1} '
+             label='ROC curve: class {0} vs. {1} '
                    '(area = {2:0.2f})'.format(
         b, a, roc_auc[(b, a)]))
 plt.plot([0, 1], [0, 1], 'k--', lw=lw)
@@ -218,9 +219,9 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('An extension of Receiver operating characteristic to multi-class '
+plt.title('An extension of ROC to multi-class '
           'using One-vs-One')
-plt.legend(bbox_to_anchor=(1.8, 0.55))
+plt.legend(bbox_to_anchor=(1.1, 0.30))
 plt.show()
 
 # Compute the One-vs-One ROC AUC score, weighted and unweighted
