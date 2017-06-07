@@ -64,27 +64,60 @@ print(__doc__)
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
 
-import datetime
+from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
-try:
-     from matplotlib.finance import quotes_historical_yahoo_ochl
-except ImportError:
-     # quotes_historical_yahoo_ochl was named quotes_historical_yahoo before matplotlib 1.4
-     from matplotlib.finance import quotes_historical_yahoo as quotes_historical_yahoo_ochl
 from matplotlib.collections import LineCollection
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.parse import urlencode
 from sklearn import cluster, covariance, manifold
+
 
 ###############################################################################
 # Retrieve the data from Internet
 
+def quotes_historical_google(symbol, date1, date2):
+    """Get the historical data from Google finance.
+
+    Parameters
+    ----------
+    symbol : str
+        Ticker symbol to query for, for example ``"DELL"``.
+    date1 : datetime.datetime
+        Start date.
+    date2 : datetime.datetime
+        End date.
+
+    Returns
+    -------
+    X : array
+        The columns are ``date`` -- datetime, ``open``, ``high``,
+        ``low``, ``close`` and ``volume`` of type float.
+    """
+    params = urlencode({
+        'q': symbol,
+        'startdate': date1.strftime('%b %d, %Y'),
+        'enddate': date2.strftime('%b %d, %Y'),
+        'output': 'csv'
+    })
+    url = 'http://www.google.com/finance/historical?' + params
+    with urlopen(url) as response:
+        dtype = {
+            'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
+            'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
+        }
+        converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
+        return np.genfromtxt(response, delimiter=',', skip_header=1,
+                             dtype=dtype, converters=converters,
+                             missing_values='-', filling_values=-1)
+
+
 # Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime.datetime(2003, 1, 1)
-d2 = datetime.datetime(2008, 1, 1)
+d1 = datetime(2003, 1, 1)
+d2 = datetime(2008, 1, 1)
 
-# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
     'TOT': 'Total',
     'XOM': 'Exxon',
@@ -102,7 +135,6 @@ symbol_dict = {
     'AMZN': 'Amazon',
     'TM': 'Toyota',
     'CAJ': 'Canon',
-    'MTU': 'Mitsubishi',
     'SNE': 'Sony',
     'F': 'Ford',
     'HMC': 'Honda',
@@ -111,9 +143,8 @@ symbol_dict = {
     'BA': 'Boeing',
     'KO': 'Coca Cola',
     'MMM': '3M',
-    'MCD': 'Mc Donalds',
+    'MCD': 'McDonald\'s',
     'PEP': 'Pepsi',
-    'MDLZ': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',
@@ -129,11 +160,9 @@ symbol_dict = {
     'AAPL': 'Apple',
     'SAP': 'SAP',
     'CSCO': 'Cisco',
-    'TXN': 'Texas instruments',
+    'TXN': 'Texas Instruments',
     'XRX': 'Xerox',
-    'LMT': 'Lookheed Martin',
     'WMT': 'Wal-Mart',
-    'WBA': 'Walgreen',
     'HD': 'Home Depot',
     'GSK': 'GlaxoSmithKline',
     'PFE': 'Pfizer',
@@ -149,14 +178,16 @@ symbol_dict = {
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [quotes_historical_yahoo_ochl(symbol, d1, d2, asobject=True)
-          for symbol in symbols]
+quotes = [
+    quotes_historical_google(symbol, d1, d2) for symbol in symbols
+]
 
-open = np.array([q.open for q in quotes]).astype(np.float)
-close = np.array([q.close for q in quotes]).astype(np.float)
+close_prices = np.stack([q['close'] for q in quotes])
+open_prices = np.stack([q['open'] for q in quotes])
 
 # The daily variations of the quotes are what carry most information
-variation = close - open
+variation = close_prices - open_prices
+
 
 ###############################################################################
 # Learn a graphical structure from the correlations
@@ -209,7 +240,7 @@ plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
-#a sequence of (*line0*, *line1*, *line2*), where::
+# a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]

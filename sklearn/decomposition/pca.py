@@ -4,7 +4,7 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 #         Michael Eickenberg <michael.eickenberg@inria.fr>
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #
@@ -16,6 +16,7 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
+from scipy.sparse.linalg import svds
 
 from ..externals import six
 
@@ -27,7 +28,6 @@ from ..utils import check_array
 from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils.arpack import svds
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -183,9 +183,11 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int or RandomState instance or None (default None)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton. Used by svd_solver == 'arpack' or 'randomized'.
+    random_state : int, RandomState instance or None, optional (default None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
 
         .. versionadded:: 0.18.0
 
@@ -282,6 +284,12 @@ class PCA(_BasePCA):
     [ 0.99244...]
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
     [ 6.30061...]
+
+    Notes
+    -----
+    PCA uses the maximum likelihood estimate of the eigenvalues, which does not
+    include the Bessel correction, though in practice this should rarely make a
+    difference in a machine learning context.
 
     See also
     --------
@@ -380,6 +388,9 @@ class PCA(_BasePCA):
             return self._fit_full(X, n_components)
         elif svd_solver in ['arpack', 'randomized']:
             return self._fit_truncated(X, n_components, svd_solver)
+        else:
+            raise ValueError("Unrecognized svd_solver='{0}'"
+                             "".format(svd_solver))
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X"""
@@ -592,9 +603,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    random_state : int or RandomState instance or None (default)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

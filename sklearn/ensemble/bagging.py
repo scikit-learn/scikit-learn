@@ -20,7 +20,7 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
-from ..utils import indices_to_mask
+from ..utils import indices_to_mask, check_consistent_length
 from ..utils.fixes import bincount
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
@@ -82,8 +82,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     for i in range(n_estimators):
         if verbose > 1:
-            print("Building estimator %d of %d for this parallel run (total %d)..." %
-                  (i + 1, n_estimators, total_n_estimators))
+            print("Building estimator %d of %d for this parallel run "
+                  "(total %d)..." % (i + 1, n_estimators, total_n_estimators))
 
         random_state = np.random.RandomState(seeds[i])
         estimator = ensemble._make_estimator(append=False,
@@ -282,6 +282,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Convert data
         X, y = check_X_y(X, y, ['csr', 'csc'])
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            check_consistent_length(y, sample_weight)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -330,7 +333,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if hasattr(self, "oob_score_") and self.warm_start:
             del self.oob_score_
 
-        if not self.warm_start or len(self.estimators_) == 0:
+        if not self.warm_start or not hasattr(self, 'estimators_'):
             # Free allocated memory, if any
             self.estimators_ = []
             self.estimators_features_ = []

@@ -2,6 +2,8 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..utils import check_random_state, check_array
@@ -58,8 +60,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     verbose :
         Degree of verbosity of the printed output.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -130,7 +135,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.error_ = E
         return self
 
-    def transform(self, X, ridge_alpha=None):
+    def transform(self, X, ridge_alpha='deprecated'):
         """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
@@ -150,6 +155,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Amount of ridge shrinkage to apply in order to improve
             conditioning.
 
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
+               Specify ``ridge_alpha`` in the ``SparsePCA`` constructor.
+
         Returns
         -------
         X_new array, shape (n_samples, n_components)
@@ -158,7 +167,15 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'components_')
 
         X = check_array(X)
-        ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
+        if ridge_alpha != 'deprecated':
+            warnings.warn("The ridge_alpha parameter on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. "
+                          "Specify ridge_alpha in the SparsePCA constructor.",
+                          DeprecationWarning)
+            if ridge_alpha is None:
+                ridge_alpha = self.ridge_alpha
+        else:
+            ridge_alpha = self.ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='cholesky')
         s = np.sqrt((U ** 2).sum(axis=0))
@@ -214,8 +231,11 @@ class MiniBatchSparsePCA(SparsePCA):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

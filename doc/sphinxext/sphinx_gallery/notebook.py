@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 r"""
-============================
 Parser for Jupyter notebooks
 ============================
 
@@ -12,13 +11,14 @@ Class that holds the Jupyter notebook information
 
 from __future__ import division, absolute_import, print_function
 from functools import partial
+import argparse
 import json
-import os
 import re
 import sys
+from .py_source_parser import split_code_and_text_blocks
 
 
-def ipy_notebook_skeleton():
+def jupyter_notebook_skeleton():
     """Returns a dictionary with the elements of a Jupyter notebook"""
     py_version = sys.version_info
     notebook_skeleton = {
@@ -98,61 +98,96 @@ def rst2md(text):
     return text
 
 
-class Notebook(object):
-    """Jupyter notebook object
+def jupyter_notebook(script_blocks):
+    """Generate a Jupyter notebook file cell-by-cell
 
-    Constructs the file cell-by-cell and writes it at the end"""
+    Parameters
+    ----------
+    script_blocks: list
+        script execution cells
+    """
 
-    def __init__(self, file_name, target_dir):
-        """Declare the skeleton of the notebook
+    work_notebook = jupyter_notebook_skeleton()
+    add_code_cell(work_notebook, "%matplotlib inline")
+    fill_notebook(work_notebook, script_blocks)
 
-        Parameters
-        ----------
-        file_name : str
-            original script file name, .py extension will be renamed
-        target_dir: str
-            directory where notebook file is to be saved
-        """
+    return work_notebook
 
-        self.file_name = file_name.replace('.py', '.ipynb')
-        self.write_file = os.path.join(target_dir, self.file_name)
-        self.work_notebook = ipy_notebook_skeleton()
-        self.add_code_cell("%matplotlib inline")
 
-    def add_code_cell(self, code):
-        """Add a code cell to the notebook
+def add_code_cell(work_notebook, code):
+    """Add a code cell to the notebook
 
-        Parameters
-        ----------
-        code : str
-            Cell content
-        """
+    Parameters
+    ----------
+    code : str
+        Cell content
+    """
 
-        code_cell = {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {"collapsed": False},
-            "outputs": [],
-            "source": [code.strip()]
-            }
-        self.work_notebook["cells"].append(code_cell)
+    code_cell = {
+        "cell_type": "code",
+        "execution_count": None,
+        "metadata": {"collapsed": False},
+        "outputs": [],
+        "source": [code.strip()]
+    }
+    work_notebook["cells"].append(code_cell)
 
-    def add_markdown_cell(self, text):
-        """Add a markdown cell to the notebook
 
-        Parameters
-        ----------
-        code : str
-            Cell content
-        """
-        markdown_cell = {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [rst2md(text)]
-        }
-        self.work_notebook["cells"].append(markdown_cell)
+def add_markdown_cell(work_notebook, text):
+    """Add a markdown cell to the notebook
 
-    def save_file(self):
-        """Saves the notebook to a file"""
-        with open(self.write_file, 'w') as out_nb:
-            json.dump(self.work_notebook, out_nb, indent=2)
+    Parameters
+    ----------
+    code : str
+        Cell content
+    """
+    markdown_cell = {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [rst2md(text)]
+    }
+    work_notebook["cells"].append(markdown_cell)
+
+
+def fill_notebook(work_notebook, script_blocks):
+    """Writes the Jupyter notebook cells
+
+    Parameters
+    ----------
+    script_blocks : list of tuples
+    """
+
+    for blabel, bcontent in script_blocks:
+        if blabel == 'code':
+            add_code_cell(work_notebook, bcontent)
+        else:
+            add_markdown_cell(work_notebook, bcontent + '\n')
+
+
+def save_notebook(work_notebook, write_file):
+    """Saves the Jupyter work_notebook to write_file"""
+    with open(write_file, 'w') as out_nb:
+        json.dump(work_notebook, out_nb, indent=2)
+
+
+###############################################################################
+# Notebook shell utility
+
+def python_to_jupyter_cli(args=None, namespace=None):
+    """Exposes the jupyter notebook renderer to the command line
+
+    Takes the same arguments as ArgumentParser.parse_args
+    """
+    parser = argparse.ArgumentParser(
+        description='Sphinx-Gallery Notebook converter')
+    parser.add_argument('python_src_file', nargs='+',
+                        help='Input Python file script to convert. '
+                        'Supports multiple files and shell wildcards'
+                        ' (e.g. *.py)')
+    args = parser.parse_args(args, namespace)
+
+    for src_file in args.python_src_file:
+        blocks = split_code_and_text_blocks(src_file)
+        print('Converting {0}'.format(src_file))
+        example_nb = jupyter_notebook(blocks)
+        save_notebook(example_nb, src_file.replace('.py', '.ipynb'))

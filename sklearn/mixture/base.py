@@ -11,6 +11,7 @@ from abc import ABCMeta, abstractmethod
 from time import time
 
 import numpy as np
+from scipy.misc import logsumexp
 
 from .. import cluster
 from ..base import BaseEstimator
@@ -18,7 +19,6 @@ from ..base import DensityMixin
 from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
-from ..utils.extmath import logsumexp
 
 
 def _check_shape(param, param_shape, name):
@@ -230,7 +230,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 best_n_iter = n_iter
 
         if not self.converged_:
-            warnings.warn('Initialization %d did not converged. '
+            warnings.warn('Initialization %d did not converge. '
                           'Try different init parameters, '
                           'or increase max_iter, tol '
                           'or check for degenerate data.'

@@ -103,9 +103,15 @@ thumbnail with its default link Background color */
 blockquote.sphx-glr-script-out {
   margin-left: 0pt;
 }
+
+div.sphx-glr-footer {
+    text-align: center;
+}
+
 div.sphx-glr-download {
   display: inline-block;
   margin: 1em auto 1ex 2ex;
+  vertical-align: middle;
 }
 
 div.sphx-glr-download a {
@@ -115,14 +121,45 @@ div.sphx-glr-download a {
   border: 1px solid #c2c22d;
   color: #000;
   display: inline-block;
+  /* Not valid in old browser, hence we keep the line above to override */
+  display: table-caption;
   font-weight: bold;
-  max-width: 45ex;
   padding: 1ex;
   text-align: center;
 }
 
+/* The last child of a download button is the file name */
+div.sphx-glr-download a span:last-child {
+    font-size: smaller;
+}
+
+@media (min-width: 20em) {
+    div.sphx-glr-download a {
+	min-width: 10em;
+    }
+}
+
+@media (min-width: 30em) {
+    div.sphx-glr-download a {
+	min-width: 13em;
+    }
+}
+
+@media (min-width: 40em) {
+    div.sphx-glr-download a {
+	min-width: 16em;
+    }
+}
+
+
 div.sphx-glr-download code.download {
   display: inline-block;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  /* border and background are given by the enclosing 'a' */
+  border: none;
+  background: none;
 }
 
 div.sphx-glr-download a:hover {
@@ -144,10 +181,12 @@ ul.sphx-glr-horizontal img {
 }
 
 p.sphx-glr-signature a.reference.external {
-  background-color: #EBECED;
   -moz-border-radius: 5px;
   -webkit-border-radius: 5px;
   border-radius: 5px;
   padding: 3px;
   font-size: 75%;
+  text-align: right;
+  margin-left: auto;
+  display: table;
 }

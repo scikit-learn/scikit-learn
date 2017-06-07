@@ -173,6 +173,8 @@ Splitter Classes
    model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
+   model_selection.RepeatedKFold
+   model_selection.RepeatedStratifiedKFold
    model_selection.ShuffleSplit
    model_selection.GroupShuffleSplit
    model_selection.StratifiedShuffleSplit
@@ -257,6 +259,7 @@ Loaders
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
+   datasets.load_wine
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
    datasets.load_linnerud
@@ -325,7 +328,6 @@ Samples generator
 
    decomposition.PCA
    decomposition.IncrementalPCA
-   decomposition.ProjectedGradientNMF
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
@@ -1061,7 +1063,7 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.DistanceMetric
    neighbors.KernelDensity
    neighbors.LocalOutlierFactor
-	      
+
 .. autosummary::
    :toctree: generated/
    :template: function.rst
