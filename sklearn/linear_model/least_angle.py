@@ -299,8 +299,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'Dropping a regressor, after %i iterations, '
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
-                              'the smallest cholesky pivot element being %.3e. '
-                              'Reduce max_iter or increase eps parameters.'
+                              'the smallest cholesky pivot element being %.3e.'
+                              ' Reduce max_iter or increase eps parameters.'
                               % (n_iter, alpha, n_active, diag),
                               ConvergenceWarning)
 
