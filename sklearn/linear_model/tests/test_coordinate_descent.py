@@ -175,6 +175,24 @@ def test_lasso_cv():
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 
+def test_lasso_cv_with_some_model_selection():
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import StratifiedKFold
+    from sklearn import datasets
+    from sklearn.linear_model import LassoCV
+
+    diabetes = datasets.load_diabetes()
+    X = diabetes.data
+    y = diabetes.target
+
+    pipe = make_pipeline(
+        StandardScaler(),
+        LassoCV(cv=StratifiedKFold(n_splits=5))
+    )
+    pipe.fit(X, y)
+
+
 def test_lasso_cv_positive_constraint():
     X, y, X_test, y_test = build_dataset()
     max_iter = 500
