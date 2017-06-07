@@ -8,14 +8,10 @@
 
 import numpy as np
 import scipy.sparse as sp
-
-try:
-    from scipy.sparse.linalg import svds
-except ImportError:
-    from ..utils.arpack import svds
+from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, as_float_array, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -157,12 +153,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = as_float_array(X, copy=False)
+        X = check_array(X, accept_sparse=['csr', 'csc'])
         random_state = check_random_state(self.random_state)
-
-        # If sparse and not csr or csc, convert to csr
-        if sp.issparse(X) and X.getformat() not in ["csr", "csc"]:
-            X = X.tocsr()
 
         if self.algorithm == "arpack":
             U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)

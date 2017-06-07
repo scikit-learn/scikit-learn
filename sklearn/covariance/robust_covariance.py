@@ -14,7 +14,7 @@ from scipy import linalg
 from scipy.stats import chi2
 
 from . import empirical_covariance, EmpiricalCovariance
-from ..utils.extmath import fast_logdet, pinvh
+from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
 
 
@@ -107,7 +107,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         location = initial_estimates[0]
         covariance = initial_estimates[1]
         # run a special iteration for that case (to get an initial support)
-        precision = pinvh(covariance)
+        precision = linalg.pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
@@ -127,7 +127,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         previous_det = det
         previous_support = support
         # compute a new support from the full data set mahalanobis distances
-        precision = pinvh(covariance)
+        precision = linalg.pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # compute new estimates
@@ -393,7 +393,7 @@ def fast_mcd(X, support_fraction=None,
             covariance = np.asarray([[np.var(X[support])]])
             location = np.array([location])
             # get precision matrix in an optimized way
-            precision = pinvh(covariance)
+            precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
         else:
             support = np.ones(n_samples, dtype=bool)
@@ -401,7 +401,7 @@ def fast_mcd(X, support_fraction=None,
             location = np.asarray([np.mean(X)])
             X_centered = X - location
             # get precision matrix in an optimized way
-            precision = pinvh(covariance)
+            precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
 # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
@@ -629,7 +629,7 @@ class MinCovDet(EmpiricalCovariance):
             raw_covariance = self._nonrobust_covariance(X[raw_support],
                                                         assume_centered=True)
             # get precision matrix in an optimized way
-            precision = pinvh(raw_covariance)
+            precision = linalg.pinvh(raw_covariance)
             raw_dist = np.sum(np.dot(X, precision) * X, 1)
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance

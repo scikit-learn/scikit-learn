@@ -55,9 +55,9 @@ available as neg_mean_squared_error which return the negated value
 of the metric.
 
 
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 Scoring                         Function                                      Comment
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 **Classification**
 'accuracy'                      :func:`metrics.accuracy_score`
 'average_precision'             :func:`metrics.average_precision_score`
@@ -80,7 +80,7 @@ Scoring                         Function                                      Co
 'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
 'r2'                            :func:`metrics.r2_score`
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 
 Usage examples:
 
@@ -173,7 +173,7 @@ Here is an example of building custom scorers, and of using the
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1, 1]]
+    >>> ground_truth = [[1], [1]]
     >>> predictions  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)

@@ -178,6 +178,10 @@ Enhancements
      removed by setting it to `None`.
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
+   - Prevent cast from float32 to float64 in
+   :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
+   by :user:`Joan Massich <massich>`
+
 Bug fixes
 .........
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
@@ -213,7 +217,8 @@ Bug fixes
 
    - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
-     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`
+     in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`.
+
    - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
      ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
      :user:`Ralf Gommers <rgommers>`.
@@ -223,9 +228,9 @@ Bug fixes
      where a float being compared to ``0.0`` using ``==`` caused a divide by zero
      error. This was fixed in :issue:`7970` by :user:`He Chen <chenhe95>`.
 
-   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a
-     sparse array X and initial centroids, where X's means were unnecessarily
-     being subtracted from the centroids. :issue:`7872` by `Josh Karnofsky <https://github.com/jkarno>`_.
+   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a sparse
+     array X and initial centroids, where X's means were unnecessarily being
+     subtracted from the centroids. :issue:`7872` by :user:`Josh Karnofsky <jkarno>`.
 
    - Fix estimators to accept a ``sample_weight`` parameter of type
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
@@ -248,6 +253,20 @@ Bug fixes
      :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
+
+   - Fixes to the input validation in
+     :class:`sklearn.covariance.EllipticEnvelope`.
+     :issue:`8086` by `Andreas Müller`_.
+
+   - Fix output shape and bugs with n_jobs > 1 in  
+     :class:`sklearn.decomposition.SparseCoder` transform and :func:`sklarn.decomposition.sparse_encode`
+     for one-dimensional data and one component.
+     This also impacts the output shape of :class:`sklearn.decomposition.DictionaryLearning`.
+     :issue:`8086` by `Andreas Müller`_.
+
+   - Several fixes to input validation in
+     :class:`multiclass.OutputCodeClassifier`
+     :issue:`8086` by `Andreas Müller`_.
 
    - Fix a bug where
      :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
@@ -293,6 +312,12 @@ Bug fixes
      tree.
      :issue:`8512` by :user:`Li Li <aikinogard>`.
 
+   - Fixed a bug in :class:`manifold.TSNE` affecting convergence of the
+     gradient descent. :issue:`8768` by :user:`David DeTomaso <deto>`.
+
+   - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
+     :user:`Sergei Lebedev <superbobry>`
+
 API changes summary
 -------------------
 
@@ -334,6 +359,20 @@ API changes summary
      :func:`sklearn.model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+
+   - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
+
+   - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
+     parameter and sets the ``threshold_`` attribute during the call to
+     ``fit``, and no longer during the call to ``transform```, by `Andreas
+     Müller`_.
+
+   - :class:`feature_selection.SelectFromModel` now has a ``partial_fit``
+     method only if the underlying estimator does. By `Andreas Müller`_.
+
+   - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
+     only if the underlying estimator does.  By `Andreas Müller`_. 
+
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
      method ``check_decision_proba_consistency`` has been added in
@@ -345,6 +384,10 @@ API changes summary
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
+
+   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
+     has been renamed to ``n_components`` and will be removed in version 0.21.
+     :issue:`8922` by :user:Attractadore
 
 
 .. _changes_0_18_1:
@@ -780,8 +823,8 @@ Model evaluation and meta-estimators
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
      and :class:`pipeline.FeatureUnion` components using the ``set_params``
      interface that powers :mod:`sklearn.grid_search`.
-     See :ref:`sphx_glr_plot_compare_reduction.py`. By `Joel Nothman`_ and
-     :user:`Robert McGibbon <rmcgibbo>`.
+     See :ref:`sphx_glr_auto_examples_plot_compare_reduction.py`
+     By `Joel Nothman`_ and :user:`Robert McGibbon <rmcgibbo>`.
 
    - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
