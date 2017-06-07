@@ -831,3 +831,74 @@ def make_union(*transformers, **kwargs):
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
     return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs)
+
+
+def _unique_names(*names):
+    """If there are repeated names, append indexes to subsequent repetitions"""
+    indexes = {}
+    new_names = []
+
+    for name in names:
+        if name in indexes:
+            name = "%s%d" % (name, indexes[name])
+            indexes[name] += 1
+        else:
+            indexes[name] = 2
+        new_names.append(name)
+
+    return new_names
+
+
+def merge_pipelines(*pipelines, **kwargs):
+    """Join pipelines into a single one.
+
+    The new pipeline won't inherit the old parameters: only the steps will be
+    used.
+
+    Parameters
+    ----------
+    *pipelines : list of pipelines to be merged.
+        If there are repeated step names, the next parameters will have an
+        index appended. Eg: if there is `"foo"` in pipelines `p1` and `p2`,
+        `merge_pipelines(p1, p2)` will result in step names `"foo"` and
+        `"foo2"`.
+
+    clone: bool, optional (default : False)
+        If steps should be cloned
+
+    **kwargs : keyword arguments to be passed to the new pipeline
+
+    Returns
+    -------
+    Pipeline
+
+    Examples
+    --------
+    >>> from sklearn.pipeline import make_pipeline, merge_pipelines
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> from sklearn.preprocessing import StandardScaler, MinMaxScaler
+    >>> transformer1 = make_pipeline(PCA(), TruncatedSVD())
+    >>> transformer2 = make_pipeline(StandardScaler(), MinMaxScaler())
+    >>> merge_pipelines(transformer1, transformer2)
+    ... # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(memory=None,
+         steps=[('pca', PCA(copy=True, iterated_power='auto',
+                            n_components=None, random_state=None,
+                            svd_solver='auto', tol=0.0, whiten=False)),
+                ('truncatedsvd', TruncatedSVD(algorithm='randomized',
+                                              n_components=2, n_iter=5,
+                                              random_state=None, tol=0.0)),
+                ('standardscaler', StandardScaler(copy=True, with_mean=True,
+                                                  with_std=True)),
+                ('minmaxscaler', MinMaxScaler(copy=True,
+                                              feature_range=(0, 1)))])
+    """
+    should_clone = kwargs.pop("clone", False)
+    estimator_wrapper = clone if should_clone else lambda x: x
+
+    steps = [x for p in pipelines for x in p.steps]
+    names = _unique_names(*[name for name, _ in steps])
+    estimators = [estimator_wrapper(estimator)
+                  for _, estimator in steps]
+
+    return Pipeline(zip(names, estimators), **kwargs)
