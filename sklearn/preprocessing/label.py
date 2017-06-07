@@ -135,7 +135,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     array([ 2.])
 
     """
-    def __init__(self, estimator, transformer=None,
+    def __init__(self, estimator=None, transformer=None,
                  func=None, inverse_func=None, check_invertible=True):
         self.estimator = estimator
         self.transformer = transformer
@@ -156,11 +156,10 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             self.transformer_ = FunctionTransformer(
                 func=self.func, inverse_func=self.inverse_func, validate=False)
         self.transformer_.fit(y)
-        # XXX: is it a necessary test? one might not want an invertible
-        # function.
         if self.check_invertible:
             n_subsample = min(1000, y.shape[0])
-            subsample_idx = np.random.permutation(y.shape[0], size=n_subsample)
+            subsample_idx = np.random.choice(range(y.shape[0]),
+                                             size=n_subsample, replace=False)
             diff = np.abs((y[subsample_idx] -
                            self.transformer_.inverse_transform(
                                self.transformer_.transform(y[subsample_idx]))))
@@ -189,6 +188,9 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
+        # to avoid circular import, the estimator is initialize in fit
+        from ..linear_model import LinearRegression
+        self.estimator = LinearRegression()
         # memorize if y should be a multi-output
         self.y_ndim_ = y.ndim
         if y.ndim == 1:
