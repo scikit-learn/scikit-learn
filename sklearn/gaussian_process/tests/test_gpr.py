@@ -296,7 +296,8 @@ def test_gpr_correct_error_message():
     y = np.ones(6)
     kernel = DotProduct()
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
-    assert_raise_message(ValueError, "The kernel, %s, isn't returning a "
+    assert_raise_message(np.linalg.LinAlgError,
+                         "The kernel, %s, is not returning a "
                          "positive definite matrix. Try gradually increasing "
                          "the 'alpha' parameter of your "
                          "GaussianProcessRegressor estimator."
