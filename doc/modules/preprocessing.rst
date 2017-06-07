@@ -281,8 +281,16 @@ a uniform distribution with values between 0 and 1::
   >>> X_test_trans = quantile_transformer.transform(X_test)
   >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100])
   array([ 4.3,  5.1,  5.8,  6.5,  7.9])
+
+This feature corresponds to the sepal length in cm. Once the quantile
+transformation applied, those landmarks approach closely the percentiles
+previously defined::
+
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
   array([ 0.0000001 ,  0.24608042,  0.49100792,  0.73162701,  0.9999999 ])
+
+This can be confirmed on a independent testing set with similar remarks::
+
   >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
   array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
