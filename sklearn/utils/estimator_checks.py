@@ -156,7 +156,7 @@ def check_supervised_y_no_nan(name, estimator):
         estimator.fit(X, y)
     except ValueError as e:
         if str(e) != errmsg:
-            raise ValueError("Estimator {0} raised warning as expected, but "
+            raise ValueError("Estimator {0} raised error as expected, but "
                              "does not match expected error message"
                              .format(name))
     else:
@@ -247,10 +247,14 @@ def check_estimator(Estimator):
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
 
+    This test can be applied to classes or instances.
+    Classes currently have some additional tests that related to construction,
+    while passing instances allows the testing of multiple options.
+
     Parameters
     ----------
     Estimator : class
-        Class to check. Estimator is a class object (not an instance).
+        Estimator to check. Estimator is a class object or instance.
 
     """
     if isinstance(Estimator, type):
@@ -332,7 +336,7 @@ def set_testing_parameters(estimator):
         # of components of the random matrix projection will be probably
         # greater than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
-        estimator.set_params(n_components=8)
+        estimator.set_params(n_components=2)
 
     if isinstance(estimator, SelectKBest):
         # SelectKBest has a default of k=10
@@ -516,6 +520,7 @@ def check_dont_overwrite_parameters(name, estimator):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
+    estimator = clone(estimator)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     set_testing_parameters(estimator)
 
@@ -1753,7 +1758,7 @@ def check_decision_proba_consistency(name, estimator):
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
     X_test = np.random.randn(20, 2) + 4
-
+    estimator = clone(estimator)
     set_testing_parameters(estimator)
 
     if (hasattr(estimator, "decision_function") and
