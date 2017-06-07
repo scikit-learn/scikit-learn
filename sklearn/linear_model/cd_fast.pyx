@@ -12,6 +12,7 @@ import numpy as np
 import numpy.linalg as linalg
 
 cimport cython
+from cython cimport floating
 from cpython cimport bool
 from cython cimport floating
 import warnings
