@@ -2,9 +2,10 @@ import scipy.sparse as sp
 import numpy as np
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.externals.six.moves import cPickle as pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_raises_regex, assert_true
+from sklearn.utils.testing import assert_raises_regex, assert_true, assert_equal
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
@@ -182,6 +183,24 @@ def test_check_estimator():
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+
+def test_check_estimator_clones():
+    # check that check_estimator doesn't modify the estimator it receives
+    from sklearn.datasets import load_iris
+    iris = load_iris()
+    est = AdaBoostClassifier()
+
+    # without fitting
+    old_pickle = pickle.dumps(est)
+    check_estimator(est)
+    assert_equal(old_pickle, pickle.dumps(est))
+
+    # with fitting
+    est.fit(iris.data, iris.target)
+    old_pickle = pickle.dumps(est)
+    check_estimator(est)
+    assert_equal(old_pickle, pickle.dumps(est))
 
 
 def test_check_estimators_unfitted():
