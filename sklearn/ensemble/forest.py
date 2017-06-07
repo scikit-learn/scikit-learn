@@ -61,7 +61,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import bincount, parallel_helper
+from ..utils.fixes import bincount
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 
@@ -175,7 +175,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         X = self._validate_X_predict(X)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
-            delayed(parallel_helper)(tree, 'apply', X, check_input=False)
+            delayed(tree.apply)(X, check_input=False)
             for tree in self.estimators_)
 
         return np.array(results).T
@@ -206,8 +206,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               backend="threading")(
-            delayed(parallel_helper)(tree, 'decision_path', X,
-                                      check_input=False)
+            delayed(tree.decision_path)(X, check_input=False)
             for tree in self.estimators_)
 
         n_nodes = [0]
