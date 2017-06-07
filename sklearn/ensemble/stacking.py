@@ -83,6 +83,71 @@ def _identity_transformer():
     return FunctionTransformer(lambda x: x)
 
 
+class StackLayer(FeatureUnion):
+    """ Single layer for model stacking
+
+    Parameters
+    ----------
+    base_estimators : list of estimators to be used in stacking
+
+    restack : bool, optional (default=False)
+        Whether input should be concatenated to the transformation.
+
+    cv : cv to be used, optional (default=3)
+        Will be passed to `StackMetaEstimator` for each base estimator.
+
+    method : string, optional (default='auto')
+        Invokes the passed method name of the estimators. If the method is
+        `auto`, will try to invoke `predict_proba` or `predict` in that
+        order.
+
+    n_jobs : int, optional (default=1)
+        Number of jobs to be passed to `cross_val_predict` during
+        `fit_transform`.
+
+    transformer_weights : dict, optional (default=None)
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
+
+    Example
+    -------
+    >>> from sklearn.ensemble import StackLayer
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> from sklearn.svm import SVC
+    >>> l = StackMetaEstimator([('svc', SVC()),
+    ...                         ('knn', KNeighborsClassifier())])
+    >>> l # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    """
+    def __init__(self, base_estimators=[], restack=False, cv=3, method='auto',
+                 n_jobs=1, transformer_weights=None):
+        self.base_estimators = base_estimators
+        self.restack = restack
+        self.cv = cv
+        self.method = method
+        self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
+        self._update_layer()
+
+    def _wrap_estimator(self, estimator):
+        return StackMetaEstimator(estimator, cv=self.cv, method=self.method,
+                                  n_jobs=self.n_jobs)
+
+    def _update_layer(self):
+        self.transformer_list = [(name, self._wrap_estimator(x))
+                                 for name, x in self.base_estimators]
+        if self.restack:
+            self.transformer_list.append(_identity_transformer())
+
+    def get_params(self, deep=True):
+        return self._get_params('base_estimators', deep=deep)
+
+    def set_params(self, **kwargs):
+        self._set_params('base_estimators', **kwargs)
+        self._update_layer()
+        return self
+
+
+
 def make_stack_layer(*base_estimators, **kwargs):
     """Construct a single layer for a stacked model.
 
