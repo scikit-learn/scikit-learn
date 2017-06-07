@@ -6,6 +6,8 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+from functools import partial
+
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -15,7 +17,7 @@ from scipy.sparse import csr_matrix, issparse
 from .ball_tree import BallTree
 from .kd_tree import KDTree
 from ..base import BaseEstimator
-from ..metrics import pairwise_distances
+from ..metrics import pairwise_distances_reduce
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.fixes import argpartition
@@ -266,9 +268,24 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
+    def _kneighbors_reduce_func(self, dist, n_neighbors, return_distance):
+        sample_range = np.arange(dist.shape[0])[:, None]
+        neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
+        neigh_ind = neigh_ind[:, :n_neighbors]
+        # argpartition doesn't guarantee sorted order, so we sort again
+        neigh_ind = neigh_ind[
+            sample_range, np.argsort(dist[sample_range, neigh_ind])]
+        if return_distance:
+            if self.effective_metric_ == 'euclidean':
+                result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+            else:
+                result = dist[sample_range, neigh_ind], neigh_ind
+        else:
+            result = neigh_ind
+        return result
+
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
-
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
@@ -347,28 +364,21 @@ class KNeighborsMixin(object):
 
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
+
+            reduce_func = partial(self._kneighbors_reduce_func,
+                                  n_neighbors=n_neighbors,
+                                  return_distance=return_distance)
+
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=n_jobs, squared=True)
+                result = pairwise_distances_reduce(
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric='euclidean', n_jobs=n_jobs, squared=True)
             else:
-                dist = pairwise_distances(
-                    X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
+                result = pairwise_distances_reduce(
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric=self.effective_metric_, n_jobs=n_jobs,
                     **self.effective_metric_params_)
-
-            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
-            neigh_ind = neigh_ind[:, :n_neighbors]
-            # argpartition doesn't guarantee sorted order, so we sort again
-            neigh_ind = neigh_ind[
-                sample_range, np.argsort(dist[sample_range, neigh_ind])]
-
-            if return_distance:
-                if self.effective_metric_ == 'euclidean':
-                    result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
-                else:
-                    result = dist[sample_range, neigh_ind], neigh_ind
-            else:
-                result = neigh_ind
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -499,6 +509,29 @@ class KNeighborsMixin(object):
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
+    def _radius_neighbors_reduce_func(self, dist, radius, return_distance):
+        neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
+
+        # See https://github.com/numpy/numpy/issues/5456
+        # if you want to understand why this is initialized this way.
+        neigh_ind = np.empty(dist.shape[0], dtype='object')
+        neigh_ind[:] = neigh_ind_list
+
+        if return_distance:
+            dist_array = np.empty(dist.shape[0], dtype='object')
+            if self.effective_metric_ == 'euclidean':
+                dist_list = [np.sqrt(d[neigh_ind[i]])
+                             for i, d in enumerate(dist)]
+            else:
+                dist_list = [d[neigh_ind[i]]
+                             for i, d in enumerate(dist)]
+            dist_array[:] = dist_list
+
+            results = dist_array, neigh_ind
+        else:
+            results = neigh_ind
+        return results
+
     def radius_neighbors(self, X=None, radius=None, return_distance=True):
         """Finds the neighbors within a given radius of a point or points.
 
@@ -578,39 +611,27 @@ class RadiusNeighborsMixin(object):
         if radius is None:
             radius = self.radius
 
-        n_samples = X.shape[0]
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=self.n_jobs, squared=True)
                 radius *= radius
+                reduce_func = partial(self._radius_neighbors_reduce_func,
+                                      radius=radius,
+                                      return_distance=return_distance)
+
+                results = pairwise_distances_reduce(
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric='euclidean', n_jobs=self.n_jobs,
+                    squared=True)
             else:
-                dist = pairwise_distances(X, self._fit_X,
-                                          self.effective_metric_,
-                                          n_jobs=self.n_jobs,
-                                          **self.effective_metric_params_)
+                reduce_func = partial(self._radius_neighbors_reduce_func,
+                                      radius=radius,
+                                      return_distance=return_distance)
 
-            neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
-
-            # See https://github.com/numpy/numpy/issues/5456
-            # if you want to understand why this is initialized this way.
-            neigh_ind = np.empty(n_samples, dtype='object')
-            neigh_ind[:] = neigh_ind_list
-
-            if return_distance:
-                dist_array = np.empty(n_samples, dtype='object')
-                if self.effective_metric_ == 'euclidean':
-                    dist_list = [np.sqrt(d[neigh_ind[i]])
-                                 for i, d in enumerate(dist)]
-                else:
-                    dist_list = [d[neigh_ind[i]]
-                                 for i, d in enumerate(dist)]
-                dist_array[:] = dist_list
-
-                results = dist_array, neigh_ind
-            else:
-                results = neigh_ind
+                results = pairwise_distances_reduce(
+                    X, self._fit_X, reduce_func=reduce_func,
+                    metric=self.effective_metric_, n_jobs=self.n_jobs,
+                    **self.effective_metric_params_)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):

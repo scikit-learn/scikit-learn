@@ -10,9 +10,11 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.externals.six import iteritems
 
@@ -27,6 +29,8 @@ from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances_blockwise
+from sklearn.metrics.pairwise import pairwise_distances_reduce
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
@@ -365,9 +369,89 @@ def test_pairwise_distances_argmin_min():
     dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
 
     dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin_min(
-        X, Y, axis=0, metric="manhattan", batch_size=50)
+        X, Y, axis=0, metric="manhattan", block_size=50)
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+
+    # Test batch_size deprecation warning
+    assert_warns_message(DeprecationWarning, "'batch_size' was deprecated in "
+                         "version 0.19 and will be removed in version 0.21.",
+                         pairwise_distances_argmin_min, X, Y, batch_size=500,
+                         metric='euclidean')
+
+
+def test_pairwise_distances_reduce_invalid_reduce_func():
+    X = np.empty((400, 4))
+    y = np.empty((200, 4))
+    assert_raise_message(ValueError, 'reduce_func needs to be passed as an '
+                         'argument', pairwise_distances_reduce, X, y,
+                         block_size=0, metric='euclidean')
+
+
+def _reduce_func(dist):
+    return dist[:, :100]
+
+
+def test_pairwise_distances_reduce():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((400, 4))
+    # Reduced Euclidean distance
+    S = pairwise_distances(X)[:, :100]
+    S2 = pairwise_distances_reduce(X, None, reduce_func=_reduce_func,
+                                   block_size=1)
+    assert_array_almost_equal(S, S2)
+
+
+def check_pairwise_distances_blockwise(X, Y, block_size, metric='euclidean'):
+    from sklearn.metrics.pairwise import BYTES_PER_FLOAT
+    gen = pairwise_distances_blockwise(X, Y, block_size=block_size,
+                                       metric=metric)
+    blockwise_distances = list(gen)
+    min_block_mib = X.shape[0] * BYTES_PER_FLOAT * 2 ** -20
+    if block_size < min_block_mib:
+        block_size = min_block_mib
+
+    for block in blockwise_distances:
+        memory_used = len(block) * BYTES_PER_FLOAT
+        assert_true(memory_used <= block_size * 2 ** 20)
+
+    blockwise_distances = np.vstack(blockwise_distances)
+    S = pairwise_distances(X, Y, metric=metric)
+    assert_array_almost_equal(blockwise_distances, S)
+
+
+def test_pairwise_distances_blockwise_invalid_block_size():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((400, 4))
+    y = rng.random_sample((200, 4))
+    assert_warns_message(UserWarning, 'block_size should be at least '
+                         'n_samples * 8 bytes = 1 MiB, got 0',
+                         pairwise_distances_blockwise, X, y, block_size=0,
+                         metric='euclidean')
+    check_pairwise_distances_blockwise(X, y, block_size=0)
+
+
+def test_pairwise_distances_blockwise():
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((400, 4))
+    check_pairwise_distances_blockwise(X, None, block_size=1,
+                                       metric='euclidean')
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((200, 4))
+    check_pairwise_distances_blockwise(X, Y, block_size=1,
+                                       metric='euclidean')
+    # absurdly large block_size
+    check_pairwise_distances_blockwise(X, Y, block_size=10000,
+                                       metric='euclidean')
+    # "cityblock" uses scikit-learn metric, cityblock (function) is
+    # scipy.spatial.
+    check_pairwise_distances_blockwise(X, Y, block_size=1,
+                                       metric='cityblock')
+    # Test that a value error is raised if the metric is unknown
+    assert_raises(ValueError, pairwise_distances_blockwise, X, Y,
+                  metric="blah")
 
 
 def test_euclidean_distances():
