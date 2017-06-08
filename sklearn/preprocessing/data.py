@@ -29,8 +29,6 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES)
-from ..utils.random import choice
-
 BOUNDS_THRESHOLD = 1e-7
 
 

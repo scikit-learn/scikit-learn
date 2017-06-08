@@ -287,14 +287,17 @@ transformation applied, those landmarks approach closely the percentiles
 previously defined::
 
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
-  array([ 0.0000001 ,  0.24608042,  0.49100792,  0.73162701,  0.9999999 ])
+  ... # doctest: +ELLIPSIS +SKIP
+  array([ 0.00... ,  0.24...,  0.49...,  0.73...,  0.99... ])
 
 This can be confirmed on a independent testing set with similar remarks::
 
   >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +SKIP
   array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
-  array([ 0.01801802,  0.25653626,  0.46157383,  0.6081081 ,  0.94144144])
+  ... # doctest: +ELLIPSIS +SKIP
+  array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
 
 It is also possible to map the transformed data to a normal distribution by
 setting ``output_distribution='normal'``::
@@ -303,13 +306,13 @@ setting ``output_distribution='normal'``::
   ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
   >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([[ 4.30000001,  2.00000009,  1.00000003,  0.09999991],
-         [ 4.3149149 ,  2.02982991,  1.01491493,  0.09999992],
-         [ 4.32982979,  2.05965973,  1.02982983,  0.09999992],
+  array([[ 4.30...,  2.00...,  1.00...,  0.09...],
+         [ 4.31... ,  2.02...,  1.01...,  0.09...],
+         [ 4.32...,  2.05...,  1.02...,  0.09...],
          ...,
-         [ 7.8403404 ,  4.34034033,  6.84034045,  2.50000003],
-         [ 7.87017023,  4.37017021,  6.8701703 ,  2.50000003],
-         [ 7.90000005,  4.40000008,  6.90000015,  2.50000004]])
+         [ 7.84... ,  4.34...,  6.84...,  2.50...],
+         [ 7.87...,  4.37...,  6.87... ,  2.50...],
+         [ 7.90...,  4.40...,  6.90...,  2.50...]])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
