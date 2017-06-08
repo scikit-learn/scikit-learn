@@ -140,20 +140,26 @@ def test_binary_search_neighbors():
 
     # Test that when we use all the neighbors the results are identical
     k = n_samples
-    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
-    P2 = _binary_search_perplexity(distances, neighbors_nn,
+    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64)
+    distances_nn = np.array([distances[k, neighbors_nn[k]]
+                            for k in range(n_samples)])
+    P2 = _binary_search_perplexity(distances_nn, neighbors_nn,
                                    desired_perplexity, verbose=0)
-    assert_array_almost_equal(P1, P2, decimal=4)
+    P_nn = np.array([P1[k, neighbors_nn[k]] for k in range(n_samples)])
+    assert_array_almost_equal(P_nn, P2, decimal=4)
 
     # Test that the highest P_ij are the same when few neighbors are used
     for k in np.linspace(80, n_samples, 10):
         k = int(k)
         topn = k * 10  # check the top 10 *k entries out of k * k entries
         neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
-        P2k = _binary_search_perplexity(distances, neighbors_nn,
+        distances_nn = np.array([distances[k, neighbors_nn[k]]
+                                for k in range(n_samples)])
+        P2k = _binary_search_perplexity(distances_nn, neighbors_nn,
                                         desired_perplexity, verbose=0)
         idx = np.argsort(P1.ravel())[::-1]
         P1top = P1.ravel()[idx][:topn]
+        idx = np.argsort(P2k.ravel())[::-1]
         P2top = P2k.ravel()[idx][:topn]
         assert_array_almost_equal(P1top, P2top, decimal=2)
 
@@ -175,6 +181,8 @@ def test_binary_perplexity_stability():
         P = _binary_search_perplexity(distances.copy(), neighbors_nn.copy(),
                                       3, verbose=0)
         P1 = _joint_probabilities_nn(distances, neighbors_nn, 3, verbose=0)
+        # Convert the sparse matrix to a dense one for testing
+        P1 = P1.toarray()
         if last_P is None:
             last_P = P
             last_P1 = P1
@@ -193,9 +201,9 @@ def test_gradient():
     alpha = 1.0
 
     distances = random_state.randn(n_samples, n_features).astype(np.float32)
-    distances = distances.dot(distances.T)
+    distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
-    X_embedded = random_state.randn(n_samples, n_components)
+    X_embedded = random_state.randn(n_samples, n_components).astype(np.float32)
 
     P = _joint_probabilities(distances, desired_perplexity=25.0,
                              verbose=0)
@@ -280,13 +288,16 @@ def test_fit_csr_matrix():
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    D = squareform(pdist(X), "sqeuclidean")
-    tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                metric="precomputed", random_state=0, verbose=0)
-    X_embedded = tsne.fit_transform(D)
-    assert_almost_equal(trustworthiness(D, X_embedded, n_neighbors=1,
-                                        precomputed=True), 1.0, decimal=1)
+    for i in range(5):
+        X = random_state.randn(100, 2)
+        D = squareform(pdist(X), "sqeuclidean")
+        tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
+                    early_exaggeration=2.0, metric="precomputed",
+                    random_state=i, verbose=0)
+        X_embedded = tsne.fit_transform(D)
+        t = trustworthiness(D, X_embedded, n_neighbors=1,
+                            precomputed=True)
+        assert t > .95
 
 
 def test_early_exaggeration_too_small():
@@ -332,8 +343,12 @@ def test_init_ndarray_precomputed():
 
 def test_distance_not_available():
     # 'metric' must be valid.
-    tsne = TSNE(metric="not available")
+    tsne = TSNE(metric="not available", method='exact')
     assert_raises_regexp(ValueError, "Unknown metric not available.*",
+                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+
+    tsne = TSNE(metric="not available", method='barnes_hut')
+    assert_raises_regexp(ValueError, "Metric 'not available' not valid.*",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
@@ -418,7 +433,13 @@ def _run_answer_test(pos_input, pos_output, neighbors, grad_output,
     pij_input = squareform(pij_input).astype(np.float32)
     grad_bh = np.zeros(pos_output.shape, dtype=np.float32)
 
-    _barnes_hut_tsne.gradient(pij_input, pos_output, neighbors,
+    from scipy.sparse import csr_matrix
+    P = csr_matrix(pij_input)
+
+    neighbors = P.indices.astype(np.int64)
+    indptr = P.indptr.astype(np.int64)
+
+    _barnes_hut_tsne.gradient(P.data, pos_output, neighbors, indptr,
                               grad_bh, 0.5, 2, 1, skip_num_points=0)
     assert_array_almost_equal(grad_bh, grad_output, decimal=4)
 
@@ -439,7 +460,7 @@ def test_verbose():
         sys.stdout = old_stdout
 
     assert("[t-SNE]" in out)
-    assert("Computing pairwise distances" in out)
+    assert("nearest neighbors..." in out)
     assert("Computed conditional probabilities" in out)
     assert("Mean sigma" in out)
     assert("Finished" in out)
@@ -483,8 +504,13 @@ def test_64bit():
         for dt in [np.float32, np.float64]:
             X = random_state.randn(100, 2).astype(dt)
             tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                        random_state=0, method=method)
-            tsne.fit_transform(X)
+                        random_state=0, method=method, verbose=0)
+            X_embedded = tsne.fit_transform(X)
+            effective_type = X_embedded.dtype
+
+            # tsne cython code is only single precision, so the output will
+            # always be single precision, irrespectively of the input dtype
+            assert effective_type == np.float32
 
 
 def test_barnes_hut_angle():
@@ -499,10 +525,10 @@ def test_barnes_hut_angle():
         random_state = check_random_state(0)
         distances = random_state.randn(n_samples, n_features)
         distances = distances.astype(np.float32)
-        distances = distances.dot(distances.T)
+        distances = abs(distances.dot(distances.T))
         np.fill_diagonal(distances, 0.0)
         params = random_state.randn(n_samples, n_components)
-        P = _joint_probabilities(distances, perplexity, False)
+        P = _joint_probabilities(distances, perplexity, verbose=0)
         kl, gradex = _kl_divergence(params, P, degrees_of_freedom, n_samples,
                                     n_components)
 
@@ -510,12 +536,18 @@ def test_barnes_hut_angle():
         bt = BallTree(distances)
         distances_nn, neighbors_nn = bt.query(distances, k=k + 1)
         neighbors_nn = neighbors_nn[:, 1:]
-        Pbh = _joint_probabilities_nn(distances, neighbors_nn,
-                                      perplexity, False)
-        kl, gradbh = _kl_divergence_bh(params, Pbh, neighbors_nn,
-                                       degrees_of_freedom, n_samples,
-                                       n_components, angle=angle,
-                                       skip_num_points=0, verbose=False)
+        distances_nn = np.array([distances[i, neighbors_nn[i]]
+                                 for i in range(n_samples)])
+        assert np.all(distances[0, neighbors_nn[0]] == distances_nn[0]),\
+            abs(distances[0, neighbors_nn[0]] - distances_nn[0])
+        Pbh = _joint_probabilities_nn(distances_nn, neighbors_nn,
+                                      perplexity, verbose=0)
+        kl, gradbh = _kl_divergence_bh(params, Pbh, degrees_of_freedom,
+                                       n_samples, n_components, angle=angle,
+                                       skip_num_points=0, verbose=0)
+
+        P = squareform(P)
+        Pbh = Pbh.toarray()
         assert_array_almost_equal(Pbh, P, decimal=5)
         assert_array_almost_equal(gradex, gradbh, decimal=5)
 
@@ -569,8 +601,8 @@ def test_n_iter_without_progress():
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
-    tsne = TSNE(n_iter_without_progress=-1, verbose=2,
-                random_state=1, method='exact')
+    tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e7,
+                random_state=1, method='exact', n_iter=200)
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()

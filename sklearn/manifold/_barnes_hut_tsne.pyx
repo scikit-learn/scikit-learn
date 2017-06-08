@@ -11,8 +11,8 @@
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport printf
 from libc.math cimport sqrt, log
-cimport numpy as np
 import numpy as np
+cimport numpy as np
 
 cdef char* EMPTY_STRING = ""
 
@@ -219,7 +219,7 @@ cdef inline int offset2index(int* offset, int n_dimensions) nogil:
     for dim in range(n_dimensions):
         index += (2 ** dim) * offset[n_dimensions - dim - 1]
         if DEBUGFLAG:
-            printf("o2i index %i dim %i            offset", index, dim)
+            printf("o2i index %i dim %i offset", index, dim)
             for j in range(n_dimensions):
                 printf(" %i", offset[j])
             printf(" n_dimensions %i\n", n_dimensions)
@@ -250,8 +250,8 @@ cdef int insert(Node *root, float pos[3], long point_index, long depth, long
     cdef int not_identical = 1
     cdef int n_dimensions = root.tree.n_dimensions
     if DEBUGFLAG:
-        printf("[t-SNE] [d=%i] Inserting pos %i [%f, %f] duplicate_count=%i "
-                "into child %p\n", depth, point_index, pos[0], pos[1],
+        printf("[t-SNE] [d=%li] Inserting pos %li [%f, %f] duplicate_count=%li"
+                " into child %p\n", depth, point_index, pos[0], pos[1],
                 duplicate_count, root)    
     # Increment the total number points including this
     # node and below it
@@ -286,7 +286,7 @@ cdef int insert(Node *root, float pos[3], long point_index, long depth, long
     if (root.size == 0) & root.is_leaf:
         # Root node is empty and a leaf
         if DEBUGFLAG:
-            printf("[t-SNE] [d=%i] Inserting [%f, %f] into blank cell\n", depth,
+            printf("[t-SNE] [d=%li] Inserting [%f, %f] into blank cell\n", depth,
                    pos[0], pos[1])
         for ax in range(n_dimensions):
             root.leaf_point_position[ax] = pos[ax]
@@ -296,9 +296,9 @@ cdef int insert(Node *root, float pos[3], long point_index, long depth, long
     else:
         # Root node is occupied or not a leaf
         if DEBUGFLAG:
-            printf("[t-SNE] [d=%i] Node %p is occupied or is a leaf.\n", depth,
+            printf("[t-SNE] [d=%li] Node %p is occupied or is a leaf.\n", depth,
                     root)
-            printf("[t-SNE] [d=%i] Node %p leaf = %i. Size %i\n", depth, root,
+            printf("[t-SNE] [d=%li] Node %p leaf = %i. Size %li\n", depth, root,
                     root.is_leaf, root.size)
         if root.is_leaf & (root.size > 0):
             # is a leaf node and is occupied
@@ -308,15 +308,15 @@ cdef int insert(Node *root, float pos[3], long point_index, long depth, long
             if not_identical == 1:
                 root.size += duplicate_count
                 if DEBUGFLAG:
-                    printf("[t-SNE] Warning: [d=%i] Detected identical "
-                            "points. Returning. Leaf now has size %i\n",
+                    printf("[t-SNE] Warning: [d=%li] Detected identical "
+                            "points. Returning. Leaf now has size %li\n",
                             depth, root.size)
                 return 0
         # If necessary, subdivide this node before
         # descending
         if root.is_leaf:
             if DEBUGFLAG:
-                printf("[t-SNE] [d=%i] Subdividing this leaf node %p\n", depth,
+                printf("[t-SNE] [d=%li] Subdividing this leaf node %p\n", depth,
                         root)
             subdivide(root)
         # We have two points to relocate: the one previously
@@ -325,12 +325,12 @@ cdef int insert(Node *root, float pos[3], long point_index, long depth, long
         if root.size > 0:
             child = select_child(root, root.leaf_point_position, root.point_index)
             if DEBUGFLAG:
-                printf("[t-SNE] [d=%i] Relocating old point to node %p\n",
+                printf("[t-SNE] [d=%li] Relocating old point to node %p\n",
                         depth, child)
             insert(child, root.leaf_point_position, root.point_index, depth + 1, root.size)
         # Insert the new point
         if DEBUGFLAG:
-            printf("[t-SNE] [d=%i] Selecting node for new point\n", depth)
+            printf("[t-SNE] [d=%li] Selecting node for new point\n", depth)
         child = select_child(root, pos, point_index)
         if root.size > 0:
             # Remove the point from this node
@@ -351,7 +351,7 @@ cdef int insert_many(Tree* tree, float[:,:] pos_array) nogil:
         for ax in range(tree.n_dimensions):
             row[ax] = pos_array[i, ax]
         if DEBUGFLAG:
-            printf("[t-SNE] inserting point %i: [%f, %f]\n", i, row[0], row[1])
+            printf("[t-SNE] inserting point %li: [%f, %f]\n", i, row[0], row[1])
         err = insert(tree.root_node, row, i, 0, 1)
         if err != 0:
             printf("[t-SNE] ERROR\n%s", EMPTY_STRING)
@@ -416,7 +416,7 @@ cdef long count_points(Node* root, long count) nogil:
         count += root.size
         if DEBUGFLAG : 
             printf("[t-SNE] %p is a leaf node, no children\n", root)
-            printf("[t-SNE] %i points in node %p\n", count, root)
+            printf("[t-SNE] %li points in node %p\n", count, root)
         return count
     # Otherwise, get the children
     for idx in range(root.tree.n_cell_per_node):
@@ -425,7 +425,7 @@ cdef long count_points(Node* root, long count) nogil:
             printf("[t-SNE] Counting points for child %p\n", child)
         if child.is_leaf and child.size > 0:
             if DEBUGFLAG:
-                printf("[t-SNE] Child has size %d\n", child.size)
+                printf("[t-SNE] Child has size %ld\n", child.size)
             count += child.size
         elif not child.is_leaf:
             if DEBUGFLAG:
@@ -436,13 +436,14 @@ cdef long count_points(Node* root, long count) nogil:
         # one point, and then the other neighboring cells
         # don't get filled in
     if DEBUGFLAG:
-        printf("[t-SNE] %i points in this node\n", count)
+        printf("[t-SNE] %li points in this node\n", count)
     return count
 
 
-cdef float compute_gradient(float[:,:] val_P,
+cdef float compute_gradient(float[:] val_P,
                             float[:,:] pos_reference,
-                            np.int64_t[:,:] neighbors,
+                            np.int64_t[:] neighbors,
+                            np.int64_t[:] indptr,
                             float[:,:] tot_force,
                             Node* root_node,
                             float theta,
@@ -453,46 +454,46 @@ cdef float compute_gradient(float[:,:] val_P,
     # in two components, the positive and negative forces
     cdef long i, coord
     cdef int ax
-    cdef long n = pos_reference.shape[0]
+    cdef long n_samples = pos_reference.shape[0]
     cdef int n_dimensions = root_node.tree.n_dimensions
     if root_node.tree.verbose > 11:
-        printf("[t-SNE] Allocating %i elements in force arrays\n",
-                n * n_dimensions * 2)
+        printf("[t-SNE] Allocating %li elements in force arrays\n",
+                n_samples * n_dimensions * 2)
     cdef float* sum_Q = <float*> malloc(sizeof(float))
-    cdef float* neg_f = <float*> malloc(sizeof(float) * n * n_dimensions)
-    cdef float* neg_f_fast = <float*> malloc(sizeof(float) * n * n_dimensions)
-    cdef float* pos_f = <float*> malloc(sizeof(float) * n * n_dimensions)
+    cdef float* neg_f = <float*> malloc(sizeof(float) * n_samples * n_dimensions)
+    cdef float* pos_f = <float*> malloc(sizeof(float) * n_samples * n_dimensions)
     cdef clock_t t1, t2
     cdef float sQ, error
 
     sum_Q[0] = 0.0
     t1 = clock()
-    compute_gradient_negative(val_P, pos_reference, neg_f, root_node, sum_Q,
+    compute_gradient_negative(pos_reference, neg_f, root_node, sum_Q,
                               dof, theta, start, stop)
     t2 = clock()
     if root_node.tree.verbose > 15:
         printf("[t-SNE] Computing negative gradient: %e ticks\n", ((float) (t2 - t1)))
     sQ = sum_Q[0]
     t1 = clock()
-    error = compute_gradient_positive(val_P, pos_reference, neighbors, pos_f,
-                              n_dimensions, dof, sQ, start, root_node.tree.verbose)
+    error = compute_gradient_positive(val_P, pos_reference, neighbors, indptr,
+                                      pos_f, n_dimensions, dof, sQ, start,
+                                      root_node.tree.verbose)
     t2 = clock()
     if root_node.tree.verbose > 15:
         printf("[t-SNE] Computing positive gradient: %e ticks\n", ((float) (t2 - t1)))
-    for i in range(start, n):
+    for i in range(start, n_samples):
         for ax in range(n_dimensions):
             coord = i * n_dimensions + ax
             tot_force[i, ax] = pos_f[coord] - (neg_f[coord] / sum_Q[0])
     free(sum_Q)
     free(neg_f)
-    free(neg_f_fast)
     free(pos_f)
-    return sQ
+    return error
 
 
-cdef float compute_gradient_positive(float[:,:] val_P,
+cdef float compute_gradient_positive(float[:] val_P,
                                      float[:,:] pos_reference,
-                                     np.int64_t[:,:] neighbors,
+                                     np.int64_t[:] neighbors,
+                                     np.int64_t[:] indptr,
                                      float* pos_f,
                                      int n_dimensions,
                                      float dof,
@@ -507,43 +508,41 @@ cdef float compute_gradient_positive(float[:,:] val_P,
     cdef:
         int ax
         long i, j, k
-        long K = neighbors.shape[1]
-        long n = val_P.shape[0]
-        float[3] buff
-        float D, Q, pij
+        long n_samples = indptr.shape[0] - 1
+        float dij, qij, pij
         float C = 0.0
         float exponent = (dof + 1.0) / -2.0
     cdef clock_t t1, t2
+    cdef float* buff = <float*> malloc(sizeof(float) * n_dimensions)
     t1 = clock()
-    for i in range(start, n):
+    for i in range(start, n_samples):
         for ax in range(n_dimensions):
             pos_f[i * n_dimensions + ax] = 0.0
-        for k in range(K):
-            j = neighbors[i, k]
+        for k in range(indptr[i], indptr[i+1]):
+            j = neighbors[k]
             # we don't need to exclude the i==j case since we've 
             # already thrown it out from the list of neighbors
-            D = 0.0
-            Q = 0.0
-            pij = val_P[i, j]
+            dij = 0.0
+            pij = val_P[k]
             for ax in range(n_dimensions):
                 buff[ax] = pos_reference[i, ax] - pos_reference[j, ax]
-                D += buff[ax] ** 2.0  
-            Q = (((1.0 + D) / dof) ** exponent)
-            D = pij * Q
-            Q /= sum_Q
-            C += pij * log((pij + EPSILON) / (Q + EPSILON))
+                dij += buff[ax] * buff[ax]
+            qij = (((1.0 + dij) / dof) ** exponent)
+            dij = pij * qij
+            qij /= sum_Q
+            C += pij * log((pij + EPSILON) / (qij + EPSILON))
             for ax in range(n_dimensions):
-                pos_f[i * n_dimensions + ax] += D * buff[ax]
+                pos_f[i * n_dimensions + ax] += dij * buff[ax]
     t2 = clock()
     dt = ((float) (t2 - t1))
     if verbose > 10:
         printf("[t-SNE] Computed error=%1.4f in %1.1e ticks\n", C, dt)
+
+    free(buff)
     return C
 
 
-
-cdef void compute_gradient_negative(float[:,:] val_P, 
-                                    float[:,:] pos_reference,
+cdef void compute_gradient_negative(float[:,:] pos_reference,
                                     float* neg_f,
                                     Node *root_node,
                                     float* sum_Q,
@@ -613,8 +612,8 @@ cdef void compute_gradient_negative(float[:,:] val_P,
         dta += t2 - t1
         dtb += t3 - t2
     if root_node.tree.verbose > 20:
-        printf("[t-SNE] Tree: %i clock ticks | ", dta)
-        printf("Force computation: %i clock ticks\n", dtb)
+        printf("[t-SNE] Tree: %li clock ticks | ", dta)
+        printf("Force computation: %li clock ticks\n", dtb)
     free(iQ)
     free(force)
     free(pos)
@@ -680,37 +679,6 @@ cdef void compute_non_edge_forces(Node* node,
                         l)
 
 
-cdef float compute_error(float[:, :] val_P,
-                        float[:, :] pos_reference,
-                        np.int64_t[:,:] neighbors,
-                        float sum_Q,
-                        int n_dimensions,
-                        int verbose) nogil:
-    cdef int i, j, ax
-    cdef int I = neighbors.shape[0]
-    cdef int K = neighbors.shape[1]
-    cdef float pij, Q
-    cdef float C = 0.0
-    cdef clock_t t1, t2
-    cdef float dt, delta
-    t1 = clock()
-    for i in range(I):
-        for k in range(K):
-            j = neighbors[i, k]
-            pij = val_P[i, j]
-            Q = 0.0
-            for ax in range(n_dimensions):
-                delta = (pos_reference[i, ax] - pos_reference[j, ax])
-                Q += delta * delta
-            Q = (1.0 / (sum_Q + Q * sum_Q))
-            C += pij * log((pij + EPSILON) / (Q + EPSILON))
-    t2 = clock()
-    dt = ((float) (t2 - t1))
-    if verbose > 10:
-        printf("[t-SNE] Computed error=%1.4f in %1.1e ticks\n", C, dt)
-    return C
-
-
 def calculate_edge(pos_output):
     # Make the boundaries slightly outside of the data
     # to avoid floating point error near the edge
@@ -724,10 +692,12 @@ def calculate_edge(pos_output):
     right_edge = center + width / 2.0
     return left_edge, right_edge, width
 
-def gradient(float[:,:] pij_input, 
-             float[:,:] pos_output, 
-             np.int64_t[:,:] neighbors, 
-             float[:,:] forces, 
+
+def gradient(float[:] val_P,
+             float[:,:] pos_output,
+             np.int64_t[:] neighbors,
+             np.int64_t[:] indptr,
+             float[:,:] forces,
              float theta,
              int n_dimensions,
              int verbose,
@@ -740,24 +710,18 @@ def gradient(float[:,:] pij_input,
     n = pos_output.shape[0]
     left_edge, right_edge, width = calculate_edge(pos_output)
     assert width.itemsize == 4
-    assert pij_input.itemsize == 4
+    assert val_P.itemsize == 4
     assert pos_output.itemsize == 4
     assert forces.itemsize == 4
-    m = "Number of neighbors must be < # of points - 1"
-    assert n - 1 >= neighbors.shape[1], m
-    m = "neighbors array and pos_output shapes are incompatible"
-    assert n == neighbors.shape[0], m
     m = "Forces array and pos_output shapes are incompatible"
     assert n == forces.shape[0], m
     m = "Pij and pos_output shapes are incompatible"
-    assert n == pij_input.shape[0], m
-    m = "Pij and pos_output shapes are incompatible"
-    assert n == pij_input.shape[1], m
+    assert n == indptr.shape[0] - 1, m
     if verbose > 10:
         printf("[t-SNE] Initializing tree of n_dimensions %i\n", n_dimensions)
     cdef Tree* qt = init_tree(left_edge, width, n_dimensions, verbose)
     if verbose > 10:
-        printf("[t-SNE] Inserting %i points\n", pos_output.shape[0])
+        printf("[t-SNE] Inserting %li points\n", pos_output.shape[0])
     err = insert_many(qt, pos_output)
     assert err == 0, "[t-SNE] Insertion failed"
     if verbose > 10:
@@ -765,18 +729,16 @@ def gradient(float[:,:] pij_input,
         # in the generated C code that triggers error with gcc 4.9
         # and -Werror=format-security
         printf("[t-SNE] Computing gradient\n%s", EMPTY_STRING)
-    sum_Q = compute_gradient(pij_input, pos_output, neighbors, forces,
-                             qt.root_node, theta, dof, skip_num_points, -1)
-    C = compute_error(pij_input, pos_output, neighbors, sum_Q, n_dimensions,
-                      verbose)
+    C = compute_gradient(val_P, pos_output, neighbors, indptr, forces,
+                         qt.root_node, theta, dof, skip_num_points, -1)
     if verbose > 10:
         # XXX: format hack to workaround lack of `const char *` type
         # in the generated C code
         # and -Werror=format-security
         printf("[t-SNE] Checking tree consistency\n%s", EMPTY_STRING)
     cdef long count = count_points(qt.root_node, 0)
-    m = ("Tree consistency failed: unexpected number of points=%i "
-         "at root node=%i" % (count, qt.root_node.cumulative_size))
+    m = ("Tree consistency failed: unexpected number of points=%li "
+         "at root node=%li" % (count, qt.root_node.cumulative_size))
     assert count == qt.root_node.cumulative_size, m 
     m = "Tree consistency failed: unexpected number of points on the tree"
     assert count == qt.n_points, m

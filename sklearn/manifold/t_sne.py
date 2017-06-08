@@ -13,7 +13,8 @@ from scipy import linalg
 import scipy.sparse as sp
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
-from ..neighbors import BallTree
+from scipy.sparse import csr_matrix
+from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
@@ -70,10 +71,11 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
 
     Parameters
     ----------
-    distances : array, shape (n_samples * (n_samples-1) / 2,)
-        Distances of samples are stored as condensed matrices, i.e.
-        we omit the diagonal and duplicate entries and store everything
-        in a one-dimensional array.
+    distances : array, shape (n_samples, K)
+        Distances of samples to its K nearest neighbors.
+
+    neighbors : array, shape (n_samples, K)
+        K nearest-neighbors for each samples.
 
     desired_perplexity : float
         Desired perplexity of the joint probability distributions.
@@ -83,21 +85,27 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
 
     Returns
     -------
-    P : array, shape (n_samples * (n_samples-1) / 2,)
-        Condensed joint probability matrix.
+    P : csr sparse matrix, shape (n_samples, n_samples)
+        Condensed joint probability matrix with only nearest neighbors.
     """
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
+    n_samples, K = neighbors.shape
     distances = distances.astype(np.float32, copy=False)
     neighbors = neighbors.astype(np.int64, copy=False)
     conditional_P = _utils._binary_search_perplexity(
         distances, neighbors, desired_perplexity, verbose)
-    m = "All probabilities should be finite"
-    assert np.all(np.isfinite(conditional_P)), m
-    P = conditional_P + conditional_P.T
-    sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
-    P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
-    assert np.all(np.abs(P) <= 1.0)
+    assert np.all(np.isfinite(conditional_P)), \
+        "All probabilities should be finite"
+
+    P = csr_matrix((conditional_P.ravel(), neighbors.ravel(),
+                    range(0, n_samples * K + 1, K)),
+                   shape=(n_samples, n_samples))
+
+    P = P + P.T
+    sum_P = np.maximum(P.sum(), MACHINE_EPSILON)
+    P /= sum_P
+    assert np.all(np.abs(P.data) <= 1.0)
     return P
 
 
@@ -140,11 +148,11 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     X_embedded = params.reshape(n_samples, n_components)
 
     # Q is a heavy-tailed distribution: Student's t-distribution
-    n = pdist(X_embedded, "sqeuclidean")
-    n += 1.
-    n /= degrees_of_freedom
-    n **= (degrees_of_freedom + 1.0) / -2.0
-    Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
+    dist = pdist(X_embedded, "sqeuclidean")
+    dist += 1.
+    dist /= degrees_of_freedom
+    dist **= (degrees_of_freedom + 1.0) / -2.0
+    Q = np.maximum(dist / (2.0 * np.sum(dist)), MACHINE_EPSILON)
 
     # Optimization trick below: np.dot(x, y) is faster than
     # np.sum(x * y) because it calls BLAS
@@ -153,11 +161,12 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     kl_divergence = 2.0 * np.dot(P, np.log(P / Q))
 
     # Gradient: dC/dY
-    grad = np.ndarray((n_samples, n_components))
-    PQd = squareform((P - Q) * n)
+    # pdist always returns double precision distances. Thus we need to take
+    grad = np.ndarray((n_samples, n_components), dtype=params.dtype)
+    PQd = squareform((P - Q) * dist)
     for i in range(skip_num_points, n_samples):
-        np.dot(np.ravel(PQd[i], order='K'), X_embedded[i] - X_embedded,
-               out=grad[i])
+        grad[i] = np.dot(np.ravel(PQd[i], order='K'),
+                         X_embedded[i] - X_embedded)
     grad = grad.ravel()
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad *= c
@@ -221,9 +230,8 @@ def _kl_divergence_error(params, P, neighbors, degrees_of_freedom, n_samples,
     return kl_divergence
 
 
-def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
-                      n_components, angle=0.5, skip_num_points=0,
-                      verbose=False):
+def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
+                      angle=0.5, skip_num_points=0, verbose=False):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
@@ -234,12 +242,8 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     params : array, shape (n_params,)
         Unraveled embedding.
 
-    P : array, shape (n_samples * (n_samples-1) / 2,)
+    P : csr sparse matrix, shape (n_samples, n_sample)
         Condensed joint probability matrix.
-
-    neighbors : int64 array, shape (n_samples, K)
-        Array with element [i, j] giving the index for the jth
-        closest neighbor to point i.
 
     degrees_of_freedom : float
         Degrees of freedom of the Student's-t distribution.
@@ -278,14 +282,13 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     """
     params = params.astype(np.float32, copy=False)
     X_embedded = params.reshape(n_samples, n_components)
-    neighbors = neighbors.astype(np.int64, copy=False)
-    if len(P.shape) == 1:
-        sP = squareform(P).astype(np.float32)
-    else:
-        sP = P.astype(np.float32)
+
+    val_P = P.data.astype(np.float32, copy=False)
+    neighbors = P.indices.astype(np.int64, copy=False)
+    indptr = P.indptr.astype(np.int64, copy=False)
 
     grad = np.zeros(X_embedded.shape, dtype=np.float32)
-    error = _barnes_hut_tsne.gradient(sP, X_embedded, neighbors,
+    error = _barnes_hut_tsne.gradient(val_P, X_embedded, neighbors, indptr,
                                       grad, angle, n_components, verbose,
                                       dof=degrees_of_freedom)
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
@@ -629,11 +632,9 @@ class TSNE(BaseEstimator):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = TSNE(n_components=2, random_state=0)
     >>> np.set_printoptions(suppress=True)
-    >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[ 0.00017619,  0.00004014],
-           [ 0.00010268,  0.00020546],
-           [ 0.00018298, -0.00008335],
-           [ 0.00009501, -0.00001388]])
+    >>> X_embedded = model.fit_transform(X)
+    >>> X_embedded.shape
+    (4, 2)
 
     References
     ----------
@@ -699,6 +700,12 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.metric == "precomputed":
+            if isinstance(self.init, string_types) and self.init == 'pca':
+                raise ValueError("The parameter init=\"pca\" cannot be "
+                                 "used with metric=\"precomputed\".")
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square distance matrix")
         if self.method == 'barnes_hut' and sp.issparse(X):
             raise TypeError('A sparse matrix was passed, but dense '
                             'data is required for method="barnes_hut". Use '
@@ -708,37 +715,33 @@ class TSNE(BaseEstimator):
                             'reduction techniques (e.g. TruncatedSVD)')
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=np.float64)
+                            dtype=[np.float32, np.float64])
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
-            raise ValueError("early_exaggeration must be at least 1, but is "
-                             "%f" % self.early_exaggeration)
+            raise ValueError("early_exaggeration must be at least 1, but is {}"
+                             .format(self.early_exaggeration))
 
         if self.n_iter < 200:
             raise ValueError("n_iter should be at least 200")
 
-        if self.metric == "precomputed":
-            if isinstance(self.init, string_types) and self.init == 'pca':
-                raise ValueError("The parameter init=\"pca\" cannot be used "
-                                 "with metric=\"precomputed\".")
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square distance matrix")
-            distances = X
-        else:
-            if self.verbose:
-                print("[t-SNE] Computing pairwise distances...")
-
-            if self.metric == "euclidean":
-                distances = pairwise_distances(X, metric=self.metric,
-                                               squared=True)
+        if self.method == "exact":
+            if self.metric == "precomputed":
+                distances = X
             else:
-                distances = pairwise_distances(X, metric=self.metric)
+                if self.verbose:
+                    print("[t-SNE] Computing pairwise distances...")
 
-        if not np.all(distances >= 0):
-            raise ValueError("All distances should be positive, either "
-                             "the metric or precomputed distances given "
-                             "as X are not correct")
+                if self.metric == "euclidean":
+                    distances = pairwise_distances(X, metric=self.metric,
+                                                   squared=True)
+                else:
+                    distances = pairwise_distances(X, metric=self.metric)
+
+            if not np.all(distances >= 0):
+                raise ValueError("All distances should be positive, either "
+                                 "the metric or precomputed distances given "
+                                 "as X are not correct")
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
@@ -753,34 +756,40 @@ class TSNE(BaseEstimator):
         if self.method == 'barnes_hut':
             if self.verbose:
                 print("[t-SNE] Computing %i nearest neighbors..." % k)
+
+            # Find the nearest neighbors for every point
+            # TODO: argument for class knn_estimator=None
+            # TODO: assert that the knn metric is euclidean
             if self.metric == 'precomputed':
-                # Use the precomputed distances to find
-                # the k nearest neighbors and their distances
-                neighbors_nn = np.argsort(distances, axis=1)[:, :k]
+                knn = NearestNeighbors(metric=self.metric)
             else:
-                # Find the nearest neighbors for every point
-                bt = BallTree(X)
-                # LvdM uses 3 * perplexity as the number of neighbors
-                # And we add one to not count the data point itself
-                # In the event that we have very small # of points
-                # set the neighbors to n - 1
-                distances_nn, neighbors_nn = bt.query(X, k=k + 1)
-                neighbors_nn = neighbors_nn[:, 1:]
-            P = _joint_probabilities_nn(distances, neighbors_nn,
+                knn = NearestNeighbors(algorithm='ball_tree',
+                                       metric=self.metric)
+            knn.fit(X)
+            # LvdM uses 3 * perplexity as the number of neighbors
+            # And we add one to not count the data point itself
+            # In the event that we have very small # of points
+            # set the neighbors to n - 1
+            distances_nn, neighbors_nn = knn.kneighbors(
+                None, n_neighbors=k)
+            if self.metric != "precomputed":
+                distances_nn **= 2
+
+            P = _joint_probabilities_nn(distances_nn, neighbors_nn,
                                         self.perplexity, self.verbose)
         else:
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
-        assert np.all(np.isfinite(P)), "All probabilities should be finite"
-        assert np.all(P >= 0), "All probabilities should be zero or positive"
-        assert np.all(P <= 1), ("All probabilities should be less "
-                                "or then equal to one")
+            assert np.all(np.isfinite(P)), "All probabilities should be finite"
+            assert np.all(P >= 0), "All probabilities should be non-negative"
+            assert np.all(P <= 1), ("All probabilities should be less "
+                                    "or then equal to one")
 
         if isinstance(self.init, np.ndarray):
             X_embedded = self.init
         elif self.init == 'pca':
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
-            X_embedded = pca.fit_transform(X)
+            X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
         elif self.init == 'random':
             X_embedded = None
         else:
@@ -812,8 +821,8 @@ class TSNE(BaseEstimator):
 
         if X_embedded is None:
             # Initialize embedding randomly
-            X_embedded = 1e-4 * random_state.randn(n_samples,
-                                                   self.n_components)
+            X_embedded = 1e-4 * random_state.randn(
+                n_samples, self.n_components).astype(np.float32)
         params = X_embedded.ravel()
 
         opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
@@ -822,20 +831,16 @@ class TSNE(BaseEstimator):
                     "verbose": self.verbose, "n_iter_check": 25,
                     "kwargs": dict(skip_num_points=skip_num_points)}
         if self.method == 'barnes_hut':
-            m = "Must provide an array of neighbors to use Barnes-Hut"
-            assert neighbors is not None, m
             obj_func = _kl_divergence_bh
-            objective_error = _kl_divergence_error
-            sP = squareform(P).astype(np.float32)
-            neighbors = neighbors.astype(np.int64)
-            args = [sP, neighbors, degrees_of_freedom, n_samples,
+            args = [P, degrees_of_freedom, n_samples,
                     self.n_components]
+
             opt_args['args'] = args
             opt_args['min_grad_norm'] = 1e-3
             opt_args['n_iter_without_progress'] = 30
             # Don't always calculate the cost since that calculation
             # can be nearly as expensive as the gradient
-            opt_args['objective_error'] = objective_error
+            opt_args['objective_error'] = _kl_divergence_error
             opt_args['kwargs']['angle'] = self.angle
             opt_args['kwargs']['verbose'] = self.verbose
         else:
@@ -855,11 +860,10 @@ class TSNE(BaseEstimator):
         opt_args['it'] = it + 1
         params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                       **opt_args)
+
         if self.verbose:
             print("[t-SNE] KL divergence after %d iterations with early "
                   "exaggeration: %f" % (it + 1, kl_divergence))
-        # Save the final number of iterations
-        self.n_iter_ = it
 
         # Final optimization
         P /= self.early_exaggeration
@@ -867,6 +871,8 @@ class TSNE(BaseEstimator):
         opt_args['it'] = it + 1
         params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                       **opt_args)
+        # Save the final number of iterations
+        self.n_iter_ = it
 
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f"

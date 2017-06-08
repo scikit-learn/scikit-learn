@@ -12,18 +12,18 @@ cdef float PERPLEXITY_TOLERANCE = 1e-5
 
 @cython.boundscheck(False)
 cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
-        np.ndarray[np.float32_t, ndim=2] affinities, 
-        np.ndarray[np.int64_t, ndim=2] neighbors, 
+        np.ndarray[np.float32_t, ndim=2] affinities,
+        np.ndarray[np.int64_t, ndim=2] neighbors,
         float desired_perplexity,
         int verbose):
-    """Binary search for sigmas of conditional Gaussians. 
-    
+    """Binary search for sigmas of conditional Gaussians.
+
     This approximation reduces the computational complexity from O(N^2) to
     O(uN). See the exact method '_binary_search_perplexity' for more details.
 
     Parameters
     ----------
-    affinities : array-like, shape (n_samples, n_samples)
+    affinities : array-like, shape (n_samples, K)
         Distances between training samples.
 
     neighbors : array-like, shape (n_samples, K) or None
@@ -46,16 +46,13 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     cdef long n_steps = 100
 
     cdef long n_samples = affinities.shape[0]
-    # This array is later used as a 32bit array. It has multiple intermediate
-    # floating point additions that benefit from the extra precision
-    cdef np.ndarray[np.float64_t, ndim=2] P = np.zeros((n_samples, n_samples),
-                                                       dtype=np.float64)
-    # Precisions of conditional Gaussian distrubutions
+    # Precisions of conditional Gaussian distributions
     cdef float beta
     cdef float beta_min
     cdef float beta_max
     cdef float beta_sum = 0.0
-    # Now we go to log scale
+
+    # Use log scale
     cdef float desired_entropy = math.log(desired_perplexity)
     cdef float entropy_diff
 
@@ -69,6 +66,11 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     if using_neighbors:
         K = neighbors.shape[1]
 
+    # This array is later used as a 32bit array. It has multiple intermediate
+    # floating point additions that benefit from the extra precision
+    cdef np.ndarray[np.float64_t, ndim=2] P = np.zeros((n_samples, K),
+                                                       dtype=np.float64)
+
     for i in range(n_samples):
         beta_min = -NPY_INFINITY
         beta_max = NPY_INFINITY
@@ -79,34 +81,20 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
             # Compute current entropy and corresponding probabilities
             # computed just over the nearest neighbors or over all data
             # if we're not using neighbors
-            if using_neighbors:
-                for k in range(K):
-                    j = neighbors[i, k]
-                    P[i, j] = math.exp(-affinities[i, j] * beta)
-            else:
-                for j in range(K):
-                    P[i, j] = math.exp(-affinities[i, j] * beta)
-            P[i, i] = 0.0
             sum_Pi = 0.0
-            if using_neighbors:
-                for k in range(K):
-                    j = neighbors[i, k]
+            for j in range(K):
+                if j != i or using_neighbors:
+                    P[i, j] = math.exp(-affinities[i, j] * beta)
                     sum_Pi += P[i, j]
-            else:
-                for j in range(K):
-                    sum_Pi += P[i, j]
+
             if sum_Pi == 0.0:
                 sum_Pi = EPSILON_DBL
             sum_disti_Pi = 0.0
-            if using_neighbors:
-                for k in range(K):
-                    j = neighbors[i, k]
-                    P[i, j] /= sum_Pi
-                    sum_disti_Pi += affinities[i, j] * P[i, j]
-            else:
-                for j in range(K):
-                    P[i, j] /= sum_Pi
-                    sum_disti_Pi += affinities[i, j] * P[i, j]
+
+            for j in range(K):
+                P[i, j] /= sum_Pi
+                sum_disti_Pi += affinities[i, j] * P[i, j]
+
             entropy = math.log(sum_Pi) + beta * sum_disti_Pi
             entropy_diff = entropy - desired_entropy
 
