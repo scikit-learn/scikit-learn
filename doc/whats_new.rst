@@ -324,6 +324,9 @@ Bug fixes
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
      :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
 
+   - Add ``shuffle`` parameter to :func:`sklearn.model_selection.train_test_split`.
+     :issue:`#8845` by  :user:`themrmax <themrmax>`
+
 API changes summary
 -------------------
 
