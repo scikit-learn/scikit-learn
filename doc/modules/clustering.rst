@@ -54,6 +54,13 @@ Overview of clustering methods
      - General-purpose, even cluster size, flat geometry, not too many clusters
      - Distances between points
 
+   * - :ref:`K-Medoids <k_medoids>`
+     - number of clusters
+     - Large ``n_samples``, medium ``n_clusters``
+     - General-purpose, uneven cluster size, flat geometry, 
+       not too many clusters
+     - Distances between points (arbitrary metric)
+
    * - :ref:`Affinity propagation <affinity_propagation>`
      - damping, sample preference
      - Not scalable with n_samples
@@ -277,6 +284,26 @@ small, as shown in the example and cited reference.
    <http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
    D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
+
+.. _k_medoids:
+
+K-Medoids
+=========
+
+:class:`KMedoids` is similar to :class:`KMeans` with some exceptions. First, instead of using the mean of each cluster as the cluster center, :class:`KMedoids` uses that data point as the cluster center (also known as the medoid) whose sum-of-distances to all cluster members is the smallest. Second, the distance metric used by :class:`KMedoids` can be freely chosen, whereas with :class:`KMeans` it is fixed to Euclidean distance.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits with various distance metrics.
+
+**Algorithm description:**
+:class:`KMedoids` fitting algorithms have different variants, one of them being Partitioning Around Medoids, or PAM. Currently Scikit-Learn only supports PAM, but other variants may be introduced if need be. PAM algorithm is:
+
+* Randomly assign samples to clusters
+* Continue while the medoids keep changing or maximum number of iterations, 
+  *max_iter*, is reached
+* Assign new medoids in each cluster
+* Assign samples to clusters with the closest medoids
 
 .. _affinity_propagation:
 
