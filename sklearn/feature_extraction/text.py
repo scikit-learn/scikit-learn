@@ -28,7 +28,7 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
-from .stop_words import ENGLISH_STOP_WORDS
+from .stop_words import ENGLISH_STOP_WORDS, ENGLISH_STOP_WORDS_EXPANDED
 from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
@@ -87,6 +87,8 @@ def strip_tags(s):
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
+    elif stop == "english-expanded":
+        return ENGLISH_STOP_WORDS_EXPANDED
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
