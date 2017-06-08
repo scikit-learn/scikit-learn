@@ -73,14 +73,51 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.inv_kw_args = inv_kw_args
 
     def fit(self, X, y=None):
+        """Fit transformer by checking X.
+
+        If ``validate`` is ``True``, ``X`` will be checked.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Input array.
+
+        Returns
+        -------
+        self
+        """
         if self.validate:
             check_array(X, self.accept_sparse)
         return self
 
     def transform(self, X, y=None):
+        """Transform X using the forward function.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Input array.
+
+        Returns
+        -------
+        X_out : array-like, shape (n_samples, n_features)
+            Transformed input.
+        """
         return self._transform(X, y, self.func, self.kw_args)
 
     def inverse_transform(self, X, y=None):
+        """Transform X using the inverse function.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Input array.
+
+        Returns
+        -------
+        X_out : array-like, shape (n_samples, n_features)
+            Transformed input.
+        """
         return self._transform(X, y, self.inverse_func, self.inv_kw_args)
 
     def _transform(self, X, y=None, func=None, kw_args=None):
