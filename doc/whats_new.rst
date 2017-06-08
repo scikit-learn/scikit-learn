@@ -294,9 +294,18 @@ Bug fixes
      left `coef_` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
 
+
+   - Fix a bug where :class:`sklearn.feature_extraction.FeatureHasher`
+     mandatorily applied a sparse random projection to the hashed features,
+     preventing the use of 
+     :class:`sklearn.feature_extraction.text.HashingVectorizer` in a
+     pipeline with  :class:`sklearn.feature_extraction.text.TfidfTransformer`.
+     :issue:`7513` by :user:`Roman Yurchak <rth>`.
+     
    - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
      raising an exception if instability is identified.  :issue:`7376` and
      :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
+     
    - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
