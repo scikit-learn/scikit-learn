@@ -10,34 +10,7 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
-from . import __version__
-
-
-_PRINTOPTIONS = {'parameters': 'all'}
-
-
-def set_print(parameters=None):
-    """Set estimator print options.
-
-    WARNING: This functionality is experimental and might be removed or changed
-    at any time.
-
-    Parameters
-    ----------
-    parameters : None, 'all' or 'changed', default=None
-        Which parameters to show when printing estimators.
-        If None, this setting is not changed, if 'all',
-        all parameters are shown, if 'changed', only the
-        parameters that are not at their default value are shown.
-
-    Returns
-    -------
-    printoptions : dict
-        Current print options.
-    """
-    if parameters is not None:
-        _PRINTOPTIONS['parameters'] = parameters
-    return _PRINTOPTIONS
+from . import __version__, get_config
 
 
 ##############################################################################
@@ -313,7 +286,7 @@ class BaseEstimator(object):
 
     def _changed_params(self):
         params = self.get_params(deep=False)
-        if _PRINTOPTIONS['parameters'] == 'changed':
+        if get_config()['show_parameters'] == 'changed':
             filtered_params = {}
             init_params = signature(self.__init__).parameters
             for k, v in params.items():

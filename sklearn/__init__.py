@@ -18,7 +18,11 @@ import warnings
 import os
 from contextlib import contextmanager as _contextmanager
 
-_ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
+_CONFIG = {'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE',
+                                                False)),
+           'show_parameters': bool(os.environ.get('SKLEARN_SHOW_PARAMETERS',
+                                                  'all'))
+           }
 
 
 def get_config():
@@ -29,10 +33,10 @@ def get_config():
     config : dict
         Keys are parameter names that can be passed to :func:`set_config`.
     """
-    return {'assume_finite': _ASSUME_FINITE}
+    return _CONFIG
 
 
-def set_config(assume_finite=None):
+def set_config(assume_finite=None, show_parameters=None):
     """Set global scikit-learn configuration
 
     Parameters
@@ -42,10 +46,15 @@ def set_config(assume_finite=None):
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
         avoiding error.
+    show_parameters : str, 'all' or 'changed'
+        Whether to include all estimator parameters in the
+        string representation or only the changed ones.
     """
-    global _ASSUME_FINITE
+    global _CONFIG
     if assume_finite is not None:
-        _ASSUME_FINITE = assume_finite
+        _CONFIG.update(assume_finite=assume_finite)
+    if show_parameters is not None:
+        _CONFIG.update(show_parmeters=show_parameters)
 
 
 @_contextmanager
