@@ -57,6 +57,9 @@ def test_make_classification():
 
     assert_equal(X.shape, (2000, 31), "X shape mismatch")
     assert_equal(y.shape, (2000,), "y shape mismatch")
+    assert_equal(np.unique(X.view([('', X.dtype)]*X.shape[1])).view(X.dtype)
+                 .reshape(-1, X.shape[1]).shape[0], 2000,
+                 "Unexpected number of unique rows")
 
 
 def test_make_classification_informative_features():
