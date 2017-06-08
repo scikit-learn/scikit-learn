@@ -161,7 +161,6 @@ Enhancements
      and :func:`model_selection.cross_val_score` now allow estimators with callable
      kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
 
-
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -170,6 +169,7 @@ Enhancements
 
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -179,8 +179,11 @@ Enhancements
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
    - Prevent cast from float32 to float64 in
-   :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
-   by :user:`Joan Massich <massich>`
+     :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
+     by :user:`Joan Massich <massich>`
+
+   - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
+     :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
 
 Bug fixes
 .........
