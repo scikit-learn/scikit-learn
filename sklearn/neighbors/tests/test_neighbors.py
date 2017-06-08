@@ -9,6 +9,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
@@ -535,6 +536,19 @@ def check_classifier_sparse_multilabel_y(name):
 def test_classifiers_sparse_multilabel_y():
     for name in CLASSIFIERS:
         yield check_classifier_sparse_multilabel_y, name
+
+def test_sparse_multilabel_y():
+    rng = check_random_state(0)
+    n_features = 2
+    n_samples = 100
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 5, (n_samples, n_output))
+
+    clf = neighbors.KNeighborsClassifier(n_neighbors=3)
+    assert_raises_regex(ValueError,
+                        "Sparse y is only supported for multilabel")
 
 
 def test_KNeighborsClassifier_multioutput():

@@ -161,7 +161,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
             for k, classes_k in enumerate(classes_):
                 mode = self._mode(_y[neigh_ind, k].toarray(), weights)
-                y_pred_sparse_multilabel.append(csc_matrix(mode).T)
+                y_pred_sparse_multilabel.append(csc_matrix(mode.T))
 
             y_pred = sparse.hstack(y_pred_sparse_multilabel)
 
