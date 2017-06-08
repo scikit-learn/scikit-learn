@@ -702,7 +702,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     Raises
     ------
     NotFittedError
-        If the attributes aren not found.
+        If the attributes are not found.
     """
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
