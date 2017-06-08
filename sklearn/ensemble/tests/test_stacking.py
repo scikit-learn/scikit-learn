@@ -37,23 +37,11 @@ def test_stacking_api():
     clf1 = RidgeClassifier(random_state=1)
     clf2 = LogisticRegression(random_state=1)
     clf3 = RandomForestClassifier(random_state=1)
-    clf4 = BaggingClassifier(random_state=1)
-    clf5 = SVC(random_state=1)
 
     layer = make_stack_layer(clf1, clf2, clf3)
 
     assert_array_equal([x[1].base_estimator for x in layer.transformer_list],
                        [clf1, clf2, clf3])
-
-    clf_layers = [[clf1, clf2], [clf3, clf4], clf5]
-    final_clf = stack_estimators(*clf_layers)
-
-    clfs_from_pipeline = [[x[1].base_estimator
-                           for x in y[1].transformer_list]
-                          for y in final_clf.steps[:-1]]
-    clfs_from_pipeline.append(final_clf.steps[-1][1])
-
-    assert_array_equal(clf_layers, clfs_from_pipeline)
 
 
 def test_classification():

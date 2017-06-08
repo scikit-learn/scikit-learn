@@ -20,7 +20,6 @@ from .voting_classifier import VotingClassifier
 from .stacking import StackMetaEstimator
 from .stacking import StackLayer
 from .stacking import make_stack_layer
-from .stacking import stack_estimators
 
 from . import bagging
 from . import forest
@@ -36,5 +35,5 @@ __all__ = ["BaseEnsemble",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "VotingClassifier",
            "StackMetaEstimator", "StackLayer",
-           "make_stack_layer", "stack_estimators", "bagging", "forest",
+           "make_stack_layer", "bagging", "forest",
            "gradient_boosting", "partial_dependence", "weight_boosting"]
