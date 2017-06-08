@@ -23,6 +23,12 @@ iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
 
+# A custom classifier based on SVC to return 'float' type class labels
+class FaultySVC(SVC):
+    def predict(self, X):
+        return super(FaultySVC, self).predict(X).astype(float)
+
+
 def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
     msg = ('Invalid `estimators` attribute, `estimators` should be'
@@ -364,3 +370,16 @@ def test_estimator_weights_format():
     eclf1.fit(X, y)
     eclf2.fit(X, y)
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
+
+def test_predict_for_hard_voting():
+    # Test predictions array data type error
+    clf1 = FaultySVC(random_state=123)
+    clf2 = GaussianNB()
+    clf3 = SVC(probability=True, random_state=123)
+    eclf1 = VotingClassifier(estimators=[
+        ('fsvc', clf1), ('gnb', clf2), ('svc', clf3)], weights=[1, 2, 3],
+        voting='hard')
+
+    eclf1.fit(X, y)
+    eclf1.predict(X)
