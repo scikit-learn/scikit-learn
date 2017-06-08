@@ -678,6 +678,8 @@ def test_stratified_shuffle_split_multilabel():
         X = np.ones_like(y)
         sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
         train, test = next(iter(sss.split(X=X, y=y)))
+        y_train = y[train]
+        y_test = y[test]
 
         # no overlap
         assert_array_equal(np.intersect1d(train, test), [])
@@ -687,8 +689,9 @@ def test_stratified_shuffle_split_multilabel():
 
         # correct stratification of entire rows
         # (by design, here y[:, 0] uniquely determines the entire row of y)
-        assert_equal(np.mean(y[train, 0]), 0.5)
-        assert_equal(np.mean(y[test, 0]), 0.5)
+        expected_ratio = np.mean(y[:, 0])
+        assert_equal(expected_ratio, np.mean(y_train[:, 0]))
+        assert_equal(expected_ratio, np.mean(y_test[:, 0]))
 
 
 def test_predefinedsplit_with_kfold_split():
