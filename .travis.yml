@@ -3,19 +3,12 @@ sudo: false
 
 language: python
 
-# Pre-install packages for the ubuntu distribution
 cache:
   apt: true
   directories:
   - $HOME/.cache/pip
-  - $HOME/download
-addons:
-  apt:
-    packages:
-      - libatlas3gf-base
-      - libatlas-dev
-      # only required by the DISTRIB="ubuntu" build:
-      - python-scipy
+
+dist: trusty
 
 env:
   global:
@@ -23,44 +16,47 @@ env:
     - TEST_DIR=/tmp/sklearn
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
-  matrix:
-    # This environment tests that scikit-learn can be built against
-    # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
-    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
-      COVERAGE=true
-    # This environment tests the oldest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
-      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.23"
-    # This environment tests the newest supported anaconda env
-    # It also runs tests requiring Pandas.
-    - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" PANDAS_VERSION="0.18.0"
-      CYTHON_VERSION="0.23.4"
-    # flake8 linting on diff wrt common ancestor with upstream/master
-    - RUN_FLAKE8="true" SKIP_TESTS="true"
-      DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.23.4"
-
 
 matrix:
-  allow_failures:
-    # allow_failures seems to be keyed on the python version
-    # We are using this to allow failures for DISTRIB=scipy-dev-wheels
-    - python: 3.5
-
   include:
+    # This environment tests that scikit-learn can be built against
+    # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
+    - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
+           COVERAGE=true
+      addons:
+        apt:
+          packages:
+            # these only required by the DISTRIB="ubuntu" builds:
+            - python-scipy
+            - libatlas3gf-base
+            - libatlas-dev
+    # This environment tests the oldest supported anaconda env
+    - env: DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
+           NUMPY_VERSION="1.8.2" SCIPY_VERSION="0.13.3" CYTHON_VERSION="0.23.5"
+           COVERAGE=true
+    # This environment tests the newest supported Anaconda release (4.4.0)
+    # It also runs tests requiring Pandas.
+    - env: DISTRIB="conda" PYTHON_VERSION="3.6.1" INSTALL_MKL="true"
+           NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0" PANDAS_VERSION="0.20.1"
+           CYTHON_VERSION="0.25.2" COVERAGE=true
+    # This environment use pytest to run the tests. It uses the newest
+    # supported Anaconda release (4.4.0). It also runs tests requiring Pandas.
+    # - env: USE_PYTEST="true" DISTRIB="conda" PYTHON_VERSION="3.6.1"
+    #        INSTALL_MKL="true" NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0"
+    #        PANDAS_VERSION="0.20.1" CYTHON_VERSION="0.25.2"
+    # flake8 linting on diff wrt common ancestor with upstream/master
+    - env: RUN_FLAKE8="true" SKIP_TESTS="true"
+           DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
+           NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0" CYTHON_VERSION="0.23.5"
     # This environment tests scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    # Note: libatlas3gf-base is not allowed yet so we need 'sudo':
-    # https://github.com/travis-ci/apt-package-whitelist/issues/2407
-    # Once libatlas3gf-base is on the whitelist it will be possible to replace
-    # the before_install step with and addons/apt/packages declaration.
-    -  python: 3.5
-       env: DISTRIB="scipy-dev-wheels"
-       sudo: True
-       before_install: sudo apt-get install -yqq libatlas3gf-base libatlas-dev
-
+  #   -  python: 3.5
+  #      env: DISTRIB="scipy-dev-wheels"
+  # allow_failures:
+  #   # allow_failures seems to be keyed on the python version
+  #   # We are using this to allow failures for DISTRIB=scipy-dev-wheels
+  #   - python: 3.5
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh

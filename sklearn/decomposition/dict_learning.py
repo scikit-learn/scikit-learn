@@ -100,6 +100,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     if X.ndim == 1:
         X = X[:, np.newaxis]
     n_samples, n_features = X.shape
+    n_components = dictionary.shape[0]
+    if dictionary.shape[1] != X.shape[1]:
+        raise ValueError("Dictionary and X have different numbers of features:"
+                         "dictionary.shape: {} X.shape{}".format(
+                             dictionary.shape, X.shape))
     if cov is None and algorithm != 'lasso_cd':
         # overwriting cov is safe
         copy_cov = False
@@ -163,6 +168,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
                          % algorithm)
+    if new_code.ndim != 2:
+        return new_code.reshape(n_samples, n_components)
     return new_code
 
 
@@ -287,10 +294,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                               max_iter=max_iter,
                               check_input=False,
                               verbose=verbose)
-        # This ensure that dimensionality of code is always 2,
-        # consistant with the case n_jobs > 1
-        if code.ndim == 1:
-            code = code[np.newaxis, :]
         return code
 
     # Enter parallel code block
@@ -450,8 +453,11 @@ def _update_dict_cd(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -643,8 +649,11 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
     verbose :
         Degree of output the procedure will print.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
@@ -833,8 +842,11 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_inner_stats : boolean, optional
         Return the inner statistics A (dictionary covariance) and B
@@ -1028,7 +1040,6 @@ class SparseCodingMixin(TransformerMixin):
         """
         check_is_fitted(self, 'components_')
 
-        # XXX : kwargs is not documented
         X = check_array(X)
         n_samples, n_features = X.shape
 
@@ -1114,6 +1125,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
     sparse_encode
     """
+    _required_parameters = ["dictionary"]
 
     def __init__(self, dictionary, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1254,8 +1266,11 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     verbose :
         degree of verbosity of the printed output
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1419,8 +1434,11 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     shuffle : bool,
         whether to shuffle the samples before forming batches
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------

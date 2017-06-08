@@ -574,8 +574,7 @@ def test_deprecation_randomized_pca():
     assert_array_almost_equal(Y, Y_pca)
 
 
-def test_pca_spase_input():
-
+def test_pca_sparse_input():
     X = np.random.RandomState(0).rand(5, 4)
     X = sp.sparse.csr_matrix(X)
     assert(sp.sparse.issparse(X))
@@ -584,3 +583,9 @@ def test_pca_spase_input():
         pca = PCA(n_components=3, svd_solver=svd_solver)
 
         assert_raises(TypeError, pca.fit, X)
+
+
+def test_pca_bad_solver():
+    X = np.random.RandomState(0).rand(5, 4)
+    pca = PCA(n_components=3, svd_solver='bad_argument')
+    assert_raises(ValueError, pca.fit, X)

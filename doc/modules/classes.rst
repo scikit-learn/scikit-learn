@@ -40,6 +40,9 @@ Functions
    :template: function.rst
 
    base.clone
+   config_context
+   set_config
+   get_config
 
 
 .. _cluster_ref:
@@ -170,6 +173,8 @@ Splitter Classes
    model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
+   model_selection.RepeatedKFold
+   model_selection.RepeatedStratifiedKFold
    model_selection.ShuffleSplit
    model_selection.GroupShuffleSplit
    model_selection.StratifiedShuffleSplit
@@ -254,6 +259,7 @@ Loaders
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
+   datasets.load_wine
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
    datasets.load_linnerud
@@ -1351,11 +1357,30 @@ Low-level methods
    :toctree: generated/
    :template: function.rst
 
+   utils.assert_all_finite
+   utils.as_float_array
+   utils.check_X_y
+   utils.check_array
+   utils.check_consistent_length
    utils.check_random_state
+   utils.indexable
+   utils.class_weight.compute_class_weight
+   utils.class_weight.compute_sample_weight
    utils.estimator_checks.check_estimator
+   utils.extmath.safe_sparse_dot
    utils.resample
+   utils.safe_indexing
    utils.shuffle
-
+   utils.sparsefuncs.mean_variance_axis
+   utils.sparsefuncs.incr_mean_variance_axis
+   utils.sparsefuncs.inplace_column_scale
+   utils.sparsefuncs.inplace_row_scale
+   utils.sparsefuncs.inplace_swap_row
+   utils.sparsefuncs.inplace_swap_column
+   utils.validation.check_is_fitted
+   utils.validation.check_symmetric
+   utils.validation.column_or_1d
+   utils.validation.has_fit_parameter
 
 Recently deprecated
 ===================

@@ -20,7 +20,7 @@ The two species are:
 References:
 
  * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+   <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
 
@@ -50,11 +50,12 @@ except ImportError:
 
 import numpy as np
 
-from sklearn.datasets.base import get_data_home, Bunch
+from sklearn.datasets.base import get_data_home
+from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
-DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
+DIRECTORY_URL = "http://biodiversityinformatics.amnh.org/open_source/maxent/"
 
 SAMPLES_URL = DIRECTORY_URL + "samples.zip"
 COVERAGES_URL = DIRECTORY_URL + "coverages.zip"
@@ -139,7 +140,7 @@ def fetch_species_distributions(data_home=None,
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
@@ -194,7 +195,7 @@ def fetch_species_distributions(data_home=None,
     ----------
 
     * `"Maximum entropy modeling of species geographic distributions"
-      <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+      <http://rob.schapire.net/papers/ecolmod.pdf>`_
       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
       190:231-259, 2006.
 

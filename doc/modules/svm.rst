@@ -28,7 +28,8 @@ The advantages of support vector machines are:
 The disadvantages of support vector machines include:
 
     - If the number of features is much greater than the number of
-      samples, the method is likely to give poor performances.
+      samples, avoid over-fitting in choosing :ref:`svm_kernels` and regularization
+      term is crucial.
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
@@ -240,7 +241,11 @@ and use ``decision_function`` instead of ``predict_proba``.
    `"Probability estimates for multi-class classification by pairwise coupling"
    <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
-
+ 
+ 
+ * Platt
+   `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
+   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`.
 
 Unbalanced problems
 --------------------
@@ -443,7 +448,7 @@ The *kernel function* can be any of the following:
   * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
     :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
+  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
   * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),

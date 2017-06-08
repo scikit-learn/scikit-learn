@@ -55,9 +55,9 @@ available as neg_mean_squared_error which return the negated value
 of the metric.
 
 
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 Scoring                         Function                                      Comment
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 **Classification**
 'accuracy'                      :func:`metrics.accuracy_score`
 'average_precision'             :func:`metrics.average_precision_score`
@@ -80,7 +80,7 @@ Scoring                         Function                                      Co
 'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
 'r2'                            :func:`metrics.r2_score`
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 
 Usage examples:
 
@@ -94,7 +94,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'completeness_score', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
 .. note::
 
@@ -173,7 +173,7 @@ Here is an example of building custom scorers, and of using the
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1, 1]]
+    >>> ground_truth = [[1], [1]]
     >>> predictions  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)

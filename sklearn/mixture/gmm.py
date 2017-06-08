@@ -15,14 +15,14 @@ of Gaussian Mixture Models.
 # - 'sklearn/mixture/dpgmm.py'
 # - 'sklearn/mixture/test_dpgmm.py'
 # - 'sklearn/mixture/test_gmm.py'
+from time import time
 
 import numpy as np
 from scipy import linalg
-from time import time
+from scipy.misc import logsumexp
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -152,8 +152,11 @@ class _GMMBase(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    random_state : RandomState or an int seed (None by default)
-        A random number generator instance
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent

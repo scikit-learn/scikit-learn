@@ -175,6 +175,24 @@ def test_lasso_cv():
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 
+def test_lasso_cv_with_some_model_selection():
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import StratifiedKFold
+    from sklearn import datasets
+    from sklearn.linear_model import LassoCV
+
+    diabetes = datasets.load_diabetes()
+    X = diabetes.data
+    y = diabetes.target
+
+    pipe = make_pipeline(
+        StandardScaler(),
+        LassoCV(cv=StratifiedKFold(n_splits=5))
+    )
+    pipe.fit(X, y)
+
+
 def test_lasso_cv_positive_constraint():
     X, y, X_test, y_test = build_dataset()
     max_iter = 500
@@ -610,12 +628,20 @@ def test_random_descent():
 
 
 def test_enet_path_positive():
-    # Test that the coefs returned by positive=True in enet_path are positive
+    # Test positive parameter
 
-    X, y, _, _ = build_dataset(n_samples=50, n_features=50)
+    X, Y, _, _ = build_dataset(n_samples=50, n_features=50, n_targets=2)
+
+    # For mono output
+    # Test that the coefs returned by positive=True in enet_path are positive
     for path in [enet_path, lasso_path]:
-        pos_path_coef = path(X, y, positive=True)[1]
+        pos_path_coef = path(X, Y[:, 0], positive=True)[1]
         assert_true(np.all(pos_path_coef >= 0))
+
+    # For multi output, positive parameter is not allowed
+    # Test that an error is raised
+    for path in [enet_path, lasso_path]:
+        assert_raises(ValueError, path, X, Y, positive=True)
 
 
 def test_sparse_dense_descent_paths():
@@ -691,8 +717,8 @@ def test_enet_float_precision():
                 y = dtype(y)
                 ignore_warnings(clf.fit)(X, y)
 
-                coef[dtype] = clf.coef_
-                intercept[dtype] = clf.intercept_
+                coef[('simple', dtype)] = clf.coef_
+                intercept[('simple', dtype)] = clf.intercept_
 
                 assert_equal(clf.coef_.dtype, dtype)
 
@@ -707,11 +733,23 @@ def test_enet_float_precision():
                 assert_array_almost_equal(clf.intercept_,
                                           clf_precompute.intercept_)
 
-            assert_array_almost_equal(coef[np.float32], coef[np.float64],
-                                      decimal=4)
-            assert_array_almost_equal(intercept[np.float32],
-                                      intercept[np.float64],
-                                      decimal=4)
+                # test multi task enet
+                multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
+                clf_multioutput = MultiTaskElasticNet(
+                    alpha=0.5, max_iter=100, fit_intercept=fit_intercept,
+                    normalize=normalize)
+                clf_multioutput.fit(X, multi_y)
+                coef[('multi', dtype)] = clf_multioutput.coef_
+                intercept[('multi', dtype)] = clf_multioutput.intercept_
+                assert_equal(clf.coef_.dtype, dtype)
+
+            for v in ['simple', 'multi']:
+                assert_array_almost_equal(coef[(v, np.float32)],
+                                          coef[(v, np.float64)],
+                                          decimal=4)
+                assert_array_almost_equal(intercept[(v, np.float32)],
+                                          intercept[(v, np.float64)],
+                                          decimal=4)
 
 
 def test_enet_l1_ratio():

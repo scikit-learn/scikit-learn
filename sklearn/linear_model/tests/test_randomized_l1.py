@@ -1,5 +1,7 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
+from tempfile import mkdtemp
+import shutil
 
 import numpy as np
 from scipy import sparse
@@ -7,6 +9,7 @@ from scipy import sparse
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 
 from sklearn.linear_model.randomized_l1 import (lasso_stability_path,
                                                 RandomizedLasso,
@@ -38,6 +41,19 @@ def test_lasso_stability_path():
                        np.argsort(np.sum(scores_path, axis=1))[-3:])
 
 
+def test_randomized_lasso_error_memory():
+    scaling = 0.3
+    selection_threshold = 0.5
+    tempdir = 5
+    clf = RandomizedLasso(verbose=False, alpha=[1, 0.8], random_state=42,
+                          scaling=scaling,
+                          selection_threshold=selection_threshold,
+                          memory=tempdir)
+    assert_raises_regex(ValueError, "'memory' should either be a string or"
+                        " a sklearn.externals.joblib.Memory instance",
+                        clf.fit, X, y)
+
+
 def test_randomized_lasso():
     # Check randomized lasso
     scaling = 0.3
@@ -57,6 +73,18 @@ def test_randomized_lasso():
     feature_scores = clf.fit(X, y).scores_
     assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
     assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
+    # test caching
+    try:
+        tempdir = mkdtemp()
+        clf = RandomizedLasso(verbose=False, alpha=[1, 0.8], random_state=42,
+                              scaling=scaling,
+                              selection_threshold=selection_threshold,
+                              memory=tempdir)
+        feature_scores = clf.fit(X, y).scores_
+        assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
+        assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
+    finally:
+        shutil.rmtree(tempdir)
 
     X_r = clf.transform(X)
     X_full = clf.inverse_transform(X_r)
@@ -99,6 +127,9 @@ def test_randomized_logistic():
                                        n_resampling=50, tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(np.argsort(F), np.argsort(feature_scores))
+
+    clf = RandomizedLogisticRegression(verbose=False, C=[[1., 0.5]])
+    assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_randomized_logistic_sparse():

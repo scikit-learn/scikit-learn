@@ -557,10 +557,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     break
 
                 if self.n_iter_ == self.max_iter:
-                    warnings.warn('Stochastic Optimizer: Maximum iterations'
-                                  ' reached and the optimization hasn\'t '
-                                  'converged yet.'
-                                  % (), ConvergenceWarning)
+                    warnings.warn(
+                        "Stochastic Optimizer: Maximum iterations (%d) "
+                        "reached and the optimization hasn't converged yet."
+                        % self.max_iter, ConvergenceWarning)
         except KeyboardInterrupt:
             warnings.warn("Training interrupted by user.")
 
@@ -755,8 +755,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations.
 
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
@@ -908,6 +911,13 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
+        elif self.warm_start:
+            classes = unique_labels(y)
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used where `y` has "
+                                 "the same classes as in the previous "
+                                 "call to fit. Previously got %s, `y` has %s" %
+                                 (self.classes_, classes))
         else:
             classes = unique_labels(y)
             if np.setdiff1d(classes, self.classes_, assume_unique=True):
@@ -938,6 +948,25 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             y_pred = y_pred.ravel()
 
         return self._label_binarizer.inverse_transform(y_pred)
+
+    def fit(self, X, y):
+        """Fit the model to data matrix X and target(s) y.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : returns a trained MLP model.
+        """
+        return self._fit(X, y, incremental=(self.warm_start and
+                                            hasattr(self, "classes_")))
 
     @property
     def partial_fit(self):
@@ -1100,8 +1129,11 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations.
 
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when

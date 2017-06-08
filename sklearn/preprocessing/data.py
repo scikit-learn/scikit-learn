@@ -19,7 +19,6 @@ from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1149,7 +1148,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack(bincount(c, minlength=self.n_input_features_)
+        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
                          for c in combinations)
 
     def get_feature_names(self, input_features=None):
@@ -1281,7 +1280,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     else:
         raise ValueError("'%d' is not a supported axis" % axis)
 
-    X = check_array(X, sparse_format, copy=copy, warn_on_dtype=True,
+    X = check_array(X, sparse_format, copy=copy,
                     estimator='the normalize function', dtype=FLOAT_DTYPES)
     if axis == 0:
         X = X.T
@@ -1735,7 +1734,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    Given a dataset with three features and two samples, we let the encoder
+    Given a dataset with three features and four samples, we let the encoder
     find the maximum value per feature and transform the data to a binary
     one-hot encoding.
 

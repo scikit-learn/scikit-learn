@@ -115,6 +115,17 @@ def test_height_linkage_tree():
         assert_true(len(children) + n_leaves == n_nodes)
 
 
+def test_agglomerative_clustering_wrong_arg_memory():
+    # Test either if an error is raised when memory is not
+    # either a str or a joblib.Memory instance
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    memory = 5
+    clustering = AgglomerativeClustering(memory=memory)
+    assert_raises(ValueError, clustering.fit, X)
+
+
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.

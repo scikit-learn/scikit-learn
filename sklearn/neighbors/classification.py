@@ -61,7 +61,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default = 'minkowski')
+    metric : string or callable, default 'minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
@@ -268,7 +268,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default='minkowski')
+    metric : string or callable, default 'minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
@@ -366,8 +366,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
-            pred_labels = np.array([_y[ind, k] for ind in neigh_ind],
-                                   dtype=object)
+            pred_labels = np.zeros(len(neigh_ind), dtype=object)
+            pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
             if weights is None:
                 mode = np.array([stats.mode(pl)[0]
                                  for pl in pred_labels[inliers]], dtype=np.int)

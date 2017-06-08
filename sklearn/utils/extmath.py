@@ -12,38 +12,30 @@ Extended math utilities.
 # License: BSD 3 clause
 
 from __future__ import division
-from functools import partial
 import warnings
 
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
+from scipy.misc import logsumexp as scipy_logsumexp
 
-from . import check_random_state
+from . import check_random_state, deprecated
 from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ..exceptions import NonBLASDotWarning
 
 
+@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19"
+            "and will be removed in 0.21. Use scipy.linalg.norm instead.")
 def norm(x):
     """Compute the Euclidean or Frobenius norm of x.
 
     Returns the Euclidean norm when x is a vector, the Frobenius norm when x
     is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
     """
-    x = np.asarray(x)
-    nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
-    return nrm2(x)
-
-
-# Newer NumPy has a ravel that needs less copying.
-if np_version < (1, 7, 1):
-    _ravel = np.ravel
-else:
-    _ravel = partial(np.ravel, order='K')
+    return linalg.norm(x)
 
 
 def squared_norm(x):
@@ -52,7 +44,11 @@ def squared_norm(x):
     Returns the Euclidean norm when x is a vector, the Frobenius norm when x
     is a matrix (2-d array). Faster than norm(x) ** 2.
     """
-    x = _ravel(x)
+    x = np.ravel(x, order='K')
+    if np.issubdtype(x.dtype, np.integer):
+        warnings.warn('Array type is integer, np.dot may overflow. '
+                      'Data should be float type to avoid this issue',
+                      UserWarning)
     return np.dot(x, x)
 
 
@@ -98,68 +94,10 @@ def _impose_f_order(X):
         return check_array(X, copy=False, order='F'), False
 
 
-def _fast_dot(A, B):
-    if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
-        raise ValueError
-
-    if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
-                                 for x in [A, B]):
-        warnings.warn('Falling back to np.dot. '
-                      'Data must be of same type of either '
-                      '32 or 64 bit float for the BLAS function, gemm, to be '
-                      'used for an efficient dot operation. ',
-                      NonBLASDotWarning)
-        raise ValueError
-
-    if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
-        raise ValueError
-
-    # scipy 0.9 compliant API
-    dot = linalg.get_blas_funcs(['gemm'], (A, B))[0]
-    A, trans_a = _impose_f_order(A)
-    B, trans_b = _impose_f_order(B)
-    return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
-
-
-def _have_blas_gemm():
-    try:
-        linalg.get_blas_funcs(['gemm'])
-        return True
-    except (AttributeError, ValueError):
-        warnings.warn('Could not import BLAS, falling back to np.dot')
-        return False
-
-
-# Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
-if np_version < (1, 7, 2) and _have_blas_gemm():
-    def fast_dot(A, B):
-        """Compute fast dot products directly calling BLAS.
-
-        This function calls BLAS directly while warranting Fortran contiguity.
-        This helps avoiding extra copies `np.dot` would have created.
-        For details see section `Linear Algebra on large Arrays`:
-        http://wiki.scipy.org/PerformanceTips
-
-        Parameters
-        ----------
-        A, B: instance of np.ndarray
-            Input arrays. Arrays are supposed to be of the same dtype and to
-            have exactly 2 dimensions. Currently only floats are supported.
-            In case these requirements aren't met np.dot(A, B) is returned
-            instead. To activate the related warning issued in this case
-            execute the following lines of code:
-
-            >> import warnings
-            >> from sklearn.exceptions import NonBLASDotWarning
-            >> warnings.simplefilter('always', NonBLASDotWarning)
-        """
-        try:
-            return _fast_dot(A, B)
-        except ValueError:
-            # Maltyped or malformed data.
-            return np.dot(A, B)
-else:
-    fast_dot = np.dot
+@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19"
+            "and will be removed in 0.21. Use the equivalent np.dot instead.")
+def fast_dot(a, b, out=None):
+    return np.dot(a, b, out)
 
 
 def density(w, **kwargs):
@@ -179,6 +117,19 @@ def safe_sparse_dot(a, b, dense_output=False):
 
     Uses BLAS GEMM as replacement for numpy.dot where possible
     to avoid unnecessary copies.
+
+    Parameters
+    ----------
+    a : array or sparse matrix
+    b : array or sparse matrix
+    dense_output : boolean, default False
+        When False, either ``a`` or ``b`` being sparse will yield sparse
+        output. When True, output will always be an array.
+
+    Returns
+    -------
+    dot_product : array or sparse matrix
+        sparse if ``a`` or ``b`` is sparse and ``dense_output``=False.
     """
     if issparse(a) or issparse(b):
         ret = a * b
@@ -186,7 +137,7 @@ def safe_sparse_dot(a, b, dense_output=False):
             ret = ret.toarray()
         return ret
     else:
-        return fast_dot(a, b)
+        return np.dot(a, b)
 
 
 def randomized_range_finder(A, size, n_iter,
@@ -215,8 +166,12 @@ def randomized_range_finder(A, size, n_iter,
 
         .. versionadded:: 0.18
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Returns
     -------
@@ -320,8 +275,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance to make behavior
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Notes
     -----
@@ -350,7 +309,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     n_samples, n_features = M.shape
 
     if n_iter == 'auto':
-        # Checks if the number of iterations is explicitely specified
+        # Checks if the number of iterations is explicitly specified
         # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
         n_iter = 7 if n_components < .1 * min(M.shape) else 4
 
@@ -386,15 +345,14 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
+@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19"
+            "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
 def logsumexp(arr, axis=0):
     """Computes the sum of arr assuming arr is in the log domain.
-
     Returns log(sum(exp(arr))) while minimizing the possibility of
     over/underflow.
-
     Examples
     --------
-
     >>> import numpy as np
     >>> from sklearn.utils.extmath import logsumexp
     >>> a = np.arange(10)
@@ -403,13 +361,7 @@ def logsumexp(arr, axis=0):
     >>> logsumexp(a)
     9.4586297444267107
     """
-    arr = np.rollaxis(arr, axis)
-    # Use the max to normalize, as with the log this is what accumulates
-    # the less errors
-    vmax = arr.max(axis=0)
-    out = np.log(np.sum(np.exp(arr - vmax), axis=0))
-    out += vmax
-    return out
+    return scipy_logsumexp(arr, axis)
 
 
 def weighted_mode(a, w, axis=0):
@@ -486,72 +438,10 @@ def weighted_mode(a, w, axis=0):
     return mostfrequent, oldcounts
 
 
+@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19"
+            "and will be removed in 0.21. Use scipy.linalg.pinvh instead.")
 def pinvh(a, cond=None, rcond=None, lower=True):
-    """Compute the (Moore-Penrose) pseudo-inverse of a hermetian matrix.
-
-    Calculate a generalized inverse of a symmetric matrix using its
-    eigenvalue decomposition and including all 'large' eigenvalues.
-
-    Parameters
-    ----------
-    a : array, shape (N, N)
-        Real symmetric or complex hermetian matrix to be pseudo-inverted
-
-    cond : float or None, default None
-        Cutoff for 'small' eigenvalues.
-        Singular values smaller than rcond * largest_eigenvalue are considered
-        zero.
-
-        If None or -1, suitable machine precision is used.
-
-    rcond : float or None, default None (deprecated)
-        Cutoff for 'small' eigenvalues.
-        Singular values smaller than rcond * largest_eigenvalue are considered
-        zero.
-
-        If None or -1, suitable machine precision is used.
-
-    lower : boolean
-        Whether the pertinent array data is taken from the lower or upper
-        triangle of a. (Default: lower)
-
-    Returns
-    -------
-    B : array, shape (N, N)
-
-    Raises
-    ------
-    LinAlgError
-        If eigenvalue does not converge
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> a = np.random.randn(9, 6)
-    >>> a = np.dot(a, a.T)
-    >>> B = pinvh(a)
-    >>> np.allclose(a, np.dot(a, np.dot(B, a)))
-    True
-    >>> np.allclose(B, np.dot(B, np.dot(a, B)))
-    True
-
-    """
-    a = np.asarray_chkfinite(a)
-    s, u = linalg.eigh(a, lower=lower)
-
-    if rcond is not None:
-        cond = rcond
-    if cond in [None, -1]:
-        t = u.dtype.char.lower()
-        factor = {'f': 1E3, 'd': 1E6}
-        cond = factor[t] * np.finfo(t).eps
-
-    # unlike svd case, eigh can lead to negative eigenvalues
-    above_cutoff = (abs(s) > cond * np.max(abs(s)))
-    psigma_diag = np.zeros_like(s)
-    psigma_diag[above_cutoff] = 1.0 / s[above_cutoff]
-
-    return np.dot(u * psigma_diag, np.conjugate(u).T)
+    return linalg.pinvh(a, cond, rcond, lower)
 
 
 def cartesian(arrays, out=None):
@@ -651,7 +541,7 @@ def log_logistic(X, out=None):
         -log(1 + exp(-x_i))     if x_i > 0
         x_i - log(1 + exp(x_i)) if x_i <= 0
 
-    For the ordinary logistic function, use ``sklearn.utils.fixes.expit``.
+    For the ordinary logistic function, use ``scipy.special.expit``.
 
     Parameters
     ----------

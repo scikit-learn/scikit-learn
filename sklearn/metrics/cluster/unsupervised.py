@@ -9,7 +9,6 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
-from ...utils.fixes import bincount
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
@@ -62,12 +61,14 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to randomly select a subset of samples if
-        ``sample_size is not None``. If an integer is given, it fixes the seed.
-        Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The generator used to randomly select a subset of samples.  If int,
+        random_state is the seed used by the random number generator; If
+        RandomState instance, random_state is the random number generator; If
+        None, the random number generator is the RandomState instance used by
+        `np.random`. Used when ``sample_size is not None``.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -138,7 +139,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -167,7 +168,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     distances = pairwise_distances(X, metric=metric, **kwds)
     unique_labels = le.classes_
-    n_samples_per_label = bincount(labels, minlength=len(unique_labels))
+    n_samples_per_label = np.bincount(labels, minlength=len(unique_labels))
 
     # For sample i, store the mean distance of the cluster to which
     # it belongs in intra_clust_dists[i]

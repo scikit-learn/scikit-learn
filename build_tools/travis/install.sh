@@ -28,36 +28,24 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # conda-based environment instead
     deactivate
 
-    # Use the miniconda installer for faster download / install of conda
-    # itself
-    pushd .
-    cd
-    mkdir -p download
-    cd download
-    echo "Cached in $HOME/download :"
-    ls -l
-    echo
-    if [[ ! -f miniconda.sh ]]
-        then
-        wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
-            -O miniconda.sh
-        fi
-    chmod +x miniconda.sh && ./miniconda.sh -b
-    cd ..
-    export PATH=/home/travis/miniconda/bin:$PATH
+    # Install miniconda
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        -O miniconda.sh
+    MINICONDA_PATH=/home/travis/miniconda
+    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+    export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
-    popd
 
     # Configure the conda environment and put it in the path using the
     # provided versions
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
-            mkl flake8 cython=$CYTHON_VERSION \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
@@ -86,16 +74,14 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     source ~/testvenv/bin/activate
     pip install --upgrade pip setuptools
 
-    # We use the default Python virtualenv provided by travis
-    echo "Installing numpy master wheel"
-    pip install --pre --upgrade --no-index --timeout=60 \
-        --trusted-host travis-dev-wheels.scipy.org \
-        -f https://travis-dev-wheels.scipy.org/ numpy scipy
+    echo "Installing numpy and scipy master wheels"
+    dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
+    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy
     pip install nose nose-timer cython
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage coveralls
+    pip install coverage codecov
 fi
 
 if [[ "$SKIP_TESTS" == "true" ]]; then
@@ -118,5 +104,8 @@ except ImportError:
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    conda install flake8
+    # flake8 version is temporarily set to 2.5.1 because the next
+    # version available on conda (3.3.0) has a bug that checks non
+    # python files and cause non meaningful flake8 errors
+    conda install --yes flake8=2.5.1
 fi

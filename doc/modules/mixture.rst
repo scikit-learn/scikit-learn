@@ -181,15 +181,15 @@ almost always depends on the data.
 The next figure compares the results obtained for the different type of the
 weight concentration prior (parameter ``weight_concentration_prior_type``)
 for different values of ``weight_concentration_prior``.
-Here, we can see the the value of the ``weight_concentration_prior`` parameter
+Here, we can see the value of the ``weight_concentration_prior`` parameter
 has a strong impact on the effective number of active components obtained. We
 can also notice that large values for the concentration weight prior lead to
 more uniform weights when the type of prior is 'dirichlet_distribution' while
 this is not necessarily the case for the 'dirichlet_process' type (used by
 default).
 
-.. |plot_bgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
-   :target: ../auto_examples/mixture/plot_gmm.html
+.. |plot_bgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_001.png
+   :target: ../auto_examples/mixture/plot_concentration_prior.html
    :scale: 48%
 
 .. |plot_dpgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
@@ -303,7 +303,7 @@ with a finite Gaussian mixture model.
 An important question is how can the Dirichlet process use an infinite,
 unbounded number of clusters and still be consistent. While a full explanation
 doesn't fit this manual, one can think of its `stick breaking process
-<https://en.wikipedia.org/wiki/Dirichlet_process#The_stick-breaking_process>`
+<https://en.wikipedia.org/wiki/Dirichlet_process#The_stick-breaking_process>`_
 analogy to help understanding it. The stick breaking process is a generative
 story for the Dirichlet process. We start with a unit-length stick and in each
 step we break off a portion of the remaining stick. Each time, we associate the

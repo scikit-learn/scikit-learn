@@ -86,9 +86,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -277,9 +280,12 @@ class LinearSVR(LinearModel, RegressorMixin):
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -468,9 +474,12 @@ class SVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -621,9 +630,12 @@ class NuSVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -972,9 +984,12 @@ class OneClassSVM(BaseLibSVM):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -1036,7 +1051,9 @@ class OneClassSVM(BaseLibSVM):
         return self
 
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Signed distance to the separating hyperplane.
+
+        Signed distance is positive for an inlier and negative for an outlier.
 
         Parameters
         ----------
@@ -1049,3 +1066,23 @@ class OneClassSVM(BaseLibSVM):
         """
         dec = self._decision_function(X)
         return dec
+
+    def predict(self, X):
+        """
+        Perform classification on samples in X.
+
+        For an one-class model, +1 or -1 is returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
+
+        Returns
+        -------
+        y_pred : array, shape (n_samples,)
+            Class labels for samples in X.
+        """
+        y = super(OneClassSVM, self).predict(X)
+        return np.asarray(y, dtype=np.intp)
