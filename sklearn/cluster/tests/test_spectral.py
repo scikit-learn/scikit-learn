@@ -2,8 +2,6 @@
 
 from sklearn.externals.six.moves import cPickle
 
-dumps, loads = cPickle.dumps, cPickle.loads
-
 import numpy as np
 from scipy import sparse
 
@@ -17,10 +15,15 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.cluster.spectral import discretize
+from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics import v_measure_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
+
+
+dumps, loads = cPickle.dumps, cPickle.loads
 
 
 def test_spectral_clustering():
@@ -50,36 +53,6 @@ def test_spectral_clustering():
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
                 assert_array_equal(model_copy.labels_, model.labels_)
-
-
-def test_spectral_amg_mode():
-    # Test the amg mode of SpectralClustering
-    centers = np.array([
-        [0., 0., 0.],
-        [10., 10., 10.],
-        [20., 20., 20.],
-    ])
-    X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=1., random_state=42)
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-    S = sparse.coo_matrix(S)
-    try:
-        from pyamg import smoothed_aggregation_solver
-
-        amg_loaded = True
-    except ImportError:
-        amg_loaded = False
-    if amg_loaded:
-        labels = spectral_clustering(S, n_clusters=len(centers),
-                                     random_state=0, eigen_solver="amg")
-        # We don't care too much that it's good, just that it *worked*.
-        # There does have to be some lower limit on the performance though.
-        assert_greater(np.mean(labels == true_labels), .3)
-    else:
-        assert_raises(ValueError, spectral_embedding, S,
-                      n_components=len(centers),
-                      random_state=0, eigen_solver="amg")
 
 
 def test_spectral_unknown_mode():
@@ -194,3 +167,43 @@ def test_discretize(seed=8):
                                                        n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)
             assert_greater(adjusted_rand_score(y_true, y_pred), 0.8)
+
+
+def test_spectral_clustering_solvers():
+    # Test that spectral_clustering is the same for all solvers
+    # Based on toy example from plot_segmentation_toy.py
+
+    try:
+        # Optional package pyamg needs to be installed for this test to run
+        from pyamg import smoothed_aggregation_solver
+        amg_loaded = True
+    except ImportError:
+        amg_loaded = False
+
+    # a small two coin image
+    x, y = np.indices((40, 40))
+
+    center1, center2 = (14, 12), (20, 25)
+    radius1, radius2 = 8, 7
+
+    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1 ** 2
+    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
+
+    img = circle1 + circle2
+    mask = img.astype(bool)
+    img = img.astype(float)
+    img += 1 + 0.2 * np.random.randn(*img.shape)
+
+    graph = img_to_graph(img, mask=mask)
+    graph.data = np.exp(-graph.data / graph.data.std())
+
+    labels_arpack = spectral_clustering(graph, n_clusters=2,
+                                        eigen_solver='arpack')
+    labels_lobpcg = spectral_clustering(graph, n_clusters=2,
+                                        eigen_solver='lobpcg')
+
+    assert_equal(v_measure_score(labels_arpack, labels_lobpcg), 1)
+    if amg_loaded:
+        labels_amg = spectral_clustering(graph, n_clusters=2,
+                                         eigen_solver='amg')
+        assert_equal(v_measure_score(labels_amg, labels_lobpcg), 1)
