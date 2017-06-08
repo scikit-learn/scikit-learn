@@ -253,8 +253,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
         Notes
         -----
-        If whitening is enabled, inverse_transform does not compute the
-        exact inverse operation of transform.
+        If whitening is enabled, inverse_transform will compute the
+        exact inverse operation, which includes reversing whitening.
         """
         X = check_array(X)
 

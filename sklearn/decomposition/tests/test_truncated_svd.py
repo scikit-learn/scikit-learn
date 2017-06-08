@@ -62,12 +62,14 @@ def test_sparse_formats():
 
 def test_inverse_transform():
     for algo in ("arpack", "randomized"):
-        # We need a lot of components for the reconstruction to be "almost
-        # equal" in all positions. XXX Test means or sums instead?
-        tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
-        Xt = tsvd.fit_transform(X)
-        Xinv = tsvd.inverse_transform(Xt)
-        assert_array_almost_equal(Xinv, Xdense, decimal=1)
+        for whiten in (False, True):
+            # We need a lot of components for the reconstruction to be "almost
+            # equal" in all positions. XXX Test means or sums instead?
+            tsvd = TruncatedSVD(n_components=52, random_state=42,
+                                algorithm=algo, whiten=whiten)
+            Xt = tsvd.fit_transform(X)
+            Xinv = tsvd.inverse_transform(Xt)
+            assert_array_almost_equal(Xinv, Xdense, decimal=1)
 
 
 def test_integers():
@@ -222,18 +224,13 @@ def test_singular_values():
     assert_array_almost_equal(rpca.singular_values_, [3.142, 2.718, 1.0], 14)
 
 
-def test_svd_whiten():
-    tsvd = TruncatedSVD(n_components=X.shape[1] - 1, random_state=42,
-                        whiten=True, algorithm='arpack')
-    Xt = tsvd.fit_transform(X)
-    Xt_2 = tsvd.transform(X)
-    assert_allclose(Xt, Xt_2)
-    Xinv = tsvd.inverse_transform(Xt)
-    # Xdense is a sparse array in dense format (check zeros separately)
-    # The below equality is approximate since n_components < n_features
-    mask = Xdense == 0.0
-    assert_allclose(Xinv[mask], 0, atol=0.08)
-    assert_allclose(Xinv[~mask], Xdense[~mask], rtol=0.04)
+def test_svd_transform_fit_transform():
+    for whiten in (False, True):
+        tsvd = TruncatedSVD(n_components=X.shape[1] - 1,
+                            random_state=42, whiten=True)
+        Xt = tsvd.fit_transform(X)
+        Xt_2 = tsvd.transform(X)
+        assert_allclose(Xt, Xt_2)
 
 
 def test_svd_consistency():
@@ -248,11 +245,12 @@ def test_truncated_svd_eq_pca():
 
     X_c = X - X.mean(axis=0)
 
-    pars = dict(n_components=52, random_state=42)
+    params = dict(n_components=10, random_state=42)
 
-    for whiten in [False, True]:
-        svd = TruncatedSVD(whiten=whiten, **pars)
-        pca = PCA(whiten=whiten, **pars)
+    for whiten in (False, True):
+        svd = TruncatedSVD(whiten=whiten, algorithm='arpack', **params)
+        pca = PCA(whiten=whiten, svd_solver='arpack',
+                  **params)
 
         Xt_svd = svd.fit_transform(X_c)
         Xt_pca = pca.fit_transform(X_c)
@@ -295,4 +293,4 @@ def test_lsi():
     X_proj = svd.fit_transform(X)
     q_proj = svd.transform(q)
     scores = cosine_similarity(X_proj, q_proj)[:, 0]
-    assert_array_almost_equal(scores, scores_ref, decimal=2)
+    assert_array_almost_equal(scores, scores_ref, decimal=3)
