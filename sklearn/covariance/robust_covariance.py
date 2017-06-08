@@ -123,7 +123,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
     # If the data already has singular covariance, calculate the precision,
     # as the loop below will not be entered.
     if np.isinf(det):
-        precision = pinvh(covariance)
+        precision = linalg.pinvh(covariance)
 
     previous_det = np.inf
     while (det < previous_det and remaining_iterations > 0
@@ -387,8 +387,8 @@ def fast_mcd(X, support_fraction=None,
             diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
             halves_start = np.where(diff == np.min(diff))[0]
             # take the middle points' mean to get the robust location estimate
-            location = 0.5 * (X_sorted[n_support + halves_start]
-                              + X_sorted[halves_start]).mean()
+            location = 0.5 * (X_sorted[n_support + halves_start] +
+                              X_sorted[halves_start]).mean()
             support = np.zeros(n_samples, dtype=bool)
             X_centered = X - location
             support[np.argsort(np.abs(X_centered), 0)[:n_support]] = True
