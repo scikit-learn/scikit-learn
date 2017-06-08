@@ -12,7 +12,6 @@ from math import sqrt, ceil
 
 import numpy as np
 from scipy import linalg
-import scipy.sparse.linalg
 from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
