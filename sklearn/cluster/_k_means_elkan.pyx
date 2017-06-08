@@ -11,6 +11,8 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cython cimport floating
+from cpython cimport array as c_array
+from array import array
 
 from libc.math cimport sqrt
 
