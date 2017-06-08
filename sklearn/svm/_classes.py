@@ -1951,7 +1951,9 @@ class SVDD(BaseLibSVM):
         return self
 
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Signed distance to the enveloping hypersphere.
+
+        Signed distance is positive for an inlier and negative for an outlier.
 
         Parameters
         ----------
