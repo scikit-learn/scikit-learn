@@ -45,8 +45,7 @@ def assert_all_finite(X):
 
     Parameters
     ----------
-    X : np.ndarray, scipy.sparse
-        ``X`` MUST be an np.ndarray instance or a scipy.sparse matrix.
+    X : array or sparse matrix
     """
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
