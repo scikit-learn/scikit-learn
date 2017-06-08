@@ -201,6 +201,9 @@ def test_repr():
     some_est = T(a=["long_params"] * 1000)
     assert_equal(len(repr(some_est)), 415)
 
+    with sklearn.config_context(show_default_parameters=False):
+        assert_equal(repr(test), "T(a=K(), b=K())")
+
 
 def test_str():
     # Smoke test the str of the base estimator
