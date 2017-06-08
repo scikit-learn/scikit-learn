@@ -35,7 +35,7 @@ public_modules = [
     # 'sklearn.linear_model',
     # 'sklearn.manifold',
     'sklearn.multiclass',
-    # 'sklearn.metrics',
+    'sklearn.metrics',
     'sklearn.naive_bayes',
     # 'sklearn.mixture',
     # 'sklearn.model_selection',
