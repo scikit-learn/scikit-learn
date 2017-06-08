@@ -52,7 +52,8 @@ import matplotlib.pyplot as plt
 
 # Black removed and is used for noise instead.
 unique_labels = set(labels)
-colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+colors = [plt.cm.Spectral(each)
+          for each in np.linspace(0, 1, len(unique_labels))]
 for k, col in zip(unique_labels, colors):
     if k == -1:
         # Black used for noise.
