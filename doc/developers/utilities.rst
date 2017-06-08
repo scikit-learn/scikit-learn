@@ -68,6 +68,15 @@ For example::
     >>> random_state.rand(4)
     array([ 0.5488135 ,  0.71518937,  0.60276338,  0.54488318])
 
+When developing your own scikit-learn compatible estimator, the following
+helpers are available.
+
+- :func:`validation.check_is_fitted`: check that the estimator has been fitted
+  before calling ``transform``, ``predict``, or similar methods. This helper
+  allows to raise a standardized error message across estimator.
+
+- :func:`validation.has_fit_parameter`: check that a given parameter is
+  supported in the ``fit`` method of a given estimator.
 
 Efficient Linear Algebra & Array Operations
 ===========================================

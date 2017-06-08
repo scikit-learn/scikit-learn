@@ -126,11 +126,15 @@ def safe_indexing(X, indices):
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list.
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
         Data from which to sample rows or items.
-
-    indices : array-like, list
+    indices : array-like of int
         Indices according to which X will be subsampled.
+
+    Returns
+    -------
+    subset
+        Subset of X on first axis
     """
     if hasattr(X, "iloc"):
         # Pandas Dataframes and Series
