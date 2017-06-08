@@ -9,6 +9,7 @@ from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, all_estimators,
                                    ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
@@ -200,6 +201,7 @@ def test_check_estimator_clones():
     for name, Estimator in all_estimators():
         est = Estimator()
         set_checking_parameters(est)
+        set_random_state(est)
         # without fitting
         old_pickle = pickle.dumps(est)
         try:
@@ -213,6 +215,7 @@ def test_check_estimator_clones():
     for name, Estimator in all_estimators():
         est = Estimator()
         set_checking_parameters(est)
+        set_random_state(est)
         try:
             est.fit(iris.data + 10, iris.target)
         except Exception as e:
