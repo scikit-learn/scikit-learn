@@ -6,8 +6,9 @@ from sklearn.externals.six.moves import cPickle as pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
-                                   assert_equal)
+                                   assert_equal, all_estimators)
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import set_testing_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier
@@ -194,13 +195,16 @@ def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
     from sklearn.datasets import load_iris
     iris = load_iris()
+
+    for name, Estimator in all_estimators():
+        est = Estimator()
+        set_testing_parameters(est)
+        # without fitting
+        old_pickle = pickle.dumps(est)
+        check_estimator(est)
+        assert_equal(old_pickle, pickle.dumps(est))
+
     est = AdaBoostClassifier()
-
-    # without fitting
-    old_pickle = pickle.dumps(est)
-    check_estimator(est)
-    assert_equal(old_pickle, pickle.dumps(est))
-
     # with fitting
     est.fit(iris.data, iris.target)
     old_pickle = pickle.dumps(est)
