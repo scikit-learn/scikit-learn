@@ -48,8 +48,9 @@ ENGLISH_STOP_WORDS = frozenset([
 # Source https://en.wikipedia.org/wiki/Wikipedia:List_of_English_contractions
 ENGLISH_CONTRACTION = frozenset([
     "ain", "aren", "couldn", "didn", "doesn", "don", "gonna", "gotta", "hadn",
-    "hasn", "haven", "isn", "ll", "mightn", "mustn", "needn", "oughtn", "shan",
-    "shouldn", "re", "tis", "twas", "ve", "wasn", "weren", "won", "wouldn"])
+    "hasn", "haven", "isn", "ll", "mightn", "mustn", "needn", "ol", "oughtn",
+    "shan", "shouldn", "re", "tis", "twas", "ve", "wasn", "weren", "won",
+    "wouldn"])
 
 ENGLISH_STOP_WORDS_EXPANDED = frozenset().union(*[ENGLISH_STOP_WORDS,
                                                   ENGLISH_CONTRACTION])
