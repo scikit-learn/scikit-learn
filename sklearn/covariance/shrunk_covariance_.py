@@ -73,15 +73,15 @@ class ShrunkCovariance(EmpiricalCovariance):
     store_precision : boolean, default True
         Specify if the estimated precision is stored
 
-    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
-        Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
-
     assume_centered : boolean, default False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If False, data are centered before computation.
+
+    shrinkage : float, 0 <= shrinkage <= 1, default 0.1
+        Coefficient in the convex combination used for the computation
+        of the shrunk estimate.
 
     Attributes
     ----------

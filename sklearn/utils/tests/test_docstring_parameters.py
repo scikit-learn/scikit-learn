@@ -23,7 +23,7 @@ public_modules = [
     'sklearn.base',
     'sklearn.calibration',
     'sklearn.cluster',
-    # 'sklearn.covariance',
+    'sklearn.covariance',
     # 'sklearn.cross_decomposition',
     'sklearn.datasets',
     # 'sklearn.decomposition',

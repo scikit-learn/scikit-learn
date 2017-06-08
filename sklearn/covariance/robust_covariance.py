@@ -317,15 +317,15 @@ def fast_mcd(X, support_fraction=None,
           value of support_fraction will be used within the algorithm:
           `[n_sample + n_features + 1] / 2`.
 
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    cov_computation_method : callable, default empirical_covariance
-        The function which will be used to compute the covariance.
-        Must return shape (n_features, n_features)
 
     Notes
     -----
