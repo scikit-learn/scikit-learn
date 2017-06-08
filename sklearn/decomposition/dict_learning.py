@@ -374,18 +374,6 @@ def _worst_represented_example(X, dictionary, sparse_codes):
     return X[worst_index, :]
 
 
-def _decompose_svd(residual):
-    """Decompose the residual using 1-rank SVD."""
-
-    # Sparse version is used because non-sparse does not allow to
-    # set the desired number of singular values.
-    U, S, V = scipy.sparse.linalg.svds(residual, 1)
-    # U is unitary, so d is normalized
-    d = U.ravel()
-    g = np.dot(V.T, S).ravel()
-    return d, g
-
-
 def _decompose_projections(residual, g_old):
     """Decompose the residual using SVD-approximating projections."""
 
@@ -397,8 +385,7 @@ def _decompose_projections(residual, g_old):
     return d, g
 
 
-def _ksvd_atom_update(X, atom_index, dictionary, sparse_codes,
-                      approximate_svd):
+def _ksvd_atom_update(X, atom_index, dictionary, sparse_codes):
     """Update single dictionary atom and the corresponding codes.
 
     Use SVD decomposition to preserve sparsity.
@@ -420,11 +407,8 @@ def _ksvd_atom_update(X, atom_index, dictionary, sparse_codes,
         dictionary[atom_index, :] = 0
         representation = np.dot(sparse_codes[atom_usages, :], dictionary)
         residual = (X[atom_usages, :] - representation).T
-        if approximate_svd:
-            atom, atom_codes = _decompose_projections(
+        atom, atom_codes = _decompose_projections(
                 residual, sparse_codes[atom_usages, atom_index])
-        else:
-            atom, atom_codes = _decompose_svd(residual)
         dictionary[atom_index, :] = atom
         sparse_codes[atom_usages, atom_index] = atom_codes.T
 
@@ -514,12 +498,12 @@ def _update_dict(dictionary, X, codes, method, verbose=0, random_state=None):
                                                verbose=verbose, return_r2=True,
                                                random_state=random_state)
         dictionary = dictionary.T
-    else:  # method in ('ksvd', 'exact_ksvd'):
-        approximate_svd = (method == 'ksvd')
+    else:
+        assert method == 'ksvd'
         n_components = dictionary.shape[0]
         for atom_index in range(n_components):
             dictionary, codes = _ksvd_atom_update(
-                X, atom_index, dictionary, codes, approximate_svd)
+                X, atom_index, dictionary, codes)
 
         residual = norm(X - np.dot(codes, dictionary))
 
@@ -588,7 +572,7 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
         Number of nonzero coefficients to target in each column of the
         solution. This is used by L0 dictionary learning methods.
 
-    method: {'lars', 'cd', 'ksvd', 'exact_ksvd'}
+    method: {'lars', 'cd', 'ksvd'}
         Method for dictionary learning.  The default ``coding_method``
         depends on this argument.
         lars : update dictionary using block component wise
@@ -596,13 +580,8 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
         cd: update dictionary using block component wise
             coordinate descent.  Default ``coding_method`` is 'lasso_cd'.
         ksvd : update atoms separately using approximate 1-svd
-            error matrix decomposition; in the most cases this
-            method is more preferable than the 'exact_ksvd' as it
-            gives good precision but works faster.  Default
+            error matrix decomposition. Default
             ``coding_method`` is 'omp'.
-        exact_ksvd : update atoms separately using exact 1-svd
-            error matrix decomposition.  Default ``coding_method``
-            is 'omp'.
 
     coding_method : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
         Method for sparse coding step.  Default value depends on the
@@ -697,7 +676,7 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
 
     if method in ('lars', 'cd'):
         problem_type = 'L1'
-    elif method in ('ksvd', 'exact_ksvd'):
+    elif method in ('ksvd'):
         problem_type = 'L0'
     else:
         raise ValueError('Unknown dictionary learning method ' + method)
@@ -1188,7 +1167,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         number of nonzero coefficients to target in each column of the
         solution. This is used by L0 dictionary learning methods.
 
-    fit_algorithm : {'lars', 'cd', 'ksvd', 'exact_ksvd'}
+    fit_algorithm : {'lars', 'cd', 'ksvd'}
         Method for dictionary learning.
         lars : update dictionary using block component wise
             coordinate descent and the least angle regression method
@@ -1200,13 +1179,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             coding. Lars will be faster if the estimated components are
             sparse.
         ksvd : update atoms separately using approximate 1-svd
-            error matrix decomposition; in the most cases this
-            method is more preferable than the 'exact_ksvd' as it
-            gives good precision but works faster. The sparse coder
+            error matrix decomposition. The sparse coder
             for learning is OMP.
-        exact_ksvd : update atoms separately using exact 1-svd
-            error matrix decomposition. The sparse coder for learning
-            is OMP.
 
         .. versionadded:: 0.17
            *cd* coordinate descent method to improve speed.
