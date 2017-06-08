@@ -65,6 +65,11 @@ New features
 Enhancements
 ............
 
+   - Simplified string representations (``repr``) of all estimators which
+     can be enabled via :func:`sklearn.set_config`. The simplified
+     representation only shows parameters with settings that differ
+     from the default parameter settings. :issue:`9039` by `Andreas Müller`_.
+
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986`
      :user:`Oscar Najera <Titan-C>`
