@@ -1,6 +1,8 @@
 import warnings
 import unittest
 import sys
+import numpy as np
+from scipy import sparse
 
 from sklearn.utils.testing import (
     assert_raises,
@@ -13,6 +15,7 @@ from sklearn.utils.testing import (
     assert_equal,
     set_random_state,
     assert_raise_message,
+    assert_allclose_dense_sparse,
     ignore_warnings)
 
 from sklearn.tree import DecisionTreeClassifier
@@ -48,6 +51,17 @@ def test_set_random_state():
     set_random_state(lda, 3)
     set_random_state(tree, 3)
     assert_equal(tree.random_state, 3)
+
+
+def test_assert_allclose_dense_sparse():
+    x = np.arange(9).reshape(3, 3)
+    msg = "Not equal to tolerance "
+    y = sparse.csc_matrix(x)
+    for X in [x, y]:
+        assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse,
+                             X, X * 2)
+        assert_allclose_dense_sparse(X, X)
+
 
 
 def test_assert_raise_message():

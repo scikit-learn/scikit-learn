@@ -5,7 +5,8 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import cPickle as pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_raises_regex, assert_true, assert_equal
+from sklearn.utils.testing import (assert_raises_regex, assert_true,
+                                   assert_equal)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
@@ -128,8 +129,10 @@ def test_check_estimator():
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
     msg = "TypeError not raised"
-    assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
-    assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        BaseBadClassifier)
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
     try:
         from pandas import Series  # noqa
@@ -142,7 +145,8 @@ def test_check_estimator():
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
-    assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        NoCheckinPredict())
     # check that estimator state does not change
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
@@ -163,7 +167,8 @@ def test_check_estimator():
                         check_estimator, SetsWrongAttribute)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
-    msg = "Estimator " + name + " doesn't seem to fail gracefully on sparse data"
+    msg = ("Estimator " + name
+           + " doesn't seem to fail gracefully on sparse data")
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
     # that means we need to jump through some hoops to catch it.

@@ -375,6 +375,29 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
                              (names, function.__name__))
 
 
+def assert_allclose_dense_sparse(x, y, err_msg=''):
+    """Assert allclose for sparse and dense data.
+
+    Both x and y need to be either sparse or dense, they
+    can't be mixed.
+
+    Parameters
+    ----------
+    x : array-like or sparse matrix
+        First array to compare.
+
+    y : array-like or sparse matrix
+        Second array to compare.
+
+    err_msg : string, default=''
+        Error message to raise.
+    """
+    if sp.sparse.issparse(x):
+        assert_allclose(x.data, y.data, err_msg=err_msg)
+    else:
+        assert_allclose(x, y, err_msg=err_msg)
+
+
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
 

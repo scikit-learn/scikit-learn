@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_allclose_sparse_dense
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
@@ -65,13 +66,6 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-
-
-def assert_almost_equal_dense_sparse(x, y, err_msg=''):
-    if sparse.issparse(x):
-        assert_allclose(x.data, y.data, err_msg=err_msg)
-    else:
-        assert_allclose(x, y, err_msg=err_msg)
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -743,20 +737,20 @@ def _check_transformer(name, transformer_orig, X, y):
             X_pred3 = transformer.fit_transform(X, y=y_)
         if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
             for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
-                assert_almost_equal_dense_sparse(
+                assert_allclose_sparse_dense(
                     x_pred, x_pred2, 2,
                     "fit_transform and transform outcomes not consistent in %s"
                     % transformer)
-                assert_almost_equal_dense_sparse(
+                assert_allclose_sparse_dense(
                     x_pred, x_pred3, 2,
                     "consecutive fit_transform outcomes not consistent in %s"
                     % transformer)
         else:
-            assert_almost_equal_dense_sparse(
+            assert_allclose_sparse_dense(
                 X_pred, X_pred2, 2,
                 "fit_transform and transform outcomes not consistent in %s"
                 % transformer)
-            assert_almost_equal_dense_sparse(
+            assert_allclose_sparse_dense(
                 X_pred, X_pred3, 2,
                 "consecutive fit_transform outcomes not consistent in %s"
                 % transformer)
@@ -799,7 +793,7 @@ def check_pipeline_consistency(name, estimator_orig):
             func_pipeline = getattr(pipeline, func_name)
             result = func(X, y)
             result_pipe = func_pipeline(X, y)
-            assert_almost_equal_dense_sparse(result, result_pipe)
+            assert_allclose_sparse_dense(result, result_pipe)
 
 
 @ignore_warnings
@@ -973,7 +967,7 @@ def check_estimators_pickle(name, estimator_orig):
 
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
-        assert_almost_equal_dense_sparse(result[method], unpickled_result)
+        assert_allclose_sparse_dense(result[method], unpickled_result)
 
 
 @ignore_warnings(category=DeprecationWarning)
