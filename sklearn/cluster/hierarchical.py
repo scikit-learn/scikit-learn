@@ -541,13 +541,16 @@ _TREE_BUILDERS = dict(
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
 
-def _hc_cut(n_clusters, children, n_leaves):
+def _hc_cut(n_clusters, children, n_leaves,
+            distance_threshold=None, distances=None):
     """Function cutting the ward tree for a given number of clusters.
 
     Parameters
     ----------
     n_clusters : int or ndarray
         The number of clusters to form.
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both.
 
     children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
@@ -560,12 +563,29 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_leaves : int
         Number of leaves of the tree.
 
+    distance_threshold : int (optional)
+        The distance threshold to cluster at.
+        If ``distance_threshold`` is set then ``n_clusters`` will be the
+        number of clusters at which the distances exceed the
+        ``distance_threshold``
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
+        ignored.
+
+    distances : ndarray, shape (n_nodes-1,) (optional)
+        Only used when distance_threshold is set.
+        distances[i] refers to the distance between children[i][0] and
+        children[i][1] when they are merged.
+
     Returns
     -------
     labels : array [n_samples]
         cluster labels for each point
 
     """
+    # cut the tree when distance threshold is reached
+    if distance_threshold:
+        n_clusters = np.count_nonzero(distances >= distance_threshold) + 1
     if n_clusters > n_leaves:
         raise ValueError('Cannot extract more clusters than samples: '
                          '%s clusters where given for a tree with %s leaves.'
@@ -603,6 +623,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     ----------
     n_clusters : int, default=2
         The number of clusters to find.
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both.
+
+    distance_threshold : int (optional)
+        The distance threshold to cluster at.
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
+        ignored.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -669,11 +697,13 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     """
 
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    def __init__(self, n_clusters=2, distance_threshold=None,
+                 affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func='deprecated'):
         self.n_clusters = n_clusters
+        self.distance_threshold = distance_threshold
         self.memory = memory
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
@@ -703,9 +733,17 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
-        if self.n_clusters <= 0:
+        self.n_clusters_ = self.n_clusters
+
+        if self.n_clusters_ is not None and self.n_clusters_ <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
-                             " %s was provided." % str(self.n_clusters))
+                             " %s was provided." % str(self.n_clusters_))
+
+        if self.n_clusters_ is None and self.distance_threshold is None:
+            raise ValueError("Either n_clusters (>0) or distance_threshold "
+                             "needs to be set, got n_clusters={} and "
+                             "distance_threshold={} instead.".format(
+                                self.n_clusters_, self.distance_threshold))
 
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
@@ -729,12 +767,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         compute_full_tree = self.compute_full_tree
         if self.connectivity is None:
             compute_full_tree = True
-        if compute_full_tree == 'auto':
+        if compute_full_tree == 'auto' and self.distance_threshold is None:
             # Early stopping is likely to give a speed up only for
             # a large number of clusters. The actual threshold
             # implemented here is heuristic
-            compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
-        n_clusters = self.n_clusters
+            compute_full_tree = self.n_clusters_ < max(100, .02 * n_samples)
+        n_clusters = self.n_clusters_
         if compute_full_tree:
             n_clusters = None
 
@@ -743,14 +781,30 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
-        self.children_, self.n_components_, self.n_leaves_, parents = \
-            memory.cache(tree_builder)(X, connectivity,
-                                       n_clusters=n_clusters,
-                                       **kwargs)
+        distance_threshold = self.distance_threshold
+        # if distance_threshold is set then distances is returned
+        if distance_threshold is not None:
+            ch, n_comps, n_lvs, parents, distances = \
+                memory.cache(tree_builder)(X, connectivity,
+                                           n_clusters=n_clusters,
+                                           return_distance=True,
+                                           **kwargs)
+        else:
+            ch, n_comps, n_lvs, parents = \
+                memory.cache(tree_builder)(X, connectivity,
+                                           n_clusters=n_clusters,
+                                           **kwargs)
+        self.children_, self.n_components_, self.n_leaves_ = ch, n_comps, n_lvs
+
         # Cut the tree
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
-                                   self.n_leaves_)
+            if distance_threshold is not None:
+                self.labels_ = _hc_cut(self.n_clusters_, self.children_,
+                                       self.n_leaves_,
+                                       distance_threshold, distances)
+            else:
+                self.labels_ = _hc_cut(self.n_clusters_, self.children_,
+                                       self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
             # copy to avoid holding a reference on the original array
@@ -772,6 +826,14 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     ----------
     n_clusters : int, default 2
         The number of clusters to find.
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both.
+
+    distance_threshold : int (optional)
+        The distance threshold to cluster at.
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
+        ignored.
 
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",

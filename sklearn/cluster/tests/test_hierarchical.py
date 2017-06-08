@@ -13,6 +13,7 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
+from sklearn.metrics.cluster.supervised import adjusted_rand_score
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
@@ -465,7 +466,8 @@ def test_connectivity_callable():
     connectivity = kneighbors_graph(X, 3, include_self=False)
     aglc1 = AgglomerativeClustering(connectivity=connectivity)
     aglc2 = AgglomerativeClustering(
-        connectivity=partial(kneighbors_graph, n_neighbors=3, include_self=False))
+        connectivity=partial(kneighbors_graph, n_neighbors=3,
+                             include_self=False))
     aglc1.fit(X)
     aglc2.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)
@@ -527,11 +529,120 @@ def test_agg_n_clusters():
 
     rng = np.random.RandomState(0)
     X = rng.rand(20, 10)
-    for n_clus in [-1, 0]:
-        agc = AgglomerativeClustering(n_clusters=n_clus)
-        msg = ("n_clusters should be an integer greater than 0."
-               " %s was provided." % str(agc.n_clusters))
-        assert_raise_message(ValueError, msg, agc.fit, X)
+    n_clus = -1
+    agc = AgglomerativeClustering(n_clusters=n_clus)
+    msg = ("n_clusters should be an integer greater than 0."
+           " %s was provided." % str(agc.n_clusters))
+    assert_raise_message(ValueError, msg, agc.fit, X)
+    n_clus = 0
+    agc = AgglomerativeClustering(n_clusters=n_clus)
+    msg = ("n_clusters should be an integer greater than 0."
+           " %s was provided." % str(agc.n_clusters))
+    assert_raise_message(ValueError, msg, agc.fit, X)
+
+
+def test_agg_n_cluster_or_distance_threshold():
+    # Test that an error is raised when n_clusters
+    # and distance_threshold are None
+
+    n_clus = None
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 10)
+    # distance_threshold is None by default
+    agc = AgglomerativeClustering(n_clusters=n_clus)
+    msg = ("Either n_clusters (>0) or distance_threshold "
+           "needs to be set, got n_clusters={} and "
+           "distance_threshold=None instead.".format(agc.n_clusters))
+    assert_raise_message(ValueError, msg, agc.fit, X)
+
+
+def test_agg_n_cluster_and_distance_threshold():
+    # Test that when distance_threshold is set n_clusters_ is unchanged
+
+    n_clus, dist_thresh = 10, 10
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 10)
+    agc = AgglomerativeClustering(n_clusters=n_clus,
+                                  distance_threshold=dist_thresh)
+    agc.fit(X)
+    # Expecting no errors here
+    assert_true(agc.n_clusters == n_clus)
+    assert_true(agc.n_clusters_ == n_clus)
+
+
+def test_affinity_passed_to_fix_connectivity():
+    # Test that the affinity parameter is actually passed to the pairwise
+    # function
+
+    size = 2
+    rng = np.random.RandomState(0)
+    X = rng.randn(size, size)
+    mask = np.array([True, False, False, True])
+
+    connectivity = grid_to_graph(n_x=size, n_y=size,
+                                 mask=mask, return_as=np.ndarray)
+
+    class FakeAffinity:
+        def __init__(self):
+            self.counter = 0
+
+        def increment(self, *args, **kwargs):
+            self.counter += 1
+            return self.counter
+
+    fa = FakeAffinity()
+
+    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+
+    assert_equal(fa.counter, 3)
+
+
+def test_agglomerative_clustering_with_distance_threshold():
+    # Check that we obtain the correct number of clusters with
+    # agglomerative clustering with distance_threshold.
+
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=np.bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    connectivity = grid_to_graph(*mask.shape)
+    # test when distance threshold is set to 10
+    distance_threshold = 10
+    for linkage in ("ward", "complete", "average"):
+        for conn in [None, connectivity]:
+            clustering = AgglomerativeClustering(
+                distance_threshold=distance_threshold,
+                connectivity=conn, linkage=linkage)
+            clustering.fit(X)
+            clusters_produced = clustering.labels_
+            num_clusters_produced = len(np.unique(clustering.labels_))
+            # test if the clusters produced match the point in the linkage tree
+            # where the distance exceeds the threshold
+            tree_builder = _TREE_BUILDERS[linkage]
+            children, n_components, n_leaves, parent, distances = \
+                tree_builder(X, connectivity=conn, n_clusters=None,
+                             return_distance=True)
+            num_clusters_at_threshold = np.count_nonzero(
+                distances >= distance_threshold) + 1
+            # test number of clusters produced
+            assert_true(num_clusters_at_threshold == num_clusters_produced)
+            # test clusters produced
+            clusters_at_threshold = _hc_cut(n_clusters=num_clusters_produced,
+                                            children=children,
+                                            n_leaves=n_leaves)
+            assert_true(np.array_equiv(clusters_produced,
+                                       clusters_at_threshold))
+
+
+def test_agglomerative_clustering_with_distance_threshold_edge_case():
+    # test boundary case of distance_threshold matching the distance
+    X = [[0], [1]]
+    for linkage in ("ward", "complete", "average"):
+        for threshold, y_true in [(0.5, [1, 0]), (1.0, [1, 0]), (1.5, [0, 0])]:
+            clusterer = AgglomerativeClustering(distance_threshold=threshold,
+                                                linkage=linkage)
+            y_pred = clusterer.fit_predict(X)
+            assert_equal(1, adjusted_rand_score(y_true, y_pred))
 
 
 def test_affinity_passed_to_fix_connectivity():
