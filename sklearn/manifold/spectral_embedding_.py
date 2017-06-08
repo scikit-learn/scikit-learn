@@ -310,7 +310,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
             lambdas, diffusion_map = eigh(laplacian)
-            embedding = diffusion_map.T
+            embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 embedding = embedding / dd
         else:
@@ -321,7 +321,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T
+            embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 embedding = embedding / dd
             if embedding.shape[0] == 1:
