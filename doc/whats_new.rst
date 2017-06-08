@@ -62,6 +62,11 @@ New features
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
 
+   - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
+     compute Discounted cumulative gain (DCG) and Normalized discounted
+     cumulative gain (NDCG).
+     :issue:`7739` by :user:`David Gasquez <davidgasquez>`.
+
 Enhancements
 ............
 
