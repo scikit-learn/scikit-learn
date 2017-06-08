@@ -187,6 +187,12 @@ Enhancements
 
 Bug fixes
 .........
+
+   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
+     that produced a singular covariance matrix would cause the helper method
+     `_c_step` to throw an exception.
+     :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
+
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
@@ -203,6 +209,7 @@ Bug fixes
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
+
    - Fixed same issue in :func:`sklearn.grid_search.BaseSearchCV.inverse_transform`
      :issue:`8846` by :user:`Rasmus Eriksson <MrMjauh>`
 
