@@ -508,7 +508,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
 
     .. [4] `Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC and CEN
         Error Measures in MultiClass Prediction
-        <http://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0041882>`_
+        <http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`_
 
     Examples
     --------
