@@ -4,6 +4,8 @@
 #
 # License: BSD 3 clause
 
+import itertools
+
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
@@ -90,6 +92,38 @@ def test_mcd_issue1127():
     X = rnd.normal(size=(3, 1))
     mcd = MinCovDet()
     mcd.fit(X)
+
+
+def test_mcd_issue3367():
+    # Check that MCD completes when the covariance matrix is singular
+    # i.e. one of the rows and columns are all zeros
+    rand_gen = np.random.RandomState(0)
+
+    # Think of these as the values for X and Y -> 10 values between -5 and 5
+    data_values = np.linspace(-5, 5, 10).tolist()
+    # Get the cartesian product of all possible coordinate pairs from above set
+    data = np.array(list(itertools.product(data_values, data_values)))
+
+    # Add a third column that's all zeros to make our data a set of point
+    # within a plane, which means that the covariance matrix will be singular
+    data = np.hstack((data, np.zeros((data.shape[0], 1))))
+
+    # The below line of code should raise an exception if the covariance matrix
+    # is singular. As a further test, since we have points in XYZ, the
+    # principle components (Eigenvectors) of these directly relate to the
+    # geometry of the points. Since it's a plane, we should be able to test
+    # that the Eigenvector that corresponds to the smallest Eigenvalue is the
+    # plane normal, specifically [0, 0, 1], since everything is in the XY plane
+    # (as I've set it up above). To do this one would start by:
+    #
+    #     evals, evecs = np.linalg.eigh(mcd_fit.covariance_)
+    #     normal = evecs[:, np.argmin(evals)]
+    #
+    # After which we need to assert that our `normal` is equal to [0, 0, 1].
+    # Do note that there is floating point error associated with this, so it's
+    # best to subtract the two and then compare some small tolerance (e.g.
+    # 1e-12).
+    MinCovDet(random_state=rand_gen).fit(data)
 
 
 def test_outlier_detection():
