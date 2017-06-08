@@ -1073,8 +1073,8 @@ Optionally, weights can be provided for the individual classifiers::
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
 
 
-Model Stacking
-==============
+Stacked generalization
+======================
 
 Stacked generalization is another method of combining estimators to reduce their
 biases [W1992]_ by combining several estimators (possibly non-linearly) stacked
@@ -1091,52 +1091,32 @@ The method is as follows [MLW2015]_:
 4. Use this predictions to train the models on the next layer;
 5. Fit the model on the whole training set.
 
-For creating the meta estimators, we have `StackMetaEstimator`. It will generate
-the cross validation predictions (steps 1 through 3) automatically.
+Stacked generalization works with regression and classification problems.
 
 Usage
 -----
 
-Let's use Iris dataset as an example.
+.. Explain basic usage of `StackLayer`. Make clear how it works both with
+   regression and classification problems
 
-    >>> from sklearn.ensemble import stack_estimators
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.svm import SVC, LinearSVC
-    >>> from sklearn.model_selection import cross_val_score
-    >>> from sklearn.ensemble import BaggingClassifier
-    >>> from sklearn.neighbors import KNeighborsClassifier
 
-    >>> from sklearn import datasets
+Stacked generalization applied to regression
+............................................
 
-    >>> iris = datasets.load_iris()
-    >>> X = iris.data[:, :2]
-    >>> y = iris.target
 
-    >>> base_models = [SVC(kernel='rbf'),
-    ...                RandomForestClassifier(random_state=1),
-    ...                BaggingClassifier(KNeighborsClassifier(), random_state=7,
-    ...                                  max_samples=0.5, max_features=0.5)]
 
-    >>> scores = [cross_val_score(m, X, y).mean()
-    ...           for m in base_models]
-    >>> print(scores)
-    [0.79983660130718948, 0.73897058823529405, 0.74060457516339862]
+Stacked generalization applied to classification
+................................................
 
-    >>> eclf = stack_estimators(base_models, LinearSVC())
-    >>> scores = cross_val_score(eclf, X, y)
-    >>> print(scores.mean())
-    0.820261437908
 
-It can be seen that stacking both estimators improved the score.
+The `MetaStackEstimator`
+------------------------
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stack_iris_001.png
-    :target: ../auto_examples/ensemble/plot_stack_iris.html
-    :align: center
-    :scale: 75%
+.. Explain useful use-cases for using this class directly: pre-training models,
+   etc.
 
 .. topic:: Examples
 
- * :ref:`sphx_glr_auto_examples_ensemble_stack_optimization.py`
 
 .. topic:: References
 
