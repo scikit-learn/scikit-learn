@@ -135,32 +135,26 @@ iris dataset::
 Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
 supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
 
-::
+Alternatively, if we have Python module ``graphviz`` installed, we can generate
+a PDF file directly in Python::
 
-    >>> import os
-    >>> os.unlink('iris.dot')
-
-Alternatively, if we have Python module ``pydotplus`` installed, we can generate
-a PDF file (or any other supported file type) directly in Python::
-
-    >>> import pydotplus # doctest: +SKIP
+    >>> import graphviz # doctest: +SKIP
     >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data) # doctest: +SKIP
-    >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
+    >>> graph.render("iris") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
 options, including coloring nodes by their class (or value for regression) and
-using explicit variable and class names if desired. IPython notebooks can also
-render these plots inline using the `Image()` function::
+using explicit variable and class names if desired. Jupyter notebooks also
+render these plots inline automatically::
 
-    >>> from IPython.display import Image  # doctest: +SKIP
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
                              feature_names=iris.feature_names,  # doctest: +SKIP
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data)  # doctest: +SKIP
-    >>> Image(graph.create_png())  # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
+    >>> graph # doctest: +SKIP
 
 .. only:: html
 
