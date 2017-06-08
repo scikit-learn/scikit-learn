@@ -40,11 +40,11 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     Parameters
     ----------
     regressor : object, (default=LinearRegression())
-        Regressor object derived from ``RegressorMixin``.
+        Regressor object such as derived from ``RegressorMixin``.
 
     transformer : object, (default=None)
-        Estimator object derived from ``TransformerMixin``. Cannot be set at
-        the same time as ``func`` and ``inverse_func``. If ``None`` and
+        Estimator object such as derived from ``TransformerMixin``. Cannot be
+        set at the same time as ``func`` and ``inverse_func``. If ``None`` and
         ``func`` and ``inverse_func`` are ``None`` as well, the transformer
         will be an identity transformer.
 
