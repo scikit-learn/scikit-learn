@@ -608,8 +608,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         oob_decision_function = (predictions /
                                  predictions.sum(axis=1)[:, np.newaxis])
-        oob_score = accuracy_score(y, classes_.take(np.argmax(predictions,
-                                                              axis=1)))
+        oob_score = accuracy_score(y, np.argmax(predictions, axis=1))
 
         self.oob_decision_function_ = oob_decision_function
         self.oob_score_ = oob_score

@@ -161,7 +161,6 @@ Enhancements
      and :func:`model_selection.cross_val_score` now allow estimators with callable
      kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
 
-
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -170,6 +169,7 @@ Enhancements
 
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -179,11 +179,20 @@ Enhancements
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
    - Prevent cast from float32 to float64 in
-   :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
-   by :user:`Joan Massich <massich>`
+     :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
+     by :user:`Joan Massich <massich>`
+
+   - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
+     :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
 
 Bug fixes
 .........
+
+   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
+     that produced a singular covariance matrix would cause the helper method
+     `_c_step` to throw an exception.
+     :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
+
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
@@ -200,6 +209,7 @@ Bug fixes
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
+
    - Fixed same issue in :func:`sklearn.grid_search.BaseSearchCV.inverse_transform`
      :issue:`8846` by :user:`Rasmus Eriksson <MrMjauh>`
 
@@ -317,6 +327,12 @@ Bug fixes
 
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
+
+   - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
+     :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
+
+   - Add ``shuffle`` parameter to :func:`sklearn.model_selection.train_test_split`.
+     :issue:`#8845` by  :user:`themrmax <themrmax>`
 
 API changes summary
 -------------------
