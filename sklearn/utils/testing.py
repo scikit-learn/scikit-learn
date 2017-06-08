@@ -820,7 +820,7 @@ def check_parameters_match(func, doc=None, ignore=None):
 
     if ignore is not None:
         for p in ignore:
-            del args[args.index(p)]
+            args.remove(p)
 
     if doc is None:
         with warnings.catch_warnings(record=True) as w:
@@ -833,9 +833,16 @@ def check_parameters_match(func, doc=None, ignore=None):
             raise RuntimeError('Error for %s:\n%s' % (name_, w[0]))
     # check set
     param_names = [name for name, _, _ in doc['Parameters']]
+
     # clean up some docscrape output:
     param_names = [name.split(':')[0].strip('` ') for name in param_names]
     param_names = [name for name in param_names if '*' not in name]
+
+    if ignore is not None:
+        for p in ignore:
+            if p in param_names:
+                param_names.remove(p)
+
     if len(param_names) != len(args):
         bad = str(sorted(list(set(param_names) - set(args)) +
                          list(set(args) - set(param_names))))

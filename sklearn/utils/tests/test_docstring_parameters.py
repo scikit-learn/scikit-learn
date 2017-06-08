@@ -21,6 +21,7 @@ public_modules = [
     # the list of modules users need to access for all functionality
     # 'sklearn',
     'sklearn.base',
+    'sklearn.calibration',
     # 'sklearn.cluster',
     # 'sklearn.covariance',
     # 'sklearn.cross_decomposition',
@@ -30,14 +31,18 @@ public_modules = [
     # 'sklearn.feature_extraction',
     # 'sklearn.feature_selection',
     # 'sklearn.gaussian_process',
+    'sklearn.isotonic',
     # 'sklearn.linear_model',
     # 'sklearn.manifold',
+    'sklearn.multiclass',
     # 'sklearn.metrics',
+    'sklearn.naive_bayes',
     # 'sklearn.mixture',
     # 'sklearn.model_selection',
     # 'sklearn.neighbors',
     # 'sklearn.neural_network',
     # 'sklearn.preprocessing',
+    'sklearn.pipeline',
     # 'sklearn.semi_supervised',
     # 'sklearn.tree',
     # 'sklearn.utils',
@@ -47,6 +52,9 @@ public_modules = [
 # functions to ignore args / docstring of
 _docstring_ignores = [
     'sklearn.utils.deprecation.load_mlcomp',
+    'sklearn.pipeline.make_pipeline',
+    'sklearn.pipeline.make_union',
+    'sklearn.utils.extmath.safe_sparse_dot',
 ]
 
 _tab_ignores = [
@@ -85,7 +93,8 @@ def test_docstring_parameters():
                 param_ignore = None
                 # Now skip docstring test for y when y is None
                 # by default for API reason
-                if method_name in ['fit', 'score', 'fit_predict']:
+                if method_name in \
+                        ['fit', 'score', 'fit_predict', 'fit_transform']:
                     sig = signature(method)
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):

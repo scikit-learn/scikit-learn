@@ -324,6 +324,8 @@ def test_check_parameters_match():
 
     incorrect = check_parameters_match(f_ok)
     assert_equal(incorrect, [])
+    incorrect = check_parameters_match(f_ok, ignore=['b'])
+    assert_equal(incorrect, [])
     incorrect = check_parameters_match(f_missing, ignore=['b'])
     assert_equal(incorrect, [])
     assert_raise_message(RuntimeError, 'Unknown section Results',
