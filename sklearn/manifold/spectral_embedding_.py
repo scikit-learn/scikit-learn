@@ -269,7 +269,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol, v0=v0)
             embedding = diffusion_map.T[n_components::-1]
-            if(norm_laplacian):
+            if norm_laplacian:
                 embedding = embedding / dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
@@ -294,7 +294,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
         embedding = diffusion_map.T
-        if(norm_laplacian):
+        if norm_laplacian:
             embedding = embedding / dd
         if embedding.shape[0] == 1:
             raise ValueError
@@ -311,7 +311,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                 laplacian = laplacian.toarray()
             lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T
-            if(norm_laplacian):
+            if norm_laplacian:
                 embedding = embedding / dd
         else:
             laplacian = _set_diag(laplacian, 1, norm_laplacian)
@@ -322,7 +322,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
             embedding = diffusion_map.T
-            if(norm_laplacian):
+            if norm_laplacian:
                 embedding = embedding / dd
             if embedding.shape[0] == 1:
                 raise ValueError
