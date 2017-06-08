@@ -628,7 +628,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
-                 store_covariances=None, tol=1.0e-4):
+                 tol=1.0e-4, store_covariances=None):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariances = store_covariances
