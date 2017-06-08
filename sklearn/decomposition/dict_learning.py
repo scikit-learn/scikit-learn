@@ -803,7 +803,7 @@ class SparseCodingMixin(TransformerMixin):
         self.split_sign = split_sign
         self.n_jobs = n_jobs
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Encode the data as a sparse combination of the dictionary atoms.
 
         Coding method is determined by the object parameter
