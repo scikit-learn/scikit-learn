@@ -610,7 +610,7 @@ class Lars(LinearModel, RegressorMixin):
         return Gram
 
     def _fit(self, X, y, max_iter, alpha, fit_path, Xy=None):
-        """Aux method to fit the model using X, y as training data"""
+        """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(X, y,
@@ -1155,7 +1155,7 @@ class LarsCV(Lars):
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
-        Lars._fit(self, X, y, max_iter=self.max_iter, alpha=best_alpha,
+        self._fit(X, y, max_iter=self.max_iter, alpha=best_alpha,
                   Xy=None, fit_path=True)
         return self
 
