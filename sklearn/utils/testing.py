@@ -392,10 +392,7 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=0, err_msg=''):
     err_msg : string, default=''
         Error message to raise.
     """
-    if sp.sparse.issparse(x):
-        if not sp.sparse.issparse(y):
-            raise ValueError("Can only compare two sparse matrices,"
-                             " not a sparse matrix and an array.")
+    if sp.sparse.issparse(x) and sp.sparse.issparse(y):
         x = x.tocsr()
         y = y.tocsr()
         x.sum_duplicates()
@@ -403,8 +400,12 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=0, err_msg=''):
         assert_array_equal(x.indices, y.indices, err_msg=err_msg)
         assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
         assert_allclose(x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg)
-    else:
+    elif not sp.sparse.issparse(x) and not sp.sparse.issparse(y):
+        # both dense
         assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)
+    else:
+        raise ValueError("Can only compare two sparse matrices,"
+                         " not a sparse matrix and an array.")
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
