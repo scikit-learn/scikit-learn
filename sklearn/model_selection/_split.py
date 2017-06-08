@@ -284,7 +284,15 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         self.n_splits = n_splits
         self.shuffle = shuffle
-        self.random_state = random_state
+        if shuffle and not isinstance(random_state,
+                                      (np.integer, numbers.Integral)):
+            # This is done to ensure that the multiple calls to split
+            # are random for each initialization of splitter but consistent
+            # across multiple calls for the same initialization.
+            self.random_state = check_random_state(
+                random_state).randint(np.iinfo(np.int32).max)
+        else:
+            self.random_state = random_state
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -568,10 +576,7 @@ class StratifiedKFold(_BaseKFold):
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None, groups=None):
-        if self.shuffle:
-            rng = check_random_state(self.random_state)
-        else:
-            rng = self.random_state
+        rng = check_random_state(self.random_state)
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
@@ -1140,7 +1145,14 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
-        self.random_state = random_state
+        if isinstance(random_state, (np.integer, numbers.Integral)):
+            self.random_state = random_state
+        else:
+            # This is done to ensure that the multiple calls to split
+            # are random for each initialization of splitter but consistent
+            # across multiple calls for the same initialization.
+            self.random_state = check_random_state(
+                random_state).randint(np.iinfo(np.int32).max)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
