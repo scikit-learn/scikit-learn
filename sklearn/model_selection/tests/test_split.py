@@ -234,7 +234,7 @@ def test_kfold_valueerrors():
     X1 = np.array([[1, 2], [3, 4], [5, 6]])
     X2 = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
     # Check that errors are raised if there is not enough samples
-    assert_raises(ValueError, next, KFold(4).split(X1))
+    (ValueError, next, KFold(4).split(X1))
 
     # Check that a warning is raised if the least populated class has too few
     # members.
@@ -1287,6 +1287,29 @@ def test_time_series_cv():
     n_splits_actual = len(list(splits))
     assert_equal(n_splits_actual, tscv.get_n_splits())
     assert_equal(n_splits_actual, 2)
+
+
+def _check_time_series_max_train_size(splits, check_splits, max_train_size):
+    for (train, test), (check_train, check_test) in zip(splits, check_splits):
+        assert_array_equal(test, check_test)
+        assert_true(len(check_train) <= max_train_size)
+        suffix_start = max(len(train) - max_train_size, 0)
+        assert_array_equal(check_train, train[suffix_start:])
+
+
+def test_time_series_max_train_size():
+    X = np.zeros((6, 1))
+    splits = TimeSeriesSplit(n_splits=3).split(X)
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=3).split(X)
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=3)
+
+    # Test for the case where the size of a fold is greater than max_train_size
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=2).split(X)
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
+
+    # Test for the case where the size of each fold is less than max_train_size
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=5).split(X)
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
 def test_nested_cv():
