@@ -22,7 +22,7 @@ cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset
+from sklearn.utils.seq_dataset cimport SequentialDataset64
 
 np.import_array()
 
@@ -338,7 +338,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int penalty_type,
               double alpha, double C,
               double l1_ratio,
-              SequentialDataset dataset,
+              SequentialDataset64 dataset,
               np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
               bint early_stopping, estimator,
               int n_iter_no_change,
@@ -368,8 +368,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-    dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+    dataset : SequentialDataset64
+        A concrete ``SequentialDataset64`` object.
     validation_mask : ndarray[unsigned char, ndim=1]
         Equal to True on the validation set.
     early_stopping : boolean
@@ -456,7 +456,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 int penalty_type,
                 double alpha, double C,
                 double l1_ratio,
-                SequentialDataset dataset,
+                SequentialDataset64 dataset,
                 np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
                 bint early_stopping, estimator,
                 int n_iter_no_change,
@@ -491,8 +491,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-    dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+    dataset : SequentialDataset64
+        A concrete ``SequentialDataset64`` object.
     validation_mask : ndarray[unsigned char, ndim=1]
         Equal to True on the validation set.
     early_stopping : boolean
@@ -506,6 +506,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The maximum number of iterations (epochs).
     tol: double
         The tolerance for the stopping criterion.
+    dataset : SequentialDataset64
+        A concrete ``SequentialDataset64`` object.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -582,7 +584,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                int penalty_type,
                double alpha, double C,
                double l1_ratio,
-               SequentialDataset dataset,
+               SequentialDataset64 dataset,
                np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
                bint early_stopping, estimator,
                int n_iter_no_change,

@@ -9,16 +9,19 @@ from scipy import linalg
 
 
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.base import _preprocess_data
 from sklearn.linear_model.base import _rescale_data
+from sklearn.linear_model.base import make_dataset
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import load_iris
 
 rng = np.random.RandomState(0)
 
@@ -399,3 +402,122 @@ def test_rescale_data():
     rescaled_y2 = y * np.sqrt(sample_weight)
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
+
+
+@ignore_warnings  # all deprecation warnings
+def test_deprecation_center_data():
+    n_samples = 200
+    n_features = 2
+
+    w = 1.0 + rng.rand(n_samples)
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+
+    param_grid = product([True, False], [True, False], [True, False],
+                         [None, w])
+
+    for (fit_intercept, normalize, copy, sample_weight) in param_grid:
+
+        XX = X.copy()  # such that we can try copy=False as well
+
+        X1, y1, X1_mean, X1_var, y1_mean = \
+            center_data(XX, y, fit_intercept=fit_intercept,
+                        normalize=normalize, copy=copy,
+                        sample_weight=sample_weight)
+
+        XX = X.copy()
+
+        X2, y2, X2_mean, X2_var, y2_mean = \
+            _preprocess_data(XX, y, fit_intercept=fit_intercept,
+                             normalize=normalize, copy=copy,
+                             sample_weight=sample_weight)
+
+        assert_array_almost_equal(X1, X2)
+        assert_array_almost_equal(y1, y2)
+        assert_array_almost_equal(X1_mean, X2_mean)
+        assert_array_almost_equal(X1_var, X2_var)
+        assert_array_almost_equal(y1_mean, y2_mean)
+
+    # Sparse cases
+    X = sparse.csr_matrix(X)
+
+    for (fit_intercept, normalize, copy, sample_weight) in param_grid:
+
+        X1, y1, X1_mean, X1_var, y1_mean = \
+            center_data(X, y, fit_intercept=fit_intercept, normalize=normalize,
+                        copy=copy, sample_weight=sample_weight)
+
+        X2, y2, X2_mean, X2_var, y2_mean = \
+            _preprocess_data(X, y, fit_intercept=fit_intercept,
+                             normalize=normalize, copy=copy,
+                             sample_weight=sample_weight, return_mean=False)
+
+        assert_array_almost_equal(X1.toarray(), X2.toarray())
+        assert_array_almost_equal(y1, y2)
+        assert_array_almost_equal(X1_mean, X2_mean)
+        assert_array_almost_equal(X1_var, X2_var)
+        assert_array_almost_equal(y1_mean, y2_mean)
+
+    for (fit_intercept, normalize) in product([True, False], [True, False]):
+
+        X1, y1, X1_mean, X1_var, y1_mean = \
+            sparse_center_data(X, y, fit_intercept=fit_intercept,
+                               normalize=normalize)
+
+        X2, y2, X2_mean, X2_var, y2_mean = \
+            _preprocess_data(X, y, fit_intercept=fit_intercept,
+                             normalize=normalize, return_mean=True)
+
+        assert_array_almost_equal(X1.toarray(), X2.toarray())
+        assert_array_almost_equal(y1, y2)
+        assert_array_almost_equal(X1_mean, X2_mean)
+        assert_array_almost_equal(X1_var, X2_var)
+        assert_array_almost_equal(y1_mean, y2_mean)
+
+
+def test_fused_types_make_dataset():
+    iris = load_iris()
+
+    X_32 = iris.data.astype(np.float32)
+    y_32 = iris.target.astype(np.float32)
+    X_csr_32 = sparse.csr_matrix(X_32)
+    sample_weight_32 = np.arange(y_32.size, dtype=np.float32)
+
+    X_64 = iris.data.astype(np.float64)
+    y_64 = iris.target.astype(np.float64)
+    X_csr_64 = sparse.csr_matrix(X_64)
+    sample_weight_64 = np.arange(y_64.size, dtype=np.float64)
+
+    # array
+    dataset_32, _ = make_dataset(X_32, y_32, sample_weight_32)
+    dataset_64, _ = make_dataset(X_64, y_64, sample_weight_64)
+    xi_32, yi_32, _, _ = dataset_32._next_py()
+    xi_64, yi_64, _, _ = dataset_64._next_py()
+    xi_data_32, _, _ = xi_32
+    xi_data_64, _, _ = xi_64
+
+    assert_equal(xi_data_32.dtype, np.float32)
+    assert_equal(xi_data_64.dtype, np.float64)
+    assert_equal(yi_32.dtype, np.float32)
+    assert_equal(yi_64.dtype, np.float64)
+    assert_array_almost_equal(yi_64, yi_32, decimal=5)
+
+    # csr
+    datasetcsr_32, _ = make_dataset(X_csr_32, y_32, sample_weight_32)
+    datasetcsr_64, _ = make_dataset(X_csr_64, y_64, sample_weight_64)
+    xicsr_32, yicsr_32, _, _ = datasetcsr_32._next_py()
+    xicsr_64, yicsr_64, _, _ = datasetcsr_64._next_py()
+    xicsr_data_32, _, _ = xicsr_32
+    xicsr_data_64, _, _ = xicsr_64
+
+    assert_equal(xicsr_data_32.dtype, np.float32)
+    assert_equal(xicsr_data_64.dtype, np.float64)
+    assert_equal(yicsr_32.dtype, np.float32)
+    assert_equal(yicsr_64.dtype, np.float64)
+    assert_array_almost_equal(xicsr_data_64, xicsr_data_32, decimal=5)
+    assert_array_almost_equal(yicsr_64, yicsr_32, decimal=5)
+
+    assert_array_equal(xi_data_32, xicsr_data_32)
+    assert_array_equal(xi_data_64, xicsr_data_64)
+    assert_array_equal(yi_32, yicsr_32)
+    assert_array_equal(yi_64, yicsr_64)

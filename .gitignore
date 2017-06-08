@@ -68,3 +68,8 @@ benchmarks/bench_covertype_data/
 .cache
 .pytest_cache/
 _configtest.o.d
+
+# files generated from a template
+sklearn/utils/seq_dataset.pyx
+sklearn/utils/seq_dataset.pxd
+sklearn/linear_model/sag_fast.pyx
