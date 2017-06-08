@@ -16,6 +16,7 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
+from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
@@ -30,6 +31,8 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
+    if _get_config()['assume_finite']:
+        return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent

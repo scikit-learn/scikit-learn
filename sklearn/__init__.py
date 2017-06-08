@@ -15,6 +15,78 @@ See http://scikit-learn.org for complete documentation.
 import sys
 import re
 import warnings
+import os
+from contextlib import contextmanager as _contextmanager
+
+_ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
+
+
+def get_config():
+    """Retrieve current values for configuration set by :func:`set_config`
+
+    Returns
+    -------
+    config : dict
+        Keys are parameter names that can be passed to :func:`set_config`.
+    """
+    return {'assume_finite': _ASSUME_FINITE}
+
+
+def set_config(assume_finite=None):
+    """Set global scikit-learn configuration
+
+    Parameters
+    ----------
+    assume_finite : bool, optional
+        If True, validation for finiteness will be skipped,
+        saving time, but leading to potential crashes. If
+        False, validation for finiteness will be performed,
+        avoiding error.
+    """
+    global _ASSUME_FINITE
+    if assume_finite is not None:
+        _ASSUME_FINITE = assume_finite
+
+
+@_contextmanager
+def config_context(**new_config):
+    """Context manager for global scikit-learn configuration
+
+    Parameters
+    ----------
+    assume_finite : bool, optional
+        If True, validation for finiteness will be skipped,
+        saving time, but leading to potential crashes. If
+        False, validation for finiteness will be performed,
+        avoiding error.
+
+    Notes
+    -----
+    All settings, not just those presently modified, will be returned to
+    their previous values when the context manager is exited. This is not
+    thread-safe.
+
+    Examples
+    --------
+    >>> import sklearn
+    >>> from sklearn.utils.validation import assert_all_finite
+    >>> with sklearn.config_context(assume_finite=True):
+    ...     assert_all_finite([float('nan')])
+    >>> with sklearn.config_context(assume_finite=True):
+    ...     with sklearn.config_context(assume_finite=False):
+    ...         assert_all_finite([float('nan')])
+    ... # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+    ...
+    ValueError: Input contains NaN, ...
+    """
+    old_config = get_config().copy()
+    set_config(**new_config)
+
+    try:
+        yield
+    finally:
+        set_config(**old_config)
 
 
 # Make sure that DeprecationWarning within this package always gets printed
