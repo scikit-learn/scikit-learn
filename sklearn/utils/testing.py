@@ -393,6 +393,15 @@ def assert_allclose_dense_sparse(x, y, err_msg=''):
         Error message to raise.
     """
     if sp.sparse.issparse(x):
+        if not sp.sparse.issparse(y):
+            raise ValueError("Can only compare two sparse matrices,"
+                             " not a sparse matrix and an array.")
+        x = x.tocsr()
+        y = y.tocsr()
+        x.eliminate_zeros()
+        y.eliminate_zeros()
+        assert_array_equal(x.indices, y.indices, err_msg=err_msg)
+        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
         assert_allclose(x.data, y.data, err_msg=err_msg)
     else:
         assert_allclose(x, y, err_msg=err_msg)

@@ -58,10 +58,19 @@ def test_assert_allclose_dense_sparse():
     msg = "Not equal to tolerance "
     y = sparse.csc_matrix(x)
     for X in [x, y]:
+        # basic compare
         assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse,
                              X, X * 2)
         assert_allclose_dense_sparse(X, X)
 
+    assert_raise_message(AssertionError, "Can only check two sparse",
+                         assert_allclose_dense_sparse, x, y)
+
+    A = sparse.diags(np.ones(5)).tocsr()
+    B = sparse.csr_matrix(np.ones((1, 5)))
+
+    assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse, B,
+                         A)
 
 
 def test_assert_raise_message():
@@ -187,7 +196,7 @@ def test_ignore_warning():
 # This class is inspired from numpy 1.7 with an alteration to check
 # the reset warning filters after calls to assert_warns.
 # This assert_warns behavior is specific to scikit-learn because
-#`clean_warning_registry()` is called internally by assert_warns
+# `clean_warning_registry()` is called internally by assert_warns
 # and clears all previous filters.
 class TestWarns(unittest.TestCase):
     def test_warn(self):
