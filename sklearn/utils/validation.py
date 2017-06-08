@@ -46,12 +46,15 @@ def _assert_all_finite(X):
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
-    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+    Parameters
+    ----------
+    X : array or sparse matrix
+    """
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
 def as_float_array(X, copy=True, force_all_finite=True):
-    """Converts an array-like to an array of floats
+    """Converts an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -600,6 +603,20 @@ def check_random_state(seed):
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
 
+    Parameters
+    ----------
+    estimator : object
+        An estimator to inspect.
+
+    parameter: str
+        The searched parameter.
+
+    Returns
+    -------
+    is_parameter: bool
+        Whether the parameter was found to be a a named parameter of the
+        estimator's fit method.
+
     Examples
     --------
     >>> from sklearn.svm import SVC
@@ -691,6 +708,15 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     all_or_any : callable, {all, any}, default all
         Specify whether all or any of the given attributes must exist.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    NotFittedError
+        If the attributes are not found.
     """
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
