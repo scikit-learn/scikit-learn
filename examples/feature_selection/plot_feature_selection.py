@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 from sklearn import datasets, svm
 from sklearn.feature_selection import SelectPercentile, f_classif
 
-# import some data to play with
+# Import some data to play with
 
 # The iris dataset
 iris = datasets.load_iris()

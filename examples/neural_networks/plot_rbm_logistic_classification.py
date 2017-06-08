@@ -42,7 +42,6 @@ from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
 
 
-###############################################################################
 # Setting up
 
 def nudge_dataset(X, Y):
@@ -91,7 +90,6 @@ rbm = BernoulliRBM(random_state=0, verbose=True)
 
 classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 
-###############################################################################
 # Training
 
 # Hyper-parameters. These were set by cross-validation,
@@ -111,7 +109,6 @@ classifier.fit(X_train, Y_train)
 logistic_classifier = linear_model.LogisticRegression(C=100.0)
 logistic_classifier.fit(X_train, Y_train)
 
-###############################################################################
 # Evaluation
 
 print()
@@ -125,7 +122,6 @@ print("Logistic regression using raw pixel features:\n%s\n" % (
         Y_test,
         logistic_classifier.predict(X_test))))
 
-###############################################################################
 # Plotting
 
 plt.figure(figsize=(4.2, 4))

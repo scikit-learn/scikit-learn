@@ -17,7 +17,6 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import StandardScaler
 
 
-##############################################################################
 # Generate sample data
 centers = [[1, 1], [-1, -1], [1, -1]]
 X, labels_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.4,
@@ -25,7 +24,6 @@ X, labels_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.4,
 
 X = StandardScaler().fit_transform(X)
 
-##############################################################################
 # Compute DBSCAN
 db = DBSCAN(eps=0.3, min_samples=10).fit(X)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
@@ -46,7 +44,6 @@ print("Adjusted Mutual Information: %0.3f"
 print("Silhouette Coefficient: %0.3f"
       % metrics.silhouette_score(X, labels))
 
-##############################################################################
 # Plot result
 import matplotlib.pyplot as plt
 

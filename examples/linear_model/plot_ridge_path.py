@@ -39,7 +39,6 @@ from sklearn import linear_model
 X = 1. / (np.arange(1, 11) + np.arange(0, 10)[:, np.newaxis])
 y = np.ones(10)
 
-###############################################################################
 # Compute paths
 
 n_alphas = 200
@@ -51,7 +50,6 @@ for a in alphas:
     ridge.fit(X, y)
     coefs.append(ridge.coef_)
 
-###############################################################################
 # Display results
 
 ax = plt.gca()

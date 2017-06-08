@@ -32,7 +32,6 @@ n_components = n_row * n_col
 image_shape = (64, 64)
 rng = RandomState(0)
 
-###############################################################################
 # Load faces data
 dataset = fetch_olivetti_faces(shuffle=True, random_state=rng)
 faces = dataset.data
@@ -48,7 +47,6 @@ faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
 print("Dataset consists of %d faces" % n_samples)
 
 
-###############################################################################
 def plot_gallery(title, images, n_col=n_col, n_row=n_row):
     plt.figure(figsize=(2. * n_col, 2.26 * n_row))
     plt.suptitle(title, size=16)
@@ -62,7 +60,6 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
         plt.yticks(())
     plt.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 
-###############################################################################
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
@@ -102,12 +99,10 @@ estimators = [
 ]
 
 
-###############################################################################
 # Plot a sample of the input data
 
 plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 
-###############################################################################
 # Do the estimation and plot it
 
 for name, estimator, center in estimators:

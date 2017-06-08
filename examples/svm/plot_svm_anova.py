@@ -14,7 +14,6 @@ from sklearn import svm, datasets, feature_selection
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 
-###############################################################################
 # Import some data to play with
 digits = datasets.load_digits()
 y = digits.target
@@ -26,7 +25,6 @@ X = X.reshape((n_samples, -1))
 # add 200 non-informative features
 X = np.hstack((X, 2 * np.random.random((n_samples, 200))))
 
-###############################################################################
 # Create a feature-selection transform and an instance of SVM that we
 # combine together to have an full-blown estimator
 
@@ -34,7 +32,6 @@ transform = feature_selection.SelectPercentile(feature_selection.f_classif)
 
 clf = Pipeline([('anova', transform), ('svc', svm.SVC(C=1.0))])
 
-###############################################################################
 # Plot the cross-validation score as a function of percentile of features
 score_means = list()
 score_stds = list()

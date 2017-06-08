@@ -15,8 +15,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.metrics import r2_score
 
-###############################################################################
-# generate some sparse data to play with
+# Generate some sparse data to play with
 np.random.seed(42)
 
 n_samples, n_features = 50, 200
@@ -35,7 +34,6 @@ n_samples = X.shape[0]
 X_train, y_train = X[:n_samples // 2], y[:n_samples // 2]
 X_test, y_test = X[n_samples // 2:], y[n_samples // 2:]
 
-###############################################################################
 # Lasso
 from sklearn.linear_model import Lasso
 
@@ -47,7 +45,6 @@ r2_score_lasso = r2_score(y_test, y_pred_lasso)
 print(lasso)
 print("r^2 on test data : %f" % r2_score_lasso)
 
-###############################################################################
 # ElasticNet
 from sklearn.linear_model import ElasticNet
 
