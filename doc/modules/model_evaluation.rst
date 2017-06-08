@@ -203,11 +203,13 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. _multimetric_scoring:
+
 Using mutiple metric evaluation
 -------------------------------
 
 Starting from version 0.19, scikit-learn permits evaluation of multiple metrics
-in ``GridSearchCV``, ``RandomSearchCV`` and ``cross_val_score``.
+in ``GridSearchCV``, ``RandomizedSearchCV`` and ``cross_val_score``.
 
 There are two ways to specify multiple scoring metrics for the ``scoring``
 parameter:
@@ -221,8 +223,8 @@ parameter:
       >>> scoring = {'accuracy': make_scorer(accuracy_score),
       ...            'prec': 'precision'}
 
-Note that the dict keys can either be scorer functions or one of the allowable
-predefined metric strings.
+Note that the dict values can either be scorer functions or one of the
+allowable predefined metric strings.
 
 Currently only those scorer functions that return a single score can be passed
 inside the dict. Scorer functions that return multiple values are not

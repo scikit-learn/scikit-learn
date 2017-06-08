@@ -31,6 +31,15 @@ Changelog
 New features
 ............
 
+   - :class:`model_selection.GridSearchCV`,
+     :class:`model_selection.RandomizedSearchCV` now support multimetric
+     evaluation. Refer the :ref:`multimetric_grid_search` section of userguide
+     for more information. :issue:`7388` by `Raghav RV`_
+
+   - :func:`model_selection.cross_val_score` now support multimetric
+     evaluation. Refer the :ref:`multimetric_cross_validation` section of
+     userguide for more information. :issue:`7388` by `Raghav RV`_
+
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
