@@ -1051,8 +1051,9 @@ class OneClassSVM(BaseLibSVM):
         return self
 
     def decision_function(self, X):
-        """Signed distance to the separating hyperplane: positive if inlier,
-        negative if outlier.
+        """Signed distance to the separating hyperplane.
+
+        Signed distance is positive for an inlier and negative for an outlier.
 
         Parameters
         ----------
