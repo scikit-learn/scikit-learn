@@ -1,14 +1,13 @@
 import scipy.sparse as sp
 import numpy as np
 import sys
-import os
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import cPickle as pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, all_estimators,
-                                   SkipTest)
+                                   slow_test)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
@@ -194,10 +193,8 @@ def test_check_estimator():
     check_estimator(MultiTaskElasticNet())
 
 
+@slow_test
 def test_check_estimator_clones():
-    if not os.environ.get('SLOW_TESTS', False):
-        raise SkipTest("Skipping slow tests")
-
     # check that check_estimator doesn't modify the estimator it receives
     from sklearn.datasets import load_iris
     iris = load_iris()
