@@ -209,7 +209,7 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
-    valid=True
+    valid = True
     if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
@@ -347,11 +347,11 @@ def _check_multimetric_scoring(estimator, scoring=None, allow_none=False):
         if isinstance(scoring, (list, tuple, set)):
             err_msg = ("The list/tuple elements must be unique "
                        "strings of predefined scorers. ")
-            invalid=False
+            invalid = False
             try:
                 keys = set(scoring)
             except TypeError:  # For list of lists
-                invalid=True
+                invalid = True
             if invalid:
                 raise ValueError(err_msg)
 
