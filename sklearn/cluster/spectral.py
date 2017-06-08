@@ -300,30 +300,6 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
-    affinity : string, array-like or callable, default 'rbf'
-        If a string, this may be one of 'nearest_neighbors', 'precomputed',
-        'rbf' or one of the kernels supported by
-        `sklearn.metrics.pairwise_kernels`.
-
-        Only kernels that produce similarity scores (non-negative values that
-        increase with similarity) should be used. This property is not checked
-        by the clustering algorithm.
-
-    gamma : float, default=1.0
-        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
-        Ignored for ``affinity='nearest_neighbors'``.
-
-    degree : float, default=3
-        Degree of the polynomial kernel. Ignored by other kernels.
-
-    coef0 : float, default=1
-        Zero coefficient for polynomial and sigmoid kernels.
-        Ignored by other kernels.
-
-    n_neighbors : integer
-        Number of neighbors to use when constructing the affinity matrix using
-        the nearest neighbors method. Ignored for ``affinity='rbf'``.
-
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
@@ -342,6 +318,23 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
+    gamma : float, default=1.0
+        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Ignored for ``affinity='nearest_neighbors'``.
+
+    affinity : string, array-like or callable, default 'rbf'
+        If a string, this may be one of 'nearest_neighbors', 'precomputed',
+        'rbf' or one of the kernels supported by
+        `sklearn.metrics.pairwise_kernels`.
+
+        Only kernels that produce similarity scores (non-negative values that
+        increase with similarity) should be used. This property is not checked
+        by the clustering algorithm.
+
+    n_neighbors : integer
+        Number of neighbors to use when constructing the affinity matrix using
+        the nearest neighbors method. Ignored for ``affinity='rbf'``.
+
     eigen_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
@@ -352,6 +345,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         embedding. k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another approach
         which is less sensitive to random initialization.
+
+    degree : float, default=3
+        Degree of the polynomial kernel. Ignored by other kernels.
+
+    coef0 : float, default=1
+        Zero coefficient for polynomial and sigmoid kernels.
+        Ignored by other kernels.
 
     kernel_params : dictionary of string to any, optional
         Parameters (keyword arguments) and values for kernel passed as

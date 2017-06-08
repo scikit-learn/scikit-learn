@@ -22,7 +22,7 @@ public_modules = [
     # 'sklearn',
     'sklearn.base',
     'sklearn.calibration',
-    # 'sklearn.cluster',
+    'sklearn.cluster',
     # 'sklearn.covariance',
     # 'sklearn.cross_decomposition',
     'sklearn.datasets',
@@ -94,7 +94,8 @@ def test_docstring_parameters():
                 # Now skip docstring test for y when y is None
                 # by default for API reason
                 if method_name in \
-                        ['fit', 'score', 'fit_predict', 'fit_transform']:
+                        ['fit', 'score', 'fit_predict', 'fit_transform',
+                         'partial_fit']:
                     sig = signature(method)
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):
