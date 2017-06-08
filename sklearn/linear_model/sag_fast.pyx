@@ -18,17 +18,19 @@ from ..utils.seq_dataset cimport SequentialDataset
 
 from libc.stdio cimport printf
 
+from cython cimport floating
+
 cdef extern from "sgd_fast_helpers.h":
-    bint skl_isfinite(double) nogil
+    bint skl_isfinite(floating) nogil
 
 
-cdef inline double fmax(double x, double y) nogil:
+cdef inline floating fmax(floating x, floating y) nogil:
     if x > y:
         return x
     return y
 
 
-cdef double _logsumexp(double* arr, int n_classes) nogil:
+cdef floating _logsumexp(floating* arr, int n_classes) nogil:
     """Computes the sum of arr assuming arr is in the log domain.
 
     Returns log(sum(exp(arr))) while minimizing the possibility of
@@ -36,8 +38,8 @@ cdef double _logsumexp(double* arr, int n_classes) nogil:
     """
     # Use the max to normalize, as with the log this is what accumulates
     # the less errors
-    cdef double vmax = arr[0]
-    cdef double out = 0.0
+    cdef floating vmax = arr[0]
+    cdef floating out = 0.0
     cdef int i
 
     for i in range(1, n_classes):
@@ -51,8 +53,8 @@ cdef double _logsumexp(double* arr, int n_classes) nogil:
 
 
 cdef class MultinomialLogLoss:
-    cdef double _loss(self, double* prediction, double y, int n_classes,
-                      double sample_weight) nogil:
+    cdef floating _loss(self, floating* prediction, floating y, int n_classes,
+                      floating sample_weight) nogil:
         """Multinomial Logistic regression loss.
 
         The multinomial logistic loss for one sample is:
@@ -66,21 +68,21 @@ cdef class MultinomialLogLoss:
 
         Parameters
         ----------
-        prediction : pointer to a np.ndarray[double] of shape (n_classes,)
+        prediction : pointer to a np.ndarray[floating] of shape (n_classes,)
             Prediction of the multinomial classifier, for current sample.
 
-        y : double, between 0 and n_classes - 1
+        y : floating, between 0 and n_classes - 1
             Indice of the correct class for current sample (i.e. label encoded).
 
         n_classes : integer
             Total number of classes.
 
-        sample_weight : double
+        sample_weight : floating
             Weight of current sample.
 
         Returns
         -------
-        loss : double
+        loss : floating
             Multinomial loss for current sample.
 
         Reference
@@ -88,15 +90,15 @@ cdef class MultinomialLogLoss:
         Bishop, C. M. (2006). Pattern recognition and machine learning.
         Springer. (Chapter 4.3.4)
         """
-        cdef double logsumexp_prediction = _logsumexp(prediction, n_classes)
-        cdef double loss
+        cdef floating logsumexp_prediction = _logsumexp(prediction, n_classes)
+        cdef floating loss
 
         # y is the indice of the correct class of current sample.
         loss = (logsumexp_prediction - prediction[int(y)]) * sample_weight
         return loss
 
-    cdef void _dloss(self, double* prediction, double y, int n_classes,
-                     double sample_weight, double* gradient_ptr) nogil:
+    cdef void _dloss(self, floating* prediction, floating y, int n_classes,
+                     floating sample_weight, floating* gradient_ptr) nogil:
         """Multinomial Logistic regression gradient of the loss.
 
         The gradient of the multinomial logistic loss with respect to a class c,
@@ -114,19 +116,19 @@ cdef class MultinomialLogLoss:
 
         Parameters
         ----------
-        prediction : pointer to a np.ndarray[double] of shape (n_classes,)
+        prediction : pointer to a np.ndarray[floating] of shape (n_classes,)
             Prediction of the multinomial classifier, for current sample.
 
-        y : double, between 0 and n_classes - 1
+        y : floating, between 0 and n_classes - 1
             Indice of the correct class for current sample (i.e. label encoded)
 
         n_classes : integer
             Total number of classes.
 
-        sample_weight : double
+        sample_weight : floating
             Weight of current sample.
 
-        gradient_ptr : pointer to a np.ndarray[double] of shape (n_classes,)
+        gradient_ptr : pointer to a np.ndarray[floating] of shape (n_classes,)
             Gradient vector to be filled.
 
         Reference
@@ -134,7 +136,7 @@ cdef class MultinomialLogLoss:
         Bishop, C. M. (2006). Pattern recognition and machine learning.
         Springer. (Chapter 4.3.4)
         """
-        cdef double logsumexp_prediction = _logsumexp(prediction, n_classes)
+        cdef floating logsumexp_prediction = _logsumexp(prediction, n_classes)
         cdef int class_ind
 
         for class_ind in range(n_classes):
@@ -153,40 +155,40 @@ cdef class MultinomialLogLoss:
 
 def _multinomial_grad_loss_all_samples(
         SequentialDataset dataset,
-        np.ndarray[double, ndim=2, mode='c'] weights_array,
-        np.ndarray[double, ndim=1, mode='c'] intercept_array,
+        np.ndarray[floating, ndim=2, mode='c'] weights_array,
+        np.ndarray[floating, ndim=1, mode='c'] intercept_array,
         int n_samples, int n_features, int n_classes):
     """Compute multinomial gradient and loss across all samples.
 
     Used for testing purpose only.
     """
-    cdef double* weights = <double * >weights_array.data
-    cdef double* intercept = <double * >intercept_array.data
+    cdef floating* weights = <floating * >weights_array.data
+    cdef floating* intercept = <floating * >intercept_array.data
 
-    cdef double *x_data_ptr = NULL
+    cdef floating *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
     cdef int xnnz = -1
-    cdef double y
-    cdef double sample_weight
+    cdef floating y
+    cdef floating sample_weight
 
-    cdef double wscale = 1.0
+    cdef floating wscale = 1.0
     cdef int i, j, class_ind, feature_ind
-    cdef double val
-    cdef double sum_loss = 0.0
+    cdef floating val
+    cdef floating sum_loss = 0.0
 
     cdef MultinomialLogLoss multiloss = MultinomialLogLoss()
 
-    cdef np.ndarray[double, ndim=2] sum_gradient_array = \
-        np.zeros((n_features, n_classes), dtype=np.double, order="c")
-    cdef double* sum_gradient = <double*> sum_gradient_array.data
+    cdef np.ndarray[floating, ndim=2] sum_gradient_array = \
+        np.zeros((n_features, n_classes), dtype=np.floating, order="c")
+    cdef floating* sum_gradient = <floating*> sum_gradient_array.data
 
-    cdef np.ndarray[double, ndim=1] prediction_array = \
-        np.zeros(n_classes, dtype=np.double, order="c")
-    cdef double* prediction = <double*> prediction_array.data
+    cdef np.ndarray[floating, ndim=1] prediction_array = \
+        np.zeros(n_classes, dtype=np.floating, order="c")
+    cdef floating* prediction = <floating*> prediction_array.data
 
-    cdef np.ndarray[double, ndim=1] gradient_array = \
-        np.zeros(n_classes, dtype=np.double, order="c")
-    cdef double* gradient = <double*> gradient_array.data
+    cdef np.ndarray[floating, ndim=1] gradient_array = \
+        np.zeros(n_classes, dtype=np.floating, order="c")
+    cdef floating* gradient = <floating*> gradient_array.data
 
     with nogil:
         for i in range(n_samples):
@@ -215,29 +217,29 @@ def _multinomial_grad_loss_all_samples(
     return sum_loss, sum_gradient_array
 
 
-cdef inline double _soft_thresholding(double x, double shrinkage) nogil:
+cdef inline floating _soft_thresholding(floating x, floating shrinkage) nogil:
     return fmax(x - shrinkage, 0) - fmax(- x - shrinkage, 0)
 
 
 def sag(SequentialDataset dataset,
-        np.ndarray[double, ndim=2, mode='c'] weights_array,
-        np.ndarray[double, ndim=1, mode='c'] intercept_array,
+        np.ndarray[floating, ndim=2, mode='c'] weights_array,
+        np.ndarray[floating, ndim=1, mode='c'] intercept_array,
         int n_samples,
         int n_features,
         int n_classes,
-        double tol,
+        floating tol,
         int max_iter,
         str loss_function,
-        double step_size,
-        double alpha,
-        double beta,
-        np.ndarray[double, ndim=2, mode='c'] sum_gradient_init,
-        np.ndarray[double, ndim=2, mode='c'] gradient_memory_init,
+        floating step_size,
+        floating alpha,
+        floating beta,
+        np.ndarray[floating, ndim=2, mode='c'] sum_gradient_init,
+        np.ndarray[floating, ndim=2, mode='c'] gradient_memory_init,
         np.ndarray[bint, ndim=1, mode='c'] seen_init,
         int num_seen,
         bint fit_intercept,
-        np.ndarray[double, ndim=1, mode='c'] intercept_sum_gradient_init,
-        double intercept_decay,
+        np.ndarray[floating, ndim=1, mode='c'] intercept_sum_gradient_init,
+        floating intercept_decay,
         bint saga,
         bint verbose):
     """Stochastic Average Gradient (SAG) and SAGA solvers.
@@ -258,15 +260,15 @@ def sag(SequentialDataset dataset,
 
     """
     # the data pointer for x, the current sample
-    cdef double *x_data_ptr = NULL
+    cdef floating *x_data_ptr = NULL
     # the index pointer for the column of the data
     cdef int *x_ind_ptr = NULL
     # the number of non-zero features for current sample
     cdef int xnnz = -1
     # the label value for curent sample
-    cdef double y
+    cdef floating y
     # the sample weight
-    cdef double sample_weight
+    cdef floating sample_weight
 
     # helper variable for indexes
     cdef int f_idx, s_idx, feature_ind, class_ind, j
@@ -278,9 +280,9 @@ def sag(SequentialDataset dataset,
     cdef int sample_ind
 
     # the maximum change in weights, used to compute stopping criteria
-    cdef double max_change
+    cdef floating max_change
     # a holder variable for the max weight, used to compute stopping criteria
-    cdef double max_weight
+    cdef floating max_weight
 
     # the start time of the fit
     cdef time_t start_time
@@ -288,32 +290,32 @@ def sag(SequentialDataset dataset,
     cdef time_t end_time
 
     # precomputation since the step size does not change in this implementation
-    cdef double wscale_update = 1.0 - step_size * alpha
+    cdef floating wscale_update = 1.0 - step_size * alpha
 
     # vector of booleans indicating whether this sample has been seen
     cdef bint* seen = <bint*> seen_init.data
 
     # helper for cumulative sum
-    cdef double cum_sum
+    cdef floating cum_sum
 
     # the pointer to the coef_ or weights
-    cdef double* weights = <double * >weights_array.data
+    cdef floating* weights = <floating * >weights_array.data
     # the pointer to the intercept_array
-    cdef double* intercept = <double * >intercept_array.data
+    cdef floating* intercept = <floating * >intercept_array.data
 
     # the pointer to the intercept_sum_gradient
-    cdef double* intercept_sum_gradient = \
-        <double * >intercept_sum_gradient_init.data
+    cdef floating* intercept_sum_gradient = \
+        <floating * >intercept_sum_gradient_init.data
 
     # the sum of gradients for each feature
-    cdef double* sum_gradient = <double*> sum_gradient_init.data
+    cdef floating* sum_gradient = <floating*> sum_gradient_init.data
     # the previously seen gradient for each sample
-    cdef double* gradient_memory = <double*> gradient_memory_init.data
+    cdef floating* gradient_memory = <floating*> gradient_memory_init.data
 
     # the cumulative sums needed for JIT params
-    cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
-        np.empty(n_samples, dtype=np.double, order="c")
-    cdef double* cumulative_sums = <double*> cumulative_sums_array.data
+    cdef np.ndarray[floating, ndim=1] cumulative_sums_array = \
+        np.empty(n_samples, dtype=np.floating, order="c")
+    cdef floating* cumulative_sums = <floating*> cumulative_sums_array.data
 
     # the index for the last time this feature was updated
     cdef np.ndarray[int, ndim=1] feature_hist_array = \
@@ -321,30 +323,30 @@ def sag(SequentialDataset dataset,
     cdef int* feature_hist = <int*> feature_hist_array.data
 
     # the previous weights to use to compute stopping criteria
-    cdef np.ndarray[double, ndim=2] previous_weights_array = \
-        np.zeros((n_features, n_classes), dtype=np.double, order="c")
-    cdef double* previous_weights = <double*> previous_weights_array.data
+    cdef np.ndarray[floating, ndim=2] previous_weights_array = \
+        np.zeros((n_features, n_classes), dtype=np.floating, order="c")
+    cdef floating* previous_weights = <floating*> previous_weights_array.data
 
-    cdef np.ndarray[double, ndim=1] prediction_array = \
-        np.zeros(n_classes, dtype=np.double, order="c")
-    cdef double* prediction = <double*> prediction_array.data
+    cdef np.ndarray[floating, ndim=1] prediction_array = \
+        np.zeros(n_classes, dtype=np.floating, order="c")
+    cdef floating* prediction = <floating*> prediction_array.data
 
-    cdef np.ndarray[double, ndim=1] gradient_array = \
-        np.zeros(n_classes, dtype=np.double, order="c")
-    cdef double* gradient = <double*> gradient_array.data
+    cdef np.ndarray[floating, ndim=1] gradient_array = \
+        np.zeros(n_classes, dtype=np.floating, order="c")
+    cdef floating* gradient = <floating*> gradient_array.data
 
     # Bias correction term in saga
-    cdef double gradient_correction
+    cdef floating gradient_correction
 
     # the scalar used for multiplying z
-    cdef double wscale = 1.0
+    cdef floating wscale = 1.0
 
     # the cumulative sums for each iteration for the sparse implementation
     cumulative_sums[0] = 0.0
 
     # the multipliative scale needed for JIT params
-    cdef np.ndarray[double, ndim=1] cumulative_sums_prox_array
-    cdef double* cumulative_sums_prox
+    cdef np.ndarray[floating, ndim=1] cumulative_sums_prox_array
+    cdef floating* cumulative_sums_prox
 
     cdef bint prox = beta > 0 and saga
 
@@ -369,8 +371,8 @@ def sag(SequentialDataset dataset,
 
     if prox:
         cumulative_sums_prox_array = np.empty(n_samples,
-                                              dtype=np.double, order="c")
-        cumulative_sums_prox = <double*> cumulative_sums_prox_array.data
+                                              dtype=np.floating, order="c")
+        cumulative_sums_prox = <floating*> cumulative_sums_prox_array.data
     else:
         cumulative_sums_prox = NULL
 
@@ -526,13 +528,13 @@ cdef void raise_infinite_error(int n_iter):
                      "or MinMaxScaler might help." % (n_iter + 1))
 
 
-cdef double scale_weights(double* weights, double wscale, int n_features,
+cdef floating scale_weights(floating* weights, floating wscale, int n_features,
                           int n_samples, int n_classes, int sample_itr,
-                          double* cumulative_sums,
-                          double* cumulative_sums_prox,
+                          floating* cumulative_sums,
+                          floating* cumulative_sums_prox,
                           int* feature_hist,
                           bint prox,
-                          double* sum_gradient,
+                          floating* sum_gradient,
                           int n_iter) nogil:
     """Scale the weights with wscale for numerical stability.
 
@@ -557,13 +559,13 @@ cdef double scale_weights(double* weights, double wscale, int n_features,
     return 1.0
 
 
-cdef void lagged_update(double* weights, double wscale, int xnnz,
+cdef void lagged_update(floating* weights, floating wscale, int xnnz,
                           int n_samples, int n_classes, int sample_itr,
-                          double* cumulative_sums,
-                          double* cumulative_sums_prox,
+                          floating* cumulative_sums,
+                          floating* cumulative_sums_prox,
                           int* feature_hist,
                           bint prox,
-                          double* sum_gradient,
+                          floating* sum_gradient,
                           int* x_ind_ptr,
                           bint reset,
                           int n_iter) nogil:
@@ -575,7 +577,7 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
     1 (this is done at the end of each epoch).
     """
     cdef int feature_ind, class_ind, idx, f_idx, lagged_ind, last_update_ind
-    cdef double cum_sum, grad_step, prox_step
+    cdef floating cum_sum, grad_step, prox_step
     for feature_ind in range(xnnz):
         if not reset:
             feature_ind = x_ind_ptr[feature_ind]
@@ -639,9 +641,9 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
             cumulative_sums_prox[sample_itr - 1] = 0.0
 
 
-cdef void predict_sample(double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                         double* w_data_ptr, double wscale, double* intercept,
-                         double* prediction, int n_classes) nogil:
+cdef void predict_sample(floating* x_data_ptr, int* x_ind_ptr, int xnnz,
+                         floating* w_data_ptr, floating wscale, floating* intercept,
+                         floating* prediction, int n_classes) nogil:
     """Compute the prediction given sparse sample x and dense weight w.
 
     Parameters
@@ -658,7 +660,7 @@ cdef void predict_sample(double* x_data_ptr, int* x_ind_ptr, int xnnz,
     w_data_ptr : pointer
         Pointer to the data of the weights w
 
-    wscale : double
+    wscale : floating
         Scale of the weights w
 
     intercept : pointer
@@ -672,7 +674,7 @@ cdef void predict_sample(double* x_data_ptr, int* x_ind_ptr, int xnnz,
 
     """
     cdef int feature_ind, class_ind, j
-    cdef double innerprod
+    cdef floating innerprod
 
     for class_ind in range(n_classes):
         innerprod = 0.0
