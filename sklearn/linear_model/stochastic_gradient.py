@@ -20,7 +20,6 @@ from ..utils.validation import check_is_fitted
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
-from ..utils.fixes import astype
 from ..utils import compute_class_weight
 from ..utils import deprecated
 from .sgd_fast import Hinge
@@ -864,7 +863,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                      n_iter, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = astype(y, np.float64, copy=False)
+        y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape
 

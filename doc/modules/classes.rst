@@ -40,6 +40,9 @@ Functions
    :template: function.rst
 
    base.clone
+   config_context
+   set_config
+   get_config
 
 
 .. _cluster_ref:
@@ -256,6 +259,7 @@ Loaders
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
+   datasets.load_wine
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
    datasets.load_linnerud
