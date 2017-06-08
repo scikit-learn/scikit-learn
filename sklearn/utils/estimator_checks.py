@@ -80,8 +80,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_empty_data_messages
 
     if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
-        # SpectralEmbedding
-        non-deterministic,
+        # SpectralEmbedding non-deterministic,
         # see issue #4236
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
