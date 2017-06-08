@@ -31,6 +31,11 @@ Changelog
 New features
 ............
 
+   - Validation that input data contains no NaN or inf can now be suppressed
+     using :func:`config_context`, at your own risk. This will save on runtime,
+     and may be particularly useful for prediction time. :issue:`7548` by
+     `Joel Nothman`_.
+
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
