@@ -643,7 +643,7 @@ parameters or alternatively it uses the given parameters.
     >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
     >>> gp = gaussian_process.GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
     >>> gp.fit(X, y)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    GaussianProcess(theta0=array([[ 0.01]]), thetaL=array([[ 0.0001]]),
+    GaussianProcess(...theta0=array([[ 0.01]]), thetaL=array([[ 0.0001]]),
             thetaU=array([[ 0.1]]))
     >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
 
