@@ -373,7 +373,7 @@ def test_estimator_weights_format():
 
 
 def test_predict_for_hard_voting():
-    # Test predictions array data type error
+    # Test voting classifier with non-integer (float) prediction
     clf1 = FaultySVC(random_state=123)
     clf2 = GaussianNB()
     clf3 = SVC(probability=True, random_state=123)
