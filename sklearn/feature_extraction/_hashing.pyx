@@ -15,7 +15,7 @@ np.import_array()
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign):
+def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     """Guts of FeatureHasher.transform.
 
     Returns

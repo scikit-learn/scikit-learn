@@ -109,8 +109,8 @@ def test_hasher_zeros():
 
 
 def test_hasher_alternate_sign():
-    X = [["foo", "bar", "baz", "investigation need", "records"]]
     # the last two tokens produce a hash collision that sums as 0
+    X = [["foo", "bar", "baz", "investigation need", "records"]]
 
     Xt = FeatureHasher(alternate_sign=True, non_negative=False,
                        input_type='string').fit_transform(X)

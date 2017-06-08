@@ -409,6 +409,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
 
+        .. versionadded:: 0.19
+
     non_negative : boolean, optional, default False
         When True, an absolute value is applied to the features matrix prior to
         returning it. When used in conjunction with alternate_sign=True, this
