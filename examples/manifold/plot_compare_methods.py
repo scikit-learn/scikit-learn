@@ -45,7 +45,8 @@ plt.suptitle("Manifold Learning with %i points, %i neighbors"
 
 
 ax = fig.add_subplot(251, projection='3d')
-ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral,
+           edgecolors='k')
 ax.view_init(4, -72)
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
@@ -60,7 +61,8 @@ for i, method in enumerate(methods):
     print("%s: %.2g sec" % (methods[i], t1 - t0))
 
     ax = fig.add_subplot(252 + i)
-    plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
+    plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral,
+                edgecolors='k')
     plt.title("%s (%.2g sec)" % (labels[i], t1 - t0))
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
@@ -71,7 +73,8 @@ Y = manifold.Isomap(n_neighbors, n_components).fit_transform(X)
 t1 = time()
 print("Isomap: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(257)
-plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
+plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral,
+            edgecolors='k')
 plt.title("Isomap (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -84,7 +87,8 @@ Y = mds.fit_transform(X)
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(258)
-plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
+plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral,
+            edgecolors='k')
 plt.title("MDS (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -98,7 +102,8 @@ Y = se.fit_transform(X)
 t1 = time()
 print("SpectralEmbedding: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(259)
-plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
+plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral,
+            edgecolors='k')
 plt.title("SpectralEmbedding (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -110,7 +115,8 @@ Y = tsne.fit_transform(X)
 t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(2, 5, 10)
-plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
+plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral,
+            edgecolors='k')
 plt.title("t-SNE (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
