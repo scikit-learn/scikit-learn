@@ -996,35 +996,35 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_clustering(name, alg_orig):
-    alg = clone(alg_orig)
+def check_clustering(name, clusterer_orig):
+    clusterer = clone(clusterer_orig)
     X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
-    if hasattr(alg, "n_clusters"):
-        alg.set_params(n_clusters=3)
-    set_random_state(alg)
+    if hasattr(clusterer, "n_clusters"):
+        clusterer.set_params(n_clusters=3)
+    set_random_state(clusterer)
     if name == 'AffinityPropagation':
-        alg.set_params(preference=-100)
-        alg.set_params(max_iter=100)
+        clusterer.set_params(preference=-100)
+        clusterer.set_params(max_iter=100)
 
     # fit
-    alg.fit(X)
+    clusterer.fit(X)
     # with lists
-    alg.fit(X.tolist())
+    clusterer.fit(X.tolist())
 
-    assert_equal(alg.labels_.shape, (n_samples,))
-    pred = alg.labels_
+    assert_equal(clusterer.labels_.shape, (n_samples,))
+    pred = clusterer.labels_
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
     if name == 'SpectralClustering':
         # there is no way to make Spectral clustering deterministic :(
         return
-    set_random_state(alg)
+    set_random_state(clusterer)
     with warnings.catch_warnings(record=True):
-        pred2 = alg.fit_predict(X)
+        pred2 = clusterer.fit_predict(X)
     assert_array_equal(pred, pred2)
 
 
@@ -1406,7 +1406,7 @@ def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
 @ignore_warnings(category=DeprecationWarning)
 def check_class_weight_balanced_linear_classifier(name, Classifier):
     """Test class weights with non-contiguous class labels."""
-    # STILL ON CLASSES?
+    # this is run on classes, not instances, though this should be changed
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = np.array([1, 1, 1, -1, -1])
