@@ -16,8 +16,8 @@ cdef class SequentialDataset:
     cdef int _get_next_index(self) nogil
     cdef int _get_random_index(self) nogil
 
-    cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
-                      int *nnz, double *y, double *sample_weight,
+    cdef void _sample(self, floating **x_data_ptr, int **x_ind_ptr,
+                      int *nnz, floating *y, floating *sample_weight,
                       int current_index) nogil
     cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
                    int *nnz, double *y, double *sample_weight) nogil

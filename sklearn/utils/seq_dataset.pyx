@@ -17,8 +17,8 @@ np.import_array()
 cdef class SequentialDataset:
     """Base class for datasets with sequential data access. """
 
-    cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight) nogil:
+    cdef void next(self, floating **x_data_ptr, int **x_ind_ptr,
+                   int *nnz, floating *y, floating *sample_weight) nogil:
         """Get the next example ``x`` from the dataset.
 
         Parameters
