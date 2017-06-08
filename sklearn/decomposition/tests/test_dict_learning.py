@@ -51,11 +51,13 @@ def test_dict_learning_shapes():
     assert_equal(dico.components_.shape, (n_components, n_features))
     assert_equal(dico.transform(X).shape, (X.shape[0], n_components))
 
+
 def test_dict_learning_lars_shapes():
     n_components = 5
     dico = DictionaryLearning(n_components, fit_algorithm='lars',
                               random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
+
 
 def test_dict_learning_ksvd_shapes():
     n_components = 5
