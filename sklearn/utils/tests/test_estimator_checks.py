@@ -192,10 +192,6 @@ def test_check_estimator():
     check_estimator(MultiTaskElasticNet())
 
 
-def _bad_fit(self, X, y):
-    raise ValueError("You shouldn't have called this")
-
-
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
     from sklearn.datasets import load_iris
@@ -205,17 +201,13 @@ def test_check_estimator_clones():
         est = Estimator()
         set_checking_parameters(est)
         # without fitting
-        est.fit = _bad_fit
         old_pickle = pickle.dumps(est)
         try:
             check_estimator(est)
         except Exception as e:
             # some estimators don't pass the test right now
             # don't worry about that here
-            if "called this" in str(e):
-                raise AssertionError("check_estimator didn't clone")
-            else:
-                continue
+            continue
         assert_equal(old_pickle, pickle.dumps(est))
 
     for name, Estimator in all_estimators():
@@ -227,18 +219,13 @@ def test_check_estimator_clones():
             print(e)
             continue
         # with fitting
-        est.fit = _bad_fit
         old_pickle = pickle.dumps(est)
-        check_estimator(est)
         try:
             check_estimator(est)
         except Exception as e:
             # some estimators don't pass the test right now
             # don't worry about that here
-            if "called this" in str(e):
-                raise AssertionError("check_estimator didn't clone")
-            else:
-                continue
+            continue
         assert_equal(old_pickle, pickle.dumps(est))
 
 
