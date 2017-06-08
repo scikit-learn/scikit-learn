@@ -117,6 +117,19 @@ def safe_sparse_dot(a, b, dense_output=False):
 
     Uses BLAS GEMM as replacement for numpy.dot where possible
     to avoid unnecessary copies.
+
+    Parameters
+    ----------
+    a : array or sparse matrix
+    b : array or sparse matrix
+    dense_output : boolean, default False
+        When False, either ``a`` or ``b`` being sparse will yield sparse
+        output. When True, output will always be an array.
+
+    Returns
+    -------
+    dot_product : array or sparse matrix
+        sparse if ``a`` or ``b`` is sparse and ``dense_output``=False.
     """
     if issparse(a) or issparse(b):
         ret = a * b
