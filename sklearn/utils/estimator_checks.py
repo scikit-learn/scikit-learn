@@ -290,8 +290,8 @@ def set_checking_parameters(estimator):
         warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
-        # LinearSVR
-        if estimator.__class__.__name__ == 'LinearSVR':
+        # LinearSVR, LinearSVC
+        if estimator.__class__.__name__ in ['LinearSVR', 'LinearSVC']:
             estimator.set_params(max_iter=20)
         # NMF
         if estimator.__class__.__name__ == 'NMF':
