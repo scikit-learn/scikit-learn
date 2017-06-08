@@ -459,7 +459,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self._get_hasher().fit(X, y=y)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform a sequence of documents to a document-term matrix.
 
         Parameters
@@ -468,8 +468,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Samples. Each sample must be a text document (either bytes or
             unicode strings, file name or file object depending on the
             constructor argument) which will be tokenized and hashed.
-
-        y : (ignored)
 
         Returns
         -------
