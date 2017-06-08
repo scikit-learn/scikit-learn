@@ -7,6 +7,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -101,6 +102,33 @@ def test_randomized_lasso():
 
     clf = RandomizedLasso(verbose=False, scaling=1.1)
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_dtype_match():
+    # Check randomized lasso
+    scaling = 0.3
+    selection_threshold = 0.5
+
+    X_64 = X.astype(np.float64)
+    y_64 = y.astype(np.float64)
+    X_32 = X.astype(np.float32)
+    y_32 = y.astype(np.float32)
+
+    # check type consistency 32 bits
+    lasso_32 = RandomizedLasso(verbose=False, alpha=1, random_state=42,
+                          scaling=scaling,
+                          selection_threshold=selection_threshold)
+    lasso_32.fit(X_32, y_32)
+    assert_equal(lasso_32.coef_.dtype, X_32.dtype)
+
+    # check type consistency 64 bits
+    lasso_64 = RandomizedLasso(verbose=False, alpha=1, random_state=42,
+                          scaling=scaling,
+                          selection_threshold=selection_threshold)
+    lasso_64.fit(X_64, y_64)
+    assert_equal(lasso_64.coef_.dtype, X_64.dtype)
+
+    assert_almost_equal(lasso_32.coef_, lasso_64.coef_.astype(np.float32))
 
 
 def test_randomized_logistic():
