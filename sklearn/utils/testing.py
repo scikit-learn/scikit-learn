@@ -375,7 +375,7 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
                              (names, function.__name__))
 
 
-def assert_allclose_dense_sparse(x, y, err_msg=''):
+def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=0, err_msg=''):
     """Assert allclose for sparse and dense data.
 
     Both x and y need to be either sparse or dense, they
@@ -398,13 +398,13 @@ def assert_allclose_dense_sparse(x, y, err_msg=''):
                              " not a sparse matrix and an array.")
         x = x.tocsr()
         y = y.tocsr()
-        x.eliminate_zeros()
-        y.eliminate_zeros()
+        x.sum_duplicates()
+        y.sum_duplicates()
         assert_array_equal(x.indices, y.indices, err_msg=err_msg)
         assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
-        assert_allclose(x.data, y.data, err_msg=err_msg)
+        assert_allclose(x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg)
     else:
-        assert_allclose(x, y, err_msg=err_msg)
+        assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
