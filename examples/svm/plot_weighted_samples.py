@@ -29,7 +29,7 @@ def plot_decision_function(classifier, sample_weight, axis, title):
     # plot the line, the points, and the nearest vectors to the plane
     axis.contourf(xx, yy, Z, alpha=0.75, cmap=plt.cm.bone)
     axis.scatter(X[:, 0], X[:, 1], c=y, s=100 * sample_weight, alpha=0.9,
-                 cmap=plt.cm.bone)
+                 cmap=plt.cm.bone, edgecolors='black')
 
     axis.axis('off')
     axis.set_title(title)

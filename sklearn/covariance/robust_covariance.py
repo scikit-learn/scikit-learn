@@ -96,6 +96,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
             initial_estimates=None, verbose=False,
             cov_computation_method=empirical_covariance):
     n_samples, n_features = X.shape
+    dist = np.inf
 
     # Initialisation
     support = np.zeros(n_samples, dtype=bool)
@@ -119,8 +120,14 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
 
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
+    # If the data already has singular covariance, calculate the precision,
+    # as the loop below will not be entered.
+    if np.isinf(det):
+        precision = linalg.pinvh(covariance)
+
     previous_det = np.inf
-    while (det < previous_det) and (remaining_iterations > 0):
+    while (det < previous_det and remaining_iterations > 0
+            and not np.isinf(det)):
         # save old estimates values
         previous_location = location
         previous_covariance = covariance
@@ -142,14 +149,9 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
 
     previous_dist = dist
     dist = (np.dot(X - location, precision) * (X - location)).sum(axis=1)
-    # Catch computation errors
+    # Check if best fit already found (det => 0, logdet => -inf)
     if np.isinf(det):
-        raise ValueError(
-            "Singular covariance matrix. "
-            "Please check that the covariance matrix corresponding "
-            "to the dataset is full rank and that MinCovDet is used with "
-            "Gaussian-distributed data (or at least data drawn from a "
-            "unimodal, symmetric distribution.")
+        results = location, covariance, det, support, dist
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -385,8 +387,8 @@ def fast_mcd(X, support_fraction=None,
             diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
             halves_start = np.where(diff == np.min(diff))[0]
             # take the middle points' mean to get the robust location estimate
-            location = 0.5 * (X_sorted[n_support + halves_start]
-                              + X_sorted[halves_start]).mean()
+            location = 0.5 * (X_sorted[n_support + halves_start] +
+                              X_sorted[halves_start]).mean()
             support = np.zeros(n_samples, dtype=bool)
             X_centered = X - location
             support[np.argsort(np.abs(X_centered), 0)[:n_support]] = True

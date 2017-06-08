@@ -31,6 +31,11 @@ Changelog
 New features
 ............
 
+   - Validation that input data contains no NaN or inf can now be suppressed
+     using :func:`config_context`, at your own risk. This will save on runtime,
+     and may be particularly useful for prediction time. :issue:`7548` by
+     `Joel Nothman`_.
+
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
@@ -161,7 +166,6 @@ Enhancements
      and :func:`model_selection.cross_val_score` now allow estimators with callable
      kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
 
-
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -170,6 +174,7 @@ Enhancements
 
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -179,11 +184,20 @@ Enhancements
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
    - Prevent cast from float32 to float64 in
-   :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
-   by :user:`Joan Massich <massich>`
+     :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
+     by :user:`Joan Massich <massich>`
+
+   - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
+     :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
 
 Bug fixes
 .........
+
+   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
+     that produced a singular covariance matrix would cause the helper method
+     `_c_step` to throw an exception.
+     :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
+
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
@@ -197,9 +211,14 @@ Bug fixes
      ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
+   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails 
+     when generating more than 30 features. :issue:`8159` by
+     :user:`Herilalaina Rakotoarison <herilalaina>`
+
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
+
    - Fixed same issue in :func:`sklearn.grid_search.BaseSearchCV.inverse_transform`
      :issue:`8846` by :user:`Rasmus Eriksson <MrMjauh>`
 
@@ -284,9 +303,18 @@ Bug fixes
      left `coef_` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
 
+
+   - Fix a bug where :class:`sklearn.feature_extraction.FeatureHasher`
+     mandatorily applied a sparse random projection to the hashed features,
+     preventing the use of 
+     :class:`sklearn.feature_extraction.text.HashingVectorizer` in a
+     pipeline with  :class:`sklearn.feature_extraction.text.TfidfTransformer`.
+     :issue:`7513` by :user:`Roman Yurchak <rth>`.
+     
    - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
      raising an exception if instability is identified.  :issue:`7376` and
      :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
+     
    - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
@@ -317,6 +345,12 @@ Bug fixes
 
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
+
+   - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
+     :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
+
+   - Add ``shuffle`` parameter to :func:`sklearn.model_selection.train_test_split`.
+     :issue:`#8845` by  :user:`themrmax <themrmax>`
 
 API changes summary
 -------------------
@@ -388,6 +422,41 @@ API changes summary
    - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
      has been renamed to ``n_components`` and will be removed in version 0.21.
      :issue:`8922` by :user:Attractadore
+
+   - :class:`cluster.bicluster.SpectralCoClustering` and
+     :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
+     :issue:`6126` by `Andreas Müller`_.
+
+   - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
+     for scikit-learn. The following backported functions in ``sklearn.utils``
+     have been removed or deprecated accordingly.
+     :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
+     
+     Removed in 0.19:
+     
+     - ``utils.fixes.argpartition``
+     - ``utils.fixes.array_equal``
+     - ``utils.fixes.astype``
+     - ``utils.fixes.bincount``
+     - ``utils.fixes.expit``
+     - ``utils.fixes.frombuffer_empty``
+     - ``utils.fixes.in1d``
+     - ``utils.fixes.norm``
+     - ``utils.fixes.rankdata``
+     - ``utils.fixes.safe_copy``
+     
+     Deprecated in 0.19, to be removed in 0.21:
+     
+     - ``utils.arpack.eigs``
+     - ``utils.arpack.eigsh``
+     - ``utils.arpack.svds``
+     - ``utils.extmath.fast_dot``
+     - ``utils.extmath.logsumexp``
+     - ``utils.extmath.norm``
+     - ``utils.extmath.pinvh``
+     - ``utils.random.choice``
+     - ``utils.sparsetools.connected_components``
+     - ``utils.stats.rankdata``
 
 
 .. _changes_0_18_1:
