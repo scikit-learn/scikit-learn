@@ -916,8 +916,8 @@ Some tips and tricks:
     (Note that this will not filter out punctuation.)
 
 
-    The following example will, for instance, transform British spelling to American
-    spelling::
+    The following example will, for instance, transform some British spelling 
+    to American spelling::
 
         >>> import re
         >>> def to_british(tokens):
@@ -936,7 +936,10 @@ Some tips and tricks:
         >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
         [...'color', ...'color']
 
-    The same approach could be used for stemming.
+    The same approach could be used for stemming or normalizing all numbers
+    to a new token, as illustrated in:
+
+     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
 
 
 Customizing the vectorizer can also be useful when handling Asian languages

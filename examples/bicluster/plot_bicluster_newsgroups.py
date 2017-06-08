@@ -41,18 +41,21 @@ from sklearn.metrics.cluster import v_measure_score
 print(__doc__)
 
 
-def number_aware_tokenizer(doc):
-    """ Tokenizer that maps all numeric tokens to a placeholder.
+def numbers_to_paceholder(tokens):
+    """ Map all numeric tokens to a placeholder.
 
     For many applications, tokens that begin with a number are not directly
     useful, but the fact that such a token exists can be relevant.  By applying
     this form of dimensionality reduction, some methods may perform better.
     """
-    token_pattern = re.compile(u'(?u)\\b\\w\\w+\\b')
-    tokens = token_pattern.findall(doc)
-    tokens = ["#NUMBER" if token[0] in "0123456789_" else token
-              for token in tokens]
-    return tokens
+    for t in tokens:
+        yield re.sub(r"^\d+$", "#NUMBER", t)
+
+
+class CustomTfidfVectorizer(TfidfVectorizer):
+    def build_tokenizer(self):
+        base = super(CustomTfidfVectorizer, self).build_tokenizer()
+        return lambda doc: list(numbers_to_paceholder(base(doc)))
 
 
 # exclude 'comp.os.ms-windows.misc'
@@ -67,8 +70,7 @@ categories = ['alt.atheism', 'comp.graphics',
 newsgroups = fetch_20newsgroups(categories=categories)
 y_true = newsgroups.target
 
-vectorizer = TfidfVectorizer(stop_words='english', min_df=5,
-                             tokenizer=number_aware_tokenizer)
+vectorizer = CustomTfidfVectorizer(stop_words='english', min_df=5)
 cocluster = SpectralCoclustering(n_clusters=len(categories),
                                  svd_method='arpack', random_state=0)
 kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000,
