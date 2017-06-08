@@ -161,7 +161,6 @@ Enhancements
      and :func:`model_selection.cross_val_score` now allow estimators with callable
      kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
 
-
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -170,6 +169,7 @@ Enhancements
 
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
@@ -178,8 +178,21 @@ Enhancements
      removed by setting it to `None`.
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
+   - Prevent cast from float32 to float64 in
+     :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
+     by :user:`Joan Massich <massich>`
+
+   - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
+     :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
+
 Bug fixes
 .........
+
+   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
+     that produced a singular covariance matrix would cause the helper method
+     `_c_step` to throw an exception.
+     :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
+
    - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
@@ -196,6 +209,7 @@ Bug fixes
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
+
    - Fixed same issue in :func:`sklearn.grid_search.BaseSearchCV.inverse_transform`
      :issue:`8846` by :user:`Rasmus Eriksson <MrMjauh>`
 
@@ -307,8 +321,18 @@ Bug fixes
      when the length of features_names does not match n_features in the decision
      tree.
      :issue:`8512` by :user:`Li Li <aikinogard>`.
+
    - Fixed a bug in :class:`manifold.TSNE` affecting convergence of the
      gradient descent. :issue:`8768` by :user:`David DeTomaso <deto>`.
+
+   - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
+     :user:`Sergei Lebedev <superbobry>`
+
+   - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
+     :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
+
+   - Add ``shuffle`` parameter to :func:`sklearn.model_selection.train_test_split`.
+     :issue:`#8845` by  :user:`themrmax <themrmax>`
 
 API changes summary
 -------------------
@@ -385,6 +409,37 @@ API changes summary
    - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
      has been renamed to ``n_components`` and will be removed in version 0.21.
      :issue:`8922` by :user:Attractadore
+
+   - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
+     for scikit-learn. The following backported functions in ``sklearn.utils``
+     have been removed or deprecated accordingly.
+     :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
+     
+     Removed in 0.19:
+     
+     - ``utils.fixes.argpartition``
+     - ``utils.fixes.array_equal``
+     - ``utils.fixes.astype``
+     - ``utils.fixes.bincount``
+     - ``utils.fixes.expit``
+     - ``utils.fixes.frombuffer_empty``
+     - ``utils.fixes.in1d``
+     - ``utils.fixes.norm``
+     - ``utils.fixes.rankdata``
+     - ``utils.fixes.safe_copy``
+     
+     Deprecated in 0.19, to be removed in 0.21:
+     
+     - ``utils.arpack.eigs``
+     - ``utils.arpack.eigsh``
+     - ``utils.arpack.svds``
+     - ``utils.extmath.fast_dot``
+     - ``utils.extmath.logsumexp``
+     - ``utils.extmath.norm``
+     - ``utils.extmath.pinvh``
+     - ``utils.random.choice``
+     - ``utils.sparsetools.connected_components``
+     - ``utils.stats.rankdata``
 
 
 .. _changes_0_18_1:
@@ -820,8 +875,8 @@ Model evaluation and meta-estimators
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
      and :class:`pipeline.FeatureUnion` components using the ``set_params``
      interface that powers :mod:`sklearn.grid_search`.
-     See :ref:`sphx_glr_plot_compare_reduction.py`. By `Joel Nothman`_ and
-     :user:`Robert McGibbon <rmcgibbo>`.
+     See :ref:`sphx_glr_auto_examples_plot_compare_reduction.py`
+     By `Joel Nothman`_ and :user:`Robert McGibbon <rmcgibbo>`.
 
    - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported

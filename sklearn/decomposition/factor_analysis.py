@@ -28,7 +28,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
-from ..utils.extmath import fast_logdet, fast_dot, randomized_svd, squared_norm
+from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
@@ -256,8 +256,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Wpsi = self.components_ / self.noise_variance_
         cov_z = linalg.inv(Ih + np.dot(Wpsi, self.components_.T))
-        tmp = fast_dot(X_transformed, Wpsi.T)
-        X_transformed = fast_dot(tmp, cov_z)
+        tmp = np.dot(X_transformed, Wpsi.T)
+        X_transformed = np.dot(tmp, cov_z)
 
         return X_transformed
 
