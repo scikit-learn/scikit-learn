@@ -7,6 +7,7 @@ from sklearn._build_utils import get_blas_info
 def configuration(parent_package='', top_path=None):
     import numpy
     from numpy.distutils.misc_util import Configuration
+    from Cython import Tempita as tempita
 
     config = Configuration('utils', parent_package, top_path)
     config.add_subpackage('sparsetools')
@@ -53,6 +54,24 @@ def configuration(parent_package='', top_path=None):
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
+
+    # generate files from a template
+    pyx_templates = ['sklearn/utils/seq_dataset.pyx.tp',
+                     'sklearn/utils/seq_dataset.pxd.tp']
+
+    for pyxfiles in pyx_templates:
+        outfile = pyxfiles[:-3]
+        # if .pyx.tp is not updated, no need to output .pyx
+        if (os.path.exists(outfile) and
+                os.stat(pyxfiles).st_mtime < os.stat(outfile).st_mtime):
+            continue
+
+        with open(pyxfiles, "r") as f:
+            tmpl = f.read()
+        pyxcontent = tempita.sub(tmpl)
+
+        with open(outfile, "w") as f:
+            f.write(pyxcontent)
 
     config.add_extension('seq_dataset',
                          sources=['seq_dataset.pyx'],
