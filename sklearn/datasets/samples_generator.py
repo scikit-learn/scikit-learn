@@ -25,7 +25,7 @@ def _generate_hypercube(samples, dimensions, rng):
     """Returns distinct binary samples of length dimensions
     """
     if dimensions > 30:
-        return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
+        return np.hstack([rng.randint(2, size=(samples, dimensions - 30)),
                           _generate_hypercube(samples, 30, rng)])
     out = sample_without_replacement(2 ** dimensions, samples,
                                      random_state=rng).astype(dtype='>u4',
