@@ -11,6 +11,7 @@ from scipy import sparse
 from scipy.stats import rankdata
 import struct
 
+import sklearn
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
 from sklearn.utils.testing import assert_raises
@@ -1553,6 +1554,8 @@ def check_parameters_default_constructible(name, Estimator):
         clone(estimator)
         # test __repr__
         repr(estimator)
+        with sklearn.config_context(show_default_parameters=False):
+            repr(estimator)
         # test that set_params returns self
         assert_true(estimator.set_params() is estimator)
 
