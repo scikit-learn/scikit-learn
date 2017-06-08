@@ -40,9 +40,8 @@ is an estimator object::
     >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
     >>> pipe = Pipeline(estimators)
     >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    Pipeline(memory=None,
-             steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+    Pipeline(steps=[('reduce_dim', PCA()),
+                    ('clf', SVC())])
 
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
@@ -53,31 +52,24 @@ filling in the names automatically::
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> from sklearn.preprocessing import Binarizer
     >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
-             steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
-                    ('multinomialnb', MultinomialNB(alpha=1.0,
-                                                    class_prior=None,
-                                                    fit_prior=True))])
+    Pipeline(steps=[('binarizer', Binarizer()),
+                    ('multinomialnb', MultinomialNB())])
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
     >>> pipe.steps[0]
-    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False))
+    ('reduce_dim', PCA())
 
 and as a ``dict`` in ``named_steps``::
 
     >>> pipe.named_steps['reduce_dim']
-    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False)
+    PCA()
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
     >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    Pipeline(memory=None,
-             steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
-                    ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
+    Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC(C=10))])
 
 Attributes of named_steps map to keys, enabling tab completion in interactive environments::
 
@@ -152,8 +144,8 @@ object::
     >>> pipe = Pipeline(estimators, memory=cachedir)
     >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(...,
-             steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+             steps=[('reduce_dim', PCA()),
+                    ('clf', SVC())])
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
@@ -169,8 +161,7 @@ object::
      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
      >>> pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-     Pipeline(memory=None,
-              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
+     Pipeline(steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[ -1.77484909e-19  ... 4.07058917e-18]]
@@ -243,10 +234,8 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
-                 transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', KernelPCA(alpha=1.0,...))],
-                 transformer_weights=None)
+    FeatureUnion(transformer_list=[('linear_pca', PCA()),
+                                   ('kernel_pca', KernelPCA())])
 
 
 Like pipelines, feature unions have a shorthand constructor called
@@ -258,10 +247,8 @@ and ignored by setting to ``None``::
 
     >>> combined.set_params(kernel_pca=None)
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
-                 transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', None)],
-                 transformer_weights=None)
+    FeatureUnion(transformer_list=[('linear_pca', PCA()),
+                                   ('kernel_pca', None)])
 
 .. topic:: Examples:
 

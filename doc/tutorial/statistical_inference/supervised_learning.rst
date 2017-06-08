@@ -94,9 +94,7 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
-               weights='uniform')
+    KNeighborsClassifier()
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -176,7 +174,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    LinearRegression()
     >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
@@ -327,9 +325,7 @@ application of Occam's razor: *prefer simpler models*.
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, positive=False, precompute=False,
-       random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
+    Lasso(alpha=0.025118864315095794)
     >>> print(regr.coef_)
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
@@ -370,10 +366,7 @@ function or **logistic** function:
 
     >>> logistic = linear_model.LogisticRegression(C=1e5)
     >>> logistic.fit(iris_X_train, iris_y_train)
-    LogisticRegression(C=100000.0, class_weight=None, dual=False,
-              fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
+    LogisticRegression(C=100000.0)
 
 This is known as :class:`LogisticRegression`.
 
@@ -454,10 +447,7 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+    SVC(kernel='linear')
 
 
 .. warning:: **Normalizing data**

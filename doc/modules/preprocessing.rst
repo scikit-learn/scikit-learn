@@ -73,7 +73,7 @@ This class is hence suitable for use in the early steps of a
 
   >>> scaler = preprocessing.StandardScaler().fit(X)
   >>> scaler
-  StandardScaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler()
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
@@ -286,7 +286,7 @@ This class is hence suitable for use in the early steps of a
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
-  Normalizer(copy=True, norm='l2')
+  Normalizer()
 
 
 The normalizer instance can then be used on sample vectors as any transformer::
@@ -341,7 +341,7 @@ as each sample is treated independently of others::
 
   >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
   >>> binarizer
-  Binarizer(copy=True, threshold=0.0)
+  Binarizer()
 
   >>> binarizer.transform(X)
   array([[ 1.,  0.,  1.],
@@ -398,8 +398,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-         handle_unknown='error', n_values='auto', sparse=True)
+  OneHotEncoder()
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
@@ -418,8 +417,7 @@ features, one has to explicitly set ``n_values``. For example,
     >>> # Note that there are missing categorical values for the 2nd and 3rd
     >>> # features
     >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
+    OneHotEncoder(n_values=[2, 3, 4])
     >>> enc.transform([[1, 0, 0]]).toarray()
     array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
 
@@ -453,7 +451,7 @@ that contain the missing values::
     >>> from sklearn.preprocessing import Imputer
     >>> imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
-    Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
+    Imputer()
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
     [[ 4.          2.        ]
@@ -466,7 +464,7 @@ The :class:`Imputer` class also supports sparse matrices::
     >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
     >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
     >>> imp.fit(X)
-    Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
+    Imputer(missing_values=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
     >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
     [[ 4.          2.        ]

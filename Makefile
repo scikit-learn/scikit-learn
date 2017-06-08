@@ -34,7 +34,7 @@ test-sphinxext:
 	$(NOSETESTS) -s -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
-	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
+	SKLEARN_SHOW_DEFAULT_PARAMETERS=False $(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
 	doc/tutorial/text_analytics
 endif

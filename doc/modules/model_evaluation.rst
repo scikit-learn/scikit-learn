@@ -802,10 +802,7 @@ with a svm classifier in a binary class problem::
   >>> y = [-1, 1]
   >>> est = svm.LinearSVC(random_state=0)
   >>> est.fit(X, y)
-  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-       multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-       verbose=0)
+  LinearSVC(random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
   >>> pred_decision  # doctest: +ELLIPSIS
   array([-2.18...,  2.36...,  0.09...])
@@ -820,10 +817,7 @@ with a svm classifier in a multiclass problem::
   >>> labels = np.array([0, 1, 2, 3])
   >>> est = svm.LinearSVC()
   >>> est.fit(X, Y)
-  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-       multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-       verbose=0)
+  LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
   >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
@@ -1567,7 +1561,7 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   0.63...
   >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
   >>> clf.fit(X_train, y_train)
-  DummyClassifier(constant=None, random_state=0, strategy='most_frequent')
+  DummyClassifier(random_state=0, strategy='most_frequent')
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.57...
 
