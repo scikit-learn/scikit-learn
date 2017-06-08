@@ -61,6 +61,11 @@ class ModifyInitParams(BaseEstimator):
         self.a = a.copy()
 
 
+@deprecated("This estimator is deprecated")
+class DeprecatedEstimator(T):
+    pass
+
+
 class DeprecatedAttributeEstimator(BaseEstimator):
     def __init__(self, a=None, b=None):
         self.a = a
@@ -203,6 +208,16 @@ def test_repr():
 
     with sklearn.config_context(show_default_parameters=False):
         assert_equal(repr(test), "T(a=K(), b=K())")
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_short_repr_deprecated():
+    with sklearn.config_context(show_default_parameters=False):
+        est = DeprecatedEstimator()
+        assert_equal(repr(est), "DeprecatedEstimator()")
+
+        est = DeprecatedEstimator(a='c')
+        assert_equal(repr(est), "DeprecatedEstimator(a='c')")
 
 
 def test_str():

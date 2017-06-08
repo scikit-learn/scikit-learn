@@ -288,7 +288,8 @@ class BaseEstimator(object):
         params = self.get_params(deep=False)
         if not get_config()['show_default_parameters']:
             filtered_params = {}
-            init_params = signature(self.__init__).parameters
+            init = getattr(self.__init__, 'deprecated_original', self.__init__)
+            init_params = signature(init).parameters
             for k, v in params.items():
                 if v != init_params[k].default:
                     filtered_params[k] = v
