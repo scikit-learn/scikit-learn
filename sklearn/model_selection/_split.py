@@ -1450,7 +1450,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-
     Examples
     --------
     >>> from sklearn.model_selection import StratifiedShuffleSplit
@@ -1860,6 +1859,10 @@ def train_test_split(*arrays, **options):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    shuffle : boolean, optional (default=True)
+        Whether or not to shuffle the data before splitting. If shuffle=False
+        then stratify must be None.
+
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
         the class labels.
@@ -1903,6 +1906,9 @@ def train_test_split(*arrays, **options):
     >>> y_test
     [1, 4]
 
+    >>> train_test_split(y, shuffle=False)
+    [[0, 1, 2], [3, 4]]
+
     """
     n_arrays = len(arrays)
     if n_arrays == 0:
@@ -1911,6 +1917,7 @@ def train_test_split(*arrays, **options):
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     stratify = options.pop('stratify', None)
+    shuffle = options.pop('shuffle', True)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
@@ -1920,21 +1927,37 @@ def train_test_split(*arrays, **options):
 
     arrays = indexable(*arrays)
 
-    if stratify is not None:
-        CVClass = StratifiedShuffleSplit
+    if shuffle is False:
+        if stratify is not None:
+            raise NotImplementedError(
+                "Stratified train/test split is not implemented for "
+                "shuffle=False")
+
+        n_samples = _num_samples(arrays[0])
+        n_train, n_test = _validate_shuffle_split(n_samples, test_size,
+                                                  train_size)
+
+        train = np.arange(n_train)
+        test = np.arange(n_train, n_train + n_test)
+
     else:
-        CVClass = ShuffleSplit
+        if stratify is not None:
+            CVClass = StratifiedShuffleSplit
+        else:
+            CVClass = ShuffleSplit
 
-    cv = CVClass(test_size=test_size,
-                 train_size=train_size,
-                 random_state=random_state)
+        cv = CVClass(test_size=test_size,
+                     train_size=train_size,
+                     random_state=random_state)
 
-    train, test = next(cv.split(X=arrays[0], y=stratify))
+        train, test = next(cv.split(X=arrays[0], y=stratify))
+
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests
+
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params
