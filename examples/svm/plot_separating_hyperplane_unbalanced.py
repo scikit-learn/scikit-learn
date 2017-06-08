@@ -73,4 +73,5 @@ Z = wclf.decision_function(xy).reshape(XX.shape)
 # plot decision boundary and margins for weighted classes
 b = ax.contour(XX, YY, Z, colors='r', levels=[0], alpha=0.5, linestyles=['-'])
 
-plt.legend([a.collections[0], b.collections[0]], ["non weighted", "weighted"], loc="upper right")
+plt.legend([a.collections[0], b.collections[0]], ["non weighted", "weighted"],
+           loc="upper right")
