@@ -54,7 +54,7 @@ def set_config(assume_finite=None, show_parameters=None):
     if assume_finite is not None:
         _CONFIG.update(assume_finite=assume_finite)
     if show_parameters is not None:
-        _CONFIG.update(show_parmeters=show_parameters)
+        _CONFIG.update(show_parameters=show_parameters)
 
 
 @_contextmanager
