@@ -931,7 +931,7 @@ def test_train_test_split_errors():
     assert_raises(TypeError, train_test_split, range(3),
                   some_argument=1.1)
     assert_raises(ValueError, train_test_split, range(3), range(42))
-    assert_raises(NotImplementedError, train_test_split, range(10),
+    assert_raises(ValueError, train_test_split, range(10),
                   shuffle=False, stratify=True)
 
 

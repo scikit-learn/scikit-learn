@@ -1929,7 +1929,7 @@ def train_test_split(*arrays, **options):
 
     if shuffle is False:
         if stratify is not None:
-            raise NotImplementedError(
+            raise ValueError(
                 "Stratified train/test split is not implemented for "
                 "shuffle=False")
 
