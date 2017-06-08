@@ -1,5 +1,7 @@
+from distutils.version import StrictVersion
 from itertools import product
 import numpy as np
+import scipy
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
@@ -501,6 +503,42 @@ def test_kneighbors_classifier_sparse(n_samples=40,
             X_eps = sparsev(X[:n_test_pts] + epsilon)
             y_pred = knn.predict(X_eps)
             assert_array_equal(y_pred, y[:n_test_pts])
+
+CLASSIFIERS = {
+    'KNeighborsClassifier': neighbors.KNeighborsClassifier(n_neighbors=3),
+    'RadiusNeighborsClassifier': neighbors.RadiusNeighborsClassifier(
+        radius=0.1, outlier_label=-1),
+}
+
+
+def check_classifier_sparse_multilabel_y(name):
+    rng = check_random_state(0)
+    n_features = 2
+    n_samples = 100
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 2, (n_samples, n_output))
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = CLASSIFIERS[name]
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    y_sparse = csc_matrix(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_sparse,
+                                                        random_state=0)
+    if StrictVersion(scipy.__version__) < StrictVersion('0.13.0'):
+        assert_raises(EnvironmentError, clf.fit, X_train, y_train)
+    else:
+        clf.fit(X_train, y_train)
+        y_sparse_pred = clf.predict(X_test)
+        assert_array_equal(y_pred, y_sparse_pred.toarray())
+
+
+def test_classifiers_sparse_multilabel_y():
+    for name in CLASSIFIERS:
+        yield check_classifier_sparse_multilabel_y, name
 
 
 def test_KNeighborsClassifier_multioutput():

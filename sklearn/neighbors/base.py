@@ -6,10 +6,12 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+from distutils.version import StrictVersion
 import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import scipy
 from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
@@ -772,15 +774,27 @@ class SupervisedIntegerMixin(object):
             self.outputs_2d_ = True
 
         check_classification_targets(y)
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
 
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
+        self.classes_ = []
+
+        if issparse(y) and self.outputs_2d_:
+            if StrictVersion(scipy.__version__) < StrictVersion('0.13.0'):
+                raise EnvironmentError('Sparse multilabel y not supported for'
+                                       'scipy < 0.13')
+            self.outputs_2d_ = 'sparse'
+            self._y = y
+            self.classes_ = [np.array([0, 1], dtype=np.int)] * y.shape[1]
+
+        else:
+            self._y = np.empty(y.shape, dtype=np.int)
+            for k in range(self._y.shape[1]):
+                classes, self._y[:, k] = np.unique(y[:, k],
+                                                   return_inverse=True)
+                self.classes_.append(classes)
+
+            if not self.outputs_2d_:
+                self.classes_ = self.classes_[0]
+                self._y = self._y.ravel()
 
         return self._fit(X)
 
