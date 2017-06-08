@@ -38,7 +38,6 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils.fixes import bincount
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -91,6 +90,10 @@ def _check_targets(y_true, y_pred):
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
+        if y_type == "binary":
+            unique_values = np.union1d(y_true, y_pred)
+            if len(unique_values) > 2:
+                y_type = "multiclass"
 
     if y_type.startswith('multilabel'):
         y_true = csr_matrix(y_true)
@@ -237,6 +240,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
            [1, 0, 2]])
 
     In the binary case, we can extract true positives, etc as follows:
+
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
@@ -970,7 +974,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     .. [3] `Discriminative Methods for Multi-labeled Classification Advances
            in Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
            Godbole, Sunita Sarawagi
-           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`
+           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`_
 
     Examples
     --------
@@ -1083,16 +1087,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             tp_bins_weights = None
 
         if len(tp_bins):
-            tp_sum = bincount(tp_bins, weights=tp_bins_weights,
+            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
                               minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
-            pred_sum = bincount(y_pred, weights=sample_weight,
+            pred_sum = np.bincount(y_pred, weights=sample_weight,
                                 minlength=len(labels))
         if len(y_true):
-            true_sum = bincount(y_true, weights=sample_weight,
+            true_sum = np.bincount(y_true, weights=sample_weight,
                                 minlength=len(labels))
 
         # Retain only selected labels
@@ -1474,8 +1478,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         .. versionadded:: 0.18
 
     classes : array, shape = [n_labels], optional
-        (deprecated) Integer array of labels. This parameter has been
-         renamed to ``labels`` in version 0.18 and will be removed in 0.20.
+        Integer array of labels.
+
+        .. deprecated:: 0.18
+           This parameter has been deprecated in favor of ``labels`` in
+           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------

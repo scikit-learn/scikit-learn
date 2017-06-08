@@ -10,7 +10,7 @@ from operator import itemgetter
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.special import erf
+from scipy.special import erf, expit
 
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.gaussian_process.kernels \
@@ -106,10 +106,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers. If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -388,7 +389,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         log_marginal_likelihood = -np.inf
         for _ in range(self.max_iter_predict):
             # Line 4
-            pi = 1 / (1 + np.exp(-f))
+            pi = expit(f)
             W = pi * (1 - pi)
             # Line 5
             W_sr = np.sqrt(W)
@@ -510,10 +511,12 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     multi_class : string, default : "one_vs_rest"
         Specifies how multi-class classification problems are handled.

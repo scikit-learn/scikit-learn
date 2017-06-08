@@ -4,7 +4,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils.testing import assert_raises, assert_true, assert_equal
+from sklearn.utils.testing import (assert_raises, assert_true, assert_equal,
+                                   ignore_warnings)
 
 
 def test_feature_hasher_dicts():
@@ -108,6 +109,7 @@ def test_hasher_zeros():
     assert_equal(X.data.shape, (0,))
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hasher_alternate_sign():
     # the last two tokens produce a hash collision that sums as 0
     X = [["foo", "bar", "baz", "investigation need", "records"]]
@@ -133,6 +135,7 @@ def test_hasher_alternate_sign():
     assert_array_equal(Xt.data, Xt_2.data)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hasher_negative():
     X = [{"foo": 2, "bar": -4, "baz": -1}.items()]
     Xt = FeatureHasher(alternate_sign=False, non_negative=False,

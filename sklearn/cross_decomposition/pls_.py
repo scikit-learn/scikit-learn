@@ -4,27 +4,21 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
-from distutils.version import LooseVersion
-from sklearn.utils.extmath import svd_flip
-
-from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..utils import check_array, check_consistent_length
-from ..externals import six
 
 import warnings
 from abc import ABCMeta, abstractmethod
+
 import numpy as np
-from scipy import linalg
-from ..utils import arpack
+from scipy.linalg import pinv2, svd
+from scipy.sparse.linalg import svds
+
+from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..utils import check_array, check_consistent_length
+from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..externals import six
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
-
-import scipy
-pinv2_args = {}
-if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
-    # check_finite=False is an optimization available only in scipy >=0.12
-    pinv2_args = {'check_finite': False}
 
 
 def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
@@ -48,7 +42,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             if X_pinv is None:
                 # We use slower pinv2 (same as np.linalg.pinv) for stability
                 # reasons
-                X_pinv = linalg.pinv2(X, **pinv2_args)
+                X_pinv = pinv2(X, check_finite=False)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
             # Mode A regress each X column on y_score
@@ -65,7 +59,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         # 2.1 Update y_weights
         if mode == "B":
             if Y_pinv is None:
-                Y_pinv = linalg.pinv2(Y, **pinv2_args)  # compute once pinv(Y)
+                Y_pinv = pinv2(Y, check_finite=False)  # compute once pinv(Y)
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
@@ -89,7 +83,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
 
 def _svd_cross_product(X, Y):
     C = np.dot(X.T, Y)
-    U, s, Vh = linalg.svd(C, full_matrices=False)
+    U, s, Vh = svd(C, full_matrices=False)
     u = U[:, [0]]
     v = Vh.T[:, [0]]
     return u, v
@@ -353,13 +347,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
         self.x_rotations_ = np.dot(
             self.x_weights_,
-            linalg.pinv2(np.dot(self.x_loadings_.T, self.x_weights_),
-                         **pinv2_args))
+            pinv2(np.dot(self.x_loadings_.T, self.x_weights_),
+                  check_finite=False))
         if Y.shape[1] > 1:
             self.y_rotations_ = np.dot(
                 self.y_weights_,
-                linalg.pinv2(np.dot(self.y_loadings_.T, self.y_weights_),
-                             **pinv2_args))
+                pinv2(np.dot(self.y_loadings_.T, self.y_weights_),
+                      check_finite=False))
         else:
             self.y_rotations_ = np.ones(1)
 
@@ -545,7 +539,9 @@ class PLSRegression(_PLS):
 
     where Xk and Yk are residual matrices at iteration k.
 
-    `Slides explaining PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`
+    `Slides explaining
+    PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
+
 
     For each component k, find weights u, v that optimizes:
     ``max corr(Xk u, Yk v) * std(Xk u) std(Yk u)``, such that ``|u| = 1``
@@ -682,7 +678,8 @@ class PLSCanonical(_PLS):
 
     where Xk and Yk are residual matrices at iteration k.
 
-    `Slides explaining PLS <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`
+    `Slides explaining PLS
+    <http://www.eigenvector.com/Docs/Wise_pls_properties.pdf>`_
 
     For each component k, find weights u, v that optimize::
 
@@ -811,9 +808,9 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # all the components (C.shape[1]), we have to use another one. Else,
         # let's use arpacks to compute only the interesting components.
         if self.n_components >= np.min(C.shape):
-            U, s, V = linalg.svd(C, full_matrices=False)
+            U, s, V = svd(C, full_matrices=False)
         else:
-            U, s, V = arpack.svds(C, k=self.n_components)
+            U, s, V = svds(C, k=self.n_components)
         # Deterministic output
         U, V = svd_flip(U, V)
         V = V.T

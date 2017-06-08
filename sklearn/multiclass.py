@@ -46,7 +46,7 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
-from .utils.validation import check_X_y
+from .utils.validation import check_X_y, check_array
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -176,7 +176,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
-
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -217,6 +216,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         return self
 
+    @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
 
@@ -488,8 +488,12 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        check_classification_targets(y)
 
         self.classes_ = np.unique(y)
+        if len(self.classes_) == 1:
+            raise ValueError("OneVsOneClassifier can not be fit when only one"
+                             " class is present.")
         n_classes = self.classes_.shape[0]
         estimators_indices = list(zip(*(Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_ovo_binary)
@@ -498,13 +502,14 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.estimators_ = estimators_indices[0]
         try:
-            self.pairwise_indices_ = estimators_indices[1] \
-                                     if self._pairwise else None
+            self.pairwise_indices_ = (
+                estimators_indices[1] if self._pairwise else None)
         except AttributeError:
             self.pairwise_indices_ = None
 
         return self
 
+    @if_delegate_has_method(delegate='estimator')
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
 
@@ -544,8 +549,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             n_jobs=self.n_jobs)(
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
-                for estimator, (i, j) in izip(
-                        self.estimators_, (combinations)))
+                for estimator, (i, j) in izip(self.estimators_,
+                                              (combinations)))
 
         self.pairwise_indices_ = None
 
@@ -640,9 +645,11 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state : numpy.RandomState, optional
-        The generator used to initialize the codebook. Defaults to
-        numpy.random.
+    random_state : int, RandomState instance or None, optional, default: None
+        The generator used to initialize the codebook.  If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     n_jobs : int, optional, default: 1
         The number of jobs to use for the computation. If -1 all CPUs are used.
@@ -701,12 +708,14 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
+        X, y = check_X_y(X, y)
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {1}"
                              "".format(self.code_size))
 
         _check_estimator(self.estimator)
         random_state = check_random_state(self.random_state)
+        check_classification_targets(y)
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
@@ -747,6 +756,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Predicted multi-class targets.
         """
         check_is_fitted(self, 'estimators_')
+        X = check_array(X)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]
