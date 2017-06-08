@@ -286,7 +286,7 @@ class BaseEstimator(object):
 
     def _changed_params(self):
         params = self.get_params(deep=False)
-        if get_config()['show_parameters'] == 'changed':
+        if not get_config()['show_default_parameters']:
             filtered_params = {}
             init_params = signature(self.__init__).parameters
             for k, v in params.items():
