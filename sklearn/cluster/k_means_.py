@@ -913,7 +913,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X = self._check_fit_data(X)
         return self.fit(X)._transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform X to a cluster-distance space.
 
         In the new space, each dimension is the distance to the cluster
