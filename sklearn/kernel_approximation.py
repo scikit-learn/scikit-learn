@@ -38,9 +38,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : {int, RandomState}, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
-        if RandomState instance, random_state is the random number generator.
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Notes
     -----
@@ -124,9 +126,11 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : {int, RandomState}, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
-        if RandomState instance, random_state is the random number generator.
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     References
     ----------
@@ -181,7 +185,8 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
-            and n_features is the number of features.
+            and n_features is the number of features. All values of X must be
+            strictly greater than "-skewedness".
 
         Returns
         -------
@@ -191,8 +196,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
-        if (X < 0).any():
-            raise ValueError("X may not contain entries smaller than zero.")
+        if (X <= -self.skewedness).any():
+            raise ValueError("X may not contain entries smaller than"
+                             " -skewedness.")
 
         X += self.skewedness
         np.log(X, X)
@@ -378,8 +384,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         How many data points will be used to construct the mapping.
 
     gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi2 and
-        sigmoid kernels. Interpretation of the default value is left to
+        Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
+        and sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
@@ -394,10 +400,11 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
-    random_state : {int, RandomState}, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
-        if RandomState instance, random_state is the random number generator.
-
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -478,7 +485,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
         S = np.maximum(S, 1e-12)
-        self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
+        self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
         self.component_indices_ = inds
         return self

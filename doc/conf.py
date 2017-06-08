@@ -69,7 +69,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u('scikit-learn')
-copyright = u('2010 - 2016, scikit-learn developers (BSD License)')
+copyright = u('2007 - 2017, scikit-learn developers (BSD License)')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -236,12 +236,12 @@ trim_doctests_flags = True
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
+    'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
         'sklearn': None,
         'matplotlib': 'http://matplotlib.org',
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
-        'nibabel': 'http://nipy.org/nibabel'}
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.8.1',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'}
 }
 
 

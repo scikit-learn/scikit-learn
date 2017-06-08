@@ -1,4 +1,3 @@
-
 """
 The :mod:`sklearn.cross_validation` module includes utilities for cross-
 validation and performance evaluation.
@@ -27,12 +26,10 @@ from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
                                column_or_1d)
 from .utils.multiclass import type_of_target
-from .utils.random import choice
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
-from .utils.fixes import bincount
 from .gaussian_process.kernels import Kernel as GPKernel
 from .exceptions import FitFailedWarning
 
@@ -297,9 +294,11 @@ class KFold(_BaseKFold):
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -499,9 +498,11 @@ class StratifiedKFold(_BaseKFold):
         Whether to shuffle each stratification of the data before splitting
         into batches.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -538,7 +539,7 @@ class StratifiedKFold(_BaseKFold):
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
-        label_counts = bincount(y_inversed)
+        label_counts = np.bincount(y_inversed)
         min_labels = np.min(label_counts)
         if np.all(self.n_folds > label_counts):
             raise ValueError("All the n_labels for individual classes"
@@ -822,8 +823,11 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -984,7 +988,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             # if we need to add more, we add them all and
             # go to the next value
             add_now = min(len(inds), need_to_add)
-            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            inds = rng.choice(inds, size=add_now, replace=False)
             floored[inds] += 1
             need_to_add -= add_now
             if need_to_add == 0:
@@ -1031,8 +1035,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Examples
     --------
@@ -1063,7 +1070,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
-        if np.min(bincount(self.y_indices)) < 2:
+        if np.min(np.bincount(self.y_indices)) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
                              " number of labels for any class cannot"
@@ -1080,7 +1087,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
-        cls_count = bincount(self.y_indices)
+        cls_count = np.bincount(self.y_indices)
 
         for n in range(self.n_iter):
             # if there are ties in the class-counts, we want
@@ -1225,8 +1232,11 @@ class LabelShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train labels. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     """
     def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
@@ -1756,8 +1766,10 @@ def _permutation_test_score(estimator, X, y, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
-        estimator.fit(X[train], y[train])
-        avg_score.append(scorer(estimator, X[test], y[test]))
+        X_train, y_train = _safe_split(estimator, X, y, train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train)
+        estimator.fit(X_train, y_train)
+        avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
 
 
@@ -1770,7 +1782,7 @@ def _shuffle(y, labels, random_state):
         for label in np.unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
-    return y[ind]
+    return safe_indexing(y, ind)
 
 
 def check_cv(cv, X=None, y=None, classifier=False):
@@ -1887,9 +1899,11 @@ def permutation_test_score(estimator, X, y, cv=None,
         Labels constrain the permutation among groups of samples with
         a same label.
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, optional
         The verbosity level.
@@ -1903,11 +1917,14 @@ def permutation_test_score(estimator, X, y, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `scoring` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `scoring` is
-        rather a loss function (i.e. when lower is better such as with
-        `mean_squared_error`) then this is actually the complement of the
-        p-value:  1 - p-value.
+        The p-value, which approximates the probability that the score would
+        be obtained by chance. This is calculated as:
+
+        `(C + 1) / (n_permutations + 1)`
+
+        Where C is the number of permutations whose score >= the true score.
+
+        The best possible p-value is 1/(n_permutations + 1), the worst is 1.0.
 
     Notes
     -----
@@ -1972,8 +1989,11 @@ def train_test_split(*arrays, **options):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as

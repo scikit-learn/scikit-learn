@@ -22,14 +22,12 @@ from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.fixes import astype
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
@@ -230,10 +228,11 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     verbose : boolean, optional
         Verbosity mode.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -449,10 +448,11 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
     precompute_distances : boolean, default: True
         Precompute distances (faster but takes more memory).
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -638,10 +638,11 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     init : {'k-means++', 'random' or ndarray or callable} optional
         Method for initialization
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     x_squared_norms :  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
@@ -766,10 +767,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : int, default 0
         Verbosity mode.
@@ -1008,10 +1010,11 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     random_reassign : boolean, optional
         If True, centers with very low counts are randomly reassigned
@@ -1057,16 +1060,15 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with uniform probability
-            new_centers = choice(X.shape[0], replace=False, size=n_reassigns,
-                                 random_state=random_state)
+            new_centers = random_state.choice(X.shape[0], replace=False,
+                                              size=n_reassigns)
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
-                assign_rows_csr(X,
-                                astype(new_centers, np.intp),
-                                astype(np.where(to_reassign)[0], np.intp),
+                assign_rows_csr(X, new_centers.astype(np.intp),
+                                np.where(to_reassign)[0].astype(np.intp),
                                 centers)
             else:
                 centers[to_reassign] = X[new_centers]
@@ -1247,10 +1249,11 @@ class MiniBatchKMeans(KMeans):
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     reassignment_ratio : float, default: 0.01
         Control the fraction of the maximum number of counts for a

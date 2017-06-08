@@ -8,14 +8,10 @@
 
 import numpy as np
 import scipy.sparse as sp
-
-try:
-    from scipy.sparse.linalg import svds
-except ImportError:
-    from ..utils.arpack import svds
+from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, as_float_array, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -59,9 +55,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         The default is larger than the default in `randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
-    random_state : int or RandomState, optional
-        (Seed for) pseudo-random number generator. If not given, the
-        numpy.random singleton is used.
+    random_state : int, RandomState instance or None, optional, default = None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
@@ -155,12 +153,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = as_float_array(X, copy=False)
+        X = check_array(X, accept_sparse=['csr', 'csc'])
         random_state = check_random_state(self.random_state)
-
-        # If sparse and not csr or csc, convert to csr
-        if sp.issparse(X) and X.getformat() not in ["csr", "csc"]:
-            X = X.tocsr()
 
         if self.algorithm == "arpack":
             U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)

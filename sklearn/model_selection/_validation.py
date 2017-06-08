@@ -21,13 +21,13 @@ import scipy.sparse as sp
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
-from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
+from ..preprocessing import LabelEncoder
 
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
@@ -364,7 +364,9 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
               as in '2*n_jobs'
 
     method : string, optional, default: 'predict'
-        Invokes the passed method name of the passed estimator.
+        Invokes the passed method name of the passed estimator. For
+        method='predict_proba', the columns correspond to the classes
+        in sorted order.
 
     Returns
     -------
@@ -389,6 +391,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     if not callable(getattr(estimator, method)):
         raise AttributeError('{} not implemented in estimator'
                              .format(method))
+
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        le = LabelEncoder()
+        y = le.fit_transform(y)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -472,6 +478,14 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        n_classes = len(set(y))
+        predictions_ = np.zeros((X_test.shape[0], n_classes))
+        if method == 'decision_function' and len(estimator.classes_) == 2:
+            predictions_[:, estimator.classes_[-1]] = predictions
+        else:
+            predictions_[:, estimator.classes_] = predictions
+        predictions = predictions_
     return predictions, test
 
 
@@ -565,9 +579,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, optional
         The verbosity level.
@@ -581,11 +597,14 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `scoring` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `scoring` is
-        rather a loss function (i.e. when lower is better such as with
-        `mean_squared_error`) then this is actually the complement of the
-        p-value:  1 - p-value.
+        The p-value, which approximates the probability that the score would
+        be obtained by chance. This is calculated as:
+
+        `(C + 1) / (n_permutations + 1)`
+
+        Where C is the number of permutations whose score >= the true score.
+
+        The best possible p-value is 1/(n_permutations + 1), the worst is 1.0.
 
     Notes
     -----
@@ -622,8 +641,10 @@ def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv.split(X, y, groups):
-        estimator.fit(X[train], y[train])
-        avg_score.append(scorer(estimator, X[test], y[test]))
+        X_train, y_train = _safe_split(estimator, X, y, train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train)
+        estimator.fit(X_train, y_train)
+        avg_score.append(scorer(estimator, X_test, y_test))
     return np.mean(avg_score)
 
 
@@ -636,7 +657,7 @@ def _shuffle(y, groups, random_state):
         for group in np.unique(groups):
             this_mask = (groups == group)
             indices[this_mask] = random_state.permutation(indices[this_mask])
-    return y[indices]
+    return safe_indexing(y, indices)
 
 
 def learning_curve(estimator, X, y, groups=None,
@@ -723,9 +744,11 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` == 'True'.
 
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
@@ -831,8 +854,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
-                                 dtype=np.int, copy=False)
+        train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
+                             dtype=np.int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:
