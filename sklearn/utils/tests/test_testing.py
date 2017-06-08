@@ -322,7 +322,10 @@ def test_check_parameters_match():
         raise SkipTest(
             "numpydoc is required to test the docstrings")
 
-    check_parameters_match(f_ok)
+    incorrect = check_parameters_match(f_ok)
+    assert_equal(incorrect, [])
+    incorrect = check_parameters_match(f_missing, ignore=['b'])
+    assert_equal(incorrect, [])
     assert_raise_message(RuntimeError, 'Unknown section Results',
                          check_parameters_match, f_bad_sections)
     assert_raise_message(RuntimeError, 'Unknown section Parameter',

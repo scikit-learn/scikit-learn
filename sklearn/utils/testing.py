@@ -788,7 +788,7 @@ def get_func_name(func):
     return '.'.join(parts)
 
 
-def check_parameters_match(func, doc=None):
+def check_parameters_match(func, doc=None, ignore=None):
     """Helper to check docstring
 
     Parameters
@@ -797,6 +797,8 @@ def check_parameters_match(func, doc=None):
         The function object to test.
     doc : str
         Pass evenually manually the docstring to test.
+    ignore : None | list
+        Parameters to ignore.
 
     Returns
     -------
@@ -815,6 +817,10 @@ def check_parameters_match(func, doc=None):
     # drop self
     if len(args) > 0 and args[0] == 'self':
         args = args[1:]
+
+    if ignore is not None:
+        for p in ignore:
+            del args[args.index(p)]
 
     if doc is None:
         with warnings.catch_warnings(record=True) as w:

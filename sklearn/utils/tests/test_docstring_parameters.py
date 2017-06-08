@@ -9,6 +9,7 @@ from pkgutil import walk_packages
 from inspect import getsource
 
 import sklearn
+from sklearn.base import signature
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_parameters_match, get_func_name
 
@@ -19,6 +20,7 @@ _doc_special_members = ('__contains__', '__getitem__', '__iter__', '__len__',
 public_modules = [
     # the list of modules users need to access for all functionality
     # 'sklearn',
+    'sklearn.base',
     # 'sklearn.cluster',
     # 'sklearn.covariance',
     # 'sklearn.cross_decomposition',
@@ -80,7 +82,16 @@ def test_docstring_parameters():
                 incorrect += check_parameters_match(cls.__init__, cdoc)
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
-                incorrect += check_parameters_match(method)
+                param_ignore = None
+                # Now skip docstring test for y when y is None
+                # by default for API reason
+                if method_name in ['fit', 'score', 'fit_predict']:
+                    sig = signature(method)
+                    if ('y' in sig.parameters and
+                            sig.parameters['y'].default is None):
+                        param_ignore = ['y']  # ignore y for fit and score
+                incorrect += check_parameters_match(method,
+                                                    ignore=param_ignore)
             if hasattr(cls, '__call__'):
                 incorrect += check_parameters_match(cls.__call__)
         functions = inspect.getmembers(module, inspect.isfunction)
