@@ -150,8 +150,7 @@ class Trans(BaseEstimator):
         return self
 
     def transform(self, X, y=None):
-        # return check_array(X)
-        return np.asarray(X)
+        return X
 
 
 class SparseMatrixTrans(BaseEstimator):
@@ -951,95 +950,7 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 
-# def test_column_transformer():
-#     # dictionary
-#     X_dict = {'first': [0, 1, 2],
-#               'second': [2, 4, 6]}
-#     # recarray
-#     X_recarray = np.recarray((3,),
-#                              dtype=[('first', np.int), ('second', np.int)])
-#     X_recarray['first'] = X_dict['first']
-#     X_recarray['second'] = X_dict['second']
-#
-#     # array
-#     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-#
-#     Xs_name = [X_dict, X_recarray]
-#     Xs_positional = [X_array]
-#
-#     # dataframe
-#     try:
-#         import pandas as pd
-#         X_df = pd.DataFrame(X_dict)
-#         Xs_name.append(X_df)
-#         Xs_positional.append(X_df)
-#     except:
-#         print("Pandas not found, not testing ColumnTransformer with"
-#               " DataFrame.")
-#     X_res_first = np.array(X_dict['first']).reshape(-1, 1)
-#     X_res_second = np.array(X_dict['second']).reshape(-1, 1)
-#     X_res_both = np.vstack([X_dict['first'], X_dict['second']]).T
-#
-#     for X, (first, second) in chain(product(Xs_name, [('first', 'second')]),
-#                                     product(Xs_positional, [(0, 1)])):
-#
-#         first_feat = ColumnTransformer([('trans', Trans(), first)])
-#         second_feat = ColumnTransformer([('trans', Trans(), second)])
-#         both = ColumnTransformer([('trans1', Trans(), first),
-#                                   ('trans2', Trans(), second)])
-#         assert_array_equal(first_feat.fit_transform(X), X_res_first)
-#         assert_array_equal(second_feat.fit_transform(X), X_res_second)
-#         assert_array_equal(both.fit_transform(X), X_res_both)
-#         # fit then transform
-#         assert_array_equal(first_feat.fit(X).transform(X), X_res_first)
-#         assert_array_equal(second_feat.fit(X).transform(X), X_res_second)
-#         assert_array_equal(both.fit(X).transform(X), X_res_both)
-#
-#     # test with transformer_weights
-#     transformer_weights = {'trans1': .1, 'trans2': 10}
-#     for X in Xs_name:
-#         both = ColumnTransformer([('trans1', Trans(), 'first'),
-#                                   ('trans2', Trans(), 'second')],
-#                                  transformer_weights=transformer_weights)
-#         res = np.vstack([transformer_weights['trans1'] * np.array(X['first']),
-#                          transformer_weights['trans2'] * np.array(X['second'])]).T
-#         assert_array_equal(both.fit_transform(X), res)
-#         # fit then transform
-#         assert_array_equal(both.fit(X).transform(X), res)
-#
-#     # test multiple columns
-#     for X in Xs_name:
-#         # list
-#         both = ColumnTransformer([('trans', Trans(), ['first', 'second'])])
-#         assert_array_equal(both.fit_transform(X), X_res_both)
-#         assert_array_equal(both.fit(X).transform(X), X_res_both)
-#
-#         # with weights
-#         both = ColumnTransformer([('trans', Trans(), ['first', 'second'])],
-#                                  transformer_weights={'trans': .1})
-#         assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
-#         assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
-#
-#     for X in Xs_positional:
-#         # list
-#         both = ColumnTransformer([('trans', Trans(), [0, 1])])
-#         assert_array_equal(both.fit_transform(X), X_res_both)
-#         assert_array_equal(both.fit(X).transform(X), X_res_both)
-#
-#         # slice
-#         both = ColumnTransformer([('trans', Trans(), slice(0, 2))])
-#         assert_array_equal(both.fit_transform(X), X_res_both)
-#         assert_array_equal(both.fit(X).transform(X), X_res_both)
-#
-#         # with weights
-#         both = ColumnTransformer([('trans', Trans(), [0, 1])],
-#                                  transformer_weights={'trans': .1})
-#         assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
-#         assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
-
-
-def test_column_transformer_subset_selection():
-
+def test_column_transformer():
     # dictionary
     X_dict = {'first': np.array([0, 1, 2]),
               'second': np.array([2, 4, 6])}
@@ -1067,44 +978,160 @@ def test_column_transformer_subset_selection():
 
     X_res_first1D = np.array(X_dict['first'])
     X_res_first2D = X_res_first1D.reshape(-1, 1)
-    # X_res_second1D = np.array(X_dict['second'])
-    # X_res_second2D = X_res_second1D.reshape(-1, 1)
     X_res_both = np.vstack([X_dict['first'], X_dict['second']]).T
-
 
     for X in Xs_name:
         col_trans = ColumnTransformer([('trans', Trans(), 'first')])
         assert_array_equal(col_trans.fit_transform(X), X_res_first1D)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_first1D)
 
         col_trans = ColumnTransformer([('trans', Trans(), ['first'])])
         assert_array_equal(col_trans.fit_transform(X), X_res_first2D)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_first2D)
 
         col_trans = ColumnTransformer([('trans', Trans(),
                                         ['first', 'second'])])
         assert_array_equal(col_trans.fit_transform(X), X_res_both)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_both)
+
+        col_trans = ColumnTransformer([('trans1', Trans(), ['first']),
+                                       ('trans2', Trans(), ['second'])])
+        assert_array_equal(col_trans.fit_transform(X), X_res_both)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_both)
 
         if hasattr(X, 'iloc'):
             # for dataframes also test slice
             col_trans = ColumnTransformer(
                 [('trans', Trans(), slice('first', 'second'))])
             assert_array_equal(col_trans.fit_transform(X), X_res_both)
+            assert_array_equal(col_trans.fit(X).transform(X), X_res_both)
 
     for X in Xs_positional:
         col_trans = ColumnTransformer([('trans', Trans(), 0)])
         assert_array_equal(col_trans.fit_transform(X), X_res_first1D)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_first1D)
 
         col_trans = ColumnTransformer([('trans', Trans(), [0])])
         assert_array_equal(col_trans.fit_transform(X), X_res_first2D)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_first2D)
 
         col_trans = ColumnTransformer([('trans', Trans(),
                                         [0, 1])])
         assert_array_equal(col_trans.fit_transform(X), X_res_both)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_both)
+
+        col_trans = ColumnTransformer([('trans1', Trans(), [0]),
+                                       ('trans2', Trans(), [1])])
+        assert_array_equal(col_trans.fit_transform(X), X_res_both)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_both)
 
         col_trans = ColumnTransformer([('trans', Trans(), slice(0, 1))])
         assert_array_equal(col_trans.fit_transform(X), X_res_first2D)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_first2D)
 
         col_trans = ColumnTransformer([('trans', Trans(), slice(0, 2))])
         assert_array_equal(col_trans.fit_transform(X), X_res_both)
+        assert_array_equal(col_trans.fit(X).transform(X), X_res_both)
+
+    # test with transformer_weights
+
+    transformer_weights = {'trans1': .1, 'trans2': 10}
+    for X in Xs_name:
+        both = ColumnTransformer([('trans1', Trans(), ['first']),
+                                  ('trans2', Trans(), ['second'])],
+                                 transformer_weights=transformer_weights)
+        res = np.vstack([transformer_weights['trans1'] * X['first'],
+                         transformer_weights['trans2'] * X['second']]).T
+        assert_array_equal(both.fit_transform(X), res)
+        # fit then transform
+        assert_array_equal(both.fit(X).transform(X), res)
+
+    # test multiple columns
+    for X in Xs_name:
+        both = ColumnTransformer([('trans', Trans(), ['first', 'second'])],
+                                 transformer_weights={'trans': .1})
+        assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
+        assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
+
+    for X in Xs_positional:
+        both = ColumnTransformer([('trans', Trans(), [0, 1])],
+                                 transformer_weights={'trans': .1})
+        assert_array_equal(both.fit_transform(X), 0.1 * X_res_both)
+        assert_array_equal(both.fit(X).transform(X), 0.1 * X_res_both)
+
+
+def test_column_transformer_sparse_array():
+    X_sparse = sparse.eye(3, 2).tocsr()
+
+    # no distinction between 1D and 2D
+    X_res_first = X_sparse[:, 0].A
+    X_res_both = X_sparse.A
+
+    col_trans = ColumnTransformer([('trans', Trans(), 0)])
+    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
+    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_first)
+    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
+                       X_res_first)
+
+    col_trans = ColumnTransformer([('trans', Trans(), [0])])
+    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
+    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_first)
+    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
+                       X_res_first)
+
+    col_trans = ColumnTransformer([('trans', Trans(), [0, 1])])
+    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
+    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_both)
+    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
+                       X_res_both)
+
+    col_trans = ColumnTransformer([('trans', Trans(), slice(0, 1))])
+    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
+    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_first)
+    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
+                       X_res_first)
+
+    col_trans = ColumnTransformer([('trans', Trans(), slice(0, 2))])
+    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
+    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_both)
+    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
+                       X_res_both)
+
+
+def test_column_transformer_dict():
+    # test dict special cases
+
+    X_dict = {'first': [0, 1, 2],
+              'second': [2, 4, 6]}
+
+    # pass through with single key
+
+    class TransAssert(BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            assert_true(isinstance(X, list))
+            return X
+
+    col_trans = ColumnTransformer([('trans', TransAssert(), 'first')])
+    col_trans.fit_transform(X_dict)
+
+    # raise error when selecting multiple columns for list items
+
+    col_trans = ColumnTransformer([('trans', Trans(), ['first', 'second'])])
+    assert_raises(ValueError, col_trans.fit_transform, X_dict)
+
+
+def test_column_transformer_dict_mixed_sparse():
+    X_dict = {'first': sparse.eye(3, 2).tocsr(),
+              'second': np.array([1,2,3])}
+
+    col_trans = ColumnTransformer([('trans', Trans(), ['first', 'second'])])
+    res = col_trans.fit_transform(X_dict)
+    assert_true(sparse.issparse(res))
+    exp = np.array([[1, 0, 1], [0, 1, 2], [0, 0, 3]], dtype='float64')
+    assert_array_equal(res.A, exp)
 
 
 def test_column_transformer_2D_dict_items():

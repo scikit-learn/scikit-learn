@@ -844,7 +844,7 @@ def make_union(*transformers, **kwargs):
 
 
 class ColumnTransformer(FeatureUnion):
-    """Applies transformers to columns of a array / dataframe / dict.
+    """Applies transformers to columns of an array / dataframe / dict.
 
     This estimator applies transformer objects to columns or fields of the
     input, then concatenates the results. This is useful for heterogeneous or
@@ -903,8 +903,8 @@ def _getitem(X, key):
     """
     Get feature column(s) from input data X.
 
-    Supported input types (X): numpy arrays, recarrays, sparse arrays, dataframes
-    and dictionaries (mappings)
+    Supported input types (X): numpy arrays, recarrays, sparse arrays,
+    dataframes and dictionaries (mappings)
 
     Supported key types (key):
     - scalar: output is 1D (with exception for dicts, see below)
@@ -928,7 +928,6 @@ def _getitem(X, key):
         return X
 
     # check whether we have string column names or integers
-
     if (isinstance(key, int)
             or (isinstance(key, list)
                 and all(isinstance(col, int) for col in key))
@@ -968,11 +967,6 @@ def _getitem(X, key):
             else:
                 raise ValueError("Specifying the columns as a slice is not "
                                  "supported for dictionaries or recarrays")
-
-            # if not isinstance(column, list):
-            #     return _ensure_2d(X[column])
-            # else:
-            #     return np.hstack([_ensure_2d(X[col]) for col in column])
 
     else:
         if hasattr(X, 'iloc'):
