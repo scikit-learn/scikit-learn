@@ -24,6 +24,7 @@ from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
+from .utils import deprecated
 from .preprocessing import StandardScaler
 
 
@@ -556,7 +557,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    covariances_ : list of array-like, shape = [n_features, n_features]
+    covariance_ : list of array-like, shape = [n_features, n_features]
         Covariance matrices of each class.
 
     means_ : array-like, shape = [n_classes, n_features]
@@ -576,9 +577,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
 
-    store_covariances : boolean
+    store_covariance : boolean
         If True the covariance matrices are computed and stored in the
-        `self.covariances_` attribute.
+        `self.covariance_` attribute.
 
         .. versionadded:: 0.17
 
@@ -597,7 +598,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> clf.fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariances=False, tol=0.0001)
+                                  store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -607,18 +608,26 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Discriminant Analysis
     """
 
-    def __init__(self, priors=None, reg_param=0., store_covariances=False,
-                 tol=1.0e-4):
+    def __init__(self, priors=None, reg_param=0., store_covariance=False,
+                 tol=1.0e-4, store_covariances=None):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariances = store_covariances
+        self.store_covariance = store_covariance
         self.tol = tol
+
+    @property
+    @deprecated("Attribute 'covariances_' was deprecated in version 0.19 and "
+                "will be removed in 0.21. Use 'covariance_' instead")
+    def covariances_(self):
+        return self.covariance_
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
             .. versionchanged:: 0.19
-               *store_covariance* has been moved to main constructor.
+               *store_covariances* has been moved to main constructor as
+               *store_covariance*.
 
             .. versionchanged:: 0.19
                *tol* has been moved to main constructor.
@@ -645,7 +654,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        if self.store_covariances:
+        if self.store_covariances is not None:
+            warnings.warn("'store_covariances' was renamed to "
+                          "'store_covariance' in version 0.19 and will be "
+                          "removed in 0.21.",
+                          DeprecationWarning)
+            self.store_covariance = self.store_covariances
+        if self.store_covariance:
             cov = []
         means = []
         scalings = []
@@ -665,13 +680,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            if self.store_covariances:
+            if self.store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-        if self.store_covariances:
-            self.covariances_ = cov
+        if self.store_covariance:
+            self.covariance_ = cov
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
         self.rotations_ = rotations
