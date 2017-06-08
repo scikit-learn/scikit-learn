@@ -321,6 +321,9 @@ Bug fixes
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
 
+   - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
+     :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
+
 API changes summary
 -------------------
 
