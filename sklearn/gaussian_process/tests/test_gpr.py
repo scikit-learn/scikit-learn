@@ -10,10 +10,11 @@ from scipy.optimize import approx_fprime
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
+from sklearn.gaussian_process.kernels import DotProduct
 
 from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
-            assert_almost_equal, assert_equal)
+            assert_almost_equal, assert_equal, assert_raise_message)
 
 
 def f(x):
@@ -288,6 +289,19 @@ def test_custom_optimizer():
         # Checks that optimizer improved marginal likelihood
         assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
                        gpr.log_marginal_likelihood(gpr.kernel.theta))
+
+
+def test_gpr_correct_error_message():
+    X = np.arange(12).reshape(6, -1)
+    y = np.ones(6)
+    kernel = DotProduct()
+    gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
+    assert_raise_message(np.linalg.LinAlgError,
+                         "The kernel, %s, is not returning a "
+                         "positive definite matrix. Try gradually increasing "
+                         "the 'alpha' parameter of your "
+                         "GaussianProcessRegressor estimator."
+                         % kernel, gpr.fit, X, y)
 
 
 def test_duplicate_input():

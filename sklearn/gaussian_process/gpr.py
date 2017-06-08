@@ -47,13 +47,14 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     alpha : float or array-like, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting. If an array is
-        passed, it must have the same number of entries as the data used for
-        fitting and is used as datapoint-dependent noise level. Note that this
-        is equivalent to adding a WhiteKernel with c=alpha. Allowing to specify
-        the noise level directly as a parameter is mainly for convenience and
-        for consistency with Ridge.
+        Larger values correspond to increased noise level in the observations.
+        This can also prevent a potential numerical issue during fitting, by
+        ensuring that the calculated values form a positive definite matrix.
+        If an array is passed, it must have the same number of entries as the
+        data used for fitting and is used as datapoint-dependent noise level.
+        Note that this is equivalent to adding a WhiteKernel with c=alpha.
+        Allowing to specify the noise level directly as a parameter is mainly
+        for convenience and for consistency with Ridge.
 
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
@@ -242,9 +243,16 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         # of actual query points
         K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.alpha
-        self.L_ = cholesky(K, lower=True)  # Line 2
+        try:
+            self.L_ = cholesky(K, lower=True)  # Line 2
+        except np.linalg.LinAlgError as exc:
+            exc.args = ("The kernel, %s, is not returning a "
+                        "positive definite matrix. Try gradually "
+                        "increasing the 'alpha' parameter of your "
+                        "GaussianProcessRegressor estimator."
+                        % self.kernel_,) + exc.args
+            raise
         self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
-
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
