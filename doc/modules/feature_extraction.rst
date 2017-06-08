@@ -936,10 +936,10 @@ Some tips and tricks:
         >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
         [...'color', ...'color']
 
-    The same approach could be used for stemming or normalizing all numbers
-    to a new token, as illustrated in:
+    for other styles of preprocessing; examples include stemming, lemmatization,
+    or normalizing numerical tokens, with the latter illustrated in:
 
-     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+     * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py.py`
 
 
 Customizing the vectorizer can also be useful when handling Asian languages

@@ -41,7 +41,7 @@ from sklearn.metrics.cluster import v_measure_score
 print(__doc__)
 
 
-def numbers_to_paceholder(tokens):
+def number_normalizer(tokens):
     """ Map all numeric tokens to a placeholder.
 
     For many applications, tokens that begin with a number are not directly
@@ -52,10 +52,10 @@ def numbers_to_paceholder(tokens):
         yield re.sub(r"^\d+$", "#NUMBER", t)
 
 
-class CustomTfidfVectorizer(TfidfVectorizer):
+class NumberNormalizingVectorizer(TfidfVectorizer):
     def build_tokenizer(self):
-        base = super(CustomTfidfVectorizer, self).build_tokenizer()
-        return lambda doc: list(numbers_to_paceholder(base(doc)))
+        base = TfidfVectorizer.build_tokenizer(self)
+        return lambda doc: list(number_normalizer(base(doc)))
 
 
 # exclude 'comp.os.ms-windows.misc'
@@ -70,7 +70,7 @@ categories = ['alt.atheism', 'comp.graphics',
 newsgroups = fetch_20newsgroups(categories=categories)
 y_true = newsgroups.target
 
-vectorizer = CustomTfidfVectorizer(stop_words='english', min_df=5)
+vectorizer = NumberNormalizingVectorizer(stop_words='english', min_df=5)
 cocluster = SpectralCoclustering(n_clusters=len(categories),
                                  svd_method='arpack', random_state=0)
 kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000,
