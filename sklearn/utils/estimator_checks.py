@@ -80,7 +80,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_empty_data_messages
 
     if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
-        # SpectralEmbedding is non-deterministic,
+        # SpectralEmbedding non-deterministic,
         # see issue #4236
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
@@ -1109,12 +1109,11 @@ def check_classifiers_train(name, Classifier):
             try:
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
-                if n_classes is 2:
+                if n_classes == 2:
                     assert_equal(decision.shape, (n_samples,))
                     dec_pred = (decision.ravel() > 0).astype(np.int)
                     assert_array_equal(dec_pred, y_pred)
-                if (n_classes is 3 and not isinstance(classifier, BaseLibSVM)):
-                    # 1on1 of LibSVM works differently
+                if n_classes == 3:
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
