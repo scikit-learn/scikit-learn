@@ -21,7 +21,8 @@ from contextlib import contextmanager as _contextmanager
 _CONFIG = {'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE',
                                                 False)),
            'show_default_parameters':
-           bool(os.environ.get('SKLEARN_SHOW_DEFAULT_PARAMETERS', True))
+               (os.environ.get('SKLEARN_SHOW_DEFAULT_PARAMETERS')
+                not in ["False", "FALSE", ""])
            }
 
 
