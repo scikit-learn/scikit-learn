@@ -898,6 +898,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Convenience method; equivalent to calling fit(X) followed by
         predict(X).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to transform.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
         """
         return self.fit(X).labels_
 
@@ -905,6 +915,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """Compute clustering and transform X to cluster-distance space.
 
         Equivalent to fit(X).transform(X), but more efficiently implemented.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to transform.
+
+        Returns
+        -------
+        X_new : array, shape [n_samples, k]
+            X transformed in the new space.
         """
         # Currently, this just skips a copy of the data if it is not in
         # np.array or CSR format already.
