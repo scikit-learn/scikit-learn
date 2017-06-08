@@ -15,9 +15,9 @@ from sklearn.utils.testing import (
     set_random_state,
     assert_raise_message,
     ignore_warnings,
-    check_parameters_match
-    )
+    check_parameters_match)
 
+from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
@@ -316,6 +316,12 @@ class Klass(object):
 
 
 def test_check_parameters_match():
+    try:
+        import numpydoc  # noqa
+    except ImportError:
+        raise SkipTest(
+            "numpydoc is required to test the docstrings")
+
     check_parameters_match(f_ok)
     assert_raise_message(RuntimeError, 'Unknown section Results',
                          check_parameters_match, f_bad_sections)

@@ -85,7 +85,7 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    pip install numpydoc
+    pip install sphinx numpydoc  # numpydoc requires sphinx
 fi
 
 if [[ "$SKIP_TESTS" == "true" ]]; then
