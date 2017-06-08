@@ -28,7 +28,6 @@ from sklearn.preprocessing.label import _inverse_binarize_multiclass
 from sklearn import datasets
 
 iris = datasets.load_iris()
-friedman = datasets.make_friedman1(random_state=0)
 
 
 def toarray(a):

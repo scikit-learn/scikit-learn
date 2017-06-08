@@ -6,14 +6,15 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone, is_regressor
 from ..linear_model import LinearRegression
-from ..utils.validation import check_is_fitted
+from ..utils.fixes import signature
+from ..utils.validation import check_is_fitted, check_array
 from ._function_transformer import FunctionTransformer
 
 __all__ = ['TransformedTargetRegressor']
 
 
 class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
-    """Meta-estimator to apply a transformation to the target before fitting.
+    """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation in regression
     problems. This transformation can be given as a Transformer such as the
@@ -22,24 +23,24 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
     The computation during ``fit`` is::
 
-        estimator.fit(X, func(y))
+        regressor.fit(X, func(y))
 
     or::
 
-        estimator.fit(X, transformer.transform(y))
+        regressor.fit(X, transformer.transform(y))
 
     The computation during ``predict`` is::
 
-        inverse_func(estimator.predict(X))
+        inverse_func(regressor.predict(X))
 
     or::
 
-        transformer.inverse_transform(estimator.predict(X))
+        transformer.inverse_transform(regressor.predict(X))
 
     Parameters
     ----------
-    estimator : object, (default=LinearRegression())
-        Estimator object derived from ``RegressorMixin``.
+    regressor : object, (default=LinearRegression())
+        Regressor object derived from ``RegressorMixin``.
 
     transformer : object, (default=None)
         Estimator object derived from ``TransformerMixin``. Cannot be set at
@@ -47,60 +48,65 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         ``func`` and ``inverse_func`` are ``None`` as well, the transformer
         will be an identity transformer.
 
-    func : function, (default=None)
+    func : function, optional
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
         the same time than ``transformer``. If ``None`` and ``transformer`` is
         ``None`` as well, the function used will be the identity function.
 
-    inverse_func : function, (default=None)
-        Function apply to the prediction of the estimator. Cannot be set at
+    inverse_func : function, optional
+        Function to apply to the prediction of the regressor. Cannot be set at
         the same time than ``transformer``. If ``None`` and ``transformer`` as
-        well, the function used will be the identity function.
+        well, the function used will be the identity function. The inverse
+        function is used to return to the same space of the original training
+        labels during prediction.
 
-    check_invertible : bool, (default=True)
+    check_inverse : bool, (default=True)
         Whether to check that ``transform`` followed by ``inverse_transform``
-        or ``func`` followed by ``inverse_func`` lead to the original data.
+        or ``func`` followed by ``inverse_func`` leads to the original data.
 
     Attributes
     ----------
-    estimator_ : object
-        Fitted estimator.
+    regressor_ : object
+        Fitted regressor.
 
     transformer_ : object
         Used transformer in ``fit`` and ``predict``.
+
+    y_ndim_ : int
+        Number of targets.
 
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.preprocessing import TransformedTargetRegressor
-    >>> tt = TransformedTargetRegressor(estimator=LinearRegression(),
+    >>> tt = TransformedTargetRegressor(regressor=LinearRegression(),
     ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
     >>> tt.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    TransformedTargetRegressor(check_invertible=True,
-        estimator=LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1,
+    TransformedTargetRegressor(check_inverse=True,
+        regressor=LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1,
                                    normalize=False),
         func=<ufunc 'log'>, inverse_func=<ufunc 'exp'>, transformer=None)
     >>> tt.score(X, y)
     1.0
-    >>> tt.estimator_.coef_
+    >>> tt.regressor_.coef_
     array([[ 2.]])
 
     """
-    def __init__(self, estimator=LinearRegression(), transformer=None,
-                 func=None, inverse_func=None, check_invertible=True):
-        self.estimator = estimator
+    def __init__(self, regressor=LinearRegression(), transformer=None,
+                 func=None, inverse_func=None, check_inverse=True):
+        self.regressor = regressor
         self.transformer = transformer
         self.func = func
         self.inverse_func = inverse_func
-        self.check_invertible = check_invertible
+        self.check_inverse = check_inverse
         # we probably need to change this ones we have tags
-        self._estimator_type = estimator._estimator_type
+        self._estimator_type = regressor._estimator_type
 
-    def _validate_transformer(self, y):
+    def _fit_transformer(self, y, sample_weight):
         if (self.transformer is not None and
                 (self.func is not None or self.inverse_func is not None)):
             raise ValueError("Both 'transformer' and functions 'func'/"
@@ -110,15 +116,20 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             self.transformer_ = FunctionTransformer(
                 func=self.func, inverse_func=self.inverse_func, validate=False)
+        fit_parameters = signature(self.transformer_.fit).parameters
+        if "sample_weight" in fit_parameters:
+            self.transformer_.fit(y, sample_weight=sample_weight)
+        else:
+            self.transformer_.fit(y)
         self.transformer_.fit(y)
-        if self.check_invertible:
+        if self.check_inverse:
             n_subsample = min(1000, y.shape[0])
             subsample_idx = np.random.choice(range(y.shape[0]),
                                              size=n_subsample, replace=False)
-            diff = np.abs((y[subsample_idx] -
-                           self.transformer_.inverse_transform(
-                               self.transformer_.transform(y[subsample_idx]))))
-            if np.sum(diff) > 1e-7:
+            if not np.allclose(
+                    y[subsample_idx],
+                    self.transformer_.inverse_transform(
+                        self.transformer_.transform(y[subsample_idx]))):
                 raise ValueError("The provided functions or transformer are"
                                  " not strictly inverse of each other.")
 
@@ -143,22 +154,26 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
+        y = check_array(y, ensure_2d=False)
         # memorize if y should be a multi-output
         self.y_ndim_ = y.ndim
-        if y.ndim == 1:
+        if y.ndim == 1 and self.func is None:
             y_2d = y.reshape(-1, 1)
         else:
             y_2d = y
-        self._validate_transformer(y_2d)
-        self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X, self.transformer_.transform(y_2d),
-                            sample_weight=sample_weight)
+        self._fit_transformer(y_2d, sample_weight)
+        self.regressor_ = clone(self.regressor)
+        if sample_weight is not None:
+            self.regressor_.fit(X, self.transformer_.transform(y_2d),
+                                sample_weight=sample_weight)
+        else:
+            self.regressor_.fit(X, self.transformer_.transform(y_2d))
         return self
 
     def predict(self, X):
-        """Predict using the base estimator, applying inverse.
+        """Predict using the base regressor, applying inverse.
 
-        The estimator is used to predict and the ``inverse_func`` or
+        The regressor is used to predict and the ``inverse_func`` or
         ``inverse_transform`` is applied before returning the prediction.
 
         Parameters
@@ -172,10 +187,10 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             Predicted values.
 
         """
-        check_is_fitted(self, "estimator_")
-        pred = self.transformer_.inverse_transform(self.estimator_.predict(X))
+        check_is_fitted(self, "regressor_")
+        pred = self.transformer_.inverse_transform(self.regressor_.predict(X))
         # if y is not a multi-output, it should be ravel
-        if self.y_ndim_ == 1:
+        if self.y_ndim_ == 1 and self.func is None:
             return pred.ravel()
         else:
             return pred
@@ -188,7 +203,9 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         of squares ((y_true - y_true.mean()) ** 2).sum().  Best possible score
         is 1.0 and it can be negative (because the model can be arbitrarily
         worse). A constant model that always predicts the expected value of y,
-        disregarding the input features, would get a R^2 score of 0.0.
+        disregarding the input features, would get a R^2 score of 0.0. Note
+        that the score is computed in the original space using the
+        ``inverse_transform`` of ``transformer_``.
 
         Parameters
         ----------
@@ -208,13 +225,13 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
         """
 
-        check_is_fitted(self, "estimator_")
-        if not is_regressor(self.estimator_):
-            if not hasattr(self.estimator_, "_estimator_type"):
-                err = "estimator has declared no _estimator_type."
+        check_is_fitted(self, "regressor_")
+        if not is_regressor(self.regressor_):
+            if not hasattr(self.regressor_, "_estimator_type"):
+                err = "regressor has declared no _estimator_type."
             else:
-                err = "estimator has _estimator_type {}".format(
-                    self.estimator_._estimator_type)
+                err = "regressor has _estimator_type {}".format(
+                    self.regressor_._estimator_type)
             raise NotImplementedError("TransformedTargetRegressor should be a"
                                       " regressor. This " + err)
         else:
