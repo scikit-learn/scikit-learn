@@ -419,6 +419,10 @@ API changes summary
      has been renamed to ``n_components`` and will be removed in version 0.21.
      :issue:`8922` by :user:Attractadore
 
+   - :class:`cluster.bicluster.SpectralCoClustering` and
+     :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
+     :issue:`6126` by `Andreas Müller`_.
+
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
      for scikit-learn. The following backported functions in ``sklearn.utils``
      have been removed or deprecated accordingly.

@@ -470,12 +470,7 @@ def check_dict_unchanged(name, Estimator):
 
     set_random_state(estimator, 1)
 
-    # should be just `estimator.fit(X, y)`
-    # after merging #6141
-    if name in ['SpectralBiclustering']:
-        estimator.fit(X)
-    else:
-        estimator.fit(X, y)
+    estimator.fit(X, y)
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
         if hasattr(estimator, method):
