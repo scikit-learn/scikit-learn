@@ -1474,8 +1474,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                                                   self.train_size)
 
         if y.ndim == 2:
-            # for multi-label y, map each distinct row to a unique identifier:
-            y = np.array([hash(tuple(row)) for row in y])
+            # for multi-label y, map each distinct row to its string repr:
+            y = np.array([str(row) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
