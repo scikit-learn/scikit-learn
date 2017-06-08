@@ -50,7 +50,7 @@ def plot_ellipses(ax, weights, means, covars):
         # eigenvector normalization
         eig_vals = 2 * np.sqrt(2) * np.sqrt(eig_vals)
         ell = mpl.patches.Ellipse(means[n], eig_vals[0], eig_vals[1],
-                                  180 + angle)
+                                  180 + angle, edgecolor='black')
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(weights[n])
         ell.set_facecolor('#56B4E9')
@@ -70,7 +70,8 @@ def plot_results(ax1, ax2, estimator, X, y, title, plot_title=False):
     ax2.get_xaxis().set_tick_params(direction='out')
     ax2.yaxis.grid(True, alpha=0.7)
     for k, w in enumerate(estimator.weights_):
-        ax2.bar(k - .45, w, width=0.9, color='#56B4E9', zorder=3)
+        ax2.bar(k, w, width=0.9, color='#56B4E9', zorder=3,
+                align='center', edgecolor='black')
         ax2.text(k, w + 0.007, "%.1f%%" % (w * 100.),
                  horizontalalignment='center')
     ax2.set_xlim(-.6, 2 * n_components - .4)

@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
@@ -61,12 +62,12 @@ def test_multi_target_regression_partial_fit():
 
     y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
+    assert_false(hasattr(MultiOutputRegressor(Lasso), 'partial_fit'))
 
 
 def test_multi_target_regression_one_target():
     # Test multi target regression raises
     X, y = datasets.make_regression(n_targets=1)
-
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     assert_raises(ValueError, rgr.fit, X, y)
 
@@ -336,3 +337,5 @@ def test_multi_output_exceptions():
     y_new = np.column_stack((y1, y2))
     moc.fit(X, y)
     assert_raises(ValueError, moc.score, X, y_new)
+    # ValueError when y is continuous
+    assert_raise_message(ValueError, "Unknown label type", moc.fit, X, X[:, 1])

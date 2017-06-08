@@ -36,47 +36,14 @@ def _parse_version(version_string):
             version.append(x)
     return tuple(version)
 
+euler_gamma = getattr(np, 'euler_gamma',
+                      0.577215664901532860606512090082402431)
 
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
 
-try:
-    from scipy.special import expit     # SciPy >= 0.10
-    with np.errstate(invalid='ignore', over='ignore'):
-        if np.isnan(expit(1000)):       # SciPy < 0.14
-            raise ImportError("no stable expit in scipy.special")
-except ImportError:
-    def expit(x, out=None):
-        """Logistic sigmoid function, ``1 / (1 + exp(-x))``.
-
-        See sklearn.utils.extmath.log_logistic for the log of this function.
-        """
-        if out is None:
-            out = np.empty(np.atleast_1d(x).shape, dtype=np.float64)
-        out[:] = x
-
-        # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
-        # This way of computing the logistic is both fast and stable.
-        out *= .5
-        np.tanh(out, out)
-        out += 1
-        out *= .5
-
-        return out.reshape(np.shape(x))
-
-
-# little danse to see if np.copy has an 'order' keyword argument
-# Supported since numpy 1.7.0
-if 'order' in signature(np.copy).parameters:
-    def safe_copy(X):
-        # Copy, but keep the order
-        return np.copy(X, order='K')
-else:
-    # Before an 'order' argument was introduced, numpy wouldn't muck with
-    # the ordering
-    safe_copy = np.copy
-
+# Remove when minimum required NumPy >= 1.10
 try:
     if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
                         np.divide(.4, 1, casting="unsafe", dtype=np.float64))
@@ -106,18 +73,6 @@ except TypeError:
 
 
 try:
-    np.array(5).astype(float, copy=False)
-except TypeError:
-    # Compat where astype accepted no copy argument (numpy < 1.7.0)
-    def astype(array, dtype, copy=True):
-        if not copy and array.dtype == dtype:
-            return array
-        return array.astype(dtype)
-else:
-    astype = np.ndarray.astype
-
-
-try:
     with warnings.catch_warnings(record=True):
         # Don't raise the numpy deprecation warnings that appear in
         # 1.9, but avoid Python bug due to simplefilter('ignore')
@@ -129,11 +84,7 @@ except (TypeError, AttributeError):
 
     def _minor_reduce(X, ufunc):
         major_index = np.flatnonzero(np.diff(X.indptr))
-        if X.data.size == 0 and major_index.size == 0:
-            # Numpy < 1.8.0 don't handle empty arrays in reduceat
-            value = np.zeros_like(X.data)
-        else:
-            value = ufunc.reduceat(X.data, X.indptr[major_index])
+        value = ufunc.reduceat(X.data, X.indptr[major_index])
         return major_index, value
 
     def _min_or_max_axis(X, axis, min_or_max):
@@ -187,79 +138,6 @@ else:
                 X.max(axis=axis).toarray().ravel())
 
 
-try:
-    from numpy import argpartition
-except ImportError:
-    # numpy.argpartition was introduced in v 1.8.0
-    def argpartition(a, kth, axis=-1, kind='introselect', order=None):
-        return np.argsort(a, axis=axis, order=order)
-
-try:
-    from numpy import partition
-except ImportError:
-    warnings.warn('Using `sort` instead of partition.'
-                  'Upgrade numpy to 1.8 for better performace on large number'
-                  'of clusters')
-    def partition(a, kth, axis=-1, kind='introselect', order=None):
-        return np.sort(a, axis=axis, order=order)
-
-
-if np_version < (1, 7):
-    # Prior to 1.7.0, np.frombuffer wouldn't work for empty first arg.
-    def frombuffer_empty(buf, dtype):
-        if len(buf) == 0:
-            return np.empty(0, dtype=dtype)
-        else:
-            return np.frombuffer(buf, dtype=dtype)
-else:
-    frombuffer_empty = np.frombuffer
-
-
-if np_version < (1, 8):
-    def in1d(ar1, ar2, assume_unique=False, invert=False):
-        # Backport of numpy function in1d 1.8.1 to support numpy 1.6.2
-        # Ravel both arrays, behavior for the first array could be different
-        ar1 = np.asarray(ar1).ravel()
-        ar2 = np.asarray(ar2).ravel()
-
-        # This code is significantly faster when the condition is satisfied.
-        if len(ar2) < 10 * len(ar1) ** 0.145:
-            if invert:
-                mask = np.ones(len(ar1), dtype=np.bool)
-                for a in ar2:
-                    mask &= (ar1 != a)
-            else:
-                mask = np.zeros(len(ar1), dtype=np.bool)
-                for a in ar2:
-                    mask |= (ar1 == a)
-            return mask
-
-        # Otherwise use sorting
-        if not assume_unique:
-            ar1, rev_idx = np.unique(ar1, return_inverse=True)
-            ar2 = np.unique(ar2)
-
-        ar = np.concatenate((ar1, ar2))
-        # We need this to be a stable sort, so always use 'mergesort'
-        # here. The values from the first array should always come before
-        # the values from the second array.
-        order = ar.argsort(kind='mergesort')
-        sar = ar[order]
-        if invert:
-            bool_ar = (sar[1:] != sar[:-1])
-        else:
-            bool_ar = (sar[1:] == sar[:-1])
-        flag = np.concatenate((bool_ar, [invert]))
-        indx = order.argsort(kind='mergesort')[:len(ar1)]
-
-        if assume_unique:
-            return flag[indx]
-        else:
-            return flag[indx][rev_idx]
-else:
-    from numpy import in1d
-
-
 if sp_version < (0, 15):
     # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
@@ -270,22 +148,6 @@ else:
 def parallel_helper(obj, methodname, *args, **kwargs):
     """Helper to workaround Python 2 limitations of pickling instance methods"""
     return getattr(obj, methodname)(*args, **kwargs)
-
-
-if np_version < (1, 6, 2):
-    # Allow bincount to accept empty arrays
-    # https://github.com/numpy/numpy/commit/40f0844846a9d7665616b142407a3d74cb65a040
-    def bincount(x, weights=None, minlength=None):
-        if len(x) > 0:
-            return np.bincount(x, weights, minlength)
-        else:
-            if minlength is None:
-                minlength = 0
-            minlength = np.asscalar(np.asarray(minlength, dtype=np.intp))
-            return np.zeros(minlength, dtype=np.intp)
-
-else:
-    from numpy import bincount
 
 
 if 'exist_ok' in signature(os.makedirs).parameters:
@@ -310,56 +172,6 @@ else:
                 raise
 
 
-if np_version < (1, 8, 1):
-    def array_equal(a1, a2):
-        # copy-paste from numpy 1.8.1
-        try:
-            a1, a2 = np.asarray(a1), np.asarray(a2)
-        except:
-            return False
-        if a1.shape != a2.shape:
-            return False
-        return bool(np.asarray(a1 == a2).all())
-else:
-    from numpy import array_equal
-
-if sp_version < (0, 13, 0):
-    def rankdata(a, method='average'):
-        if method not in ('average', 'min', 'max', 'dense', 'ordinal'):
-            raise ValueError('unknown method "{0}"'.format(method))
-
-        arr = np.ravel(np.asarray(a))
-        algo = 'mergesort' if method == 'ordinal' else 'quicksort'
-        sorter = np.argsort(arr, kind=algo)
-
-        inv = np.empty(sorter.size, dtype=np.intp)
-        inv[sorter] = np.arange(sorter.size, dtype=np.intp)
-
-        if method == 'ordinal':
-            return inv + 1
-
-        arr = arr[sorter]
-        obs = np.r_[True, arr[1:] != arr[:-1]]
-        dense = obs.cumsum()[inv]
-
-        if method == 'dense':
-            return dense
-
-        # cumulative counts of each unique value
-        count = np.r_[np.nonzero(obs)[0], len(obs)]
-
-        if method == 'max':
-            return count[dense]
-
-        if method == 'min':
-            return count[dense - 1] + 1
-
-        # average method
-        return .5 * (count[dense] + count[dense - 1] + 1)
-else:
-    from scipy.stats import rankdata
-
-
 if np_version < (1, 12):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
@@ -376,33 +188,3 @@ if np_version < (1, 12):
                                  self._fill_value)
 else:
     from numpy.ma import MaskedArray    # noqa
-
-if 'axis' not in signature(np.linalg.norm).parameters:
-
-    def norm(X, ord=None, axis=None):
-        """
-        Handles the axis parameter for the norm function
-        in old versions of numpy (useless for numpy >= 1.8).
-        """
-
-        if axis is None or X.ndim == 1:
-            result = np.linalg.norm(X, ord=ord)
-            return result
-
-        if axis not in (0, 1):
-            raise NotImplementedError("""
-            The fix that adds axis parameter to the old numpy
-            norm only works for 1D or 2D arrays.
-            """)
-
-        if axis == 0:
-            X = X.T
-
-        result = np.zeros(X.shape[0])
-        for i in range(len(result)):
-            result[i] = np.linalg.norm(X[i], ord=ord)
-
-        return result
-
-else:
-    norm = np.linalg.norm
