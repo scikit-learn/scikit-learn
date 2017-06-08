@@ -236,13 +236,12 @@ trim_doctests_flags = True
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
+    'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
         'sklearn': None,
         'matplotlib': 'http://matplotlib.org',
         'numpy': 'http://docs.scipy.org/doc/numpy-1.8.1',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'},
-    'expected_failing_examples': [
-        '../examples/applications/plot_stock_market.py']
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'}
 }
 
 

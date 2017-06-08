@@ -14,7 +14,7 @@ from scipy import linalg
 from scipy.stats import chi2
 
 from . import empirical_covariance, EmpiricalCovariance
-from ..utils.extmath import fast_logdet, pinvh
+from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
 
 
@@ -96,6 +96,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
             initial_estimates=None, verbose=False,
             cov_computation_method=empirical_covariance):
     n_samples, n_features = X.shape
+    dist = np.inf
 
     # Initialisation
     support = np.zeros(n_samples, dtype=bool)
@@ -107,7 +108,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         location = initial_estimates[0]
         covariance = initial_estimates[1]
         # run a special iteration for that case (to get an initial support)
-        precision = pinvh(covariance)
+        precision = linalg.pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
@@ -119,15 +120,21 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
 
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
+    # If the data already has singular covariance, calculate the precision,
+    # as the loop below will not be entered.
+    if np.isinf(det):
+        precision = linalg.pinvh(covariance)
+
     previous_det = np.inf
-    while (det < previous_det) and (remaining_iterations > 0):
+    while (det < previous_det and remaining_iterations > 0
+            and not np.isinf(det)):
         # save old estimates values
         previous_location = location
         previous_covariance = covariance
         previous_det = det
         previous_support = support
         # compute a new support from the full data set mahalanobis distances
-        precision = pinvh(covariance)
+        precision = linalg.pinvh(covariance)
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # compute new estimates
@@ -142,14 +149,9 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
 
     previous_dist = dist
     dist = (np.dot(X - location, precision) * (X - location)).sum(axis=1)
-    # Catch computation errors
+    # Check if best fit already found (det => 0, logdet => -inf)
     if np.isinf(det):
-        raise ValueError(
-            "Singular covariance matrix. "
-            "Please check that the covariance matrix corresponding "
-            "to the dataset is full rank and that MinCovDet is used with "
-            "Gaussian-distributed data (or at least data drawn from a "
-            "unimodal, symmetric distribution.")
+        results = location, covariance, det, support, dist
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -385,15 +387,15 @@ def fast_mcd(X, support_fraction=None,
             diff = X_sorted[n_support:] - X_sorted[:(n_samples - n_support)]
             halves_start = np.where(diff == np.min(diff))[0]
             # take the middle points' mean to get the robust location estimate
-            location = 0.5 * (X_sorted[n_support + halves_start]
-                              + X_sorted[halves_start]).mean()
+            location = 0.5 * (X_sorted[n_support + halves_start] +
+                              X_sorted[halves_start]).mean()
             support = np.zeros(n_samples, dtype=bool)
             X_centered = X - location
             support[np.argsort(np.abs(X_centered), 0)[:n_support]] = True
             covariance = np.asarray([[np.var(X[support])]])
             location = np.array([location])
             # get precision matrix in an optimized way
-            precision = pinvh(covariance)
+            precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
         else:
             support = np.ones(n_samples, dtype=bool)
@@ -401,7 +403,7 @@ def fast_mcd(X, support_fraction=None,
             location = np.asarray([np.mean(X)])
             X_centered = X - location
             # get precision matrix in an optimized way
-            precision = pinvh(covariance)
+            precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
 # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
@@ -629,7 +631,7 @@ class MinCovDet(EmpiricalCovariance):
             raw_covariance = self._nonrobust_covariance(X[raw_support],
                                                         assume_centered=True)
             # get precision matrix in an optimized way
-            precision = pinvh(raw_covariance)
+            precision = linalg.pinvh(raw_covariance)
             raw_dist = np.sum(np.dot(X, precision) * X, 1)
         self.raw_location_ = raw_location
         self.raw_covariance_ = raw_covariance

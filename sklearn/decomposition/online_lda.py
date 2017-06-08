@@ -13,6 +13,7 @@ Link: http://matthewdhoffman.com/code/onlineldavb.tar
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.misc import logsumexp
 from scipy.special import gammaln
 import warnings
 
@@ -20,7 +21,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
 from ..utils.validation import check_non_negative
-from ..utils.extmath import logsumexp
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 from ..exceptions import NotFittedError
@@ -559,12 +559,15 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     bound = self._perplexity_precomp_distr(X, doc_topics_distr,
                                                            sub_sampling=False)
                     if self.verbose:
-                        print('iteration: %d, perplexity: %.4f'
-                              % (i + 1, bound))
+                        print('iteration: %d of max_iter: %d, perplexity: %.4f'
+                              % (i + 1, max_iter, bound))
 
                     if last_bound and abs(last_bound - bound) < self.perp_tol:
                         break
                     last_bound = bound
+
+                elif self.verbose:
+                    print('iteration: %d of max_iter: %d' % (i + 1, max_iter))
                 self.n_iter_ += 1
 
         # calculate final perplexity value on train set
@@ -685,7 +688,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 cnts = X[idx_d, ids]
             temp = (dirichlet_doc_topic[idx_d, :, np.newaxis]
                     + dirichlet_component_[:, ids])
-            norm_phi = logsumexp(temp)
+            norm_phi = logsumexp(temp, axis=0)
             score += np.dot(cnts, norm_phi)
 
         # compute E[log p(theta | alpha) - log q(theta | gamma)]
