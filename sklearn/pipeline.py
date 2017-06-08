@@ -899,56 +899,98 @@ class ColumnTransformer(FeatureUnion):
         ]
 
 
-def _getitem(X, column):
+def _getitem(X, key):
     """
-    Get feature column from input data (array, dataframe, dict)
+    Get feature column(s) from input data X.
+
+    Supported input types (X): numpy arrays, recarrays, sparse arrays, dataframes
+    and dictionaries (mappings)
+
+    Supported key types (key):
+    - scalar: output is 1D (with exception for dicts, see below)
+    - lists, slices: output is 2D
+
+    Supported key data types:
+
+    - integer (positional):
+        - supported for (sparse) arrays or dataframes
+    - string (key-based):
+        - supported for recarrays, dataframes and dictionaries
+        - slice only works for dataframes
+        - So no keys other than strings are allowed (while in principle you
+          can use any hashable object as key).
+
+    Special case for dicts: for a single key, the item from the dict is just
+    passed through as is.
 
     """
     if X is None:
         return X
 
     # check whether we have string column names or integers
-    if (isinstance(column, int) or isinstance(column, slice)
-            or (isinstance(column, list)
-                and all(isinstance(col, int) for col in column))):
+
+    if (isinstance(key, int)
+            or (isinstance(key, list)
+                and all(isinstance(col, int) for col in key))
+            or (isinstance(key, slice)
+                and isinstance(key.start, (int, type(None)))
+                and isinstance(key.stop, (int, type(None))))):
         column_names = False
-    elif (isinstance(column, six.string_types)
-          or (isinstance(column, list)
-              and all(isinstance(col, six.string_types) for col in column))):
+    elif (isinstance(key, six.string_types)
+            or (isinstance(key, list)
+                and all(isinstance(col, six.string_types) for col in key))
+            or (isinstance(key, slice)
+                and isinstance(key.start, (six.string_types, type(None)))
+                and isinstance(key.stop, (six.string_types, type(None))))):
         column_names = True
     else:
-        raise ValueError("no valid 'column' type")
+        raise ValueError("No valid 'column' type")
 
     if column_names:
         if hasattr(X, 'loc'):
             # pandas dataframes
-            if not isinstance(column, list):
-                column = [column]
-            return X.loc[:, column]
+            return X.loc[:, key]
         else:
             # dicts or numpy recarrays
-            if not isinstance(column, list):
-                return _ensure_2d(X[column])
+            if isinstance(key, six.string_types):
+                # for scalar key, just pass through
+                return X[key]
+            elif isinstance(key, list):
+                if not all((hasattr(X[col], '__array__')
+                            or sparse.issparse(X[col])) for col in key):
+                    raise ValueError("Selecting multiple keys only supported"
+                                     " when items of X are arrays")
+                elif any(sparse.issparse(X[col]) for col in key):
+                    return sparse.hstack([_ensure_2d(X[col])
+                                          for col in key]).tocsr()
+                else:
+                    return np.hstack([_ensure_2d(X[col]) for col in key])
             else:
-                return np.hstack([_ensure_2d(X[col]) for col in column])
+                raise ValueError("Specifying the columns as a slice is not "
+                                 "supported for dictionaries or recarrays")
+
+            # if not isinstance(column, list):
+            #     return _ensure_2d(X[column])
+            # else:
+            #     return np.hstack([_ensure_2d(X[col]) for col in column])
 
     else:
-        if isinstance(column, int):
-            column = slice(column, column + 1)
         if hasattr(X, 'iloc'):
             # pandas dataframes
-            return X.iloc[:, column]
+            return X.iloc[:, key]
         else:
-            # numpy arrays
-            return X[:, column]
+            # numpy arrays, sparse arrays
+            return X[:, key]
 
 
 def _ensure_2d(X):
     """
-    Ensure X is 2D array (pass through 2D arrays, reshape 1D arrays to 2D)
+    Ensure X is 2D array (pass through 2D arrays, reshape 1D arrays to 2D).
+    Sparse arrays are already 2D.
 
     """
-    X = np.asarray(X)
-    if X.ndim == 1:
-        X = X.reshape(-1, 1)
+    if not sparse.issparse(X):
+        X = np.asarray(X)
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
     return X
