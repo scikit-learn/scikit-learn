@@ -261,3 +261,22 @@ def test_spectral_embedding_unnormalized():
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
 
     assert_array_almost_equal(embedding_1, embedding_2)
+
+
+def test_spectral_embedding_first_eigen_vector():
+    # Test that the first eigenvector of spectral_embedding
+    # is constant and that the second is not (for a connected graph)
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    n_components = 2
+
+    for seed in range(10):
+        embedding = spectral_embedding(sims,
+                                       norm_laplacian=False,
+                                       n_components=n_components,
+                                       drop_first=False,
+                                       random_state=seed)
+
+        assert_array_almost_equal(np.diff(embedding[:, 0]), 0)
+        assert_array_equal(np.abs(np.diff(embedding[:, 1])) > 1e-3, True)
