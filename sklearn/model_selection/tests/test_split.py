@@ -931,6 +931,8 @@ def test_train_test_split_errors():
     assert_raises(TypeError, train_test_split, range(3),
                   some_argument=1.1)
     assert_raises(ValueError, train_test_split, range(3), range(42))
+    assert_raises(NotImplementedError, train_test_split, range(10),
+                  shuffle=False, stratify=True)
 
 
 def test_train_test_split():
@@ -972,6 +974,13 @@ def test_train_test_split():
         assert_equal(len(test) + len(train), len(y))
         # check the 1:1 ratio of ones and twos in the data is preserved
         assert_equal(np.sum(train == 1), np.sum(train == 2))
+
+    # test unshuffled split
+    y = np.arange(10)
+    for test_size in [2, 0.2]:
+        train, test = train_test_split(y, shuffle=False, test_size=test_size)
+        assert_array_equal(test, [8, 9])
+        assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
 
 
 @ignore_warnings
