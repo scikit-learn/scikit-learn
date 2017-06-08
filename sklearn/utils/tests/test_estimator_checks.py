@@ -8,7 +8,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, all_estimators)
 from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.estimator_checks import set_testing_parameters
+from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier
@@ -198,7 +198,7 @@ def test_check_estimator_clones():
 
     for name, Estimator in all_estimators():
         est = Estimator()
-        set_testing_parameters(est)
+        set_checking_parameters(est)
         # without fitting
         old_pickle = pickle.dumps(est)
         check_estimator(est)

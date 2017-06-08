@@ -280,7 +280,7 @@ def _boston_subset(n_samples=200):
     return BOSTON
 
 
-def set_testing_parameters(estimator):
+def set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
     params = estimator.get_params()
