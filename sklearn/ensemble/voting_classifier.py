@@ -11,6 +11,8 @@ classification estimators.
 #
 # License: BSD 3 clause
 
+from numbers import Integral
+
 import numpy as np
 
 from ..base import ClassifierMixin
@@ -208,7 +210,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             maj = np.apply_along_axis(
                 lambda x: np.argmax(
                     np.bincount(x, weights=self._weights_not_none)),
-                axis=1, arr=predictions.astype('int'))
+                axis=1, arr=predictions)
 
         maj = self.le_.inverse_transform(maj)
 
@@ -308,4 +310,13 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+        predictions = []
+        for clf in self.estimators_:
+            pred = clf.predict(X)
+            if not np.issubdtype(pred.dtype, np.integer):
+                raise TypeError("The estimator '{}' returns prediction with"
+                                " type '{}' instead of an integer"
+                                " subtype.".format(
+                                    clf.__class__.__name__, pred.dtype))
+            predictions.append(pred)
+        return np.asarray(predictions).T

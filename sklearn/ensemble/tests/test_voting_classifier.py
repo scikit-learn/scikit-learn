@@ -382,4 +382,6 @@ def test_predict_for_hard_voting():
         voting='hard')
 
     eclf1.fit(X, y)
-    eclf1.predict(X)
+    assert_raise_message(TypeError, "The estimator 'FaultySVC' returns"
+                         " prediction with type 'float64' instead of"
+                         " an integer subtype.", eclf1.predict, X)
