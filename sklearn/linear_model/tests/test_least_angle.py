@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_no_warnings, assert_warns
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import TempMemmap
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
@@ -414,7 +414,7 @@ def test_lasso_lars_ic():
     rng = np.random.RandomState(42)
     X = diabetes.data
     y = diabetes.target
-    X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 4 bad features
+    X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 5 bad features
     lars_bic.fit(X, y)
     lars_aic.fit(X, y)
     nonzero_bic = np.where(lars_bic.coef_)[0]
