@@ -68,4 +68,4 @@ benchmarks/bench_covertype_data/
 
 # files generated from a template
 sklearn/utils/seq.dataset.pyx
-sklearn/utils/seq.datset.pxd
+sklearn/utils/seq.dataset.pxd
