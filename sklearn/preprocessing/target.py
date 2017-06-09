@@ -7,7 +7,7 @@ import numpy as np
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..linear_model import LinearRegression
 from ..utils.fixes import signature
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import check_is_fitted, check_array, check_random_state
 from ._function_transformer import FunctionTransformer
 
 __all__ = ['TransformTargetRegressor']
@@ -66,6 +66,13 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         Whether to check that ``transform`` followed by ``inverse_transform``
         or ``func`` followed by ``inverse_func`` leads to the original data.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. The random state is used for subsampling in
+        ``check_inverse``.
+
     Attributes
     ----------
     regressor_ : object
@@ -89,26 +96,33 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     >>> tt.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     TransformTargetRegressor(check_inverse=True,
-                               func=<ufunc 'log'>,
-                               inverse_func=<ufunc 'exp'>,
-                               regressor=LinearRegression(copy_X=True,
-                                                          fit_intercept=True,
-                                                          n_jobs=1,
-                                                          normalize=False),
-                               transformer=None)
+                             func=<ufunc 'log'>,
+                             inverse_func=<ufunc 'exp'>,
+                             regressor=LinearRegression(copy_X=True,
+                                                        fit_intercept=True,
+                                                        n_jobs=1,
+                                                        normalize=False),
+                             transformer=None)
     >>> tt.score(X, y)
     1.0
     >>> tt.regressor_.coef_
     array([ 2.])
 
+    Notes
+    -----
+    See examples/linear_model/plot_ols.py to highlight the benefit of
+    transforming the target before fitting a regression model.
+
     """
     def __init__(self, regressor=None, transformer=None,
-                 func=None, inverse_func=None, check_inverse=True):
+                 func=None, inverse_func=None, check_inverse=True,
+                 random_state=None):
         self.regressor = regressor
         self.transformer = transformer
         self.func = func
         self.inverse_func = inverse_func
         self.check_inverse = check_inverse
+        self.random_state = random_state
 
     def _fit_transformer(self, y, sample_weight):
         if (self.transformer is not None and
@@ -126,9 +140,11 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             self.transformer_.fit(y)
         if self.check_inverse:
+            random_state = check_random_state(self.random_state)
             n_subsample = min(10, y.shape[0])
-            subsample_idx = np.random.choice(range(y.shape[0]),
-                                             size=n_subsample, replace=False)
+            subsample_idx = random_state.choice(range(y.shape[0]),
+                                                size=n_subsample,
+                                                replace=False)
             if not np.allclose(
                     y[subsample_idx],
                     self.transformer_.inverse_transform(
@@ -198,6 +214,6 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "regressor_")
         pred = self.transformer_.inverse_transform(self.regressor_.predict(X))
         if self.y_ndim_ == 1 and self.func is None:
-            return pred.ravel()
+            return pred.squeeze()
         else:
             return pred
