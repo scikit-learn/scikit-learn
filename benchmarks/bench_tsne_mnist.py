@@ -17,6 +17,7 @@ import argparse
 from sklearn.externals.joblib import Memory
 from sklearn.datasets import fetch_mldata
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 from sklearn.utils import check_array
 
 
@@ -55,11 +56,16 @@ if __name__ == "__main__":
                         help="if set, run the benchmark with a memory "
                         "profiler.")
     parser.add_argument('--verbose', type=int, default=0)
-    parser.add_argument('--n_jobs', type=int, nargs="+", default=1,
+    parser.add_argument('--n_jobs', type=int, nargs="+", default=2,
                         help="Number of CPU used to fit sklearn.TSNE")
+    parser.add_argument('--pca-components', type=int, default=50,
+                        help="Number of principal components for preprocessing.")
     args = parser.parse_args()
 
     X, y = load_data(order=args.order)
+
+    if args.pca_components > 0:
+        X = PCA(n_components=args.pca_components).fit_transform(X)
 
     methods = []
 
@@ -95,7 +101,7 @@ if __name__ == "__main__":
 
         def bhtsne(X):
             """wrapper for LvdM bhtsne implementation."""
-            return run_bh_tsne(X, initial_dims=X.shape[1],
+            return run_bh_tsne(X, use_pca=False,
                                perplexity=args.perplexity, verbose=False)
         methods += [("LvdM.bhtsne", bhtsne)]
 
