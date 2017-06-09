@@ -28,7 +28,7 @@ public_modules = [
     'sklearn.datasets',
     'sklearn.decomposition',
     # 'sklearn.ensemble',
-    # 'sklearn.feature_extraction',
+    'sklearn.feature_extraction',
     # 'sklearn.feature_selection',
     # 'sklearn.gaussian_process',
     'sklearn.isotonic',
@@ -40,11 +40,11 @@ public_modules = [
     # 'sklearn.mixture',
     # 'sklearn.model_selection',
     # 'sklearn.neighbors',
-    # 'sklearn.neural_network',
+    'sklearn.neural_network',
     # 'sklearn.preprocessing',
     'sklearn.pipeline',
-    # 'sklearn.semi_supervised',
-    # 'sklearn.tree',
+    'sklearn.semi_supervised',
+    'sklearn.tree',
     # 'sklearn.utils',
 ]
 
@@ -56,6 +56,10 @@ _docstring_ignores = [
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
     'RandomizedPCA',
+    'BaseForest',
+    'BaseDecisionTree',
+    'ExtraTreeClassifier',
+    'ExtraTreeRegressor',
 ]
 
 _tab_ignores = [
@@ -80,6 +84,7 @@ def test_docstring_parameters():
             module = getattr(module, submod)
         classes = inspect.getmembers(module, inspect.isclass)
         for cname, cls in classes:
+            this_incorrect = []
             if cname in _docstring_ignores:
                 continue
             if cname.startswith('_') and cname not in _doc_special_members:
@@ -90,7 +95,7 @@ def test_docstring_parameters():
                 raise RuntimeError('Error for __init__ of %s in %s:\n%s'
                                    % (cls, name, w[0]))
             if hasattr(cls, '__init__'):
-                incorrect += check_parameters_match(cls.__init__, cdoc)
+                this_incorrect += check_parameters_match(cls.__init__, cdoc)
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
@@ -104,10 +109,14 @@ def test_docstring_parameters():
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
-                incorrect += check_parameters_match(method,
-                                                    ignore=param_ignore)
+                this_incorrect += check_parameters_match(method,
+                                                         ignore=param_ignore)
             if hasattr(cls, '__call__'):
-                incorrect += check_parameters_match(cls.__call__)
+                this_incorrect += check_parameters_match(cls.__call__)
+
+            # Append class name
+            incorrect += [c + ' (' + cname + ')' for c in this_incorrect]
+
         functions = inspect.getmembers(module, inspect.isfunction)
         for fname, func in functions:
             if fname.startswith('_'):

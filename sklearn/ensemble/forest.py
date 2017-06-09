@@ -1840,6 +1840,13 @@ class RandomTreesEmbedding(BaseForest):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
+
         Returns
         -------
         self : object
@@ -1857,6 +1864,13 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Input data used to build forests. Use ``dtype=np.float32`` for
             maximum efficiency.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
 
         Returns
         -------
