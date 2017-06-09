@@ -110,7 +110,7 @@ class EllipticEnvelope(MinCovDet):
         Returns
         -------
         decision : array-like, shape (n_samples, )
-            The values of the decision function for each observation.
+            Decision function of the samples.
             It is equal to the Mahalanobis distances if `raw_values`
             is True. By default (``raw_values=False``), it is equal
             to the cubic root of the shifted Mahalanobis distances.
