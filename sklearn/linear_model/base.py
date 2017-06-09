@@ -204,7 +204,10 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         X_offset = np.zeros(X.shape[1], dtype=X.dtype)
         X_scale = np.ones(X.shape[1], dtype=X.dtype)
         if y.ndim == 1:
-            y_offset = np.float32(0) if X.dtype == np.float32 else np.float64(0)
+            if X.dtype == np.float32:
+                y_offset = np.float32(0)
+            else:
+                y_offset = np.float64(0)
         else:
             y_offset = np.zeros(y.shape[1], dtype=X.dtype)
 
