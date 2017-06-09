@@ -62,8 +62,8 @@ def configuration(parent_package='', top_path=None):
         assert pyxfiles.endswith(('.pyx.tp', '.pxd.tp'))
         outfile = pyxfiles[:-3]
         # if .pxi.in is not updated, no need to output .pxi
-        if os.path.exists(outfile) and \
-                        os.stat(pyxfiles).st_mtime < os.stat(outfile).st_mtime:
+        if (os.path.exists(outfile) and
+                os.stat(pyxfiles).st_mtime < os.stat(outfile).st_mtime):
             continue
 
         with open(pyxfiles, "r") as f:
