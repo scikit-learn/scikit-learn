@@ -372,12 +372,9 @@ API changes summary
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
-   - All checks in ``utils.estimator_checks``, in particular :func:`utils.estimator_checks.check_estimator` now
-     accept estimator instances. All checks apart from ``check_estimator`` do not accept estimator classes any more.
-     By `Andreas Müller`_.
-
    - The ``include_others`` and ``dont_test`` parameters of :func:`utils.testing.all_estimators` are deprecated
      and are assumed ``True``, by  `Andreas Müller`_.
+
    - All checks in ``utils.estimator_checks``, in particular
      :func:`utils.estimator_checks.check_estimator` now accept estimator
      instances. Most other checks do not accept

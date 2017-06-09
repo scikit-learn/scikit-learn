@@ -34,7 +34,6 @@ from collections import defaultdict, Mapping
 from functools import partial
 import pickle
 from io import StringIO
-from scipy import sparse
 
 
 JUNK_FOOD_DOCS = (
