@@ -201,37 +201,3 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             return pred.ravel()
         else:
             return pred
-
-    def score(self, X, y, sample_weight=None):
-        """Returns the coefficient R^2 of the prediction in the original space.
-
-        The coefficient R^2 is defined as (1 - u/v), where u is the regression
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual sum
-        of squares ((y_true - y_true.mean()) ** 2).sum().  Best possible score
-        is 1.0 and it can be negative (because the model can be arbitrarily
-        worse). A constant model that always predicts the expected value of y,
-        disregarding the input features, would get a R^2 score of 0.0. Note
-        that the score is computed in the original space using the
-        ``inverse_transform`` of ``transformer_``.
-
-        Parameters
-        ----------
-        X : array-like, shape = (n_samples, n_features)
-            Test samples.
-
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
-            True values for X.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        score : float
-            R^2 of self.predict(X) wrt. y.
-
-        """
-
-        check_is_fitted(self, "regressor_")
-        return super(TransformedTargetRegressor, self).score(X, y,
-                                                             sample_weight)
