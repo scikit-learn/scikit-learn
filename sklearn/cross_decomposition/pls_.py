@@ -369,12 +369,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
             self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coef_ = (1. / self.x_std_.reshape((p, 1)) * self.coef_ *
-                          self.y_std_)
+            self.coef_ = self.coef_ * self.y_std_
+            
             if Y_ndim_is_one:
                 self.coef_ = np.ravel(self.coef_)
                 self.y_mean_ = np.ravel(self.y_mean_)
                 self.y_std_ = np.ravel(self.y_std_)
+        
         return self
 
     def transform(self, X, Y=None, copy=True):

@@ -213,6 +213,10 @@ Bug fixes
      ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
+   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails 
+     when generating more than 30 features. :issue:`8159` by
+     :user:`Herilalaina Rakotoarison <herilalaina>`
+
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
@@ -343,6 +347,8 @@ Bug fixes
 
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
+   - Fixed improper scaling in :class:`sklearn.cross_decomposition.PLSRegression`
+     with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
      :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
@@ -358,6 +364,11 @@ API changes summary
      ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
+
+   - All checks in ``utils.estimator_checks``, in particular
+     :func:`utils.estimator_checks.check_estimator` now accept estimator
+     instances. Most other checks do not accept
+     estimator classes any more. :issue:`9019` by `Andreas Müller`_.
 
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
@@ -429,9 +440,9 @@ API changes summary
      for scikit-learn. The following backported functions in ``sklearn.utils``
      have been removed or deprecated accordingly.
      :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
-     
+
      Removed in 0.19:
-     
+
      - ``utils.fixes.argpartition``
      - ``utils.fixes.array_equal``
      - ``utils.fixes.astype``
@@ -442,9 +453,9 @@ API changes summary
      - ``utils.fixes.norm``
      - ``utils.fixes.rankdata``
      - ``utils.fixes.safe_copy``
-     
+
      Deprecated in 0.19, to be removed in 0.21:
-     
+
      - ``utils.arpack.eigs``
      - ``utils.arpack.eigsh``
      - ``utils.arpack.svds``
@@ -452,6 +463,7 @@ API changes summary
      - ``utils.extmath.logsumexp``
      - ``utils.extmath.norm``
      - ``utils.extmath.pinvh``
+     - ``utils.graph.graph_laplacian``
      - ``utils.random.choice``
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
