@@ -6,6 +6,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import SkipTest
@@ -102,3 +103,21 @@ def test_return_std():
         m2.fit(X, y)
         y_mean2, y_std2 = m2.predict(X_test, return_std=True)
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
+
+
+def test_dtype_match():
+    # Test that np.float32 input data is not cast to np.float64 when possible
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+    X_32 = np.array(X).astype(np.float32)
+    y_32 = np.array(y).astype(np.float32)
+    X_64 = np.array(X).astype(np.float64)
+    y_64 = np.array(y).astype(np.float64)
+
+    # check type consistency
+    br_32 = BayesianRidge()
+    br_32.fit(X_32, y_32)
+    assert_equal(br_32.coef_.dtype, X_32.dtype)
+    br_64 = BayesianRidge()
+    br_64.fit(X_64, y_64)
+    assert_equal(br_64.coef_.dtype, X_64.dtype)
