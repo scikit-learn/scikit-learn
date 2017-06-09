@@ -57,7 +57,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
     # seed should never be 0 in SequentialDataset
     seed = rng.randint(1, np.iinfo(np.int32).max)
 
-    if isinstance(X, np.float32):
+    if X.dtype == np.float32:
         CSRData = CSRDataset32
         ArrayData = ArrayDataset32
     else:
