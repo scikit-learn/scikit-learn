@@ -151,7 +151,8 @@ cdef class SequentialDataset{{name}}:
                      current_index)
 
         # transform the pointed data in numpy CSR array
-        cdef np.ndarray[{{c_type}}, ndim=1] x_data = np.empty(nnz)
+        cdef np.ndarray[{{c_type}}, ndim=1] x_data = np.empty(nnz,
+                                                              dtype={{np_type}})
         cdef np.ndarray[int, ndim=1] x_indices = np.empty(nnz, dtype=np.int32)
         cdef np.ndarray[int, ndim=1] x_indptr = np.asarray([0, nnz],
                                                            dtype=np.int32)

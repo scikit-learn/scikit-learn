@@ -6,7 +6,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 
-from sklearn.utils.seq_dataset import ArrayDataset, CSRDataset
+from sklearn.utils.seq_dataset import ArrayDataset, CSRDataset, ArrayDataset32
+
 from sklearn.datasets import load_iris
 
 from sklearn.utils.testing import assert_equal
@@ -16,6 +17,11 @@ X = iris.data.astype(np.float64)
 y = iris.target.astype(np.float64)
 X_csr = sp.csr_matrix(X)
 sample_weight = np.arange(y.size, dtype=np.float64)
+
+X32 = iris.data.astype(np.float32)
+y32 = iris.target.astype(np.float32)
+X_csr32 = sp.csr_matrix(X)
+sample_weight32 = np.arange(y.size, dtype=np.float32)
 
 
 def assert_csr_equal(X, Y):
@@ -81,4 +87,22 @@ def test_seq_dataset_shuffle():
         _, _, _, idx1 = dataset1._random_py()
         _, _, _, idx2 = dataset2._random_py()
         assert_equal(idx1, idx2)
+
+
+def test_consistency_check_fused_types():
+    dataset32 = ArrayDataset32(X32, y32, sample_weight32, seed=42)
+    dataset64 = ArrayDataset(X, y, sample_weight, seed=42)
+
+    for i in range(5):
+        # next sample
+        xi_32, yi32, swi32, idx32 = dataset32._next_py()
+        xi_, yi, swi, idx = dataset64._next_py()
+
+        xi_data32, _, _ = xi_32
+        xi_data, _, _ = xi_
+        assert_equal(xi_data32.dtype, np.float32)
+        assert_equal(xi_data.dtype, np.float64)
+
+
+
 
