@@ -830,7 +830,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         X_32 = X.astype(np.float32);
 
         # loss in ("hinge", "squared_hinge", "log", "modified_huber")
-        for loss in ("hinge"):
+        for loss in ["hinge"]:
 
             # check type consistency 32 bits
             sgd_32 = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
