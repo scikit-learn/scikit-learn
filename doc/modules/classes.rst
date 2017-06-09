@@ -1198,6 +1198,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.PolynomialFeatures
+   preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
 
@@ -1211,6 +1212,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.maxabs_scale
    preprocessing.minmax_scale
    preprocessing.normalize
+   preprocessing.quantile_transform
    preprocessing.robust_scale
    preprocessing.scale
 
