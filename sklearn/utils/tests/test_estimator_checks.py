@@ -171,8 +171,7 @@ def test_check_estimator():
                         check_estimator, SetsWrongAttribute)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
-    msg = ("Estimator " + name
-           + " doesn't seem to fail gracefully on sparse data")
+    msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
     # that means we need to jump through some hoops to catch it.
