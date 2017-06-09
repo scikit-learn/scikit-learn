@@ -1,11 +1,11 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-import warnings
-from collections import Sequence, Mapping
+from collections import Sequence
 
 import numpy as np
 from scipy.sparse import issparse
+import warnings
 
 from .murmurhash import murmurhash3_32
 from .validation import (as_float_array,
@@ -136,14 +136,7 @@ def safe_indexing(X, indices):
     subset
         Subset of X on first axis
     """
-    if X is None:
-        # fall-through
-        return None
-    elif isinstance(X, Mapping):
-        # slice per value
-        return dict([(k, safe_indexing(v, indices)) for k, v in
-                     X.items()])
-    elif hasattr(X, "iloc"):
+    if hasattr(X, "iloc"):
         # Pandas Dataframes and Series
         try:
             return X.iloc[indices]
