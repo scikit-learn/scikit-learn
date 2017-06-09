@@ -335,6 +335,8 @@ writing data in that format.
 
 .. include:: rcv1.rst
 
+.. include:: adult_census.rst
+
 .. _boston_house_prices:
 
 .. include:: ../../sklearn/datasets/descr/boston_house_prices.rst

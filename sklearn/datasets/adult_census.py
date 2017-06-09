@@ -12,7 +12,8 @@ The version retrieved here comes from
 
 Extraction was done by Barry Becker from the 1994 Census database.
 A set of reasonably clean records was extracted using the following
-conditions: ((AAGE>16) && (AGI>100) && (AFNLWGT>1)&& (HRSWK>0))
+conditions: ((AAGE>16) && (AGI>100) && (AFNLWGT>1)&& (HRSWK>0)).
+Prediction task is to determine whether a person makes over 50K a year.
 
 The retrieved dataset consisted of 48842 x 15
 """
@@ -22,7 +23,6 @@ The retrieved dataset consisted of 48842 x 15
 from io import BytesIO
 from os.path import exists
 from os import makedirs
-import tarfile
 
 try:
     # Python 2
@@ -39,7 +39,8 @@ from .base import _pkl_filepath
 from ..externals import joblib
 
 
-DATA_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
+DATA_URL = "https://archive.ics.uci.edu/ml/machine-learning-databases/" \
+           "adult/adult.data"
 TARGET_FILENAME = "adult.data"
 
 # Grab the module-level docstring to use as a description of the
