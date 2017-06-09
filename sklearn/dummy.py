@@ -106,6 +106,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
+
         if self.strategy not in ("most_frequent", "stratified", "uniform",
                                  "constant", "prior"):
             raise ValueError("Unknown strategy type.")
@@ -119,8 +122,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                           UserWarning)
 
         self.sparse_output_ = sp.issparse(y)
-
-        check_consistent_length(X, y)
 
         if not self.sparse_output_:
             y = np.atleast_1d(y)
@@ -176,7 +177,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -186,7 +188,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -195,7 +197,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         # Compute probability only once
         if self.strategy == "stratified":
             proba = self.predict_proba(X)
-            if self.n_outputs_ == 1 and not self.output_2d_:
+            if self.n_outputs_ == 1:
                 proba = [proba]
 
         if self.sparse_output_:
@@ -256,7 +258,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -394,6 +397,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
 
         if self.strategy not in ("mean", "median", "quantile", "constant"):
             raise ValueError("Unknown strategy type: %s, expected "
@@ -401,7 +406,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              % self.strategy)
 
         y = check_array(y, ensure_2d=False)
-
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
@@ -471,7 +475,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Predicted target values for X.
         """
         check_is_fitted(self, "constant_")
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
         n_samples = X.shape[0]
 
         y = np.ones((n_samples, 1)) * self.constant_
