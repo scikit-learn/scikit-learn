@@ -31,6 +31,11 @@ Changelog
 New features
 ............
 
+   - Validation that input data contains no NaN or inf can now be suppressed
+     using :func:`config_context`, at your own risk. This will save on runtime,
+     and may be particularly useful for prediction time. :issue:`7548` by
+     `Joel Nothman`_.
+
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
@@ -206,6 +211,10 @@ Bug fixes
      ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
+   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails 
+     when generating more than 30 features. :issue:`8159` by
+     :user:`Herilalaina Rakotoarison <herilalaina>`
+
    - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
      returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
      :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
@@ -294,9 +303,18 @@ Bug fixes
      left `coef_` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
 
+
+   - Fix a bug where :class:`sklearn.feature_extraction.FeatureHasher`
+     mandatorily applied a sparse random projection to the hashed features,
+     preventing the use of 
+     :class:`sklearn.feature_extraction.text.HashingVectorizer` in a
+     pipeline with  :class:`sklearn.feature_extraction.text.TfidfTransformer`.
+     :issue:`7513` by :user:`Roman Yurchak <rth>`.
+     
    - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
      raising an exception if instability is identified.  :issue:`7376` and
      :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
+     
    - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
@@ -409,6 +427,10 @@ API changes summary
    - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
      has been renamed to ``n_components`` and will be removed in version 0.21.
      :issue:`8922` by :user:Attractadore
+
+   - :class:`cluster.bicluster.SpectralCoClustering` and
+     :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
+     :issue:`6126` by `Andreas Müller`_.
 
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
      for scikit-learn. The following backported functions in ``sklearn.utils``

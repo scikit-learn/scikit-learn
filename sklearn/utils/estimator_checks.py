@@ -484,12 +484,7 @@ def check_dict_unchanged(name, estimator_orig):
 
     set_random_state(estimator, 1)
 
-    # should be just `estimator.fit(X, y)`
-    # after merging #6141
-    if name in ['SpectralBiclustering']:
-        estimator.fit(X)
-    else:
-        estimator.fit(X, y)
+    estimator.fit(X, y)
     for method in ["predict", "transform", "decision_function",
                    "predict_proba"]:
         if hasattr(estimator, method):
@@ -1115,12 +1110,13 @@ def check_classifiers_train(name, classifier_orig):
             try:
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
-                if n_classes is 2:
+                if n_classes == 2:
                     assert_equal(decision.shape, (n_samples,))
                     dec_pred = (decision.ravel() > 0).astype(np.int)
                     assert_array_equal(dec_pred, y_pred)
-                if (n_classes is 3 and not isinstance(classifier, BaseLibSVM)):
-                    # 1on1 of LibSVM works differently
+                if (n_classes == 3 and
+                        # 1on1 of LibSVM works differently
+                        not isinstance(classifier, BaseLibSVM)):
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
