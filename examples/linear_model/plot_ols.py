@@ -15,8 +15,6 @@ the linear approximation.
 The coefficients, the residual sum of squares and the variance score are also
 calculated.
 
-In a second
-
 """
 print(__doc__)
 
@@ -24,9 +22,6 @@ print(__doc__)
 # Code source: Jaques Grobler, Guillaume Lemaitre
 # License: BSD 3 clause
 
-###############################################################################
-# Ordinary Linear Regression
-###############################################################################
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,14 +66,5 @@ plt.plot(diabetes_X_test, diabetes_y_pred, color='blue', linewidth=3)
 
 plt.xticks(())
 plt.yticks(())
-
-###############################################################################
-# Transforming the targets
-###############################################################################
-
-# from sklearn.preprocessing import TransformTargetRegressor
-
-# regr = TransformTargetRegressor(regressor=linear_model.LinearRegression(),
-#                                 func=np.log, inverse_func=np.exp)
 
 plt.show()
