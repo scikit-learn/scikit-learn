@@ -35,6 +35,9 @@ New features
      a regressor and applies a transformation to the target before fitting,
      finally transforming the regressor's predictions back to the original
      space. :issue:`9041` by `Andreas Müller`_ and
+   - Added the :class:`sklearn.preprocessing.TransformedTargetRegressor` which
+     is a meta-estimator to regress on a modified ``y`` for example, to perform
+     regression in log-space. :issue:`9041` by `Andreas Müller`_ and
      :user:`Guillaume Lemaitre <glemaitre>`.
 
    - Validation that input data contains no NaN or inf can now be suppressed
@@ -178,7 +181,7 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
-   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
 
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
@@ -217,7 +220,7 @@ Bug fixes
      ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
-   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails
+   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails 
      when generating more than 30 features. :issue:`8159` by
      :user:`Herilalaina Rakotoarison <herilalaina>`
 
@@ -283,7 +286,7 @@ Bug fixes
      :class:`sklearn.covariance.EllipticEnvelope`.
      :issue:`8086` by `Andreas Müller`_.
 
-   - Fix output shape and bugs with n_jobs > 1 in
+   - Fix output shape and bugs with n_jobs > 1 in  
      :class:`sklearn.decomposition.SparseCoder` transform and :func:`sklarn.decomposition.sparse_encode`
      for one-dimensional data and one component.
      This also impacts the output shape of :class:`sklearn.decomposition.DictionaryLearning`.
@@ -312,15 +315,15 @@ Bug fixes
 
    - Fix a bug where :class:`sklearn.feature_extraction.FeatureHasher`
      mandatorily applied a sparse random projection to the hashed features,
-     preventing the use of
+     preventing the use of 
      :class:`sklearn.feature_extraction.text.HashingVectorizer` in a
      pipeline with  :class:`sklearn.feature_extraction.text.TfidfTransformer`.
      :issue:`7513` by :user:`Roman Yurchak <rth>`.
-
+     
    - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
      raising an exception if instability is identified.  :issue:`7376` and
      :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
-
+     
    - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
@@ -330,7 +333,7 @@ Bug fixes
      both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
      ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
 
-   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
@@ -411,7 +414,7 @@ API changes summary
      method only if the underlying estimator does. By `Andreas Müller`_.
 
    - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
-     only if the underlying estimator does.  By `Andreas Müller`_.
+     only if the underlying estimator does.  By `Andreas Müller`_. 
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
@@ -425,7 +428,7 @@ API changes summary
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
 
-   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation`
+   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
      has been renamed to ``n_components`` and will be removed in version 0.21.
      :issue:`8922` by :user:Attractadore
 
@@ -437,9 +440,9 @@ API changes summary
      for scikit-learn. The following backported functions in ``sklearn.utils``
      have been removed or deprecated accordingly.
      :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
-
+     
      Removed in 0.19:
-
+     
      - ``utils.fixes.argpartition``
      - ``utils.fixes.array_equal``
      - ``utils.fixes.astype``
@@ -450,9 +453,9 @@ API changes summary
      - ``utils.fixes.norm``
      - ``utils.fixes.rankdata``
      - ``utils.fixes.safe_copy``
-
+     
      Deprecated in 0.19, to be removed in 0.21:
-
+     
      - ``utils.arpack.eigs``
      - ``utils.arpack.eigsh``
      - ``utils.arpack.svds``
