@@ -293,7 +293,7 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         D = squareform(pdist(X), "sqeuclidean")
         tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                     early_exaggeration=2.0, metric="precomputed",
-                    random_state=i, verbose=0)
+                    random_state=i, verbose=0, neighbors_method='brute')
         X_embedded = tsne.fit_transform(D)
         t = trustworthiness(D, X_embedded, n_neighbors=1,
                             precomputed=True)
@@ -337,7 +337,8 @@ def test_init_ndarray():
 def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
-    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed",
+                neighbors_method='brute')
     tsne.fit(np.zeros((100, 100)))
 
 

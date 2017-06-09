@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
@@ -15,6 +16,7 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix
 from ..neighbors import NearestNeighbors
+from ..neighbors.base import NeighborsBase
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
@@ -612,6 +614,18 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
+    n_jobs : integer (default: 1)
+        Only used if method='barnes_hut'
+        Number of CPU used to compute the nearest neighbors of each point.
+        If ``n_jobs=-1``, use all the CPUs.
+
+    neighbors_method : string or NeighborsBase object (default: 'ball_tree')
+        Only used if method='barnes_hut'
+        Method used to compute k nearest neighbors for Barnes-Hut T-SNE.
+        If it is a string, it should be compatible with the algorithm parameter
+        of `NearestNeighbors`. If it is an object, it should implement a
+        `kneighbors` method returning distances_nn and neighbors_nn.
+
 
     Attributes
     ----------
@@ -654,7 +668,8 @@ class TSNE(BaseEstimator):
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5):
+                 random_state=None, method='barnes_hut', angle=0.5, n_jobs=1,
+                 neighbors_method='ball_tree'):
         if not ((isinstance(init, string_types) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
@@ -673,6 +688,8 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
+        self.n_jobs = n_jobs
+        self.neighbors_method = neighbors_method
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -749,30 +766,43 @@ class TSNE(BaseEstimator):
         # Laurens van der Maaten, 2009.
         degrees_of_freedom = max(self.n_components - 1.0, 1)
         n_samples = X.shape[0]
-        # the number of nearest neighbors to find
-        k = min(n_samples - 1, int(3. * self.perplexity + 1))
 
         neighbors_nn = None
         if self.method == 'barnes_hut':
+            # Cpmpute the number of nearest neighbors to find.
+            # LvdM uses 3 * perplexity as the number of neighbors.
+            # In the event that we have very small # of points
+            # set the neighbors to n - 1.
+            k = min(n_samples - 1, int(3. * self.perplexity + 1))
+
             if self.verbose:
-                print("[t-SNE] Computing %i nearest neighbors..." % k)
+                print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
             # Find the nearest neighbors for every point
-            # TODO: argument for class knn_estimator=None
-            # TODO: assert that the knn metric is euclidean
-            if self.metric == 'precomputed':
-                knn = NearestNeighbors(metric=self.metric)
+            if isinstance(self.neighbors_method, string_types):
+                if (self.metric == 'precomputed' and
+                        self.neighbors_method == "ball_tree"):
+                    warnings.warn("Cannot use neighbors_method='ball_tree' "
+                                  "with metric='precomputed'. Switching to "
+                                  "neighbors_method='brute'.", RuntimeWarning)
+                    self.neighbors_method = "brute"
+                knn = NearestNeighbors(algorithm=self.neighbors_method,
+                                       n_neighbors=k, metric=self.metric,
+                                       n_jobs=self.n_jobs)
+            elif isinstance(self.neighbors_method, NeighborsBase):
+                knn = self.neighbors_method
             else:
-                knn = NearestNeighbors(algorithm='ball_tree',
-                                       metric=self.metric)
+                ValueError("neighbors_method should be either a string or "
+                           "a subclass of NeighborsBase. {} is not valid."
+                           .format(self.neighbors_method))
             knn.fit(X)
-            # LvdM uses 3 * perplexity as the number of neighbors
-            # And we add one to not count the data point itself
-            # In the event that we have very small # of points
-            # set the neighbors to n - 1
             distances_nn, neighbors_nn = knn.kneighbors(
                 None, n_neighbors=k)
+
             if self.metric != "precomputed":
+                # knn return the euclidean distance but we need it squared.
+                # TODO: the computation are valid for euclidean distance.
+                # Should we enforce that with an assert?
                 distances_nn **= 2
 
             P = _joint_probabilities_nn(distances_nn, neighbors_nn,
@@ -791,10 +821,11 @@ class TSNE(BaseEstimator):
                       random_state=random_state)
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
         elif self.init == 'random':
-            X_embedded = None
+            X_embedded = 1e-4 * random_state.randn(
+                n_samples, self.n_components).astype(np.float32)
         else:
-            raise ValueError("Unsupported initialization scheme: %s"
-                             % self.init)
+            raise ValueError("Unsupported initialization scheme: {}"
+                             .format(self.init))
 
         return self._tsne(P, degrees_of_freedom, n_samples, random_state,
                           X_embedded=X_embedded,
@@ -807,8 +838,8 @@ class TSNE(BaseEstimator):
     def n_iter_final(self):
         return self.n_iter_
 
-    def _tsne(self, P, degrees_of_freedom, n_samples, random_state,
-              X_embedded=None, neighbors=None, skip_num_points=0):
+    def _tsne(self, P, degrees_of_freedom, n_samples, random_state, X_embedded,
+              neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
         # and the Student's t-distributions Q. The optimization algorithm that
@@ -818,11 +849,6 @@ class TSNE(BaseEstimator):
         # * final optimization with momentum 0.8
         # The embedding is initialized with iid samples from Gaussians with
         # standard deviation 1e-4.
-
-        if X_embedded is None:
-            # Initialize embedding randomly
-            X_embedded = 1e-4 * random_state.randn(
-                n_samples, self.n_components).astype(np.float32)
         params = X_embedded.ravel()
 
         opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
