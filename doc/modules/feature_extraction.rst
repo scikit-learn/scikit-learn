@@ -930,8 +930,8 @@ Some tips and tricks:
         ...
         >>> class CustomVectorizer(CountVectorizer):
         ...     def build_tokenizer(self):
-        ...         base = super(CustomVectorizer, self).build_tokenizer()
-        ...         return lambda doc: list(to_british(base(doc)))
+        ...         tokenize = super(CustomVectorizer, self).build_tokenizer()
+        ...         return lambda doc: list(to_british(tokenize(doc)))
         ...
         >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
         [...'color', ...'color']
@@ -939,7 +939,7 @@ Some tips and tricks:
     for other styles of preprocessing; examples include stemming, lemmatization,
     or normalizing numerical tokens, with the latter illustrated in:
 
-     * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py.py`
+     * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`
 
 
 Customizing the vectorizer can also be useful when handling Asian languages

@@ -26,7 +26,6 @@ from __future__ import print_function
 
 from collections import defaultdict
 import operator
-import re
 from time import time
 
 import numpy as np
@@ -48,14 +47,13 @@ def number_normalizer(tokens):
     useful, but the fact that such a token exists can be relevant.  By applying
     this form of dimensionality reduction, some methods may perform better.
     """
-    for t in tokens:
-        yield re.sub(r"^\d+$", "#NUMBER", t)
+    return ("#NUMBER" if token[0].isdigit() else token for token in tokens)
 
 
 class NumberNormalizingVectorizer(TfidfVectorizer):
     def build_tokenizer(self):
-        base = super(NumberNormalizingVectorizer, self).build_tokenizer()
-        return lambda doc: list(number_normalizer(base(doc)))
+        tokenize = super(NumberNormalizingVectorizer, self).build_tokenizer()
+        return lambda doc: list(number_normalizer(tokenize(doc)))
 
 
 # exclude 'comp.os.ms-windows.misc'
