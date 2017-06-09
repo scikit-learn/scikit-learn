@@ -9,6 +9,12 @@ Generated file: seq_dataset.pyx
 
 Each class is duplicated for all dtypes (float and double). The keywords
 between double braces are substituted in setup.py.
+
+Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+        Arthur Imbert <arthurimbert05@gmail.com>
+        Joan Massich <mailsik@gmail.com>
+
+License: BSD 3 clause
 """
 
 # name, c_type, np_type
@@ -33,12 +39,6 @@ WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-#
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Arthur Imbert <arthurimbert05@gmail.com>
-#         Joan Massich <mailsik@gmail.com>
-
-# License: BSD 3 clause
 
 cimport cython
 from libc.limits cimport INT_MAX
