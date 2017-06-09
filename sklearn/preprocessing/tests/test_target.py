@@ -6,7 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 
-from sklearn.preprocessing import TransformedTargetRegressor
+from sklearn.preprocessing import TransformTargetRegressor
 
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
@@ -20,9 +20,9 @@ def test_transformed_target_regressor_error_kwargs():
     X = friedman[0]
     y = friedman[1]
     # provide a transformer and functions at the same time
-    regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      transformer=StandardScaler(),
-                                      func=np.exp, inverse_func=np.log)
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    transformer=StandardScaler(),
+                                    func=np.exp, inverse_func=np.log)
     assert_raises_regex(ValueError, "Both 'transformer' and functions"
                         " 'func'/'inverse_func' cannot be set at the"
                         " same time.", regr.fit, X, y)
@@ -31,15 +31,15 @@ def test_transformed_target_regressor_error_kwargs():
 def test_transformed_target_regressor_invertible():
     X = friedman[0]
     y = friedman[1]
-    regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.sqrt, inverse_func=np.log,
-                                      check_inverse=True)
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    func=np.sqrt, inverse_func=np.log,
+                                    check_inverse=True)
     assert_raises_regex(ValueError, "The provided functions or transformer"
                         " are not strictly inverse of each other.",
                         regr.fit, X, y)
-    regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.sqrt, inverse_func=np.log,
-                                      check_inverse=False)
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    func=np.sqrt, inverse_func=np.log,
+                                    check_inverse=False)
     # the transformer/functions are not checked to be invertible the fitting
     # should pass
     regr.fit(X, y)
@@ -49,8 +49,8 @@ def test_transformed_target_regressor_friedman():
     X = friedman[0]
     y = friedman[1]
     # pass some functions
-    regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.log, inverse_func=np.exp)
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    func=np.log, inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     y_tran = np.ravel(regr.transformer_.transform(y))
     assert_array_almost_equal(np.log(y), y_tran)
@@ -63,8 +63,8 @@ def test_transformed_target_regressor_friedman():
     assert_array_equal(regr.regressor_.coef_.ravel(),
                        lr.coef_.ravel())
     # pass a transformer
-    regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      transformer=StandardScaler())
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    transformer=StandardScaler())
     y_pred = regr.fit(X, y).predict(X)
     assert_equal(y.shape, y_pred.shape)
     y_mean = np.mean(y)
@@ -87,8 +87,8 @@ def test_transformed_target_regressor_multioutput():
     y = friedman[1]
     y = np.vstack((y, y ** 2 + 1)).T
     # pass some functions
-    regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.log, inverse_func=np.exp)
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    func=np.log, inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     y_tran = regr.transformer_.transform(y)
     assert_array_almost_equal(np.log(y), y_tran)
@@ -100,8 +100,8 @@ def test_transformed_target_regressor_multioutput():
     assert_array_equal(regr.regressor_.coef_.ravel(),
                        lr.coef_.ravel())
     # pass a transformer
-    regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      transformer=StandardScaler())
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    transformer=StandardScaler())
     y_pred = regr.fit(X, y).predict(X)
     assert_equal(y.shape, y_pred.shape)
     y_mean = np.mean(y, axis=0)

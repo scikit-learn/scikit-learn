@@ -1200,7 +1200,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.PolynomialFeatures
    preprocessing.RobustScaler
    preprocessing.StandardScaler
-   preprocessing.TransformedTargetRegressor
+   preprocessing.TransformTargetRegressor
 
 .. autosummary::
    :toctree: generated/

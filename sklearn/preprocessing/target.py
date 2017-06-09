@@ -4,16 +4,16 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone, is_regressor
+from ..base import BaseEstimator, RegressorMixin, clone
 from ..linear_model import LinearRegression
 from ..utils.fixes import signature
 from ..utils.validation import check_is_fitted, check_array
 from ._function_transformer import FunctionTransformer
 
-__all__ = ['TransformedTargetRegressor']
+__all__ = ['TransformTargetRegressor']
 
 
-class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
+class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation in regression
@@ -81,14 +81,14 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.preprocessing import TransformedTargetRegressor
-    >>> tt = TransformedTargetRegressor(regressor=LinearRegression(),
+    >>> from sklearn.preprocessing import TransformTargetRegressor
+    >>> tt = TransformTargetRegressor(regressor=LinearRegression(),
     ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
     >>> tt.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    TransformedTargetRegressor(check_inverse=True,
+    TransformTargetRegressor(check_inverse=True,
                                func=<ufunc 'log'>,
                                inverse_func=<ufunc 'exp'>,
                                regressor=LinearRegression(copy_X=True,

@@ -31,7 +31,7 @@ Changelog
 New features
 ............
 
-   - Added the :class:`sklearn.preprocessing.TransformedTargetRegressor` wraps
+   - Added the :class:`sklearn.preprocessing.TransformTargetRegressor` wraps
      a regressor and applies a transformation to the target before fitting,
      finally transforming the regressor's predictions back to the original
      space. :issue:`9041` by `Andreas Müller`_ and
