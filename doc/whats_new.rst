@@ -345,6 +345,8 @@ Bug fixes
 
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
+   - Fixed improper scaling in :class:`sklearn.cross_decomposition.PLSRegression`
+     with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
      :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
