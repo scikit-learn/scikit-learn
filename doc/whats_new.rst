@@ -6,7 +6,7 @@ Release history
 ===============
 
 Version 0.19
-==============
+============
 
 **In Development**
 

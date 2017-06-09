@@ -173,19 +173,20 @@ def average_precision_score(y_true, y_score, average="macro",
     >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
     0.83...
 
-    >>> yt = np.array([0, 0, 1, 1])
-    >>> ys = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> ap = average_precision_score(yt, ys)
-    >>> ap # doctest: +ELLIPSIS
-    0.84...
-
     """
-    precision, recall, thresholds = precision_recall_curve(
-        y_true, y_score, sample_weight=sample_weight)
-    # Return the step function integral
-    # The following works because the last entry of precision is
-    # garantee to be 1, as returned by precision_recall_curve
-    return -np.sum(np.diff(recall) * np.array(precision)[:-1])
+    def _binary_uninterpolated_average_precision(
+            y_true, y_score, sample_weight=None):
+        precision, recall, thresholds = precision_recall_curve(
+            y_true, y_score, sample_weight=sample_weight)
+        # Return the step function integral
+        # The following works because the last entry of precision is
+        # garantee to be 1, as returned by precision_recall_curve
+        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
+
+    return _average_binary_score(_binary_uninterpolated_average_precision,
+                                 y_true, y_score, average,
+                                 sample_weight=sample_weight)
+
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
