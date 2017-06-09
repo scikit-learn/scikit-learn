@@ -233,7 +233,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     Parameters
     ----------
     radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
+        Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
     weights : str or callable
