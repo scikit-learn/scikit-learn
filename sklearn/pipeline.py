@@ -626,12 +626,12 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     --------
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA, TruncatedSVD
-    >>> union = FeatureUnion([("pca", PCA()),  \
-                              ("svd", TruncatedSVD())])
+    >>> union = FeatureUnion([("pca", PCA()),
+    ...                       ("svd", TruncatedSVD())])
     >>> X = [[0., 1., 3], [2., 2., 5]]
     >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    array([[-1.5       ,  0.        ,  3.0..., -0.8...],
-           [ 1.5       ,  0.        ,  5.7...,  0.4...]])
+    array([[ 1.5       ,  0.        ,  3.0...,  0.8...],
+           [-1.5       ,  0.        ,  5.7..., -0.4...]])
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = tosequence(transformer_list)
@@ -844,6 +844,11 @@ def make_union(*transformers, **kwargs):
     return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs)
 
 
+_ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
+                     "Try to specify the column selection as a list of one "
+                     "item instead of a scalar.")
+
+
 class ColumnTransformer(FeatureUnion):
     """Applies transformers to columns of an array or pandas DataFrame.
 
@@ -898,6 +903,78 @@ class ColumnTransformer(FeatureUnion):
             (name, None if old is None else next(transformers), column)
             for name, old, column in self.transformer_list
         ]
+
+    def fit(self, X, y=None):
+        """Fit all transformers using X.
+
+        Parameters
+        ----------
+        X : iterable or array-like, depending on transformers
+            Input data, used to fit transformers.
+
+        y : array-like, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        self : FeatureUnion
+            This estimator
+        """
+        try:
+            return super(ColumnTransformer, self).fit(X, y=y)
+        except ValueError as e:
+            if "Got X with X.ndim=1. Reshape your data" in str(e):
+                raise ValueError(_ERR_MSG_1DCOLUMN)
+            else:
+                raise e
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Fit all transformers, transform the data and concatenate results.
+
+        Parameters
+        ----------
+        X : iterable or array-like, depending on transformers
+            Input data to be transformed.
+
+        y : array-like, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        try:
+            return super(ColumnTransformer, self).fit_transform(X, y=y,
+                                                                **fit_params)
+        except ValueError as e:
+            if "Got X with X.ndim=1. Reshape your data" in str(e):
+                raise ValueError(_ERR_MSG_1DCOLUMN)
+            else:
+                raise e
+
+    def transform(self, X):
+        """Transform X separately by each transformer, concatenate results.
+
+        Parameters
+        ----------
+        X : iterable or array-like, depending on transformers
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        try:
+            return super(ColumnTransformer, self).transform(X)
+        except ValueError as e:
+            if "Got X with X.ndim=1. Reshape your data" in str(e):
+                raise ValueError(_ERR_MSG_1DCOLUMN)
+            else:
+                raise e
 
 
 def _get_column(X, key):

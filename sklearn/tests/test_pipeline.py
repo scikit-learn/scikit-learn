@@ -1165,3 +1165,13 @@ def test_column_transformer_sparse_stacking():
     assert_true(sparse.issparse(X_trans))
     assert_equal(X_trans.shape, (X_trans.shape[0], X_trans.shape[0] + 1))
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
+
+
+def test_column_transformer_error_msg_1D():
+    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+
+    col_trans = ColumnTransformer([('trans', StandardScaler(), 0)])
+    assert_raise_message(ValueError, "1D data passed to a transformer",
+                         col_trans.fit, X_array)
+    assert_raise_message(ValueError, "1D data passed to a transformer",
+                         col_trans.fit_transform, X_array)
