@@ -1,5 +1,5 @@
-# Authors: Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
+# Authors: Andreas Mueller < andreas.mueller@columbia.edu>
+#          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause
 
 import numpy as np
@@ -40,13 +40,15 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     Parameters
     ----------
     regressor : object, (default=LinearRegression())
-        Regressor object such as derived from ``RegressorMixin``.
+        Regressor object such as derived from ``RegressorMixin``. This
+        regressor will be cloned during fitting.
 
     transformer : object, (default=None)
         Estimator object such as derived from ``TransformerMixin``. Cannot be
         set at the same time as ``func`` and ``inverse_func``. If ``None`` and
         ``func`` and ``inverse_func`` are ``None`` as well, the transformer
-        will be an identity transformer.
+        will be an identity transformer. The transformer will be cloned during
+        fitting.
 
     func : function, optional
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
@@ -100,15 +102,13 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     array([ 2.])
 
     """
-    def __init__(self, regressor=LinearRegression(), transformer=None,
+    def __init__(self, regressor=None, transformer=None,
                  func=None, inverse_func=None, check_inverse=True):
         self.regressor = regressor
         self.transformer = transformer
         self.func = func
         self.inverse_func = inverse_func
         self.check_inverse = check_inverse
-        # we probably need to change this ones we have tags
-        self._estimator_type = regressor._estimator_type
 
     def _fit_transformer(self, y, sample_weight):
         if (self.transformer is not None and
@@ -126,15 +126,18 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             self.transformer_.fit(y)
         if self.check_inverse:
-            n_subsample = min(1000, y.shape[0])
+            n_subsample = min(10, y.shape[0])
             subsample_idx = np.random.choice(range(y.shape[0]),
                                              size=n_subsample, replace=False)
             if not np.allclose(
                     y[subsample_idx],
                     self.transformer_.inverse_transform(
-                        self.transformer_.transform(y[subsample_idx]))):
+                        self.transformer_.transform(y[subsample_idx])),
+                    atol=1e-4):
                 raise ValueError("The provided functions or transformer are"
-                                 " not strictly inverse of each other.")
+                                 " not strictly inverse of each other. If"
+                                 " you are sure you want to proceed regardless"
+                                 ", set 'check_inverse=False'")
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -146,7 +149,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            Target vector relative to X.
+            Target values.
 
         sample_weight : array-like, shape (n_samples,) optional
             Array of weights that are assigned to individual samples.
@@ -158,14 +161,16 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
         y = check_array(y, ensure_2d=False)
-        # memorize if y should be a multi-output
         self.y_ndim_ = y.ndim
         if y.ndim == 1 and self.func is None:
             y_2d = y.reshape(-1, 1)
         else:
             y_2d = y
         self._fit_transformer(y_2d, sample_weight)
-        self.regressor_ = clone(self.regressor)
+        if self.regressor is None:
+            self.regressor_ = LinearRegression()
+        else:
+            self.regressor_ = clone(self.regressor)
         if sample_weight is not None:
             self.regressor_.fit(X, self.transformer_.fit_transform(y_2d),
                                 sample_weight=sample_weight)
@@ -192,7 +197,6 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self, "regressor_")
         pred = self.transformer_.inverse_transform(self.regressor_.predict(X))
-        # if y is not a multi-output, it should be ravel
         if self.y_ndim_ == 1 and self.func is None:
             return pred.ravel()
         else:
@@ -229,14 +233,5 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         """
 
         check_is_fitted(self, "regressor_")
-        if not is_regressor(self.regressor_):
-            if not hasattr(self.regressor_, "_estimator_type"):
-                err = "regressor has declared no _estimator_type."
-            else:
-                err = "regressor has _estimator_type {}".format(
-                    self.regressor_._estimator_type)
-            raise NotImplementedError("TransformedTargetRegressor should be a"
-                                      " regressor. This " + err)
-        else:
-            return super(TransformedTargetRegressor, self).score(X, y,
-                                                                 sample_weight)
+        return super(TransformedTargetRegressor, self).score(X, y,
+                                                             sample_weight)

@@ -21,7 +21,6 @@ from sklearn.preprocessing.label import MultiLabelBinarizer
 from sklearn.preprocessing.label import LabelEncoder
 from sklearn.preprocessing.label import label_binarize
 
-
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
 

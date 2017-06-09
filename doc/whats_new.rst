@@ -31,9 +31,11 @@ Changelog
 New features
 ............
 
-   - Added the :class:`sklearn.preprocessing.TransformedTargetRegressor` which
-     is a meta-estimator to regress on a modified ``y``. :issue:`9041` by
-     `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
+   - Added the :class:`sklearn.preprocessing.TransformedTargetRegressor` wraps
+     a regressor and applies a transformation to the target before fitting,
+     finally transforming the regressor's predictions back to the original
+     space. :issue:`9041` by `Andreas Müller`_ and
+     :user:`Guillaume Lemaitre <glemaitre>`.
 
    - Validation that input data contains no NaN or inf can now be suppressed
      using :func:`config_context`, at your own risk. This will save on runtime,
