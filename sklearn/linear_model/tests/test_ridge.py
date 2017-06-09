@@ -806,12 +806,41 @@ def test_dtype_match():
         # Check type consistency 32bits
         ridge_32 = Ridge(alpha=alpha, solver=solver)
         ridge_32.fit(X_32, y_32)
-        assert_equal(ridge_32.coef_.dtype, X_32.dtype)
+        coef_32 = ridge_32.coef_
 
         # Check type consistency 64 bits
         ridge_64 = Ridge(alpha=alpha, solver=solver)
         ridge_64.fit(X_64, y_64)
-        assert_equal(ridge_64.coef_.dtype, X_64.dtype)
+        coef_64 = ridge_64.coef_
 
-        # Check accuracy consistency
+        # Do all the checks at once, like this is easier to debug
         assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+
+        # Do the actual checks at once for easier debug
+        assert_equal(coef_32.dtype, X_32.dtype)
+        assert_equal(coef_64.dtype, X_64.dtype)
+
+def test_dtype_match_cholesky():
+    rng = np.random.RandomState(0)
+    alpha = (1.0, 0.5)
+
+    n_samples, n_features, n_target = 6, 7, 2
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples, n_target)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    # Check type consistency 32bits
+    ridge_32 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_32.fit(X_32, y_32)
+    coef_32 = ridge_32.coef_
+
+    # Check type consistency 64 bits
+    ridge_64 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_64.fit(X_64, y_64)
+    coef_64 = ridge_64.coef_
+
+    # Do all the checks at once, like this is easier to debug
+    assert_equal(coef_32.dtype, X_32.dtype)
+    assert_equal(coef_64.dtype, X_64.dtype)
+    assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)

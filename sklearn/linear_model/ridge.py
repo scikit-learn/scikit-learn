@@ -165,7 +165,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        dual_coefs = np.empty([n_targets, n_samples])
+        dual_coefs = np.empty([n_targets, n_samples], K.dtype)
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K.flat[::n_samples + 1] += current_alpha
