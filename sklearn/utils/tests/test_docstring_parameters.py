@@ -30,7 +30,7 @@ public_modules = [
     # 'sklearn.ensemble',
     'sklearn.feature_extraction',
     # 'sklearn.feature_selection',
-    # 'sklearn.gaussian_process',
+    'sklearn.gaussian_process',
     'sklearn.isotonic',
     # 'sklearn.linear_model',
     # 'sklearn.manifold',
