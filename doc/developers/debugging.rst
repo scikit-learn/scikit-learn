@@ -1,11 +1,58 @@
-.. _developers-debugging:
+.. _developers-tips:
 
-==============================
-Developers' Tips for Debugging
-==============================
+===========================
+Developers' Tips and Tricks
+===========================
 
-Memory errors: debugging Cython with valgrind
-=============================================
+Productivity and sanity-preserving tips
+=======================================
+
+In this section we gather some useful advice and tools that may increase your
+quality-of-life when reviewing pull requests, running unit tests, and so forth.
+
+Viewing the rendered HTML documentation for a pull request
+----------------------------------------------------------
+
+We use CircleCI to build the HTML documentation for every pull request. To
+access that documentation, we provide a convenience redirect at
+``http://scikit-learn.org/circle?BUILD``, as well as an automatically-generated
+list of links to the *changed* pages at
+``http://scikit-learn.org/circle?BUILD/_changed.html``, where ``BUILD`` should
+be replaced by the CircleCI build job identifier (not the pull request number).
+
+To avoid typing this link every time, we provide a userscript that adds a
+button to GitHub pull request pages. To set it up, follow these steps:
+
+  1. Install a userscript browser extension such as `TamperMonkey`_ or
+     `GreaseMonkey`_, and make sure it is enabled and running.
+
+  2. Point your browser at the `userscript`_ and follow the on-screen
+     instructions.
+
+  3. Navigate to the page of a GitHub PR, and refresh. A new button labeled "See
+     CircleCI doc for this PR" should appear in the top-right area.
+
+.. _TamperMonkey: https://tampermonkey.net
+.. _GreaseMonkey: http://www.greasespot.net
+.. _userscript: https://gist.github.com/lesteve/470170f288884ec052bcf4bc4ffe958a/raw/4270d0c731c3f1c797df3b014877b76d87b4e6bd/add_button_for_pr_circleci_doc.user.js
+
+Useful pytest aliases and flags
+-------------------------------
+
+We recommend using pytest to run unit tests. When a unit tests fail, the
+following tricks can make debugging easier:
+
+  1. The command line argument ``pytest -l`` instructs pytest to print the local
+     variables when a failure occurs.
+
+  2. The argument ``pytest --pdb`` drops into the Python debugger on failure. To
+     instead drop into the rich IPython debugger ``ipdb``, you may set up a
+     shell alias to::
+
+         pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+
+Debugging memory errors in Cython with valgrind
+===============================================
 
 While python/numpy's built-in memory management is relatively robust, it can
 lead to performance penalties for some routines. For this reason, much of
