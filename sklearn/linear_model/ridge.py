@@ -330,7 +330,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     else:
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=_dtype)
-        y = check_array(y, dtype='numeric', ensure_2d=False)
+        y = check_array(y, dtype=X.dtype, ensure_2d=False)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
