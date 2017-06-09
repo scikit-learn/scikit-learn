@@ -1,21 +1,14 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#
-# License: BSD 3 clause
-
-cimport cython
-from libc.limits cimport INT_MAX
-cimport numpy as np
-import numpy as np
-
-np.import_array()
-
-#------------------------------------------------------------------------------
-
 {{py:
+
+"""
+    Template file for easily generate fused types consistent code using Tempita
+    (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
+
+    Generated file: seq_dataset.pyx
+
+    Each class is duplicated for all dtypes (float and double). The keywords
+    between double braces are substituted in setup.py.
+"""
 
 # name, c_type, np_type
 dtypes = [('', 'double', 'np.float64'),
@@ -28,6 +21,28 @@ def get_dispatch(dtypes):
 }}
 
 {{for name, c_type, np_type in get_dispatch(dtypes)}}
+
+#------------------------------------------------------------------------------
+
+"""
+    Dataset abstractions for sequential data access.
+    WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
+"""
+
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+#
+# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#             Arthur Imbert <arthurimbert05@gmail.com>
+# License: BSD 3 clause
+
+cimport cython
+from libc.limits cimport INT_MAX
+cimport numpy as np
+import numpy as np
+
+np.import_array()
 
 
 cdef class SequentialDataset{{name}}:

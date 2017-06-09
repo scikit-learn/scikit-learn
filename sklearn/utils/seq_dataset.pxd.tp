@@ -1,13 +1,14 @@
-"""Dataset abstractions for sequential data access. """
-
-cimport numpy as np
-
-# SequentialDataset and its two concrete subclasses are (optionally randomized)
-# iterators over the rows of a matrix X and corresponding target values y.
-
-#------------------------------------------------------------------------------
-
 {{py:
+
+"""
+    Template file for easily generate fused types consistent code using Tempita
+    (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
+
+    Generated file: seq_dataset.pxd
+
+    Each class is duplicated for all dtypes (float and double). The keywords
+    between double braces are substituted in setup.py.
+"""
 
 # name, c_type
 dtypes = [('', 'double'),
@@ -20,6 +21,19 @@ def get_dispatch(dtypes):
 }}
 
 {{for name, c_type in get_dispatch(dtypes)}}
+
+#------------------------------------------------------------------------------
+
+"""
+    Dataset abstractions for sequential data access.
+    WARNING: Do not edit .pxd file directly, it is generated from .pxd.tp
+"""
+
+cimport numpy as np
+
+# SequentialDataset and its two concrete subclasses are (optionally randomized)
+# iterators over the rows of a matrix X and corresponding target values y.
+
 
 cdef class SequentialDataset{{name}}:
     cdef int current_index
