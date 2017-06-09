@@ -7,7 +7,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn import datasets
-from sklearn.neighbors import LargeMarginNearestNeighbor as LMNN
+from sklearn.neighbors import LargeMarginNearestNeighbor, KNeighborsClassifier
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -28,14 +28,19 @@ def test_neighbors_iris():
     # Puts three points of each label in the plane and performs a
     # nearest neighbor query on points near the decision boundary.
 
-    clf = LMNN(n_neighbors=1)
-    clf.fit(iris.data, iris.target)
-    assert_array_equal(clf.predict(iris.data), iris.target)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=1)
+    lmnn.fit(iris.data, iris.target)
+    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    knn.fit(lmnn.transform(iris.data), iris.target)
+    y_pred = knn.predict(lmnn.transform(iris.data))
 
-    clf.set_params(n_neighbors=9)
-    clf.fit(iris.data, iris.target)
+    assert_array_equal(y_pred, iris.target)
 
-    assert_true(clf.score(iris.data, iris.target) > 0.95)
+    lmnn.set_params(n_neighbors=9)
+    lmnn.fit(iris.data, iris.target)
+    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+
+    assert_true(knn.score(lmnn.transform(iris.data), iris.target) > 0.95)
 
 
 def test_neighbors_digits():
@@ -51,45 +56,51 @@ def test_neighbors_digits():
     test = np.arange(train_test_boundary, n_samples)
     X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
-    clf = LMNN(n_neighbors=1, max_iter=30)
-    score_uint8 = clf.fit(X_train, y_train).score(X_test, y_test)
-    score_float = clf.fit(X_train.astype(float), y_train).score(
-        X_test.astype(float), y_test)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, max_iter=30)
+    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    knn.fit(lmnn.transform(X_train), y_train)
+    score_uint8 = knn.score(lmnn.transform(X_test), y_test)
+
+    knn.fit(lmnn.transform(X_train.astype(float)), y_train)
+    score_float = knn.score(lmnn.transform(X_test.astype(float)), y_test)
+
     assert_equal(score_uint8, score_float)
 
 
-def test_params_errors():
+def test_params_validation():
     # Test that invalid parameters raise value error
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
-    clf = LMNN
+    LMNN = LargeMarginNearestNeighbor
 
     # TypeError
-    assert_raises(TypeError, clf(n_neighbors=1.3).fit, X, y)
-    assert_raises(TypeError, clf(max_iter='21').fit, X, y)
-    assert_raises(TypeError, clf(verbose='true').fit, X, y)
-    assert_raises(TypeError, clf(max_constraints=23.1).fit, X, y)
-    assert_raises(TypeError, clf(max_corrections=1e3).fit, X, y)
-    assert_raises(TypeError, clf(tol=1).fit, X, y)
-    assert_raises(TypeError, clf(n_features_out='invalid').fit, X, y)
-    assert_raises(TypeError, clf(use_pca=1).fit, X, y)
-    assert_raises(TypeError, clf(n_jobs='yes').fit, X, y)
-    assert_raises(TypeError, clf(warm_start=1).fit, X, y)
-    assert_raises(TypeError, clf(use_sparse=0.5).fit, X, y)
+    assert_raises(TypeError, LMNN(n_neighbors=1.3).fit, X, y)
+    assert_raises(TypeError, LMNN(max_iter='21').fit, X, y)
+    assert_raises(TypeError, LMNN(verbose='true').fit, X, y)
+    assert_raises(TypeError, LMNN(max_constraints=23.1).fit, X, y)
+    assert_raises(TypeError, LMNN(max_corrections=1e3).fit, X, y)
+    assert_raises(TypeError, LMNN(tol=1).fit, X, y)
+    assert_raises(TypeError, LMNN(n_features_out='invalid').fit, X, y)
+    assert_raises(TypeError, LMNN(use_pca=1).fit, X, y)
+    assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
+    assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
+    assert_raises(TypeError, LMNN(use_sparse=0.5).fit, X, y)
 
     # ValueError
-    assert_raises(ValueError, clf(n_neighbors=-1).fit, X, y)
-    assert_raises(ValueError, clf(n_neighbors=len(X)).fit, X, y)
-    assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
-    assert_raises(ValueError, clf(max_constraints=-1).fit, X, y)
-    assert_raises(ValueError, clf(max_corrections=-1).fit, X, y)
-    assert_raises(ValueError, clf(L=np.random.rand(5, 3)).fit, X, y)
-    assert_raises(ValueError, clf(n_features_out=10).fit, X, y)
-    assert_raises(ValueError, clf(n_jobs=-2).fit, X, y)
+    assert_raises(ValueError, LMNN(n_neighbors=-1).fit, X, y)
+    assert_raises(ValueError, LMNN(n_neighbors=len(X)).fit, X, y)
+    assert_raises(ValueError, LMNN(max_iter=-1).fit, X, y)
+    assert_raises(ValueError, LMNN(max_constraints=-1).fit, X, y)
+    assert_raises(ValueError, LMNN(max_corrections=-1).fit, X, y)
+
+    fit_func = LMNN(init_transformation=np.random.rand(5, 3)).fit
+    assert_raises(ValueError, fit_func, X, y)
+    assert_raises(ValueError, LMNN(n_features_out=10).fit, X, y)
+    assert_raises(ValueError, LMNN(n_jobs=-2).fit, X, y)
 
     # test min_class_size < 2
     y = [1, 1, 1, 2]
-    assert_raises(ValueError, clf(n_neighbors=1).fit, X, y)
+    assert_raises(ValueError, LMNN(n_neighbors=1).fit, X, y)
 
 
 def test_same_lmnn_parallel():
@@ -97,50 +108,50 @@ def test_same_lmnn_parallel():
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    clf = LMNN(n_neighbors=3)
-    clf.fit(X_train, y_train)
-    y = clf.predict(X_test)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3)
+    lmnn.fit(X_train, y_train)
+    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    knn.fit(lmnn.transform(X_train), y_train)
+    y = knn.predict(lmnn.transform(X_test))
 
-    clf.set_params(n_jobs=3)
-    clf.fit(X_train, y_train)
-    y_parallel = clf.predict(X_test)
+    lmnn.set_params(n_jobs=3)
+    lmnn.fit(X_train, y_train)
+    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    knn.fit(lmnn.transform(X_train), y_train)
+    y_parallel = knn.predict(lmnn.transform(X_test))
 
     assert_array_equal(y, y_parallel)
 
 
-# def test_dtype_convert():
-#     classifier = LMNN(n_neighbors=1)
-#     CLASSES = 15
-#     X = np.eye(CLASSES)
-#     y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
-#
-#     result = classifier.fit(X, y).predict(X)
-#     assert_array_equal(result, y)
-
-
-def test_L():
+def test_transformation_dimensions():
 
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    L = [[1, 2], [3, 4]]  # len(L[0]) != len(X[0])
-    assert_raises(ValueError, LMNN(L=L, n_neighbors=1).fit, X, y)
+    # Fail if transformation input dimension does not match inputs dimensions
+    transformation = [[1, 2], [3, 4]]  # len(transformation[0]) != len(X[0])
+    assert_raises(ValueError, LargeMarginNearestNeighbor(
+        init_transformation=transformation, n_neighbors=1).fit, X, y)
 
-    L = [[1, 2], [3, 4], [5, 6]]  # len(L) > len(L[0])
-    assert_raises(ValueError, LMNN(L=L, n_neighbors=1).fit, X, y)
+    # Fail if transformation output dimension is larger than
+    # transformation input dimension
+    transformation = [[1, 2], [3, 4], [5, 6]]
+    # len(transformation) > len(transformation[0])
+    assert_raises(ValueError, LargeMarginNearestNeighbor(
+        init_transformation=transformation, n_neighbors=1).fit, X, y)
 
-    L = np.arange(9).reshape(3, 3)
-    LMNN(L=L, n_neighbors=1).fit(X, y)
+    # Pass otherwise
+    transformation = np.arange(9).reshape(3, 3)
+    LargeMarginNearestNeighbor(init_transformation=transformation,
+                               n_neighbors=1).fit(X, y)
 
 
 def test_n_neighbors():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    clf = LMNN(n_neighbors=2)
-    assert_warns(UserWarning, clf.fit, X, y)
-
-    # TODO: Test if KNeighbors superclass predicts with reduced n_neighbors
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=2)
+    assert_warns(UserWarning, lmnn.fit, X, y)
 
 
 def test_n_features_out():
@@ -148,17 +159,21 @@ def test_n_features_out():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    L = [[1, 2, 3], [4, 5, 6]]  # len(L) != n_features_out
-    clf = LMNN(L=L, n_neighbors=1, n_features_out=5)
-    assert_raises(ValueError, clf.fit, X, y)
+    transformation = [[1, 2, 3], [4, 5, 6]]
+    # len(transformation) != n_features_out
+    lmnn = LargeMarginNearestNeighbor(init_transformation=transformation,
+                                      n_neighbors=1, n_features_out=5)
+    assert_raises(ValueError, lmnn.fit, X, y)
 
     # n_features_out > len(X[0])
-    clf = LMNN(L=L, n_neighbors=1, n_features_out=5)
-    assert_raises(ValueError, clf.fit, X, y)
+    lmnn = LargeMarginNearestNeighbor(init_transformation=transformation,
+                                      n_neighbors=1, n_features_out=5)
+    assert_raises(ValueError, lmnn.fit, X, y)
 
-    # n_features_out < len(L) = np.eye(len(X[0])).shape[0]
-    clf = LMNN(n_neighbors=1, n_features_out=2, use_pca=False)
-    clf.fit(X, y)
+    # n_features_out < len(transformation) = np.eye(len(X[0])).shape[0]
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, n_features_out=2,
+                                      use_pca=False)
+    lmnn.fit(X, y)
 
 
 def test_use_pca():
@@ -166,23 +181,25 @@ def test_use_pca():
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    clf = LMNN(n_neighbors=3, use_pca=False)
-    clf.fit(X_train, y_train)
-    n_iter_no_pca = clf.n_iter_
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_pca=False)
+    lmnn.fit(X_train, y_train)
+    n_iter_no_pca = lmnn.n_iter_
 
-    clf = LMNN(n_neighbors=3, use_pca=True)
-    clf.fit(X_train, y_train)
-    n_iter_pca = clf.n_iter_
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_pca=True)
+    lmnn.fit(X_train, y_train)
+    n_iter_pca = lmnn.n_iter_
 
     assert_true(n_iter_pca <= n_iter_no_pca)
 
 
 def test_max_constraints():
-    clf = LMNN(n_neighbors=3, max_constraints=1, use_sparse=True)
-    clf.fit(iris.data, iris.target)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=1,
+                                      use_sparse=True)
+    lmnn.fit(iris.data, iris.target)
 
-    clf = LMNN(n_neighbors=3, max_constraints=1, use_sparse=False)
-    clf.fit(iris.data, iris.target)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=1,
+                                      use_sparse=False)
+    lmnn.fit(iris.data, iris.target)
 
 
 def test_use_sparse():
@@ -194,13 +211,14 @@ def test_use_sparse():
     test = np.arange(train_test_boundary, n_samples)
     X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
-    clf = LMNN(n_neighbors=3, use_sparse=False)
-    clf.fit(X_train, y_train)
-    acc_sparse = clf.score(X_test, y_test)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_sparse=False)
+    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
+    acc_sparse = knn.score(lmnn.transform(X_test), y_test)
 
-    clf = LMNN(n_neighbors=3, use_sparse=True)
-    clf.fit(X_train, y_train)
-    acc_dense = clf.score(X_test, y_test)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_sparse=True)
+    knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
+    acc_dense = knn.score(lmnn.transform(X_test), y_test)
 
     err_msg = 'Toggling use_sparse results in different accuracy.'
     assert_equal(acc_dense, acc_sparse, msg=err_msg)
@@ -215,22 +233,26 @@ def test_warm_start():
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     n_iter = 10
 
-    clf_warm = LMNN(n_neighbors=3, warm_start=True, max_iter=n_iter,
-                    random_state=0).fit(X_train, y_train)
-    L_warm = clf_warm.L_
-    clf_warm.max_iter = 1
-    clf_warm.fit(X_train, y_train)
-    L_warm_plus_one = clf_warm.L_
+    lmnn_warm = LargeMarginNearestNeighbor(n_neighbors=3, warm_start=True,
+                                           max_iter=n_iter, random_state=0)
+    lmnn_warm.fit(X_train, y_train)
+    transformation_warm = lmnn_warm.transformation_
+    lmnn_warm.max_iter = 1
+    lmnn_warm.fit(X_train, y_train)
+    transformation_warm_plus_one = lmnn_warm.transformation_
 
-    clf_cold = LMNN(n_neighbors=3, warm_start=False, max_iter=n_iter,
-                    random_state=0).fit(X_train, y_train)
-    L_cold = clf_cold.L_
-    clf_cold.max_iter = 1
-    clf_cold.fit(X_train, y_train)
-    L_cold_plus_one = clf_cold.L_
+    lmnn_cold = LargeMarginNearestNeighbor(n_neighbors=3, warm_start=False,
+                                           max_iter=n_iter, random_state=0)
+    lmnn_cold.fit(X_train, y_train)
+    transformation_cold = lmnn_cold.transformation_
+    lmnn_cold.max_iter = 1
+    lmnn_cold.fit(X_train, y_train)
+    transformation_cold_plus_one = lmnn_cold.transformation_
 
-    diff_warm = np.sum(np.abs(L_warm_plus_one - L_warm))
-    diff_cold = np.sum(np.abs(L_cold_plus_one - L_cold))
+    diff_warm = np.sum(np.abs(transformation_warm_plus_one
+                              - transformation_warm))
+    diff_cold = np.sum(np.abs(transformation_cold_plus_one
+                              - transformation_cold))
 
     err_msg = "Transformer changed significantly after one iteration even " \
               "though it was warm-started."
@@ -247,12 +269,13 @@ def test_warm_start_diff_classes():
     X, y = make_cla(n_samples=30, n_features=3, n_classes=3, n_redundant=0,
                     n_informative=3, random_state=0)
 
-    clf = LMNN(n_neighbors=1, warm_start=True, max_iter=5)
-    clf.fit(X, y)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, warm_start=True,
+                                      max_iter=5)
+    lmnn.fit(X, y)
 
     X, y_less_classes = make_cla(n_samples=30, n_features=3, n_classes=2,
                                  n_redundant=0, random_state=0)
-    assert_raises(ValueError, clf.fit, X, y_less_classes)
+    assert_raises(ValueError, lmnn.fit, X, y_less_classes)
 
 
 def test_warm_start_diff_inputs():
@@ -260,18 +283,19 @@ def test_warm_start_diff_inputs():
     X, y = make_cla(n_samples=30, n_features=5, n_classes=4, n_redundant=0,
                     n_informative=5, random_state=0)
 
-    clf = LMNN(n_neighbors=1, warm_start=True, max_iter=5)
-    clf.fit(X, y)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, warm_start=True,
+                                      max_iter=5)
+    lmnn.fit(X, y)
 
     X_less_features, y = make_cla(n_samples=30, n_features=4, n_classes=4,
                                   n_redundant=0, n_informative=4,
                                   random_state=0)
-    assert_raises(ValueError, clf.fit, X_less_features, y)
+    assert_raises(ValueError, lmnn.fit, X_less_features, y)
 
 
 def test_verbose():
-    clf = LMNN(n_neighbors=3, verbose=1)
-    clf.fit(iris.data, iris.target)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, verbose=1)
+    lmnn.fit(iris.data, iris.target)
 
 
 def test_random_state():
@@ -283,21 +307,24 @@ def test_random_state():
     y = iris.target
     n_constr = 5
 
-    clf = LMNN(n_neighbors=3, max_constraints=n_constr, random_state=1)
-    clf.fit(X, y)
-    L_1 = clf.L_
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=n_constr,
+                                      random_state=1)
+    lmnn.fit(X, y)
+    transformation_1 = lmnn.transformation_
 
-    clf = LMNN(n_neighbors=3, max_constraints=n_constr, random_state=1)
-    clf.fit(X, y)
-    L_2 = clf.L_
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=n_constr,
+                                      random_state=1)
+    lmnn.fit(X, y)
+    transformation_2 = lmnn.transformation_
 
-    assert_array_equal(L_1, L_2)
+    assert_array_equal(transformation_1, transformation_2)
 
-    clf = LMNN(n_neighbors=3, max_constraints=n_constr, random_state=2)
-    clf.fit(X, y)
-    L_3 = clf.L_
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=n_constr,
+                                      random_state=2)
+    lmnn.fit(X, y)
+    transformation_3 = lmnn.transformation_
 
-    abs_diff = np.abs(L_2 - L_3).sum()
+    abs_diff = np.abs(transformation_2 - transformation_3).sum()
     assert_true(abs_diff > 0.2)
 
 
@@ -312,9 +339,8 @@ def test_singleton_class():
     y_tr[ind_singleton] = 2
     y_tr[ind_singleton[0]] = singleton_class
 
-    clf = LMNN(n_neighbors=3, max_iter=30)
-    clf.fit(X_tr, y_tr)
-    clf.score(X_te, y_te)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=30)
+    lmnn.fit(X_tr, y_tr)
 
     # One non-singleton class
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
@@ -325,8 +351,8 @@ def test_singleton_class():
     y_tr[ind_2] = 0
     y_tr[ind_2[0]] = 2
 
-    clf = LMNN(n_neighbors=3, max_iter=30)
-    assert_raises(ValueError, clf.fit, X_tr, y_tr)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=30)
+    assert_raises(ValueError, lmnn.fit, X_tr, y_tr)
 
 
 def test_callable():
@@ -334,17 +360,18 @@ def test_callable():
     y = iris.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    clf = LMNN(n_neighbors=3, callback='my_cb')
-    assert_raises(ValueError, clf.fit, X_train, y_train)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback='my_cb')
+    assert_raises(ValueError, lmnn.fit, X_train, y_train)
 
     max_iter = 10
 
-    def my_cb(L, n_iter):
+    def my_cb(transformation, n_iter):
         rem_iter = max_iter - n_iter
         print('{} iterations remaining...'.format(rem_iter))
 
-    clf = LMNN(n_neighbors=3, callback=my_cb, max_iter=max_iter, verbose=1)
-    clf.fit(X_train, y_train)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback=my_cb,
+                                      max_iter=max_iter, verbose=1)
+    lmnn.fit(X_train, y_train)
 
 
 def test_terminate_early():
@@ -352,5 +379,5 @@ def test_terminate_early():
     y = iris.target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    clf = LMNN(n_neighbors=3, max_iter=5)
-    clf.fit(X_train, y_train)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=5)
+    lmnn.fit(X_train, y_train)
