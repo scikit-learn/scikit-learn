@@ -380,7 +380,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
+        if loss in ['hinge']:
+            _dtype = [np.float64, np.float32]
+        else:
+            _dtype = np.float64
+
+        X, y = check_X_y(X, y, 'csr', dtype=_dtype, order="C")
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
