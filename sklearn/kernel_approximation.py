@@ -88,7 +88,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
                                                    size=self.n_components)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply the approximate feature map to X.
 
         Parameters
@@ -178,7 +178,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
                                                    size=self.n_components)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply the approximate feature map to X.
 
         Parameters
@@ -278,7 +278,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             self.sample_interval_ = self.sample_interval
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply approximate feature map to X.
 
         Parameters

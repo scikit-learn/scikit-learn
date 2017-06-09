@@ -105,7 +105,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         """
         return self._transform(X, y, self.func, self.kw_args)
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X):
         """Transform X using the inverse function.
 
         Parameters

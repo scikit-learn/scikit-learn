@@ -820,8 +820,15 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.y_weights_ = V
         return self
 
-    def transform(self, X, Y=None):
-        """Apply the dimension reduction learned on the train data."""
+    def transform(self, X):
+        """Apply the dimension reduction learned on the train data.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+        """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_

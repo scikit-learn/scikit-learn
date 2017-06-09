@@ -751,7 +751,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         self.scale_ = _handle_zeros_in_scale(max_abs)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Scale the data
 
         Parameters
@@ -954,7 +954,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Center and scale the data
 
         Parameters
@@ -1193,7 +1193,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         self.n_output_features_ = sum(1 for _ in combinations)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform data to polynomial features
 
         Parameters
