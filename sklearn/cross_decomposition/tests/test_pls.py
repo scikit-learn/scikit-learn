@@ -6,6 +6,7 @@ from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
                                    assert_raise_message)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
+from sklearn.preprocessing import StandardScaler
 
 
 def test_pls():
@@ -375,12 +376,12 @@ def test_pls_scaling():
 
     Q = rng.randn(n_targets, n_features)
     Y = rng.randn(n_samples, n_targets)
-    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features)
-
-    scale = 1000.
-    X_scaled = scale * X
+    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
+    X *= 1000
+    X_scaled = StandardScaler().fit_transform(X)
 
     pls = pls_.PLSRegression(n_components=5, scale=True)
+
     pls.fit(X, Y)
     score = pls.score(X, Y)
 
