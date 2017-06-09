@@ -62,6 +62,13 @@ New features
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
 
+   - Added :class:`preprocessing.QuantileTransformer` class and
+     :func:`preprocessing.quantile_transform` function for features
+     normalization based on quantiles.
+     :issue:`8363` by :user:`Denis Engemann <dengemann>`,
+     :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
+     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
+
 Enhancements
 ............
 
@@ -172,7 +179,7 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
      Victor Poughon.
 
-   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict`` 
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
      is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
 
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
@@ -331,7 +338,7 @@ Bug fixes
      both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
      ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
 
-   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return 
+   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
