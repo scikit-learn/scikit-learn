@@ -320,6 +320,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                           "automatically changed into 'sag'.")
         solver = 'sag'
 
+    _dtype = [np.float64, np.float32]
+
     # SAG needs X and y columns to be C-contiguous and np.float64
     if solver in ['sag', 'saga']:
         X = check_array(X, accept_sparse=['csr'],
@@ -327,7 +329,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
     else:
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=np.float64)
+                        dtype=_dtype)
         y = check_array(y, dtype='numeric', ensure_2d=False)
     check_consistent_length(X, y)
 
