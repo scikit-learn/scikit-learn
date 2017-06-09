@@ -54,7 +54,7 @@ def number_normalizer(tokens):
 
 class NumberNormalizingVectorizer(TfidfVectorizer):
     def build_tokenizer(self):
-        base = TfidfVectorizer.build_tokenizer(self)
+        base = super(NumberNormalizingVectorizer, self).build_tokenizer()
         return lambda doc: list(number_normalizer(base(doc)))
 
 
