@@ -22,14 +22,12 @@ from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.fixes import astype
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
@@ -915,7 +913,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X = self._check_fit_data(X)
         return self.fit(X)._transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform X to a cluster-distance space.
 
         In the new space, each dimension is the distance to the cluster
@@ -1062,16 +1060,15 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with uniform probability
-            new_centers = choice(X.shape[0], replace=False, size=n_reassigns,
-                                 random_state=random_state)
+            new_centers = random_state.choice(X.shape[0], replace=False,
+                                              size=n_reassigns)
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
-                assign_rows_csr(X,
-                                astype(new_centers, np.intp),
-                                astype(np.where(to_reassign)[0], np.intp),
+                assign_rows_csr(X, new_centers.astype(np.intp),
+                                np.where(to_reassign)[0].astype(np.intp),
                                 centers)
             else:
                 centers[to_reassign] = X[new_centers]

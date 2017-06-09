@@ -29,9 +29,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
-from ..utils.fixes import bincount
 from ..utils.fixes import signature
-from ..utils.random import choice
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
@@ -577,7 +575,7 @@ class StratifiedKFold(_BaseKFold):
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
-        y_counts = bincount(y_inversed)
+        y_counts = np.bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
             raise ValueError("All the n_groups for individual classes"
@@ -675,6 +673,9 @@ class TimeSeriesSplit(_BaseKFold):
     n_splits : int, default=3
         Number of splits. Must be at least 1.
 
+    max_train_size : int, optional
+        Maximum size for a single training set.
+
     Examples
     --------
     >>> from sklearn.model_selection import TimeSeriesSplit
@@ -682,7 +683,7 @@ class TimeSeriesSplit(_BaseKFold):
     >>> y = np.array([1, 2, 3, 4])
     >>> tscv = TimeSeriesSplit(n_splits=3)
     >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-    TimeSeriesSplit(n_splits=3)
+    TimeSeriesSplit(max_train_size=None, n_splits=3)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -698,10 +699,11 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=3):
+    def __init__(self, n_splits=3, max_train_size=None):
         super(TimeSeriesSplit, self).__init__(n_splits,
                                               shuffle=False,
                                               random_state=None)
+        self.max_train_size = max_train_size
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -740,8 +742,12 @@ class TimeSeriesSplit(_BaseKFold):
         test_starts = range(test_size + n_samples % n_folds,
                             n_samples, test_size)
         for test_start in test_starts:
-            yield (indices[:test_start],
-                   indices[test_start:test_start + test_size])
+            if self.max_train_size and self.max_train_size < test_start:
+                yield (indices[test_start - self.max_train_size:test_start],
+                       indices[test_start:test_start + test_size])
+            else:
+                yield (indices[:test_start],
+                       indices[test_start:test_start + test_size])
 
 
 class LeaveOneGroupOut(BaseCrossValidator):
@@ -1377,6 +1383,7 @@ def _approximate_mode(class_counts, n_draws, rng):
     ...                   n_draws=2, rng=42)
     array([1, 1, 0, 0])
     """
+    rng = check_random_state(rng)
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
     continuous = n_draws * class_counts / class_counts.sum()
@@ -1397,7 +1404,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             # if we need to add more, we add them all and
             # go to the next value
             add_now = min(len(inds), need_to_add)
-            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            inds = rng.choice(inds, size=add_now, replace=False)
             floored[inds] += 1
             need_to_add -= add_now
             if need_to_add == 0:
@@ -1443,7 +1450,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-
     Examples
     --------
     >>> from sklearn.model_selection import StratifiedShuffleSplit
@@ -1476,7 +1482,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
 
-        class_counts = bincount(y_indices)
+        class_counts = np.bincount(y_indices)
         if np.min(class_counts) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
@@ -1853,6 +1859,10 @@ def train_test_split(*arrays, **options):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    shuffle : boolean, optional (default=True)
+        Whether or not to shuffle the data before splitting. If shuffle=False
+        then stratify must be None.
+
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
         the class labels.
@@ -1896,6 +1906,9 @@ def train_test_split(*arrays, **options):
     >>> y_test
     [1, 4]
 
+    >>> train_test_split(y, shuffle=False)
+    [[0, 1, 2], [3, 4]]
+
     """
     n_arrays = len(arrays)
     if n_arrays == 0:
@@ -1904,6 +1917,7 @@ def train_test_split(*arrays, **options):
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     stratify = options.pop('stratify', None)
+    shuffle = options.pop('shuffle', True)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
@@ -1913,21 +1927,37 @@ def train_test_split(*arrays, **options):
 
     arrays = indexable(*arrays)
 
-    if stratify is not None:
-        CVClass = StratifiedShuffleSplit
+    if shuffle is False:
+        if stratify is not None:
+            raise ValueError(
+                "Stratified train/test split is not implemented for "
+                "shuffle=False")
+
+        n_samples = _num_samples(arrays[0])
+        n_train, n_test = _validate_shuffle_split(n_samples, test_size,
+                                                  train_size)
+
+        train = np.arange(n_train)
+        test = np.arange(n_train, n_train + n_test)
+
     else:
-        CVClass = ShuffleSplit
+        if stratify is not None:
+            CVClass = StratifiedShuffleSplit
+        else:
+            CVClass = ShuffleSplit
 
-    cv = CVClass(test_size=test_size,
-                 train_size=train_size,
-                 random_state=random_state)
+        cv = CVClass(test_size=test_size,
+                     train_size=train_size,
+                     random_state=random_state)
 
-    train, test = next(cv.split(X=arrays[0], y=stratify))
+        train, test = next(cv.split(X=arrays[0], y=stratify))
+
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests
+
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params

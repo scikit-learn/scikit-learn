@@ -11,7 +11,6 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.fixes import in1d
 from sklearn.utils.fixes import sp_version
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
@@ -1015,7 +1014,7 @@ def test_grid_search_correct_score_results():
         expected_keys = (("mean_test_score", "rank_test_score") +
                          tuple("split%d_test_score" % cv_i
                                for cv_i in range(n_splits)))
-        assert_true(all(in1d(expected_keys, result_keys)))
+        assert_true(all(np.in1d(expected_keys, result_keys)))
 
         cv = StratifiedKFold(n_splits=n_splits)
         n_splits = grid_search.n_splits_

@@ -62,6 +62,7 @@ def test_multi_target_regression_partial_fit():
 
     y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
+    assert_false(hasattr(MultiOutputRegressor(Lasso), 'partial_fit'))
 
 
 def test_multi_target_regression_one_target():

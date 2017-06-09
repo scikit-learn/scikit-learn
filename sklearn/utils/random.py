@@ -4,18 +4,20 @@
 from __future__ import division
 import numpy as np
 import scipy.sparse as sp
-import operator
 import array
 
 from sklearn.utils import check_random_state
-from sklearn.utils.fixes import astype
 from ._random import sample_without_replacement
+from .deprecation import deprecated
 
 __all__ = ['sample_without_replacement', 'choice']
 
 
 # This is a backport of np.random.choice from numpy 1.7
 # The function can be removed when we bump the requirements to >=1.7
+@deprecated("sklearn.utils.random.choice was deprecated in version 0.19"
+            "and will be removed in 0.21. Use np.random.choice or"
+            "np.random.RandomState.choice instead.")
 def choice(a, size=None, replace=True, p=None, random_state=None):
     """
     choice(a, size=None, replace=True, p=None)
@@ -104,102 +106,11 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
     dtype='|S11')
 
     """
-    random_state = check_random_state(random_state)
-
-    # Format and Verify input
-    a = np.array(a, copy=False)
-    if a.ndim == 0:
-        try:
-            # __index__ must return an integer by python rules.
-            pop_size = operator.index(a.item())
-        except TypeError:
-            raise ValueError("a must be 1-dimensional or an integer")
-        if pop_size <= 0:
-            raise ValueError("a must be greater than 0")
-    elif a.ndim != 1:
-        raise ValueError("a must be 1-dimensional")
+    if random_state is not None:
+        random_state = check_random_state(random_state)
+        return random_state.choice(a, size, replace, p)
     else:
-        pop_size = a.shape[0]
-        if pop_size is 0:
-            raise ValueError("a must be non-empty")
-
-    if p is not None:
-        p = np.array(p, dtype=np.double, ndmin=1, copy=False)
-        if p.ndim != 1:
-            raise ValueError("p must be 1-dimensional")
-        if p.size != pop_size:
-            raise ValueError("a and p must have same size")
-        if np.any(p < 0):
-            raise ValueError("probabilities are not non-negative")
-        if not np.allclose(p.sum(), 1):
-            raise ValueError("probabilities do not sum to 1")
-
-    shape = size
-    if shape is not None:
-        size = np.prod(shape, dtype=np.intp)
-    else:
-        size = 1
-
-    # Actual sampling
-    if replace:
-        if p is not None:
-            cdf = p.cumsum()
-            cdf /= cdf[-1]
-            uniform_samples = random_state.random_sample(shape)
-            idx = cdf.searchsorted(uniform_samples, side='right')
-            # searchsorted returns a scalar
-            idx = np.array(idx, copy=False)
-        else:
-            idx = random_state.randint(0, pop_size, size=shape)
-    else:
-        if size > pop_size:
-            raise ValueError("Cannot take a larger sample than "
-                             "population when 'replace=False'")
-
-        if p is not None:
-            if np.sum(p > 0) < size:
-                raise ValueError("Fewer non-zero entries in p than size")
-            n_uniq = 0
-            p = p.copy()
-            found = np.zeros(shape, dtype=np.int)
-            flat_found = found.ravel()
-            while n_uniq < size:
-                x = random_state.rand(size - n_uniq)
-                if n_uniq > 0:
-                    p[flat_found[0:n_uniq]] = 0
-                cdf = np.cumsum(p)
-                cdf /= cdf[-1]
-                new = cdf.searchsorted(x, side='right')
-                _, unique_indices = np.unique(new, return_index=True)
-                unique_indices.sort()
-                new = new.take(unique_indices)
-                flat_found[n_uniq:n_uniq + new.size] = new
-                n_uniq += new.size
-            idx = found
-        else:
-            idx = random_state.permutation(pop_size)[:size]
-            if shape is not None:
-                idx.shape = shape
-
-    if shape is None and isinstance(idx, np.ndarray):
-        # In most cases a scalar will have been made an array
-        idx = idx.item(0)
-
-    # Use samples as indices for a if a is array-like
-    if a.ndim == 0:
-        return idx
-
-    if shape is not None and idx.ndim == 0:
-        # If size == () then the user requested a 0-d array as opposed to
-        # a scalar object when size is None. However a[idx] is always a
-        # scalar and not an array. So this makes sure the result is an
-        # array, taking into account that np.array(item) may not work
-        # for object arrays.
-        res = np.empty((), dtype=a.dtype)
-        res[()] = a[idx]
-        return res
-
-    return a[idx]
+        return np.random.choice(a, size, replace, p)
 
 
 def random_choice_csc(n_samples, classes, class_probability=None,
@@ -238,7 +149,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         if classes[j].dtype.kind != 'i':
             raise ValueError("class dtype %s is not supported" %
                              classes[j].dtype)
-        classes[j] = astype(classes[j], np.int64, copy=False)
+        classes[j] = classes[j].astype(np.int64, copy=False)
 
         # use uniform distribution if no class_probability is given
         if class_probability is None:
