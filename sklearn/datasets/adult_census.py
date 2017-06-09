@@ -87,6 +87,12 @@ def fetch_adult_census(data_home=None, download_if_missing=True):
     if not exists(data_home):
         makedirs(data_home)
 
+    feature_names = ["Age", "WorkClass", "Fnlwgt", "Education", "EducationNum",
+                     "MaritalStatus", "Occupation", "Relationship", "Race",
+                     "Sex", "CapitalGain", "CapitalLoss", "hoursPerWeek",
+                     "NativeCountry"]
+    target_name = "Class"
+
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
         if not download_if_missing:
@@ -94,22 +100,13 @@ def fetch_adult_census(data_home=None, download_if_missing=True):
 
         print('downloading Adult census from %s to %s' % (DATA_URL, data_home))
         fileobj = BytesIO(urlopen(DATA_URL).read())
-
-        adult_census = np.loadtxt(fileobj, delimiter=',')
-        # Columns are not in the same order compared to the previous
-        # URL resource on lib.stat.cmu.edu
-        columns_index = range(0, 15)
-        adult_census = adult_census[:, columns_index]
+        adult_census = np.genfromtxt(fileobj, delimiter=',', dtype=None,
+                                     names=feature_names + [target_name])
         joblib.dump(adult_census, filepath, compress=6)
     else:
         adult_census = joblib.load(filepath)
 
-    feature_names = ["Age", "WorkClass", "Fnlwgt", "Education", "EducationNum",
-                     "MaritalStatus", "Occupation", "Relationship", "Race",
-                     "Sex", "CapitalGain", "CapitalLoss", "hoursPerWeek",
-                     "NativeCountry"]
-
-    target, data = adult_census[:, 14], adult_census[:, :14]
+    target, data = adult_census[target_name], adult_census[feature_names]
 
     return Bunch(data=data,
                  target=target,
