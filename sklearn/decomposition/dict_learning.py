@@ -924,6 +924,17 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the object itself
         """
         return self
 
@@ -1129,6 +1140,12 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+    batch_size : int,
+        number of samples in each mini-batch
+
+    n_jobs : int,
+        number of parallel jobs to run
+
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}
         Algorithm used to transform the data.
@@ -1160,17 +1177,11 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs : int,
-        number of parallel jobs to run
-
     dict_init : array of shape (n_components, n_features),
         initial value of the dictionary for warm restart scenarios
 
     verbose :
         degree of verbosity of the printed output
-
-    batch_size : int,
-        number of samples in each mini-batch
 
     shuffle : bool,
         whether to shuffle the samples before forming batches

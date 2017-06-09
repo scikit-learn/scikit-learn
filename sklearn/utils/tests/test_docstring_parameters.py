@@ -26,7 +26,7 @@ public_modules = [
     'sklearn.covariance',
     # 'sklearn.cross_decomposition',
     'sklearn.datasets',
-    # 'sklearn.decomposition',
+    'sklearn.decomposition',
     # 'sklearn.ensemble',
     # 'sklearn.feature_extraction',
     # 'sklearn.feature_selection',
