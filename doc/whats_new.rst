@@ -216,7 +216,7 @@ Bug fixes
      ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
-   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails
+   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails 
      when generating more than 30 features. :issue:`8159` by
      :user:`Herilalaina Rakotoarison <herilalaina>`
 
@@ -282,7 +282,7 @@ Bug fixes
      :class:`sklearn.covariance.EllipticEnvelope`.
      :issue:`8086` by `Andreas Müller`_.
 
-   - Fix output shape and bugs with n_jobs > 1 in 
+   - Fix output shape and bugs with n_jobs > 1 in  
      :class:`sklearn.decomposition.SparseCoder` transform and :func:`sklarn.decomposition.sparse_encode`
      for one-dimensional data and one component.
      This also impacts the output shape of :class:`sklearn.decomposition.DictionaryLearning`.
@@ -328,7 +328,7 @@ Bug fixes
      which would return ``'binary'`` if ``y_true`` and ``y_pred`` were
      both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
      ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
-     
+
    - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
