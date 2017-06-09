@@ -234,7 +234,7 @@ def test_kfold_valueerrors():
     X1 = np.array([[1, 2], [3, 4], [5, 6]])
     X2 = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
     # Check that errors are raised if there is not enough samples
-    assert_raises(ValueError, next, KFold(4).split(X1))
+    (ValueError, next, KFold(4).split(X1))
 
     # Check that a warning is raised if the least populated class has too few
     # members.
@@ -931,6 +931,8 @@ def test_train_test_split_errors():
     assert_raises(TypeError, train_test_split, range(3),
                   some_argument=1.1)
     assert_raises(ValueError, train_test_split, range(3), range(42))
+    assert_raises(ValueError, train_test_split, range(10),
+                  shuffle=False, stratify=True)
 
 
 def test_train_test_split():
@@ -972,6 +974,13 @@ def test_train_test_split():
         assert_equal(len(test) + len(train), len(y))
         # check the 1:1 ratio of ones and twos in the data is preserved
         assert_equal(np.sum(train == 1), np.sum(train == 2))
+
+    # test unshuffled split
+    y = np.arange(10)
+    for test_size in [2, 0.2]:
+        train, test = train_test_split(y, shuffle=False, test_size=test_size)
+        assert_array_equal(test, [8, 9])
+        assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
 
 
 @ignore_warnings
@@ -1287,6 +1296,29 @@ def test_time_series_cv():
     n_splits_actual = len(list(splits))
     assert_equal(n_splits_actual, tscv.get_n_splits())
     assert_equal(n_splits_actual, 2)
+
+
+def _check_time_series_max_train_size(splits, check_splits, max_train_size):
+    for (train, test), (check_train, check_test) in zip(splits, check_splits):
+        assert_array_equal(test, check_test)
+        assert_true(len(check_train) <= max_train_size)
+        suffix_start = max(len(train) - max_train_size, 0)
+        assert_array_equal(check_train, train[suffix_start:])
+
+
+def test_time_series_max_train_size():
+    X = np.zeros((6, 1))
+    splits = TimeSeriesSplit(n_splits=3).split(X)
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=3).split(X)
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=3)
+
+    # Test for the case where the size of a fold is greater than max_train_size
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=2).split(X)
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
+
+    # Test for the case where the size of each fold is less than max_train_size
+    check_splits = TimeSeriesSplit(n_splits=3, max_train_size=5).split(X)
+    _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
 def test_nested_cv():

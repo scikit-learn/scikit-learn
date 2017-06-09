@@ -4,7 +4,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils.testing import assert_raises, assert_true, assert_equal
+from sklearn.utils.testing import (assert_raises, assert_true, assert_equal,
+                                   ignore_warnings)
 
 
 def test_feature_hasher_dicts():
@@ -106,3 +107,46 @@ def test_hasher_zeros():
     # Assert that no zeros are materialized in the output.
     X = FeatureHasher().transform([{'foo': 0}])
     assert_equal(X.data.shape, (0,))
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_hasher_alternate_sign():
+    # the last two tokens produce a hash collision that sums as 0
+    X = [["foo", "bar", "baz", "investigation need", "records"]]
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+                       input_type='string').fit_transform(X)
+    assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
+    # check that we have a collision that produces a 0 count
+    assert_true(len(Xt.data) < len(X[0]))
+    assert_true((Xt.data == 0.).any())
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+                       input_type='string').fit_transform(X)
+    assert_true((Xt.data >= 0).all())   # all counts are positive
+    assert_true((Xt.data == 0.).any())  # we still have a collision
+    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+                       input_type='string').fit_transform(X)
+    assert_true((Xt.data > 0).all())    # strictly positive counts
+    Xt_2 = FeatureHasher(alternate_sign=False, non_negative=False,
+                         input_type='string').fit_transform(X)
+    # With initially positive features, the non_negative option should
+    # have no impact when alternate_sign=False
+    assert_array_equal(Xt.data, Xt_2.data)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_hasher_negative():
+    X = [{"foo": 2, "bar": -4, "baz": -1}.items()]
+    Xt = FeatureHasher(alternate_sign=False, non_negative=False,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
+    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() > 0)
+    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
+    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+                       input_type="pair").fit_transform(X)
+    assert_true(Xt.data.min() > 0)
