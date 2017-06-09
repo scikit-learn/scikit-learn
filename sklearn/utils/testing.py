@@ -772,3 +772,14 @@ class _named_check(object):
 
     def __call__(self, *args, **kwargs):
         return self.check(*args, **kwargs)
+
+
+def slow_test(func):
+    """Skips decorated test unless the SLOW_TESTS environment variable is set"""
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        if not os.environ.get('SLOW_TESTS', False):
+            raise SkipTest("Skipping slow tests")
+        else:
+            return func(*args, **kwargs)
+    return run_test
