@@ -194,12 +194,6 @@ Testing Functions
 - :func:`testing.all_estimators` : returns a list of all estimators in
   scikit-learn to test for consistent behavior and interfaces.
 
-- :func:`testing.slow_test`: decorator that skips the wrapped test unless
-  the ``SLOW_TESTS`` environment variable is set; useful to limit testing time
-  for users, as well as to restrict slow tests to selected continuous
-  integration instances.
-
-
 Multiclass and multilabel utility function
 ==========================================
 

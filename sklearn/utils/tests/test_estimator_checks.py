@@ -6,14 +6,17 @@ from sklearn.externals.six.moves import cPickle as pickle
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
-                                   assert_equal, all_estimators,
-                                   slow_test)
+                                   assert_equal)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+from sklearn.linear_model import LinearRegression, SGDClassifier
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
 
@@ -193,43 +196,29 @@ def test_check_estimator():
     check_estimator(MultiTaskElasticNet())
 
 
-@slow_test
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
     from sklearn.datasets import load_iris
     iris = load_iris()
 
-    for name, Estimator in all_estimators():
+    for Estimator in [GaussianMixture, LinearRegression,
+                      RandomForestClassifier, NMF, SGDClassifier,
+                      MiniBatchKMeans]:
         est = Estimator()
         set_checking_parameters(est)
         set_random_state(est)
         # without fitting
         old_pickle = pickle.dumps(est)
-        try:
-            check_estimator(est)
-        except Exception as e:
-            # some estimators don't pass the test right now
-            # don't worry about that here
-            continue
+        check_estimator(est)
         assert_equal(old_pickle, pickle.dumps(est))
 
-    for name, Estimator in all_estimators():
         est = Estimator()
         set_checking_parameters(est)
         set_random_state(est)
-        try:
-            est.fit(iris.data + 10, iris.target)
-        except Exception as e:
-            print(e)
-            continue
         # with fitting
+        est.fit(iris.data + 10, iris.target)
         old_pickle = pickle.dumps(est)
-        try:
-            check_estimator(est)
-        except Exception as e:
-            # some estimators don't pass the test right now
-            # don't worry about that here
-            continue
+        check_estimator(est)
         assert_equal(old_pickle, pickle.dumps(est))
 
 
