@@ -121,3 +121,5 @@ def test_dtype_match():
     br_64 = BayesianRidge()
     br_64.fit(X_64, y_64)
     assert_equal(br_64.coef_.dtype, X_64.dtype)
+    # check accuracy
+    assert_array_almost_equal(br_32.coef_, br_64.coef_)
