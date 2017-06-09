@@ -113,6 +113,10 @@ def average_precision_score(y_true, y_score, average="macro",
     """Compute average precision (AP) from prediction scores
 
     This score corresponds to the area under the precision-recall curve.
+    Interpolation between operating points is by horizontal sections.
+    For all recall values r not corresponding to an operating point, the
+    precision p is equal to the precision p' at the first operating point
+    (r', p') such that r' > r.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
@@ -171,13 +175,14 @@ def average_precision_score(y_true, y_score, average="macro",
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-    0.79...
+    0.83...
 
     """
     def _binary_average_precision(y_true, y_score, sample_weight=None):
         precision, recall, thresholds = precision_recall_curve(
             y_true, y_score, sample_weight=sample_weight)
-        return auc(recall, precision)
+        return sum([(recall[i] - recall[i+1]) * precision[i]
+                    for i in xrange(len(recall) - 1)])
 
     return _average_binary_score(_binary_average_precision, y_true, y_score,
                                  average, sample_weight=sample_weight)
