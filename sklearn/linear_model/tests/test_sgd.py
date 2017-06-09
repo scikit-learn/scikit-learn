@@ -824,6 +824,30 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
         clf.fit(X[:, :-1], y)
 
+    def test_dtype_match(self):
+
+        X_64 = X.astype(np.float64);
+        Y_64 = Y.astype(np.float64);
+        X_32 = X.astype(np.float32);
+        Y_32 = Y.astype(np.float32);
+
+        # loss in ("hinge", "squared_hinge", "log", "modified_huber")
+        for loss in ("hinge"):
+
+            # check type consistency 32 bits
+            sgd_32 = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
+                               loss=loss, n_iter=10, shuffle=True)
+            sgd_32.fit(X_32, Y_32)
+            assert_equal(sgd_32.coef_.dtype, X_32.dtype)
+
+            # check type consistency 64 bits
+            sgd_64 = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
+                               loss=loss, n_iter=10, shuffle=True)
+            sgd_64.fit(X_64, Y_64)
+            assert_equal(sgd_64.coef_.dtype, X_64.dtype)
+
+            assert_almost_equal(sgd_32.coef_, sgd_64.coef_, decimal=5)
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
