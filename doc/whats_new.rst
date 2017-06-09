@@ -354,6 +354,8 @@ Bug fixes
 
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
+   - Fixed improper scaling in :class:`sklearn.cross_decomposition.PLSRegression`
+     with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
      :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
@@ -451,9 +453,9 @@ API changes summary
      for scikit-learn. The following backported functions in ``sklearn.utils``
      have been removed or deprecated accordingly.
      :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
-     
+
      Removed in 0.19:
-     
+
      - ``utils.fixes.argpartition``
      - ``utils.fixes.array_equal``
      - ``utils.fixes.astype``
@@ -464,9 +466,9 @@ API changes summary
      - ``utils.fixes.norm``
      - ``utils.fixes.rankdata``
      - ``utils.fixes.safe_copy``
-     
+
      Deprecated in 0.19, to be removed in 0.21:
-     
+
      - ``utils.arpack.eigs``
      - ``utils.arpack.eigsh``
      - ``utils.arpack.svds``
@@ -474,6 +476,7 @@ API changes summary
      - ``utils.extmath.logsumexp``
      - ``utils.extmath.norm``
      - ``utils.extmath.pinvh``
+     - ``utils.graph.graph_laplacian``
      - ``utils.random.choice``
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``

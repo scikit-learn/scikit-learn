@@ -359,7 +359,7 @@ def set_checking_parameters(estimator):
         # of components of the random matrix projection will be probably
         # greater than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
-        estimator.set_params(n_components=8)
+        estimator.set_params(n_components=2)
 
     if isinstance(estimator, SelectKBest):
         # SelectKBest has a default of k=10
@@ -388,7 +388,10 @@ def check_estimator_sparse_data(name, estimator_orig):
     X[X < .8] = 0
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
-    y = multioutput_estimator_convert_y_2d(estimator_orig, y)
+    # catch deprecation warnings
+    with ignore_warnings(category=DeprecationWarning):
+        estimator = clone(estimator_orig)
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X = X_csr.asformat(sparse_format)
         # catch deprecation warnings
