@@ -21,7 +21,7 @@ from matplotlib import pyplot as plt
 from sklearn.datasets import make_hastie_10_2
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
-from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 
 
@@ -32,7 +32,7 @@ X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 
 # The scorers can be a standard scorer referenced by its name or one a
 # callable-like returned from make_scorer
-scoring = {'AUC Score': 'roc_auc', 'F1 Score': make_scorer(f1_score)}
+scoring = {'AUC Score': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 
 # Multiple metric GridSearchCV, best_* attributes are exposed for the scorer
 # with key 'AUC Score' ('roc_auc')
@@ -53,7 +53,7 @@ plt.grid()
 
 ax = plt.axes()
 ax.set_xlim(0, 402)
-ax.set_ylim(0.75, 1)
+ax.set_ylim(0.73, 1)
 
 # Get the regular numpy array from the MaskedArray
 X_axis = np.array(results['param_min_samples_split'].data, dtype=float)
