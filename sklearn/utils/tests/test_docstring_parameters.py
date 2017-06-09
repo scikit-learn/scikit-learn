@@ -33,11 +33,11 @@ public_modules = [
     'sklearn.gaussian_process',
     'sklearn.isotonic',
     # 'sklearn.linear_model',
-    # 'sklearn.manifold',
+    'sklearn.manifold',
     'sklearn.multiclass',
     'sklearn.metrics',
     'sklearn.naive_bayes',
-    # 'sklearn.mixture',
+    'sklearn.mixture',
     # 'sklearn.model_selection',
     'sklearn.neighbors',
     'sklearn.neural_network',
@@ -61,6 +61,11 @@ _docstring_ignores = [
     'ExtraTreeClassifier',
     'ExtraTreeRegressor',
     'GaussianProcess',  # deprecated
+    'VBGMM',  # deprecated
+    'DPGMM',  # deprecated
+    'GMM',  # deprecated
+    'log_multivariate_normal_density',  # deprecated
+    'sample_gaussian',  # deprecated
 ]
 
 _tab_ignores = [
