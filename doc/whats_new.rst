@@ -62,6 +62,10 @@ New features
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
 
+   - Added :class:`pipeline.ColumnTransformer`, which allows to apply
+     different transformers to different columns of arrays or or pandas
+     dataframes. By `Andreas Müller`_ and `Joris Van den Bossche`_.
+
 Enhancements
 ............
 
@@ -1885,9 +1889,6 @@ New features
      By `Alexandre Gramfort`_, `Jan Hendrik Metzen`_, `Mathieu Blondel`_
      and :user:`Balazs Kegl <kegl>`.
 
-   - :class:`pipeline.FeatureUnion` now allows the extraction of particular
-     features from dictionaries or pandas dataframes via the ``fields``
-     parameter. By `Andreas Müller`_.
 
 Enhancements
 ............
@@ -5202,4 +5203,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Anish Shah: https://github.com/AnishShah
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
+
 .. _Arthur Mensch: https://amensch.fr
+
+.. _Joris Van den Bossche: https://github.com/jorisvandenbossche

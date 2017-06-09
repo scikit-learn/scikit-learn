@@ -213,11 +213,12 @@ FeatureUnion: composite feature spaces
 :class:`FeatureUnion` combines several transformer objects into a new
 transformer that combines their output. A :class:`FeatureUnion` takes
 a list of transformer objects. During fitting, each of these
-is fit to the data independently. It can also be used to apply different
-transformations to each field of the data, producing a homogeneous feature
-matrix from a heterogeneous data source.
-The transformers are applied in parallel, and the feature matrices they output
-are concatenated side-by-side into a larger matrix.
+is fit to the data independently. The transformers are applied in parallel,
+and the feature matrices they output are concatenated side-by-side into a
+larger matrix.
+When you want to apply different transformations to each field of the data,
+producing a homogeneous feature matrix from a heterogeneous data source,
+see the related class :class:`ColumnTransformer`.
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.
@@ -272,33 +273,26 @@ and ignored by setting to ``None``::
 
 .. _column_transformer:
 
-Columnar Data
-=============
+ColumnTransformer for heterogeneous data
+========================================
 
 Many datasets contain features of different types, say text, floats and dates,
 where each type of feature requires separate preprocessing.
 Often it is easiest to preprocess data before applying scikit-learn methods,
 for example using :ref:`pandas <http://pandas.pydata.org/>`__.
-The :class:ColumnTransformer is a convenient way to perform heterogeneous
+The :class:`ColumnTransformer` is a convenient way to perform heterogeneous
 preprocessing on data columns within a scikit-learn pipeline (for example,
 when you want to adjust preprocessing parameters within a grid search).
-The :class:`ColumnTransformer` works on pandas dataframes, dictionaries, and other
-objects that implement ``getitem`` so select a certain attribute or column.
-
-.. note::
-    :class:`ColumnTransformer` expects a very different data format from the numpy arrays usually used in scikit-learn.
-    For a numpy array ``X_array``, ``X_array[1]`` will give all feature values for a single sample (``X_array[1].shape == (n_features,)``).
-    For columnar data like a dict or a pandas dataframe ``X_columns``, ``X_columns[1]`` is expected to give the values of a single feature called
-    ``1`` for all samples (``X_columns[1].shape == (n_samples,)``).
+The :class:`ColumnTransformer` works on arrays and pandas dataframes.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
 
-  >>> X = {'city': ['London', 'London', 'Paris', 'New York'],
-  ...      'title': ["His Last Bow", "How Watson Learned the Trick", "A Moveable Feast", "The Great Gatsby"]}
+  >>> import pandas as pd
+  >>> X = pd.DataFrame(
+  ...     {'city': ['London', 'London', 'Paris', 'New York'],
+  ...      'title': ["His Last Bow", "How Watson Learned the Trick", "A Moveable Feast", "The Great Gatsby"]})
 
-In contrast to the :class:`~sklearn.feature_extraction.DictVectorizer` here the whole dataset is a dict,
-with each value having the same length ``n_samples``.
 For this data, we might want to apply a :class:`~sklearn.preprocessing.OneHotEncoder` to the
 ``'city'`` column, but a :class:`~sklearn.feature_extraction.CountVectorizer` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give each
@@ -331,4 +325,4 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_hetero_feature_union.py`
+ * :ref:`sphx_glr_auto_examples_column_transformer.py`

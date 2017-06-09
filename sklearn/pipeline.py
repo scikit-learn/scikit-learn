@@ -861,12 +861,14 @@ class ColumnTransformer(FeatureUnion):
 
     Parameters
     ----------
-    transformers : list of tuples
+    transformer_list : list of tuples
         List of (name, transformer, column) tuples specifying the transformer
         objects to be applied to subsets of the data. The columns can be
         specified as a scalar or slice/list (for multiple columns) of integer
         or string values. Integers are interpreted as the positional columns,
         strings as the keys (column labels) of `X`.
+        When passing a single column to a transformer that expects 2D input
+        data, the column should be specified a list of one element.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -909,15 +911,16 @@ class ColumnTransformer(FeatureUnion):
 
         Parameters
         ----------
-        X : iterable or array-like, depending on transformers
-            Input data, used to fit transformers.
+        X : array-like or DataFrame of shape [n_samples, n_features]
+            Input data, of which specified subsets are used to fit the
+            transformers.
 
         y : array-like, shape (n_samples, ...), optional
             Targets for supervised learning.
 
         Returns
         -------
-        self : FeatureUnion
+        self : ColumnTransformer
             This estimator
         """
         try:
@@ -933,8 +936,9 @@ class ColumnTransformer(FeatureUnion):
 
         Parameters
         ----------
-        X : iterable or array-like, depending on transformers
-            Input data to be transformed.
+        X : array-like or DataFrame of shape [n_samples, n_features]
+            Input data, of which specified subsets are used to fit the
+            transformers.
 
         y : array-like, shape (n_samples, ...), optional
             Targets for supervised learning.
@@ -959,8 +963,9 @@ class ColumnTransformer(FeatureUnion):
 
         Parameters
         ----------
-        X : iterable or array-like, depending on transformers
-            Input data to be transformed.
+        X : array-like or DataFrame of shape [n_samples, n_features]
+            Input data, of which specified subsets are used to fit the
+            transformers.
 
         Returns
         -------
@@ -1016,7 +1021,9 @@ def _get_column(X, key):
                 and isinstance(key.stop, (six.string_types, type(None))))):
         column_names = True
     else:
-        raise ValueError("No valid 'column' type")
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings is allowed")
 
     if column_names:
         if hasattr(X, 'loc'):
