@@ -63,7 +63,6 @@ from ..externals import six
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
-from ..utils.graph import graph_laplacian
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_X_y, check_is_fitted, check_array
 
@@ -464,7 +463,7 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = graph_laplacian(affinity_matrix, normed=True)
+        laplacian = sparse.csgraph.laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.isspmatrix(laplacian):
             diag_mask = (laplacian.row == laplacian.col)
