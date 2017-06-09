@@ -1697,7 +1697,7 @@ def check_get_params_invariance(name, estimator):
         e = estimator([('clf', T())])
 
     elif name == 'ColumnTransformer':
-        e = estimator({'clf': (T(), 'some_column')})
+        e = estimator([('clf', T(), 'some_column')])
 
     elif name in ('GridSearchCV', 'RandomizedSearchCV', 'SelectFromModel'):
         return

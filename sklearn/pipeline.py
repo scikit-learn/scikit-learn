@@ -684,7 +684,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                 (t, type(t)))
 
     def _iter(self, X=None, skip_none=True):
-        """Generate (name, est, weight) tuples excluding None transformers
+        """
+        Generate (name, trans, data, weight) tuples excluding None transformers
         """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, X, get_weight(name))
@@ -844,7 +845,7 @@ def make_union(*transformers, **kwargs):
 
 
 class ColumnTransformer(FeatureUnion):
-    """Applies transformers to columns of an array / dataframe / dict.
+    """Applies transformers to columns of an array or pandas DataFrame.
 
     This estimator applies transformer objects to columns or fields of the
     input, then concatenates the results. This is useful for heterogeneous or
@@ -858,10 +859,9 @@ class ColumnTransformer(FeatureUnion):
     transformers : list of tuples
         List of (name, transformer, column) tuples specifying the transformer
         objects to be applied to subsets of the data. The columns can be
-        specified as a scalar or list (for multiple columns) of integer or
-        string values. Integers are interpreted as the positional columns,
-        strings as the keys of `X`. In case of positional integers, also
-        a slice object is accepted.
+        specified as a scalar or slice/list (for multiple columns) of integer
+        or string values. Integers are interpreted as the positional columns,
+        strings as the keys (column labels) of `X`.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -875,9 +875,10 @@ class ColumnTransformer(FeatureUnion):
     >>> from sklearn.pipeline import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
     >>> union = ColumnTransformer(
-    ...     [("norm1", Normalizer(norm='l1'), 'subset1'),
-    ...      ("norm2", Normalizer(norm='l1'), 'subset2')])
-    >>> X = {'subset1': [[0., 1.], [2., 2.]], 'subset2': [[1., 1.], [0., 1.]]}
+    ...     [("norm1", Normalizer(norm='l1'), [0, 1]),
+    ...      ("norm2", Normalizer(norm='l1'), [2, 3])])
+    >>> X = np.array([[0., 1., 2., 2.],
+    ...               [1., 1., 0., 1.]])
     >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
     array([[ 0. ,  1. ,  0.5,  0.5],
            [ 0.5,  0.5,  0. ,  1. ]])
@@ -887,7 +888,7 @@ class ColumnTransformer(FeatureUnion):
         """Generate (name, trans, column, weight) tuples
         """
         get_weight = (self.transformer_weights or {}).get
-        return ((name, trans, _getitem(X, column), get_weight(name))
+        return ((name, trans, _get_column(X, column), get_weight(name))
                 for name, trans, column in self.transformer_list
                 if not skip_none or trans is not None)
 
@@ -899,15 +900,14 @@ class ColumnTransformer(FeatureUnion):
         ]
 
 
-def _getitem(X, key):
+def _get_column(X, key):
     """
     Get feature column(s) from input data X.
 
-    Supported input types (X): numpy arrays, recarrays, sparse arrays,
-    dataframes and dictionaries (mappings)
+    Supported input types (X): numpy arrays, sparse arrays and dataframes
 
     Supported key types (key):
-    - scalar: output is 1D (with exception for dicts, see below)
+    - scalar: output is 1D
     - lists, slices: output is 2D
 
     Supported key data types:
@@ -915,13 +915,9 @@ def _getitem(X, key):
     - integer (positional):
         - supported for (sparse) arrays or dataframes
     - string (key-based):
-        - supported for recarrays, dataframes and dictionaries
-        - slice only works for dataframes
+        - only supported for dataframes
         - So no keys other than strings are allowed (while in principle you
           can use any hashable object as key).
-
-    Special case for dicts: for a single key, the item from the dict is just
-    passed through as is.
 
     """
     if X is None:
@@ -950,24 +946,8 @@ def _getitem(X, key):
             # pandas dataframes
             return X.loc[:, key]
         else:
-            # dicts or numpy recarrays
-            if isinstance(key, six.string_types):
-                # for scalar key, just pass through
-                return X[key]
-            elif isinstance(key, list):
-                if not all((hasattr(X[col], '__array__')
-                            or sparse.issparse(X[col])) for col in key):
-                    raise ValueError("Selecting multiple keys only supported"
-                                     " when items of X are arrays")
-                elif any(sparse.issparse(X[col]) for col in key):
-                    return sparse.hstack([_ensure_2d(X[col])
-                                          for col in key]).tocsr()
-                else:
-                    return np.hstack([_ensure_2d(X[col]) for col in key])
-            else:
-                raise ValueError("Specifying the columns as a slice is not "
-                                 "supported for dictionaries or recarrays")
-
+            raise ValueError("Specifying the columns using strings is only "
+                             "supported for pandas DataFrames")
     else:
         if hasattr(X, 'iloc'):
             # pandas dataframes
@@ -975,16 +955,3 @@ def _getitem(X, key):
         else:
             # numpy arrays, sparse arrays
             return X[:, key]
-
-
-def _ensure_2d(X):
-    """
-    Ensure X is 2D array (pass through 2D arrays, reshape 1D arrays to 2D).
-    Sparse arrays are already 2D.
-
-    """
-    if not sparse.issparse(X):
-        X = np.asarray(X)
-        if X.ndim == 1:
-            X = X.reshape(-1, 1)
-    return X

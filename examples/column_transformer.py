@@ -12,12 +12,12 @@ extraction and processing pipelines.  This scenario might occur when:
    require different processing pipelines.
 
 This example demonstrates how to use
-:class:`sklearn.feature_extraction.FeatureUnion` on a dataset containing
+:class:`sklearn.pipeline.ColumnTransformer` on a dataset containing
 different types of features.  We use the 20-newsgroups dataset and compute
 standard bag-of-words features for the subject line and body in separate
 pipelines as well as ad hoc features on the body. We combine them (with
-weights) using a FeatureUnion and finally train a classifier on the combined
-set of features.
+weights) using a ColumnTransformer and finally train a classifier on the
+combined set of features.
 
 The choice of features is not particularly helpful, but serves to illustrate
 the technique.
@@ -64,13 +64,14 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, posts):
-        features = np.recarray(shape=(len(posts),),
-                               dtype=[('subject', object), ('body', object)])
+        # construct object dtype array with two columns
+        # first column = 'subject' and second column = 'body'
+        features = np.empty(shape=(len(posts), 2), dtype=object)
         for i, text in enumerate(posts):
             headers, _, bod = text.partition('\n\n')
             bod = strip_newsgroup_footer(bod)
             bod = strip_newsgroup_quoting(bod)
-            features['body'][i] = bod
+            features[i, 1] = bod
 
             prefix = 'Subject:'
             sub = ''
@@ -78,7 +79,7 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
                 if line.startswith(prefix):
                     sub = line[len(prefix):]
                     break
-            features['subject'][i] = sub
+            features[i, 0] = sub
 
         return features
 
@@ -90,20 +91,20 @@ pipeline = Pipeline([
     # Use FeatureUnion to combine the features from subject and body
     ('union', ColumnTransformer(
         [
-            # Pulling features from the post's subject line
-            ('subject', TfidfVectorizer(min_df=50), 'subject'),
+            # Pulling features from the post's subject line (first column)
+            ('subject', TfidfVectorizer(min_df=50), 0),
 
-            # Pipeline for standard bag-of-words model for body
+            # Pipeline for standard bag-of-words model for body (second column)
             ('body_bow', Pipeline([
                 ('tfidf', TfidfVectorizer()),
                 ('best', TruncatedSVD(n_components=50)),
-            ]), 'body'),
+            ]), 1),
 
             # Pipeline for pulling ad hoc features from post's body
             ('body_stats', Pipeline([
                 ('stats', TextStats()),  # returns a list of dicts
                 ('vect', DictVectorizer()),  # list of dicts -> feature matrix
-            ]), 'body'),
+            ]), 1),
         ],
 
         # weight components in FeatureUnion
