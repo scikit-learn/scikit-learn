@@ -617,7 +617,7 @@ def test_pca_dtype_preservation():
         pca_32 = PCA(n_components=3, svd_solver=svd_solver,
                      random_state=0).fit(X_i32)
 
-        assert pca_64.components_.dtype == np.float32
-        assert pca_32.components_.dtype == np.float32
+        assert pca_64.components_.dtype == np.float64
+        assert pca_32.components_.dtype == np.float64
         assert_array_almost_equal(pca_64.components_, pca_32.components_,
                                   decimal=5)
