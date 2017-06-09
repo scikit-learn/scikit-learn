@@ -66,11 +66,11 @@ def test_assert_allclose_dense_sparse():
     assert_raise_message(ValueError, "Can only compare two sparse",
                          assert_allclose_dense_sparse, x, y)
 
-    A = sparse.diags(np.ones(5)).tocsr()
+    A = sparse.diags(np.ones(5), offsets=0).tocsr()
     B = sparse.csr_matrix(np.ones((1, 5)))
 
-    assert_raise_message(AssertionError, "Arrays are not equal", assert_allclose_dense_sparse, B,
-                         A)
+    assert_raise_message(AssertionError, "Arrays are not equal",
+                         assert_allclose_dense_sparse, B, A)
 
 
 def test_assert_raise_message():
