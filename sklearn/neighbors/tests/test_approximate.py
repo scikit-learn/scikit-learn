@@ -26,6 +26,13 @@ from sklearn.neighbors import LSHForest
 from sklearn.neighbors import NearestNeighbors
 
 
+@ignore_warnings(category=DeprecationWarning)
+def test_lsh_forest_deprecation():
+    assert_warns_message(DeprecationWarning, "LSHForest has been deprecated in 0.19 and "
+                                             "will be removed in version 0.21.", LSHForest)
+
+
+@ignore_warnings(category=DeprecationWarning)
 def test_neighbors_accuracy_with_n_candidates():
     # Checks whether accuracy increases as `n_candidates` increases.
     n_candidates_values = np.array([.1, 50, 500])
@@ -62,6 +69,7 @@ def test_neighbors_accuracy_with_n_candidates():
                 msg="Highest accuracy is not strictly greater than lowest.")
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_neighbors_accuracy_with_n_estimators():
     # Checks whether accuracy increases as `n_estimators` increases.
     n_estimators = np.array([1, 10, 100])
@@ -97,6 +105,7 @@ def test_neighbors_accuracy_with_n_estimators():
 
 
 @ignore_warnings
+@ignore_warnings(category=DeprecationWarning)
 def test_kneighbors():
     # Checks whether desired number of neighbors are returned.
     # It is guaranteed to return the requested number of neighbors
@@ -146,6 +155,7 @@ def test_kneighbors():
                 msg="neighbors are not in integer dtype.")
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_radius_neighbors():
     # Checks whether Returned distances are less than `radius`
     # At least one point should be returned when the `radius` is set
@@ -220,6 +230,7 @@ def test_radius_neighbors():
 
 
 @ignore_warnings
+@ignore_warnings(category=DeprecationWarning)
 def test_radius_neighbors_boundary_handling():
     X = [[0.999, 0.001], [0.5, 0.5], [0, 1.], [-1., 0.001]]
     n_points = len(X)
@@ -280,6 +291,7 @@ def test_radius_neighbors_boundary_handling():
     assert_array_almost_equal(np.sort(approx_dists[0]), dists[:-2])
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_distances():
     # Checks whether returned neighbors are from closest to farthest.
     n_samples = 12
@@ -306,6 +318,7 @@ def test_distances():
         # the results.
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_fit():
     # Checks whether `fit` method sets all attribute values correctly.
     n_samples = 12
@@ -333,6 +346,7 @@ def test_fit():
     assert_equal(n_samples, len(lshf.original_indices_[0]))
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_fit():
     # Checks whether inserting array is consistent with fitted data.
     # `partial_fit` method should set all attribute values correctly.
@@ -368,6 +382,7 @@ def test_partial_fit():
                  n_samples + n_samples_partial_fit)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hash_functions():
     # Checks randomness of hash functions.
     # Variance and mean of each hash function (projection vector)
@@ -397,6 +412,7 @@ def test_hash_functions():
                          np.mean(lshf.hash_functions_[i].components_))
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_candidates():
     # Checks whether candidates are sufficient.
     # This should handle the cases when number of candidates is 0.
@@ -435,6 +451,7 @@ def test_candidates():
     assert_equal(distances.shape[1], 5)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_graphs():
     # Smoke tests for graph methods.
     n_samples_sizes = [5, 10, 20]
@@ -455,6 +472,7 @@ def test_graphs():
         assert_equal(radius_neighbors_graph.shape[1], n_samples)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_sparse_input():
     # note: Fixed random state in sp.rand is not supported in older scipy.
     #       The test should succeed regardless.
