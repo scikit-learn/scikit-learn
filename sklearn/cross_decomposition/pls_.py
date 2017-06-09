@@ -439,7 +439,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         X -= self.x_mean_
         X /= self.x_std_
         Ypred = safe_sparse_dot(X, self.coef_,
-                               dense_output=True) + self.y_mean_
+                                dense_output=True) + self.y_mean_
         return Ypred
 
     def fit_transform(self, X, y=None):
