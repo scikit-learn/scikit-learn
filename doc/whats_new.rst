@@ -433,9 +433,9 @@ API changes summary
      for scikit-learn. The following backported functions in ``sklearn.utils``
      have been removed or deprecated accordingly.
      :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
-     
+
      Removed in 0.19:
-     
+
      - ``utils.fixes.argpartition``
      - ``utils.fixes.array_equal``
      - ``utils.fixes.astype``
@@ -446,9 +446,9 @@ API changes summary
      - ``utils.fixes.norm``
      - ``utils.fixes.rankdata``
      - ``utils.fixes.safe_copy``
-     
+
      Deprecated in 0.19, to be removed in 0.21:
-     
+
      - ``utils.arpack.eigs``
      - ``utils.arpack.eigsh``
      - ``utils.arpack.svds``
@@ -456,6 +456,7 @@ API changes summary
      - ``utils.extmath.logsumexp``
      - ``utils.extmath.norm``
      - ``utils.extmath.pinvh``
+     - ``utils.graph.graph_laplacian``
      - ``utils.random.choice``
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
