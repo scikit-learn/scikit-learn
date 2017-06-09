@@ -788,3 +788,30 @@ def test_errors_and_values_svd_helper():
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
     assert_raises(ValueError, RidgeClassifier().fit, X, y)
+
+
+def test_dtype_match():
+    rng = np.random.RandomState(0)
+    alpha = 1.0
+
+    n_samples, n_features = 6, 5
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    solvers = ["svd", "sparse_cg", "cholesky", "lsqr"]
+    for solver in solvers:
+
+        # Check type consistency 32bits
+        ridge_32 = Ridge(alpha=alpha, solver=solver)
+        ridge_32.fit(X_32, y_32)
+        assert_equal(ridge_32.coef_.dtype, X_32.dtype)
+
+        # Check type consistency 64 bits
+        ridge_64 = Ridge(alpha=alpha, solver=solver)
+        ridge_64.fit(X_64, y_64)
+        assert_equal(ridge_64.coef_.dtype, X_64.dtype)
+
+        # Check accuracy consistency
+        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
