@@ -220,16 +220,16 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
+    copy_cov : boolean, optional
+        Whether to copy the precomputed covariance matrix; if False, it may be
+        overwritten.
+
     init : array of shape (n_samples, n_components)
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
 
     max_iter : int, 1000 by default
         Maximum number of iterations to perform if `algorithm='lasso_cd'`.
-
-    copy_cov : boolean, optional
-        Whether to copy the precomputed covariance matrix; if False, it may be
-        overwritten.
 
     n_jobs : int, optional
         Number of parallel jobs to run.
@@ -1006,11 +1006,6 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    split_sign : bool, False by default
-        Whether to split the sparse feature vector into the concatenation of
-        its negative part and its positive part. This can improve the
-        performance of downstream classifiers.
-
     n_jobs : int,
         number of parallel jobs to run
 
@@ -1022,6 +1017,11 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     verbose :
         degree of verbosity of the printed output
+
+    split_sign : bool, False by default
+        Whether to split the sparse feature vector into the concatenation of
+        its negative part and its positive part. This can improve the
+        performance of downstream classifiers.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1140,11 +1140,17 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+    n_jobs : int,
+        number of parallel jobs to run
+
     batch_size : int,
         number of samples in each mini-batch
 
-    n_jobs : int,
-        number of parallel jobs to run
+    shuffle : bool,
+        whether to shuffle the samples before forming batches
+
+    dict_init : array of shape (n_components, n_features),
+        initial value of the dictionary for warm restart scenarios
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}
@@ -1172,19 +1178,13 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
+    verbose :
+        degree of verbosity of the printed output
+
     split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
-
-    dict_init : array of shape (n_components, n_features),
-        initial value of the dictionary for warm restart scenarios
-
-    verbose :
-        degree of verbosity of the printed output
-
-    shuffle : bool,
-        whether to shuffle the samples before forming batches
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

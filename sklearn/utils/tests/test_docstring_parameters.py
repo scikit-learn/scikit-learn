@@ -55,6 +55,7 @@ _docstring_ignores = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
+    'RandomizedPCA',
 ]
 
 _tab_ignores = [
@@ -79,6 +80,8 @@ def test_docstring_parameters():
             module = getattr(module, submod)
         classes = inspect.getmembers(module, inspect.isclass)
         for cname, cls in classes:
+            if cname in _docstring_ignores:
+                continue
             if cname.startswith('_') and cname not in _doc_special_members:
                 continue
             with warnings.catch_warnings(record=True) as w:
@@ -88,6 +91,7 @@ def test_docstring_parameters():
                                    % (cls, name, w[0]))
             if hasattr(cls, '__init__'):
                 incorrect += check_parameters_match(cls.__init__, cdoc)
+
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
                 param_ignore = None
@@ -95,7 +99,7 @@ def test_docstring_parameters():
                 # by default for API reason
                 if method_name in \
                         ['fit', 'score', 'fit_predict', 'fit_transform',
-                         'partial_fit']:
+                         'partial_fit', 'transform', 'inverse_transform']:  # XXX remove transform
                     sig = signature(method)
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):
