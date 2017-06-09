@@ -58,18 +58,18 @@ def make_dataset(X, y, sample_weight, random_state=None):
     seed = rng.randint(1, np.iinfo(np.int32).max)
 
     if isinstance(X, np.float32):
-        CSR = CSRDataset32
-        Array = ArrayDataset32
+        CSRData = CSRDataset32
+        ArrayData = ArrayDataset32
     else:
-        CSR = CSRDataset
-        Array = ArrayDataset
+        CSRData = CSRDataset
+        ArrayData = ArrayDataset
 
     if sp.issparse(X):
-        dataset = CSR(X.data, X.indptr, X.indices, y, sample_weight,
-                      seed=seed)
+        dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight,
+                          seed=seed)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
-        dataset = Array(X, y, sample_weight, seed=seed)
+        dataset = ArrayData(X, y, sample_weight, seed=seed)
         intercept_decay = 1.0
 
     return dataset, intercept_decay
