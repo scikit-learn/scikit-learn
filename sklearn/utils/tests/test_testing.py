@@ -1,6 +1,8 @@
 import warnings
 import unittest
 import sys
+import numpy as np
+from scipy import sparse
 
 from sklearn.utils.testing import (
     assert_raises,
@@ -13,6 +15,7 @@ from sklearn.utils.testing import (
     assert_equal,
     set_random_state,
     assert_raise_message,
+    assert_allclose_dense_sparse,
     ignore_warnings)
 
 from sklearn.tree import DecisionTreeClassifier
@@ -48,6 +51,26 @@ def test_set_random_state():
     set_random_state(lda, 3)
     set_random_state(tree, 3)
     assert_equal(tree.random_state, 3)
+
+
+def test_assert_allclose_dense_sparse():
+    x = np.arange(9).reshape(3, 3)
+    msg = "Not equal to tolerance "
+    y = sparse.csc_matrix(x)
+    for X in [x, y]:
+        # basic compare
+        assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse,
+                             X, X * 2)
+        assert_allclose_dense_sparse(X, X)
+
+    assert_raise_message(ValueError, "Can only compare two sparse",
+                         assert_allclose_dense_sparse, x, y)
+
+    A = sparse.diags(np.ones(5), offsets=0).tocsr()
+    B = sparse.csr_matrix(np.ones((1, 5)))
+
+    assert_raise_message(AssertionError, "Arrays are not equal",
+                         assert_allclose_dense_sparse, B, A)
 
 
 def test_assert_raise_message():
@@ -173,7 +196,7 @@ def test_ignore_warning():
 # This class is inspired from numpy 1.7 with an alteration to check
 # the reset warning filters after calls to assert_warns.
 # This assert_warns behavior is specific to scikit-learn because
-#`clean_warning_registry()` is called internally by assert_warns
+# `clean_warning_registry()` is called internally by assert_warns
 # and clears all previous filters.
 class TestWarns(unittest.TestCase):
     def test_warn(self):

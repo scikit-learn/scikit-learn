@@ -363,6 +363,11 @@ API changes summary
      now only have ``self.estimators_`` available after ``fit``.
      :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
+   - All checks in ``utils.estimator_checks``, in particular
+     :func:`utils.estimator_checks.check_estimator` now accept estimator
+     instances. Most other checks do not accept
+     estimator classes any more. :issue:`9019` by `Andreas Müller`_.
+
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
      user no longer has access to the unnormalized document topic distribution
