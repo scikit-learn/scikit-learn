@@ -259,4 +259,81 @@ plt.title('Extension of Precision-Recall curve to multi-class')
 plt.legend(lines, labels, loc=(0, -.38), prop=dict(size=14))
 
 
+###############################################################################
+# Eleven-point average precision
+# ------------------------------
+#
+# In *interpolated* average precision, a set of desired recall values is
+# specified and for each desired value we average the best precision
+# scores possible with a recall value at least equal to the target value.
+# The most common choice is 'eleven point' interpolated precision, where
+# the desired recall values are [0, 0.1, 0.2, ..., 1.0]. This is the
+# metric referenced in `The PASCAL Visual Object Classes (VOC) Challenge
+# <http://citeseerx.ist.psu.edu
+# /viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_ (top of page
+# 11, formula 1). In the example below, the eleven precision values are
+# indicated with an arrow to pointing to the best precision possible
+# while meeting or exceeding the desired recall. Note that it's possible
+# that the same operating point might correspond to multiple desired
+# recall values.
+
+from operator import itemgetter
+
+
+def pick_eleven_points(recall_, precision_):
+    """Choose the eleven operating points that correspond
+    to the best precision for any ``recall >= r`` for r in
+    [0, 0.1, 0.2, ..., 1.0]
+    """
+    operating_points = list()
+    for target_recall in np.arange(0, 1.1, 0.1):
+        operating_points_to_consider = [pair
+                                        for pair in zip(recall_, precision_)
+                                        if pair[0] >= target_recall]
+        operating_points.append(max(operating_points_to_consider,
+                                    key=itemgetter(1)))
+    return operating_points
+
+# Work on the 2nd class of iris
+iris_cls = 2
+
+eleven_points = pick_eleven_points(recall[iris_cls], precision[iris_cls])
+interpolated_average_precision = np.mean([e[1] for e in eleven_points])
+
+
+print("Target recall    Selected recall   Precision")
+for i in range(11):
+    print("  >= {} {: >12.3f} {: >12.3f}".format(i / 10,
+          *eleven_points[i]))
+
+print("  Average:{: >22.3f}".format(interpolated_average_precision))
+
+###############################################################################
+# Plot illustrating eleven-point average precision
+# .................................................
+
+plt.figure(figsize=(7, 7))
+plt.step(recall[iris_cls], precision[iris_cls], color='g', where='post',
+         alpha=0.5, linewidth=2,
+         label='Precision-recall curve of class {0} (area = {1:0.2f})'
+               ''.format(iris_cls, average_precision[iris_cls]))
+
+plt.fill_between(recall[iris_cls], precision[iris_cls], step='post', alpha=0.1,
+                 color='g')
+for i in range(11):
+    plt.annotate('',
+                 xy=(eleven_points[i][0], eleven_points[i][1]),
+                 xycoords='data', xytext=(i / 10., 0), textcoords='data',
+                 arrowprops=dict(arrowstyle="->", alpha=0.7,
+                                 connectionstyle="angle3,angleA=90,angleB=45"))
+
+
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xticks(np.arange(0, 1.1, 0.1))
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Eleven point Precision Recall for class\\n {}'.format(iris_cls))
+plt.legend(loc="upper right")
+
 plt.show()

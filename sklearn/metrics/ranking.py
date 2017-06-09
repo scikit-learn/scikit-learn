@@ -105,8 +105,14 @@ def auc(x, y, reorder=False):
 
 
 def average_precision_score(y_true, y_score, average="macro",
-                            sample_weight=None):
+                            sample_weight=None, interpolation=None):
     """Compute average precision (AP) from prediction scores
+
+    Optionally, this will compute an eleven-point interpolated average
+    precision score: for each of the eleven evenly-spaced target recall values
+    [0, 0.1, 0.2, ... 1.0], we select the maximum precision possible while
+    meeting or exceeding the target recall, and average the 11 resulting
+    precision values.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
@@ -142,6 +148,20 @@ def average_precision_score(y_true, y_score, average="macro",
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    interpolation : None (default), or 'eleven_point'
+
+        ``None``:
+            Do not interpolate the average precision. Instead, compute
+            ``sum(p[i] * (r[i] - r[i-1]))`` for all precision, recall pairs
+            ``p[i], r[i]`` for ``i >= 1``. This is the primary definition used
+            in the Wikipedia entry for Average precision. See References.
+        ``'eleven_point'``:
+            For each of the recall values, r, in {0, 0.1, 0.2, ..., 1.0},
+            compute the arithmetic mean of the first precision value with a
+            corresponding recall >= r. This metric is referenced in the Pascal
+            Visual Objects Classes (VOC) Challenge and is as described in the
+            Stanford Information Retrieval book. See References.
+
     Returns
     -------
     average_precision : float
@@ -175,17 +195,46 @@ def average_precision_score(y_true, y_score, average="macro",
 
     >>> yt = np.array([0, 0, 1, 1])
     >>> ys = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> ap = average_precision_score(yt, ys)
+    >>> ap = average_precision_score(yt, ys, interpolation='eleven_point')
     >>> ap # doctest: +ELLIPSIS
     0.84...
 
     """
-    precision, recall, thresholds = precision_recall_curve(
-        y_true, y_score, sample_weight=sample_weight)
-    # Return the step function integral
-    # The following works because the last entry of precision is
-    # garantee to be 1, as returned by precision_recall_curve
-    return -np.sum(np.diff(recall) * np.array(precision)[:-1])
+    def _binary_uninterpolated_average_precision(
+            y_true, y_score, sample_weight=None):
+        precision, recall, thresholds = precision_recall_curve(
+            y_true, y_score, sample_weight=sample_weight)
+        # Return the step function integral
+        # The following works because the last entry of precision is
+        # garantee to be 1, as returned by precision_recall_curve
+        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
+
+    def _binary_eleven_point_average_precision(
+            y_true, y_score, sample_weight=None):
+        precision, recall, thresholds = precision_recall_curve(
+            y_true, y_score, sample_weight=sample_weight)
+
+        # We need the recall values in ascending order, and to ignore the first
+        # (precision, recall) pair with precision = 1.
+        precision = precision[-2::-1]
+        recall = recall[-2::-1]
+
+        return np.mean([precision[i:].max() for i in
+                        np.searchsorted(recall, np.arange(0, 1.1, 0.1))])
+
+    if interpolation is None:
+        return _average_binary_score(_binary_uninterpolated_average_precision,
+                                     y_true, y_score, average,
+                                     sample_weight=sample_weight)
+
+    elif interpolation == 'eleven_point':
+        return _average_binary_score(_binary_eleven_point_average_precision,
+                                     y_true, y_score, average,
+                                     sample_weight=sample_weight)
+
+    else:
+        raise ValueError("interpolation has to be one of "
+                         "(None, 'eleven_point').")
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):

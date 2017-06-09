@@ -148,6 +148,19 @@ def _average_precision_slow(y_true, y_score):
     return average_precision
 
 
+def _interpolated_average_precision_slow(y_true, y_score):
+    """A second implementation for the eleven-point interpolated average
+    precision described by the Information Retrieval book. This should
+    produce identical results to average_precision_score with
+    `interpolation='eleven_point'`.
+    """
+    precision, recall, _ = precision_recall_curve(y_true, y_score)
+    precision = list(reversed(precision))
+    recall = list(reversed(recall))
+    indices = np.searchsorted(recall, np.arange(0, 1.1, 0.1))
+    return np.mean([max(precision[i:]) for i in indices])
+
+
 def test_roc_curve():
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
@@ -497,9 +510,14 @@ def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = _average_precision_slow(y_true, probas_pred)
+    interpolated_average_precision = _interpolated_average_precision_slow(
+        y_true, probas_pred)
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    assert_equal(interpolated_average_precision,
+                 average_precision_score(y_true, probas_pred,
+                                         interpolation='eleven_point'))
     assert_almost_equal(_average_precision(y_true, probas_pred),
                         precision_recall_auc, decimal=3)
     assert_equal(p.size, r.size)
@@ -633,6 +651,8 @@ def test_average_precision_constant_values():
     # The precision is then the fraction of positive whatever the recall
     # is, as there is only one threshold:
     assert_equal(average_precision_score(y_true, y_score), .25)
+    assert_equal(average_precision_score(y_true, y_score,
+                                         interpolation='eleven_point'), .25)
 
 
 def test_score_scale_invariance():
