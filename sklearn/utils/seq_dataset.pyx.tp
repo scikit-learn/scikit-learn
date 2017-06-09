@@ -1,13 +1,14 @@
 {{py:
 
 """
-    Template file for easily generate fused types consistent code using Tempita
-    (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
+Dataset abstractions for sequential data access.
+Template file for easily generate fused types consistent code using Tempita
+(https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
 
-    Generated file: seq_dataset.pyx
+Generated file: seq_dataset.pyx
 
-    Each class is duplicated for all dtypes (float and double). The keywords
-    between double braces are substituted in setup.py.
+Each class is duplicated for all dtypes (float and double). The keywords
+between double braces are substituted in setup.py.
 """
 
 # name, c_type, np_type
@@ -25,8 +26,8 @@ def get_dispatch(dtypes):
 #------------------------------------------------------------------------------
 
 """
-    Dataset abstractions for sequential data access.
-    WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
+Dataset abstractions for sequential data access.
+WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 """
 
 # cython: cdivision=True
