@@ -279,7 +279,7 @@ a uniform distribution with values between 0 and 1::
   >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
   >>> X_train_trans = quantile_transformer.fit_transform(X_train)
   >>> X_test_trans = quantile_transformer.transform(X_test)
-  >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100])
+  >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100]) # doctest: +SKIP
   array([ 4.3,  5.1,  5.8,  6.5,  7.9])
 
 This feature corresponds to the sepal length in cm. Once the quantile
@@ -306,26 +306,18 @@ setting ``output_distribution='normal'``::
   ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
   >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([[ 4.30...,  2.00...,  1.00...,  0.09...],
-         [ 4.31... ,  2.02...,  1.01...,  0.09...],
-         [ 4.32...,  2.05...,  1.02...,  0.09...],
+  array([[ 4.3...,   2...,     1...,     0.1...],
+         [ 4.31...,  2.02...,  1.01...,  0.1...],
+         [ 4.32...,  2.05...,  1.02...,  0.1...],
          ...,
-         [ 7.84... ,  4.34...,  6.84...,  2.50...],
-         [ 7.87...,  4.37...,  6.87... ,  2.50...],
-         [ 7.90...,  4.40...,  6.90...,  2.50...]])
+         [ 7.84...,  4.34...,  6.84...,  2.5...],
+         [ 7.87...,  4.37...,  6.87...,  2.5...],
+         [ 7.9...,   4.4...,   6.9...,   2.5...]])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
 corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively --- do not
 become infinite under the transformation.
-
-:class:`QuantileTransformer` provides a ``smoothing_noise`` parameter (set to
-True by default) to make the interpretation more intuitive when inspecting the
-transformation. This is particularly useful when feature values are replicated
-identically many times in the training set (e.g. prices, ordinal values such as
-user ratings, coarse-grained units of time, etc.). See
-:ref:`sphx_glr_auto_examples_preprocessing_plot_smoothing_noise_quantile_transform.py`
-for more details.
 
 .. _preprocessing_normalization:
 

@@ -62,7 +62,7 @@ New features
      normalization based on quantiles.
      :issue:`8363` by :user:`Denis Engemann <dengemann>`,
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
-     and :user:`Thierry Guillemot <tguillemot>`.
+     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
 
 Enhancements
 ............

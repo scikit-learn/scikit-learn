@@ -1987,11 +1987,6 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
-    smoothing_noise : bool, optional (default=True)
-        Perturbs features at training time before computing quantiles by adding
-        Gaussian noise. It eases interpratation of the computed ``quantiles_``
-        when a particular feature value is predominant.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -2034,28 +2029,17 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     See examples/preprocessing/plot_all_scaling.py for a comparison of the
     different scalers, transformers, and normalizers.
 
-    See examples/preprocessing/plot_smoothing_noise_quantile_transform.py for
-    an illustration of the ``smoothing_noise`` parameter use.
-
     """
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
-                 smoothing_noise=True, random_state=None, copy=True):
+                 random_state=None, copy=True):
         self.n_quantiles = n_quantiles
         self.output_distribution = output_distribution
         self.ignore_implicit_zeros = ignore_implicit_zeros
         self.subsample = subsample
-        self.smoothing_noise = smoothing_noise
         self.random_state = random_state
         self.copy = copy
-
-    def _compute_quantiles_one_column(self, X_col, references, random_state):
-        """Private function to compute the quantiles for one feature."""
-        if self.smoothing_noise is True:
-            X_col = X_col + random_state.normal(0, 1e-7, size=X_col.shape)
-
-        return np.percentile(X_col, references)
 
     def _dense_fit(self, X, random_state):
         """Compute percentiles for dense matrices.
@@ -2080,9 +2064,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(
-                self._compute_quantiles_one_column(col, references,
-                                                   random_state))
+            self.quantiles_.append(np.percentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2127,8 +2109,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 self.quantiles_.append([0] * len(references))
             else:
                 self.quantiles_.append(
-                    self._compute_quantiles_one_column(column_data, references,
-                                                       random_state))
+                    np.percentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2206,7 +2187,16 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                             upper_bound_x)
 
         if not inverse:
-            X_col = np.interp(X_col, quantiles, self.references_)
+            # Interpolate in one direction and in the other and take the
+            # mean. This is in case of repeated values in the features
+            # and hence repeated quantiles
+            #
+            # If we don't do this, only one extreme of the duplicated is
+            # used (the upper when we do assending, and the
+            # lower for descending). We take the mean of these two
+            X_col = .5 * (np.interp(X_col, quantiles, self.references_)
+                          - np.interp(-X_col, -quantiles[::-1],
+                                      -self.references_[::-1]))
         else:
             X_col = np.interp(X_col, self.references_, quantiles)
 
@@ -2333,7 +2323,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
-                       smoothing_noise=True,
                        random_state=None,
                        copy=False):
     """Transform features using quantiles information.
@@ -2380,11 +2369,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         computational efficiency. Note that the subsampling procedure may
         differ for value-identical sparse and dense matrices.
 
-    smoothing_noise : bool, optional (default=True)
-        Perturbs features at training time before computing quantiles by adding
-        Gaussian noise. It eases interpratation of the computed ``quantiles_``
-        when a particular feature value is predominant.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -2429,15 +2413,11 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     See examples/preprocessing/plot_all_scaling.py for a comparison of the
     different scalers, transformers, and normalizers.
 
-    See examples/preprocessing/plot_smoothing_noise_quantile_transform.py for
-    an illustration of the ``smoothing_noise`` parameter use.
-
     """
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
                             subsample=subsample,
                             ignore_implicit_zeros=ignore_implicit_zeros,
-                            smoothing_noise=smoothing_noise,
                             random_state=random_state,
                             copy=copy)
     if axis == 0:

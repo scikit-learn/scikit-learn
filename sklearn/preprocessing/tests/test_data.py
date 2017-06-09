@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
@@ -144,7 +143,8 @@ def test_polynomial_feature_names():
                         'b c^2', 'c^3'], feature_names)
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names([u"\u0001F40D", u"\u262E", u"\u05D0"])
+    feature_names = poly.get_feature_names(
+        [u"\u0001F40D", u"\u262E", u"\u05D0"])
     assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
                        feature_names)
 
@@ -857,14 +857,13 @@ def test_robust_scaler_iris_quantiles():
 def test_quantile_transform_iris():
     X = iris.data
     # uniform output distribution
-    transformer = QuantileTransformer(n_quantiles=30, smoothing_noise=False)
+    transformer = QuantileTransformer(n_quantiles=30)
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
     # normal output distribution
     transformer = QuantileTransformer(n_quantiles=30,
-                                      output_distribution='normal',
-                                      smoothing_noise=False)
+                                      output_distribution='normal')
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
@@ -943,7 +942,7 @@ def test_quantile_transform_sparse_ignore_zeros():
                   [0, 1]])
     X_sparse = sparse.csc_matrix(X)
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
-                                      n_quantiles=5, smoothing_noise=False)
+                                      n_quantiles=5)
 
     # dense case -> warning raise
     assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
@@ -977,16 +976,16 @@ def test_quantile_transform_sparse_ignore_zeros():
     assert_almost_equal(X_expected, X_trans.A)
 
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
-                                      n_quantiles=5, smoothing_noise=False)
+                                      n_quantiles=5)
     X_data = np.array([-1, -1, 1, 0, 0, 0, 1, -1, 1])
     X_col = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1])
     X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6])
     X_sparse = sparse.csc_matrix((X_data, (X_row, X_col)))
     X_trans = transformer.fit_transform(X_sparse)
     X_expected = np.array([[0, 1],
-                           [0, 0.5],
-                           [0, 0.5],
-                           [0, 0.5],
+                           [0, 0.375],
+                           [0, 0.375],
+                           [0, 0.375],
                            [0, 1],
                            [0, 0],
                            [0, 1]])
@@ -997,8 +996,7 @@ def test_quantile_transform_sparse_ignore_zeros():
     transformer = QuantileTransformer(ignore_implicit_zeros=True,
                                       n_quantiles=5,
                                       subsample=8,
-                                      random_state=0,
-                                      smoothing_noise=False)
+                                      random_state=0)
     X_trans = transformer.fit_transform(X_sparse)
     assert_almost_equal(X_expected, X_trans.A)
     assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
@@ -1011,7 +1009,7 @@ def test_quantile_transform_dense_toy():
                   [75, 8, 9.5],
                   [100, 10, 0.1]])
 
-    transformer = QuantileTransformer(n_quantiles=5, smoothing_noise=False)
+    transformer = QuantileTransformer(n_quantiles=5)
     transformer.fit(X)
 
     # using the a uniform output, each entry of X should be map between 0 and 1
@@ -1021,7 +1019,7 @@ def test_quantile_transform_dense_toy():
     assert_almost_equal(np.sort(X_trans, axis=0), X_expected)
 
     X_test = np.array([
-        [-1,  1,  0],
+        [-1, 1, 0],
         [101, 11, 10],
     ])
     X_expected = np.array([
@@ -1095,7 +1093,7 @@ def test_quantile_transform_sparse_toy():
 
     X = sparse.csc_matrix(X)
 
-    transformer = QuantileTransformer(n_quantiles=10, smoothing_noise=False)
+    transformer = QuantileTransformer(n_quantiles=10)
     transformer.fit(X)
 
     X_trans = transformer.fit_transform(X)
@@ -1105,9 +1103,8 @@ def test_quantile_transform_sparse_toy():
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
-    transformer_dense = QuantileTransformer(n_quantiles=10,
-                                            smoothing_noise=False).fit(
-                                                X.toarray())
+    transformer_dense = QuantileTransformer(n_quantiles=10).fit(
+        X.toarray())
 
     X_trans = transformer_dense.transform(X)
     assert_array_almost_equal(np.min(X_trans.toarray(), axis=0), 0.)
@@ -1137,11 +1134,9 @@ def test_quantile_transform_bounds():
 
     # check sparse and dense are consistent
     X_trans = QuantileTransformer(n_quantiles=3,
-                                  smoothing_noise=False,
                                   random_state=0).fit_transform(X_dense)
     assert_array_almost_equal(X_trans, X_dense)
     X_trans_sp = QuantileTransformer(n_quantiles=3,
-                                     smoothing_noise=False,
                                      random_state=0).fit_transform(X_sparse)
     assert_array_almost_equal(X_trans_sp.A, X_dense)
     assert_array_almost_equal(X_trans, X_trans_sp.A)
@@ -1154,14 +1149,13 @@ def test_quantile_transform_bounds():
     X1 = np.array([[0, 0.1],
                    [0, 0.5],
                    [1, 0.1]])
-    transformer = QuantileTransformer(n_quantiles=3,
-                                      smoothing_noise=False).fit(X)
+    transformer = QuantileTransformer(n_quantiles=3).fit(X)
     X_trans = transformer.transform(X1)
     assert_array_almost_equal(X_trans, X1)
 
     # check that values outside of the range learned will be mapped properly.
     X = np.random.random((1000, 1))
-    transformer = QuantileTransformer(smoothing_noise=False)
+    transformer = QuantileTransformer()
     transformer.fit(X)
     assert_equal(transformer.transform(-10), transformer.transform(np.min(X)))
     assert_equal(transformer.transform(10), transformer.transform(np.max(X)))
@@ -1173,57 +1167,13 @@ def test_quantile_transform_bounds():
                      np.max(transformer.references_)))
 
 
-def test_quantile_transform_add_noise_subsamples():
-    # toy examples
-    unique_feature = [0, 0.5, 1]
-    X = np.transpose([[unique_feature[0]] * 1 +
-                      [unique_feature[1]] * 7 +
-                      [unique_feature[2]] * 2])
-    transformer = QuantileTransformer(n_quantiles=100, smoothing_noise=True,
-                                      random_state=0)
-    transformer.fit(X)
-    # check that the feature values associated to quantiles are strictly
-    # monitically increasing as suggested by the 'interp' function from numpy
-    diff_quantiles = np.diff(transformer.quantiles_, axis=0)
-    map(assert_greater, diff_quantiles, [0] * len(diff_quantiles))
+def test_quantile_transform_and_inverse():
     # iris dataset
     X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, smoothing_noise=True,
-                                      random_state=0)
+    transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
     X_trans = transformer.fit_transform(X)
     X_trans_inv = transformer.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
-    # check  that  the  feature  values associated  to  quantiles  are
-    # strictly  monitically increasing  as suggested  by the  'interp'
-    # function from numpy
-    diff_quantiles = np.diff(transformer.quantiles_, axis=0)
-    for dq in diff_quantiles.T:
-        map(assert_greater, dq, [0] * len(dq))
-
-
-def test_quantile_transform_numpy_interp_behaviour():
-    # The quantile transformer relies on the numpy implementation of 'interp'
-    # function. In the presence of a predominant constant feature values or a
-    # large number of quantiles, a single feature value is mapped to different
-    # quantiles.  The default behaviour of 'interp' will be returning the
-    # largest quantile associated to the feature value. This test attends to
-    # check if there is any behavorial changes in the 'interp' function and to
-    # act accordingly.  This implementation subtilities is mention in the
-    # docstring of the 'interp' function.
-
-    unique_feature = [0, 0.5, 1]
-    X = np.transpose([[unique_feature[0]] * 1 +
-                      [unique_feature[1]] * 7 +
-                      [unique_feature[2]] * 2])
-    qt = QuantileTransformer(n_quantiles=100, smoothing_noise=False)
-    qt.fit(X)
-    ref = np.linspace(0., 1., num=qt.n_quantiles)
-    max_quantiles_idx = [np.flatnonzero(qt.quantiles_ == unique_feature[i])[-1]
-                         for i in range(len(unique_feature))]
-    X_trans = np.transpose([[ref[max_quantiles_idx[0]]] * 1 +
-                            [ref[max_quantiles_idx[1]]] * 7 +
-                            [ref[max_quantiles_idx[2]]] * 2])
-    assert_array_almost_equal(qt.transform(X), X_trans)
 
 
 def test_robust_scaler_invalid_range():
