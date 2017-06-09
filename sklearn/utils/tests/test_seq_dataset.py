@@ -10,7 +10,7 @@ from sklearn.utils.seq_dataset import ArrayDataset, CSRDataset, ArrayDataset32
 
 from sklearn.datasets import load_iris
 
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, assert_array_almost_equal
 
 iris = load_iris()
 X = iris.data.astype(np.float64)
@@ -95,10 +95,11 @@ def test_consistency_check_fused_types():
 
     for i in range(5):
         # next sample
-        xi_32, yi32, swi32, idx32 = dataset32._next_py()
-        xi_, yi, swi, idx = dataset64._next_py()
+        xi32, yi32, swi32, idx32 = dataset32._next_py()
+        xi64, yi64, swi64, idx64 = dataset64._next_py()
 
-        xi_data32, _, _ = xi_32
-        xi_data, _, _ = xi_
+        xi_data32, _, _ = xi32
+        xi_data64, _, _ = xi64
         assert_equal(xi_data32.dtype, np.float32)
-        assert_equal(xi_data.dtype, np.float64)
+        assert_equal(xi_data64.dtype, np.float64)
+        assert_array_almost_equal(xi_data64, xi_data32)

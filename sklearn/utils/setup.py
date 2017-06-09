@@ -60,9 +60,8 @@ def configuration(parent_package='', top_path=None):
                      'sklearn/utils/seq_dataset.pxd.tp']
 
     for pyxfiles in pyx_templates:
-        assert pyxfiles.endswith(('.pyx.tp', '.pxd.tp'))
         outfile = pyxfiles[:-3]
-        # if .pxi.in is not updated, no need to output .pxi
+        # if .pyx.tp is not updated, no need to output .pyx
         if (os.path.exists(outfile) and
                 os.stat(pyxfiles).st_mtime < os.stat(outfile).st_mtime):
             continue
