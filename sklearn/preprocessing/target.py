@@ -87,13 +87,17 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     >>> tt.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     TransformedTargetRegressor(check_inverse=True,
-        regressor=LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1,
-                                   normalize=False),
-        func=<ufunc 'log'>, inverse_func=<ufunc 'exp'>, transformer=None)
+                               func=<ufunc 'log'>,
+                               inverse_func=<ufunc 'exp'>,
+                               regressor=LinearRegression(copy_X=True,
+                                                          fit_intercept=True,
+                                                          n_jobs=1,
+                                                          normalize=False),
+                               transformer=None)
     >>> tt.score(X, y)
     1.0
     >>> tt.regressor_.coef_
-    array([[ 2.]])
+    array([ 2.])
 
     """
     def __init__(self, regressor=LinearRegression(), transformer=None,
@@ -121,7 +125,6 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             self.transformer_.fit(y, sample_weight=sample_weight)
         else:
             self.transformer_.fit(y)
-        self.transformer_.fit(y)
         if self.check_inverse:
             n_subsample = min(1000, y.shape[0])
             subsample_idx = np.random.choice(range(y.shape[0]),
@@ -164,10 +167,10 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self._fit_transformer(y_2d, sample_weight)
         self.regressor_ = clone(self.regressor)
         if sample_weight is not None:
-            self.regressor_.fit(X, self.transformer_.transform(y_2d),
+            self.regressor_.fit(X, self.transformer_.fit_transform(y_2d),
                                 sample_weight=sample_weight)
         else:
-            self.regressor_.fit(X, self.transformer_.transform(y_2d))
+            self.regressor_.fit(X, self.transformer_.fit_transform(y_2d))
         return self
 
     def predict(self, X):
@@ -196,7 +199,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             return pred
 
     def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Returns the coefficient R^2 of the prediction in the original space.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the regression
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual sum
