@@ -102,7 +102,3 @@ def test_consistency_check_fused_types():
         xi_data, _, _ = xi_
         assert_equal(xi_data32.dtype, np.float32)
         assert_equal(xi_data.dtype, np.float64)
-
-
-
-
