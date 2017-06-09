@@ -39,7 +39,7 @@ public_modules = [
     'sklearn.naive_bayes',
     # 'sklearn.mixture',
     # 'sklearn.model_selection',
-    # 'sklearn.neighbors',
+    'sklearn.neighbors',
     'sklearn.neural_network',
     # 'sklearn.preprocessing',
     'sklearn.pipeline',
@@ -55,11 +55,12 @@ _docstring_ignores = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
-    'RandomizedPCA',
+    'RandomizedPCA',  # deprecated
     'BaseForest',
     'BaseDecisionTree',
     'ExtraTreeClassifier',
     'ExtraTreeRegressor',
+    'GaussianProcess',  # deprecated
 ]
 
 _tab_ignores = [

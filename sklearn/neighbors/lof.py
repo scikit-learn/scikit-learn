@@ -55,12 +55,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default=2)
-        Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
     metric : string or callable, default 'minkowski'
         metric used for the distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
@@ -88,6 +82,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         See the documentation for scipy.spatial.distance for details on these
         metrics:
         http://docs.scipy.org/doc/scipy/reference/spatial.distance.html
+
+    p : integer, optional (default=2)
+        Parameter for the Minkowski metric from
+        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.

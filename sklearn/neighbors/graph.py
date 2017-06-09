@@ -57,11 +57,6 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
         The default distance is 'euclidean' ('minkowski' metric with the p
         param equal to 2.)
 
-    include_self : bool, default=False.
-        Whether or not to mark each sample as the first nearest neighbor to
-        itself. If `None`, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibilty.
-
     p : int, default 2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -69,6 +64,11 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     metric_params : dict, optional
         additional keyword arguments for the metric function.
+
+    include_self : bool, default=False.
+        Whether or not to mark each sample as the first nearest neighbor to
+        itself. If `None`, then True is used for mode='connectivity' and False
+        for mode='distance' as this will preserve backwards compatibilty.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -132,11 +132,6 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
         gives a list of available metrics. The default distance is
         'euclidean' ('minkowski' metric with the param equal to 2.)
 
-    include_self : bool, default=False
-        Whether or not to mark each sample as the first nearest neighbor to
-        itself. If `None`, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibilty.
-
     p : int, default 2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -144,6 +139,11 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     metric_params : dict, optional
         additional keyword arguments for the metric function.
+
+    include_self : bool, default=False
+        Whether or not to mark each sample as the first nearest neighbor to
+        itself. If `None`, then True is used for mode='connectivity' and False
+        for mode='distance' as this will preserve backwards compatibilty.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
