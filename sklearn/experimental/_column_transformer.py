@@ -24,8 +24,8 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
 class ColumnTransformer(FeatureUnion):
     """Applies transformers to columns of an array or pandas DataFrame.
 
-    This estimator applies transformer objects to columns or fields of the
-    input, then concatenates the results. This is useful for heterogeneous or
+    This estimator applies transformer objects to columns of the input,
+    then concatenates the results. This is useful for heterogeneous or
     columnar data, to combine several feature extraction mechanisms into a
     single transformer.
 
@@ -37,9 +37,8 @@ class ColumnTransformer(FeatureUnion):
         List of (name, transformer, column) tuples specifying the transformer
         objects to be applied to subsets of the data. The columns can be
         specified as a scalar or slice/list (for multiple columns) of integer
-        or string values. Integers are interpreted as the positional columns,
-        strings as the keys (column labels) of `X`. Also a boolean mask on the
-        columns is supported.
+        or string values, or a boolean mask. Integers are interpreted as the
+        positional columns, strings as the column labels of `X`.
         When passing a single column to a transformer that expects 2D input
         data, the column should be specified a list of one element.
 
@@ -56,7 +55,7 @@ class ColumnTransformer(FeatureUnion):
     >>> from sklearn.preprocessing import Normalizer
     >>> union = ColumnTransformer(
     ...     [("norm1", Normalizer(norm='l1'), [0, 1]),
-    ...      ("norm2", Normalizer(norm='l1'), [2, 3])])
+    ...      ("norm2", Normalizer(norm='l1'), slice(2, 4))])
     >>> X = np.array([[0., 1., 2., 2.],
     ...               [1., 1., 0., 1.]])
     >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
@@ -120,7 +119,9 @@ class ColumnTransformer(FeatureUnion):
         -------
         X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            sum of n_components (output dimension) over transformers. If
+            one result is a sparse matrix, everything will be converted to
+            sparse matrices.
         """
         try:
             return super(ColumnTransformer, self).fit_transform(X, y=y,
@@ -144,7 +145,9 @@ class ColumnTransformer(FeatureUnion):
         -------
         X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            sum of n_components (output dimension) over transformers. If
+            one result is a sparse matrix, everything will be converted to
+            sparse matrices.
         """
         try:
             return super(ColumnTransformer, self).transform(X)
@@ -202,7 +205,7 @@ def _get_column(X, key):
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
-                         "strings is allowed")
+                         "strings, or boolean mask is allowed")
 
     if column_names:
         if hasattr(X, 'loc'):

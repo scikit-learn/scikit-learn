@@ -728,7 +728,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans,  X_sel, y)
+            delayed(_fit_one_transformer)(trans, X_sel, y)
             for _, trans, X_sel, _ in self._iter(X=X))
         self._update_transformer_list(transformers)
         return self

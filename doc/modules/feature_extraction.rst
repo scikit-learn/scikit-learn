@@ -118,7 +118,8 @@ for example using `pandas <http://pandas.pydata.org/>`__.
 The :class:`~sklearn.experimental.ColumnTransformer` is a convenient way to perform heterogeneous
 preprocessing on data columns within a scikit-learn pipeline (for example,
 when you want to adjust preprocessing parameters within a grid search).
-The :class:`~sklearn.experimental.ColumnTransformer` works on (sparse) arrays and pandas dataframes.
+The :class:`~sklearn.experimental.ColumnTransformer` works on arrays, sparse matrices
+and pandas dataframes.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -129,14 +130,12 @@ preprocessing or a specific feature extraction method::
   ...      'title': ["His Last Bow", "How Watson Learned the Trick",
   ...                "A Moveable Feast", "The Great Gatsby"]})
 
-For this data, we might want to apply a :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
-to the ``'city'`` column, but a :class:`feature_extraction.text.CountVectorizer <sklearn.feature_extraction.text.CountVectorizer>`
+For this data, we might want to encode 'city' column as categorical variable, but apply a :class:`feature_extraction.text.CountVectorizer <sklearn.feature_extraction.text.CountVectorizer>`
 to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give each
 transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
 
   >>> from sklearn.experimental import ColumnTransformer
-  >>> from sklearn.preprocessing import OneHotEncoder
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> column_trans = ColumnTransformer(
   ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),

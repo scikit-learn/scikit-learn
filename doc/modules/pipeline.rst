@@ -218,7 +218,8 @@ and the feature matrices they output are concatenated side-by-side into a
 larger matrix.
 When you want to apply different transformations to each field of the data,
 producing a homogeneous feature matrix from a heterogeneous data source,
-see the related class :class:`ColumnTransformer`.
+see the related class :class:`sklearn.experimental.ColumnTransformer`
+(see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.

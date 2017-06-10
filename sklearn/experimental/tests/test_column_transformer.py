@@ -1,5 +1,5 @@
 """
-Test the pipeline module.
+Test the ColumnTransformer.
 """
 
 import numpy as np
@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import SkipTest
 
 from sklearn.base import BaseEstimator
@@ -35,7 +36,6 @@ class SparseMatrixTrans(BaseEstimator):
 
 
 def test_column_transformer():
-    # array
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     X_res_first1D = np.array([0, 1, 2])
@@ -93,14 +93,14 @@ def test_column_transformer():
 
 
 def test_column_transformer_dataframe():
-    # dataframe
     try:
         import pandas as pd
-        X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-        X_df = pd.DataFrame(X_array, columns=['first', 'second'])
     except ImportError:
         raise SkipTest("pandas is not installed: skipping ColumnTransformer "
                        "tests for DataFrames.")
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_df = pd.DataFrame(X_array, columns=['first', 'second'])
 
     X_res_first1D = np.array([0, 1, 2])
     X_res_first2D = X_res_first1D.reshape(-1, 1)
@@ -208,54 +208,34 @@ def test_column_transformer_dataframe():
     ct = ColumnTransformer([('trans', TransAssert(), ['first', 'second'])])
     ct.fit_transform(X_df)
 
+    # integer column spec + integer column names -> still use positional
+    X_df2 = X_df.copy()
+    X_df2.columns = [1, 0]
+    ct = ColumnTransformer([('trans', Trans(), 0)])
+    assert_array_equal(ct.fit_transform(X_df), X_res_first1D)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first1D)
+
 
 def test_column_transformer_sparse_array():
     X_sparse = sparse.eye(3, 2).tocsr()
 
     # no distinction between 1D and 2D
-    X_res_first = X_sparse[:, 0].A
-    X_res_both = X_sparse.A
+    X_res_first = X_sparse[:, 0]
+    X_res_both = X_sparse
 
-    col_trans = ColumnTransformer([('trans', Trans(), 0)])
-    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
-    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_first)
-    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
-                       X_res_first)
+    for col in [0, [0], slice(0, 1)]:
+        ct = ColumnTransformer([('trans', Trans(), col)])
+        assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
+        assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_first)
+        assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
+                                     X_res_first)
 
-    col_trans = ColumnTransformer([('trans', Trans(), [0])])
-    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
-    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_first)
-    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
-                       X_res_first)
-
-    col_trans = ColumnTransformer([('trans', Trans(), [0, 1])])
-    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
-    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_both)
-    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
-                       X_res_both)
-
-    col_trans = ColumnTransformer([('trans', Trans(), slice(0, 1))])
-    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
-    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_first)
-    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
-                       X_res_first)
-
-    col_trans = ColumnTransformer([('trans', Trans(), slice(0, 2))])
-    assert_true(sparse.issparse(col_trans.fit_transform(X_sparse)))
-    assert_array_equal(col_trans.fit_transform(X_sparse).A, X_res_both)
-    assert_array_equal(col_trans.fit(X_sparse).transform(X_sparse).A,
-                       X_res_both)
-
-
-def test_column_transformer_2D_array_items():
-    union = ColumnTransformer(
-        [("norm1", Normalizer(norm='l1'), [0, 1]),
-         ("norm2", Normalizer(norm='l1'), [2, 3])])
-    X = np.array([[0., 1., 2., 2.],
-                  [1., 1., 0., 1.]])
-    X_res = np.array([[0., 1., 0.5, 0.5],
-                      [0.5, 0.5, 0., 1.]])
-    assert_array_equal(union.fit_transform(X), X_res)
+    for col in [[0, 1], slice(0, 2)]:
+        ct = ColumnTransformer([('trans', Trans(), col)])
+        assert_true(sparse.issparse(ct.fit_transform(X_sparse)))
+        assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
+        assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
+                                     X_res_both)
 
 
 def test_column_transformer_sparse_stacking():
@@ -277,6 +257,22 @@ def test_column_transformer_error_msg_1D():
                          col_trans.fit, X_array)
     assert_raise_message(ValueError, "1D data passed to a transformer",
                          col_trans.fit_transform, X_array)
+
+
+def test_column_transformer_invalid_columns():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    # general invalid
+    for col in [1.5, ['string', 1], slice(1, 's')]:
+        ct = ColumnTransformer([('trans', Trans(), col)])
+        assert_raise_message(ValueError, "No valid specification",
+                             ct.fit, X_array)
+
+    # invalid for arrays
+    for col in ['string', ['string', 'other'], slice('a', 'b')]:
+        ct = ColumnTransformer([('trans', Trans(), col)])
+        assert_raise_message(ValueError, "Specifying the columns",
+                             ct.fit, X_array)
 
 
 def test_make_column_transformer():
