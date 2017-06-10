@@ -753,7 +753,7 @@ Classifiers and Regressors
      :issue:`5291` by `Manoj Kumar`_.
 
    - Added the :class:`multioutput.MultiOutputRegressor` meta-estimator. It
-     converts single output regressors to multi-ouput regressors by fitting
+     converts single output regressors to multi-output regressors by fitting
      one regressor per output. By :user:`Tim Head <betatim>`.
 
 Other estimators
