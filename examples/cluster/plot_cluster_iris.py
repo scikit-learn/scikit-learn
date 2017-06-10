@@ -58,7 +58,7 @@ for name, est in estimators.items():
     ax.set_xlabel('Petal width')
     ax.set_ylabel('Sepal length')
     ax.set_zlabel('Petal length')
-    ax.set_title(titles[fignum-1])
+    ax.set_title(titles[fignum - 1])
     ax.dist = 12
     fignum = fignum + 1
 
