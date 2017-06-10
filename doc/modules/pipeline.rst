@@ -280,10 +280,10 @@ Many datasets contain features of different types, say text, floats and dates,
 where each type of feature requires separate preprocessing.
 Often it is easiest to preprocess data before applying scikit-learn methods,
 for example using :ref:`pandas <http://pandas.pydata.org/>`__.
-The :class:`ColumnTransformer` is a convenient way to perform heterogeneous
+The :class:`~sklearn.experimental.ColumnTransformer` is a convenient way to perform heterogeneous
 preprocessing on data columns within a scikit-learn pipeline (for example,
 when you want to adjust preprocessing parameters within a grid search).
-The :class:`ColumnTransformer` works on arrays and pandas dataframes.
+The :class:`~sklearn.experimental.ColumnTransformer` works on arrays and pandas dataframes.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -298,7 +298,7 @@ For this data, we might want to apply a :class:`~sklearn.preprocessing.OneHotEnc
 As we might use multiple feature extraction methods on the same column, we give each
 transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
 
-  >>> from sklearn.pipeline import ColumnTransformer
+  >>> from sklearn.experimental import ColumnTransformer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> column_trans = ColumnTransformer(

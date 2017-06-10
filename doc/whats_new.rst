@@ -62,7 +62,7 @@ New features
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
 
-   - Added :class:`pipeline.ColumnTransformer`, which allows to apply
+   - Added :class:`experimental.ColumnTransformer`, which allows to apply
      different transformers to different columns of arrays or or pandas
      dataframes. By `Andreas Müller`_ and `Joris Van den Bossche`_.
 
