@@ -65,8 +65,8 @@ for idx, clf, tt in zip(product([0, 1], [0, 1]),
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
 
-    axarr[idx[0], idx[1]].contourf(xx, yy, Z, alpha=0.4, cmap=plt.cm.Paired)
-    axarr[idx[0], idx[1]].scatter(X[:, 0], X[:, 1], c=y, alpha=0.8,
+    axarr[idx[0], idx[1]].contourf(xx, yy, Z, alpha=0.4)
+    axarr[idx[0], idx[1]].scatter(X[:, 0], X[:, 1], c=y,
                                   s=20, edgecolor='black')
     axarr[idx[0], idx[1]].set_title(tt)
 
