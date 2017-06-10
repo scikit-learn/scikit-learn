@@ -107,7 +107,6 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
-
     """
     if not eps > 0.0:
         raise ValueError("eps must be positive.")

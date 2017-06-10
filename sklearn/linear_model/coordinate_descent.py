@@ -258,7 +258,6 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     LassoCV
     LassoLarsCV
     sklearn.decomposition.sparse_encode
-
     """
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
@@ -1346,7 +1345,6 @@ class LassoCV(LinearModelCV, RegressorMixin):
     LassoLars
     Lasso
     LassoLarsCV
-
     """
     path = staticmethod(lasso_path)
 

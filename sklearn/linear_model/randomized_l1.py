@@ -308,7 +308,6 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     See also
     --------
     RandomizedLogisticRegression, Lasso, ElasticNet
-
     """
     def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
                  n_resampling=200, selection_threshold=.25,
