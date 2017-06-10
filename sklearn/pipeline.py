@@ -23,7 +23,7 @@ from .utils import Bunch
 
 from .utils.metaestimators import _BaseComposition
 
-__all__ = ['Pipeline', 'FeatureUnion', 'ColumnTransformer']
+__all__ = ['Pipeline', 'FeatureUnion']
 
 
 class Pipeline(_BaseComposition):

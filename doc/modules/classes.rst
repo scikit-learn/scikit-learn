@@ -1160,7 +1160,6 @@ See the :ref:`metrics` section of the user guide for further details.
 
    pipeline.Pipeline
    pipeline.FeatureUnion
-   pipleline.ColumnTransformer
 
 .. autosummary::
    :toctree: generated/
@@ -1382,6 +1381,27 @@ Low-level methods
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
+
+
+.. _experimental_ref:
+
+:mod:`sklearn.experimental`: Experimental functionality
+=======================================================
+
+.. automodule:: sklearn.experimental
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`tree` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   experimental.ColumnTransformer
+
 
 Recently deprecated
 ===================

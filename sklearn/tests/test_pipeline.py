@@ -21,8 +21,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
 
 from sklearn.base import clone, BaseEstimator
-from sklearn.pipeline import (Pipeline, FeatureUnion, make_pipeline,
-                              make_union)
+from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
