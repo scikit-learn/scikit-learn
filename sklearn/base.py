@@ -13,6 +13,8 @@ from .utils.fixes import signature
 from . import __version__
 
 _DEFAULT_TAGS = {
+    'deterministic': True,
+    'requires_positive_data': False,
     'input_types': ['2darray'],
     'test_accuracy': True,
     'input_validation': True,
@@ -331,7 +333,6 @@ class BaseEstimator(object):
             super(BaseEstimator, self).__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
-
 
 
 class ClassifierMixin(object):
