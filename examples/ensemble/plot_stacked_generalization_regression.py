@@ -49,7 +49,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                     random_state=RANDOM_SEED)
 
 # Base regressors
-lasso = LassoCV()
+lasso = LassoCV(random_state=RANDOM_SEED)
 ridge = RidgeCV()
 svr = SVR(C=1e2, gamma=1e-3)
 
@@ -61,7 +61,7 @@ def evaluate_and_log_model(name, model, plot_idx):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     score = mean_squared_error(y_test, y_pred)
-    print "MSE for %s: %.5f" %(name, score)
+    print "MSE for %s: %.5f" % (name, score)
 
     plt.subplot(SUBPLOT_OFFSET + plot_idx)
     plt.title(name)
