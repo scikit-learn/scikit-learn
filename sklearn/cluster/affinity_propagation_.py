@@ -72,7 +72,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx-glr-auto-examples-cluster-plot-affinity-propagation-py>`.
+    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
 
     References
     ----------
@@ -245,7 +245,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx-glr-auto-examples-cluster-plot-affinity-propagation-py>`.
+    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.

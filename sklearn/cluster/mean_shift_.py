@@ -173,7 +173,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_mean_shift.py
-    <sphx-glr-auto-examples-cluster-plot-mean-shift-py>`.
+    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
     """
 

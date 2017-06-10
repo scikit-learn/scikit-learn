@@ -29,7 +29,7 @@ Notes
 
 For an example of using this dataset, see
 :ref:`examples/applications/plot_species_distribution_modeling.py
-<sphx-glr-auto-examples-applications-plot-species-distribution-modeling-py>`.
+<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
 """
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -206,7 +206,7 @@ def fetch_species_distributions(data_home=None,
 
     * For an example of using this dataset with scikit-learn, see
       :ref:`examples/applications/plot_species_distribution_modeling.py
-      <sphx-glr-auto-examples-applications-plot-species-distribution-modeling-py>`.
+      <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):

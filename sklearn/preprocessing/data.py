@@ -119,7 +119,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     See also
     --------
@@ -251,7 +251,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -413,7 +413,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
@@ -511,7 +511,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
@@ -719,7 +719,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, copy=True):
@@ -852,7 +852,7 @@ def maxabs_scale(X, axis=0, copy=True):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
 
@@ -947,7 +947,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     https://en.wikipedia.org/wiki/Median_(statistics)
     https://en.wikipedia.org/wiki/Interquartile_range
@@ -1099,7 +1099,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     See also
     --------

@@ -90,7 +90,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_dbscan.py
-    <sphx-glr-auto-examples-cluster-plot-dbscan-py>`.
+    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -230,7 +230,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_dbscan.py
-    <sphx-glr-auto-examples-cluster-plot-dbscan-py>`.
+    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
