@@ -2,6 +2,7 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 from inspect import signature
 import numpy as np
+import re
 
 
 def changed_params(estimator):
@@ -16,12 +17,19 @@ def changed_params(estimator):
     return filtered_params
 
 
+def _strip_color(string):
+    return re.sub('\033\[[0-9;]+m', "", string)
+
+
 class _Formatter(object):
     def __init__(self, indent_est='step', changed_only=False,
-                 color_changed=False):
+                 color_changed=False, default_color='\033[38;2;100;100;100m'):
+        # light grey, r=100,g=100,b=100
         self.indent_est = indent_est
         self.changed_only = changed_only
         self.color_changed = color_changed
+
+        self.default_color = default_color
         self.types = {}
         self.htchar = ' '
         self.lfchar = '\n'
@@ -89,16 +97,15 @@ class _Formatter(object):
 
         if self.color_changed:
             changed = changed_params(value)
-            c = '\033[94m'
 
             def color(string, key):
-                if key in changed:
-                    return c + string + '\033[0m'
+                if key not in changed:
+                    return self.default_color + string + '\033[0m'
                 else:
                     return string
 
-            items = [color(str(key), key) + '='
-                     + self.format_all(params[key], indent + offset)
+            items = [color(str(key) + '='
+                     + self.format_all(params[key], indent + offset), key)
                      for key in params]
         else:
             items = [str(key) + '='
@@ -141,11 +148,11 @@ class _Formatter(object):
         for i, item in enumerate(items):
             if i > 0:
                 this_string += ','
-            if pos + len(item) + 1 > self.width:
+            if pos + len(_strip_color(item)) + 1 > self.width:
                 this_string += self.lfchar + self.htchar * indent
                 pos = len(self.htchar * (indent + 1)) + 1
             elif i > 0:
                 this_string += " "
             this_string += item
-            pos += len(item) + 1
+            pos += len(_strip_color(item)) + 1
         return this_string
