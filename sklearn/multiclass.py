@@ -368,6 +368,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         T : array-like, shape = [n_samples, n_classes]
         """
         check_is_fitted(self, 'estimators_')
+        if len(self.estimators_) == 1:
+            return self.estimators_[0].decision_function(X)
         return np.array([est.decision_function(X).ravel()
                          for est in self.estimators_]).T
 
@@ -574,6 +576,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Predicted multi-class targets.
         """
         Y = self.decision_function(X)
+        if self.n_classes_ == 2:
+            return self.classes_[(Y > 0).astype(np.int)]
         return self.classes_[Y.argmax(axis=1)]
 
     def decision_function(self, X):
@@ -606,7 +610,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  for est, Xi in zip(self.estimators_, Xs)]).T
         Y = _ovr_decision_function(predictions,
                                    confidences, len(self.classes_))
-
+        if self.n_classes_ == 2:
+            return Y[:, 1]
         return Y
 
     @property
