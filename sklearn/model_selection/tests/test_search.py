@@ -1317,3 +1317,11 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_deprecated_grid_search_idd():
+    depr_message = ("The `iid` parameter has been deprecated in version 0.19 "
+                    "and will be removed in 0.21.")
+    assert_warns_message(DeprecationWarning, depr_message, GridSearchCV,
+                         SVC(), [], iid=False)
