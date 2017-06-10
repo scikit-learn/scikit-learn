@@ -38,7 +38,8 @@ class ColumnTransformer(FeatureUnion):
         objects to be applied to subsets of the data. The columns can be
         specified as a scalar or slice/list (for multiple columns) of integer
         or string values. Integers are interpreted as the positional columns,
-        strings as the keys (column labels) of `X`.
+        strings as the keys (column labels) of `X`. Also a boolean mask on the
+        columns is supported.
         When passing a single column to a transformer that expects 2D input
         data, the column should be specified a list of one element.
 
@@ -162,11 +163,11 @@ def _get_column(X, key):
 
     Supported key types (key):
     - scalar: output is 1D
-    - lists, slices: output is 2D
+    - lists, slices, boolean masks: output is 2D
 
     Supported key data types:
 
-    - integer (positional):
+    - integer or boolean mask (positional):
         - supported for (sparse) arrays or dataframes
     - string (key-based):
         - only supported for dataframes
@@ -192,6 +193,12 @@ def _get_column(X, key):
                 and isinstance(key.start, (six.string_types, type(None)))
                 and isinstance(key.stop, (six.string_types, type(None))))):
         column_names = True
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool):
+        # boolean mask
+        column_names = False
+        if hasattr(X, 'loc'):
+            # pandas boolean masks don't work with iloc, so take loc path
+            column_names = True
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
