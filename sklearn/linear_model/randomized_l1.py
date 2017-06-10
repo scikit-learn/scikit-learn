@@ -294,7 +294,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_sparse_recovery.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
+    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
 
     References
     ----------
@@ -486,7 +487,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_sparse_recovery.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
+    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
 
     References
     ----------
@@ -621,7 +623,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     Notes
     -----
-    See examples/linear_model/plot_sparse_recovery.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
+    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
     """
     X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     rng = check_random_state(random_state)
