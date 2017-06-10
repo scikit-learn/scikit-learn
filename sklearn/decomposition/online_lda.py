@@ -13,13 +13,13 @@ Link: http://matthewdhoffman.com/code/onlineldavb.tar
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.misc import logsumexp
 from scipy.special import gammaln
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
+from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange

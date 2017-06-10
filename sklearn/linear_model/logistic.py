@@ -15,7 +15,6 @@ import warnings
 
 import numpy as np
 from scipy import optimize, sparse
-from scipy.misc import logsumexp
 from scipy.special import expit
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
@@ -27,6 +26,7 @@ from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
+from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
 from ..exceptions import NotFittedError

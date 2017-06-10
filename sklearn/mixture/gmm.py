@@ -19,10 +19,10 @@ from time import time
 
 import numpy as np
 from scipy import linalg
-from scipy.misc import logsumexp
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, deprecated
+from ..utils.fixes import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
