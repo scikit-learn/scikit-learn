@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy import linalg
 
@@ -5,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -402,6 +405,19 @@ def test_lars_cv():
         lars_cv.fit(X, y)
         np.testing.assert_array_less(old_alpha, lars_cv.alpha_)
         old_alpha = lars_cv.alpha_
+    assert_false(hasattr(lars_cv, 'n_nonzero_coefs'))
+
+
+def test_lars_cv_max_iter():
+    with warnings.catch_warnings(record=True) as w:
+        X = diabetes.data
+        y = diabetes.target
+        rng = np.random.RandomState(42)
+        x = rng.randn(len(y))
+        X = np.c_[X, x, x]  # add correlated features
+        lars_cv = linear_model.LassoLarsCV(max_iter=5)
+        lars_cv.fit(X, y)
+    assert_true(len(w) == 0)
 
 
 def test_lasso_lars_ic():
