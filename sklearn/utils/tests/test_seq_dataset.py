@@ -89,7 +89,7 @@ def test_seq_dataset_shuffle():
         assert_equal(idx1, idx2)
 
 
-def test_consistency_check_fused_types():
+def test_fused_types_consistency():
     dataset32 = ArrayDataset32(X32, y32, sample_weight32, seed=42)
     dataset64 = ArrayDataset(X, y, sample_weight, seed=42)
 
