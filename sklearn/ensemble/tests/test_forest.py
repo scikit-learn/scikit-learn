@@ -14,7 +14,6 @@ from itertools import combinations
 from itertools import product
 
 import numpy as np
-from scipy.misc import comb
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
@@ -42,6 +41,7 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.fixes import comb
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
 

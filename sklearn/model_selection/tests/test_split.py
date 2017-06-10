@@ -5,7 +5,6 @@ import warnings
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
-from scipy.misc import comb
 from itertools import combinations
 from itertools import combinations_with_replacement
 
@@ -56,6 +55,8 @@ from sklearn.datasets import make_classification
 
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
+
+from sklearn.utils.fixes import comb
 
 from sklearn.svm import SVC
 
