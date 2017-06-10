@@ -851,6 +851,7 @@ def dcg_score(y_true, y_score, k=5):
 
 def ndcg_score(y_true, y_score, k=5):
     """Normalized discounted cumulative gain (NDCG) at rank K.
+
     Normalized Discounted Cumulative Gain (NDCG) measures the performance of a
     recommendation system based on the graded relevance of the recommended
     entities. It varies from 0.0 to 1.0, with 1.0 representing the ideal
@@ -889,7 +890,7 @@ def ndcg_score(y_true, y_score, k=5):
     # Make sure we use all the labels (max between the lenght and the higher
     # number in the array)
     lb = LabelBinarizer()
-    lb.fit(range(max(max(y_true) + 1, len(y_true))))
+    lb.fit(np.arange(max(np.max(y_true) + 1, len(y_true))))
     binarized_y_true = lb.transform(y_true)
 
     if binarized_y_true.shape != y_score.shape:

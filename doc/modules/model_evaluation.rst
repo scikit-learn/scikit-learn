@@ -257,7 +257,7 @@ Some also work in the multilabel case:
    zero_one_loss
 
 
-Some work with binary and multilabel (but not multiclass) problems:
+And some work with binary and multilabel (but not multiclass) problems:
 
 .. autosummary::
    :template: function.rst
