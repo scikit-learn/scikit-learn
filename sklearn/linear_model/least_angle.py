@@ -195,7 +195,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             sys.stdout.write('.')
             sys.stdout.flush()
 
-    tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
     tiny32 = np.finfo(np.float32).tiny  # to avoid division by 0 warning
     equality_tolerance = np.finfo(np.float32).eps
 
@@ -300,9 +299,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'Dropping a regressor, after %i iterations, '
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
-                              'the smallest cholesky pivot element being %.3e'
+                              'the smallest cholesky pivot element being %.3e.'
+                              ' Reduce max_iter or increase eps parameters.'
                               % (n_iter, alpha, n_active, diag),
                               ConvergenceWarning)
+
                 # XXX: need to figure a 'drop for good' way
                 Cov = Cov_not_shortened
                 Cov[0] = 0
@@ -370,11 +371,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             corr_eq_dir = np.dot(Gram[:n_active, n_active:].T,
                                  least_squares)
 
-        g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny))
+        g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny32))
         if positive:
             gamma_ = min(g1, C / AA)
         else:
-            g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny))
+            g2 = arrayfuncs.min_pos((C + Cov) / (AA + corr_eq_dir + tiny32))
             gamma_ = min(g1, g2, C / AA)
 
         # TODO: better names for these variables: z
@@ -608,28 +609,8 @@ class Lars(LinearModel, RegressorMixin):
             Gram = None
         return Gram
 
-    def fit(self, X, y, Xy=None):
-        """Fit the model using X, y as training data.
-
-        parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data.
-
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
-            Target values.
-
-        Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
-                optional
-            Xy = np.dot(X.T, y) that can be precomputed. It is useful
-            only when the Gram matrix is precomputed.
-
-        returns
-        -------
-        self : object
-            returns an instance of self.
-        """
-        X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
+    def _fit(self, X, y, max_iter, alpha, fit_path, Xy=None):
+        """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(X, y,
@@ -641,13 +622,6 @@ class Lars(LinearModel, RegressorMixin):
             y = y[:, np.newaxis]
 
         n_targets = y.shape[1]
-
-        alpha = getattr(self, 'alpha', 0.)
-        if hasattr(self, 'n_nonzero_coefs'):
-            alpha = 0.  # n_nonzero_coefs parametrization takes priority
-            max_iter = self.n_nonzero_coefs
-        else:
-            max_iter = self.max_iter
 
         precompute = self.precompute
         if not hasattr(precompute, '__array__') and (
@@ -662,7 +636,7 @@ class Lars(LinearModel, RegressorMixin):
         self.n_iter_ = []
         self.coef_ = np.empty((n_targets, n_features))
 
-        if self.fit_path:
+        if fit_path:
             self.active_ = []
             self.coef_path_ = []
             for k in xrange(n_targets):
@@ -698,7 +672,43 @@ class Lars(LinearModel, RegressorMixin):
             if n_targets == 1:
                 self.alphas_ = self.alphas_[0]
                 self.n_iter_ = self.n_iter_[0]
+
         self._set_intercept(X_offset, y_offset, X_scale)
+        return self
+
+    def fit(self, X, y, Xy=None):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+            Target values.
+
+        Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
+                optional
+            Xy = np.dot(X.T, y) that can be precomputed. It is useful
+            only when the Gram matrix is precomputed.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """
+        X, y = check_X_y(X, y, y_numeric=True, multi_output=True)
+
+        alpha = getattr(self, 'alpha', 0.)
+        if hasattr(self, 'n_nonzero_coefs'):
+            alpha = 0.  # n_nonzero_coefs parametrization takes priority
+            max_iter = self.n_nonzero_coefs
+        else:
+            max_iter = self.max_iter
+
+        self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
+                  Xy=Xy)
+
         return self
 
 
@@ -1145,10 +1155,13 @@ class LarsCV(Lars):
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
-        Lars.fit(self, X, y)
+        self._fit(X, y, max_iter=self.max_iter, alpha=best_alpha,
+                  Xy=None, fit_path=True)
         return self
 
     @property
+    @deprecated("Attribute alpha is deprecated in 0.19 and "
+                "will be removed in 0.21. See 'alpha_' instead")
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
@@ -1282,6 +1295,24 @@ class LassoLarsCV(LarsCV):
     """
 
     method = 'lasso'
+
+    def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
+                 normalize=True, precompute='auto', cv=None,
+                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 copy_X=True, positive=False):
+        self.fit_intercept = fit_intercept
+        self.verbose = verbose
+        self.max_iter = max_iter
+        self.normalize = normalize
+        self.precompute = precompute
+        self.cv = cv
+        self.max_n_alphas = max_n_alphas
+        self.n_jobs = n_jobs
+        self.eps = eps
+        self.copy_X = copy_X
+        self.positive = positive
+        # XXX : we don't use super(LarsCV, self).__init__
+        # to avoid setting n_nonzero_coefs
 
 
 class LassoLarsIC(LassoLars):
