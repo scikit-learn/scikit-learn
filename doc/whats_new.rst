@@ -62,6 +62,13 @@ New features
      during the first epochs of ridge and logistic regression.
      :issue:`8446` by `Arthur Mensch`_.
 
+   - Added :class:`preprocessing.QuantileTransformer` class and
+     :func:`preprocessing.quantile_transform` function for features
+     normalization based on quantiles.
+     :issue:`8363` by :user:`Denis Engemann <dengemann>`,
+     :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
+     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
+
 Enhancements
 ............
 
@@ -194,7 +201,14 @@ Enhancements
 Bug fixes
 .........
 
-   - Fixed a bug in :class:`covariance.MinCovDet` where inputting data
+   - :func:`metrics.ranking.average_precision_score` no longer linearly
+     interpolates between operating points, and instead weighs precisions
+     by the change in recall since the last operating point, as per the
+     `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
+     (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
+     `Nick Dingwall`_ and `Gael Varoquaux`_.
+
+   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
      ``_c_step`` to throw an exception.
      :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
@@ -322,6 +336,7 @@ Bug fixes
      which would return ``'binary'`` if ``y_true`` and ``y_pred`` were
      both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
      ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
+
 
    - Fix :func:`linear_model.BayesianRidge.fit` to return
      ridge parameter `alpha_` and `lambda_` consistent with calculated
