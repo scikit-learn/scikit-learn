@@ -251,7 +251,8 @@ def test_ovr_binary():
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
         assert_equal(set(y_pred), set("eggs"))
-        dec = clf.decision_function(X)
+        if hasattr(base_clf, 'decision_function'):
+            dec = clf.decision_function(X)
         assert_equal(dec.shape, (5,))
 
         if test_predict_proba:
