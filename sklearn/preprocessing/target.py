@@ -7,7 +7,8 @@ import numpy as np
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..linear_model import LinearRegression
 from ..utils.fixes import signature
-from ..utils.validation import check_is_fitted, check_array, check_random_state
+from ..utils.validation import check_is_fitted
+from ..utils import check_array, check_random_state
 from ._function_transformer import FunctionTransformer
 
 __all__ = ['TransformTargetRegressor']
