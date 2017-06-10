@@ -444,7 +444,11 @@ API changes summary
 
    - :class:`cluster.bicluster.SpectralCoclustering` and
      :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
-     :issue:`6126` by `Andreas Müller`_.
+     :issue:`6126` by :user:ldirer
+
+   - :class:`neighbors.approximate.LSHForest` has been deprecated and will be
+     removed in 0.21 due to poor performance.
+     :issue:`8996` by `Andreas Müller`_.
 
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
      for scikit-learn. The following backported functions in
@@ -477,6 +481,7 @@ API changes summary
      - ``utils.random.choice``
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
+     - ``neighbors.approximate.LSHForest``
 
 
 .. _changes_0_18_1:
