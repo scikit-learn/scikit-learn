@@ -1,6 +1,7 @@
 """
-The :mod:`sklearn.pipeline` module implements utilities to build a composite
-estimator, as a chain of transforms and estimators.
+The :mod:`sklearn.experimental._column_transformer` module implements utilities
+to work with heterogeneous data and to apply different transformers to
+different columns.
 """
 # Author: Andreas Mueller
 #         Joris Van den Bossche
