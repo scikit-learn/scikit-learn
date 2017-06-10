@@ -17,6 +17,7 @@ import argparse
 from sklearn.externals.joblib import Memory
 from sklearn.datasets import fetch_mldata
 from sklearn.manifold import TSNE
+from sklearn.manifold.t_sne import trustworthiness
 from sklearn.decomposition import PCA
 from sklearn.utils import check_array
 
@@ -51,21 +52,25 @@ if __name__ == "__main__":
                         "correctly installed, run it in the benchmark.")
     parser.add_argument('--all', action='store_true',
                         help="if set, run the benchmark with the whole MNIST."
-                        "dataset. Note that it will take up to 1hour.")
+                             "dataset. Note that it will take up to 1 hour.")
     parser.add_argument('--profile', action='store_true',
                         help="if set, run the benchmark with a memory "
-                        "profiler.")
+                             "profiler.")
     parser.add_argument('--verbose', type=int, default=0)
     parser.add_argument('--n_jobs', type=int, nargs="+", default=2,
                         help="Number of CPU used to fit sklearn.TSNE")
     parser.add_argument('--pca-components', type=int, default=50,
-                        help="Number of principal components for preprocessing.")
+                        help="Number of principal components for "
+                             "preprocessing.")
     args = parser.parse_args()
 
     X, y = load_data(order=args.order)
 
     if args.pca_components > 0:
+        t0 = time()
         X = PCA(n_components=args.pca_components).fit_transform(X)
+        print("PCA preprocessing down to {} dimensions took {:0.3f}s"
+              .format(args.pca_components, time() - t0))
 
     methods = []
 
@@ -73,37 +78,36 @@ if __name__ == "__main__":
     if isinstance(args.n_jobs, int):
         tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
                     verbose=args.verbose, n_jobs=args.n_jobs)
-        methods += [("sklearn.TSNE", tsne.fit_transform)]
+        methods += [("sklearn TSNE", tsne.fit_transform)]
     elif isinstance(args.n_jobs, list):
         for n_jobs in args.n_jobs:
             tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
                         verbose=args.verbose, n_jobs=n_jobs)
-            methods += [("sklearn.TSNE_n_jobs{}".format(n_jobs),
+            methods += [("sklearn TSNE (n_jobs={})".format(n_jobs),
                         tsne.fit_transform)]
 
     if args.bhtsne:
         try:
             from bhtsne.bhtsne import run_bh_tsne
         except ImportError:
-            raise ImportError(
-                """
-        If you want comparison with the reference implementation, build the
-        binary from source (https://github.com/lvdmaaten/bhtsne) in the folder
-        benchmarks/bhtsne and add an empty `__init__.py` file in the folder:
+            raise ImportError("""\
+If you want comparison with the reference implementation, build the
+binary from source (https://github.com/lvdmaaten/bhtsne) in the folder
+benchmarks/bhtsne and add an empty `__init__.py` file in the folder:
 
-        $ git clone git@github.com:lvdmaaten/bhtsne.git
-        $ cd bhtsne
-        $ g++ sptree.cpp tsne.cpp tsne_main.cpp -o bh_tsne -O2
-        $ touch __init__.py
-        $ cd ..
-                   """
-            )
+$ git clone git@github.com:lvdmaaten/bhtsne.git
+$ cd bhtsne
+$ g++ sptree.cpp tsne.cpp tsne_main.cpp -o bh_tsne -O2
+$ touch __init__.py
+$ cd ..
+""")
 
         def bhtsne(X):
-            """wrapper for LvdM bhtsne implementation."""
-            return run_bh_tsne(X, use_pca=False,
-                               perplexity=args.perplexity, verbose=False)
-        methods += [("LvdM.bhtsne", bhtsne)]
+            """Wrapper for the reference lvdmaaten/bhtsne implementation."""
+            # PCA preprocessing is done elsewhere in the benchmark script
+            return run_bh_tsne(X, use_pca=False, perplexity=args.perplexity,
+                               verbose=False)
+        methods += [("lvdmaaten/bhtsne", bhtsne)]
 
     if args.profile:
 
@@ -130,9 +134,11 @@ if __name__ == "__main__":
             t0 = time()
             X_embedded = method(X_train)
             duration = time() - t0
-            print("Fitting {} on {} samples took {:.3f}s"
-                  .format(name, n, duration))
+            tw = trustworthiness(X_train, X_embedded)
+            print("Fitting {} on {} samples took {:.3f}s, "
+                  "trustworthiness: {:0.3f}".format(name, n, duration, tw))
             results.append(dict(method=name, duration=duration, n_samples=n))
             with open(log_filename, 'w', encoding='utf-8') as f:
                 json.dump(results, f)
-            np.save('mnist_{}_{}.npy'.format(name, n), X_embedded)
+            np.save('mnist_{}_{}.npy'.format(name.replace("/", '-'), n),
+                    X_embedded)
