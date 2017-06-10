@@ -302,7 +302,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
                       n_iter_check=1, n_iter_without_progress=50,
-                      momentum=0.5, learning_rate=1000.0, min_gain=0.01,
+                      momentum=0.8, learning_rate=200.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
     """Batch gradient descent with momentum and individual gains.
@@ -337,13 +337,16 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         Maximum number of iterations without progress before we abort the
         optimization.
 
-    momentum : float, within (0.0, 1.0), optional (default: 0.5)
+    momentum : float, within (0.0, 1.0), optional (default: 0.8)
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 1000.0)
-        The learning rate should be extremely high for t-SNE! Values in the
-        range [100.0, 1000.0] are common.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers.
 
     min_gain : float, optional (default: 0.01)
         Minimum individual gain for each parameter.
@@ -530,7 +533,7 @@ class TSNE(BaseEstimator):
         between 5 and 50. The choice is not extremely critical since t-SNE
         is quite insensitive to this parameter.
 
-    early_exaggeration : float, optional (default: 4.0)
+    early_exaggeration : float, optional (default: 12.0)
         Controls how tight natural clusters in the original space are in
         the embedded space and how much space will be between them. For
         larger values, the space between natural clusters will be larger
@@ -539,16 +542,17 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, optional (default: 1000)
-        The learning rate can be a critical parameter. It should be
-        between 100 and 1000. If the cost function increases during initial
-        optimization, the early exaggeration factor or the learning rate
-        might be too high. If the cost function gets stuck in a bad local
-        minimum increasing the learning rate helps sometimes.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers. If the cost function gets stuck in a bad local
+        minimum increasing the learning rate may help.
 
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
-        least 200.
+        least 250.
 
     n_iter_without_progress : int, optional (default: 30)
         Only used if method='exact'
@@ -665,7 +669,7 @@ class TSNE(BaseEstimator):
     """
 
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
+                 early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5, n_jobs=1,
@@ -843,15 +847,14 @@ class TSNE(BaseEstimator):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
         # and the Student's t-distributions Q. The optimization algorithm that
-        # we use is batch gradient descent with three stages:
-        # * early exaggeration with momentum 0.5
-        # * early exaggeration with momentum 0.8
-        # * final optimization with momentum 0.8
+        # we use is batch gradient descent with two stages:
+        # * initial optimization with early exaggeration and momentum at 0.5
+        # * final optimization with momentum at 0.8
         # The embedding is initialized with iid samples from Gaussians with
         # standard deviation 1e-4.
         params = X_embedded.ravel()
 
-        opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
+        opt_args = {"it": 0,
                     "learning_rate": self.learning_rate,
                     "n_iter_without_progress": self.n_iter_without_progress,
                     "verbose": self.verbose, "n_iter_check": 25,
@@ -876,27 +879,29 @@ class TSNE(BaseEstimator):
             opt_args['min_error_diff'] = 0.0
             opt_args['min_grad_norm'] = self.min_grad_norm
 
-        # Early exaggeration
+        # Learning schedule (part 1): do 250 iteration with lower momentum but
+        # higher learning rate controlled via the early exageration parameter
+        opt_args['n_iter'] = 250
+        opt_args['momentum'] = 0.5
         P *= self.early_exaggeration
 
         params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                       **opt_args)
-        opt_args['n_iter'] = 100
-        opt_args['momentum'] = 0.8
-        opt_args['it'] = it + 1
-        params, kl_divergence, it = _gradient_descent(obj_func, params,
-                                                      **opt_args)
-
         if self.verbose:
             print("[t-SNE] KL divergence after %d iterations with early "
                   "exaggeration: %f" % (it + 1, kl_divergence))
 
-        # Final optimization
+        # Learning schedule (part 2): disable early exaggeration and finish
+        # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        opt_args['n_iter'] = self.n_iter
-        opt_args['it'] = it + 1
-        params, kl_divergence, it = _gradient_descent(obj_func, params,
-                                                      **opt_args)
+        remaining = self.n_iter - 250
+        if remaining > 0:
+            opt_args['n_iter'] = self.n_iter
+            opt_args['it'] = it + 1
+            opt_args['momentum'] = 0.8
+            params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                          **opt_args)
+
         # Save the final number of iterations
         self.n_iter_ = it
 

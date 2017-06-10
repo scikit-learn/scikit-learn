@@ -39,7 +39,8 @@ def load_data(dtype=np.float32, order='C'):
 
 
 def tsne_fit_transform(model, data):
-    return model.fit_transform(data)
+    transformed = model.fit_transform(data)
+    return transformed, model.n_iter_
 
 
 if __name__ == "__main__":
@@ -78,13 +79,14 @@ if __name__ == "__main__":
     if isinstance(args.n_jobs, int):
         tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
                     verbose=args.verbose, n_jobs=args.n_jobs)
-        methods += [("sklearn TSNE", tsne.fit_transform)]
+        methods += [("sklearn TSNE",
+                     lambda data: tsne_fit_transform(tsne, data))]
     elif isinstance(args.n_jobs, list):
         for n_jobs in args.n_jobs:
             tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
                         verbose=args.verbose, n_jobs=n_jobs)
             methods += [("sklearn TSNE (n_jobs={})".format(n_jobs),
-                        tsne.fit_transform)]
+                        lambda data: tsne_fit_transform(tsne, data))]
 
     if args.bhtsne:
         try:
@@ -105,8 +107,9 @@ $ cd ..
         def bhtsne(X):
             """Wrapper for the reference lvdmaaten/bhtsne implementation."""
             # PCA preprocessing is done elsewhere in the benchmark script
+            n_iter = -1  # TODO find a way to report the number of iterations
             return run_bh_tsne(X, use_pca=False, perplexity=args.perplexity,
-                               verbose=False)
+                               verbose=False), n_iter
         methods += [("lvdmaaten/bhtsne", bhtsne)]
 
     if args.profile:
@@ -132,11 +135,12 @@ $ cd ..
         for name, method in methods:
             print("Fitting {} on {} samples...".format(name, n))
             t0 = time()
-            X_embedded = method(X_train)
+            X_embedded, n_iter = method(X_train)
             duration = time() - t0
             tw = trustworthiness(X_train, X_embedded)
-            print("Fitting {} on {} samples took {:.3f}s, "
-                  "trustworthiness: {:0.3f}".format(name, n, duration, tw))
+            print("Fitting {} on {} samples took {:.3f}s in {:d} iterations, "
+                  "trustworthiness: {:0.3f}".format(
+                      name, n, duration, n_iter, tw))
             results.append(dict(method=name, duration=duration, n_samples=n))
             with open(log_filename, 'w', encoding='utf-8') as f:
                 json.dump(results, f)
