@@ -142,8 +142,9 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
   ...      ('title_bow', CountVectorizer(), 'title')])
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, transformer_weights=None,
-      transformers=...)
+  ColumnTransformer(n_jobs=1,
+      transformer_list=...
+      transformer_weights=None)
 
   >>> column_trans.get_feature_names() == [
   ...    'city_category__London', 'city_category__New York', 'city_category__Paris',

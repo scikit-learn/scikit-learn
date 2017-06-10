@@ -7,6 +7,6 @@ from sklearn.utils.testing import SkipTest
 
 def setup(module):
     try:
-        import pandas
+        import pandas  # noqa
     except ImportError:
         raise SkipTest("pandas not installed")
