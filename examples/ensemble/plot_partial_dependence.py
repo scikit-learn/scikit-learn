@@ -96,7 +96,7 @@ def main():
     Z = pdp[0].reshape(list(map(np.size, axes))).T
     ax = Axes3D(fig)
     surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
-                           cmap=plt.cm.BuPu, edgecolor='black')
+                           cmap=plt.cm.BuPu, edgecolor='k')
     ax.set_xlabel(names[target_feature[0]])
     ax.set_ylabel(names[target_feature[1]])
     ax.set_zlabel('Partial dependence')

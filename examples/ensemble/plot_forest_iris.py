@@ -153,7 +153,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         # black outline
         plt.scatter(X[:, 0], X[:, 1], c=y,
                     cmap=ListedColormap(['r', 'y', 'b']),
-                    edgecolor='black', s=20)
+                    edgecolor='k', s=20)
         plot_idx += 1  # move on to the next plot in sequence
 
 plt.suptitle("Classifiers on feature subsets of the Iris dataset")

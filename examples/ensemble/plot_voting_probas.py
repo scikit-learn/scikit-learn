@@ -57,15 +57,15 @@ fig, ax = plt.subplots()
 
 # bars for classifier 1-3
 p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width,
-            color='green', edgecolor='black')
+            color='green', edgecolor='k')
 p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width,
-            color='lightgreen', edgecolor='black')
+            color='lightgreen', edgecolor='k')
 
 # bars for VotingClassifier
 p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width,
-            color='blue', edgecolor='black')
+            color='blue', edgecolor='k')
 p4 = ax.bar(ind + width, [0, 0, 0, class2_1[-1]], width,
-            color='steelblue', edgecolor='black')
+            color='steelblue', edgecolor='k')
 
 # plot annotations
 plt.axvline(2.8, color='k', linestyle='dashed')
