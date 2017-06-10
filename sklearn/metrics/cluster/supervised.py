@@ -18,11 +18,11 @@ from __future__ import division
 from math import log
 
 import numpy as np
-from scipy.misc import comb
 from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
+from ...utils.fixes import comb
 
 
 def comb2(n):

@@ -11,8 +11,6 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 import warnings
-import sys
-import functools
 import os
 import errno
 
@@ -35,6 +33,7 @@ def _parse_version(version_string):
             # x may be of the form dev-1ea1592
             version.append(x)
     return tuple(version)
+
 
 euler_gamma = getattr(np, 'euler_gamma',
                       0.577215664901532860606512090082402431)
@@ -142,11 +141,17 @@ if sp_version < (0, 15):
     # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
 else:
-    from scipy.sparse.linalg import lsqr as sparse_lsqr
+    from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
+
+
+try:  # SciPy >= 0.19
+    from scipy.special import comb, logsumexp
+except ImportError:
+    from scipy.misc import comb, logsumexp  # noqa
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
-    """Helper to workaround Python 2 limitations of pickling instance methods"""
+    """Workaround for Python 2 limitations of pickling instance methods"""
     return getattr(obj, methodname)(*args, **kwargs)
 
 
