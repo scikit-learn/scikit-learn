@@ -1322,7 +1322,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     """
     if norm not in ('l1', 'l2', 'max'):
@@ -1409,7 +1409,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
 
     See also
@@ -2041,7 +2041,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
@@ -2425,7 +2425,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     -----
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
-    <sphx-glr-auto-examples-preprocessing-plot-all-scaling-py>`.
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
