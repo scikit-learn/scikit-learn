@@ -20,18 +20,23 @@ from sklearn.manifold import TSNE
 from sklearn.manifold.t_sne import trustworthiness
 from sklearn.decomposition import PCA
 from sklearn.utils import check_array
+from sklearn.utils import shuffle as _shuffle
 
 
 memory = Memory('mnist_tsne_benchmark_data', mmap_mode='r')
 
 
 @memory.cache
-def load_data(dtype=np.float32, order='C'):
+def load_data(dtype=np.float32, order='C', shuffle=True, seed=0):
     """Load the data, then cache and memmap the train/test split"""
     print("Loading dataset...")
     data = fetch_mldata('MNIST original')
+
     X = check_array(data['data'], dtype=dtype, order=order)
     y = data["target"]
+
+    if shuffle:
+        X, y = _shuffle(X, y, random_state=seed)
 
     # Normalize features
     X /= 255
