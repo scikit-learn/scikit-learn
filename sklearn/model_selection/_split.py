@@ -22,14 +22,13 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from scipy.misc import comb
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
-from ..utils.fixes import signature
+from ..utils.fixes import signature, comb
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
