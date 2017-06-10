@@ -102,4 +102,4 @@ def test_consistency_check_fused_types():
         xi_data64, _, _ = xi64
         assert_equal(xi_data32.dtype, np.float32)
         assert_equal(xi_data64.dtype, np.float64)
-        assert_array_almost_equal(xi_data64, xi_data32)
+        assert_array_almost_equal(xi_data64, xi_data32, decimal=5)
