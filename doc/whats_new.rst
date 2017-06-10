@@ -73,6 +73,11 @@ New features
      different transformers to different columns of arrays or or pandas
      dataframes. By `Andreas Müller`_ and `Joris Van den Bossche`_.
 
+   - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
+     compute Discounted cumulative gain (DCG) and Normalized discounted
+     cumulative gain (NDCG).
+     :issue:`7739` by :user:`David Gasquez <davidgasquez>`.
+
 Enhancements
 ............
 
@@ -448,7 +453,11 @@ API changes summary
 
    - :class:`cluster.bicluster.SpectralCoclustering` and
      :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
-     :issue:`6126` by `Andreas Müller`_.
+     :issue:`6126` by :user:ldirer
+
+   - :class:`neighbors.approximate.LSHForest` has been deprecated and will be
+     removed in 0.21 due to poor performance.
+     :issue:`8996` by `Andreas Müller`_.
 
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
      for scikit-learn. The following backported functions in
@@ -481,6 +490,7 @@ API changes summary
      - ``utils.random.choice``
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
+     - ``neighbors.approximate.LSHForest``
 
 
 .. _changes_0_18_1:
@@ -757,7 +767,7 @@ Classifiers and Regressors
      :issue:`5291` by `Manoj Kumar`_.
 
    - Added the :class:`multioutput.MultiOutputRegressor` meta-estimator. It
-     converts single output regressors to multi-ouput regressors by fitting
+     converts single output regressors to multi-output regressors by fitting
      one regressor per output. By :user:`Tim Head <betatim>`.
 
 Other estimators
