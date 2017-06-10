@@ -124,6 +124,7 @@ scoring parameter::
   >>> scores                                              # doctest: +ELLIPSIS
   array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
+See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
@@ -176,25 +177,24 @@ validation iterator instead, for instance::
 
 Multiple metric evaluation and change in return type
 ----------------------------------------------------
-Starting from version 0.19, it is possible to specify multiple metrics for
-evaluation in ``cross_val_score``.
+It is also possible to specify multiple metrics for evaluation in
+``cross_val_score``.
 
-When using multimetric ``scoring`` parameter, the return type is a dict
-which has the following keys -
+When using multiple scoring metrics, the return type is a dict which has the
+following keys -
 ``[test_<scrorer1_name>, test_<scorer2_name>, test_<scorer...>, fit_times, score_times]``
 by default.
 
 Additionally setting ``return_train_score`` to ``True`` adds train
 score keys for all the scorers.
 
-The multiple metrics can be specified either as a ``list``/``tuple``/``set`` of
-predefined scorer names::
+The multiple metrics can be specified either as a ``list``, ``tuple`` or
+``set`` of predefined scorer names::
 
     >>> from sklearn.model_selection import cross_val_score
-    >>> from sklearn.metrics.scorer import make_scorer
     >>> from sklearn.metrics import recall_score
     >>> scoring = ['precision_macro', 'recall_macro']
-    >>> clf = svm.SVC(kernel='linear', C=1)
+    >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
     >>> scores = cross_val_score(clf, iris.data, iris.target, scoring=scoring,
     ...                          cv=5)
     >>> sorted(scores.keys())
@@ -202,8 +202,9 @@ predefined scorer names::
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
     array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
-Or as a dict mapping scorer name to the predefined or custom scorer function::
+Or as a dict mapping scorer name to a predefined or custom scoring function::
 
+    >>> from sklearn.metrics.scorer import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
     ...            'rec_micro': make_scorer(recall_score, average='macro')}
     >>> scores = cross_val_score(clf, iris.data, iris.target, scoring=scoring,
@@ -215,7 +216,7 @@ Or as a dict mapping scorer name to the predefined or custom scorer function::
     array([ 0.97...,  0.97...,  0.99...,  0.98...,  0.98...])
 
 Note that if you want train scores, fit times or score times even for a single
-metric scorer, it is possible to give it as a single element list or dict::
+metric scorer, provide a singleton list or dict::
     >>> scoring = ['roc_auc']    # or
     >>> scoring = {'ROC-AUC': 'roc_auc'}
 
@@ -233,7 +234,7 @@ These prediction can then be used to evaluate the classifier::
   >>> from sklearn.model_selection import cross_val_predict
   >>> predicted = cross_val_predict(clf, iris.data, iris.target, cv=10)
   >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
-  0.966...
+  0.973...
 
 Note that the result of this computation may be slightly different from those
 obtained using :func:`cross_val_score` as the elements are grouped in different

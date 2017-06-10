@@ -214,10 +214,10 @@ in ``GridSearchCV``, ``RandomizedSearchCV`` and ``cross_val_score``.
 There are two ways to specify multiple scoring metrics for the ``scoring``
 parameter:
 
-- As a ``list``/``tuple``/``set`` of string metrics::
+- As an iterable of string metrics::
       >>> scoring = ['accuracy', 'precision']
 
-- As a ``dict`` mapping the scorer name to the scorer function::
+- As a ``dict`` mapping the scorer name to the scoring function::
       >>> from sklearn.metrics import accuracy_score
       >>> from sklearn.metrics import make_scorer
       >>> scoring = {'accuracy': make_scorer(accuracy_score),
