@@ -44,10 +44,10 @@ New features
      :class:`decomposition.NMF`, allowing the optimization of all
      beta-divergences, including the Frobenius norm, the generalized
      Kullback-Leibler divergence and the Itakura-Saito divergence.
-     By `Tom Dupre la Tour`_.
+     :issue:`5295` by `Tom Dupre la Tour`_.
 
-   - Added the :class:`sklearn.model_selection.RepeatedKFold` and
-     :class:`sklearn.model_selection.RepeatedStratifiedKFold`.
+   - Added the :class:`model_selection.RepeatedKFold` and
+     :class:`model_selection.RepeatedStratifiedKFold`.
      :issue:`8120` by `Neeraj Gangwar`_.
 
    - Added :func:`metrics.mean_squared_log_error`, which computes
@@ -60,7 +60,7 @@ New features
      :class:`linear_model.Ridge`. It allows the use of L1 penalty with
      multinomial logistic loss, and behaves marginally better than 'sag'
      during the first epochs of ridge and logistic regression.
-     By `Arthur Mensch`_.
+     :issue:`8446` by `Arthur Mensch`_.
 
    - Added :class:`preprocessing.QuantileTransformer` class and
      :func:`preprocessing.quantile_transform` function for features
@@ -73,7 +73,7 @@ Enhancements
 ............
 
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
-     documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986`
+     documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
 
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
@@ -81,7 +81,7 @@ Enhancements
      issue: `8053` by :user:`Peng Yu <yupbank>`.
    - :class:`pipeline.Pipeline` allows to cache transformers
      within a pipeline by using the ``memory`` constructor parameter.
-     By :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
+     :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
 
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
      :class:`decomposition.TruncatedSVD` now expose the singular values
@@ -99,12 +99,11 @@ Enhancements
      by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
      and :user:`Stephen Hoover <stephen-hoover>`.
 
-   - Relax assumption on the data for the ``SkewedChi2Sampler``. Since the
-     Skewed-Chi2 kernel is defined on the open interval :math: `(-skewedness;
-     +\infty)^d`, the transform function should not check whether X < 0 but
-     whether ``X < -self.skewedness``. (`#7573
-     <https://github.com/scikit-learn/scikit-learn/pull/7573>`_) by `Romain
-     Brault`_.
+   - Relax assumption on the data for the
+     :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
+     kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
+     the transform function should not check whether ``X < 0`` but whether ``X <
+     -self.skewedness``. :issue:`7573` by `Romain Brault`_.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -130,7 +129,8 @@ Enhancements
      :issue:`7506` by :user:`Narine Kokhlikyan <NarineK>`.
 
    - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
-     to enable selection of the norm order when ``coef_`` is more than 1D
+     to enable selection of the norm order when ``coef_`` is more than 1D.
+     :issue:`6181` by :user:`Antoine Wendlinger <antoinewdg>`.
 
    - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
      :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
@@ -144,7 +144,7 @@ Enhancements
      norm 'max' the norms returned will be the same as for dense matrices.
      :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
 
-   - :class:`sklearn.linear_model.RANSACRegressor` no longer throws an error
+   - :class:`linear_model.RANSACRegressor` no longer throws an error
      when calling ``fit`` if no inliers are found in its first iteration.
      Furthermore, causes of skipped iterations are tracked in newly added
      attributes, ``n_skips_*``.
@@ -154,7 +154,7 @@ Enhancements
      correct shape for all values of the argument ``method``.
      :issue:`7863` by :user:`Aman Dalmia <dalmia>`.
 
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+   - Fix a bug where :class:`feature_selection.SelectFdr` did not
      exactly implement Benjamini-Hochberg procedure. It formerly may have
      selected fewer features than it should.
      :issue:`7490` by :user:`Peng Meng <mpjlu>`.
@@ -176,11 +176,12 @@ Enhancements
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
 
-   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
-     Victor Poughon.
+   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score`.
+     :issue:`8335` by :user:`Victor Poughon <vpoughon>`.
 
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
-     is a lot faster with ``return_std=True`` by :user:`Hadrien Bertrand <hbertrand>`.
+     is a lot faster with ``return_std=True``. :issue:`8591` by
+     :user:`Hadrien Bertrand <hbertrand>`.
 
    - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
      with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
@@ -191,8 +192,8 @@ Enhancements
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
    - Prevent cast from float32 to float64 in
-     :class:`sklearn.linear_model.LogisticRegression` when using newton-cg solver
-     by :user:`Joan Massich <massich>`
+     :class:`linear_model.LogisticRegression` when using newton-cg
+     solver. :issue:`8835` by :user:`Joan Massich <massich>`.
 
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
      :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
@@ -209,59 +210,57 @@ Bug fixes
 
    - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
-     `_c_step` to throw an exception.
+     ``_c_step`` to throw an exception.
      :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
 
-   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` uses an
+   - Fixed a bug where :class:`ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
      :issue:`8549` by `Peter Wang <https://github.com/PTRWang>`_.
 
-   - Fixed a bug where :class:`sklearn.cluster.DBSCAN` gives incorrect
+   - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
      result when input is a precomputed sparse matrix with initial
-     rows all zero.
-     :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
+     rows all zero. :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
 
-   - Fixed a bug where :class:`sklearn.ensemble.AdaBoostClassifier` throws
+   - Fixed a bug where :class:`ensemble.AdaBoostClassifier` throws
      ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
-   - Fixed a bug when :func:`sklearn.datasets.make_classification` fails 
+   - Fixed a bug when :func:`datasets.make_classification` fails
      when generating more than 30 features. :issue:`8159` by
-     :user:`Herilalaina Rakotoarison <herilalaina>`
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
-   - Fixed a bug where :func:`sklearn.model_selection.BaseSearchCV.inverse_transform`
-     returns self.best_estimator_.transform() instead of self.best_estimator_.inverse_transform()
-     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`
+   - Fixed a bug where :func:`model_selection.BaseSearchCV.inverse_transform`
+     returns ``self.best_estimator_.transform()`` instead of
+     ``self.best_estimator_.inverse_transform()``.
+     :issue:`8344` by :user:`Akshay Gupta <Akshay0724>`.
 
-   - Fixed same issue in :func:`sklearn.grid_search.BaseSearchCV.inverse_transform`
+   - Fixed same issue in :func:`grid_search.BaseSearchCV.inverse_transform`
      :issue:`8846` by :user:`Rasmus Eriksson <MrMjauh>`
 
-   - Fixed a bug where :class:`sklearn.linear_model.RandomizedLasso` and
-     :class:`sklearn.linear_model.RandomizedLogisticRegression` breaks for
-     sparse input.
-     :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
+   - Fixed a bug where :class:`linear_model.RandomizedLasso` and
+     :class:`linear_model.RandomizedLogisticRegression` breaks for
+     sparse input. :issue:`8259` by :user:`Aman Dalmia <dalmia>`.
 
-   - Fixed a bug where :func:`sklearn.linear_model.RANSACRegressor.fit` may run until
+   - Fixed a bug where :func:`linear_model.RANSACRegressor.fit` may run until
      ``max_iter`` if finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
 
-   - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
+   - Fixed a bug where :func:`datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
 
-   - Fixed a bug where :class:`sklearn.linear_model.LassoLars` does not give
+   - Fixed a bug where :class:`linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
      in R (lars library). :issue:`7849` by :user:`Jair Montoya Martinez <jmontoyam>`.
 
-   - Some ``fetch_`` functions in `sklearn.datasets` were ignoring the
-     ``download_if_missing`` keyword.  This was fixed in :issue:`7944` by
-     :user:`Ralf Gommers <rgommers>`.
+   - Some ``fetch_`` functions in :mod:`sklearn.datasets` were ignoring the
+     ``download_if_missing`` keyword. :issue:`7944` by :user:`Ralf Gommers <rgommers>`.
 
-   - Fixed a bug in :class:`sklearn.ensemble.GradientBoostingClassifier`
-     and :class:`sklearn.ensemble.GradientBoostingRegressor`
+   - Fixed a bug in :class:`ensemble.GradientBoostingClassifier`
+     and :class:`ensemble.GradientBoostingRegressor`
      where a float being compared to ``0.0`` using ``==`` caused a divide by zero
-     error. This was fixed in :issue:`7970` by :user:`He Chen <chenhe95>`.
+     error. issue:`7970` by :user:`He Chen <chenhe95>`.
 
-   - Fix a bug regarding fitting :class:`sklearn.cluster.KMeans` with a sparse
+   - Fix a bug regarding fitting :class:`cluster.KMeans` with a sparse
      array X and initial centroids, where X's means were unnecessarily being
      subtracted from the centroids. :issue:`7872` by :user:`Josh Karnofsky <jkarno>`.
 
@@ -269,32 +268,32 @@ Bug fixes
      ``pandas.Series`` in their ``fit`` function. :issue:`7825` by
      `Kathleen Chen`_.
 
-   - Fixed a bug where :class:`sklearn.ensemble.IsolationForest` fails when
+   - Fixed a bug where :class:`ensemble.IsolationForest` fails when
      ``max_features`` is less than 1.
      :issue:`5732` by :user:`Ishank Gulati <IshankGulati>`.
 
-   - Fix a bug where :class:`sklearn.ensemble.VotingClassifier` raises an error
+   - Fix a bug where :class:`ensemble.VotingClassifier` raises an error
      when a numpy array is passed in for weights. :issue:`7983` by
      :user:`Vincent Pham <vincentpham1991>`.
 
-   - Fix a bug in :class:`sklearn.decomposition.LatentDirichletAllocation`
+   - Fix a bug in :class:`decomposition.LatentDirichletAllocation`
      where the ``perplexity`` method was returning incorrect results because
      the ``transform`` method returns normalized document topic distributions
      as of version 0.18. :issue:`7954` by :user:`Gary Foreman <garyForeman>`.
 
-   - Fix a bug where :class:`sklearn.ensemble.GradientBoostingClassifier` and
-     :class:`sklearn.ensemble.GradientBoostingRegressor` ignored the
+   - Fix a bug where :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor` ignored the
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
 
-   - Fixes to the input validation in
-     :class:`sklearn.covariance.EllipticEnvelope`.
+   - Fixes to the input validation in :class:`covariance.EllipticEnvelope`.
      :issue:`8086` by `Andreas Müller`_.
 
-   - Fix output shape and bugs with n_jobs > 1 in  
-     :class:`sklearn.decomposition.SparseCoder` transform and :func:`sklarn.decomposition.sparse_encode`
+   - Fix output shape and bugs with n_jobs > 1 in
+     :class:`decomposition.SparseCoder` transform and
+     :func:`decomposition.sparse_encode`
      for one-dimensional data and one component.
-     This also impacts the output shape of :class:`sklearn.decomposition.DictionaryLearning`.
+     This also impacts the output shape of :class:`decomposition.DictionaryLearning`.
      :issue:`8086` by `Andreas Müller`_.
 
    - Several fixes to input validation in
@@ -302,43 +301,44 @@ Bug fixes
      :issue:`8086` by `Andreas Müller`_.
 
    - Fix a bug where
-     :class:`sklearn.ensemble.gradient_boosting.QuantileLossFunction` computed
+     :class:`ensemble.gradient_boosting.QuantileLossFunction` computed
      negative errors for negative values of ``ytrue - ypred`` leading to
      wrong values when calling ``__call__``.
      :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
 
-   - Fix :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba` to
+   - Fix :func:`multioutput.MultiOutputClassifier.predict_proba` to
      return a list of 2d arrays, rather than a 3d array. In the case where
      different target columns had different numbers of classes, a `ValueError`
      would be raised on trying to stack matrices with different dimensions.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
-   - Fix a bug where :func:`sklearn.linear_model.LassoLars.fit` sometimes
+   - Fix a bug where :func:`linear_model.LassoLars.fit` sometimes
      left `coef_` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
 
-
-   - Fix a bug where :class:`sklearn.feature_extraction.FeatureHasher`
+   - Fix a bug where :class:`feature_extraction.FeatureHasher`
      mandatorily applied a sparse random projection to the hashed features,
-     preventing the use of 
-     :class:`sklearn.feature_extraction.text.HashingVectorizer` in a
-     pipeline with  :class:`sklearn.feature_extraction.text.TfidfTransformer`.
+     preventing the use of
+     :class:`feature_extraction.text.HashingVectorizer` in a
+     pipeline with  :class:`feature_extraction.text.TfidfTransformer`.
      :issue:`7513` by :user:`Roman Yurchak <rth>`.
-     
-   - Fix a bug in cases where `numpy.cumsum` may be numerically unstable,
-     raising an exception if instability is identified.  :issue:`7376` and
+
+   - Fix a bug in cases where ``numpy.cumsum`` may be numerically unstable,
+     raising an exception if instability is identified. :issue:`7376` and
      :issue:`7331` by `Joel Nothman`_ and :user:`yangarbiter`.
-     
-   - Fix a bug where :meth:`sklearn.base.BaseEstimator.__getstate__`
+
+   - Fix a bug where :meth:`base.BaseEstimator.__getstate__`
      obstructed pickling customizations of child-classes, when used in a
      multiple inheritance context.
      :issue:`8316` by :user:`Holger Peters <HolgerPeters>`.
-   - Fix a bug in :func:`sklearn.metrics.classification._check_targets`
+
+   - Fix a bug in :func:`metrics.classification._check_targets`
      which would return ``'binary'`` if ``y_true`` and ``y_pred`` were
      both ``'binary'`` but the union of ``y_true`` and ``y_pred`` was
      ``'multiclass'``. :issue:`8377` by `Loic Esteve`_.
 
-   - Fix :func:`sklearn.linear_model.BayesianRidge.fit` to return
+
+   - Fix :func:`linear_model.BayesianRidge.fit` to return
      ridge parameter `alpha_` and `lambda_` consistent with calculated
      coefficients `coef_` and `intercept_`.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
@@ -349,23 +349,22 @@ Bug fixes
    - Fixed a bug in :class:`svm.OneClassSVM` where it returned floats instead of
      integer classes. :issue:`8676` by :user:`Vathsala Achar <VathsalaAchar>`.
 
-   - Fixed a bug where :func:`sklearn.tree.export_graphviz` raised an error
+   - Fixed a bug where :func:`tree.export_graphviz` raised an error
      when the length of features_names does not match n_features in the decision
-     tree.
-     :issue:`8512` by :user:`Li Li <aikinogard>`.
+     tree. :issue:`8512` by :user:`Li Li <aikinogard>`.
 
    - Fixed a bug in :class:`manifold.TSNE` affecting convergence of the
      gradient descent. :issue:`8768` by :user:`David DeTomaso <deto>`.
 
    - Fixed a memory leak in our LibLinear implementation. :issue:`9024` by
      :user:`Sergei Lebedev <superbobry>`
-   - Fixed improper scaling in :class:`sklearn.cross_decomposition.PLSRegression`
+   - Fixed improper scaling in :class:`cross_decomposition.PLSRegression`
      with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
      :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
 
-   - Add ``shuffle`` parameter to :func:`sklearn.model_selection.train_test_split`.
+   - Add ``shuffle`` parameter to :func:`model_selection.train_test_split`.
      :issue:`#8845` by  :user:`themrmax <themrmax>`
 
 API changes summary
@@ -383,18 +382,18 @@ API changes summary
      estimator classes any more. :issue:`9019` by `Andreas Müller`_.
 
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
-     in :class:`sklearn.decomposition.LatentDirichletAllocation` because the
+     in :class:`decomposition.LatentDirichletAllocation` because the
      user no longer has access to the unnormalized document topic distribution
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
 
-   - Replace attribute ``named_steps`` ``dict`` to :class:`sklearn.utils.Bunch`
-     in :class:`sklearn.pipeline.Pipeline` to enable tab completion in interactive
+   - Replace attribute ``named_steps`` ``dict`` to :class:`utils.Bunch`
+     in :class:`pipeline.Pipeline` to enable tab completion in interactive
      environment. In the case conflict value on ``named_steps`` and ``dict``
      attribute, ``dict`` behavior will be prioritized.
      :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
-   - The :func:`sklearn.multioutput.MultiOutputClassifier.predict_proba`
+   - The :func:`multioutput.MultiOutputClassifier.predict_proba`
      function used to return a 3d array (``n_samples``, ``n_classes``,
      ``n_outputs``). In the case where different target columns had different
      numbers of classes, a `ValueError` would be raised on trying to stack
@@ -404,16 +403,15 @@ API changes summary
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
    - Deprecate the ``fit_params`` constructor input to the
-     :class:`sklearn.model_selection.GridSearchCV` and
-     :class:`sklearn.model_selection.RandomizedSearchCV` in favor
+     :class:`model_selection.GridSearchCV` and
+     :class:`model_selection.RandomizedSearchCV` in favor
      of passing keyword parameters to the ``fit`` methods
      of those classes. Data-dependent parameters needed for model
      training should be passed as keyword arguments to ``fit``,
      and conforming to this convention will allow the hyperparameter
      selection classes to be used with tools such as
-     :func:`sklearn.model_selection.cross_val_predict`.
+     :func:`model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
-
 
    - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
@@ -426,7 +424,7 @@ API changes summary
      method only if the underlying estimator does. By `Andreas Müller`_.
 
    - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
-     only if the underlying estimator does.  By `Andreas Müller`_. 
+     only if the underlying estimator does.  By `Andreas Müller`_.
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
@@ -438,19 +436,19 @@ API changes summary
      parameter in lieu of the ``min_impurity_split``, which is now deprecated.
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
-     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV_`
+     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
 
-   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation` 
+   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation`
      has been renamed to ``n_components`` and will be removed in version 0.21.
-     :issue:`8922` by :user:Attractadore
+     :issue:`8922` by :user:`Attractadore`
 
-   - :class:`cluster.bicluster.SpectralCoClustering` and
+   - :class:`cluster.bicluster.SpectralCoclustering` and
      :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
      :issue:`6126` by `Andreas Müller`_.
 
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
-     for scikit-learn. The following backported functions in ``sklearn.utils``
-     have been removed or deprecated accordingly.
+     for scikit-learn. The following backported functions in
+     :mod:`sklearn.utils` have been removed or deprecated accordingly.
      :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
 
      Removed in 0.19:
