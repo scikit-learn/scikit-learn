@@ -820,7 +820,10 @@ def test_dtype_match():
         assert_equal(coef_32.dtype, X_32.dtype)
         assert_equal(coef_64.dtype, X_64.dtype)
 
+
 def test_dtype_match_cholesky():
+    # Test different alphas in cholesky solver to ensure full coverage.
+    # This test is separated from test_dtype_match for clarity.
     rng = np.random.RandomState(0)
     alpha = (1.0, 0.5)
 

@@ -171,7 +171,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0)
             if not return_mean:
-                X_offset = np.zeros(X.shape[1], dtype=X.dtype)
+                X_offset[:] = 0
 
             if normalize:
 
