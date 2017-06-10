@@ -5,6 +5,7 @@
 
 import copy
 import warnings
+import struct
 
 import numpy as np
 from scipy import sparse
@@ -556,6 +557,18 @@ class MultiOutputMixin(object):
     def _get_tags(self):
         return _update_tags(self, super(MultiOutputMixin, self),
                             multioutput=True)
+
+
+def _is_32bit():
+    """Detect if process is 32bit Python."""
+    return struct.calcsize('P') * 8 == 32
+
+
+class _UnstableOn32BitMixin(object):
+    """Mark estimators that are non-determinstic on 32bit."""
+    def _get_tags(self):
+        return _update_tags(self, super(_UnstableOn32BitMixin, self),
+                            deterministic=_is_32bit())
 
 
 def is_classifier(estimator):

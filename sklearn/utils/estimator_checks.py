@@ -9,7 +9,6 @@ from copy import deepcopy
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
-import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.six import text_type
@@ -97,7 +96,7 @@ def _yield_non_meta_checks(name, estimator):
         yield check_dtype_object
         yield check_estimators_empty_data_messages
 
-    if name not in CROSS_DECOMPOSITION + ['SpectralEmbedding']:
+    if name not in CROSS_DECOMPOSITION:
         # SpectralEmbedding is non-deterministic,
         # see issue #4236
         # cross-decomposition's "transform" returns X and Y
@@ -363,11 +362,6 @@ class NotAnArray(object):
 
     def __array__(self, dtype=None):
         return self.data
-
-
-def _is_32bit():
-    """Detect if process is 32bit Python."""
-    return struct.calcsize('P') * 8 == 32
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -715,14 +709,6 @@ def check_transformers_unfitted(name, transformer):
 
 
 def _check_transformer(name, transformer_orig, X, y):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
-        # Those transformers yield non-deterministic output when executed on
-        # a 32bit Python. The same transformers are stable on 64bit Python.
-        # FIXME: try to isolate a minimalistic reproduction case only depending
-        # on numpy & scipy and/or maybe generate a test dataset that does not
-        # cause such unstable behaviors.
-        msg = name + ' is non deterministic on 32bit Python'
-        raise SkipTest(msg)
     n_samples, n_features = np.asarray(X).shape
     transformer = clone(transformer_orig)
     set_random_state(transformer)
@@ -754,6 +740,14 @@ def _check_transformer(name, transformer_orig, X, y):
         else:
             X_pred2 = transformer.transform(X)
             X_pred3 = transformer.fit_transform(X, y=y_)
+        # raises error on malformed input for transform
+        if hasattr(X, 'T') and not _safe_tags(transformer, "stateless"):
+            # If it's not an array, it does not have a 'T' property
+            assert_raises(ValueError, transformer.transform, X.T)
+
+        if not _safe_tags(transformer_orig, 'deterministic'):
+            msg = name + ' is non deterministic'
+            raise SkipTest(msg)
         if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
             for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
                 assert_allclose_dense_sparse(
@@ -780,21 +774,11 @@ def _check_transformer(name, transformer_orig, X, y):
             assert_equal(_num_samples(X_pred2), n_samples)
             assert_equal(_num_samples(X_pred3), n_samples)
 
-        # raises error on malformed input for transform
-        if hasattr(X, 'T') and not _safe_tags(transformer, "stateless"):
-            # If it's not an array, it does not have a 'T' property
-            assert_raises(ValueError, transformer.transform, X.T)
-
 
 @ignore_warnings
 def check_pipeline_consistency(name, estimator_orig):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
-        # Those transformers yield non-deterministic output when executed on
-        # a 32bit Python. The same transformers are stable on 64bit Python.
-        # FIXME: try to isolate a minimalistic reproduction case only depending
-        # scipy and/or maybe generate a test dataset that does not
-        # cause such unstable behaviors.
-        msg = name + ' is non deterministic on 32bit Python'
+    if not _safe_tags(estimator_orig, 'deterministic'):
+        msg = name + ' is non deterministic'
         raise SkipTest(msg)
 
     # check that make_pipeline(est) gives same score as est
