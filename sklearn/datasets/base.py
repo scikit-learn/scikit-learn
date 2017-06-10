@@ -365,6 +365,7 @@ def load_iris(return_X_y=False):
     """
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'iris.csv')
+    iris_csv_filename = join(module_path, 'data','iris.csv')
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -434,9 +435,11 @@ def load_breast_cancer(return_X_y=False):
     """
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'breast_cancer.csv')
+    csv_filename = join(module_path, 'data', 'breast_cancer.csv')
 
     with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
         fdescr = rst_file.read()
+
 
     feature_names = np.array(['mean radius', 'mean texture',
                               'mean perimeter', 'mean area',
@@ -579,8 +582,10 @@ def load_diabetes(return_X_y=False):
     """
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
-    data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
-    target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+    data_filename = join(base_dir, 'diabetes_data.csv.gz')
+    data = np.loadtxt(data_filename)
+    target_filename = join(base_dir, 'diabetes_target.csv.gz')
+    target = np.loadtxt(target_filename)
 
     with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
         fdescr = rst_file.read()
