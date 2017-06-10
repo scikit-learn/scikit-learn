@@ -175,12 +175,18 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     scorer = scoring_validator(estimator, "accuracy")
     assert_true(isinstance(scorer, _PredictScorer))
 
-    estimator = EstimatorWithFit()
-    scorer = scoring_validator(estimator, allow_none=True)
-    assert_true(scorer is None)
+    # Test the allow_none parameter for check_scoring alone
+    if scoring_validator is check_scoring:
+        estimator = EstimatorWithFit()
+        scorer = scoring_validator(estimator, allow_none=True)
+        assert_true(scorer is None)
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
+    # This wraps the _check_multimetric_scoring to take in single metric
+    # scoring parameter so we can run the tests that we will run for
+    # check_scoring, for check_multimetric_scoring too for single-metric
+    # usecases
     scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
     assert_false(is_multi)
@@ -201,9 +207,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         check_multimetric_scoring_single_metric_wrapper)
 
     # For multiple metric use cases
-
     # Make sure it works for the valid cases
-
     for scoring in (('accuracy',), ['precision'],
                     {'acc': 'accuracy', 'precision': 'precision'},
                     ('accuracy', 'precision'), ['precision', 'accuracy'],
@@ -231,15 +235,10 @@ def test_check_scoring_and_check_multimetric_scoring():
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
-    scorers, is_multi = _check_multimetric_scoring(estimator, allow_none=True)
-    assert_equal(scorers, {'score': None})
-    assert_false(is_multi)
 
     # Make sure it raises errors when scoring parameter is not valid.
-
-    error_message_regexp = ".*must be unique strings.*"
-
     # More weird corner cases are tested at test_validation.py
+    error_message_regexp = ".*must be unique strings.*"
     for scoring in ((make_scorer(precision_score),  # Tuple of callables
                      make_scorer(accuracy_score)), [5],
                     (make_scorer(precision_score),), (), ('f1', 'f1')):

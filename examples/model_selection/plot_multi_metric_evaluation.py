@@ -26,24 +26,33 @@ from sklearn.tree import DecisionTreeClassifier
 
 print(__doc__)
 
+###############################################################################
+# Running ``GridSearchCV`` using multiple evaluation metrics
+# ----------------------------------------------------------
+#
+
 X, y = make_hastie_10_2(n_samples=8000, random_state=42)
 
 # The scorers can be either be one of the predefined metric strings or a scorer
 # callable, like the one returned by make_scorer
 scoring = {'AUC': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 
-# Setting refit='AUC', refits an estimator on the whole training set using the
+# Setting refit='AUC', refits an estimator on the whole dataset with the
 # parameter setting that has the best cross-validated AUC score.
-# That estimator is made available at gs.best_estimator_ along with parameters
-# like gs.best_score_, gs.best_parameters_ and gs.best_index_
+# That estimator is made available at ``gs.best_estimator_`` along with
+# parameters like ``gs.best_score_``, ``gs.best_parameters_`` and
+# ``gs.best_index_``
 gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
                   param_grid={'min_samples_split': range(2, 403, 10)},
                   scoring=scoring, cv=5, refit='AUC')
 gs.fit(X, y)
-
 results = gs.cv_results_
 
-plt.figure().set_size_inches(13, 13)
+###############################################################################
+# Plotting the result
+# -------------------
+
+plt.figure(figsize=(13, 13))
 plt.title("GridSearchCV evaluating using multiple scorers simultaneously",
           fontsize=16)
 
