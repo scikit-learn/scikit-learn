@@ -32,7 +32,7 @@ public_modules = [
     # 'sklearn.feature_selection',
     'sklearn.gaussian_process',
     'sklearn.isotonic',
-    # 'sklearn.linear_model',
+    'sklearn.linear_model',
     'sklearn.manifold',
     'sklearn.multiclass',
     'sklearn.metrics',
@@ -110,7 +110,8 @@ def test_docstring_parameters():
                 # by default for API reason
                 if method_name in \
                         ['fit', 'score', 'fit_predict', 'fit_transform',
-                         'partial_fit', 'transform', 'inverse_transform']:  # XXX remove transform
+                         'partial_fit',
+                         'transform', 'inverse_transform', 'predict']:  # XXX remove transform
                     sig = signature(method)
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):

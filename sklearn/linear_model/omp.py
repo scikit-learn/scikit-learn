@@ -537,6 +537,8 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     """Orthogonal Matching Pursuit model (OMP)
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
     n_nonzero_coefs : int, optional
@@ -564,8 +566,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
-
-    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -740,6 +740,8 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     """Cross-validated Orthogonal Matching Pursuit model (OMP)
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
     copy : bool, optional
@@ -784,8 +786,6 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
-
-    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
