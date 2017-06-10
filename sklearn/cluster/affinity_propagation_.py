@@ -71,12 +71,14 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     Notes
     -----
-    See examples/cluster/plot_affinity_propagation.py for an example.
+    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
+    <sphx-glr-auto-examples-cluster-plot-affinity-propagation-py>`.
 
     References
     ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
+
     """
     S = as_float_array(S, copy=copy)
     n_samples = S.shape[0]
@@ -243,7 +245,8 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/cluster/plot_affinity_propagation.py for an example.
+    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
+    <sphx-glr-auto-examples-cluster-plot-affinity-propagation-py>`.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.

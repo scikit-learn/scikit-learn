@@ -89,7 +89,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Notes
     -----
-    See examples/cluster/plot_dbscan.py for an example.
+    For an example, see :ref:`examples/cluster/plot_dbscan.py
+    <sphx-glr-auto-examples-cluster-plot-dbscan-py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -106,6 +107,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
+
     """
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
@@ -228,7 +230,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/cluster/plot_dbscan.py for an example.
+    For an example, see :ref:`examples/cluster/plot_dbscan.py
+    <sphx-glr-auto-examples-cluster-plot-dbscan-py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
