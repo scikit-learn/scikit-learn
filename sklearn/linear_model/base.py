@@ -158,7 +158,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     coordinate_descend).
 
     This is here because nearly all linear models will want their data to be
-    centered.
+    centered. This function also systematically makes y consistent with X.dtype
     """
 
     if isinstance(sample_weight, numbers.Number):
@@ -166,6 +166,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
     X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
                     dtype=FLOAT_DTYPES)
+    y = np.asarray(y, dtype=X.dtype)
 
     if fit_intercept:
         if sp.issparse(X):
@@ -197,17 +198,12 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
             else:
                 X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = np.average(y, axis=0, weights=sample_weight)
-        if X.dtype == np.float32:
-            y_offset = np.float32(y_offset)
         y = y - y_offset
     else:
         X_offset = np.zeros(X.shape[1], dtype=X.dtype)
         X_scale = np.ones(X.shape[1], dtype=X.dtype)
         if y.ndim == 1:
-            if X.dtype == np.float32:
-                y_offset = np.float32(0)
-            else:
-                y_offset = np.float64(0)
+            y_offset = X.dtype.type(0)
         else:
             y_offset = np.zeros(y.shape[1], dtype=X.dtype)
 
@@ -468,7 +464,8 @@ class LinearRegression(LinearModel, RegressorMixin):
             Training data
 
         y : numpy array of shape [n_samples, n_targets]
-            Target values
+            Target values. If it's not the case, y is cast in X.dtype further
+            in the code
 
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample

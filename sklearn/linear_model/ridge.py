@@ -966,7 +966,8 @@ class _RidgeGCV(LinearModel):
             Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values
+            Target values. If it's not the case, y is cast in X.dtype further
+            in the code
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
@@ -1085,7 +1086,8 @@ class _BaseRidgeCV(LinearModel):
             Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values
+            Target values. If it's not the case, y is cast in X.dtype further
+            in the code
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
@@ -1327,7 +1329,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             and n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            Target values.
+            Target values. If it's not the case, y is cast in X.dtype further
+            in the code
 
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.
