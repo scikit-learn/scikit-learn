@@ -171,7 +171,7 @@ learn::
       (506, 14)
 
     .. seealso::
-        :func:`pandas.read_csv`
+        `pandas.read_csv <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_csv.html>`_
 
 Learning and predicting
 ------------------------
