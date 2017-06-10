@@ -11,9 +11,9 @@ different columns.
 import numpy as np
 
 from ..externals import six
-from ..pipeline import FeatureUnion
+from ..pipeline import FeatureUnion, _name_estimators
 
-__all__ = ['ColumnTransformer']
+__all__ = ['ColumnTransformer', 'make_column_transformer']
 
 
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
@@ -218,3 +218,62 @@ def _get_column(X, key):
         else:
             # numpy arrays, sparse arrays
             return X[:, key]
+
+
+def _get_transformer_list(estimators):
+    """
+    Construct (name, trans, column) tuples from dictionary
+
+    """
+    transformers = estimators.keys()
+    names = _name_estimators(transformers)
+
+    transformer_list = [(name, trans, estimators[trans])
+                        for (name, trans) in names]
+    return sorted(transformer_list, key=lambda x: x[0])
+
+
+def make_column_transformer(transformers, **kwargs):
+    """Construct a ColumnTransformer from the given transformers.
+
+    This is a shorthand for the ColumnTransformer constructor; it does not
+    require, and does not permit, naming the transformers. Instead, they will
+    be given names automatically based on their types. It also does not allow
+    weighting.
+
+    Parameters
+    ----------
+    transformers : dict of estimators
+        Dictionary of transformer to column selection.
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1).
+
+    Returns
+    -------
+    f : ColumnTransformer
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+    >>> from sklearn.experimental import make_column_transformer
+    >>> make_column_transformer(
+    ...     {StandardScaler(): ['numerical_column'],
+    ...      OneHotEncoder(): ['categorical_column']})
+    ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    ColumnTransformer(n_jobs=1,
+         transformer_list=[('onehotencoder',
+                            OneHotEncoder(...),
+                            ['categorical_column']),
+                           ('standardscaler',
+                            StandardScaler(...),
+                            ['numerical_column'])],
+         transformer_weights=None)
+
+    """
+    n_jobs = kwargs.pop('n_jobs', 1)
+    if kwargs:
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
+    transformer_list = _get_transformer_list(transformers)
+    return ColumnTransformer(transformer_list, n_jobs=n_jobs)

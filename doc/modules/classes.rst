@@ -1404,6 +1404,11 @@ Low-level methods
 
    experimental.ColumnTransformer
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   experimental.make_column_transformer
 
 Recently deprecated
 ===================

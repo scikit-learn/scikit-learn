@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import SkipTest
 
 from sklearn.base import BaseEstimator
-from sklearn.experimental import ColumnTransformer
+from sklearn.experimental import ColumnTransformer, make_column_transformer
 
 from sklearn.preprocessing import StandardScaler, Normalizer
 
@@ -277,3 +277,31 @@ def test_column_transformer_error_msg_1D():
                          col_trans.fit, X_array)
     assert_raise_message(ValueError, "1D data passed to a transformer",
                          col_trans.fit_transform, X_array)
+
+
+def test_make_column_transformer():
+    scaler = StandardScaler()
+    norm = Normalizer()
+    ct = make_column_transformer({scaler: 'first', norm: ['second']})
+    names, transformers, columns = zip(*ct.transformer_list)
+    assert_equal(names, ("normalizer", "standardscaler"))
+    assert_equal(transformers, (norm, scaler))
+    assert_equal(columns, (['second'], 'first'))
+
+
+def test_make_union_kwargs():
+    scaler = StandardScaler()
+    norm = Normalizer()
+    ct = make_column_transformer({scaler: 'first', norm: ['second']}, n_jobs=3)
+    assert_equal(
+        ct.transformer_list,
+        make_column_transformer({scaler: 'first',
+                                 norm: ['second']}).transformer_list)
+    assert_equal(ct.n_jobs, 3)
+    # invalid keyword parameters should raise an error message
+    assert_raise_message(
+        TypeError,
+        'Unknown keyword arguments: "transformer_weights"',
+        make_column_transformer, {scaler: 'first', norm: ['second']},
+        transformer_weights={'pca': 10, 'Transf': 1}
+    )
