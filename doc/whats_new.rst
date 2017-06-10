@@ -418,6 +418,11 @@ API changes summary
      :func:`model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+   - The ``decision_function`` output shape for binary classification in
+     :class:`multi_class.OneVsRestClassifier` and
+     :class:`multi_class.OneVsOneClassifier` is now ``(n_samples,)`` to conform
+     to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
+
    - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
    - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
