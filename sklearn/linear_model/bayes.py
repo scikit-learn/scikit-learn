@@ -110,7 +110,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/plot_bayesian_ridge.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_bayesian_ridge.py
+    <sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py>`.
 
     References
     ----------
@@ -372,8 +373,9 @@ class ARDRegression(LinearModel, RegressorMixin):
     array([ 1.])
 
     Notes
-    --------
-    See examples/linear_model/plot_ard.py for an example.
+    -----
+    For an example, see :ref:`examples/linear_model/plot_ard.py
+    <sphx_glr_auto_examples_linear_model_plot_ard.py>`.
 
     References
     ----------
