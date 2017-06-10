@@ -425,7 +425,7 @@ API changes summary
 
    - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
      only if the underlying estimator does.  By `Andreas Müller`_.
-     only if the underlying estimator does.  By `Andreas Müller`_. 
+
     - Change the default value for ``learning_rate`` in the
       `sklearn.manifold.TSNE` constructor from 1000 to 200 (with a warning
       message if not set explicitely).
@@ -484,9 +484,6 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
 
-    - Change the default value for ``learning_rate`` in the
-      `sklearn.manifold.TSNE` constructor from 1000 to 200. This fixes
-      :issue:`6204` by :user:`John Joseph Valletta <jjvalletta>`.
 
 .. _changes_0_18_1:
 
