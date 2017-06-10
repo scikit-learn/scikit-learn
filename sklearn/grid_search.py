@@ -398,6 +398,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
 
+        if not self.iid:
+            warnings.warn("The `iid` parameter has been deprecated "
+                          "in version 0.19 and will be removed in 0.21.",
+                          DeprecationWarning)
+
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
