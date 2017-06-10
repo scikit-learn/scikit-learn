@@ -41,7 +41,7 @@ public_modules = [
     # 'sklearn.model_selection',
     'sklearn.neighbors',
     'sklearn.neural_network',
-    # 'sklearn.preprocessing',
+    'sklearn.preprocessing',
     'sklearn.pipeline',
     'sklearn.semi_supervised',
     'sklearn.tree',
