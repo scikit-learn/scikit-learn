@@ -251,6 +251,8 @@ def test_ovr_binary():
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
         assert_equal(set(y_pred), set("eggs"))
+        dec = clf.decision_function(X)
+        assert_equal(dec.shape, (5,))
 
         if test_predict_proba:
             X_test = np.array([[0, 0, 4]])
@@ -524,6 +526,12 @@ def test_ovo_decision_function():
     n_samples = iris.data.shape[0]
 
     ovo_clf = OneVsOneClassifier(LinearSVC(random_state=0))
+    # first binary
+    ovo_clf.fit(iris.data, iris.target == 0)
+    decisions = ovo_clf.decision_function(iris.data)
+    assert_equal(decisions.shape, (n_samples,))
+
+    # then multi-class
     ovo_clf.fit(iris.data, iris.target)
     decisions = ovo_clf.decision_function(iris.data)
 
