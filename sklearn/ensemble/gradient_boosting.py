@@ -27,7 +27,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 from .base import BaseEnsemble
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
@@ -40,7 +39,6 @@ import numbers
 import numpy as np
 
 from scipy import stats
-from scipy.misc import logsumexp
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -57,6 +55,7 @@ from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
+from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
