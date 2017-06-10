@@ -1184,6 +1184,21 @@ def check_estimators_unfitted(name, estimator_orig):
 
     msg = "fit"
     if hasattr(est, 'predict'):
+        can_predict = False
+        try:
+            # some models can predict without fitting
+            # like GaussianProcess regressors
+            # in this case, we skip this test
+            pred = est.predict(X)
+            assert_equal(pred.shape[0], X.shape[0])
+            can_predict = True
+        except:
+            pass
+        if can_predict:
+            raise SkipTest(
+                "{} can predict without fitting, skipping "
+                "check_estimator_unfitted.".format(name))
+
         assert_raise_message((AttributeError, ValueError), msg,
                              est.predict, X)
 
