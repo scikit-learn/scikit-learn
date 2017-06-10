@@ -1091,23 +1091,66 @@ The method is as follows [MLW2015]_:
 4. Use this predictions to train the models on the next layer;
 5. Fit the model on the whole training set.
 
-Stacked generalization works with regression and classification problems.
+As stacked generalization is a generic framework for combining estimators, it
+works with regression and classification problems. It's so generic the API is
+the same for both problems!
 
-Usage
+Usage:
 -----
 
-.. Explain basic usage of `StackLayer`. Make clear how it works both with
-   regression and classification problems
-
+The most basic stacked ensemble consists of two layers: a layer of base
+generalizers and a single estimator for combining the output of the base
+estimators. We implement it with the :class:`StackLayer` class.
 
 Stacked generalization applied to regression
 ............................................
 
+For this problem, assume some regressors were tested and have a good performance
+on the dataset.
 
+    >>> from sklearn.linear_model import LassoCV, RidgeCV
+    >>> from sklearn.svm import SVR
+
+    >>> lasso = LassoCV()
+    >>> ridge = RidgeCV()
+    >>> svr = SVR(C=1e2, gamma=1e-3)
+
+    >>> base_regressors = [("lasso", lasso),
+    ...                    ("ridge", ridge),
+    ...                    ("svr", svr)]
+
+Now here is where :class:`StackLayer` comes into play: it will take base
+regressors and turn them into a transformer.
+
+    >>> layer0 = StackLayer(base_regressors)
+
+This transformer already implements the proper algorithm to train the base
+regressors without leaking data to the next layer, so no need to worry.
+
+The output for `layer0` is a matrix where each column is the prediction from
+one of the base regressors. We can now combine them in any way, including
+training another regressor with it. For this example, we used a linear
+regression and build the final model using the :class:`Pipeline` class.
+
+    >>> from sklearn.ensemble import StackLayer
+    >>> from sklearn.pipeline import Pipeline
+
+    >>> final_regressor = Pipeline([('layer0', layer0),
+    ...                             ('layer1', LinearRegression())])
+
+If we apply this model to the Boston house price dataset
+(:func:`sklearn.datasets.load_boston`) and use mean squared error metric,
+the stack result is 18.93744. The best model (the RidgeCV) scored 21.69905.
 
 Stacked generalization applied to classification
 ................................................
 
+As stated before, stacked generalization can be applied both to regression and
+classification algorithms. The procedure is the same: combine base classifiers
+into one transformer with :class:`StackLayer` and use it as a step in the final
+classifier.
+
+.. TODO write example for classification
 
 The `MetaStackEstimator`
 ------------------------
