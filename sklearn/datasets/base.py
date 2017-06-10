@@ -365,7 +365,7 @@ def load_iris(return_X_y=False):
     """
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'iris.csv')
-    iris_csv_filename = join(module_path, 'data','iris.csv')
+    iris_csv_filename = join(module_path, 'data', 'iris.csv')
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -439,7 +439,6 @@ def load_breast_cancer(return_X_y=False):
 
     with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
         fdescr = rst_file.read()
-
 
     feature_names = np.array(['mean radius', 'mean texture',
                               'mean perimeter', 'mean area',
