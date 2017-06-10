@@ -1475,6 +1475,12 @@ def check_estimators_overwrite_params(name, estimator_orig):
 def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     # this check works on classes, not instances
+    required_parameters = getattr(Estimator, "_required_parameters", [])
+    if len(required_parameters):
+        raise SkipTest("Can't instantiate estimator {} which"
+                       "requires parameters {} in "
+                       "check_no_fit_attribute_set_in_init".format(
+                           name, required_parameters))
     estimator = Estimator()
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):

@@ -47,29 +47,26 @@ def test_all_estimator_no_base_class():
         assert_false(name.lower().startswith('base'), msg=msg)
 
 
-def test_all_estimators():
-    # Test that estimators are default-constructible, cloneable
-    # and have working repr.
-    estimators = all_estimators(include_meta_estimators=True)
-
-    # Meta sanity-check to make sure that the estimator introspection runs
-    # properly
-    assert_greater(len(estimators), 0)
-
-    for name, Estimator in estimators:
-        # some can just not be sensibly default constructed
-        yield (_named_check(check_parameters_default_constructible, name),
-               name, Estimator)
-
-
 def test_non_meta_estimators():
     # input validation etc for non-meta estimators
     estimators = all_estimators(include_meta_estimators=True)
+    assert_greater(len(estimators), 0)
     for name, Estimator in estimators:
-        if issubclass(Estimator, BiclusterMixin):
-            continue
         if name.startswith("_"):
+            # skip private classes
             continue
+
+        # class-level tests
+        yield (_named_check(check_parameters_default_constructible, name),
+               name, Estimator)
+        # class level check only for default instantiation for now
+        # it skips is _required_parameter is not None
+        yield _named_check(
+            check_no_fit_attributes_set_in_init, name), name, Estimator
+
+        if issubclass(Estimator, BiclusterMixin):  # FIXME
+            continue
+
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
             if required_parameters == ["estimator"]:
@@ -84,9 +81,6 @@ def test_non_meta_estimators():
                 continue
         else:
             estimator = Estimator()
-            # class level check only for default instantiation for now
-            yield _named_check(
-                check_no_fit_attributes_set_in_init, name), name, Estimator
 
         for check in _yield_all_checks(name, estimator):
             set_checking_parameters(estimator)
