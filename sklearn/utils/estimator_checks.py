@@ -107,10 +107,7 @@ def _yield_non_meta_checks(name, estimator):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
-    if name not in ['GaussianProcess']:
-        # FIXME!
-        # in particular GaussianProcess!
-        yield check_estimators_overwrite_params
+    yield check_estimators_overwrite_params
     if hasattr(estimator, 'sparsify'):
         yield check_sparsify_coefficients
 
@@ -131,14 +128,7 @@ def _yield_classifier_checks(name, classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in
-        ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
-        # TODO some complication with -1 label
-       name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
-            # We don't raise a warning in these classifiers, as
-            # the column y interface is used by the forests.
-
-        yield check_supervised_y_2d
+    yield check_supervised_y_2d
     # test if NotFittedError is raised
     yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
@@ -185,9 +175,7 @@ def _yield_regressor_checks(name, regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    if name != "GaussianProcessRegressor":
-        # Test if NotFittedError is raised
-        yield check_estimators_unfitted
+    yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -1064,12 +1052,10 @@ def check_clusterer_compute_labels_predict(name, clusterer_orig):
     """Check that predict is invariant of compute_labels"""
     X, y = make_blobs(n_samples=20, random_state=0)
     clusterer = clone(clusterer_orig)
+    set_random_state(clusterer)
 
     if hasattr(clusterer, "compute_labels"):
         # MiniBatchKMeans
-        if hasattr(clusterer, "random_state"):
-            clusterer.set_params(random_state=0)
-
         X_pred1 = clusterer.fit(X).predict(X)
         clusterer.set_params(compute_labels=False)
         X_pred2 = clusterer.fit(X).predict(X)
