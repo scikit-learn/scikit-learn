@@ -170,8 +170,8 @@ See :ref:`scoring_parameter` for more details.
 Specifying multiple metrics for evaluation
 ------------------------------------------
 
-From version 0.19, ``GridSearchCV`` and ``RandomizedSearchCV`` allows specifying
-multiple metrics for the ``scoring`` parameter.
+``GridSearchCV`` and ``RandomizedSearchCV`` allows specifying multiple metrics
+for the ``scoring`` parameter.
 
 Multimetric scoring can either be specified as a list of strings of predefined
 scores names or a dict mapping the scorer name to the scorer function and/or

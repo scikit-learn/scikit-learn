@@ -32,13 +32,13 @@ New features
 ............
 
    - :class:`model_selection.GridSearchCV`,
-     :class:`model_selection.RandomizedSearchCV` now support multimetric
-     evaluation. Refer the :ref:`multimetric_grid_search` section of userguide
-     for more information. :issue:`7388` by `Raghav RV`_
+     :class:`model_selection.RandomizedSearchCV` and
+     :func:`model_selection.cross_val_score` now support simultaneous
+     evaluation of multiple metrics. Refer to the
+     :ref:`multimetric_grid_search` and :ref:`multimetric_cross_validation`
+     sections of the user guide for more information.
+     :issue:`7388` by `Raghav RV`_
 
-   - :func:`model_selection.cross_val_score` now support multimetric
-     evaluation. Refer the :ref:`multimetric_cross_validation` section of
-     userguide for more information. :issue:`7388` by `Raghav RV`_
    - Validation that input data contains no NaN or inf can now be suppressed
      using :func:`config_context`, at your own risk. This will save on runtime,
      and may be particularly useful for prediction time. :issue:`7548` by
