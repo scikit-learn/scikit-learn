@@ -1394,8 +1394,6 @@ Low-level methods
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`tree` section for further details.
-
 .. currentmodule:: sklearn
 
 .. autosummary::

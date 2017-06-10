@@ -109,12 +109,12 @@ ColumnTransformer for heterogeneous data
 .. warning::
 
     The :class:`experimental.ColumnTransformer <sklearn.experimental.ColumnTransformer>`
-    is experimental and the API is subject to change.
+    class is experimental and the API is subject to change.
 
 Many datasets contain features of different types, say text, floats and dates,
 where each type of feature requires separate preprocessing or feature extraction steps.
 Often it is easiest to preprocess data before applying scikit-learn methods,
-for example using :ref:`pandas <http://pandas.pydata.org/>`__.
+for example using `pandas <http://pandas.pydata.org/>`__.
 The :class:`~sklearn.experimental.ColumnTransformer` is a convenient way to perform heterogeneous
 preprocessing on data columns within a scikit-learn pipeline (for example,
 when you want to adjust preprocessing parameters within a grid search).
@@ -126,10 +126,12 @@ preprocessing or a specific feature extraction method::
   >>> import pandas as pd
   >>> X = pd.DataFrame(
   ...     {'city': ['London', 'London', 'Paris', 'New York'],
-  ...      'title': ["His Last Bow", "How Watson Learned the Trick", "A Moveable Feast", "The Great Gatsby"]})
+  ...      'title': ["His Last Bow", "How Watson Learned the Trick",
+  ...                "A Moveable Feast", "The Great Gatsby"]})
 
-For this data, we might want to apply a :class:`preprocessing.OneHotEncoder` to the
-``'city'`` column, but a :class:`feature_extraction.CountVectorizer <sklearn.feature_extraction.CountVectorizer>` to the ``'title'`` column.
+For this data, we might want to apply a :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
+to the ``'city'`` column, but a :class:`feature_extraction.text.CountVectorizer <sklearn.feature_extraction.text.CountVectorizer>`
+to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give each
 transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
 
