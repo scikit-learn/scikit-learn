@@ -20,8 +20,8 @@ sample_weight = np.arange(y.size, dtype=np.float64)
 
 X32 = iris.data.astype(np.float32)
 y32 = iris.target.astype(np.float32)
-X_csr32 = sp.csr_matrix(X)
-sample_weight32 = np.arange(y.size, dtype=np.float32)
+X_csr32 = sp.csr_matrix(X32)
+sample_weight32 = np.arange(y32.size, dtype=np.float32)
 
 
 def assert_csr_equal(X, Y):
