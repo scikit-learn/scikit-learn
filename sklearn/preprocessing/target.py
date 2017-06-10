@@ -98,6 +98,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     TransformTargetRegressor(check_inverse=True,
                              func=<ufunc 'log'>,
                              inverse_func=<ufunc 'exp'>,
+                             random_state=None,
                              regressor=LinearRegression(copy_X=True,
                                                         fit_intercept=True,
                                                         n_jobs=1,
