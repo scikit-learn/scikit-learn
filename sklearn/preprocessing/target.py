@@ -5,7 +5,6 @@
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
-from ..linear_model import LinearRegression
 from ..utils.fixes import signature
 from ..utils.validation import check_is_fitted
 from ..utils import check_array, check_random_state
@@ -185,6 +184,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             y_2d = y
         self._fit_transformer(y_2d, sample_weight)
+        from ..linear_model import LinearRegression
         if self.regressor is None:
             self.regressor_ = LinearRegression()
         else:
