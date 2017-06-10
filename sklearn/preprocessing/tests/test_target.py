@@ -1,5 +1,7 @@
 import numpy as np
 
+from sklearn.base import clone
+
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -7,6 +9,7 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 
 from sklearn.preprocessing import TransformTargetRegressor
+from sklearn.preprocessing import MaxAbsScaler
 
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
@@ -16,7 +19,7 @@ from sklearn import datasets
 friedman = datasets.make_friedman1(random_state=0)
 
 
-def test_transformed_target_regressor_error_kwargs():
+def test_transform_target_regressor_error_kwargs():
     X = friedman[0]
     y = friedman[1]
     # provide a transformer and functions at the same time
@@ -28,7 +31,7 @@ def test_transformed_target_regressor_error_kwargs():
                         " same time.", regr.fit, X, y)
 
 
-def test_transformed_target_regressor_invertible():
+def test_transform_target_regressor_invertible():
     X = friedman[0]
     y = friedman[1]
     regr = TransformTargetRegressor(regressor=LinearRegression(),
@@ -45,7 +48,7 @@ def test_transformed_target_regressor_invertible():
     regr.fit(X, y)
 
 
-def test_transformed_target_regressor_friedman():
+def test_transform_target_regressor_friedman():
     X = friedman[0]
     y = friedman[1]
     # pass some functions
@@ -62,27 +65,32 @@ def test_transformed_target_regressor_friedman():
     assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
     assert_array_equal(regr.regressor_.coef_.ravel(),
                        lr.coef_.ravel())
-    # pass a transformer
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    transformer=StandardScaler())
-    y_pred = regr.fit(X, y).predict(X)
-    assert_equal(y.shape, y_pred.shape)
-    y_mean = np.mean(y)
-    y_std = np.std(y)
-    y_tran = np.ravel(regr.transformer_.transform(y.reshape(-1, 1)))
-    assert_array_almost_equal((y - y_mean) / y_std, y_tran)
-    assert_array_almost_equal(y, np.ravel(regr.transformer_.inverse_transform(
-        y_tran.reshape(-1, 1))))
-    assert_equal(y.shape, y_pred.shape)
-    lr = LinearRegression()
-    ss = StandardScaler()
-    lr.fit(X, ss.fit_transform(y[:, None])[:, 0])
-    assert_allclose(y_pred, ss.inverse_transform(lr.predict(X)))
-    assert_array_equal(regr.regressor_.coef_.ravel(),
-                       lr.coef_.ravel())
+    # StandardScaler support 1d array while MaxAbsScaler support only 2d array
+    for transformer in (StandardScaler(), MaxAbsScaler()):
+        regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                        transformer=transformer)
+        y_pred = regr.fit(X, y).predict(X)
+        assert_equal(y.shape, y_pred.shape)
+        y_tran = np.ravel(regr.transformer_.transform(y.reshape(-1, 1)))
+        if issubclass(StandardScaler, transformer.__class__):
+            y_mean = np.mean(y)
+            y_std = np.std(y)
+            assert_array_almost_equal((y - y_mean) / y_std, y_tran)
+        assert_array_almost_equal(
+            y, regr.transformer_.inverse_transform(
+                y_tran.reshape(-1, 1)).squeeze())
+        assert_equal(y.shape, y_pred.shape)
+        lr = LinearRegression()
+        transformer2 = clone(transformer)
+        lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)).squeeze())
+        assert_allclose(y_pred,
+                        transformer2.inverse_transform(
+                            lr.predict(X).reshape(-1, 1)).squeeze())
+        assert_array_equal(regr.regressor_.coef_.squeeze(),
+                           lr.coef_.squeeze())
 
 
-def test_transformed_target_regressor_multioutput():
+def test_transform_target_regressor_multioutput():
     X = friedman[0]
     y = friedman[1]
     y = np.vstack((y, y ** 2 + 1)).T
@@ -99,20 +107,31 @@ def test_transformed_target_regressor_multioutput():
     assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
     assert_array_equal(regr.regressor_.coef_.ravel(),
                        lr.coef_.ravel())
-    # pass a transformer
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    transformer=StandardScaler())
+    # StandardScaler support 1d array while MaxAbsScaler support only 2d array
+    for transformer in (StandardScaler(), MaxAbsScaler()):
+        regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                        transformer=transformer)
+        y_pred = regr.fit(X, y).predict(X)
+        assert_equal(y.shape, y_pred.shape)
+        y_tran = regr.transformer_.transform(y)
+        if issubclass(StandardScaler, transformer.__class__):
+            y_mean = np.mean(y, axis=0)
+            y_std = np.std(y, axis=0)
+            assert_array_almost_equal((y - y_mean) / y_std, y_tran)
+        assert_array_almost_equal(y, regr.transformer_.inverse_transform(
+            y_tran))
+        assert_equal(y.shape, y_pred.shape)
+        transformer2 = clone(transformer)
+        lr.fit(X, transformer2.fit_transform(y))
+        assert_allclose(y_pred, transformer2.inverse_transform(lr.predict(X)))
+        assert_array_equal(regr.regressor_.coef_.squeeze(),
+                           lr.coef_.squeeze())
+
+
+def test_transform_target_regressor_identity():
+    X = friedman[0]
+    y = friedman[1]
+    regr = TransformTargetRegressor()
     y_pred = regr.fit(X, y).predict(X)
-    assert_equal(y.shape, y_pred.shape)
-    y_mean = np.mean(y, axis=0)
-    y_std = np.std(y, axis=0)
-    y_tran = regr.transformer_.transform(y)
-    assert_array_almost_equal((y - y_mean) / y_std, y_tran)
-    assert_array_almost_equal(y, regr.transformer_.inverse_transform(
-        y_tran))
-    assert_equal(y.shape, y_pred.shape)
-    ss = StandardScaler()
-    lr.fit(X, ss.fit_transform(y))
-    assert_allclose(y_pred, ss.inverse_transform(lr.predict(X)))
-    assert_array_equal(regr.regressor_.coef_.ravel(),
-                       lr.coef_.ravel())
+    y_pred_2 = LinearRegression().fit(X, y).predict(X)
+    assert_array_equal(y_pred, y_pred_2)

@@ -239,6 +239,8 @@ data.
   or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
   to further remove the linear correlation across features.
 
+.. _scaling_regression:
+
 .. topic:: Scaling target variables in regression
 
     :func:`scale` and :class:`StandardScaler` work out-of-the-box with 1d arrays.

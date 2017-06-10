@@ -9,10 +9,10 @@ Transforming the prediction target (``y``)
 Transforming target in regression
 ---------------------------------
 
-:class:`TransformTargetRegressor` transforms the target before fitting a
-regression model and inverting back the prediction to the original space. It
-takes as an argument the regressor that will be used for prediction, and the
-transformer that will be applied to the target variable::
+:class:`TransformTargetRegressor` transforms the target y before fitting a
+regression model. The predictions are mapped back to the original space via an
+inverse transform. It takes as an argument the regressor that will be used for
+prediction, and the transformer that will be applied to the target variable::
 
   >>> import numpy as np
   >>> from sklearn.datasets import load_boston
@@ -32,8 +32,8 @@ transformer that will be applied to the target variable::
   >>> print('R2 score:', regr.score(X_test, y_test)) # doctest : +ELLIPSIS
   R2 score: 0.63...
 
-The transformer can also be replaced by a function and an inverse function. We
-can define the following two functions::
+For simple transformations, instead of a Transformer object, a pair of
+functions can be passed, defining the transformation and its inverse mapping::
 
   >>> from __future__ import division
   >>> def func(x):
@@ -69,8 +69,8 @@ each other. However, it is possible to bypass this checking by setting
 .. note::
 
    The transformation can be triggered by setting either ``transformer`` or the
-   functions ``func`` and ``inverse_func``. However, setting both options
-   will raise an error.
+   pair of functions ``func`` and ``inverse_func``. However, setting both
+   options will raise an error.
 
 Label binarization
 ------------------

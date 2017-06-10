@@ -1,4 +1,4 @@
-# Authors: Andreas Mueller < andreas.mueller@columbia.edu>
+# Authors: Andreas Mueller <andreas.mueller@columbia.edu>
 #          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause
 
@@ -52,15 +52,16 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
     func : function, optional
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
-        the same time than ``transformer``. If ``None`` and ``transformer`` is
-        ``None`` as well, the function used will be the identity function.
+        the same time as ``transformer`` is ``None`` as well. If ``None`` and
+        ``transformer`` is ``None`` as well, the function used will be the
+        identity function.
 
     inverse_func : function, optional
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time than ``transformer``. If ``None`` and ``transformer`` as
-        well, the function used will be the identity function. The inverse
-        function is used to return to the same space of the original training
-        labels during prediction.
+        the same time as ``transformer`` is ``None`` as well. If ``None`` and
+        ``transformer`` as well, the function used will be the identity
+        function. The inverse function is used to return to the same space of
+        the original training labels during prediction.
 
     check_inverse : bool, (default=True)
         Whether to check that ``transform`` followed by ``inverse_transform``
@@ -80,9 +81,6 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
     transformer_ : object
         Used transformer in ``fit`` and ``predict``.
-
-    y_ndim_ : int
-        Number of targets.
 
     Examples
     --------
@@ -111,8 +109,11 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/plot_ols.py to highlight the benefit of
-    transforming the target before fitting a regression model.
+    The benefit of transforming the target before fitting a regression model is
+    highlighted in :ref:`examples/preprocessing/plot_transform_target.py
+    <sphx_glr_auto_examples_preprocessing_plot_transform_target.py> `.
+
+    See also :ref:`User guide <scaling_regression>`
 
     """
     def __init__(self, regressor=None, transformer=None,
@@ -178,7 +179,6 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
         y = check_array(y, ensure_2d=False)
-        self.y_ndim_ = y.ndim
         if y.ndim == 1 and self.func is None:
             y_2d = y.reshape(-1, 1)
         else:
@@ -190,10 +190,13 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             self.regressor_ = clone(self.regressor)
         if sample_weight is not None:
-            self.regressor_.fit(X, self.transformer_.fit_transform(y_2d),
-                                sample_weight=sample_weight)
+            self.regressor_.fit(
+                X, self.transformer_.fit_transform(y_2d).squeeze(),
+                sample_weight=sample_weight)
         else:
-            self.regressor_.fit(X, self.transformer_.fit_transform(y_2d))
+            self.regressor_.fit(
+                X, self.transformer_.fit_transform(y_2d).squeeze())
+
         return self
 
     def predict(self, X):
@@ -214,8 +217,9 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
         """
         check_is_fitted(self, "regressor_")
-        pred = self.transformer_.inverse_transform(self.regressor_.predict(X))
-        if self.y_ndim_ == 1 and self.func is None:
-            return pred.squeeze()
+        pred = self.regressor_.predict(X)
+        if pred.ndim == 1 and self.func is None:
+            return self.transformer_.inverse_transform(
+                pred.reshape(-1, 1)).squeeze()
         else:
-            return pred
+            return self.transformer_.inverse_transform(pred)
