@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from ..utils.fixes import expit as logistic_sigmoid
+from scipy.special import expit as logistic_sigmoid
 
 
 def identity(X):

@@ -19,6 +19,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from scipy.misc import logsumexp
 from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
@@ -26,7 +27,7 @@ from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, check_consistent_length
-from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
@@ -483,13 +484,13 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        classes : array-like, shape = [n_classes], optional (default=None)
+        classes : array-like, shape = [n_classes] (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples], optional (default=None)
+        sample_weight : array-like, shape = [n_samples] (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -554,7 +555,7 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        sample_weight : array-like, shape = [n_samples], optional (default=None)
+        sample_weight : array-like, shape = [n_samples], (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
