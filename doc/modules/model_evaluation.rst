@@ -208,8 +208,8 @@ the following two rules:
 Using mutiple metric evaluation
 -------------------------------
 
-Starting from version 0.19, scikit-learn permits evaluation of multiple metrics
-in ``GridSearchCV``, ``RandomizedSearchCV`` and ``cross_val_score``.
+Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
+``RandomizedSearchCV`` and ``cross_validate``.
 
 There are two ways to specify multiple scoring metrics for the ``scoring``
 parameter:
@@ -239,7 +239,7 @@ permitted and will require a wrapper to return a single metric::
     >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
-    >>> scores = cross_val_score(svm.fit(X, y), X, y, scoring=scoring)
+    >>> scores = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
     >>> print(scores['tp'])                   # doctest: +NORMALIZE_WHITESPACE
     [12 13 15]
     >>> print(scores['fn'])                   # doctest: +NORMALIZE_WHITESPACE

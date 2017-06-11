@@ -31,13 +31,18 @@ Changelog
 New features
 ............
 
-   - :class:`model_selection.GridSearchCV`,
-     :class:`model_selection.RandomizedSearchCV` and
-     :func:`model_selection.cross_val_score` now support simultaneous
+   - :class:`model_selection.GridSearchCV` and
+     :class:`model_selection.RandomizedSearchCV` now support simultaneous
      evaluation of multiple metrics. Refer to the
-     :ref:`multimetric_grid_search` and :ref:`multimetric_cross_validation`
-     sections of the user guide for more information.
-     :issue:`7388` by `Raghav RV`_
+     :ref:`multimetric_grid_search` section of the user guide for more
+     information. :issue:`7388` by `Raghav RV`_
+
+   - Added the :func:`model_selection.cross_validate` which allows evaluation
+     of multiple metrics. This function returns a dict with more useful
+     information from cross-validation such as the train scores, fit times and
+     score times even for single metric evaluation.
+     Refer to :ref:`multimetric_cross_validation` section of the userguide
+     for more information. :issue:`7388` by `Raghav RV`_
 
    - Validation that input data contains no NaN or inf can now be suppressed
      using :func:`config_context`, at your own risk. This will save on runtime,
