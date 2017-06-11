@@ -25,6 +25,9 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
+# Though the following import is not directly being used, it is required
+# for 3D projection to work
+from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn.cluster import KMeans
 from sklearn import datasets
