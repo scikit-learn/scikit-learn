@@ -6,6 +6,7 @@ import copy
 from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression)
 
+from sklearn.utils.validation import as_float_array
 from sklearn.utils.testing import (assert_raises, assert_array_equal,
                                    assert_equal,
                                    assert_array_almost_equal,
@@ -459,3 +460,11 @@ def test_isotonic_copy_before_fit():
     # https://github.com/scikit-learn/scikit-learn/issues/6628
     ir = IsotonicRegression()
     copy.copy(ir)
+
+
+def test_isotonic_dtype():
+    x = [2, 1, 4, 3, 5]
+    for dtype in (np.int32, np.int64, np.float32, np.float64):
+        x_np = np.array(x, dtype=np.int32)
+        y = isotonic_regression(x_np)
+        assert_equal(y.dtype, as_float_array(x_np).dtype)

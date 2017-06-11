@@ -119,11 +119,12 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
     order = np.s_[:] if increasing else np.s_[::-1]
-    y = np.array(y[order], dtype=np.float64)
+    y = as_float_array(y)
+    y = np.array(y[order], dtype=y.dtype)
     if sample_weight is None:
-        sample_weight = np.ones(len(y), dtype=np.float64)
+        sample_weight = np.ones(len(y), dtype=y.dtype)
     else:
-        sample_weight = np.array(sample_weight[order], dtype=np.float64)
+        sample_weight = np.array(sample_weight[order])
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
