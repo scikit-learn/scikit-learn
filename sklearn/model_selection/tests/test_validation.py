@@ -26,6 +26,7 @@ from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_validate
 from sklearn.model_selection import permutation_test_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
@@ -254,7 +255,7 @@ def test_cross_val_score():
     assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
 
 
-def test_cross_val_score_multiple_metric_invalid_scoring_param():
+def test_cross_validate_multiple_metric_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
 
@@ -264,25 +265,25 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
     # List/tuple of callables should raise a message advising users to use
     # dict of names to callables mapping
     assert_raises_regex(ValueError, error_message_regexp,
-                        cross_val_score, estimator, X, y,
+                        cross_validate, estimator, X, y,
                         scoring=(make_scorer(precision_score),
                                  make_scorer(accuracy_score)))
     assert_raises_regex(ValueError, error_message_regexp,
-                        cross_val_score, estimator, X, y,
+                        cross_validate, estimator, X, y,
                         scoring=(make_scorer(precision_score),))
 
     # So should empty lists/tuples
     assert_raises_regex(ValueError, error_message_regexp + "Empty list.*",
-                        cross_val_score, estimator, X, y, scoring=())
+                        cross_validate, estimator, X, y, scoring=())
 
     # So should duplicated entries
     assert_raises_regex(ValueError, error_message_regexp + "Duplicated.*",
-                        cross_val_score, estimator, X, y,
+                        cross_validate, estimator, X, y,
                         scoring=('f1_micro', 'f1_micro'))
 
     # Nested Lists should raise a generic error message
     assert_raises_regex(ValueError, error_message_regexp,
-                        cross_val_score, estimator, X, y,
+                        cross_validate, estimator, X, y,
                         scoring=[[make_scorer(precision_score)]])
 
     error_message_regexp = (".*should either be.*string or callable.*for "
@@ -290,22 +291,22 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
 
     # Empty dict should raise invalid scoring error
     assert_raises_regex(ValueError, "An empty dict",
-                        cross_val_score, estimator, X, y, scoring=(dict()))
+                        cross_validate, estimator, X, y, scoring=(dict()))
 
     # And so should any other invalid entry
     assert_raises_regex(ValueError, error_message_regexp,
-                        cross_val_score, estimator, X, y, scoring=5)
+                        cross_validate, estimator, X, y, scoring=5)
 
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError,
                         "Can't handle mix of binary and continuous",
-                        cross_val_score, estimator, X, y,
+                        cross_validate, estimator, X, y,
                         scoring=multiclass_scorer)
     assert_raises_regex(ValueError,
                         "Can't handle mix of binary and continuous",
-                        cross_val_score, estimator, X, y,
+                        cross_validate, estimator, X, y,
                         scoring={"foo": multiclass_scorer})
 
     multivalued_scorer = make_scorer(confusion_matrix)
@@ -313,15 +314,18 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError,
                         "scoring must return a number, got",
-                        cross_val_score, SVC(), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError,
                         "scoring must return a number, got",
-                        cross_val_score, SVC(), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring={"foo": multivalued_scorer})
 
 
-def test_cross_val_score_multiple_metric():
+def test_cross_validate_multiple_metric():
+    # Testing cross_validate for single metric is implicitly done when testing
+    # cross_val_score, as cross_val_score is a wrapper around cross_validate
+
     # Regression
     X, y = make_regression(n_samples=30, random_state=0)
     reg = Ridge(random_state=0)
@@ -347,7 +351,7 @@ def test_cross_val_score_multiple_metric():
     test_r2_scores = np.array(test_r2_scores)
 
     # Single metric passed as a list
-    r2_scores_dict = cross_val_score(reg, X, y, cv=5, scoring=['r2'])
+    r2_scores_dict = cross_validate(reg, X, y, cv=5, scoring=['r2'])
     assert_true(isinstance(r2_scores_dict, dict))
     assert_equal(len(r2_scores_dict), 3)
     assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
@@ -364,7 +368,7 @@ def test_cross_val_score_multiple_metric():
 
     for return_train_score in (True, False):
         for scoring in all_scoring:
-            cv_results = cross_val_score(reg, X, y, cv=5, scoring=scoring,
+            cv_results = cross_validate(reg, X, y, cv=5, scoring=scoring,
                                          return_train_score=return_train_score)
             assert_true(isinstance(cv_results, dict))
             assert_equal(set(cv_results.keys()),

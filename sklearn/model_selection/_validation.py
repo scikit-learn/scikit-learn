@@ -31,13 +31,13 @@ from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
 
-__all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
-           'learning_curve', 'validation_curve']
+__all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
+           'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
-                    n_jobs=1, verbose=0, fit_params=None,
-                    pre_dispatch='2*n_jobs', return_train_score=False):
+def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
+                   n_jobs=1, verbose=0, fit_params=None,
+                   pre_dispatch='2*n_jobs', return_train_score=False):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -66,13 +66,12 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         or a dict with names as keys and callables as values.
 
         NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values may be wrapped
+        value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        If None the estimator's default scorer (if available) is used.
+        See :ref:`_multivalued_scorer_wrapping` for an example.
 
-        For multimetric scoring the return value is a dict. Refer the doc of
-        return parameter ``scores`` to know more.
+        If None, the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -152,13 +151,18 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y))               # doctest: +ELLIPSIS
+
+    >>> # single metric evaluation using cross_validate
+    >>> cv_results = cross_validate(lasso, X, y)
+    >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
+    ['fit_times', 'score_times', 'test_score']
+    >>> cv_results['test_score']
     [ 0.33...  0.08...  0.03...]
 
-    >>> # Multi-metric evaluation using cross_val_score
+    >>> # Multiple metric evaluation using cross_validate
     >>> # (Please refer the ``scoring`` parameter doc for more information)
-    >>> scores = cross_val_score(lasso, X, y, return_train_score=True,
-    ...                          scoring=('r2', 'neg_mean_squared_error'))
+    >>> scores = cross_validate(lasso, X, y, return_train_score=True,
+    ...                         scoring=('r2', 'neg_mean_squared_error'))
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])                         # doctest: +ELLIPSIS
@@ -166,6 +170,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     See Also
     ---------
+    :func:`sklearn.metrics.cross_val_score`:
+        Run cross-validation for single metric evaluation.
+
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
 
@@ -173,10 +180,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers, is_multimetric = _check_multimetric_scoring(estimator,
-                                                         scoring=scoring)
-    if not is_multimetric:
-        scorers = scorers['score']
+    scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -185,12 +189,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     scores = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
-            # We need the times only for multimetric scoring
-            return_times=is_multimetric)
+            return_times=True)
         for train, test in cv.split(X, y, groups))
-
-    if not is_multimetric:
-        return np.array(next(zip(*scores)))
 
     if return_train_score:
         train_scores, test_scores, fit_times, score_times = zip(*scores)
@@ -200,7 +200,6 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = dict()
-
     ret['fit_times'] = np.array(fit_times)
     ret['score_times'] = np.array(score_times)
 
@@ -210,6 +209,113 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
             ret['train_%s' % name] = train_scores[name]
 
     return ret
+
+
+def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
+                    n_jobs=1, verbose=0, fit_params=None,
+                    pre_dispatch='2*n_jobs'):
+    """Evaluate a score by cross-validation
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    groups : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross validation,
+          - integer, to specify the number of folds in a `(Stratified)KFold`,
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train, test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    Returns
+    -------
+    scores : array of float, shape=(len(list(cv)),)
+        Array of scores of the estimator for each run of the cross validation.
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.model_selection import cross_val_score
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
+    [ 0.33150734  0.08022311  0.03531764]
+
+    See Also
+    ---------
+    :func:`sklearn.model_selection.cross_validate`:
+        To run cross-validation on multiple metrics and also to return
+        train scores, fit times and score times.
+
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
+    """
+    # To ensure multimetric format is not supported
+    scorer = check_scoring(estimator, scoring=scoring)
+
+    cv_results = cross_validate(estimator=estimator, X=X, y=y, groups=groups,
+                                scoring={'score': scorer}, cv=cv,
+                                n_jobs=n_jobs, verbose=verbose,
+                                fit_params=fit_params,
+                                pre_dispatch=pre_dispatch)
+    return cv_results['test_score']
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
@@ -915,7 +1021,6 @@ def learning_curve(estimator, X, y, groups=None,
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     # Store it as list as we will be iterating over the list multiple times
     cv_iter = list(cv.split(X, y, groups))
-    n_splits = len(cv_iter)
 
     scorer = check_scoring(estimator, scoring=scoring)
 
@@ -941,10 +1046,6 @@ def learning_curve(estimator, X, y, groups=None,
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv_iter)
-        # out, at this point, is of shape (n_splits, n_unique_ticks, 2)
-        # (where 2 is for train/test scores)
-        # We need it to be of shape (2, n_unique_ticks, n_splits)
-        out = np.asarray(out).transpose((2, 1, 0))
     else:
         train_test_proportions = []
         for train, test in cv_iter:
@@ -955,10 +1056,11 @@ def learning_curve(estimator, X, y, groups=None,
             clone(estimator), X, y, scorer, train, test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in train_test_proportions)
-        out = list(zip(*out))
+        out = np.array(out)
+        n_cv_folds = out.shape[0] // n_unique_ticks
+        out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
-        out[0] = (np.array(out[0]).reshape(n_splits, n_unique_ticks)).T
-        out[1] = (np.array(out[1]).reshape(n_splits, n_unique_ticks)).T
+    out = np.asarray(out).transpose((2, 1, 0))
 
     return train_sizes_abs, out[0], out[1]
 
@@ -1136,13 +1238,10 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
-    out = list(zip(*out))
-
+    out = np.asarray(out)
     n_params = len(param_range)
-    n_splits = cv.get_n_splits(X, y)
-
-    out[0] = (np.array(out[0]).reshape(n_splits, n_params)).T
-    out[1] = (np.array(out[1]).reshape(n_splits, n_params)).T
+    n_cv_folds = out.shape[0] // n_params
+    out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
 
     return out[0], out[1]
 
@@ -1159,20 +1258,39 @@ def _aggregate_score_dicts(scores, shape=None, transpose=False):
     If transpose is set, the individual arrays are transposed after reshaping
     This is useful if the the scores are not ordered first by cv splits.
 
+    Parameters
+    ----------
+
+    scores : list of dict
+        List of dicts of the scores for all scorers. This is a flat list,
+        assumed originally to be of row major order. See ``transpose``
+        parameter if it is ordered in column major order.
+
+    shape : tuple
+        This specifies how the scores are ordered and to what shape it must
+        be formed.
+
+    transpose : bool, default False
+        Whether to transpose the final numpy arrays after reshaping them. This
+        is useful if the data is arranged in a column major ordering, where
+        a simple reshape cannot recover the shape of the output array.
+
+        See the below example to understand the need for transpose better.
+
     Example
     -------
 
     >>> scores = [{'a': 1, 'b':1}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
     ...           {'a': 4, 'b':4}, {'a': 5, 'b':5}, {'a': 6, 'b':6},
     ...           {'a': 7, 'b':7}, {'a': 8, 'b':8}, {'a': 9, 'b':9},
-    ...           {'a': 10, 'b': 10}]                          # doctest: +SKIP
-    >>> _aggregate_score_dicts(scores,                         # doctest: +SKIP
+    ...           {'a': 10, 'b': 10}]                         # doctest: +SKIP
+    >>> _aggregate_score_dicts(scores,                        # doctest: +SKIP
     ...                        shape=(2, 5), transpose=False)
     {'a': array([[1, 2, 3, 4, 5],
                  [6, 7, 8, 9, 10]]),
      'b': array([[1, 2, 3, 4, 5],
                  [6, 7, 8, 9, 10]])}
-    >>> _aggregate_score_dicts(scores,                         # doctest: +SKIP
+    >>> _aggregate_score_dicts(scores,                        # doctest: +SKIP
     ...                        shape=(2, 5), transpose=True)
     {'a': array([[1, 6], [2, 7], [3, 8], [4, 9], [5, 10]]),
      'b': array([[1, 6], [2, 7], [3, 8], [4, 9], [5, 10]])}
