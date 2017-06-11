@@ -48,7 +48,8 @@ fig = plt.figure(figsize=(8, 6))
 fignum = 1
 titles = ['3 clusters', '8 clusters', '3 clusters, bad initialization']
 for name, est in estimators.items():
-    ax = plt.subplot(2, 2, fignum, projection='3d')
+    ax = plt.subplot(2, 2, fignum, projection='3d',
+                     elev=48, azim=134)
     est.fit(X)
     labels = est.labels_
 
@@ -66,7 +67,8 @@ for name, est in estimators.items():
     fignum = fignum + 1
 
 # Plot the ground truth
-ax = plt.subplot(2, 2, 4, projection='3d')
+ax = plt.subplot(2, 2, 4, projection='3d',
+                 elev=48, azim=134)
 for name, label in [('Setosa', 0),
                     ('Versicolour', 1),
                     ('Virginica', 2)]:
