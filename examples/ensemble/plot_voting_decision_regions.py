@@ -67,7 +67,7 @@ for idx, clf, tt in zip(product([0, 1], [0, 1]),
 
     axarr[idx[0], idx[1]].contourf(xx, yy, Z, alpha=0.4)
     axarr[idx[0], idx[1]].scatter(X[:, 0], X[:, 1], c=y,
-                                  s=20, edgecolor='black')
+                                  s=20, edgecolor='k')
     axarr[idx[0], idx[1]].set_title(tt)
 
 plt.show()
