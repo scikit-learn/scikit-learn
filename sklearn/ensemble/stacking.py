@@ -5,7 +5,7 @@
 
 from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin)
 from ..model_selection import cross_val_predict
-from ..pipeline import (_name_estimators, FeatureUnion, Pipeline)
+from ..pipeline import (_name_estimators, FeatureUnion)
 from ..preprocessing import FunctionTransformer
 
 
