@@ -9,30 +9,79 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_raises)
-from sklearn.ensemble import (StackMetaEstimator, make_stack_layer,
-                              stack_estimators)
-from sklearn.linear_model import (LogisticRegression, RidgeClassifier,
-                                  LinearRegression)
+from sklearn.ensemble import (StackMetaEstimator, make_stack_layer)
+from sklearn.linear_model import (RidgeClassifier, LinearRegression,
+                                  LogisticRegression)
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn import datasets
 from sklearn.model_selection import (ParameterGrid, StratifiedKFold)
 
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
+RANDOM_SEED = 8939
 
-def test_transformer_init():
-    # Tests if attributes are set correctly
-
-    base_clf = RidgeClassifier(random_state=1)
-    blended = StackMetaEstimator(base_clf)
-
-    assert_equal(blended.base_estimator, base_clf)
-    assert_equal(blended.cv, 3)
+META_ESTIMATOR_PARAMS = {'cv': [2, StratifiedKFold()],
+                         'method': ['auto', 'predict', 'predict_proba'],
+                         'n_jobs': [1, 2]}
+META_ESTIMATOR_FIT_PARAMS = [{}, {"sample_weight": np.ones(y.shape)}]
 
 
-def test_stacking_api():
+def _check_estimator(estimator, **fit_params):
+    # checks that we can fit_transform to the data
+    Xt = estimator.fit_transform(X, y, **fit_params)
+
+    # checks that we get a column vector
+    assert_equal(Xt.ndim, 2)
+
+    # checks that `fit` is not available
+    assert_raises(NotImplementedError, estimator.fit, X, y)
+
+    # checks that we can transform the data after it's fitted
+    Xt2 = estimator.transform(X)
+
+    # checks that transformed data is always a column vector
+    assert_equal(Xt2.ndim, 2)
+
+
+def test_regression():
+    # tests regression with various parameter settings
+
+    regressors = [LinearRegression(), SVR()]
+
+    for reg in regressors:
+        for params in ParameterGrid(META_ESTIMATOR_PARAMS):
+            if params['method'] is 'predict_proba':
+                # no need to test this, as it's related to classification
+                continue
+            blended_reg = StackMetaEstimator(reg, **params)
+            for fit_params in META_ESTIMATOR_FIT_PARAMS:
+                _check_estimator(blended_reg, **fit_params)
+
+
+def test_classification():
+    # tests classification with various parameter settings
+
+    classifiers_with_proba = [RandomForestClassifier(random_state=RANDOM_SEED),
+                              BaggingClassifier(RidgeClassifier(),
+                                                random_state=RANDOM_SEED)]
+    classifiers_without_proba = [RidgeClassifier(random_state=RANDOM_SEED),
+                                 SVC(random_state=RANDOM_SEED)]
+
+    for clf in classifiers_with_proba:
+        for params in ParameterGrid(META_ESTIMATOR_PARAMS):
+            blended_clf = StackMetaEstimator(clf, **params)
+            for fit_params in META_ESTIMATOR_FIT_PARAMS:
+                _check_estimator(blended_clf, **fit_params)
+
+    # test method='auto' for classifiers without 'predict_proba'
+    for clf in classifiers_without_proba:
+        clf = StackMetaEstimator(clf, method='auto')
+        _check_estimator(blended_clf, **fit_params)
+
+
+def test_stacking_shortcuts():
     # Just test if the API generates the expected pipelines
     clf1 = RidgeClassifier(random_state=1)
     clf2 = LogisticRegression(random_state=1)
@@ -44,46 +93,8 @@ def test_stacking_api():
                        [clf1, clf2, clf3])
 
 
-def test_classification():
-    # tests classification with various parameter settings
-
-    sample_weight = np.ones(y.shape)
-
-    # grid with some classifiers that don't have `predict_proba`
-    grid1 = ParameterGrid({'base_estimator':
-                           [RidgeClassifier(random_state=1),
-                            LogisticRegression(random_state=1),
-                            LinearRegression(),
-                            RandomForestClassifier(random_state=1),
-                            SVC(random_state=1)],
-                           'cv': [2, StratifiedKFold()],
-                           'method': ['auto', 'predict'],
-                           'n_jobs': [1, 2],
-                           'fit_params': [{},
-                                          {'sample_weight': sample_weight}]})
-
-    # grid with classifiers that have both predict and predict_proba
-    grid2 = ParameterGrid({'base_estimator':
-                           [RandomForestClassifier(random_state=1),
-                            BaggingClassifier(RidgeClassifier(),
-                                              random_state=1)],
-                           'cv': [2, StratifiedKFold()],
-                           'method': ['auto', 'predict', 'predict_proba'],
-                           'n_jobs': [1, 2],
-                           'fit_params': [{},
-                                          {'sample_weight': sample_weight}]})
-
-    params_list = list(grid1)+list(grid2)
-
-    for params in params_list:
-        fit_params = params.pop('fit_params')
-        clf = StackMetaEstimator(**params)
-        Xt = clf.fit_transform(X, y, **fit_params)
-
-        # checks that we get a column vector
-        assert_equal(Xt.ndim, 2)
-
-        assert_raises(NotImplementedError, clf.fit, X, y, **fit_params)
+def test_layer_regression():
+    pass
 
 
 def test_restack():
