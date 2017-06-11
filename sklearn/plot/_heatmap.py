@@ -45,10 +45,11 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     norm : matplotlib normalizer
         Normalizer passed to pcolor
     """
+
     import matplotlib.pyplot as plt
     if ax is None:
         ax = plt.gca()
-    img = ax.pcolor(values, cmap=cmap, vmin=None, vmax=None, norm=norm)
+    img = ax.pcolormesh(values, cmap=cmap, vmin=None, vmax=None, norm=norm)
     # this will allow us to access the pixel values:
     img.update_scalarmappable()
     ax.set_xlabel(xlabel)
@@ -72,6 +73,11 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     for p, color, value in zip(img.get_paths(), img.get_facecolors(),
                                img.get_array()):
         x, y = p.vertices[:-2, :].mean(0)
+
+        # adjusting x and y for alignment:
+        x = x - 1./6
+        y = y + 1./6
+
         if np.mean(color[:3]) > 0.5:
             # pixel bright: use black for number
             c = 'k'
