@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.linear_model.randomized_l1 import (lasso_stability_path,
                                                 RandomizedLasso,
@@ -94,7 +95,7 @@ def test_randomized_lasso():
     clf = RandomizedLasso(verbose=False, alpha='aic', random_state=42,
                           scaling=scaling)
     feature_scores = clf.fit(X, y).scores_
-    assert_array_equal(feature_scores, X.shape[1] * [1.])
+    assert_allclose(feature_scores, [1., 1., 1., 0.225, 1.], rtol=0.2)
 
     clf = RandomizedLasso(verbose=False, scaling=-0.1)
     assert_raises(ValueError, clf.fit, X, y)
