@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 To run this benchmark, you will need,
@@ -22,6 +21,8 @@ from memory_profiler import memory_usage
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import (CountVectorizer, TfidfVectorizer,
                                              HashingVectorizer)
+
+n_repeat = 3
 
 
 def run_vectorizer(Vectorizer, X, **params):
@@ -54,8 +55,8 @@ for Vectorizer, (analyzer, ngram_range) in itertools.product(
     bench.update(params)
     dt = timeit.repeat(run_vectorizer(Vectorizer, text, **params),
                        number=1,
-                       repeat=3)
-    bench['time'] = "{:.2f} (±{:.2f})".format(np.mean(dt), np.std(dt))
+                       repeat=n_repeat)
+    bench['time'] = "{:.2f} (+-{:.2f})".format(np.mean(dt), np.std(dt))
 
     mem_usage = memory_usage(run_vectorizer(Vectorizer, text, **params))
 
@@ -67,6 +68,8 @@ for Vectorizer, (analyzer, ngram_range) in itertools.product(
 df = pd.DataFrame(res).set_index(['analyzer', 'ngram_range', 'vectorizer'])
 
 print('\n========== Run time performance (sec) ===========\n')
+print('Computing the mean and the standard deviation '
+      'of the run time over {} runs...\n'.format(n_repeat))
 print(df['time'].unstack(level=-1))
 
 print('\n=============== Memory usage (MB) ===============\n')
