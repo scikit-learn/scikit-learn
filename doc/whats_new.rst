@@ -372,6 +372,9 @@ Bug fixes
    - Add ``shuffle`` parameter to :func:`model_selection.train_test_split`.
      :issue:`#8845` by  :user:`themrmax <themrmax>`
 
+   - Fix AIC/BIC criterion computation in :class:`linear_model.LassoLarsIC`
+     by `Alexandre Gramfort`_ and :user:`Mehmet Basbug <mehmetbasbug>`.
+
 API changes summary
 -------------------
 
