@@ -378,6 +378,19 @@ def test_cross_validate_multiple_metric():
             assert_array_almost_equal(
                 cv_results['test_neg_mean_squared_error'], test_mse_scores)
 
+            # Make sure all the arrays are of np.ndarray type
+            assert type(cv_results['test_r2']) == np.ndarray
+            assert (type(cv_results['test_neg_mean_squared_error']) ==
+                    np.ndarray)
+            assert type(cv_results['fit_times'] == np.ndarray)
+            assert type(cv_results['score_times'] == np.ndarray)
+
+            # Ensure all the times are within sane limits
+            assert np.all(cv_results['fit_times'] > 0)
+            assert np.all(cv_results['fit_times'] < 10)
+            assert np.all(cv_results['score_times'] > 0)
+            assert np.all(cv_results['score_times'] < 10)
+
             if return_train_score:
                 assert_array_almost_equal(cv_results['train_r2'],
                                           train_r2_scores)

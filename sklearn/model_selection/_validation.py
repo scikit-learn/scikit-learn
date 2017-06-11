@@ -156,8 +156,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> cv_results = cross_validate(lasso, X, y)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_times', 'score_times', 'test_score']
-    >>> cv_results['test_score']
-    [ 0.33...  0.08...  0.03...]
+    >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    array([ 0.33...,  0.08...,  0.03...])
 
     >>> # Multiple metric evaluation using cross_validate
     >>> # (Please refer the ``scoring`` parameter doc for more information)
@@ -204,9 +204,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     ret['score_times'] = np.array(score_times)
 
     for name in scorers:
-        ret['test_%s' % name] = test_scores[name]
+        ret['test_%s' % name] = np.array(test_scores[name])
         if return_train_score:
-            ret['train_%s' % name] = train_scores[name]
+            ret['train_%s' % name] = np.array(train_scores[name])
 
     return ret
 
