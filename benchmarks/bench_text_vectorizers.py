@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 
 To run this benchmark, you will need,
@@ -39,7 +40,6 @@ print("This benchmarks runs in ~20 min ...")
 
 res = []
 
-# Wrap the result of iteritools.product with tqdm to get a progress bar
 for Vectorizer, (analyzer, ngram_range) in itertools.product(
             [CountVectorizer, TfidfVectorizer, HashingVectorizer],
             [('word', (1, 1)),
