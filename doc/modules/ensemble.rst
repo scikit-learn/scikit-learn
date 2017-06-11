@@ -1095,6 +1095,13 @@ As stacked generalization is a generic framework for combining estimators, it
 works with regression and classification problems. It's so generic the API is
 the same for both problems!
 
+.. topic:: References
+
+ .. [W1992] D. Wolpert, "Stacked Generalization",
+        Neural Networks, Vol. 5, No. 5, 1992.
+
+ .. [MLW2015] https://mlwave.com/kaggle-ensembling-guide/
+
 Usage:
 -----
 
@@ -1142,6 +1149,11 @@ If we apply this model to the Boston house price dataset
 (:func:`sklearn.datasets.load_boston`) and use mean squared error metric,
 the stack result is 18.93744. The best model (the RidgeCV) scored 21.69905.
 
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_classification_001.png
+    :target: ../auto_examples/ensemble/plot_stacked_generalization_classification.html
+    :align: center
+    :scale: 75%
+
 Stacked generalization applied to classification
 ................................................
 
@@ -1150,20 +1162,37 @@ classification algorithms. The procedure is the same: combine base classifiers
 into one transformer with :class:`StackLayer` and use it as a step in the final
 classifier.
 
-.. TODO write example for classification
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+
+    >>> svc = SVC(C=1e3, gamma=1e-2, probability=True, random_state=RANDOM_SEED)
+    >>> et = ExtraTreesClassifier(max_depth=None, n_estimators=30,
+    >>>                           min_samples_split=2, random_state=RANDOM_SEED)
+    >>> rf = RandomForestClassifier(max_depth=None, n_estimators=30,
+    >>>                             random_state=RANDOM_SEED)
+
+    >>> base_classifiers = [("SVC", svc),
+    ...                     ("ExtraTrees", et),
+    ...                     ("RandomForest", rf)]
+
+    >>> layer0 = StackLayer(base_classifiers)
+    >>> combiner = LogisticRegression(random_state=RANDOM_SEED)
+    >>> final_classifier = Pipeline([('layer0', layer0),
+    ...                              ('layer1', combiner)])
+
+We can then apply `final_classifier` in our classification problem. The
+following figure shows how the final classifier combined the decision boundaries
+from the base classifiers when applied to the Iris dataset
+(:func:`sklearn.datasets.load_iris`).
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_classification_001.png
+    :target: ../auto_examples/ensemble/plot_stacked_generalization_classification.html
+    :align: center
+    :scale: 75%
 
 The `MetaStackEstimator`
 ------------------------
 
-.. Explain useful use-cases for using this class directly: pre-training models,
-   etc.
-
-.. topic:: Examples
-
-
-.. topic:: References
-
- .. [W1992] D. Wolpert, "Stacked Generalization",
-        Neural Networks, Vol. 5, No. 5, 1992.
-
- .. [MLW2015] https://mlwave.com/kaggle-ensembling-guide/
+.. TODO Explain useful use-cases for using this class directly: pre-training
+   models, etc.

@@ -35,7 +35,7 @@ SUBPLOT_Y = 4
 SUBPLOT_OFFSET = (SUBPLOT_X * 10 + SUBPLOT_Y) * 10
 EXAMPLE_INDEX = 2
 
-plt.figure(EXAMPLE_INDEX, figsize=(9,3))
+plt.figure(EXAMPLE_INDEX, figsize=(9, 3))
 
 # prepare data
 X, y = load_iris(return_X_y=True)
@@ -54,9 +54,9 @@ base_classifiers = [("SVC", svc),
                     ("ExtraTrees", et),
                     ("RandomForest", rf)]
 
+
 def plot_model(name, model, plot_idx):
     model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
 
     plt.subplot(SUBPLOT_OFFSET + plot_idx)
     plt.title(name)
@@ -77,8 +77,6 @@ for i, (name, classifier) in enumerate(base_classifiers):
 
 layer0 = StackLayer(base_classifiers)
 
-from sklearn.model_selection import GridSearchCV
-
 X2_train = layer0.fit_transform(X_train, y_train)
 
 combiner = LogisticRegression(random_state=RANDOM_SEED)
@@ -87,4 +85,5 @@ final_classifier = Pipeline([('layer0', layer0),
 
 plot_model('Stacked classifiers', final_classifier, SUBPLOT_Y)
 
+plt.tight_layout()
 plt.show()

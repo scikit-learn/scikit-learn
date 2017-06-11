@@ -41,7 +41,7 @@ SUBPLOT_Y = 4
 SUBPLOT_OFFSET = (SUBPLOT_X * 10 + SUBPLOT_Y) * 10
 EXAMPLE_INDEX = 1
 
-plt.figure(EXAMPLE_INDEX, figsize=(9,3))
+plt.figure(EXAMPLE_INDEX, figsize=(9, 3))
 
 # prepare data
 X, y = load_boston(return_X_y=True)
@@ -56,6 +56,7 @@ svr = SVR(C=1e2, gamma=1e-3)
 base_regressors = [("lasso", lasso),
                    ("ridge", ridge),
                    ("svr", svr)]
+
 
 def evaluate_and_log_model(name, model, plot_idx):
     model.fit(X_train, y_train)
@@ -81,5 +82,5 @@ final_regressor = Pipeline([('layer0', layer0),
                             ('layer1', LinearRegression())])
 
 evaluate_and_log_model('Stacked Regressors', final_regressor, 4)
-
+plt.tight_layout()
 plt.show()
