@@ -1129,6 +1129,7 @@ on the dataset.
 Now here is where :class:`StackLayer` comes into play: it will take base
 regressors and turn them into a transformer.
 
+    >>> from sklearn.ensemble import StackLayer
     >>> layer0 = StackLayer(base_regressors)
 
 This transformer already implements the proper algorithm to train the base
@@ -1141,6 +1142,7 @@ regression and build the final model using the :class:`Pipeline` class.
 
     >>> from sklearn.ensemble import StackLayer
     >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.linear_model import LinearRegression
 
     >>> final_regressor = Pipeline([('layer0', layer0),
     ...                             ('layer1', LinearRegression())])
@@ -1166,18 +1168,17 @@ classifier.
     >>> from sklearn.svm import SVC
     >>> from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
-    >>> svc = SVC(C=1e3, gamma=1e-2, probability=True, random_state=RANDOM_SEED)
+    >>> svc = SVC(C=1e3, gamma=1e-2, probability=True)
     >>> et = ExtraTreesClassifier(max_depth=None, n_estimators=30,
-    >>>                           min_samples_split=2, random_state=RANDOM_SEED)
-    >>> rf = RandomForestClassifier(max_depth=None, n_estimators=30,
-    >>>                             random_state=RANDOM_SEED)
+    ...                           min_samples_split=2)
+    >>> rf = RandomForestClassifier(max_depth=None, n_estimators=30)
 
     >>> base_classifiers = [("SVC", svc),
     ...                     ("ExtraTrees", et),
     ...                     ("RandomForest", rf)]
 
     >>> layer0 = StackLayer(base_classifiers)
-    >>> combiner = LogisticRegression(random_state=RANDOM_SEED)
+    >>> combiner = LogisticRegression()
     >>> final_classifier = Pipeline([('layer0', layer0),
     ...                              ('layer1', combiner)])
 
