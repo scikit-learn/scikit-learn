@@ -223,6 +223,7 @@ Model validation
    :toctree: generated/
    :template: function.rst
 
+   model_selection.cross_validate
    model_selection.cross_val_score
    model_selection.cross_val_predict
    model_selection.permutation_test_score
@@ -1426,6 +1427,7 @@ To be removed in 0.20
    learning_curve.validation_curve
    cross_validation.cross_val_predict
    cross_validation.cross_val_score
+   cross_validation.cross_validate
    cross_validation.check_cv
    cross_validation.permutation_test_score
    cross_validation.train_test_split
