@@ -243,6 +243,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         check_consistent_length(X, y, sample_weight)
         X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
 
+        X = as_float_array(X)
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
@@ -262,7 +263,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = np.ones(len(y))
 
         order = np.lexsort((y, X))
-        X, y, sample_weight = [array[order].astype(np.float64, copy=False)
+        X, y, sample_weight = [array[order].astype(X.dtype, copy=False)
                                for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)
@@ -347,6 +348,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             The transformed data
         """
         T = as_float_array(T)
+        T = T.astype(self._necessary_X_.dtype, copy=False)
+
         if len(T.shape) != 1:
             raise ValueError("Isotonic regression input should be a 1d array")
 
