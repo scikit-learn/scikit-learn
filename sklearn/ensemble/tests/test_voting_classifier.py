@@ -364,3 +364,7 @@ def test_estimator_weights_format():
     eclf1.fit(X, y)
     eclf2.fit(X, y)
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
+
+def test_frozen():
+    raise NotImplementedError()

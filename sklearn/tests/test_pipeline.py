@@ -928,3 +928,11 @@ def test_make_pipeline_memory():
     assert_true(pipeline.memory is None)
 
     shutil.rmtree(cachedir)
+
+
+def test_pipeline_frozen():
+    raise NotImplementedError()
+
+
+def test_feature_union_frozen():
+    raise NotImplementedError()
