@@ -503,6 +503,7 @@ class PCA(_BasePCA):
         if self.n_components_ < n_features:
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())
+            self.noise_variance_ /= n_features - n_components
         else:
             self.noise_variance_ = 0.
 
