@@ -174,7 +174,8 @@ def test_whitening():
         X_whitened2 = pca.transform(X_)
         assert_array_almost_equal(X_whitened, X_whitened2)
 
-        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components),
+        assert_almost_equal(X_whitened.std(ddof=1, axis=0),
+                            np.ones(n_components),
                             decimal=6)
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
