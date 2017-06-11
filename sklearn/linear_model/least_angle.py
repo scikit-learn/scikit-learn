@@ -1400,9 +1400,9 @@ class LassoLarsIC(LassoLars):
 
     criterion_ : array, shape (n_alphas,)
         The value of the information criteria ('aic', 'bic') across all
-        alphas. The alpha which has the smallest information criteria is chosen.
-        This value is larger by a factor of ``n_samples`` compared to Eqns. 2.15
-        and 2.16 in (Zou et al, 2007).
+        alphas. The alpha which has the smallest information criterion is
+        chosen. This value is larger by a factor of ``n_samples`` compared to
+        Eqns. 2.15 and 2.16 in (Zou et al, 2007).
 
 
     Examples
