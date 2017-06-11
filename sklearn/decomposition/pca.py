@@ -346,7 +346,7 @@ class PCA(_BasePCA):
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= sqrt(X.shape[0])
+            U *= sqrt(X.shape[0] - 1)
         else:
             # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:self.n_components_]
