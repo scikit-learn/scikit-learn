@@ -78,9 +78,13 @@ class StackMetaEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         return preds
 
 
+def _identity(x):
+    return x
+
+
 def _identity_transformer():
     """Contructs a transformer that does nothing"""
-    return FunctionTransformer(lambda x: x)
+    return FunctionTransformer(_identity)
 
 
 class StackLayer(FeatureUnion):
