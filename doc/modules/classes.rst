@@ -400,6 +400,8 @@ Samples generator
    ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
    ensemble.VotingClassifier
+   ensemble.StackMetaEstimator
+   ensemble.StackLayer
 
 .. autosummary::
    :toctree: generated/

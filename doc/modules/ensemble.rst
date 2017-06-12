@@ -1073,6 +1073,8 @@ Optionally, weights can be provided for the individual classifiers::
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
 
 
+.. _stacking:
+
 Stacked generalization
 ======================
 
@@ -1103,7 +1105,7 @@ the same for both problems!
  .. [MLW2015] https://mlwave.com/kaggle-ensembling-guide/
 
 Usage:
------
+------
 
 The most basic stacked ensemble consists of two layers: a layer of base
 generalizers and a single estimator for combining the output of the base
@@ -1113,7 +1115,8 @@ Stacked generalization applied to regression
 ............................................
 
 For this problem, assume some regressors were tested and have a good performance
-on the dataset.
+on the dataset. Here we used a :class:`LassoCV`, :class:`RidgeCV` and
+:class:`SVR`::
 
     >>> from sklearn.linear_model import LassoCV, RidgeCV
     >>> from sklearn.svm import SVR
@@ -1126,8 +1129,8 @@ on the dataset.
     ...                    ("ridge", ridge),
     ...                    ("svr", svr)]
 
-Now here is where :class:`StackLayer` comes into play: it will take base
-regressors and turn them into a transformer.
+Now here is where `StackLayer` comes into play: it will take the base regressors
+and turn them into a transformer::
 
     >>> from sklearn.ensemble import StackLayer
     >>> layer0 = StackLayer(base_regressors)
@@ -1135,10 +1138,10 @@ regressors and turn them into a transformer.
 This transformer already implements the proper algorithm to train the base
 regressors without leaking data to the next layer, so no need to worry.
 
-The output for `layer0` is a matrix where each column is the prediction from
+The output for ``layer0`` is a matrix where each column is the prediction from
 one of the base regressors. We can now combine them in any way, including
 training another regressor with it. For this example, we used a linear
-regression and build the final model using the :class:`Pipeline` class.
+regression and build the final model using :class:`Pipeline` class::
 
     >>> from sklearn.ensemble import StackLayer
     >>> from sklearn.pipeline import Pipeline
@@ -1151,7 +1154,7 @@ If we apply this model to the Boston house price dataset
 (:func:`sklearn.datasets.load_boston`) and use mean squared error metric,
 the stack result is 18.93744. The best model (the RidgeCV) scored 21.69905.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_classification_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_regression_001.png
     :target: ../auto_examples/ensemble/plot_stacked_generalization_classification.html
     :align: center
     :scale: 75%
@@ -1161,8 +1164,8 @@ Stacked generalization applied to classification
 
 As stated before, stacked generalization can be applied both to regression and
 classification algorithms. The procedure is the same: combine base classifiers
-into one transformer with :class:`StackLayer` and use it as a step in the final
-classifier.
+into one transformer with `StackLayer` and use it as a step in the final
+classifier::
 
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.svm import SVC
@@ -1182,7 +1185,7 @@ classifier.
     >>> final_classifier = Pipeline([('layer0', layer0),
     ...                              ('layer1', combiner)])
 
-We can then apply `final_classifier` in our classification problem. The
+We can then apply ``final_classifier`` in our classification problem. The
 following figure shows how the final classifier combined the decision boundaries
 from the base classifiers when applied to the Iris dataset
 (:func:`sklearn.datasets.load_iris`).
@@ -1192,8 +1195,14 @@ from the base classifiers when applied to the Iris dataset
     :align: center
     :scale: 75%
 
-The `MetaStackEstimator`
+The `StackMetaEstimator`
 ------------------------
+
+Under the hood, this is the class that implements what's needed to turn an
+estimator into a transformer that can be used for stacked
+generalization. `StackLayer` is actually just a wrapper that takes the
+estimators, wraps them with `StackMetaEstimator` and joins everything with
+:class:`FeatureUnion`.
 
 .. TODO Explain useful use-cases for using this class directly: pre-training
    models, etc.

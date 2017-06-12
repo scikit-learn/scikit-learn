@@ -62,13 +62,15 @@ def evaluate_and_log_model(name, model, plot_idx):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     score = mean_squared_error(y_test, y_pred)
-    print "MSE for %s: %.5f" % (name, score)
+    print("MSE for %s: %.5f" % (name, score))
 
     plt.subplot(SUBPLOT_OFFSET + plot_idx)
     plt.title(name)
     plt.scatter(y_pred, y_test, )
     plt.xlabel('Predicted')
     plt.ylabel('Measured')
+    plt.xticks(())
+    plt.yticks(())
 
 
 for i, (name, regressor) in enumerate(base_regressors):

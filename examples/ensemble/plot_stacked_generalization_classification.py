@@ -33,7 +33,7 @@ RANDOM_SEED = 89555
 SUBPLOT_X = 1
 SUBPLOT_Y = 4
 SUBPLOT_OFFSET = (SUBPLOT_X * 10 + SUBPLOT_Y) * 10
-EXAMPLE_INDEX = 2
+EXAMPLE_INDEX = 1
 
 plt.figure(EXAMPLE_INDEX, figsize=(9, 3))
 
@@ -67,6 +67,8 @@ def plot_model(name, model, plot_idx):
     z = model.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
     plt.contourf(xx, yy, z, cmap=plt.cm.RdYlBu, alpha=.5)
     plt.scatter(X[:, 0], X[:, 1], c=y, s=15, cmap=plt.cm.RdYlBu)
+    plt.xticks(())
+    plt.yticks(())
 
 
 for i, (name, classifier) in enumerate(base_classifiers):
