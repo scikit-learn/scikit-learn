@@ -1094,8 +1094,8 @@ The method is as follows [MLW2015]_:
 5. Fit the model on the whole training set.
 
 As stacked generalization is a generic framework for combining estimators, it
-works with regression and classification problems. It's so generic the API is
-the same for both problems!
+works with regression and classification problems. The API reflects that, so
+it's the same for both categories.
 
 Usage:
 ------
@@ -1133,7 +1133,7 @@ regressors without leaking data to the next layer, so no need to worry.
 
 The output for ``layer0`` is a matrix where each column is the prediction from
 one of the base regressors. We can now combine them in any way, including
-training another regressor with it. For this example, we used a linear
+training another regressor with it. For this example, we use a linear
 regression and build the final model using `Pipeline` class::
 
     >>> from sklearn.ensemble import StackLayer
@@ -1144,8 +1144,9 @@ regression and build the final model using `Pipeline` class::
     ...                             ('layer1', LinearRegression())])
 
 If we apply this model to the Boston house price dataset
-(:func:`sklearn.datasets.load_boston`) and use mean squared error metric,
-the stack result is 18.93744. The best model (the RidgeCV) scored 21.69905.
+(:func:`sklearn.datasets.load_boston`) and use mean squared error metric, the
+stack result is 18.93744. The best model (the RidgeCV) scored 21.69905 when used
+alone.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_regression_001.png
     :target: ../auto_examples/ensemble/plot_stacked_generalization_classification.html
