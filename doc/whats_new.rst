@@ -367,13 +367,16 @@ Bug fixes
      with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
-     :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
+     :issue:`8936` by :user:`mlewis1729 <mlewis1729>`
 
    - Add ``shuffle`` parameter to :func:`model_selection.train_test_split`.
-     :issue:`#8845` by  :user:`themrmax <themrmax>`
+     :issue:`8845` by  :user:`themrmax <themrmax>`
 
    - Fix AIC/BIC criterion computation in :class:`linear_model.LassoLarsIC`
      by `Alexandre Gramfort`_ and :user:`Mehmet Basbug <mehmetbasbug>`.
+
+   - Fix bug where stratified CV splitters did not work with
+     :class:`linear_model.LassoCV`. :issue:`8973` by `Paulo Haddad <paulochf>`.
 
 API changes summary
 -------------------
