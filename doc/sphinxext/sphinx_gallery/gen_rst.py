@@ -11,6 +11,8 @@ example files.
 Files that generate images should start with 'plot'
 
 """
+# Don't use unicode_literals here (be explicit with u"..." instead) otherwise
+# tricky errors come up with exec(code_blocks, ...) calls
 from __future__ import division, print_function, absolute_import
 from time import time
 import codecs
@@ -46,10 +48,7 @@ except ImportError:
                 yield (prefix + line if predicate(line) else line)
         return ''.join(prefixed_lines())
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 # make sure that the Agg backend is set before importing any
 # matplotlib
@@ -84,6 +83,7 @@ try:
     basestring
 except NameError:
     basestring = str
+    unicode = str
 
 
 ###############################################################################
@@ -104,17 +104,21 @@ class Tee(object):
         self.file1.flush()
         self.file2.flush()
 
+    # When called from a local terminal seaborn needs it in Python3
+    def isatty(self):
+        self.file1.isatty()
+
+
+class MixedEncodingStringIO(StringIO):
+    """Helper when both ASCII and unicode strings will be written"""
+
+    def write(self, data):
+        if not isinstance(data, unicode):
+            data = data.decode('utf-8')
+        StringIO.write(self, data)
+
 
 ###############################################################################
-CODE_DOWNLOAD = """**Total running time of the script:**
-({0:.0f} minutes {1:.3f} seconds)\n\n
-\n.. container:: sphx-glr-download
-
-    **Download Python source code:** :download:`{2} <{2}>`\n
-\n.. container:: sphx-glr-download
-
-    **Download IPython notebook:** :download:`{3} <{3}>`\n"""
-
 # The following strings are used when we have several pictures: we use
 # an html div tag that our CSS uses to turn the lists into horizontal
 # lists.
@@ -136,7 +140,8 @@ SINGLE_IMAGE = """
 """
 
 
-CODE_OUTPUT = """.. rst-class:: sphx-glr-script-out
+# This one could contain unicode
+CODE_OUTPUT = u""".. rst-class:: sphx-glr-script-out
 
  Out::
 
@@ -209,29 +214,13 @@ def md5sum_is_current(src_file):
     src_md5 = get_md5sum(src_file)
 
     src_md5_file = src_file + '.md5'
-    src_file_changed = True
     if os.path.exists(src_md5_file):
         with open(src_md5_file, 'r') as file_checksum:
             ref_md5 = file_checksum.read()
-        if src_md5 == ref_md5:
-            src_file_changed = False
 
-    if src_file_changed:
-        with open(src_md5_file, 'w') as file_checksum:
-            file_checksum.write(src_md5)
+        return src_md5 == ref_md5
 
-    return src_file_changed
-
-
-def _plots_are_current(src_file, image_file):
-    """Test existence of image file and no change in md5sum of
-    example"""
-
-    first_image_file = image_file.format(1)
-    has_image = os.path.exists(first_image_file)
-    src_file_changed = check_md5sum_change(src_file)
-
-    return has_image and not src_file_changed
+    return False
 
 
 def save_figures(image_path, fig_count, gallery_conf):
@@ -243,6 +232,8 @@ def save_figures(image_path, fig_count, gallery_conf):
         Path where plots are saved (format string which accepts figure number)
     fig_count : int
         Previous figure number count. Figure number add from this number
+    gallery_conf : dict
+        Contains the configuration of Sphinx-Gallery
 
     Returns
     -------
@@ -272,9 +263,9 @@ def save_figures(image_path, fig_count, gallery_conf):
     if gallery_conf.get('find_mayavi_figures', False):
         from mayavi import mlab
         e = mlab.get_engine()
-        last_matplotlib_fig_num = len(figure_list)
+        last_matplotlib_fig_num = fig_count + len(figure_list)
         total_fig_num = last_matplotlib_fig_num + len(e.scenes)
-        mayavi_fig_nums = range(last_matplotlib_fig_num, total_fig_num)
+        mayavi_fig_nums = range(last_matplotlib_fig_num + 1, total_fig_num + 1)
 
         for scene, mayavi_fig_num in zip(e.scenes, mayavi_fig_nums):
             current_fig = image_path.format(mayavi_fig_num)
@@ -368,18 +359,28 @@ def scale_image(in_fname, out_fname, max_width, max_height):
                           generated images')
 
 
-def save_thumbnail(image_path, base_image_name, gallery_conf):
+def save_thumbnail(image_path_template, src_file, gallery_conf):
     """Save the thumbnail image"""
-    first_image_file = image_path.format(1)
-    thumb_dir = os.path.join(os.path.dirname(first_image_file), 'thumb')
+    # read specification of the figure to display as thumbnail from main text
+    _, content = get_docstring_and_rest(src_file)
+    thumbnail_number = extract_thumbnail_number(content)
+    thumbnail_image_path = image_path_template.format(thumbnail_number)
+
+    thumb_dir = os.path.join(os.path.dirname(thumbnail_image_path), 'thumb')
     if not os.path.exists(thumb_dir):
         os.makedirs(thumb_dir)
 
+    base_image_name = os.path.splitext(os.path.basename(src_file))[0]
     thumb_file = os.path.join(thumb_dir,
                               'sphx_glr_%s_thumb.png' % base_image_name)
 
-    if os.path.exists(first_image_file):
-        scale_image(first_image_file, thumb_file, 400, 280)
+    if src_file in gallery_conf['failing_examples']:
+        broken_img = os.path.join(glr_path_static(), 'broken_example.png')
+        scale_image(broken_img, thumb_file, 200, 140)
+
+    elif os.path.exists(thumbnail_image_path):
+        scale_image(thumbnail_image_path, thumb_file, 400, 280)
+
     elif not os.path.exists(thumb_file):
         # create something to replace the thumbnail
         default_thumb_file = os.path.join(glr_path_static(), 'no_image.png')
@@ -396,7 +397,7 @@ def generate_dir_rst(src_dir, target_dir, gallery_conf, seen_backrefs):
               src_dir)
         print('Skipping this directory')
         print(80 * '_')
-        return ""  # because string is an expected return type
+        return "", []  # because string is an expected return type
 
     with open(os.path.join(src_dir, 'README.txt')) as fid:
         fhindex = fid.read()
@@ -411,8 +412,9 @@ def generate_dir_rst(src_dir, target_dir, gallery_conf, seen_backrefs):
     computation_times = []
     build_target_dir = os.path.relpath(target_dir, gallery_conf['src_dir'])
     for fname in sorted_listdir:
-        amount_of_code = generate_file_rst(fname, target_dir, src_dir,
-                                           gallery_conf)
+        amount_of_code, time_elapsed = \
+            generate_file_rst(fname, target_dir, src_dir, gallery_conf)
+        computation_times.append((time_elapsed, fname))
         new_fname = os.path.join(src_dir, fname)
         intro = extract_intro(new_fname)
         this_entry = _thumbnail_div(build_target_dir, fname, intro) + """
@@ -437,40 +439,45 @@ def generate_dir_rst(src_dir, target_dir, gallery_conf, seen_backrefs):
     fhindex += """.. raw:: html\n
     <div style='clear:both'></div>\n\n"""
 
-    return fhindex
+    return fhindex, computation_times
 
 
-def execute_script(code_block, example_globals, image_path, fig_count,
-                   src_file, gallery_conf):
+def execute_code_block(code_block, example_globals,
+                       block_vars, gallery_conf):
     """Executes the code block of the example file"""
     time_elapsed = 0
     stdout = ''
 
-    # We need to execute the code
-    print('plotting code blocks in %s' % src_file)
+    # If example is not suitable to run, skip executing its blocks
+    if not block_vars['execute_script']:
+        return stdout, time_elapsed
 
     plt.close('all')
     cwd = os.getcwd()
     # Redirect output to stdout and
     orig_stdout = sys.stdout
+    src_file = block_vars['src_file']
 
     try:
         # First cd in the original example dir, so that any file
         # created by the example get created in this directory
         os.chdir(os.path.dirname(src_file))
-        my_buffer = StringIO()
+        my_buffer = MixedEncodingStringIO()
         my_stdout = Tee(sys.stdout, my_buffer)
         sys.stdout = my_stdout
 
         t_start = time()
+        # don't use unicode_literals at the top of this file or you get
+        # nasty errors here on Py2.7
         exec(code_block, example_globals)
         time_elapsed = time() - t_start
 
         sys.stdout = orig_stdout
 
         my_stdout = my_buffer.getvalue().strip().expandtabs()
+        # raise RuntimeError
         if my_stdout:
-            stdout = CODE_OUTPUT.format(indent(my_stdout, ' ' * 4))
+            stdout = CODE_OUTPUT.format(indent(my_stdout, u' ' * 4))
         os.chdir(cwd)
         images_rst, fig_num = save_figures(block_vars['image_path'],
                                            block_vars['fig_count'], gallery_conf)
@@ -478,44 +485,72 @@ def execute_script(code_block, example_globals, image_path, fig_count,
     except Exception:
         formatted_exception = traceback.format_exc()
 
-        print(80 * '_')
-        print('%s is not compiling:' % src_file)
-        print(formatted_exception)
-        print(80 * '_')
+        fail_example_warning = 80 * '_' + '\n' + \
+            '%s failed to execute correctly:' % src_file + \
+            formatted_exception + 80 * '_' + '\n'
+        warnings.warn(fail_example_warning)
 
-        figure_list = []
-        image_list = codestr2rst(formatted_exception, lang='pytb')
-
-        # Overrides the output thumbnail in the gallery for easy identification
-        broken_img = os.path.join(glr_path_static(), 'broken_example.png')
-        shutil.copyfile(broken_img, os.path.join(cwd, image_path.format(1)))
-        fig_count += 1  # raise count to avoid overwriting image
+        fig_num = 0
+        images_rst = codestr2rst(formatted_exception, lang='pytb')
 
         # Breaks build on first example error
-
+        # XXX This check can break during testing e.g. if you uncomment the
+        # `raise RuntimeError` by the `my_stdout` call, maybe use `.get()`?
         if gallery_conf['abort_on_example_error']:
             raise
+        # Stores failing file
+        gallery_conf['failing_examples'][src_file] = formatted_exception
+        block_vars['execute_script'] = False
 
     finally:
         os.chdir(cwd)
         sys.stdout = orig_stdout
 
-    print(" - time elapsed : %.2g sec" % time_elapsed)
-    code_output = "\n{0}\n\n{1}\n\n".format(image_list, stdout)
+    code_output = u"\n{0}\n\n{1}\n\n".format(images_rst, stdout)
+    block_vars['fig_count'] += fig_num
 
-    return code_output, time_elapsed, fig_count + len(figure_list)
+    return code_output, time_elapsed
+
+
+def clean_modules():
+    """Remove "unload" seaborn from the name space
+
+    After a script is executed it can load a variety of setting that one
+    does not want to influence in other examples in the gallery."""
+
+    # Horrible code to 'unload' seaborn, so that it resets
+    # its default when is load
+    # Python does not support unloading of modules
+    # https://bugs.python.org/issue9072
+    for module in list(sys.modules.keys()):
+        if 'seaborn' in module:
+            del sys.modules[module]
+
+    # Reset Matplotlib to default
+    plt.rcdefaults()
 
 
 def generate_file_rst(fname, target_dir, src_dir, gallery_conf):
-    """ Generate the rst file for a given example.
+    """Generate the rst file for a given example.
 
-        Returns the amout of code (in characters) of the corresponding
-        files.
+    Returns
+    -------
+    amount_of_code : int
+        character count of the corresponding python script in file
+    time_elapsed : float
+        seconds required to run the script
     """
 
     src_file = os.path.normpath(os.path.join(src_dir, fname))
     example_file = os.path.join(target_dir, fname)
     shutil.copyfile(src_file, example_file)
+    script_blocks = split_code_and_text_blocks(src_file)
+    amount_of_code = sum([len(bcontent)
+                          for blabel, bcontent in script_blocks
+                          if blabel == 'code'])
+
+    if md5sum_is_current(example_file):
+        return amount_of_code, 0
 
     image_dir = os.path.join(target_dir, 'images')
     if not os.path.exists(image_dir):
@@ -568,16 +603,11 @@ def generate_file_rst(fname, target_dir, src_dir, gallery_conf):
                 example_rst += codestr2rst(bcontent) + '\n'
                 example_rst += code_output
             else:
-                example_rst += text2string(bcontent) + '\n'
-                example_nb.add_markdown_cell(text2string(bcontent))
-    else:
-        for blabel, bcontent in script_blocks:
-            if blabel == 'code':
+                example_rst += code_output
+                if 'sphx-glr-script-out' in code_output:
+                    # Add some vertical space after output
+                    example_rst += "\n\n|\n\n"
                 example_rst += codestr2rst(bcontent) + '\n'
-                example_nb.add_code_cell(bcontent)
-            else:
-                example_rst += bcontent + '\n'
-                example_nb.add_markdown_cell(text2string(bcontent))
 
         else:
             example_rst += bcontent + '\n\n'

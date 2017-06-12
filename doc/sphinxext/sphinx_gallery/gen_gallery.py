@@ -11,11 +11,12 @@ when building the documentation.
 
 
 from __future__ import division, print_function, absolute_import
+import copy
 import re
 import os
 
 from . import glr_path_static
-from .gen_rst import generate_dir_rst
+from .gen_rst import generate_dir_rst, SPHX_GLR_SIG
 from .docs_resolv import embed_code_links
 from .downloads import generate_zipfiles
 
@@ -74,6 +75,7 @@ def parse_config(app):
     except TypeError:
         plot_gallery = bool(app.builder.config.plot_gallery)
 
+    gallery_conf = copy.deepcopy(DEFAULT_GALLERY_CONF)
     gallery_conf.update(app.config.sphinx_gallery_conf)
     gallery_conf.update(plot_gallery=plot_gallery)
     gallery_conf.update(
@@ -286,9 +288,10 @@ def get_default_config_value(key):
 
 def setup(app):
     """Setup sphinx-gallery sphinx extension"""
-    app.add_config_value('plot_gallery', True, 'html')
-    app.add_config_value('abort_on_example_error', False, 'html')
-    app.add_config_value('sphinx_gallery_conf', gallery_conf, 'html')
+    app.add_config_value('sphinx_gallery_conf', DEFAULT_GALLERY_CONF, 'html')
+    for key in ['plot_gallery', 'abort_on_example_error']:
+        app.add_config_value(key, get_default_config_value(key), 'html')
+
     app.add_stylesheet('gallery.css')
 
     # Sphinx < 1.6 calls it `_extensions`, >= 1.6 is `extensions`.
@@ -298,4 +301,5 @@ def setup(app):
 
     app.connect('builder-inited', generate_gallery_rst)
 
+    app.connect('build-finished', sumarize_failing_examples)
     app.connect('build-finished', embed_code_links)
