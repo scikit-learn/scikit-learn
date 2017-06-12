@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.utils.testing import assert_equal
 from sklearn.semi_supervised import label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.datasets import make_classification
+from sklearn.utils.testing import assert_warns, assert_no_warnings
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
@@ -59,3 +61,15 @@ def test_predict_proba():
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                                   np.array([[0.5, 0.5]]))
+
+
+def test_alpha_deprecation():
+    X, y = make_classification(n_samples=100)
+    y[::3] = -1
+    lp_default = label_propagation.LabelPropagation()
+    lp_default_y = assert_no_warnings(lp_default.fit, X, y).transduction_
+
+    lp_0 = label_propagation.LabelPropagation(alpha=0)
+    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
+
+    assert_array_equal(lp_default_y, lp_0_y)

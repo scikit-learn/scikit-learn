@@ -240,9 +240,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         n_samples, n_classes = len(y), len(classes)
 
-        # Hack to deprecate "alpha" of LabelPropagation and set its correct
-        # value (look at LabelPropagation.fit).
-        alpha = getattr(self, '_alpha', self.alpha)
+        alpha = self.alpha
+        if alpha is None:
+            alpha = 0
         y = np.asarray(y)
         unlabeled = y == -1
         clamp_weights = np.ones((n_samples, 1))
@@ -357,6 +357,11 @@ class LabelPropagation(BaseLabelPropagation):
     --------
     LabelSpreading : Alternate label propagation strategy more robust to noise
     """
+    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+                 alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
+        super(LabelPropagation, self).__init__(
+            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors, alpha=alpha,
+            max_iter=max_iter, tol=tol, n_jobs=n_jobs)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -375,16 +380,11 @@ class LabelPropagation(BaseLabelPropagation):
         return affinity_matrix
 
     def fit(self, X, y):
-        # alpha is deprecated for LabelPropagation because it doesn't have any
-        # theoretical meaning (from the reference paper). Look at PR 6727.
         if self.alpha is not None:
             warnings.warn(
-                "alpha's value will be ignored."
                 "alpha is deprecated since 0.19 and will be removed in 0.21.",
                 DeprecationWarning
             )
-        # Extra property to set the correct value of the deprecated "alpha".
-        self._alpha = 0
         return super(LabelPropagation, self).fit(X, y)
 
 
