@@ -119,8 +119,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
 
-        Note that this parameter has no effect for single metric ``scoring``.
-
     Returns
     -------
     scores : array of float or dict of float arrays, array shape=(n_splits,)
