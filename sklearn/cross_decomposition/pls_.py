@@ -330,13 +330,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
                 # - regress Yk's on y_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, y_scores)
-                              / np.dot(y_scores.T, y_scores))
+                y_loadings = (np.dot(Yk.T, y_scores) /
+                              np.dot(y_scores.T, y_scores))
                 Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
                 # - regress Yk's on x_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, x_scores)
-                              / np.dot(x_scores.T, x_scores))
+                y_loadings = (np.dot(Yk.T, x_scores) /
+                              np.dot(x_scores.T, x_scores))
                 Yk -= np.dot(x_scores, y_loadings.T)
             # 3) Store weights, scores and loadings # Notation:
             self.x_scores_[:, k] = x_scores.ravel()  # T
