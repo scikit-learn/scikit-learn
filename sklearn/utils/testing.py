@@ -539,8 +539,8 @@ def all_estimators(include_meta_estimators=None,
                       DeprecationWarning)
 
     if include_meta_estimators is not None:
-        warnings.warn("include_dont_test was deprecated in version 0.19 and"
-                      " will be removed in 0.21",
+        warnings.warn("include_meta_estimators was deprecated in version 0.19 "
+                      "and will be removed in 0.21",
                       DeprecationWarning)
 
     all_classes = []

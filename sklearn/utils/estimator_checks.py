@@ -92,7 +92,7 @@ def _yield_non_meta_checks(name, estimator):
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
-    if tags.get("input_validation", True):
+    if tags["input_validation"]:
         yield check_dtype_object
         yield check_estimators_empty_data_messages
 
@@ -102,7 +102,7 @@ def _yield_non_meta_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if (not tags.get("missing_values")) and tags.get("input_validation", True):
+    if (not tags["missing_values"] and tags["input_validation"]):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
@@ -206,13 +206,12 @@ def _yield_clustering_checks(name, clusterer):
 
 def _yield_all_checks(name, estimator):
     tags = _safe_tags(estimator)
-    input_types = tags.get("input_types", ["2darray"])
-    if "2darray" not in input_types:
+    if "2darray" not in tags["input_types"]:
         warnings.warn("Can't test estimator {} which requires input "
-                      " of type {}".format(name, input_types),
+                      " of type {}".format(name, tags["input_types"]),
                       SkipTestWarning)
         return
-    if tags.get("_skip_test", False):
+    if tags["_skip_test"]:
         warnings.warn("Explicit SKIP via _skip_test tag for estimator "
                       "{}.".format(name),
                       SkipTestWarning)
@@ -326,7 +325,7 @@ def set_checking_parameters(estimator):
         estimator.set_params(n_init=2)
 
     if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
+        estimator.n_components = 2
 
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = min(estimator.n_clusters, 2)
@@ -1106,18 +1105,18 @@ def check_classifiers_train(name, classifier_orig):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if tags.get("test_predictions", True):
+        if tags["test_predictions"]:
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
-        if tags.get("input_validation", True):
+        if tags["input_validation"]:
             assert_raises(ValueError, classifier.predict, X.T)
         if hasattr(classifier, "decision_function"):
             try:
                 # decision_function agrees with predict
                 decision = classifier.decision_function(X)
-                if n_classes is 2:
-                    if not tags.get("multioutput_only", False):
+                if n_classes == 2:
+                    if not tags["multioutput_only"]:
                         assert_equal(decision.shape, (n_samples,))
                     else:
                         assert_equal(decision.shape, (n_samples, 1))
@@ -1127,7 +1126,7 @@ def check_classifiers_train(name, classifier_orig):
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
-                if tags.get("input_validation", True):
+                if tags["input_validation"]:
                     # raises error on malformed input for decision_function
                     assert_raises(ValueError,
                                   classifier.decision_function, X.T)
@@ -1141,7 +1140,7 @@ def check_classifiers_train(name, classifier_orig):
             # check that probas for all classes sum to one
             assert_array_almost_equal(np.sum(y_prob, axis=1),
                                       np.ones(n_samples))
-            if tags.get("input_validation", True):
+            if tags["input_validation"]:
                 # raises error on malformed input for predict_proba
                 assert_raises(ValueError, classifier.predict_proba, X.T)
             if hasattr(classifier, "predict_log_proba"):
@@ -1490,10 +1489,15 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
     # this check works on classes, not instances
     required_parameters = getattr(Estimator, "_required_parameters", [])
     if len(required_parameters):
-        raise SkipTest("Can't instantiate estimator {} which"
-                       "requires parameters {} in "
-                       "check_no_fit_attribute_set_in_init".format(
-                           name, required_parameters))
+        if required_parameters in ["base_estimator", "estimator"]:
+            if issubclass(Estimator, RegressorMixin):
+                estimator = Estimator(Ridge())
+            else:
+                estimator = Estimator(LinearDiscriminantAnalysis())
+        else:
+            raise SkipTest("Can't instantiate estimator {} which"
+                           "requires parameters {}".format(
+                               name, required_parameters))
     estimator = Estimator()
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):

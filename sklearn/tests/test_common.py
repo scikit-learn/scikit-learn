@@ -47,7 +47,7 @@ def test_all_estimator_no_base_class():
         assert_false(name.lower().startswith('base'), msg=msg)
 
 
-def test_non_meta_estimators():
+def test_all_estimators():
     # input validation etc for non-meta estimators
     estimators = all_estimators(include_meta_estimators=True)
     assert_greater(len(estimators), 0)
@@ -57,10 +57,10 @@ def test_non_meta_estimators():
             continue
 
         # class-level tests
+        # both skip if _required_parameters are more complex
+        # than "estimator" or "base_estimator"
         yield (_named_check(check_parameters_default_constructible, name),
                name, Estimator)
-        # class level check only for default instantiation for now
-        # it skips is _required_parameter is not None
         yield _named_check(
             check_no_fit_attributes_set_in_init, name), name, Estimator
 
@@ -69,15 +69,15 @@ def test_non_meta_estimators():
 
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
-            if required_parameters == ["estimator"]:
+            if required_parameters in (["estimator"], ["base_estimator"]):
                 if issubclass(Estimator, RegressorMixin):
                     estimator = Estimator(Ridge())
                 else:
                     estimator = Estimator(LinearDiscriminantAnalysis())
             else:
-                warn("Can't instantiate "
-                     "estimator {} which requires parameters {}".format(
-                         name, required_parameters), SkipTestWarning)
+                warn("Can't instantiate estimator {} which requires "
+                     "parameters {}".format(name, required_parameters),
+                     SkipTestWarning)
                 continue
         else:
             estimator = Estimator()
