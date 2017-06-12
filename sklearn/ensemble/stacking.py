@@ -42,8 +42,9 @@ class StackMetaEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         self.method = method
         self.n_jobs = n_jobs
 
-    def fit(self, *args, **kwargs):
-        raise NotImplementedError("Use `fit_transform` instead")
+    def fit(self, X, y, **fit_params):
+        self.base_estimator.fit(X, y, **fit_params)
+        return self
 
     def _method_name(self):
         if self.method == 'auto':

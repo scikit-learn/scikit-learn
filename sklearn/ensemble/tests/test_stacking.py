@@ -7,8 +7,7 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 
 
 import numpy as np
-from sklearn.utils.testing import (assert_equal, assert_array_equal,
-                                   assert_raises)
+from sklearn.utils.testing import (assert_equal, assert_array_equal)
 from sklearn.ensemble import (StackMetaEstimator, StackLayer, make_stack_layer)
 from sklearn.linear_model import (RidgeClassifier, LinearRegression,
                                   LogisticRegression)
@@ -35,8 +34,8 @@ def _check_estimator(estimator, **fit_params):
     # checks that we get a column vector
     assert_equal(Xt.ndim, 2)
 
-    # checks that `fit` is not available
-    assert_raises(NotImplementedError, estimator.fit, X, y)
+    # checks that `fit` is available
+    estimator.fit(X, y, **fit_params)
 
     # checks that we can transform the data after it's fitted
     Xt2 = estimator.transform(X)
@@ -100,8 +99,8 @@ def _check_layer(l):
     if l.restack:
         _check_restack(Xt, X)
 
-    # check that `fit` is not accessible
-    assert_raises(NotImplementedError, l.fit, X, y)
+    # check that `fit` is accessible
+    l.fit(X, y)
 
 
 def test_layer_regression():
