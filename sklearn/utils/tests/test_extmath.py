@@ -130,16 +130,15 @@ def check_randomized_svd_low_rank(dtype):
 
         # If the input dtype is float, then the output dtype is float of the
         # same bit size (f32 is not upcast to f64)
-        # But if the input dtype is int, the output dtype is float32/float64
-        # depending on the platform
+        # But if the input dtype is int, the output dtype is float64
         if dtype.kind == 'f':
             assert Ua.dtype == dtype
             assert sa.dtype == dtype
             assert Va.dtype == dtype
         else:
-            assert Ua.dtype.kind == 'f'
-            assert sa.dtype.kind == 'f'
-            assert Va.dtype.kind == 'f'
+            assert Ua.dtype == np.float64
+            assert sa.dtype == np.float64
+            assert Va.dtype == np.float64
 
         assert_equal(Ua.shape, (n_samples, k))
         assert_equal(sa.shape, (k,))
