@@ -4859,7 +4859,7 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`sphx_glr_auto_examples_applications_face_recognition.py`,
+    :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
     :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
     :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
     :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
