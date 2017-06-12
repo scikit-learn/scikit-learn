@@ -1204,7 +1204,7 @@ Advanced usage
 --------------
 
 Stacked generalization without cross validation
------------------------------------------------
+...............................................
 
 The default implementation uses cross validation to avoid leaking data from one
 layer to the other, but there's another way of avoiding it [MLW2015]_. Instead
@@ -1238,7 +1238,7 @@ doing a full cross validation split on the first layer. The obvious disadvantage
 is that less data is used to train the model.
 
 Stacking multiple layers together
----------------------------------
+.................................
 
 It's already been said that the estimators on the first layer are combined with
 another estimator. The interesting point is that the combiner can also be a
