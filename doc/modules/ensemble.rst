@@ -1226,13 +1226,12 @@ model to transform the second part::
     >>> from sklearn.model_selection import train_test_split
     >>> X0, X1, y0, y1 = train_test_split(X, y, test_size=.1)
 
-    >>> l0.fit(X0, y0)
+    >>> l0 = l0.fit(X0, y0)
     >>> X1_transformed = l0.transform(X1)
 
 Now train the combiner using the transformed data.
 
-    >>> combiner = LogisticRegression()
-    >>> combiner.fit(X1_transformed, y1)
+    >>> combiner = LogisticRegression().fit(X1_transformed, y1)
 
 That's it. The advantage of doing this method is that it can be faster than
 doing a full cross validation split on the first layer. The obvious disadvantage
@@ -1256,10 +1255,10 @@ the `Pipeline` API to stack everything together::
     >>> layer2 = [('rf', RandomForestClassifier()),
     ...           ('svc', SVC())]
     >>> combiner = LogisticRegression()
-    >>> clf = Pipeline(('layer0', StackLayer(layer0)),
-    ...                ('layer1', StackLayer(layer1))
-    ...                ('layer2', StackLayer(layer2))
-    ...                ('combiner', StackLayer(combiner))
+    >>> clf = Pipeline([('layer0', StackLayer(layer0)),
+    ...                 ('layer1', StackLayer(layer1)),
+    ...                 ('layer2', StackLayer(layer2)),
+    ...                 ('combiner', combiner)])
 
 .. topic:: References
 
