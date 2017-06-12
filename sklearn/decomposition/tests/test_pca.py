@@ -214,29 +214,23 @@ def test_explained_variance():
                               rpca.explained_variance_ratio_, 1)
 
     # compare to empirical variances
+    expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
+    expected_result = sorted(expected_result, reverse=True)[:2]
+
     X_pca = pca.transform(X)
     assert_array_almost_equal(pca.explained_variance_,
                               np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(pca.explained_variance_, expected_result)
 
     X_pca = apca.transform(X)
     assert_array_almost_equal(apca.explained_variance_,
                               np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(apca.explained_variance_, expected_result)
 
     X_rpca = rpca.transform(X)
     assert_array_almost_equal(rpca.explained_variance_,
                               np.var(X_rpca, ddof=1, axis=0),
                               decimal=1)
-
-    # Another way to run this part (according to the original definition)
-    expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
-    expected_result = sorted(expected_result, reverse=True)[:2]
-    X_pca = pca.transform(X)
-    assert_array_almost_equal(pca.explained_variance_, expected_result)
-
-    X_pca = apca.transform(X)
-    assert_array_almost_equal(apca.explained_variance_, expected_result)
-
-    X_rpca = rpca.transform(X)
     assert_array_almost_equal(rpca.explained_variance_,
                               expected_result, decimal=1)
 
