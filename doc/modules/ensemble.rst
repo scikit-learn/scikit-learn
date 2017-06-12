@@ -1097,26 +1097,19 @@ As stacked generalization is a generic framework for combining estimators, it
 works with regression and classification problems. It's so generic the API is
 the same for both problems!
 
-.. topic:: References
-
- .. [W1992] D. Wolpert, "Stacked Generalization",
-        Neural Networks, Vol. 5, No. 5, 1992.
-
- .. [MLW2015] https://mlwave.com/kaggle-ensembling-guide/
-
 Usage:
 ------
 
 The most basic stacked ensemble consists of two layers: a layer of base
 generalizers and a single estimator for combining the output of the base
-estimators. We implement it with the :class:`StackLayer` class.
+estimators. We implement it with the `StackLayer` class.
 
 Stacked generalization applied to regression
 ............................................
 
 For this problem, assume some regressors were tested and have a good performance
-on the dataset. Here we used a :class:`LassoCV`, :class:`RidgeCV` and
-:class:`SVR`::
+on the dataset. Here we used a `LassoCV`, `RidgeCV` and
+`SVR`::
 
     >>> from sklearn.linear_model import LassoCV, RidgeCV
     >>> from sklearn.svm import SVR
@@ -1141,7 +1134,7 @@ regressors without leaking data to the next layer, so no need to worry.
 The output for ``layer0`` is a matrix where each column is the prediction from
 one of the base regressors. We can now combine them in any way, including
 training another regressor with it. For this example, we used a linear
-regression and build the final model using :class:`Pipeline` class::
+regression and build the final model using `Pipeline` class::
 
     >>> from sklearn.ensemble import StackLayer
     >>> from sklearn.pipeline import Pipeline
@@ -1202,7 +1195,74 @@ Under the hood, this is the class that implements what's needed to turn an
 estimator into a transformer that can be used for stacked
 generalization. `StackLayer` is actually just a wrapper that takes the
 estimators, wraps them with `StackMetaEstimator` and joins everything with
-:class:`FeatureUnion`.
+`FeatureUnion`.
 
-.. TODO Explain useful use-cases for using this class directly: pre-training
-   models, etc.
+On the simpler use cases, `StackLayer` should be enough but for some special
+cases, it can be useful to use `StackMetaEstimator` directly.
+
+Advanced usage
+--------------
+
+Stacked generalization without cross validation
+-----------------------------------------------
+
+The default implementation uses cross validation to avoid leaking data from one
+layer to the other, but there's another way of avoiding it [MLW2015]_. Instead
+of using cross validation, train a layer with only part of the data and provide
+estimates to the other part. The combiner should be trained using only this
+transformed data.
+
+The simpler way is to train the layers separatelly. First, build the first
+layer::
+
+    >>> l0 = StackLayer([('rf1', RandomForestClassifier(criterion='gini')),
+    ...                  ('rf2', RandomForestClassifier(criterion='entropy'))],
+    ...                 cv=None)
+
+Then split the data and train the first layer only on part of it. Use the fitted
+model to transform the second part::
+
+    >>> from sklearn.model_selection import train_test_split
+    >>> X0, X1, y0, y1 = train_test_split(X, y, test_size=.1)
+
+    >>> l0.fit(X0, y0)
+    >>> X1_transformed = l0.transform(X1)
+
+Now train the combiner using the transformed data.
+
+    >>> combiner = LogisticRegression()
+    >>> combiner.fit(X1_transformed, y1)
+
+That's it. The advantage of doing this method is that it can be faster than
+doing a full cross validation split on the first layer. The obvious disadvantage
+is that less data is used to train the model.
+
+Stacking multiple layers together
+---------------------------------
+
+It's already been said that the estimators on the first layer are combined with
+another estimator. The interesting point is that the combiner can also be a
+stacked model. This means there are no limits to how many layers we can stack
+together [W1992]_.
+
+Stacking several layers is equally simple. Just build the layer as usual and use
+the `Pipeline` API to stack everything together::
+
+    >>> layer0 = [('rf', RandomForestClassifier()),
+    ...           ('svc', SVC())]
+    >>> layer1 = [('rf', RandomForestClassifier()),
+    ...           ('svc', SVC())]
+    >>> layer2 = [('rf', RandomForestClassifier()),
+    ...           ('svc', SVC())]
+    >>> combiner = LogisticRegression()
+    >>> clf = Pipeline(('layer0', StackLayer(layer0)),
+    ...                ('layer1', StackLayer(layer1))
+    ...                ('layer2', StackLayer(layer2))
+    ...                ('combiner', StackLayer(combiner))
+
+.. topic:: References
+
+ .. [W1992] D. H. Wolpert, "Stacked Generalization",
+        Neural Networks, Vol. 5, No. 5, 1992.
+
+ .. [MLW2015] https://mlwave.com/kaggle-ensembling-guide/
