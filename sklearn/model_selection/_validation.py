@@ -38,9 +38,9 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False):
-    """Evaluate a score by cross-validation
+    """Evaluate metric(s) by cross-validation and also record fit/score times.
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Read more in the :ref:`User Guide <multimetric_cross_validation>`.
 
     Parameters
     ----------
