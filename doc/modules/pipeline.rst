@@ -102,7 +102,7 @@ ignored by setting them to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_feature_selection_feature_selection_pipeline.py`
+ * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
  * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_plot_digits_pipe.py`
  * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
@@ -265,5 +265,5 @@ and ignored by setting to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_plot_feature_stacker.py`
  * :ref:`sphx_glr_auto_examples_hetero_feature_union.py`
