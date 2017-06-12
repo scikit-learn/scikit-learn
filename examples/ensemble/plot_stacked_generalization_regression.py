@@ -8,8 +8,9 @@ regressors into a single stacked one that performs better than the best
 regressor.
 
 We use Boston's house pricing dataset to compare the mean squared error between
-three regressors (SVM, Lasso and Ridge regressions) and the combination of their
-outputs with a single linear regression. The following result is achieved.
+three regressors (SVM, Lasso and Ridge regressions) and the combination of
+their outputs with a single linear regression. The following result is
+achieved.
 
 MSE for lasso: 22.91279
 MSE for ridge: 21.69905
