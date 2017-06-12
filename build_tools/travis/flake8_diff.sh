@@ -75,7 +75,7 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     fi
     echo -e "\nLast 2 commits in $LOCAL_BRANCH_REF:"
     echo '--------------------------------------------------------------------------------'
-    git log -2 $LOCAL_BRANCH_REF
+    git --no-pager log -2 $LOCAL_BRANCH_REF
 
     REMOTE_MASTER_REF="$REMOTE/master"
     # Make sure that $REMOTE_MASTER_REF is a valid reference
@@ -97,7 +97,7 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     echo -e "\nCommon ancestor between $LOCAL_BRANCH_REF ($LOCAL_BRANCH_SHORT_HASH)"\
          "and $REMOTE_MASTER_REF ($REMOTE_MASTER_SHORT_HASH) is $COMMIT_SHORT_HASH:"
     echo '--------------------------------------------------------------------------------'
-    git show --no-patch $COMMIT_SHORT_HASH
+    git --no-pager show --no-patch $COMMIT_SHORT_HASH
 
     COMMIT_RANGE="$COMMIT_SHORT_HASH..$LOCAL_BRANCH_SHORT_HASH"
 
