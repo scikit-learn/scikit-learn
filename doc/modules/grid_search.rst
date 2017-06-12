@@ -70,7 +70,7 @@ evaluated and the best combination is retained.
 
 .. topic:: Examples:
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py` for an example of
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
@@ -131,7 +131,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_model_selection_randomized_search.py` compares the usage and efficiency
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:

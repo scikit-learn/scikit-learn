@@ -160,7 +160,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_applications_face_recognition.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
@@ -796,7 +796,7 @@ stored components::
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
-    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
 .. topic:: References:
@@ -890,7 +890,7 @@ when data can be fetched sequentially.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
