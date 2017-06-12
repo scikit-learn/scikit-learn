@@ -1021,9 +1021,7 @@ def check_clustering(name, clusterer_orig):
     assert_equal(clusterer.labels_.shape, (n_samples,))
     pred = clusterer.labels_
     assert_greater(adjusted_rand_score(pred, y), 0.4)
-    # fit another time with ``fit_predict`` and compare results
-    if name == 'SpectralClustering':
-        # there is no way to make Spectral clustering deterministic :(
+    if not _safe_tags(clusterer, 'deterministic'):
         return
     set_random_state(clusterer)
     with warnings.catch_warnings(record=True):
@@ -1578,7 +1576,7 @@ def check_parameters_default_constructible(name, Estimator):
     with ignore_warnings(category=DeprecationWarning):
         required_parameters = getattr(Estimator, "_required_parameters", [])
         if len(required_parameters):
-            if required_parameters == ["estimator"]:
+            if required_parameters in ["base_estimator", "estimator"]:
                 if issubclass(Estimator, RegressorMixin):
                     estimator = Estimator(Ridge())
                 else:
