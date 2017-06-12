@@ -285,7 +285,8 @@ def set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
     params = estimator.get_params()
-    if ("n_iter" in params and estimator.__class__.__name__ != "TSNE"):
+    if ("n_iter" in params and estimator.__class__.__name__ != "TSNE"
+            and not isinstance(estimator, BaseSGD)):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         warnings.simplefilter("ignore", ConvergenceWarning)
