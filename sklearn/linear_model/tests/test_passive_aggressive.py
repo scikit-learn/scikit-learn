@@ -168,7 +168,7 @@ def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
     clf = PassiveAggressiveClassifier(
-        C=0.1, max_iter=1000, tol=-np.inf,  class_weight=None)
+        C=0.1, max_iter=1000, tol=-np.inf, class_weight=None)
     clf.fit(X2, y2)
 
     # Already balanced, so "balanced" weights should have no effect
