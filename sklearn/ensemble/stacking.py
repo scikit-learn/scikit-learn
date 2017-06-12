@@ -43,6 +43,27 @@ class StackMetaEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         self.n_jobs = n_jobs
 
     def fit(self, X, y, **fit_params):
+        """Fit the estimator.
+
+        This should only be used in special situations. See :ref:`user guide`
+        for more info.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        **fit_params : parameters to be passed to the base estimator.
+
+        Returns
+        -------
+        self : object
+
+        """
         self.base_estimator.fit(X, y, **fit_params)
         return self
 
@@ -58,6 +79,20 @@ class StackMetaEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         return method
 
     def transform(self, *args, **kwargs):
+        """Transform dataset.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Input data to be transformed. Use ``dtype=np.float32`` for maximum
+            efficiency. Sparse matrices are also supported, use sparse
+            ``csr_matrix`` for maximum efficiency.
+
+        Returns
+        -------
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
         t = getattr(self.base_estimator, self._method_name())
         preds = t(*args, **kwargs)
 
@@ -67,6 +102,24 @@ class StackMetaEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         return preds
 
     def fit_transform(self, X, y, **fit_params):
+        """Fit estimator and transform dataset.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Input data used to build forests. Use ``dtype=np.float32`` for
+            maximum efficiency.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        **fit_params : parameters to be passed to the base estimator.
+
+        Returns
+        -------
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
+            Transformed dataset.
+        """
         preds = cross_val_predict(self.base_estimator, X, y, cv=self.cv,
                                   method=self._method_name(),
                                   n_jobs=self.n_jobs, fit_params=fit_params)
@@ -148,9 +201,30 @@ class StackLayer(FeatureUnion):
                                           _identity_transformer()))
 
     def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
         return self._get_params('base_estimators', deep=deep)
 
     def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
         self._set_params('base_estimators', **kwargs)
         self._update_layer()
         return self
