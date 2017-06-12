@@ -362,7 +362,7 @@ def test_cross_validate_multiple_metric():
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
 
     keys_sans_train = set(('test_r2', 'test_neg_mean_squared_error',
-                           'fit_times', 'score_times'))
+                           'fit_time', 'score_time'))
     keys_with_train = keys_sans_train.union(
         set(('train_r2', 'train_neg_mean_squared_error')))
 
@@ -382,14 +382,14 @@ def test_cross_validate_multiple_metric():
             assert type(cv_results['test_r2']) == np.ndarray
             assert (type(cv_results['test_neg_mean_squared_error']) ==
                     np.ndarray)
-            assert type(cv_results['fit_times'] == np.ndarray)
-            assert type(cv_results['score_times'] == np.ndarray)
+            assert type(cv_results['fit_time'] == np.ndarray)
+            assert type(cv_results['score_time'] == np.ndarray)
 
             # Ensure all the times are within sane limits
-            assert np.all(cv_results['fit_times'] > 0)
-            assert np.all(cv_results['fit_times'] < 10)
-            assert np.all(cv_results['score_times'] > 0)
-            assert np.all(cv_results['score_times'] < 10)
+            assert np.all(cv_results['fit_time'] > 0)
+            assert np.all(cv_results['fit_time'] < 10)
+            assert np.all(cv_results['score_time'] > 0)
+            assert np.all(cv_results['score_time'] < 10)
 
             if return_train_score:
                 assert_array_almost_equal(cv_results['train_r2'],

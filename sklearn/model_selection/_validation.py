@@ -130,13 +130,13 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         arrays for each scorer is returned. The possible keys for this ``dict``
         are:
 
-            - ``test_scores`` The score array for test scores on each cv split.
-            - ``train_scores`` The score array for train scores on each cv
+            - ``test_score`` The score array for test scores on each cv split.
+            - ``train_score`` The score array for train scores on each cv
               split. This is available only if ``return_train_score`` parameter
               is ``True``.
-            - ``fit_times`` The time for fitting the estimator on the train
+            - ``fit_time`` The time for fitting the estimator on the train
               set for each cv split.
-            - ``score_times`` The time for scoring the estimator on the test
+            - ``score_time`` The time for scoring the estimator on the test
               set for each cv split. (Note time for scoring on the train set
               is not included even if ``return_train_score`` is set to ``True``
 
@@ -155,7 +155,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> # single metric evaluation using cross_validate
     >>> cv_results = cross_validate(lasso, X, y)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
-    ['fit_times', 'score_times', 'test_score']
+    ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     array([ 0.33...,  0.08...,  0.03...])
 
@@ -200,8 +200,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = dict()
-    ret['fit_times'] = np.array(fit_times)
-    ret['score_times'] = np.array(score_times)
+    ret['fit_time'] = np.array(fit_times)
+    ret['score_time'] = np.array(score_times)
 
     for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])

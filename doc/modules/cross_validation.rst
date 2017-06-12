@@ -186,10 +186,10 @@ The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
   fit-times and score-times.
 
 For single metric evaluataion, where the scoring parameter is a string,
-callable or None, the keys will be - ``[test_score, , fit_times, score_times]``
+callable or None, the keys will be - ``[test_score, , fit_time, score_time]``
 
 And for multiple metric evaluation, the return is a dict with the following
-keys - ``[test_<scrorer1_name>, test_<scorer2_name>, test_<scorer...>, fit_times, score_times]``
+keys - ``[test_<scrorer1_name>, test_<scorer2_name>, test_<scorer...>, fit_time, score_time]``
 
 Additionally setting ``return_train_<scorer_name>`` to ``True`` adds train
 score keys for all the scorers.
@@ -204,7 +204,7 @@ The multiple metrics can be specified either as a ``list``, ``tuple`` or
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
     ...                         cv=5)
     >>> sorted(scores.keys())
-    ['fit_times', 'score_times', 'test_precision_macro', 'test_recall_macro']
+    ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
     array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
@@ -216,7 +216,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
     ...                         cv=5, return_train_score=True)
     >>> sorted(scores.keys())                 # doctest: +NORMALIZE_WHITESPACE
-    ['fit_times', 'score_times', 'test_prec_macro', 'test_rec_micro',
+    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_micro',
      'train_prec_macro', 'train_rec_micro']
     >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
     array([ 0.97...,  0.97...,  0.99...,  0.98...,  0.98...])
