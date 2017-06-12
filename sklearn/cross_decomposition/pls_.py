@@ -328,13 +328,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
                 # - regress Yk's on y_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, y_scores)
-                              / np.dot(y_scores.T, y_scores))
+                y_loadings = (np.dot(Yk.T, y_scores) /
+                              np.dot(y_scores.T, y_scores))
                 Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
                 # - regress Yk's on x_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, x_scores)
-                              / np.dot(x_scores.T, x_scores))
+                y_loadings = (np.dot(Yk.T, x_scores) /
+                              np.dot(x_scores.T, x_scores))
                 Yk -= np.dot(x_scores, y_loadings.T)
             # 3) Store weights, scores and loadings # Notation:
             self.x_scores_[:, k] = x_scores.ravel()  # T
@@ -370,12 +370,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # => B = W*Q' (p x q)
             self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
             self.coef_ = self.coef_ * self.y_std_
-            
+
             if Y_ndim_is_one:
                 self.coef_ = np.ravel(self.coef_)
                 self.y_mean_ = np.ravel(self.y_mean_)
                 self.y_std_ = np.ravel(self.y_std_)
-        
         return self
 
     def transform(self, X, Y=None, copy=True):
