@@ -441,7 +441,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             raise NotFittedError('This %s instance was initialized '
                                  'with refit=False. %s is '
                                  'available only after refitting on the best '
-                                 'parameters. '
+                                 'parameters. You can refit an estimator '
+                                 'manually using the ``best_parameters_`` '
+                                 'attribute'
                                  % (type(self).__name__, method_name))
         else:
             check_is_fitted(self, 'best_estimator_')

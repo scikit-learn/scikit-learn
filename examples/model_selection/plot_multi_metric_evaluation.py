@@ -1,8 +1,8 @@
 """Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV
 
-Multiple metric grid search (or random search) can be done by setting the
-``scoring`` parameter to a list of metric scorer names or a dict mapping the
-scorer names to the scorer callables.
+Multiple metric parameter search can be done by setting the ``scoring``
+parameter to a list of metric scorer names or a dict mapping the scorer names
+to the scorer callables.
 
 The scores of all the scorers are available in the ``cv_results_`` dict at keys
 ending in ``'_<scorer_name>'`` (``'mean_test_precision'``,

@@ -320,11 +320,8 @@ def _check_multimetric_scoring(estimator, scoring=None):
     scorers_dict : dict
         A dict mapping each scorer name to its validated scorer.
 
-        The validated scorer could be None if ``allow_none`` is ``True``
-        (``{'score': None}``).
-
-        The scorer_name is set to ``'score'`` if the default scorer is
-        used.
+        The validated scorer will be None if ``allow_none`` is ``True`` in
+        which case  the return is (``{'score': None}``).
 
     is_multimetric : bool
         True if scorer is a list/tuple or dict of callables
@@ -348,7 +345,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
             invalid = False
             try:
                 keys = set(scoring)
-            except TypeError:  # For list of lists
+            except TypeError:
                 invalid = True
             if invalid:
                 raise ValueError(err_msg)
