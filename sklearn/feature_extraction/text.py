@@ -508,7 +508,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                              non_negative=self.non_negative)
 
     def _get_tags(self):
-        return _update_tags(self, super(HashingVectorizer, self),
+        return _update_tags(super(HashingVectorizer, self),
                             input_types=["string"])
 
 
@@ -945,7 +945,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                      key=itemgetter(1))]
 
     def _get_tags(self):
-        return _update_tags(self, super(CountVectorizer, self),
+        return _update_tags(super(CountVectorizer, self),
                             input_types=["string"])
 
 
@@ -1108,7 +1108,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         return np.ravel(self._idf_diag.sum(axis=0))
 
     def _get_tags(self):
-        return _update_tags(self, super(TfidfTransformer, self),
+        return _update_tags(super(TfidfTransformer, self),
                             input_types=["sparse"])
 
 
@@ -1400,5 +1400,5 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
     def _get_tags(self):
-        return _update_tags(self, super(TfidfVectorizer, self),
+        return _update_tags(super(TfidfVectorizer, self),
                             input_types=["string"])

@@ -131,5 +131,5 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                     **(kw_args if kw_args else {}))
 
     def _get_tags(self):
-        return _update_tags(self, super(FunctionTransformer, self),
+        return _update_tags(super(FunctionTransformer, self),
                             stateless=True)

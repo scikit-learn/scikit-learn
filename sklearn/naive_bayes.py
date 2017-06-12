@@ -606,8 +606,8 @@ class BaseDiscreteNB(BaseNB):
     intercept_ = property(_get_intercept)
 
     def _get_tags(self):
-        return _update_tags(self, super(BaseDiscreteNB, self),
-                            test_accuracy=False)
+        return _update_tags(super(BaseDiscreteNB, self),
+                            test_predictions=False)
 
 
 class MultinomialNB(BaseDiscreteNB):

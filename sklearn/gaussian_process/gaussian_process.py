@@ -892,5 +892,5 @@ class GaussianProcess(BaseEstimator, RegressorMixin, MultiOutputMixin):
         self.random_start = int(self.random_start)
 
     def _get_tags(self):
-        return _update_tags(self, super(GaussianProcess, self),
+        return _update_tags(super(GaussianProcess, self),
                             _skip_test=True)

@@ -1739,7 +1739,7 @@ class MultiTaskElasticNet(Lasso):
         return self
 
     def _get_tags(self):
-        return _update_tags(self, super(MultiTaskElasticNet, self),
+        return _update_tags(super(MultiTaskElasticNet, self),
                             multioutput_only=True)
 
 
@@ -2040,7 +2040,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.selection = selection
 
     def _get_tags(self):
-        return _update_tags(self, super(MultiTaskElasticNetCV, self),
+        return _update_tags(super(MultiTaskElasticNetCV, self),
                             multioutput_only=True)
 
 
@@ -2182,5 +2182,5 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             selection=selection)
 
     def _get_tags(self):
-        return _update_tags(self, super(MultiTaskLassoCV, self),
+        return _update_tags(super(MultiTaskLassoCV, self),
                             multioutput_only=True)

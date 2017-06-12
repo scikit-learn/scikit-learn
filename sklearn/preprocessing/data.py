@@ -1384,7 +1384,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
     def _get_tags(self):
-        return _update_tags(self, super(Normalizer, self), stateless=True)
+        return _update_tags(super(Normalizer, self), stateless=True)
 
 
 def binarize(X, threshold=0.0, copy=True):
@@ -1498,7 +1498,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
     def _get_tags(self):
-        return _update_tags(self, super(Binarizer, self), stateless=True)
+        return _update_tags(super(Binarizer, self), stateless=True)
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):

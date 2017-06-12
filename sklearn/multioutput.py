@@ -197,7 +197,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.asarray(y).T
 
     def _get_tags(self):
-        return _update_tags(self, super(MultiOutputEstimator, self),
+        return _update_tags(super(MultiOutputEstimator, self),
                             multioutput_only=True)
 
 
@@ -371,5 +371,5 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
     def _get_tags(self):
-        return _update_tags(self, super(MultiOutputClassifier, self),
+        return _update_tags(super(MultiOutputClassifier, self),
                             _skip_test=True)

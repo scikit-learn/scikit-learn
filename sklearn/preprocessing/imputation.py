@@ -376,5 +376,5 @@ class Imputer(BaseEstimator, TransformerMixin):
         return X
 
     def _get_tags(self):
-        return _update_tags(self, super(Imputer, self),
+        return _update_tags(super(Imputer, self),
                             missing_values=True)

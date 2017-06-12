@@ -17,7 +17,7 @@ _DEFAULT_TAGS = {
     'deterministic': True,
     'requires_positive_data': False,
     'input_types': ['2darray'],
-    'test_accuracy': True,
+    'test_predictions': True,
     'input_validation': True,
     'multioutput': False,
     "missing_values": False,
@@ -27,7 +27,7 @@ _DEFAULT_TAGS = {
     'multioutput_only': False}
 
 
-def _update_tags(estimator, sup, **kwargs):
+def _update_tags(sup, **kwargs):
     if hasattr(sup, "_get_tags"):
         tags_old = sup._get_tags().copy()
         tags_old.update(kwargs)
@@ -368,7 +368,7 @@ class ClassifierMixin(object):
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
     def _get_tags(self):
-        return _update_tags(self, super(ClassifierMixin, self),
+        return _update_tags(super(ClassifierMixin, self),
                             is_classifier=True)
 
 
@@ -409,7 +409,7 @@ class RegressorMixin(object):
                         multioutput='variance_weighted')
 
     def _get_tags(self):
-        return _update_tags(self, super(RegressorMixin, self),
+        return _update_tags(super(RegressorMixin, self),
                             is_regressor=True)
 
 
@@ -436,7 +436,7 @@ class ClusterMixin(object):
         return self.labels_
 
     def _get_tags(self):
-        return _update_tags(self, super(ClusterMixin, self), is_clusterer=True)
+        return _update_tags(super(ClusterMixin, self), is_clusterer=True)
 
 
 class BiclusterMixin(object):
@@ -524,7 +524,7 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
     def _get_tags(self):
-        return _update_tags(self, super(TransformerMixin, self),
+        return _update_tags(super(TransformerMixin, self),
                             is_transformer=True)
 
 
@@ -555,7 +555,7 @@ class MetaEstimatorMixin(object):
 class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
     def _get_tags(self):
-        return _update_tags(self, super(MultiOutputMixin, self),
+        return _update_tags(super(MultiOutputMixin, self),
                             multioutput=True)
 
 
@@ -567,7 +567,7 @@ def _is_32bit():
 class _UnstableOn32BitMixin(object):
     """Mark estimators that are non-determinstic on 32bit."""
     def _get_tags(self):
-        return _update_tags(self, super(_UnstableOn32BitMixin, self),
+        return _update_tags(super(_UnstableOn32BitMixin, self),
                             deterministic=_is_32bit())
 
 

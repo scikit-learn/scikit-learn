@@ -516,5 +516,5 @@ class PatchExtractor(BaseEstimator):
         return patches
 
     def _get_tags(self):
-        return _update_tags(self, super(PatchExtractor, self),
+        return _update_tags(super(PatchExtractor, self),
                             input_types=["3darray"])

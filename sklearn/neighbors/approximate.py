@@ -101,7 +101,7 @@ class GaussianRandomProjectionHash(ProjectionToHashMixin,
 
     def _get_tags(self):
         # likely to be removed and I have no idea what's happening
-        return _update_tags(self, super(GaussianRandomProjectionHash, self),
+        return _update_tags(super(GaussianRandomProjectionHash, self),
                             _skip_test=True)
 
 

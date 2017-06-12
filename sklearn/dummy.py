@@ -326,8 +326,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             return [np.log(p) for p in proba]
 
     def _get_tags(self):
-        return _update_tags(self, super(DummyClassifier, self),
-                            input_validation=False, test_accuracy=False)
+        return _update_tags(super(DummyClassifier, self),
+                            input_validation=False, test_predictions=False)
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
@@ -486,5 +486,5 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         return y
 
     def _get_tags(self):
-        return _update_tags(self, super(DummyRegressor, self),
-                            test_accuracy=False, input_validation=False)
+        return _update_tags(super(DummyRegressor, self),
+                            test_predictions=False, input_validation=False)

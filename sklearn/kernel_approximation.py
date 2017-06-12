@@ -111,7 +111,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         return projection
 
     def _get_tags(self):
-        return _update_tags(self, super(RBFSampler, self), stateless=True)
+        return _update_tags(super(RBFSampler, self), stateless=True)
 
 
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
@@ -212,7 +212,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return projection
 
     def _get_tags(self):
-        return _update_tags(self, super(SkewedChi2Sampler, self),
+        return _update_tags(super(SkewedChi2Sampler, self),
                             stateless=True)
 
 
@@ -371,7 +371,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return sp.hstack(X_new)
 
     def _get_tags(self):
-        return _update_tags(self, super(AdditiveChi2Sampler, self),
+        return _update_tags(super(AdditiveChi2Sampler, self),
                             stateless=True)
 
 

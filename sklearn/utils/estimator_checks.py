@@ -1106,7 +1106,7 @@ def check_classifiers_train(name, classifier_orig):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if tags.get("test_accuracy", True):
+        if tags.get("test_predictions", True):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
@@ -1338,7 +1338,7 @@ def check_regressors_train(name, regressor_orig):
     # TODO: find out why PLS and CCA fail. RANSAC is random
     # and furthermore assumes the presence of outliers, hence
     # skipped
-    if _safe_tags(regressor, "test_accuracy"):
+    if _safe_tags(regressor, "test_predictions"):
         assert_greater(regressor.score(X, y_), 0.5)
 
 

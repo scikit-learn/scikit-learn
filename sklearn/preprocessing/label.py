@@ -154,7 +154,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         return self.classes_[y]
 
     def _get_tags(self):
-        return _update_tags(self, super(LabelEncoder, self),
+        return _update_tags(super(LabelEncoder, self),
                             input_types=["1dlabels"])
 
 
@@ -392,7 +392,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return y_inv
 
     def _get_tags(self):
-        return _update_tags(self, super(LabelBinarizer, self),
+        return _update_tags(super(LabelBinarizer, self),
                             input_types=["1dlabels"])
 
 
@@ -837,5 +837,5 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                     in yt]
 
     def _get_tags(self):
-        return _update_tags(self, super(MultiLabelBinarizer, self),
+        return _update_tags(super(MultiLabelBinarizer, self),
                             input_types=["2dlabels"])

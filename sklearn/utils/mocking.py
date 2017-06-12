@@ -83,5 +83,5 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         return score
 
     def _get_tags(self):
-        return _update_tags(self, super(CheckingClassifier, self),
+        return _update_tags(super(CheckingClassifier, self),
                             input_types=["1dlabels"], _skip_test=True)

@@ -420,5 +420,5 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             self._build_f(self._necessary_X_, self._necessary_y_)
 
     def _get_tags(self):
-        return _update_tags(self, super(IsotonicRegression, self),
+        return _update_tags(super(IsotonicRegression, self),
                             input_types=["1darray"])
