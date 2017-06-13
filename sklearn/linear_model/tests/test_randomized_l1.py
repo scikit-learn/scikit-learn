@@ -59,17 +59,18 @@ def test_randomized_lasso():
     # Check randomized lasso
     scaling = 0.3
     selection_threshold = 0.5
+    n_resampling = 20
 
     # or with 1 alpha
     clf = RandomizedLasso(verbose=False, alpha=1, random_state=42,
-                          scaling=scaling,
+                          scaling=scaling, n_resampling=n_resampling,
                           selection_threshold=selection_threshold)
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
 
     # or with many alphas
     clf = RandomizedLasso(verbose=False, alpha=[1, 0.8], random_state=42,
-                          scaling=scaling,
+                          scaling=scaling, n_resampling=n_resampling,
                           selection_threshold=selection_threshold)
     feature_scores = clf.fit(X, y).scores_
     assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
@@ -93,7 +94,7 @@ def test_randomized_lasso():
     assert_equal(X_full.shape, X.shape)
 
     clf = RandomizedLasso(verbose=False, alpha='aic', random_state=42,
-                          scaling=scaling)
+                          scaling=scaling, n_resampling=100)
     feature_scores = clf.fit(X, y).scores_
     assert_allclose(feature_scores, [1., 1., 1., 0.225, 1.], rtol=0.2)
 
@@ -102,6 +103,25 @@ def test_randomized_lasso():
 
     clf = RandomizedLasso(verbose=False, scaling=1.1)
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_randomized_lasso_precompute():
+    # Check randomized lasso for different values of precompute
+    n_resampling = 20
+    alpha = 1
+    random_state = 42
+
+    G = np.dot(X.T, X)
+
+    clf = RandomizedLasso(alpha=alpha, random_state=random_state,
+                          precompute=G, n_resampling=n_resampling)
+    feature_scores_1 = clf.fit(X, y).scores_
+
+    for precompute in [True, False, None, 'auto']:
+        clf = RandomizedLasso(alpha=alpha, random_state=random_state,
+                              precompute=precompute, n_resampling=n_resampling)
+        feature_scores_2 = clf.fit(X, y).scores_
+        assert_array_equal(feature_scores_1, feature_scores_2)
 
 
 def test_randomized_logistic():
