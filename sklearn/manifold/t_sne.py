@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+from time import time
 import warnings
 import numpy as np
 from scipy import linalg
@@ -90,6 +91,7 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
     P : csr sparse matrix, shape (n_samples, n_samples)
         Condensed joint probability matrix with only nearest neighbors.
     """
+    t0 = time()
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
     n_samples, K = neighbors.shape
@@ -108,6 +110,10 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
     sum_P = np.maximum(P.sum(), MACHINE_EPSILON)
     P /= sum_P
     assert np.all(np.abs(P.data) <= 1.0)
+    if verbose >= 2:
+        duration = time() - t0
+        print("[t-SNE] Computed conditional probabilities in {:.3f}s"
+              .format(duration))
     return P
 
 
@@ -301,7 +307,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
 
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
-                      n_iter_check=1, n_iter_without_progress=50,
+                      n_iter_check=1, n_iter_without_progress=51,
                       momentum=0.8, learning_rate=200.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
@@ -333,7 +339,7 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         Should return a tuple of cost and gradient for a given parameter
         vector.
 
-    n_iter_without_progress : int, optional (default: 30)
+    n_iter_without_progress : int, optional (default: 51)
         Maximum number of iterations without progress before we abort the
         optimization.
 
@@ -389,8 +395,9 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
     gains = np.ones_like(p)
     error = np.finfo(np.float).max
     best_error = np.finfo(np.float).max
-    best_iter = 0
+    best_iter = it
 
+    tic = time()
     for i in range(it, n_iter):
         new_error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
@@ -405,14 +412,19 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         p += update
 
         if (i + 1) % n_iter_check == 0:
+            toc = time()
+            duration = toc - tic
+            tic = toc
             if new_error is None:
                 new_error = objective_error(p, *args)
             error_diff = np.abs(new_error - error)
             error = new_error
 
             if verbose >= 2:
-                m = "[t-SNE] Iteration %d: error = %.7f, gradient norm = %.7f"
-                print(m % (i + 1, error, grad_norm))
+                print("[t-SNE] Iteration %d: error = %.7f,"
+                      " gradient norm = %.7f"
+                      " (%s iterations in %0.3fs)"
+                      % (i + 1, error, grad_norm, n_iter_check, duration))
 
             if error < best_error:
                 best_error = error
@@ -799,9 +811,19 @@ class TSNE(BaseEstimator):
                 ValueError("neighbors_method should be either a string or "
                            "a subclass of NeighborsBase. {} is not valid."
                            .format(self.neighbors_method))
+            t0 = time()
             knn.fit(X)
+            duration = time() - t0
+            if self.verbose:
+                print("[t-SNE] Indexed {} samples in {:.3f}s...".format(
+                    n_samples, duration))
+            t0 = time()
             distances_nn, neighbors_nn = knn.kneighbors(
                 None, n_neighbors=k)
+            duration = time() - t0
+            if self.verbose:
+                print("[t-SNE] Computed neighbors for {} samples in {:.3f}s..."
+                      .format(n_samples, duration))
 
             if self.metric != "precomputed":
                 # knn return the euclidean distance but we need it squared.
@@ -857,7 +879,7 @@ class TSNE(BaseEstimator):
         opt_args = {"it": 0,
                     "learning_rate": self.learning_rate,
                     "n_iter_without_progress": self.n_iter_without_progress,
-                    "verbose": self.verbose, "n_iter_check": 25,
+                    "verbose": self.verbose, "n_iter_check": 50,
                     "kwargs": dict(skip_num_points=skip_num_points)}
         if self.method == 'barnes_hut':
             obj_func = _kl_divergence_bh
@@ -865,7 +887,6 @@ class TSNE(BaseEstimator):
                     self.n_components]
 
             opt_args['args'] = args
-            opt_args['min_grad_norm'] = 1e-3
             opt_args['n_iter_without_progress'] = 30
             # Don't always calculate the cost since that calculation
             # can be nearly as expensive as the gradient
@@ -881,8 +902,10 @@ class TSNE(BaseEstimator):
 
         # Learning schedule (part 1): do 250 iteration with lower momentum but
         # higher learning rate controlled via the early exageration parameter
-        opt_args['n_iter'] = 250
+        exploration_n_iter = 250
+        opt_args['n_iter'] = exploration_n_iter
         opt_args['momentum'] = 0.5
+        opt_args['n_iter_without_progress'] = exploration_n_iter
         P *= self.early_exaggeration
 
         params, kl_divergence, it = _gradient_descent(obj_func, params,
@@ -894,8 +917,8 @@ class TSNE(BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self.n_iter - 250
-        if remaining > 0:
+        remaining = self.n_iter - exploration_n_iter
+        if it < exploration_n_iter or remaining > 0:
             opt_args['n_iter'] = self.n_iter
             opt_args['it'] = it + 1
             opt_args['momentum'] = 0.8

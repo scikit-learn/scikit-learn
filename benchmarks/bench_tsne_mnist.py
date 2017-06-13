@@ -114,7 +114,7 @@ $ cd ..
             # PCA preprocessing is done elsewhere in the benchmark script
             n_iter = -1  # TODO find a way to report the number of iterations
             return run_bh_tsne(X, use_pca=False, perplexity=args.perplexity,
-                               verbose=False), n_iter
+                               verbose=args.verbose > 0), n_iter
         methods += [("lvdmaaten/bhtsne", bhtsne)]
 
     if args.profile:
@@ -127,7 +127,7 @@ $ cd ..
                               "run `pip install memory_profiler`.")
         methods = [(n, profile(m)) for n, m in methods]
 
-    data_size = [100, 1000, 5000, 10000]
+    data_size = [100, 500, 1000, 5000, 10000]
     if args.all:
         data_size += [70000]
 
