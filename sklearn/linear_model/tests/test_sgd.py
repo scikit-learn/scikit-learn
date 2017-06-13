@@ -21,6 +21,8 @@ from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 
+from sklearn.linear_model import sgd_fast
+
 
 class SparseSGDClassifier(SGDClassifier):
 
@@ -475,7 +477,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # log and modified_huber losses can output probability estimates
         # binary case
         for loss in ["log", "modified_huber"]:
-            clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
+            clf = self.factory(loss=loss, alpha=0.01, n_iter=10)
             clf.fit(X, Y)
             p = clf.predict_proba([[3, 2]])
             assert_true(p[0, 1] > 0.5)
@@ -609,7 +611,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_weights_multiplied(self):
         # Tests that class_weight and sample_weight are multiplicative
         class_weights = {1: .6, 2: .3}
-        sample_weights = np.random.random(Y4.shape[0])
+        rng = np.random.RandomState(0)
+        sample_weights = rng.random_sample(Y4.shape[0])
         multiplied_together = np.copy(sample_weights)
         multiplied_together[Y4 == 1] *= class_weights[1]
         multiplied_together[Y4 == 2] *= class_weights[2]
@@ -958,6 +961,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     def test_sgd_epsilon_insensitive(self):
         xmin, xmax = -5, 5
         n_samples = 100
+        rng = np.random.RandomState(0)
         X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
 
         # simple linear function without noise
@@ -971,8 +975,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         assert_true(score > 0.99)
 
         # simple linear function with noise
-        y = 0.5 * X.ravel() \
-            + np.random.randn(n_samples, 1).ravel()
+        y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
         clf = self.factory(loss='epsilon_insensitive', epsilon=0.01,
                            alpha=0.1, n_iter=20,
@@ -1010,7 +1013,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
         n_samples, n_features = 1000, 5
         rng = np.random.RandomState(0)
-        X = np.random.randn(n_samples, n_features)
+        X = rng.randn(n_samples, n_features)
         # ground_truth linear model that generate y from X and to which the
         # models should converge if the regularizer would be set to 0.0
         ground_truth_coef = rng.randn(n_features)
@@ -1159,3 +1162,117 @@ def test_large_regularization():
         with np.errstate(all='raise'):
             model.fit(iris.data, iris.target)
         assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
+
+
+def _test_gradient_common(loss_function, cases):
+    # Test gradient of different loss functions
+    # cases is a list of (p, y, expected)
+    for p, y, expected in cases:
+        assert_almost_equal(loss_function.dloss(p, y), expected)
+
+
+def test_gradient_hinge():
+    # Test Hinge (hinge / perceptron)
+    # hinge
+    loss = sgd_fast.Hinge(1.0)
+    cases = [
+        # (p, y, expected)
+        (1.1, 1.0, 0.0), (-2.0, -1.0, 0.0),
+        (1.0, 1.0, -1.0), (-1.0, -1.0, 1.0), (0.5, 1.0, -1.0),
+        (2.0, -1.0, 1.0), (-0.5, -1.0, 1.0), (0.0, 1.0, -1.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+    # perceptron
+    loss = sgd_fast.Hinge(0.0)
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, 0.0), (-0.1, -1.0, 0.0),
+        (0.0, 1.0, -1.0), (0.0, -1.0, 1.0), (0.5, -1.0, 1.0),
+        (2.0, -1.0, 1.0), (-0.5, 1.0, -1.0), (-1.0, 1.0, -1.0),
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_squared_hinge():
+    # Test SquaredHinge
+    loss = sgd_fast.SquaredHinge(1.0)
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, 0.0), (-2.0, -1.0, 0.0), (1.0, -1.0, 4.0),
+        (-1.0, 1.0, -4.0), (0.5, 1.0, -1.0), (0.5, -1.0, 3.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_log():
+    # Test Log (logistic loss)
+    loss = sgd_fast.Log()
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, -1.0 / (np.exp(1.0) + 1.0)),
+        (1.0, -1.0, 1.0 / (np.exp(-1.0) + 1.0)),
+        (-1.0, -1.0, 1.0 / (np.exp(1.0) + 1.0)),
+        (-1.0, 1.0, -1.0 / (np.exp(-1.0) + 1.0)),
+        (0.0, 1.0, -0.5), (0.0, -1.0, 0.5),
+        (17.9, -1.0, 1.0), (-17.9, 1.0, -1.0),
+    ]
+    _test_gradient_common(loss, cases)
+    assert_almost_equal(loss.dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
+    assert_almost_equal(loss.dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
+
+
+def test_gradient_squared_loss():
+    # Test SquaredLoss
+    loss = sgd_fast.SquaredLoss()
+    cases = [
+        # (p, y, expected)
+        (0.0, 0.0, 0.0), (1.0, 1.0, 0.0), (1.0, 0.0, 1.0),
+        (0.5, -1.0, 1.5), (-2.5, 2.0, -4.5)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_huber():
+    # Test Huber
+    loss = sgd_fast.Huber(0.1)
+    cases = [
+        # (p, y, expected)
+        (0.0, 0.0, 0.0), (0.1, 0.0, 0.1), (0.0, 0.1, -0.1),
+        (3.95, 4.0, -0.05), (5.0, 2.0, 0.1), (-1.0, 5.0, -0.1)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_modified_huber():
+    # Test ModifiedHuber
+    loss = sgd_fast.ModifiedHuber()
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, 0.0), (-1.0, -1.0, 0.0), (2.0, 1.0, 0.0),
+        (0.0, 1.0, -2.0), (-1.0, 1.0, -4.0), (0.5, -1.0, 3.0),
+        (0.5, -1.0, 3.0), (-2.0, 1.0, -4.0), (-3.0, 1.0, -4.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_epsilon_insensitive():
+    # Test EpsilonInsensitive
+    loss = sgd_fast.EpsilonInsensitive(0.1)
+    cases = [
+        (0.0, 0.0, 0.0), (0.1, 0.0, 0.0), (-2.05, -2.0, 0.0),
+        (3.05, 3.0, 0.0), (2.2, 2.0, 1.0), (2.0, -1.0, 1.0),
+        (2.0, 2.2, -1.0), (-2.0, 1.0, -1.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_squared_epsilon_insensitive():
+    # Test SquaredEpsilonInsensitive
+    loss = sgd_fast.SquaredEpsilonInsensitive(0.1)
+    cases = [
+        (0.0, 0.0, 0.0), (0.1, 0.0, 0.0), (-2.05, -2.0, 0.0),
+        (3.05, 3.0, 0.0), (2.2, 2.0, 0.2), (2.0, -1.0, 5.8),
+        (2.0, 2.2, -0.2), (-2.0, 1.0, -5.8)
+    ]
+    _test_gradient_common(loss, cases)

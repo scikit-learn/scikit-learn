@@ -1,18 +1,27 @@
 """ test the label propagation module """
 
-import nose
 import numpy as np
 
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.semi_supervised import label_propagation
+from sklearn.datasets import make_classification
+from sklearn.metrics.pairwise import rbf_kernel
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
     (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
+    (label_propagation.LabelPropagation, {
+        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
+    }),
     (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
-    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2})
+    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2}),
+    (label_propagation.LabelSpreading, {
+        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
+    }),
 ]
 
 
@@ -21,7 +30,7 @@ def test_fit_transduction():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        nose.tools.assert_equal(clf.transduction_[2], 1)
+        assert_equal(clf.transduction_[2], 1)
 
 
 def test_distribution():
@@ -53,3 +62,15 @@ def test_predict_proba():
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                                   np.array([[0.5, 0.5]]))
+
+
+def test_alpha_deprecation():
+    X, y = make_classification(n_samples=100)
+    y[::3] = -1
+    lp_default = label_propagation.LabelPropagation()
+    lp_default_y = assert_no_warnings(lp_default.fit, X, y).transduction_
+
+    lp_0 = label_propagation.LabelPropagation(alpha=0)
+    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
+
+    assert_array_equal(lp_default_y, lp_0_y)

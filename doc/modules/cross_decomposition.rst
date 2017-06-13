@@ -13,7 +13,7 @@ These families of algorithms are useful to find linear relations between two
 multivariate datasets: the ``X`` and ``Y`` arguments of the ``fit`` method
 are 2D arrays.
 
-.. figure:: ../auto_examples/cross_decomposition/images/plot_compare_cross_decomposition_001.png
+.. figure:: ../auto_examples/cross_decomposition/images/sphx_glr_plot_compare_cross_decomposition_001.png
    :target: ../auto_examples/cross_decomposition/plot_compare_cross_decomposition.html
    :scale: 75%
    :align: center
@@ -39,4 +39,4 @@ Classes included in this module are :class:`PLSRegression`
 
 .. topic:: Examples:
 
-    * :ref:`example_cross_decomposition_plot_compare_cross_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`

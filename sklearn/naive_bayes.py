@@ -25,10 +25,10 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array
-from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils import check_X_y, check_array, check_consistent_length
+from .utils.extmath import safe_sparse_dot
+from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
 from .externals import six
 
@@ -168,7 +168,7 @@ class GaussianNB(BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
             .. versionadded:: 0.17
@@ -212,7 +212,7 @@ class GaussianNB(BaseNB):
         var : array-like, shape (number of Gaussians,)
             Variances for Gaussians in original set.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -282,13 +282,13 @@ class GaussianNB(BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
 
-        classes : array-like, shape (n_classes,)
+        classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
             .. versionadded:: 0.17
@@ -314,17 +314,17 @@ class GaussianNB(BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
 
-        classes : array-like, shape (n_classes,)
+        classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        _refit: bool
+        _refit: bool, optional (default=False)
             If true, act as though this were the first time we called
             _partial_fit (ie, throw away any past fitting and start over).
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -333,6 +333,9 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         X, y = check_X_y(X, y)
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            check_consistent_length(y, sample_weight)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
@@ -383,12 +386,12 @@ class GaussianNB(BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = in1d(unique_y, classes)
+        unique_y_in_classes = np.in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError("The target label(s) %s in y do not exist in the "
                              "initial classes %s" %
-                             (y[~unique_y_in_classes], classes))
+                             (unique_y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:
             i = classes.searchsorted(y_i)
@@ -480,13 +483,13 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        classes : array-like, shape = [n_classes]
+        classes : array-like, shape = [n_classes] (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like, shape = [n_samples] (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -551,7 +554,7 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like, shape = [n_samples], (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -620,11 +623,11 @@ class MultinomialNB(BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
-    fit_prior : boolean
+    fit_prior : boolean, optional (default=True)
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_prior : array-like, size (n_classes,)
+    class_prior : array-like, size (n_classes,), optional (default=None)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
@@ -723,15 +726,15 @@ class BernoulliNB(BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
-    binarize : float or None, optional
+    binarize : float or None, optional (default=0.0)
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
-    fit_prior : boolean
+    fit_prior : boolean, optional (default=True)
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_prior : array-like, size=[n_classes,]
+    class_prior : array-like, size=[n_classes,], optional (default=None)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 

@@ -24,6 +24,7 @@ from sklearn.datasets import make_friedman1
 from sklearn.datasets import make_friedman2
 from sklearn.datasets import make_friedman3
 from sklearn.datasets import make_low_rank_matrix
+from sklearn.datasets import make_moons
 from sklearn.datasets import make_sparse_coded_signal
 from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
@@ -48,6 +49,17 @@ def test_make_classification():
     assert_equal(sum(y == 0), 10, "Unexpected number of samples in class #0")
     assert_equal(sum(y == 1), 25, "Unexpected number of samples in class #1")
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
+
+    # Test for n_features > 30
+    X, y = make_classification(n_samples=2000, n_features=31, n_informative=31,
+                               n_redundant=0, n_repeated=0, hypercube=True,
+                               scale=0.5, random_state=0)
+
+    assert_equal(X.shape, (2000, 31), "X shape mismatch")
+    assert_equal(y.shape, (2000,), "y shape mismatch")
+    assert_equal(np.unique(X.view([('', X.dtype)]*X.shape[1])).view(X.dtype)
+                 .reshape(-1, X.shape[1]).shape[0], 2000,
+                 "Unexpected number of unique rows")
 
 
 def test_make_classification_informative_features():
@@ -360,3 +372,12 @@ def test_make_checkerboard():
     X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
                                  shuffle=True, random_state=0)
     assert_array_equal(X1, X2)
+
+
+def test_make_moons():
+    X, y = make_moons(3, shuffle=False)
+    for x, label in zip(X, y):
+        center = [0.0, 0.0] if label == 0 else [1.0, 0.5]
+        dist_sqr = ((x - center) ** 2).sum()
+        assert_almost_equal(dist_sqr, 1.0,
+                            err_msg="Point is not on expected unit circle")

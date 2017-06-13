@@ -1,6 +1,4 @@
-import numpy as np
-from numpy.testing import TestCase
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_equal, ignore_warnings
 
 from sklearn.utils.stats import rankdata
 
@@ -15,6 +13,7 @@ _cases = (
 )
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_cases():
 
     def check_case(values, method, expected):

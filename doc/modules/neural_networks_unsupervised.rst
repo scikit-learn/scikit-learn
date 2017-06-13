@@ -32,14 +32,14 @@ density estimation.
 The method gained popularity for initializing deep neural networks with the
 weights of independent RBMs. This method is known as unsupervised pre-training.
 
-.. figure:: ../auto_examples/neural_networks/images/plot_rbm_logistic_classification_001.png
+.. figure:: ../auto_examples/neural_networks/images/sphx_glr_plot_rbm_logistic_classification_001.png
    :target: ../auto_examples/neural_networks/plot_rbm_logistic_classification.html
    :align: center
    :scale: 100%
 
 .. topic:: Examples:
 
-   * :ref:`example_neural_networks_plot_rbm_logistic_classification.py`
+   * :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`
 
 
 Graphical model and parametrization
@@ -53,7 +53,7 @@ The graphical model of an RBM is a fully-connected bipartite graph.
 The nodes are random variables whose states depend on the state of the other
 nodes they are connected to. The model is therefore parameterized by the
 weights of the connections, as well as one intercept (bias) term for each
-visible and hidden unit, ommited from the image for simplicity.
+visible and hidden unit, omitted from the image for simplicity.
 
 The energy function measures the quality of a joint assignment:
 

@@ -1,10 +1,8 @@
 """
 Testing Recursive feature elimination
 """
-import warnings
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from nose.tools import assert_equal, assert_true
 from scipy import sparse
 
 from sklearn.feature_selection.rfe import RFE, RFECV
@@ -16,8 +14,7 @@ from sklearn.model_selection import cross_val_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater, assert_equal, assert_true
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -184,6 +181,13 @@ def test_rfecv():
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
+    # Verifying that steps < 1 don't blow up.
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=.2, cv=5)
+    X_sparse = sparse.csr_matrix(X)
+    rfecv_sparse.fit(X_sparse, y)
+    X_r_sparse = rfecv_sparse.transform(X_sparse)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
+
 
 def test_rfecv_mockclassifier():
     generator = check_random_state(0)
@@ -197,6 +201,25 @@ def test_rfecv_mockclassifier():
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
     assert_equal(len(rfecv.ranking_), X.shape[1])
+
+
+def test_rfecv_verbose_output():
+    # Check verbose=1 is producing an output.
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    sys.stdout = StringIO()
+
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = list(iris.target)
+
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5, verbose=1)
+    rfecv.fit(X, y)
+
+    verbose_output = sys.stdout
+    verbose_output.seek(0)
+    assert_greater(len(verbose_output.readline()), 0)
 
 
 def test_rfe_estimator_tags():

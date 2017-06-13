@@ -50,6 +50,13 @@ class TransportableException(JoblibException):
         self.etype = etype
 
 
+class WorkerInterrupt(Exception):
+    """ An exception that is not KeyboardInterrupt to allow subprocesses
+        to be interrupted.
+    """
+    pass
+
+
 _exception_mapping = dict()
 
 

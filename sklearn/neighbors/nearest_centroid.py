@@ -29,7 +29,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -95,6 +95,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
+        if self.metric == 'precomputed':
+            raise ValueError("Precomputed is not supported.")
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == 'manhattan':

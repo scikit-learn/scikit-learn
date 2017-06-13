@@ -59,7 +59,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
 
 if __name__ == '__main__':
     from sklearn.linear_model import Lasso, LassoLars
-    import pylab as pl
+    import matplotlib.pyplot as plt
 
     alpha = 0.01  # regularization parameter
 
@@ -68,28 +68,29 @@ if __name__ == '__main__':
     lasso_results, lars_lasso_results = compute_bench(alpha, list_n_samples,
                                             [n_features], precompute=True)
 
-    pl.figure('scikit-learn LASSO benchmark results')
-    pl.subplot(211)
-    pl.plot(list_n_samples, lasso_results, 'b-',
+    plt.figure('scikit-learn LASSO benchmark results')
+    plt.subplot(211)
+    plt.plot(list_n_samples, lasso_results, 'b-',
                             label='Lasso')
-    pl.plot(list_n_samples, lars_lasso_results, 'r-',
+    plt.plot(list_n_samples, lars_lasso_results, 'r-',
                             label='LassoLars')
-    pl.title('precomputed Gram matrix, %d features, alpha=%s' % (n_features, alpha))
-    pl.legend(loc='upper left')
-    pl.xlabel('number of samples')
-    pl.ylabel('Time (s)')
-    pl.axis('tight')
+    plt.title('precomputed Gram matrix, %d features, alpha=%s' % (n_features,
+                            alpha))
+    plt.legend(loc='upper left')
+    plt.xlabel('number of samples')
+    plt.ylabel('Time (s)')
+    plt.axis('tight')
 
     n_samples = 2000
     list_n_features = np.linspace(500, 3000, 5).astype(np.int)
     lasso_results, lars_lasso_results = compute_bench(alpha, [n_samples],
                                            list_n_features, precompute=False)
-    pl.subplot(212)
-    pl.plot(list_n_features, lasso_results, 'b-', label='Lasso')
-    pl.plot(list_n_features, lars_lasso_results, 'r-', label='LassoLars')
-    pl.title('%d samples, alpha=%s' % (n_samples, alpha))
-    pl.legend(loc='upper left')
-    pl.xlabel('number of features')
-    pl.ylabel('Time (s)')
-    pl.axis('tight')
-    pl.show()
+    plt.subplot(212)
+    plt.plot(list_n_features, lasso_results, 'b-', label='Lasso')
+    plt.plot(list_n_features, lars_lasso_results, 'r-', label='LassoLars')
+    plt.title('%d samples, alpha=%s' % (n_samples, alpha))
+    plt.legend(loc='upper left')
+    plt.xlabel('number of features')
+    plt.ylabel('Time (s)')
+    plt.axis('tight')
+    plt.show()

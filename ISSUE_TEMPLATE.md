@@ -1,21 +1,19 @@
 <!--
 If your issue is a usage question, submit it here instead:
 - StackOverflow with the scikit-learn tag: http://stackoverflow.com/questions/tagged/scikit-learn
-- Mailing List: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+- Mailing List: https://mail.python.org/mailman/listinfo/scikit-learn
 For more information, see User Questions: http://scikit-learn.org/stable/support.html#user-questions
 -->
 
 <!-- Instructions For Filing a Bug: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md#filing-bugs -->
 
-Description
------------
+#### Description
 <!-- Example: Joblib Error thrown when calling fit on LatentDirichletAllocation with evaluate_every > 0-->
 
-Steps/Code to Reproduce
------------------------
+#### Steps/Code to Reproduce
 <!--
 Example:
-```
+```python
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 
@@ -36,16 +34,13 @@ If the code is too long, feel free to put it in a public gist and link
 it in the issue: https://gist.github.com
 -->
 
-Expected Results
-----------------
-<!-- Example: No error is throw. Please paste or describe the expected results.-->
+#### Expected Results
+<!-- Example: No error is thrown. Please paste or describe the expected results.-->
 
-Actual Results
---------------
+#### Actual Results
 <!-- Please paste or specifically describe the actual output or traceback. -->
 
-Versions
---------
+#### Versions
 <!--
 Please run the following snippet and paste the output below.
 import platform; print(platform.platform())

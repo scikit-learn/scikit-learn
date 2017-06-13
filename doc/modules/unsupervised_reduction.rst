@@ -26,7 +26,7 @@ capture well the variance of the original features. See :ref:`decompositions`.
 
 .. topic:: **Examples**
 
-   * :ref:`example_applications_face_recognition.py`
+   * :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
 
 Random projections
 -------------------
@@ -37,7 +37,7 @@ documentation: :ref:`random_projection`.
 
 .. topic:: **Examples**
 
-   * :ref:`example_plot_johnson_lindenstrauss_bound.py`
+   * :ref:`sphx_glr_auto_examples_plot_johnson_lindenstrauss_bound.py`
 
 Feature agglomeration
 ------------------------
@@ -48,8 +48,8 @@ similarly.
 
 .. topic:: **Examples**
 
-   * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
-   * :ref:`example_cluster_plot_digits_agglomeration.py`
+   * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+   * :ref:`sphx_glr_auto_examples_cluster_plot_digits_agglomeration.py`
 
 .. topic:: **Feature scaling**
 

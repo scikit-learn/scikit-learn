@@ -2,17 +2,14 @@
 Thanks for contributing a pull request! Please ensure you have taken a look at
 the contribution guidelines: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md#Contributing-Pull-Requests
 -->
-Reference Issue
----------------
+#### Reference Issue
 <!-- Example: Fixes #1234 -->
 
 
-What does this implement/fix? Explain your changes.
----------------------------------------------------
+#### What does this implement/fix? Explain your changes.
 
 
-Any other comments?
--------------------
+#### Any other comments?
 
 
 <!--
