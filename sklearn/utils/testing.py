@@ -375,7 +375,7 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
                              (names, function.__name__))
 
 
-def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-13, err_msg=''):
+def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
     """Assert allclose for sparse and dense data.
 
     Both x and y need to be either sparse or dense, they
@@ -393,7 +393,9 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-13, err_msg=''):
         relative tolerance; see numpy.allclose
 
     atol : float, optional
-        absolute tolerance; see numpy.allclose
+        absolute tolerance; see numpy.allclose. Note that the default here is
+        more tolerant than the default for numpy.testing.assert_allclose, where
+        atol=0.
 
     err_msg : string, default=''
         Error message to raise.
