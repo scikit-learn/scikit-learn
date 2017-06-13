@@ -382,6 +382,13 @@ Bug fixes
      Its ``alpha`` parameter now defaults to 0 and the parameter is deprecated
      to be removed in version 0.21. :issue:`6727` by
      :user:`Andre Ambrosio Boechat <boechat107>` and `Joel Nothman`_.
+     
+   - Fixed a bug in :class:`linear_model.RandomizedLasso`,
+     :class:`linear_model.Lars`, :class:`linear_model.LarsLasso`,
+     :class:`linear_model.LarsCV` and :class:`linear_model.LarsLassoCV`,
+     where the parameter ``precompute`` were not used consistently accross
+     classes, and some values proposed in the docstring could raise errors.
+     :issue:`5359` by `Tom Dupre la Tour`_.
 
 API changes summary
 -------------------
