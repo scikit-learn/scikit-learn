@@ -663,9 +663,36 @@ def test_stratified_shuffle_split_overlap_train_test_bug():
     sss = StratifiedShuffleSplit(n_splits=1,
                                  test_size=0.5, random_state=0)
 
-    train, test = next(iter(sss.split(X=X, y=y)))
+    train, test = next(sss.split(X=X, y=y))
 
+    # no overlap
     assert_array_equal(np.intersect1d(train, test), [])
+
+    # complete partition
+    assert_array_equal(np.union1d(train, test), np.arange(len(y)))
+
+
+def test_stratified_shuffle_split_multilabel():
+    # fix for issue 9037
+    for y in [np.array([[0, 1], [1, 0], [1, 0], [0, 1]]),
+              np.array([[0, 1], [1, 1], [1, 1], [0, 1]])]:
+        X = np.ones_like(y)
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
+        train, test = next(sss.split(X=X, y=y))
+        y_train = y[train]
+        y_test = y[test]
+
+        # no overlap
+        assert_array_equal(np.intersect1d(train, test), [])
+
+        # complete partition
+        assert_array_equal(np.union1d(train, test), np.arange(len(y)))
+
+        # correct stratification of entire rows
+        # (by design, here y[:, 0] uniquely determines the entire row of y)
+        expected_ratio = np.mean(y[:, 0])
+        assert_equal(expected_ratio, np.mean(y_train[:, 0]))
+        assert_equal(expected_ratio, np.mean(y_test[:, 0]))
 
 
 def test_predefinedsplit_with_kfold_split():

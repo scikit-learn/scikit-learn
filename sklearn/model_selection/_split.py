@@ -1478,6 +1478,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
+
+        if y.ndim == 2:
+            # for multi-label y, map each distinct row to its string repr:
+            y = np.array([str(row) for row in y])
+
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
 
