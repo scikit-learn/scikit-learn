@@ -1,5 +1,8 @@
+import warnings
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..externals.six import string_types
 
 
 def _identity(X):
@@ -103,6 +106,11 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+
         return self._transform(X, y, self.func, self.kw_args)
 
     def inverse_transform(self, X):
@@ -118,7 +126,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        return self._transform(X, y, self.inverse_func, self.inv_kw_args)
+        return self._transform(X, y=None, self.inverse_func, self.inv_kw_args)
 
     def _transform(self, X, y=None, func=None, kw_args=None):
         if self.validate:

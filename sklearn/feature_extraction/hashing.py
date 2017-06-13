@@ -1,8 +1,6 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-import warnings
-
 import numbers
 import warnings
 
@@ -11,7 +9,6 @@ import scipy.sparse as sp
 
 from . import _hashing
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.six import string_types
 
 
 def _iteritems(d):
@@ -129,7 +126,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(self.n_features, self.input_type)
         return self
 
-    def transform(self, raw_X, y='deprecated'):
+    def transform(self, raw_X):
         """Transform a sequence of instances to a scipy.sparse matrix.
 
         Parameters
@@ -140,20 +137,13 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             the input_type constructor argument) which will be hashed.
             raw_X need not support the len function, so it can be the result
             of a generator; n_samples is determined on the fly.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         Returns
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Feature matrix, for use with estimators or further transformers.
 
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         raw_X = iter(raw_X)
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
