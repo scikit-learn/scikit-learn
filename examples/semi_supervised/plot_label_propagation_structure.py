@@ -13,7 +13,7 @@ print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt

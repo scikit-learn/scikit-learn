@@ -1,20 +1,27 @@
 """ test the label propagation module """
 
-import nose
 import numpy as np
 
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.semi_supervised import label_propagation
 from sklearn.datasets import make_classification
-from sklearn.utils.testing import assert_warns, assert_no_warnings
+from sklearn.metrics.pairwise import rbf_kernel
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
     (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
+    (label_propagation.LabelPropagation, {
+        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
+    }),
     (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
-    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2})
+    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2}),
+    (label_propagation.LabelSpreading, {
+        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
+    }),
 ]
 
 
@@ -23,7 +30,7 @@ def test_fit_transduction():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        nose.tools.assert_equal(clf.transduction_[2], 1)
+        assert_equal(clf.transduction_[2], 1)
 
 
 def test_distribution():

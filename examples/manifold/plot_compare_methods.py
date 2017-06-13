@@ -10,7 +10,7 @@ For a discussion and comparison of these algorithms, see the
 :ref:`manifold module page <manifold>`
 
 For a similar example, where the methods are applied to a
-sphere dataset, see :ref:`example_manifold_plot_manifold_sphere.py`
+sphere dataset, see :ref:`sphx_glr_auto_examples_manifold_plot_manifold_sphere.py`
 
 Note that the purpose of the MDS is to find a low-dimensional
 representation of the data (here 2D) in which the distances respect well
@@ -43,14 +43,10 @@ fig = plt.figure(figsize=(15, 8))
 plt.suptitle("Manifold Learning with %i points, %i neighbors"
              % (1000, n_neighbors), fontsize=14)
 
-try:
-    # compatibility matplotlib < 1.0
-    ax = fig.add_subplot(251, projection='3d')
-    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
-    ax.view_init(4, -72)
-except:
-    ax = fig.add_subplot(251, projection='3d')
-    plt.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.Spectral)
+
+ax = fig.add_subplot(251, projection='3d')
+ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
+ax.view_init(4, -72)
 
 methods = ['standard', 'ltsa', 'hessian', 'modified']
 labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']

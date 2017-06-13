@@ -32,7 +32,7 @@ using grid-search. The learned functions are very similar; however, fitting
 than three times faster with SVR since it has learned a sparse model using only
 approx. 1/3 of the 100 training datapoints as support vectors.
 
-.. figure:: ../auto_examples/images/plot_kernel_ridge_regression_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_ridge_regression_001.png
    :target: ../auto_examples/plot_kernel_ridge_regression.html
    :align: center
 
@@ -46,7 +46,7 @@ the learned sparse solution. Note that the degree of sparsity and thus the
 prediction time depends on the parameters :math:`\epsilon` and :math:`C` of the
 :class:`SVR`; :math:`\epsilon = 0` would correspond to a dense model.
 
-.. figure:: ../auto_examples/images/plot_kernel_ridge_regression_002.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_ridge_regression_002.png
    :target: ../auto_examples/plot_kernel_ridge_regression.html
    :align: center
 

@@ -67,8 +67,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
     return dataset, intercept_decay
 
 
-@deprecated("sparse_center_data will be removed in "
-            "0.20. Use utilities in preprocessing.data instead")
+@deprecated("sparse_center_data was deprecated in version 0.18 and will be "
+            "removed in 0.20. Use utilities in preprocessing.data instead")
 def sparse_center_data(X, y, fit_intercept, normalize=False):
     """
     Compute information needed to center data to have mean zero along
@@ -105,7 +105,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     return X, y, X_offset, y_offset, X_std
 
 
-@deprecated("center_data will be removed in "
+@deprecated("center_data was deprecated in version 0.18 and will be removed in "
             "0.20. Use utilities in preprocessing.data instead")
 def center_data(X, y, fit_intercept, normalize=False, copy=True,
                 sample_weight=None):
@@ -228,22 +228,6 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
-
-    @deprecated(" and will be removed in 0.19.")
-    def decision_function(self, X):
-        """Decision function of the linear model.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        C : array, shape = (n_samples,)
-            Returns predicted values.
-        """
-        return self._decision_function(X)
 
     def _decision_function(self, X):
         check_is_fitted(self, "coef_")
@@ -376,7 +360,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
         check_is_fitted(self, "coef_", msg=msg)
@@ -406,7 +390,7 @@ class SparseCoefMixin(object):
 
         Returns
         -------
-        self: estimator
+        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, "coef_", msg=msg)
@@ -420,20 +404,18 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, optional, default True
         whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
+        an estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -451,14 +433,6 @@ class LinearRegression(LinearModel, RegressorMixin):
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    residues_ : array, shape (n_targets,) or (1,) or empty
-        Sum of residuals. Squared Euclidean 2-norm for each target passed
-        during the fit. If the linear regression problem is under-determined
-        (the number of linearly independent rows of the training matrix is less
-        than its number of linearly independent columns), this is an empty
-        array. If the target vector passed during the fit is 1-dimensional,
-        this is a (1,) shape array.
-
     intercept_ : array
         Independent term in the linear model.
 
@@ -475,12 +449,6 @@ class LinearRegression(LinearModel, RegressorMixin):
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("``residues_`` is deprecated and will be removed in 0.19")
-    def residues_(self):
-        """Get the residues of the fitted model."""
-        return self._residues
 
     def fit(self, X, y, sample_weight=None):
         """

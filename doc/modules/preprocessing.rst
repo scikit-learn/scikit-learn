@@ -10,13 +10,20 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
+In general, learning algorithms benefit from standardization of the data set. If
+some outliers are present in the set, robust scalers or transformers are more
+appropriate. The behaviors of the different scalers, transformers, and
+normalizers on a dataset containing marginal outliers is highlighted in
+:ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
+
+
 .. _preprocessing_scaler:
 
 Standardization, or mean removal and variance scaling
 =====================================================
 
 **Standardization** of datasets is a **common requirement for many
-machine learning estimators** implemented in the scikit; they might behave
+machine learning estimators** implemented in scikit-learn; they might behave
 badly if the individual features do not more or less look like standard
 normally distributed data: Gaussian with **zero mean and unit variance**.
 
@@ -30,7 +37,7 @@ a learning algorithm (such as the RBF kernel of Support Vector
 Machines or the l1 and l2 regularizers of linear models) assume that
 all features are centered around zero and have variance in the same
 order. If a feature has a variance that is orders of magnitude larger
-that others, it might dominate the objective function and make the
+than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
 
 
@@ -39,10 +46,10 @@ operation on a single array-like dataset::
 
   >>> from sklearn import preprocessing
   >>> import numpy as np
-  >>> X = np.array([[ 1., -1.,  2.],
-  ...               [ 2.,  0.,  0.],
-  ...               [ 0.,  1., -1.]])
-  >>> X_scaled = preprocessing.scale(X)
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  >>> X_scaled = preprocessing.scale(X_train)
 
   >>> X_scaled                                          # doctest: +ELLIPSIS
   array([[ 0.  ..., -1.22...,  1.33...],
@@ -71,7 +78,7 @@ able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
-  >>> scaler = preprocessing.StandardScaler().fit(X)
+  >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
   StandardScaler(copy=True, with_mean=True, with_std=True)
 
@@ -81,7 +88,7 @@ This class is hence suitable for use in the early steps of a
   >>> scaler.scale_                                       # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
-  >>> scaler.transform(X)                               # doctest: +ELLIPSIS
+  >>> scaler.transform(X_train)                           # doctest: +ELLIPSIS
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
@@ -90,7 +97,8 @@ This class is hence suitable for use in the early steps of a
 The scaler instance can then be used on new data to transform it the
 same way it did on the training set::
 
-  >>> scaler.transform([[-1.,  1., 0.]])                # doctest: +ELLIPSIS
+  >>> X_test = [[-1., 1., 0.]]
+  >>> scaler.transform(X_test)                # doctest: +ELLIPSIS
   array([[-2.44...,  1.22..., -0.26...]])
 
 It is possible to disable either centering or scaling by either
@@ -146,7 +154,7 @@ full formula is::
 
     X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 
-    X_scaled = X_std / (max - min) + min
+    X_scaled = X_std * (max - min) + min
 
 :class:`MaxAbsScaler` works in a very similar fashion, but scales in a way
 that the training data lies within the range ``[-1, 1]`` by dividing through
@@ -187,7 +195,7 @@ sparse inputs, especially if features are on different scales.
 :class:`MaxAbsScaler`  and :func:`maxabs_scale` were specifically designed
 for scaling sparse data, and are the recommended way to go about this.
 However, :func:`scale` and :class:`StandardScaler` can accept ``scipy.sparse``
-matrices  as input, as long as ``with_centering=False`` is explicitly passed
+matrices  as input, as long as ``with_mean=False`` is explicitly passed
 to the constructor. Otherwise a ``ValueError`` will be raised as
 silently centering would break the sparsity and would often crash the
 execution by allocating excessive amounts of memory unintentionally.
@@ -247,6 +255,69 @@ in a feature space defined by function :math:`phi`,
 a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
 defined by :math:`phi` followed by removal of the mean in that space.
+
+.. _preprocessing_transformer:
+
+Non-linear transformation
+=========================
+
+Like scalers, :class:`QuantileTransformer` puts each feature into the same
+range or distribution. However, by performing a rank transformation, it smooths
+out unusual distributions and is less influenced by outliers than scaling
+methods. It does, however, distort correlations and distances within and across
+features.
+
+:class:`QuantileTransformer` and :func:`quantile_transform` provide a
+non-parametric transformation based on the quantile function to map the data to
+a uniform distribution with values between 0 and 1::
+
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.model_selection import train_test_split
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+  >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
+  >>> X_train_trans = quantile_transformer.fit_transform(X_train)
+  >>> X_test_trans = quantile_transformer.transform(X_test)
+  >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100]) # doctest: +SKIP
+  array([ 4.3,  5.1,  5.8,  6.5,  7.9])
+
+This feature corresponds to the sepal length in cm. Once the quantile
+transformation applied, those landmarks approach closely the percentiles
+previously defined::
+
+  >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +ELLIPSIS +SKIP
+  array([ 0.00... ,  0.24...,  0.49...,  0.73...,  0.99... ])
+
+This can be confirmed on a independent testing set with similar remarks::
+
+  >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +SKIP
+  array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
+  >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +ELLIPSIS +SKIP
+  array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
+
+It is also possible to map the transformed data to a normal distribution by
+setting ``output_distribution='normal'``::
+
+  >>> quantile_transformer = preprocessing.QuantileTransformer(
+  ...     output_distribution='normal', random_state=0)
+  >>> X_trans = quantile_transformer.fit_transform(X)
+  >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  array([[ 4.3...,   2...,     1...,     0.1...],
+         [ 4.31...,  2.02...,  1.01...,  0.1...],
+         [ 4.32...,  2.05...,  1.02...,  0.1...],
+         ...,
+         [ 7.84...,  4.34...,  6.84...,  2.5...],
+         [ 7.87...,  4.37...,  6.87...,  2.5...],
+         [ 7.9...,   4.4...,   6.9...,   2.5...]])
+
+Thus the median of the input becomes the mean of the output, centered at 0. The
+normal output is clipped so that the input's minimum and maximum ---
+corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively --- do not
+become infinite under the transformation.
 
 .. _preprocessing_normalization:
 
@@ -415,8 +486,8 @@ Note that, if there is a possibilty that the training data might have missing ca
 features, one has to explicitly set ``n_values``. For example,
 
     >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
-    >>> # Note that for there are missing categorical values for the 2nd and 3rd
-    >>> # feature
+    >>> # Note that there are missing categorical values for the 2nd and 3rd
+    >>> # features
     >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
            handle_unknown='error', n_values=[2, 3, 4], sparse=True)
@@ -445,49 +516,28 @@ values, either using the mean, the median or the most frequent value of
 the row or column in which the missing values are located. This class
 also allows for different missing values encodings.
 
-Imputing missing values ordinarily discards the information of which values
-were missing. Setting ``add_indicator_features=True`` allows the knowledge of
-which features were imputed to be exploited by a downstream estimator
-by adding features that indicate which elements have been imputed.
-
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean value of the columns (axis 0)
-that contain the missing values. In case there is a feature which has
-all missing features, it is discarded when transformed. Also if the
-indicator matrix is requested (``add_indicator_features=True``),
-then the shape of the transformed input is 
-``(n_samples, n_features_new + len(imputed_features_))`` ::
+that contain the missing values::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import Imputer
     >>> imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])  # doctest: +NORMALIZE_WHITESPACE
-    Imputer(add_indicator_features=False, axis=0, copy=True, missing_values='NaN',
-        strategy='mean', verbose=0)
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
+    Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
     [[ 4.          2.        ]
      [ 6.          3.666...]
      [ 7.          6.        ]]
-    >>> imp_with_in = Imputer(missing_values='NaN', strategy='mean', axis=0,add_indicator_features=True)
-    >>> imp_with_in.fit([[1, 2], [np.nan, 3], [7, 6]])
-    Imputer(add_indicator_features=True, axis=0, copy=True, missing_values='NaN',
-        strategy='mean', verbose=0)
-    >>> print(imp_with_in.transform(X))                           # doctest: +ELLIPSIS
-    [[ 4.          2.          1.          0.        ]
-     [ 6.          3.66666667  0.          1.        ]
-     [ 7.          6.          0.          0.        ]]
-    >>> print(imp_with_in.imputed_features_)
-    [0 1]
 
 The :class:`Imputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
     >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
     >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
-    >>> imp.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    Imputer(add_indicator_features=False, axis=0, copy=True, missing_values=0,
-        strategy='mean', verbose=0)
+    >>> imp.fit(X)
+    Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
     >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
     [[ 4.          2.        ]
@@ -499,7 +549,7 @@ in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`example_missing_values.py`
+estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. _polynomial_features:
 
@@ -540,7 +590,9 @@ The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(
 
 Note that polynomial features are used implicitily in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+
+.. _function_transformer:
 
 Custom transformers
 ===================
@@ -560,4 +612,4 @@ a transformer that applies a log transformation in a pipeline, do::
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to do custom feature selection,
-see :ref:`example_preprocessing_plot_function_transformer.py`
+see :ref:`sphx_glr_auto_examples_preprocessing_plot_function_transformer.py`
