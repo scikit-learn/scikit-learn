@@ -26,6 +26,11 @@ enhance the functionality of scikit-learn's estimators.
 
 **Auto-ML**
 
+- `auto_ml <https://github.com/ClimbsRocks/auto_ml/>`_
+  Automated machine learning for production and analytics, built on scikit-learn
+  and related projects. Trains a pipeline wth all the standard machine learning 
+  steps. Tuned for prediction speed and ease of transfer to production environments. 
+
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
   An automated machine learning toolkit and a drop-in replacement for a
   scikit-learn estimator
