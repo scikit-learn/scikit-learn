@@ -329,6 +329,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # the pickle module as the object built by scipy.interp1d is not
         # picklable directly.
         self._necessary_X_, self._necessary_y_ = X, y
+        self._dtype = X.dtype
 
         # Build the interpolation function
         self._build_f(X, y)
@@ -348,7 +349,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             The transformed data
         """
         T = as_float_array(T)
-        T = T.astype(self._necessary_X_.dtype, copy=False)
+        if hasattr(self, '_dtype'):
+            T = T.astype(self._dtype, copy=False)
 
         if len(T.shape) != 1:
             raise ValueError("Isotonic regression input should be a 1d array")
