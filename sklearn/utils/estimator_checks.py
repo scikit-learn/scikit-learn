@@ -1378,6 +1378,8 @@ def check_class_weight_classifiers(name, classifier_orig):
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
         y_pred = classifier.predict(X_test)
+        # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
+        #      0.88 (Issue #9111)
         assert_greater(np.mean(y_pred == 0), 0.87)
 
 
