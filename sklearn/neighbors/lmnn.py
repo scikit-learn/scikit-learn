@@ -435,7 +435,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  .format(len(self.init_transformation[0]),
                                          n_features))
 
-            if len(self.init_transformation) > len(self.init_transformation[0]):
+            if len(self.init_transformation) > \
+                    len(self.init_transformation[0]):
                 raise ValueError('Transformation output dimensionality ({}) '
                                  'cannot be greater than the '
                                  'transformation input dimensionality ({}).'.
@@ -450,7 +451,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                      'does not match the given linear '
                                      'transformation {}!'.format(
                                         self.n_features_out,
-                        len(self.init_transformation)))
+                                        len(self.init_transformation)))
 
             elif self.n_features_out > n_features:
                 raise ValueError('Preferred outputs dimensionality ({}) '
@@ -512,7 +513,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 warn('Decreasing the initial linear transformation output '
                      'dimensionality ({}) to the preferred output '
                      'dimensionality ({}).'.format(transformation.shape[0],
-                        n_features_out), DataDimensionalityWarning)
+                                                   n_features_out),
+                     DataDimensionalityWarning)
                 transformation = transformation[:n_features_out]
 
         return transformation, n_features_out
@@ -715,8 +717,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
                 ii, jj = _find_impostors_batch(Lx[ind_out], Lx[ind_in],
-                                                    margin_radii[ind_out],
-                                                    margin_radii[ind_in])
+                                               margin_radii[ind_out],
+                                               margin_radii[ind_in])
 
                 if len(ii):
                     # sample constraints if they are too many

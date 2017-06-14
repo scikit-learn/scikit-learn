@@ -1,4 +1,4 @@
-.. _lda_qda:
+.. _lmnn:
 
 =============================
 Large Margin Nearest Neighbor
@@ -9,13 +9,30 @@ Large Margin Nearest Neighbor
 .. currentmodule:: sklearn.neighbors
 
 Large Margin Nearest Neighbor (:class:`lmnn.LargeMarginNearestNeighbor`) is
-a method for distance metric learning.
+a distance metric learning algorithm.
 
 This transformer aims to learn a Mahalanobis metric that improves the
-accuracy of k-nearest neighbor classification which by default uses the
+accuracy of k-nearest neighbor classification compared to the standard
 Euclidean metric.
+
 As in support vector machines (SVMs), this method attempts to maximize the
-margin between samples that belong to different classes, thus its name.
+margin between data samples that belong to different classes, therefore the
+name of the method. Instead of a set of hyper-planes in a high or infinite
+dimensional space, LMNN constructs a set of hyper-spheres centered at each
+training point that are supposed to contain only samples that share the same
+label as the central point.
+
+In the beginning of the algorithm each training sample fixes :math:`k`
+target neighbors, namely :math:`k` nearest training samples according to some
+initial - most commonly the Euclidean - metric that share the same label.
+The first goal is to find a metric such that the distances of each sample to
+each target neighbors are minimized.
+
+The second goal of the algorithm is to create a large margin between the
+farthest target neighbor of each sample and data samples that belong to
+different classes. Data samples from different classes that violate this
+margin are called impostors.
+
 Combined with a nearest neighbors classifier (:class:`lmnn.KNeighborsClassifier`)
 this method is attractive for classification because it requires no
 modification or extension for multi-class (as opposed to binary) problems
@@ -25,23 +42,24 @@ before training.
 Large Margin Nearest Neighbor classification has been proven to work well in
 practice for data sets of varying size and difficulty.
 
-.. |ldaqda| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_qda_001.png
-        :target: ../auto_examples/classification/plot_lda_qda.html
+
+.. Enter ../auto_examples/classification/images/sphx_glr_plot_lda_lmnn_001.png
+        :target: ../auto_examples/classification/plot_lda_lmnn.html
         :scale: 80
 
-.. centered:: |ldaqda|
+.. Enter centered:: |lmnn|
 
-The plot shows decision boundaries for simple nearest neighbor
-classification and large margin nearest neighbor classification.
-The bottom row shows the same comparison after first doing PCA on the inputs.
+.. The plot shows decision boundaries for nearest neighbor classification and
+    large margin nearest neighbor classification. The bottom row shows the
+    same comparison after first doing PCA on the inputs.
 
-.. topic:: Examples:
+.. Enter topic:: Examples:
+    .. Comment
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_lmnn.py`: Comparison
+    of LDA and LMNN on synthetic data.
 
-    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`: Comparison of LDA and QDA
-    on synthetic data.
-
-Dimensionality reduction using Large Margin Nearest Neighbor
-============================================================
+Dimensionality reduction
+========================
 
 :class:`lmnn.LargeMarginNearestNeighbor` can be used to
 perform supervised dimensionality reduction, by projecting the input data to a
@@ -49,86 +67,95 @@ linear subspace consisting of the directions which maximize the separation
 between classes (in a precise sense discussed in the mathematics section
 below).
 
-This is implemented in
-:func:`lmnn.LargeMarginNearestNeighbor.transform`. The desired
-dimensionality can be set using the ``n_features_out`` constructor parameter.
-This parameter has no influence on :func:`lmnn.LargeMarginNearestNeighbor.fit`.
+This is implemented in :func:`lmnn.LargeMarginNearestNeighbor.transform`.
+The desired dimensionality can be set using the ``n_features_out`` parameter
+in the constructor.
 
-.. topic:: Examples:
-
-    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`:
+.. Comment topic:: Examples:
+    ..
+    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda_vs_lmnn.py`:
     Comparison of PCA, LDA and LMNN
-    for dimensionality reduction of the Iris dataset
+    for dimensionality reduction of the Olivetti faces dataset
 
-Mathematical formulation of the Large Margin Nearest Neighbor
-=============================================================
+Mathematical formulation
+========================
 
 The LMNN objective function consists of two competing terms, the pull loss
 that pulls target neighbors together and the push loss that pushes impostors
  away:
 
 .. math::
-    \newcommand{\bL}{\textbf{L}}
 
-    \varepsilon_{\text{pull}} (\bL) = \sum_{i, j \rightsquigarrow i} ||\bL(\vec{x}_i - \vec{x}_j)||^2
+    \varepsilon_{\text{pull}} (L) = \sum_{i, j \rightsquigarrow i} ||L
+    (x_i - x_j)||^2
 
-    \varepsilon_{\text{push}} (\bL) = \sum_{i, j \rightsquigarrow i}
-\sum_{l} (1 - y_{il}) [1 + ||\bL(\vec{x}_i - \vec{x}_j)||^2 - ||\bL(\vec{x}_i - \vec{x}_l)||^2]_+
-\text{ where } y_{il} = 1 \text{ if } $y_i = y_l$ \text{ and 0 otherwise}.
+    \varepsilon_{\text{push}} (L) = \sum_{i, j \rightsquigarrow i}
+    \sum_{l} (1 - y_{il}) [1 + || L(x_i - x_j)||^2 - || L
+    (x_i - x_l)||^2]_+
+    \text{ where } y_{il} = 1 \text{ if } $y_i = y_l$ \text{ and 0 otherwise}.
 
-    \varepsilon(\bL) = (1 - \mu) \varepsilon_{\text{pull}} (\bL) +
-\mu \varepsilon_{\text{push}} (\bL) \text{, } \quad \mu \in [0,1]
+    \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
+    \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1]
 
 
-
-and we minimize this loss with L-BFGS.
-
-The second term of the pull loss is the hingle loss, namely :math:`[x]_+ =
-\max(0, x)`.
-
+The term in the push loss, namely :math:`[x]_+ = \max(0, x)` is called the
+hingle loss.
+The parameter :math:`\mu` is a trade-off between penalizing large distances
+between target neighbors and penalizing margin violations. In practice,
+the two terms are weighted equally.
 
 To use this model for classification, we just need to use a nearest neighbors
-classifier (:func:`KNeighborsClassifier`) in the input space, transformed by
-the linear transformation found by LMNN.
+classifier (:func:`KNeighborsClassifier`) after we apply the linear
+transformation :math:`L` found by LMNN to the data.
+
+The loss function is not convex in :math:`L`, but there is an alternative
+formulation:
+
+.. math::
+
+    \varepsilon_{\text{pull}} (M) = \sum_{i, j \rightsquigarrow i} (x_i-x_j)
+    ^T M (x_i-x_j)
+
+    \varepsilon_{\text{push}} (M) = \sum_{i, j \rightsquigarrow i}
+    \sum_{l} (1 - y_{il}) [1 + (x_i-x_j)^T M (x_i-x_j) - (x_i-x_l)^T M (x_i-x_l)]_+
+    \text{ where } y_{il} = 1 \text{ if } $y_i = y_l$ \text{ and 0 otherwise}.
+
+    \varepsilon(M) = (1 - \mu) \varepsilon_{\text{pull}} (M) +
+    \mu \varepsilon_{\text{push}} (M) \text{, } \quad \mu \in [0,1]
 
 
-In contrast to related methods such as LDA, LMNN does not need to make any
-assumptions about the class distributions since the nearest neighbor
-classification naturally produces non-linear decision boundaries. See [#1]_
-for more details.
+This objective is now convex in :math:`M` but the matrix :math:`M = L^T L`
+must be constrained to be positive semidefinite as opposed to :math:`L`
+which could be any real matrix.
 
 
-Mathematical formulation of LMNN dimensionality reduction
-=========================================================
-
-LMNN can be used for dimensionality reduction by setting the
-``n_features_out`` parameter in the constructor. The algorithm will find an
-optimal transformation for a subspace of dimension ``n_features_out``.
+In contrast to related methods such as LDA, LMNN does not make any
+assumptions about the class distributions. The nearest neighbor
+classification can naturally produce highly irregular decision boundaries.
+See [#1]_ for more details.
 
 
 
 Implementation
 ==============
 
-This implementation follows closely the original MATLAB implementation found
-at https://bitbucket.org/mlcircus/lmnn which solves the unconstrained
-problem. It finds a linear transformation by optimisation with L-BFGS instead
-of solving the constrained problem that finds the globally optimal metric.
-Different from the paper, the problem solved by this implementation is
-with the squared hinge loss (to make the problem differentiable).
+This implementation follows closely the MATLAB implementation found at
+https://bitbucket.org/mlcircus/lmnn which solves the unconstrained problem.
+It finds a linear transformation :math:`L` by optimisation with
+L-BFGS instead of solving the constrained problem that finds the globally
+optimal metric. Different from the paper, the problem solved by this
+implementation is with the squared hinge loss (to make the problem
+differentiable).
 
-
-.. topic:: Examples:
-
-    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
-    with and without shrinkage.
 
 .. topic:: References:
 
    .. [#1] "Distance Metric Learning for Large Margin Nearest Neighbor
-      Classification.", Weinberger, Kilian Q., and Lawrence K. Saul, Journal
-      of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
-    (http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf)
+            Classification.", Weinberger, Kilian Q., and Lawrence K. Saul, Journal
+            of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
+
+    http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf
 
    .. [#2] Wikipedia entry on Large Margin Nearest Neighbor
-    (https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor)
+
+    https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor

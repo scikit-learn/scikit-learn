@@ -249,10 +249,10 @@ def test_warm_start():
     lmnn_cold.fit(X_train, y_train)
     transformation_cold_plus_one = lmnn_cold.transformation_
 
-    diff_warm = np.sum(np.abs(transformation_warm_plus_one
-                              - transformation_warm))
-    diff_cold = np.sum(np.abs(transformation_cold_plus_one
-                              - transformation_cold))
+    diff_warm = np.sum(np.abs(transformation_warm_plus_one -
+                              transformation_warm))
+    diff_cold = np.sum(np.abs(transformation_cold_plus_one -
+                              transformation_cold))
 
     err_msg = "Transformer changed significantly after one iteration even " \
               "though it was warm-started."
