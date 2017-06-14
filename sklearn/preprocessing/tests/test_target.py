@@ -62,6 +62,28 @@ def _check_max_abs_scaler(y, y_pred):
 def test_transform_target_regressor_friedman():
     X = friedman[0]
     y = friedman[1]
+    # create a multioutput y
+    # keep why to be 2d and it will squeezed when relevant
+    Y = [y.reshape(-1, 1), np.vstack((y, y ** 2 + 1)).T]
+    for y_2d in Y:
+        regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                        func=np.log, inverse_func=np.exp)
+        y_pred = regr.fit(X, y_2d.squeeze()).predict(X)
+        y_tran = regr.transformer_.transform(y_2d).squeeze()
+        assert_allclose(np.log(y_2d.squeeze()), y_tran)
+        assert_allclose(y_2d.squeeze(), regr.transformer_.inverse_transform(
+            y_tran).squeeze())
+        assert_equal(y_2d.squeeze().shape, y_pred.shape)
+        assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
+        lr = LinearRegression().fit(X, regr.func(y_2d.squeeze))
+        assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
+        assert_array_equal(regr.regressor_.coef_.ravel(),
+                           lr.coef_.ravel())
+
+
+def test_transform_target_regressor_friedman():
+    X = friedman[0]
+    y = friedman[1]
     # pass some functions
     regr = TransformTargetRegressor(regressor=LinearRegression(),
                                     func=np.log, inverse_func=np.exp)
