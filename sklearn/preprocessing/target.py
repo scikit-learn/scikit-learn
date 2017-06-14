@@ -6,7 +6,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted, has_fit_parameter
-from ..utils import check_X_y, check_array, check_random_state
+from ..utils import check_X_y, check_random_state
 from ._function_transformer import FunctionTransformer
 
 __all__ = ['TransformTargetRegressor']

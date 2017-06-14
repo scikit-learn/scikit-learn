@@ -29,8 +29,8 @@ prediction, and the transformer that will be applied to the target variable::
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformTargetRegressor(...)
-  >>> print('R2 score:', regr.score(X_test, y_test)) # doctest : +ELLIPSIS
-  R2 score: 0.63...
+  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
+  R2 score: 0.64
 
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
@@ -48,8 +48,8 @@ Subsequently, the object is created as::
   ...                                               inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformTargetRegressor(...)
-  >>> print('R2 score:', regr.score(X_test, y_test)) # doctest: +ELLIPSIS
-  R2 score: 0.64...
+  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
+  R2 score: 0.65
 
 By default, the provided function are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
@@ -63,8 +63,8 @@ each other. However, it is possible to bypass this checking by setting
   ...                                               check_inverse=False)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformTargetRegressor(...)
-  >>> print('R2 score:', regr.score(X_test, y_test)) # doctest: +ELLIPSIS
-  R2 score: -4.50...
+  >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
+  R2 score: -4.50
 
 .. note::
 
