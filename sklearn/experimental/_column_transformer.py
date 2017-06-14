@@ -22,7 +22,8 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
 
 
 class ColumnTransformer(FeatureUnion):
-    """Applies transformers to columns of an array or pandas DataFrame.
+    """Applies transformers to columns of an array or pandas DataFrame
+    (EXPERIMENTAL).
 
     This estimator applies transformer objects to columns of the input,
     then concatenates the results. This is useful for heterogeneous or
@@ -41,6 +42,8 @@ class ColumnTransformer(FeatureUnion):
         positional columns, strings as the column labels of `X`.
         When passing a single column to a transformer that expects 2D input
         data, the column should be specified a list of one element.
+        Subselections of a pandas DataFrames are passed through to the
+        the transformers as pandas objects.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -101,7 +104,7 @@ class ColumnTransformer(FeatureUnion):
             if "Got X with X.ndim=1. Reshape your data" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
-                raise e
+                raise
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all transformers, transform the data and concatenate results.
@@ -130,7 +133,7 @@ class ColumnTransformer(FeatureUnion):
             if "Got X with X.ndim=1. Reshape your data" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
-                raise e
+                raise
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -155,7 +158,7 @@ class ColumnTransformer(FeatureUnion):
             if "Got X with X.ndim=1. Reshape your data" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
-                raise e
+                raise
 
 
 def _get_column(X, key):

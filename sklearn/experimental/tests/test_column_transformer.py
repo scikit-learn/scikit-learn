@@ -258,6 +258,18 @@ def test_column_transformer_error_msg_1D():
     assert_raise_message(ValueError, "1D data passed to a transformer",
                          col_trans.fit_transform, X_array)
 
+    class TransRaise(BaseEstimator):
+
+        def fit(self, X, y=None):
+            raise ValueError("specific message")
+
+        def transform(self, X, y=None):
+            raise ValueError("specific message")
+
+    col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
+    for func in [col_trans.fit, col_trans.transform, col_trans.fit_transform]:
+        assert_raise_message(ValueError, "specific message", func, X_array)
+
 
 def test_column_transformer_invalid_columns():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T

@@ -160,6 +160,14 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
          [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
          [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]]...)
 
+In the above example, the ``CountVectorizer`` expects a 1D array as input and
+therefore the columns were specified as a scalar (``'city'``). Other transformers
+can expect 2D data, and in that case you need to specify the column as a list (``['city']``).
+
+Next to a scalar or a single item list, the column selection can be specified
+as a list of multiple items, a slice or a boolean mask. For more details, see
+the :class:`~sklearn.experimental.ColumnTransformer` docstring.
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_column_transformer.py`
