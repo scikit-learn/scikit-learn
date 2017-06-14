@@ -5,9 +5,9 @@
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.arpack import eigsh
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -35,7 +35,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Degree for poly kernels. Ignored by other kernels.
 
     gamma : float, default=1/n_features
-        Kernel coefficient for rbf and poly kernels. Ignored by other
+        Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
         kernels.
 
     coef0 : float, default=1

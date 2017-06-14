@@ -17,17 +17,19 @@ The two species are:
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
-References:
+References
+----------
 
- * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
-   S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-   190:231-259, 2006.
+`"Maximum entropy modeling of species geographic distributions"
+<http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
+R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
 
-Notes:
+Notes
+-----
 
- * See examples/applications/plot_species_distribution_modeling.py
-   for an example of using this dataset
+For an example of using this dataset, see
+:ref:`examples/applications/plot_species_distribution_modeling.py
+<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
 """
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -55,7 +57,7 @@ from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
-DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
+DIRECTORY_URL = "http://biodiversityinformatics.amnh.org/open_source/maxent/"
 
 SAMPLES_URL = DIRECTORY_URL + "samples.zip"
 COVERAGES_URL = DIRECTORY_URL + "coverages.zip"
@@ -195,16 +197,16 @@ def fetch_species_distributions(data_home=None,
     ----------
 
     * `"Maximum entropy modeling of species geographic distributions"
-      <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+      <http://rob.schapire.net/papers/ecolmod.pdf>`_
       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
       190:231-259, 2006.
 
     Notes
     -----
 
-    * See examples/applications/plot_species_distribution_modeling.py
-      for an example of using this dataset with scikit-learn
-
+    * For an example of using this dataset with scikit-learn, see
+      :ref:`examples/applications/plot_species_distribution_modeling.py
+      <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):

@@ -99,8 +99,15 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
-        if isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory)
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
+            memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError("'memory' should either be a string or"
+                             " a sklearn.externals.joblib.Memory"
+                             " instance, got 'memory={!r}' instead.".format(
+                                 type(memory)))
 
         scores_ = memory.cache(
             _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch']
@@ -150,6 +157,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float64))
 
     X = (1 - weights) * X
+
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', ConvergenceWarning)
         alphas_, _, coef_ = lars_path(X, y,
@@ -223,10 +231,11 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         use `preprocessing.StandardScaler` before calling `fit` on an
         estimator with `normalize=False`.
 
-    precompute : True | False | 'auto'
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
-        matrix can also be passed as argument.
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up calculations.
+        If set to 'auto' let us decide.
+        The Gram matrix can also be passed as argument, but it will be used
+        only for the selection of parameter alpha, if alpha is 'aic' or 'bic'.
 
     max_iter : integer, optional
         Maximum number of iterations to perform in the Lars algorithm.
@@ -265,7 +274,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
 
@@ -286,7 +296,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_sparse_recovery.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
+    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
 
     References
     ----------
@@ -307,7 +318,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                  max_iter=500,
                  eps=np.finfo(np.float).eps, random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
+                 memory=None):
         self.alpha = alpha
         self.scaling = scaling
         self.sample_fraction = sample_fraction
@@ -325,7 +336,6 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         self.memory = memory
 
     def _make_estimator_and_params(self, X, y):
-        assert self.precompute in (True, False, None, 'auto')
         alpha = self.alpha
         if isinstance(alpha, six.string_types) and alpha in ('aic', 'bic'):
             model = LassoLarsIC(precompute=self.precompute,
@@ -334,9 +344,16 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                                 eps=self.eps)
             model.fit(X, y)
             self.alpha_ = alpha = model.alpha_
+
+        precompute = self.precompute
+        # A precomputed Gram array is useless, since _randomized_lasso
+        # change X a each iteration
+        if hasattr(precompute, '__array__'):
+            precompute = 'auto'
+        assert precompute in (True, False, None, 'auto')
         return _randomized_lasso, dict(alpha=alpha, max_iter=self.max_iter,
                                        eps=self.eps,
-                                       precompute=self.precompute)
+                                       precompute=precompute)
 
 
 ###############################################################################
@@ -456,7 +473,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
 
@@ -477,7 +495,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_sparse_recovery.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
+    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
 
     References
     ----------
@@ -498,7 +517,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
                  normalize=True,
                  random_state=None,
                  n_jobs=1, pre_dispatch='3*n_jobs',
-                 memory=Memory(cachedir=None, verbose=0)):
+                 memory=None):
         self.C = C
         self.scaling = scaling
         self.sample_fraction = sample_fraction
@@ -612,7 +631,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     Notes
     -----
-    See examples/linear_model/plot_sparse_recovery.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
+    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
     """
     X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     rng = check_random_state(random_state)
