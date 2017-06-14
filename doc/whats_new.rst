@@ -40,7 +40,7 @@ New features
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
-   - The new solver ``mu`` implements a Multiplicate Update in
+   - The new solver ``'mu'`` implements a Multiplicate Update in
      :class:`decomposition.NMF`, allowing the optimization of all
      beta-divergences, including the Frobenius norm, the generalized
      Kullback-Leibler divergence and the Itakura-Saito divergence.
@@ -55,7 +55,7 @@ New features
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
 
-   - Added solver ``saga`` that implements the improved version of Stochastic
+   - Added solver ``'saga'`` that implements the improved version of Stochastic
      Average Gradient, in :class:`linear_model.LogisticRegression` and
      :class:`linear_model.Ridge`. It allows the use of L1 penalty with
      multinomial logistic loss, and behaves marginally better than 'sag'
@@ -108,7 +108,7 @@ Enhancements
      :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
      kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
      the transform function should not check whether ``X < 0`` but whether ``X <
-     -self.skewedness``. :issue:`7573` by `Romain Brault`_.
+     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -201,8 +201,8 @@ Enhancements
      solver. :issue:`8835` by :user:`Joan Massich <massich>`.
 
    - Prevent cast from float32 to float64 in
-     :class:`sklearn.linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
-     by :user:`Joan Massich <massich>`, ::user::`Nicolas Cordier <ncordier>`
+     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
+     by :user:`Joan Massich <massich>`, :user:`Nicolas Cordier <ncordier>`
 
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
      :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
@@ -210,14 +210,14 @@ Enhancements
 Bug fixes
 .........
 
-   - :func:`metrics.ranking.average_precision_score` no longer linearly
+   - :func:`metrics.average_precision_score` no longer linearly
      interpolates between operating points, and instead weighs precisions
      by the change in recall since the last operating point, as per the
      `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
      (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
      `Nick Dingwall`_ and `Gael Varoquaux`_.
 
-   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
+   - Fixed a bug in :class:`covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
      ``_c_step`` to throw an exception.
      :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
@@ -376,22 +376,23 @@ Bug fixes
    - Add ``shuffle`` parameter to :func:`model_selection.train_test_split`.
      :issue:`8845` by  :user:`themrmax <themrmax>`
 
-   - Fix AIC/BIC criterion computation in :class:`linear_model.LassoLarsIC`
-     by `Alexandre Gramfort`_ and :user:`Mehmet Basbug <mehmetbasbug>`.
+   - Fix AIC/BIC criterion computation in :class:`linear_model.LassoLarsIC`.
+     :issue:`9022` by `Alexandre Gramfort`_ and :user:`Mehmet Basbug <mehmetbasbug>`.
 
    - Fix bug where stratified CV splitters did not work with
-     :class:`linear_model.LassoCV`. :issue:`8973` by `Paulo Haddad <paulochf>`.
+     :class:`linear_model.LassoCV`. :issue:`8973` by
+     :user:`Paulo Haddad <paulochf>`.
 
    - Fixed a bug in :class:`linear_model.RandomizedLasso`,
-     :class:`linear_model.Lars`, :class:`linear_model.LarsLasso`,
-     :class:`linear_model.LarsCV` and :class:`linear_model.LarsLassoCV`,
+     :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
+     :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,
      where the parameter ``precompute`` were not used consistently accross
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
    - Fixed a bug where :func:`model_selection.validation_curve`
      reused the same estimator for each parameter value.
-     :issue:`7365` by `Aleksandr Sandrovskii <Sundrique>`.
+     :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
 
 API changes summary
 -------------------
@@ -440,8 +441,8 @@ API changes summary
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
    - The ``decision_function`` output shape for binary classification in
-     :class:`multi_class.OneVsRestClassifier` and
-     :class:`multi_class.OneVsOneClassifier` is now ``(n_samples,)`` to conform
+     :class:`multiclass.OneVsRestClassifier` and
+     :class:`multiclass.OneVsOneClassifier` is now ``(n_samples,)`` to conform
      to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
 
    - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
@@ -462,9 +463,9 @@ API changes summary
      method ``check_decision_proba_consistency`` has been added in
      **sklearn.utils.estimator_checks** to check their consistency.
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
-   
+
    - In version 0.21, the default behavior of splitters that use the
-     ``test_size`` and ``train_size`` parameter will change, such that
+     ``test_size`` and ``train_size`` parameter will change, such that
      specifying ``train_size`` alone will cause ``test_size`` to be the
      remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
 
@@ -482,7 +483,7 @@ API changes summary
      :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
      :issue:`6126` by :user:ldirer
 
-   - :class:`neighbors.approximate.LSHForest` has been deprecated and will be
+   - :class:`neighbors.LSHForest` has been deprecated and will be
      removed in 0.21 due to poor performance.
      :issue:`8996` by `Andreas Müller`_.
 
