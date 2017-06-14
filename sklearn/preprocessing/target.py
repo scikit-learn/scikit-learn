@@ -36,6 +36,8 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
         transformer.inverse_transform(regressor.predict(X))
 
+    Read more in the :ref:`User Guide <preprocessing_targets>`.
+
     Parameters
     ----------
     regressor : object, (default=LinearRegression())
@@ -198,17 +200,15 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("The regressor {} does not support sample "
                              "weight.".format(
                                  self.regressor_.__class__.__name__))
-        if support_sample_weight:
-            if sample_weight is None:
-                current_sample_weight = np.ones((y.shape[0],))
-            else:
-                current_sample_weight = sample_weight
 
         # transform y and convert back to 1d array if needed
         y_trans = self.transformer_.fit_transform(y_2d)
         if y.ndim == 1 and self.func is None:
             y_trans = y_trans.reshape(-1)
-        self.regressor_.fit(X, y_trans, sample_weight=current_sample_weight)
+        if sample_weight is None:
+            self.regressor_.fit(X, y_trans)
+        else:
+            self.regressor_.fit(X, y_trans, sample_weight=sample_weight)
 
         return self
 

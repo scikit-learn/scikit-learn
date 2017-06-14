@@ -9,7 +9,7 @@ Transforming the prediction target (``y``)
 Transforming target in regression
 ---------------------------------
 
-:class:`TransformTargetRegressor` transforms the target y before fitting a
+:class:`TransformTargetRegressor` transforms the targets ``y`` before fitting a
 regression model. The predictions are mapped back to the original space via an
 inverse transform. It takes as an argument the regressor that will be used for
 prediction, and the transformer that will be applied to the target variable::
