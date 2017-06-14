@@ -133,6 +133,21 @@ class MockEstimatorWithParameter(BaseEstimator):
         return X is self.X_subset
 
 
+class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
+    """Dummy classifier that disallows repeated calls of fit method"""
+
+    def fit(self, X_subset, y_subset):
+        assert_false(
+            hasattr(self, 'fit_called_'),
+            'fit is called the second time'
+        )
+        self.fit_called_ = True
+        return super(type(self), self).fit(X_subset, y_subset)
+
+    def predict(self, X):
+        raise NotImplementedError
+
+
 class MockClassifier(object):
     """Dummy classifier to test the cross-validation"""
 
@@ -850,6 +865,18 @@ def test_validation_curve():
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
+
+
+def test_validation_curve_clone_estimator():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+
+    param_range = np.linspace(1, 0, 10)
+    _, _ = validation_curve(
+        MockEstimatorWithSingleFitCallAllowed(), X, y,
+        param_name="param", param_range=param_range, cv=2
+    )
 
 
 def test_validation_curve_cv_splits_consistency():
