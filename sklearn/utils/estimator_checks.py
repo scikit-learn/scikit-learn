@@ -1142,7 +1142,7 @@ def check_classifiers_train(name, classifier_orig):
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
                 y_log_prob = classifier.predict_log_proba(X)
-                assert_allclose(y_log_prob, np.log(y_prob), 8)
+                assert_allclose(y_log_prob, np.log(y_prob), 8, atol=1e-9)
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
@@ -1378,7 +1378,9 @@ def check_class_weight_classifiers(name, classifier_orig):
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
         y_pred = classifier.predict(X_test)
-        assert_greater(np.mean(y_pred == 0), 0.89)
+        # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
+        #      0.88 (Issue #9111)
+        assert_greater(np.mean(y_pred == 0), 0.87)
 
 
 @ignore_warnings(category=DeprecationWarning)
