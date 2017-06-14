@@ -59,7 +59,7 @@ acc_lda = knn.score(lda.transform(X_test), y_test)
 # Plot the points after transformation with LinearDiscriminantAnalysis
 fig.add_subplot(132)
 plt.scatter(LX[:, 0], LX[:, 1], c=y, cmap=cmap_bold)
-plt.title("LDA (test acc. = {:5.2f}%)".format(acc_lda*100))
+plt.title("LDA (test acc. = {:5.2f}%)".format(acc_lda * 100))
 
 # Reduce dimensions with LargeMarginNearestNeighbor
 lmnn = neighbors.LargeMarginNearestNeighbor(n_neighbors=n_neighbors,
@@ -76,10 +76,9 @@ acc_lmnn = knn.score(lmnn.transform(X_test), y_test)
 fig.add_subplot(133)
 plt.scatter(LX[:, 0], LX[:, 1], c=y, cmap=cmap_bold)
 plt.title("LMNN (k = {}, test acc. = {:5.2f}%)".format(n_neighbors,
-                                                       acc_lmnn*100))
+                                                       acc_lmnn * 100))
 
 plt.suptitle('Dimensionality Reduction ({} dimensions, {} classes)'.format(
-    dim, n_classes),
-             fontweight='bold', fontsize=18)
+    dim, n_classes), fontweight='bold', fontsize=18)
 
 plt.show()

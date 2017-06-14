@@ -60,6 +60,7 @@ def test_neighbors_digits():
 
     k = 1
     lmnn = LargeMarginNearestNeighbor(n_neighbors=k, max_iter=30)
+    lmnn.fit(X_train, y_train)
     knn = KNeighborsClassifier(n_neighbors=k)
     knn.fit(lmnn.transform(X_train), y_train)
     score_uint8 = knn.score(lmnn.transform(X_test), y_test)
@@ -216,11 +217,13 @@ def test_use_sparse():
 
     k = 3
     lmnn = LargeMarginNearestNeighbor(n_neighbors=k, use_sparse=False)
+    lmnn.fit(X_train, y_train)
     knn = KNeighborsClassifier(n_neighbors=k)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_sparse = knn.score(lmnn.transform(X_test), y_test)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_sparse=True)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, use_sparse=True)
+    lmnn.fit(X_train, y_train)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_dense = knn.score(lmnn.transform(X_test), y_test)
 
