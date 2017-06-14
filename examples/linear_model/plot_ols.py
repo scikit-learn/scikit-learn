@@ -19,7 +19,7 @@ calculated.
 print(__doc__)
 
 
-# Code source: Jaques Grobler, Guillaume Lemaitre
+# Code source: Jaques Grobler
 # License: BSD 3 clause
 
 
