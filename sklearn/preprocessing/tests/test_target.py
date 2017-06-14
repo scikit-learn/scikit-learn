@@ -2,7 +2,6 @@ import numpy as np
 
 from sklearn.base import clone
 
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regex
@@ -11,7 +10,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.preprocessing import TransformTargetRegressor
 from sklearn.preprocessing import MaxAbsScaler
 
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Lasso
 from sklearn.preprocessing import StandardScaler
 
 from sklearn import datasets
@@ -19,7 +18,7 @@ from sklearn import datasets
 friedman = datasets.make_friedman1(random_state=0)
 
 
-def test_transform_target_regressor_error_kwargs():
+def test_transform_target_regressor_error():
     X = friedman[0]
     y = friedman[1]
     # provide a transformer and functions at the same time
@@ -29,6 +28,13 @@ def test_transform_target_regressor_error_kwargs():
     assert_raises_regex(ValueError, "Both 'transformer' and functions"
                         " 'func'/'inverse_func' cannot be set at the"
                         " same time.", regr.fit, X, y)
+    # fit with sample_weight with a regressor which does not support it
+    sample_weight = np.ones((y.shape[0],))
+    regr = TransformTargetRegressor(regressor=Lasso(),
+                                    transformer=StandardScaler())
+    assert_raises_regex(ValueError, "The regressor Lasso does not support"
+                        " sample weight.", regr.fit, X, y,
+                        sample_weight=sample_weight)
 
 
 def test_transform_target_regressor_invertible():
