@@ -404,9 +404,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         if ensure_2d:
             if array.ndim == 1:
                 raise ValueError(
-                    "Got X with X.ndim=1. Reshape your data either using "
-                    "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.")
+                    "Expected 2D array, got 1D array instead: \narray={}\n "
+                    "Reshape your data either using array.reshape(-1, 1) if "
+                    "your data has a single feature or array.reshape(1, -1) "
+                    "if it contains a single sample.".format(array))
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
