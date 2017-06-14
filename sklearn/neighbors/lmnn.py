@@ -21,7 +21,7 @@ from ..metrics.pairwise import euclidean_distances
 from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms
-from ..utils.fixes import sp_version, bincount
+from ..utils.fixes import sp_version
 from ..utils.random import choice, check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y
@@ -369,7 +369,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         classes = np.arange(len(classes))
 
         # Ignore classes that have less than 2 samples
-        class_sizes = bincount(y_inverse)
+        class_sizes = np.bincount(y_inverse)
         is_class_singleton = np.array(np.equal(class_sizes, 1))
         singleton_classes, = np.where(is_class_singleton)
         if len(singleton_classes):
