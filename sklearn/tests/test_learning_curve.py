@@ -99,8 +99,9 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
 
     def fit(self, X_subset, y_subset):
         assert_false(
-                hasattr(self, 'fit_called_'),
-                'fit is called the second time')
+            hasattr(self, 'fit_called_'),
+            'fit is called the second time'
+        )
         self.fit_called_ = True
         return super(type(self), self).fit(X_subset, y_subset)
 
@@ -305,6 +306,6 @@ def test_validation_curve_clone_estimator():
 
     param_range = np.linspace(1, 0, 10)
     _, _ = validation_curve(
-            MockEstimatorWithSingleFitCallAllowed(), X, y,
-            param_name="param", param_range=param_range, cv=2
+        MockEstimatorWithSingleFitCallAllowed(), X, y,
+        param_name="param", param_range=param_range, cv=2
     )
