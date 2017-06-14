@@ -10,18 +10,16 @@ different kernels:
 2. With one RBF kernel applied on both features.
 """
 
-# Authors: Behzad Tabibian <me@btabibian.com>
-#
 # License: BSD 3 clause
-
-
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ExpSineSquared
-from sklearn.gaussian_process.kernels import SelectDimensionKernel
 
 
 import numpy as np
 from matplotlib import pyplot as plt
+
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ExpSineSquared
+from sklearn.gaussian_process.kernels import SelectDimensionKernel
+from sklearn.model_selection import train_test_split
 
 print(__doc__)
 # Fixing seed
@@ -44,6 +42,9 @@ for count in param_range:
     # Construct a mesh grid and compute synthetic data
     y = np.sin(2 * x[:, 1]) + (x[:, 0] - 20) / 2 + np.random.normal(x.shape[0],
                                                                     scale=2)
+
+    x_training, x_test, y_training, y_test = train_test_split(x, y,
+                                                              test_size=0.10)
 
     kernel = SelectDimensionKernel(RBF(), [0]) * \
         SelectDimensionKernel(ExpSineSquared(), [1])

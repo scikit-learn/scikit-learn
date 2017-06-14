@@ -1876,6 +1876,9 @@ class SelectDimensionKernel(Kernel):
          `n_features` marked as True for an active index.
          If `active_dims` is an integer array, then it should be size of
          `n_active_dims` denoting the indices of the active dimensions.
+         For an anisotropic kernel, the length_scale of the kernel and
+         the active_dims should have same length and the indices of the
+         active_dims correspond to the indices of the features in X.
 
     """
 
@@ -1910,7 +1913,6 @@ class SelectDimensionKernel(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-
         active_dims = np.asarray(self.active_dims)
         if np.issubdtype(active_dims.dtype, np.bool):
             if active_dims.shape[0] == X.shape[1]:
@@ -1946,7 +1948,6 @@ class SelectDimensionKernel(Kernel):
         params : dict mapping of string to any
             Parameter names mapped to their values.
         """
-
         params = dict(kernel=self.kernel_, active_dims=self.active_dims)
         if deep:
             deep_items = self.kernel_.get_params().items()
@@ -1978,7 +1979,6 @@ class SelectDimensionKernel(Kernel):
         theta : array, shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
-
         return self.kernel_.theta
 
     @property
@@ -1996,7 +1996,6 @@ class SelectDimensionKernel(Kernel):
         theta : array, shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
-
         self.kernel_.theta = theta
 
     @property
@@ -2008,7 +2007,6 @@ class SelectDimensionKernel(Kernel):
         bounds : array, shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
-
         return self.kernel_.bounds
 
     def __eq__(self, b):
@@ -2036,7 +2034,6 @@ class SelectDimensionKernel(Kernel):
             Diagonal of kernel k(X, X)
         """
         # We have to fall back to slow way of computing diagonal
-
         return self.kernel_.diag(X[:, self.active_dims])
 
     def is_stationary(self):
