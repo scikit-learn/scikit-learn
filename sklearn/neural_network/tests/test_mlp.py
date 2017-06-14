@@ -564,7 +564,7 @@ def test_adaptive_learning_rate():
     assert_greater(1e-6, clf._optimizer.learning_rate)
 
 
-@ignore_warnings(RuntimeError)
+@ignore_warnings(category=RuntimeWarning)
 def test_warm_start():
     X = X_iris
     y = y_iris

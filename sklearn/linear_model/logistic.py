@@ -8,12 +8,14 @@ Logistic Regression
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #         Lars Buitinck
 #         Simon Wu <s8wu@uwaterloo.ca>
+#         Arthur Mensch <arthur.mensch@m4x.org
 
 import numbers
 import warnings
 
 import numpy as np
 from scipy import optimize, sparse
+from scipy.special import expit
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
@@ -21,13 +23,13 @@ from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
-from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
-                             softmax, squared_norm)
+from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
+                             squared_norm)
 from ..utils.extmath import row_norms
+from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
 from ..exceptions import NotFittedError
-from ..utils.fixes import expit
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
@@ -336,7 +338,8 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     n_classes = Y.shape[1]
     n_features = X.shape[1]
     fit_intercept = (w.size == n_classes * (n_features + 1))
-    grad = np.zeros((n_classes, n_features + bool(fit_intercept)))
+    grad = np.zeros((n_classes, n_features + bool(fit_intercept)),
+                    dtype=X.dtype)
     loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
     sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
@@ -421,7 +424,7 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 
 def _check_solver_option(solver, multi_class, penalty, dual):
-    if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag']:
+    if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']:
         raise ValueError("Logistic Regression supports only liblinear,"
                          " newton-cg, lbfgs and sag solvers, got %s" % solver)
 
@@ -433,10 +436,11 @@ def _check_solver_option(solver, multi_class, penalty, dual):
         raise ValueError("Solver %s does not support "
                          "a multinomial backend." % solver)
 
-    if solver != 'liblinear':
+    if solver not in ['liblinear', 'saga']:
         if penalty != 'l2':
             raise ValueError("Solver %s supports only l2 penalties, "
                              "got %s penalty." % (solver, penalty))
+    if solver != 'liblinear':
         if dual:
             raise ValueError("Solver %s supports only "
                              "dual=False, got dual=%s" % (solver, dual))
@@ -494,7 +498,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag'}
+    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
         Numerical solver to use.
 
     coef : array-like, shape (n_features,), default None
@@ -541,9 +545,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         the entire probability distribution. Works only for the 'lbfgs' and
         'newton-cg' solvers.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -602,10 +610,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # and check length
     # Otherwise set them to 1 for all examples
     if sample_weight is not None:
-        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
+        sample_weight = np.array(sample_weight, dtype=X.dtype, order='C')
         check_consistent_length(y, sample_weight)
     else:
-        sample_weight = np.ones(X.shape[0])
+        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
@@ -618,10 +626,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # For doing a ovr, we need to mask the labels first. for the
     # multinomial case this is not necessary.
     if multi_class == 'ovr':
-        w0 = np.zeros(n_features + int(fit_intercept))
+        w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
         mask_classes = np.array([-1, 1])
         mask = (y == pos_class)
-        y_bin = np.ones(y.shape, dtype=np.float64)
+        y_bin = np.ones(y.shape, dtype=X.dtype)
         y_bin[~mask] = -1.
         # for compute_class_weight
 
@@ -631,7 +639,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
-        if solver != 'sag':
+        if solver not in ['sag', 'saga']:
             lbin = LabelBinarizer()
             Y_multi = lbin.fit_transform(y)
             if Y_multi.shape[1] == 1:
@@ -639,10 +647,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         else:
             # SAG multinomial solver needs LabelEncoder, not LabelBinarizer
             le = LabelEncoder()
-            Y_multi = le.fit_transform(y)
+            Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
 
         w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
-                      order='F')
+                      order='F', dtype=X.dtype)
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -726,16 +734,23 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             else:
                 w0 = coef_.ravel()
 
-        elif solver == 'sag':
+        elif solver in ['sag', 'saga']:
             if multi_class == 'multinomial':
                 target = target.astype(np.float64)
                 loss = 'multinomial'
             else:
                 loss = 'log'
-
+            if penalty == 'l1':
+                alpha = 0.
+                beta = 1. / C
+            else:
+                alpha = 1. / C
+                beta = 0.
             w0, n_iter_i, warm_start_sag = sag_solver(
-                X, target, sample_weight, loss, 1. / C, max_iter, tol,
-                verbose, random_state, False, max_squared_sum, warm_start_sag)
+                X, target, sample_weight, loss, alpha,
+                beta, max_iter, tol,
+                verbose, random_state, False, max_squared_sum, warm_start_sag,
+                is_saga=(solver == 'saga'))
 
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
@@ -820,7 +835,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag'}
+    solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'}
         Decides which solver to use.
 
     penalty : str, 'l1' or 'l2'
@@ -848,12 +863,16 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Works only for the 'lbfgs' and
-        'newton-cg' solver.
+        the entire probability distribution. Does not work for
+        liblinear solver.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' and
+        'liblinear'.
 
     max_squared_sum : float, default None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -967,6 +986,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties.
 
+        .. versionadded:: 0.19
+           l1 penalty with SAGA solver (allowing 'multinomial' + L1)
+
     dual : bool, default: False
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
@@ -1012,26 +1034,34 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
-    random_state : int seed, RandomState instance, default: None
-        The seed of the pseudo random number generator to use when
-        shuffling the data. Used only in solvers 'sag' and 'liblinear'.
+    random_state : int, RandomState instance or None, optional, default: None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        'liblinear'.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}, default: 'liblinear'
+    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+        default: 'liblinear'
         Algorithm to use in the optimization problem.
 
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag' is
-            faster for large ones.
-        - For multiclass problems, only 'newton-cg', 'sag' and 'lbfgs' handle
-            multinomial loss; 'liblinear' is limited to one-versus-rest
+        - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
+            'saga' are faster for large ones.
+        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
+            handle multinomial loss; 'liblinear' is limited to one-versus-rest
             schemes.
-        - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty.
+        - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
+            'liblinear' and 'saga' handle L1 penalty.
 
-        Note that 'sag' fast convergence is only guaranteed on features with
-        approximately the same scale. You can preprocess the data with a
-        scaler from sklearn.preprocessing.
+        Note that 'sag' and 'saga' fast convergence is only guaranteed on
+        features with approximately the same scale. You can
+        preprocess the data with a scaler from sklearn.preprocessing.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
+        .. versionadded:: 0.19
+           SAGA solver.
 
     tol : float, default: 1e-4
         Tolerance for stopping criteria.
@@ -1040,8 +1070,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
-        the entire probability distribution. Works only for the 'newton-cg',
-        'sag' and 'lbfgs' solver.
+        the entire probability distribution. Does not work for liblinear
+        solver.
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
@@ -1056,7 +1086,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Useless for liblinear solver.
 
         .. versionadded:: 0.17
-           *warm_start* to support *lbfgs*, *newton-cg*, *sag* solvers.
+           *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default: 1
         Number of CPU cores used when parallelizing over classes
@@ -1109,6 +1139,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
         Minimizing Finite Sums with the Stochastic Average Gradient
         https://hal.inria.fr/hal-00860051/document
+
+    SAGA -- Defazio, A., Bach F. & Lacoste-Julien S. (2014).
+        SAGA: A Fast Incremental Gradient Method With Support
+        for Non-Strongly Convex Composite Objectives
+        https://arxiv.org/abs/1407.0202
 
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
@@ -1170,7 +1205,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+        if self.solver in ['newton-cg']:
+            _dtype = [np.float64, np.float32]
+        else:
+            _dtype = np.float64
+
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
         check_classification_targets(y)
         self.classes_ = np.unique(y)
@@ -1188,7 +1228,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             self.n_iter_ = np.array([n_iter_])
             return self
 
-        if self.solver == 'sag':
+        if self.solver in ['sag', 'saga']:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -1220,7 +1260,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.multi_class == 'multinomial':
             classes_ = [None]
             warm_start_coef = [warm_start_coef]
-
         if warm_start_coef is None:
             warm_start_coef = [None] * n_classes
 
@@ -1228,7 +1267,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
-        backend = 'threading' if self.solver == 'sag' else 'multiprocessing'
+        if self.solver in ['sag', 'saga']:
+            backend = 'threading'
+        else:
+            backend = 'multiprocessing'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                backend=backend)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
@@ -1237,9 +1279,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       multi_class=self.multi_class, max_iter=self.max_iter,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
+                      penalty=self.penalty,
                       max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight)
-            for (class_, warm_start_coef_) in zip(classes_, warm_start_coef))
+            for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
@@ -1379,25 +1422,28 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
-
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag'}
+    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
+        default: 'liblinear'
         Algorithm to use in the optimization problem.
 
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag' is
-            faster for large ones.
-        - For multiclass problems, only 'newton-cg', 'sag' and 'lbfgs' handle
-            multinomial loss; 'liblinear' is limited to one-versus-rest
+        - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
+            'saga' are faster for large ones.
+        - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
+            handle multinomial loss; 'liblinear' is limited to one-versus-rest
             schemes.
-        - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty.
+        - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty, whereas
+            'liblinear' and 'saga' handle L1 penalty.
         - 'liblinear' might be slower in LogisticRegressionCV because it does
             not handle warm-starting.
 
-        Note that 'sag' fast convergence is only guaranteed on features with
-        approximately the same scale. You can preprocess the data with a
-        scaler from sklearn.preprocessing.
+        Note that 'sag' and 'saga' fast convergence is only guaranteed on
+        features with approximately the same scale. You can preprocess the data
+        with a scaler from sklearn.preprocessing.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
+        .. versionadded:: 0.19
+           SAGA solver.
 
     tol : float, optional
         Tolerance for stopping criteria.
@@ -1443,9 +1489,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1488,6 +1536,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Array of C that maps to the best scores across every class. If refit is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
+        `C_` is of shape(n_classes,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.
@@ -1569,7 +1618,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         classes = self.classes_ = label_encoder.classes_
         encoded_labels = label_encoder.transform(label_encoder.classes_)
 
-        if self.solver == 'sag':
+        if self.solver in ['sag', 'saga']:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -1612,7 +1661,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
-        backend = 'threading' if self.solver == 'sag' else 'multiprocessing'
+        if self.solver in ['sag', 'saga']:
+            backend = 'threading'
+        else:
+            backend = 'multiprocessing'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                backend=backend)(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,

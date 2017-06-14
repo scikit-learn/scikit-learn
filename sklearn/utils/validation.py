@@ -16,6 +16,7 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
+from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
@@ -30,6 +31,8 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
+    if _get_config()['assume_finite']:
+        return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
@@ -43,12 +46,15 @@ def _assert_all_finite(X):
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
-    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+    Parameters
+    ----------
+    X : array or sparse matrix
+    """
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
 def as_float_array(X, copy=True, force_all_finite=True):
-    """Converts an array-like to an array of floats
+    """Converts an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -80,7 +86,11 @@ def as_float_array(X, copy=True, force_all_finite=True):
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
         return X.copy('F' if X.flags['F_CONTIGUOUS'] else 'C') if copy else X
     else:
-        return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
+        if X.dtype.kind in 'uib' and X.dtype.itemsize <= 4:
+            return_dtype = np.float32
+        else:
+            return_dtype = np.float64
+        return X.astype(return_dtype)
 
 
 def _is_arraylike(x):
@@ -288,6 +298,11 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         to be any format. False means that a sparse matrix input will
         raise an error.
 
+        .. deprecated:: 0.19
+           Passing 'None' to parameter ``accept_sparse`` in methods is
+           deprecated in version 0.19 "and will be removed in 0.21. Use
+           ``accept_sparse=False`` instead.
+
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
@@ -336,6 +351,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     -------
     X_converted : object
         The converted and validated X.
+
     """
     # accept_sparse 'None' deprecation check
     if accept_sparse is None:
@@ -455,6 +471,11 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
+
+        .. deprecated:: 0.19
+           Passing 'None' to parameter ``accept_sparse`` in methods is
+           deprecated in version 0.19 "and will be removed in 0.21. Use
+           ``accept_sparse=False`` instead.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -582,6 +603,20 @@ def check_random_state(seed):
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
 
+    Parameters
+    ----------
+    estimator : object
+        An estimator to inspect.
+
+    parameter: str
+        The searched parameter.
+
+    Returns
+    -------
+    is_parameter: bool
+        Whether the parameter was found to be a a named parameter of the
+        estimator's fit method.
+
     Examples
     --------
     >>> from sklearn.svm import SVC
@@ -673,6 +708,15 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     all_or_any : callable, {all, any}, default all
         Specify whether all or any of the given attributes must exist.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    NotFittedError
+        If the attributes are not found.
     """
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "

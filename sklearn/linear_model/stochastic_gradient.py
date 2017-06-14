@@ -20,7 +20,6 @@ from ..utils.validation import check_is_fitted
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
-from ..utils.fixes import astype
 from ..utils import compute_class_weight
 from ..utils import deprecated
 from .sgd_fast import Hinge
@@ -608,9 +607,12 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level
@@ -861,7 +863,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                      n_iter, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = astype(y, np.float64, copy=False)
+        y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape
 
@@ -1134,9 +1136,12 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level.

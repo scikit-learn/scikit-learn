@@ -16,6 +16,7 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
+from scipy.sparse.linalg import svds
 
 from ..externals import six
 
@@ -24,10 +25,9 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import deprecated
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
-from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils.arpack import svds
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -183,9 +183,11 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int or RandomState instance or None (default None)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton. Used by svd_solver == 'arpack' or 'randomized'.
+    random_state : int, RandomState instance or None, optional (default None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
 
         .. versionadded:: 0.18.0
 
@@ -601,9 +603,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    random_state : int or RandomState instance or None (default)
-        Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -722,7 +726,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         return X
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply dimensionality reduction on X.
 
         X is projected on the first principal components previous extracted
@@ -745,7 +749,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         if self.mean_ is not None:
             X = X - self.mean_
 
-        X = fast_dot(X, self.components_.T)
+        X = np.dot(X, self.components_.T)
         return X
 
     def fit_transform(self, X, y=None):
@@ -764,7 +768,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         X = check_array(X)
         X = self._fit(X)
-        return fast_dot(X, self.components_.T)
+        return np.dot(X, self.components_.T)
 
     def inverse_transform(self, X, y=None):
         """Transform data back to its original space.
@@ -788,7 +792,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'mean_')
 
-        X_original = fast_dot(X, self.components_)
+        X_original = np.dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_
         return X_original

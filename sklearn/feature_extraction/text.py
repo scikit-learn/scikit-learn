@@ -29,8 +29,6 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils import deprecated
-from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
@@ -159,7 +157,8 @@ class VectorizerMixin(object):
         """Whitespace sensitive char-n-gram tokenization.
 
         Tokenize text_document into a sequence of character n-grams
-        excluding any whitespace (operating only inside word boundaries)"""
+        operating only inside word boundaries. n-grams at the edges
+        of words are padded with space."""
         # normalize white spaces
         text_document = self._white_spaces.sub(" ", text_document)
 
@@ -354,7 +353,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -405,11 +404,20 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    non_negative : boolean, default=False
-        Whether output matrices should contain non-negative values only;
-        effectively calls abs on the matrix prior to returning it.
-        When True, output values can be interpreted as frequencies.
-        When False, output values will have expected value zero.
+    alternate_sign : boolean, optional, default True
+        When True, an alternating sign is added to the features as to
+        approximately conserve the inner product in the hashed space even for
+        small n_features. This approach is similar to sparse random projection.
+
+        .. versionadded:: 0.19
+
+    non_negative : boolean, optional, default False
+        When True, an absolute value is applied to the features matrix prior to
+        returning it. When used in conjunction with alternate_sign=True, this
+        significantly reduces the inner product preservation property.
+
+        .. deprecated:: 0.19
+            This option will be removed in 0.21.
 
     See also
     --------
@@ -421,8 +429,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
-                 binary=False, norm='l2', non_negative=False,
-                 dtype=np.float64):
+                 binary=False, norm='l2', alternate_sign=True,
+                 non_negative=False, dtype=np.float64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -437,6 +445,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.ngram_range = ngram_range
         self.binary = binary
         self.norm = norm
+        self.alternate_sign = alternate_sign
         self.non_negative = non_negative
         self.dtype = dtype
 
@@ -460,7 +469,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self._get_hasher().fit(X, y=y)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform a sequence of documents to a document-term matrix.
 
         Parameters
@@ -469,8 +478,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Samples. Each sample must be a text document (either bytes or
             unicode strings, file name or file object depending on the
             constructor argument) which will be tokenized and hashed.
-
-        y : (ignored)
 
         Returns
         -------
@@ -497,13 +504,14 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
+                             alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
     if sp.isspmatrix_csr(X):
-        return bincount(X.indices, minlength=X.shape[1])
+        return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(sp.csc_matrix(X, copy=False).indptr)
 
@@ -553,7 +561,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -783,7 +791,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         j_indices = np.asarray(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = frombuffer_empty(values, dtype=np.intc)
+        values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
@@ -1035,7 +1043,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self
@@ -1087,10 +1095,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     @property
     def idf_(self):
-        if hasattr(self, "_idf_diag"):
-            return np.ravel(self._idf_diag.sum(axis=0))
-        else:
-            return None
+        # if _idf_diag is not set, this will raise an attribute error,
+        # which means hasattr(self, "idf_") is False
+        return np.ravel(self._idf_diag.sum(axis=0))
 
 
 class TfidfVectorizer(CountVectorizer):

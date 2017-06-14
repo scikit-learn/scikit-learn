@@ -79,6 +79,11 @@ Parameters of the estimators in the pipeline can be accessed using the
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
                     ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
 
+Attributes of named_steps map to keys, enabling tab completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe.named_steps['reduce_dim']
+    True
+
 This is particularly important for doing grid searches::
 
     >>> from sklearn.model_selection import GridSearchCV
@@ -97,7 +102,7 @@ ignored by setting them to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_feature_selection_feature_selection_pipeline.py`
+ * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
  * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_plot_digits_pipe.py`
  * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
@@ -260,5 +265,5 @@ and ignored by setting to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_plot_feature_stacker.py`
  * :ref:`sphx_glr_auto_examples_hetero_feature_union.py`

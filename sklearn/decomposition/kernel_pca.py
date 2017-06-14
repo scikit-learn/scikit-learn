@@ -5,9 +5,9 @@
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.arpack import eigsh
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -35,7 +35,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Degree for poly kernels. Ignored by other kernels.
 
     gamma : float, default=1/n_features
-        Kernel coefficient for rbf and poly kernels. Ignored by other
+        Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
         kernels.
 
     coef0 : float, default=1
@@ -74,9 +74,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int seed, RandomState instance, or None, default=None
-        A pseudo random number generator used for the initialization of the
-        residuals when eigen_solver == 'arpack'.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
         .. versionadded:: 0.18
 

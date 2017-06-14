@@ -88,8 +88,8 @@ def fit(
         set to polynomial), 3 by default.
 
     gamma : float64, optional
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF). 0.1 by default.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float64, optional
         Independent parameter in poly/sigmoid kernel. 0 by default.
@@ -295,7 +295,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     degree : int
         Degree of the polynomial kernel.
     gamma : float
-        Gamma parameter in RBF kernel.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
 
@@ -494,8 +495,8 @@ def cross_validation(
         set to polynomial)
 
     gamma : float
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF)
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float
         Independent parameter in poly/sigmoid kernel.

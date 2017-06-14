@@ -27,7 +27,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 from .base import BaseEnsemble
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
@@ -43,6 +42,7 @@ from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from scipy.special import expit
 
 from time import time
 from ..tree.tree import DecisionTreeRegressor
@@ -54,17 +54,15 @@ from ..utils import check_array
 from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
-from ..utils.extmath import logsumexp
-from ..utils.fixes import expit
-from ..utils.fixes import bincount
 from ..utils import deprecated
+from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
 
-class QuantileEstimator(BaseEstimator):
+class QuantileEstimator(object):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
         if not 0 < alpha < 1.0:
@@ -86,7 +84,7 @@ class QuantileEstimator(BaseEstimator):
         return y
 
 
-class MeanEstimator(BaseEstimator):
+class MeanEstimator(object):
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
@@ -102,7 +100,7 @@ class MeanEstimator(BaseEstimator):
         return y
 
 
-class LogOddsEstimator(BaseEstimator):
+class LogOddsEstimator(object):
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
@@ -132,14 +130,14 @@ class ScaledLogOddsEstimator(LogOddsEstimator):
     scale = 0.5
 
 
-class PriorProbabilityEstimator(BaseEstimator):
+class PriorProbabilityEstimator(object):
     """An estimator predicting the probability of each
     class in the training data.
     """
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
-        class_counts = bincount(y, weights=sample_weight)
+        class_counts = np.bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
@@ -150,7 +148,7 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
-class ZeroEstimator(BaseEstimator):
+class ZeroEstimator(object):
     """An estimator that simply predicts zero. """
 
     def fit(self, X, y, sample_weight=None):
@@ -723,7 +721,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
-                 max_depth, min_impurity_split, init, subsample, max_features,
+                 max_depth, min_impurity_decrease, min_impurity_split,
+                 init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
@@ -737,6 +736,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.subsample = subsample
         self.max_features = max_features
         self.max_depth = max_depth
+        self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.init = init
         self.random_state = random_state
@@ -769,6 +769,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+                min_impurity_decrease=self.min_impurity_decrease,
                 min_impurity_split=self.min_impurity_split,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
@@ -1324,11 +1325,32 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_split : float, optional (default=1e-7)
+    min_impurity_split : float,
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
-        .. versionadded:: 0.18
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
 
     init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial
@@ -1417,7 +1439,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_split=1e-7, init=None,
+                 max_depth=3, min_impurity_decrease=0.,
+                 min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto'):
@@ -1431,6 +1454,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_features=max_features,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             warm_start=warm_start,
             presort=presort)
@@ -1715,11 +1739,32 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_split : float, optional (default=1e-7)
+    min_impurity_split : float,
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
-        .. versionadded:: 0.18
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
 
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
@@ -1738,8 +1783,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just erase the
-        p
-revious solution.
+        previous solution.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1811,7 +1855,8 @@ revious solution.
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_split=1e-7, init=None, random_state=None,
+                 max_depth=3, min_impurity_decrease=0.,
+                 min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
@@ -1821,7 +1866,9 @@ revious solution.
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features, min_impurity_split=min_impurity_split,
+            max_features=max_features,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort)

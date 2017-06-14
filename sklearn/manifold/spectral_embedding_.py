@@ -5,17 +5,17 @@
 # License: BSD 3 clause
 
 import warnings
+
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
-from scipy.sparse.linalg import lobpcg
+from scipy.sparse.linalg import eigsh, lobpcg
+from scipy.sparse.csgraph import connected_components
+
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils.graph import graph_laplacian
-from ..utils.sparsetools import connected_components
-from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -166,10 +166,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default: None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
-        By default, arpack is used.
+        lobpcg eigenvectors decomposition.  If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`. Used when
+        ``solver`` == 'amg'.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -231,8 +234,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
 
-    laplacian, dd = graph_laplacian(adjacency,
-                                    normed=norm_laplacian, return_diag=True)
+    laplacian, dd = sparse.csgraph.laplacian(adjacency, normed=norm_laplacian,
+                                             return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -345,9 +348,13 @@ class SpectralEmbedding(BaseEstimator):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    random_state : int seed, RandomState instance, or None, default : None
+    random_state : int, RandomState instance or None, optional, default: None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
+        lobpcg eigenvectors.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``solver`` ==
+        'amg'.
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
@@ -384,7 +391,7 @@ class SpectralEmbedding(BaseEstimator):
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
 
-    - On Spectral Clustering: Analysis and an algorithm, 2011
+    - On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
 

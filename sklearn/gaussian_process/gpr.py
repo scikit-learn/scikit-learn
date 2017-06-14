@@ -47,13 +47,14 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     alpha : float or array-like, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting. If an array is
-        passed, it must have the same number of entries as the data used for
-        fitting and is used as datapoint-dependent noise level. Note that this
-        is equivalent to adding a WhiteKernel with c=alpha. Allowing to specify
-        the noise level directly as a parameter is mainly for convenience and
-        for consistency with Ridge.
+        Larger values correspond to increased noise level in the observations.
+        This can also prevent a potential numerical issue during fitting, by
+        ensuring that the calculated values form a positive definite matrix.
+        If an array is passed, it must have the same number of entries as the
+        data used for fitting and is used as datapoint-dependent noise level.
+        Note that this is equivalent to adding a WhiteKernel with c=alpha.
+        Allowing to specify the noise level directly as a parameter is mainly
+        for convenience and for consistency with Ridge.
 
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
@@ -103,10 +104,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers. If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -241,9 +243,16 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         # of actual query points
         K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.alpha
-        self.L_ = cholesky(K, lower=True)  # Line 2
+        try:
+            self.L_ = cholesky(K, lower=True)  # Line 2
+        except np.linalg.LinAlgError as exc:
+            exc.args = ("The kernel, %s, is not returning a "
+                        "positive definite matrix. Try gradually "
+                        "increasing the 'alpha' parameter of your "
+                        "GaussianProcessRegressor estimator."
+                        % self.kernel_,) + exc.args
+            raise
         self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
-
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
@@ -312,7 +321,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 K_inv = L_inv.dot(L_inv.T)
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ki,kj,ij->k", K_trans, K_trans, K_inv)
+                y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -336,8 +345,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         n_samples : int, default: 1
             The number of samples drawn from the Gaussian process
 
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance
+        random_state : int, RandomState instance or None, optional (default=0)
+            If int, random_state is the seed used by the random number
+            generator; If RandomState instance, random_state is the
+            random number generator; If None, the random number
+            generator is the RandomState instance used by `np.random`.
 
         Returns
         -------

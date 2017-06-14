@@ -26,6 +26,11 @@ enhance the functionality of scikit-learn's estimators.
 
 **Auto-ML**
 
+- `auto_ml <https://github.com/ClimbsRocks/auto_ml/>`_
+  Automated machine learning for production and analytics, built on scikit-learn
+  and related projects. Trains a pipeline wth all the standard machine learning 
+  steps. Tuned for prediction speed and ease of transfer to production environments. 
+
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
   An automated machine learning toolkit and a drop-in replacement for a
   scikit-learn estimator
@@ -55,6 +60,11 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
+- `Xcessiv <https://github.com/reiinakano/xcessiv>`_ is a notebook-like
+  application for quick, scalable, and automated hyperparameter tuning
+  and stacked ensembling. Provides a framework for keeping track of 
+  model-hyperparameter combinations.
+
 **Model inspection and visualisation**
 
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
@@ -66,6 +76,10 @@ enhance the functionality of scikit-learn's estimators.
 
 - `scikit-plot <https://github.com/reiinakano/scikit-plot>`_ A visualization library
   for quick and easy generation of common plots in data analysis and machine learning.
+
+- `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
+  custom matplotlib visualizers for scikit-learn estimators to support visual feature
+  analysis, model selection, evaluation, and diagnostics.
 
 
 **Model export for production**
@@ -177,12 +191,22 @@ and tasks.
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for
   categorical data, and several of its variations.
 
-- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single
+- `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
 
 - `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
+
+**Pre-processing**
+
+- `categorical-encoding
+  <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
+  library of sklearn compatible categorical variable encoders.
+
+- `imbalanced-learn
+  <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
+  methods to under- and over-sample datasets.
 
 Statistical learning with Python
 --------------------------------

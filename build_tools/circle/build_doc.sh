@@ -96,27 +96,16 @@ if [[ `type -t deactivate` ]]; then
 fi
 
 # Install dependencies with miniconda
-pushd .
-cd
-mkdir -p download
-cd download
-echo "Cached in $HOME/download :"
-ls -l
-if [[ ! -f miniconda.sh ]]
-then
-   wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
-fi
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-cd ..
 export PATH="$MINICONDA_PATH/bin:$PATH"
 conda update --yes --quiet conda
-popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx pillow
+  cython nose coverage matplotlib sphinx=1.5 pillow
 source activate testenv
 
 # Build and install scikit-learn in dev mode
