@@ -280,6 +280,11 @@ API changes summary
      method ``check_decision_proba_consistency`` has been added in 
      **sklearn.utils.estimator_checks** to check their consistency. 
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
+   
+   - In version 0.21, the default behavior of splitters that use the
+     ``test_size`` and ``train_size`` parameter will change, such that
+     specifying ``train_size`` alone will cause ``test_size`` to be the
+     remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
       
 
 .. _changes_0_18_1:
