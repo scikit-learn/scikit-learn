@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_no_warnings, assert_warns
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import TempMemmap
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
@@ -170,6 +170,20 @@ def test_no_path_all_precomputed():
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert_true(alpha_ == alphas_[-1])
+
+
+def test_lars_precompute():
+    # Check for different values of precompute
+    X, y = diabetes.data, diabetes.target
+    G = np.dot(X.T, X)
+    for classifier in [linear_model.Lars, linear_model.LarsCV,
+                       linear_model.LassoLarsIC]:
+        clf = classifier(precompute=G)
+        output_1 = ignore_warnings(clf.fit)(X, y).coef_
+        for precompute in [True, False, 'auto', None]:
+            clf = classifier(precompute=precompute)
+            output_2 = clf.fit(X, y).coef_
+            assert_array_almost_equal(output_1, output_2, decimal=8)
 
 
 def test_singular_matrix():
@@ -430,7 +444,7 @@ def test_lasso_lars_ic():
     rng = np.random.RandomState(42)
     X = diabetes.data
     y = diabetes.target
-    X = np.c_[X, rng.randn(X.shape[0], 4)]  # add 4 bad features
+    X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 5 bad features
     lars_bic.fit(X, y)
     lars_aic.fit(X, y)
     nonzero_bic = np.where(lars_bic.coef_)[0]
@@ -442,15 +456,6 @@ def test_lasso_lars_ic():
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
     assert_raises(ValueError, lars_broken.fit, X, y)
-
-
-def test_no_warning_for_zero_mse():
-    # LassoLarsIC should not warn for log of zero MSE.
-    y = np.arange(10, dtype=float)
-    X = y.reshape(-1, 1)
-    lars = linear_model.LassoLarsIC(normalize=False)
-    assert_no_warnings(lars.fit, X, y)
-    assert_true(np.any(np.isinf(lars.criterion_)))
 
 
 def test_lars_path_readonly_data():

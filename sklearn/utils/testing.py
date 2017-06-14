@@ -627,13 +627,7 @@ def all_estimators(include_meta_estimators=False,
 
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
-
-    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
-    is one such class.
     """
-    if isinstance(estimator, DBSCAN):
-        return
-
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 

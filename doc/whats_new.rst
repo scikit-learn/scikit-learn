@@ -371,10 +371,23 @@ Bug fixes
      with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
-     :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
+     :issue:`8936` by :user:`mlewis1729 <mlewis1729>`
 
    - Add ``shuffle`` parameter to :func:`model_selection.train_test_split`.
-     :issue:`#8845` by  :user:`themrmax <themrmax>`
+     :issue:`8845` by  :user:`themrmax <themrmax>`
+
+   - Fix AIC/BIC criterion computation in :class:`linear_model.LassoLarsIC`
+     by `Alexandre Gramfort`_ and :user:`Mehmet Basbug <mehmetbasbug>`.
+
+   - Fix bug where stratified CV splitters did not work with
+     :class:`linear_model.LassoCV`. :issue:`8973` by `Paulo Haddad <paulochf>`.
+
+   - Fixed a bug in :class:`linear_model.RandomizedLasso`,
+     :class:`linear_model.Lars`, :class:`linear_model.LarsLasso`,
+     :class:`linear_model.LarsCV` and :class:`linear_model.LarsLassoCV`,
+     where the parameter ``precompute`` were not used consistently accross
+     classes, and some values proposed in the docstring could raise errors.
+     :issue:`5359` by `Tom Dupre la Tour`_.
 
 API changes summary
 -------------------
@@ -422,6 +435,11 @@ API changes summary
      :func:`model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+   - The ``decision_function`` output shape for binary classification in
+     :class:`multi_class.OneVsRestClassifier` and
+     :class:`multi_class.OneVsOneClassifier` is now ``(n_samples,)`` to conform
+     to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
+
    - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
    - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
@@ -440,6 +458,11 @@ API changes summary
      method ``check_decision_proba_consistency`` has been added in
      **sklearn.utils.estimator_checks** to check their consistency.
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
+   
+   - In version 0.21, the default behavior of splitters that use the
+     ``test_size`` and ``train_size`` parameter will change, such that
+     specifying ``train_size`` alone will cause ``test_size`` to be the
+     remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
 
    - All tree based estimators now accept a ``min_impurity_decrease``
      parameter in lieu of the ``min_impurity_split``, which is now deprecated.
@@ -491,7 +514,6 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
-
 
 .. _changes_0_18_1:
 
@@ -4855,7 +4877,7 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`sphx_glr_auto_examples_applications_face_recognition.py`,
+    :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
     :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
     :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
     :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
