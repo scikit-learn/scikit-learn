@@ -92,7 +92,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
     >>> tt.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
+    ... # doctest: +NORMALIZE_WHITESPACE
     TransformTargetRegressor(check_inverse=True,
                              func=<ufunc 'log'>,
                              inverse_func=<ufunc 'exp'>,

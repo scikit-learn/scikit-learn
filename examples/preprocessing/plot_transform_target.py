@@ -2,9 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """
-=====================================================
-Effect of transforming the target in regression model
-=====================================================
+======================================================
+Effect of transforming the targets in regression model
+======================================================
+
+In this example, we give an overview of the
+:class:`sklearn.preprocessing.TransformTargetRegressor`. Two examples
+illustrate the benefit of transforming the targets before learning a linear
+regression model. The first example uses synthetic data while the second
+example is based on the Boston housing data set.
 
 """
 
@@ -17,15 +23,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 print(__doc__)
-
-
-def log_transform(x):
-    return np.log(x + 1)
-
-
-def exp_transform(x):
-    return np.exp(x) - 1
-
 
 ###############################################################################
 # Synthetic example
@@ -46,6 +43,15 @@ from sklearn.metrics import median_absolute_error, r2_score
 # Therefore, a logarithmic and an exponential functions will be used to
 # transform the targets before training a linear regression model and using it
 # for prediction.
+
+
+def log_transform(x):
+    return np.log(x + 1)
+
+
+def exp_transform(x):
+    return np.exp(x) - 1
+
 
 X, y = make_regression(n_samples=10000, noise=100, random_state=0)
 y = np.exp((y + abs(y.min())) / 200)
@@ -130,8 +136,9 @@ y_trans = quantile_transform(dataset.data[:, target],
                              output_distribution='normal').squeeze()
 
 ###############################################################################
-# A :class:`QuantileTransformer` is used such that the targets follows a normal
-# distribution before applying a :class:`RidgeCV` model.
+# A :class:`sklearn.preprocessing.QuantileTransformer` is used such that the
+# targets follows a normal distribution before applying a
+# :class:`sklearn.linear_model.RidgeCV` model.
 
 f, (ax0, ax1) = plt.subplots(1, 2)
 
