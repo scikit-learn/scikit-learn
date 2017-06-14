@@ -389,6 +389,10 @@ Bug fixes
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
+   - Fixed a bug where :func:`model_selection.validation_curve`
+     reused the same estimator for each parameter value.
+     :issue:`7365` by `Aleksandr Sandrovskii <Sundrique>`.
+
 API changes summary
 -------------------
 
