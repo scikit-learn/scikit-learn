@@ -6,7 +6,6 @@ import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import warnings
-import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -14,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import make_classification
+from sklearn.utils.testing import assert_false
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -92,6 +92,17 @@ class MockEstimatorFailing(BaseEstimator):
 
     def score(self, X=None, y=None):
         return None
+
+
+class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
+    """Dummy classifier that disallows repeated calls of fit method"""
+
+    def fit(self, X_subset, y_subset):
+        assert_false(
+                hasattr(self, 'fit_called_'),
+                'fit is called the second time')
+        self.fit_called_ = True
+        return super(type(self), self).fit(X_subset, y_subset)
 
 
 def test_learning_curve():
