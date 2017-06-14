@@ -200,6 +200,10 @@ Enhancements
      :class:`linear_model.LogisticRegression` when using newton-cg
      solver. :issue:`8835` by :user:`Joan Massich <massich>`.
 
+   - Prevent cast from float32 to float64 in
+     :class:`sklearn.linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
+     by :user:`Joan Massich <massich>`, ::user::`Nicolas Cordier <ncordier>`
+
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
      :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
 
