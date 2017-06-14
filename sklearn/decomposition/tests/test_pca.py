@@ -476,7 +476,6 @@ def test_pca_score_equal():
     # specially designed for issue #7568, #8541, #8544
     digits = datasets.load_digits()
     X_digits = digits.data
-    y_digits = digits.target
     pca1 = PCA(n_components=30, svd_solver='full')
     pca1.fit(X_digits)
     score1 = pca1.score(X_digits)
