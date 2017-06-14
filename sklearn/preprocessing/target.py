@@ -6,7 +6,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted, has_fit_parameter
-from ..utils import check_array, check_random_state
+from ..utils import check_X_y, check_array, check_random_state
 from ._function_transformer import FunctionTransformer
 
 __all__ = ['TransformTargetRegressor']
@@ -176,7 +176,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
-        y = check_array(y, ensure_2d=False)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
         # transformer are designed to modify X which is a 2d dimensional, we
         # need to modify y accordingly.
@@ -204,9 +204,11 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             else:
                 current_sample_weight = sample_weight
 
-        self.regressor_.fit(
-            X, self.transformer_.fit_transform(y_2d).squeeze(),
-            sample_weight=current_sample_weight)
+        # transform y and convert back to 1d array if needed
+        y_trans = self.transformer_.fit_transform(y_2d)
+        if y.ndim == 1 and self.func is None:
+            y_trans = y_trans.reshape(-1)
+        self.regressor_.fit(X, y_trans, sample_weight=current_sample_weight)
 
         return self
 
