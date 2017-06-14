@@ -1378,7 +1378,7 @@ def check_class_weight_classifiers(name, classifier_orig):
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
         y_pred = classifier.predict(X_test)
-        assert_greater(np.mean(y_pred == 0), 0.89)
+        assert_greater(np.mean(y_pred == 0), 0.87)
 
 
 @ignore_warnings(category=DeprecationWarning)
