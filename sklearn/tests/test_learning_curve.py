@@ -104,6 +104,9 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         self.fit_called_ = True
         return super(type(self), self).fit(X_subset, y_subset)
 
+    def predict(self, X):
+        raise NotImplementedError
+
 
 def test_learning_curve():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
