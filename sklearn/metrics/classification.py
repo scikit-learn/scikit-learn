@@ -258,7 +258,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0], dtype=np.int)
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
         sample_weight = np.asarray(sample_weight)
 
@@ -277,8 +277,14 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     # also eliminate weights of eliminated items
     sample_weight = sample_weight[ind]
 
+    # Choose the accumulator dtype to always have high precision
+    if sample_weight.dtype.kind in {'i', 'u', 'b'}:
+        dtype = np.int64
+    else:
+        dtype = np.float64
+
     CM = coo_matrix((sample_weight, (y_true, y_pred)),
-                    shape=(n_labels, n_labels)
+                    shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
     return CM
@@ -451,7 +457,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
-    """Compute the Matthews correlation coefficient (MCC) for binary classes
+    """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
     measure of the quality of binary (two-class) classifications. It takes into
@@ -462,8 +468,9 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     an average random prediction and -1 an inverse prediction.  The statistic
     is also known as the phi coefficient. [source: Wikipedia]
 
-    Only in the binary case does this relate to information about true and
-    false positives and negatives. See references below.
+    Binary and multiclass labels are supported.  Only in the binary case does
+    this relate to information about true and false positives and negatives.
+    See references below.
 
     Read more in the :ref:`User Guide <matthews_corrcoef>`.
 
@@ -494,6 +501,14 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 
+    .. [3] `Gorodkin, (2004). Comparing two K-category assignments by a
+        K-category correlation coefficient
+        <http://www.sciencedirect.com/science/article/pii/S1476927104000799>`_
+
+    .. [4] `Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC and CEN
+        Error Measures in MultiClass Prediction
+        <http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041882>`_
+
     Examples
     --------
     >>> from sklearn.metrics import matthews_corrcoef
@@ -501,28 +516,25 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
     -0.33...
-
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-
-    if y_type != "binary":
+    if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
     lb = LabelEncoder()
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
-    mean_yt = np.average(y_true, weights=sample_weight)
-    mean_yp = np.average(y_pred, weights=sample_weight)
 
-    y_true_u_cent = y_true - mean_yt
-    y_pred_u_cent = y_pred - mean_yp
-
-    cov_ytyp = np.average(y_true_u_cent * y_pred_u_cent, weights=sample_weight)
-    var_yt = np.average(y_true_u_cent ** 2, weights=sample_weight)
-    var_yp = np.average(y_pred_u_cent ** 2, weights=sample_weight)
-
-    mcc = cov_ytyp / np.sqrt(var_yt * var_yp)
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    t_sum = C.sum(axis=1)
+    p_sum = C.sum(axis=0)
+    n_correct = np.trace(C)
+    n_samples = p_sum.sum()
+    cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
+    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
+    mcc = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
     if np.isnan(mcc):
         return 0.

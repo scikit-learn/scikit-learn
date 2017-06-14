@@ -14,7 +14,9 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_warns
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
@@ -480,7 +482,7 @@ def test_feature_log_prob_bnb():
     denom = np.tile(np.log(clf.class_count_ + 2.0), (X.shape[1], 1)).T
 
     # Check manual estimate matches
-    assert_array_equal(clf.feature_log_prob_, (num - denom))
+    assert_array_almost_equal(clf.feature_log_prob_, (num - denom))
 
 
 def test_bnb():
@@ -536,3 +538,49 @@ def test_naive_bayes_scale_invariance():
               for f in [1E-10, 1, 1E10]]
     assert_array_equal(labels[0], labels[1])
     assert_array_equal(labels[1], labels[2])
+
+
+def test_alpha():
+    # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
+    X = np.array([[1, 0], [1, 1]])
+    y = np.array([0, 1])
+    nb = BernoulliNB(alpha=0.)
+    assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
+    assert_warns(UserWarning, nb.fit, X, y)
+    prob = np.array([[1, 0], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = MultinomialNB(alpha=0.)
+    assert_warns(UserWarning, nb.partial_fit, X, y, classes=[0, 1])
+    assert_warns(UserWarning, nb.fit, X, y)
+    prob = np.array([[2./3, 1./3], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    # Test sparse X
+    X = scipy.sparse.csr_matrix(X)
+    nb = BernoulliNB(alpha=0.)
+    assert_warns(UserWarning, nb.fit, X, y)
+    prob = np.array([[1, 0], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = MultinomialNB(alpha=0.)
+    assert_warns(UserWarning, nb.fit, X, y)
+    prob = np.array([[2./3, 1./3], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    # Test for alpha < 0
+    X = np.array([[1, 0], [1, 1]])
+    y = np.array([0, 1])
+    expected_msg = ('Smoothing parameter alpha = -1.0e-01. '
+                    'alpha should be > 0.')
+    b_nb = BernoulliNB(alpha=-0.1)
+    m_nb = MultinomialNB(alpha=-0.1)
+    assert_raise_message(ValueError, expected_msg, b_nb.fit, X, y)
+    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
+
+    b_nb = BernoulliNB(alpha=-0.1)
+    m_nb = MultinomialNB(alpha=-0.1)
+    assert_raise_message(ValueError, expected_msg, b_nb.partial_fit,
+                         X, y, classes=[0, 1])
+    assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
+                         X, y, classes=[0, 1])

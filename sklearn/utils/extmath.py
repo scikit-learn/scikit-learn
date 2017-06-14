@@ -17,17 +17,17 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
-from scipy.misc import logsumexp as scipy_logsumexp
 
 from . import check_random_state, deprecated
 from .fixes import np_version
+from .fixes import logsumexp as scipy_logsumexp
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
 
-@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.linalg.norm instead.")
 def norm(x):
     """Compute the Euclidean or Frobenius norm of x.
@@ -94,7 +94,7 @@ def _impose_f_order(X):
         return check_array(X, copy=False, order='F'), False
 
 
-@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
             "and will be removed in 0.21. Use the equivalent np.dot instead.")
 def fast_dot(a, b, out=None):
     return np.dot(a, b, out)
@@ -117,6 +117,19 @@ def safe_sparse_dot(a, b, dense_output=False):
 
     Uses BLAS GEMM as replacement for numpy.dot where possible
     to avoid unnecessary copies.
+
+    Parameters
+    ----------
+    a : array or sparse matrix
+    b : array or sparse matrix
+    dense_output : boolean, default False
+        When False, either ``a`` or ``b`` being sparse will yield sparse
+        output. When True, output will always be an array.
+
+    Returns
+    -------
+    dot_product : array or sparse matrix
+        sparse if ``a`` or ``b`` is sparse and ``dense_output``=False.
     """
     if issparse(a) or issparse(b):
         ret = a * b
@@ -332,7 +345,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
 def logsumexp(arr, axis=0):
     """Computes the sum of arr assuming arr is in the log domain.
@@ -425,7 +438,7 @@ def weighted_mode(a, w, axis=0):
     return mostfrequent, oldcounts
 
 
-@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.linalg.pinvh instead.")
 def pinvh(a, cond=None, rcond=None, lower=True):
     return linalg.pinvh(a, cond, rcond, lower)

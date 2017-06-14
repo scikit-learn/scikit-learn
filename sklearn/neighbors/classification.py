@@ -250,7 +250,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     Parameters
     ----------
     radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
+        Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
     weights : str or callable
@@ -271,7 +271,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDtree`
+        - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -383,6 +383,19 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         if self.outputs_2d_ == 'sparse':
             y_pred_sparse_multilabel = []
+
+        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+        for k, classes_k in enumerate(classes_):
+            pred_labels = np.zeros(len(neigh_ind), dtype=object)
+            pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
+            if weights is None:
+                mode = np.array([stats.mode(pl)[0]
+                                 for pl in pred_labels[inliers]], dtype=np.int)
+            else:
+                mode = np.array([weighted_mode(pl, w)[0]
+                                 for (pl, w)
+                                 in zip(pred_labels[inliers], weights[inliers])],
+                                dtype=np.int)
 
             for k, classes_k in enumerate(classes_):
                 pred_labels = np.array([_y[ind, k].toarray()
