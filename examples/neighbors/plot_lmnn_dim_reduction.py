@@ -44,7 +44,7 @@ acc_pca = knn.score(X_pca[len(X_train):], y_test)
 # Plot the points after PCA
 fig.add_subplot(131)
 plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap=cmap_bold)
-plt.title("PCA (test acc. = {:5.2f}%)".format(acc_pca*100))
+plt.title("PCA (test acc. = {:5.2f}%)".format(acc_pca * 100))
 
 
 # Reduce dimensions with LinearDiscriminantAnalysis
