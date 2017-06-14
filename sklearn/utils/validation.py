@@ -363,7 +363,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         accept_sparse = False
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = dtype == "numeric"
+    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
