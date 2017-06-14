@@ -75,93 +75,35 @@ def test_transform_target_regressor_friedman():
             y_tran).squeeze())
         assert_equal(y_2d.squeeze().shape, y_pred.shape)
         assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
-        lr = LinearRegression().fit(X, regr.func(y_2d.squeeze))
+        lr = LinearRegression().fit(X, regr.func(y_2d.squeeze()))
         assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
         assert_array_equal(regr.regressor_.coef_.ravel(),
                            lr.coef_.ravel())
-
-
-def test_transform_target_regressor_friedman():
-    X = friedman[0]
-    y = friedman[1]
-    # pass some functions
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    func=np.log, inverse_func=np.exp)
-    y_pred = regr.fit(X, y).predict(X)
-    y_tran = np.ravel(regr.transformer_.transform(y))
-    assert_allclose(np.log(y), y_tran)
-    assert_allclose(y, np.ravel(regr.transformer_.inverse_transform(
-        y_tran.reshape(-1, 1))))
-    assert_equal(y.shape, y_pred.shape)
-    assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
-    lr = LinearRegression().fit(X, regr.func(y))
-    assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
-    assert_array_equal(regr.regressor_.coef_.ravel(),
-                       lr.coef_.ravel())
-    # StandardScaler support 1d array while MaxAbsScaler support only 2d array
-    for transformer in (StandardScaler(), MaxAbsScaler()):
-        regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                        transformer=transformer)
-        y_pred = regr.fit(X, y).predict(X)
-        assert_equal(y.shape, y_pred.shape)
-        y_tran = np.ravel(regr.transformer_.transform(y.reshape(-1, 1)))
-        if issubclass(StandardScaler, transformer.__class__):
-            _check_standard_scaler(y, y_tran)
-        else:
-            _check_max_abs_scaler(y, y_tran)
-        assert_equal(y.shape, y_pred.shape)
-        assert_allclose(y, regr.transformer_.inverse_transform(
-                y_tran.reshape(-1, 1)).squeeze())
-        lr = LinearRegression()
-        transformer2 = clone(transformer)
-        lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)).squeeze())
-        assert_allclose(y_pred, transformer2.inverse_transform(
-            lr.predict(X).reshape(-1, 1)).squeeze())
-        assert_array_equal(regr.regressor_.coef_.squeeze(),
-                           lr.coef_.squeeze())
-
-
-def test_transform_target_regressor_multioutput():
-    X = friedman[0]
-    y = friedman[1]
-    y = np.vstack((y, y ** 2 + 1)).T
-    # pass some functions
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    func=np.log, inverse_func=np.exp)
-    y_pred = regr.fit(X, y).predict(X)
-    y_tran = regr.transformer_.transform(y)
-    assert_allclose(np.log(y), y_tran)
-    assert_allclose(y, regr.transformer_.inverse_transform(y_tran))
-    assert_equal(y.shape, y_pred.shape)
-    assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
-    lr = LinearRegression().fit(X, regr.func(y))
-    assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
-    assert_array_equal(regr.regressor_.coef_.ravel(),
-                       lr.coef_.ravel())
-    # StandardScaler support 1d array while MaxAbsScaler support only 2d array
-    for transformer in (StandardScaler(), MaxAbsScaler()):
-        regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                        transformer=transformer)
-        y_pred = regr.fit(X, y).predict(X)
-        assert_equal(y.shape, y_pred.shape)
-        y_tran = regr.transformer_.transform(y)
-        if issubclass(StandardScaler, transformer.__class__):
-            _check_standard_scaler(y, y_tran)
-        else:
-            _check_max_abs_scaler(y, y_tran)
-        assert_equal(y.shape, y_pred.shape)
-        assert_allclose(y, regr.transformer_.inverse_transform(y_tran))
-        transformer2 = clone(transformer)
-        lr.fit(X, transformer2.fit_transform(y))
-        assert_allclose(y_pred, transformer2.inverse_transform(lr.predict(X)))
-        assert_array_equal(regr.regressor_.coef_.squeeze(),
-                           lr.coef_.squeeze())
-
-
-def test_transform_target_regressor_identity():
-    X = friedman[0]
-    y = friedman[1]
-    regr = TransformTargetRegressor()
-    y_pred = regr.fit(X, y).predict(X)
-    y_pred_2 = LinearRegression().fit(X, y).predict(X)
-    assert_array_equal(y_pred, y_pred_2)
+        # StandardScaler support 1d array while MaxAbsScaler support only 2d
+        # array
+        for transformer in (StandardScaler(), MaxAbsScaler()):
+            regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                            transformer=transformer)
+            y_pred = regr.fit(X, y_2d.squeeze()).predict(X)
+            assert_equal(y_2d.squeeze().shape, y_pred.shape)
+            y_tran = regr.transformer_.transform(y_2d).squeeze()
+            if issubclass(StandardScaler, transformer.__class__):
+                _check_standard_scaler(y_2d.squeeze(), y_tran)
+            else:
+                _check_max_abs_scaler(y_2d.squeeze(), y_tran)
+            assert_equal(y_2d.squeeze().shape, y_pred.shape)
+            if y_tran.ndim == 1:
+                y_tran = y_tran.reshape(-1, 1)
+            assert_allclose(y_2d.squeeze(),
+                            regr.transformer_.inverse_transform(
+                                y_tran).squeeze())
+            lr = LinearRegression()
+            transformer2 = clone(transformer)
+            lr.fit(X, transformer2.fit_transform(y_2d).squeeze())
+            y_lr_pred = lr.predict(X)
+            if y_lr_pred.ndim == 1:
+                y_lr_pred = y_lr_pred.reshape(-1, 1)
+            assert_allclose(y_pred, transformer2.inverse_transform(
+                y_lr_pred).squeeze())
+            assert_array_equal(regr.regressor_.coef_.squeeze(),
+                               lr.coef_.squeeze())
