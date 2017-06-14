@@ -46,14 +46,14 @@ def test_mcd():
 
 def test_fast_mcd_on_invalid_input():
     X = np.arange(100)
-    assert_raise_message(ValueError, 'Got X with X.ndim=1',
+    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
                          fast_mcd, X)
 
 
 def test_mcd_class_on_invalid_input():
     X = np.arange(100)
     mcd = MinCovDet()
-    assert_raise_message(ValueError, 'Got X with X.ndim=1',
+    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
                          mcd.fit, X)
 
 
