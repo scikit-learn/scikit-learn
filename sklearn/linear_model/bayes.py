@@ -9,10 +9,11 @@ from __future__ import print_function
 from math import log
 import numpy as np
 from scipy import linalg
+from scipy.linalg import pinvh
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils.extmath import fast_logdet, pinvh
+from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
 
 
@@ -109,7 +110,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/plot_bayesian_ridge.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_bayesian_ridge.py
+    <sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py>`.
 
     References
     ----------
@@ -371,8 +373,9 @@ class ARDRegression(LinearModel, RegressorMixin):
     array([ 1.])
 
     Notes
-    --------
-    See examples/linear_model/plot_ard.py for an example.
+    -----
+    For an example, see :ref:`examples/linear_model/plot_ard.py
+    <sphx_glr_auto_examples_linear_model_plot_ard.py>`.
 
     References
     ----------

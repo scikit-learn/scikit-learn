@@ -14,7 +14,7 @@ estimator classes. Typical examples include ``C``, ``kernel`` and ``gamma``
 for Support Vector Classifier, ``alpha`` for Lasso, etc.
 
 It is possible and recommended to search the hyper-parameter space for the
-best :ref:`cross_validation` score.
+best :ref:`cross validation <cross_validation>` score.
 
 Any parameter provided when constructing an estimator may be optimized in this
 manner. Specifically, to find the names and current values for all parameters
@@ -70,7 +70,7 @@ evaluated and the best combination is retained.
 
 .. topic:: Examples:
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py` for an example of
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
@@ -131,7 +131,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_model_selection_randomized_search.py` compares the usage and efficiency
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:
