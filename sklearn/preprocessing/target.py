@@ -5,8 +5,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, clone
-from ..utils.fixes import signature
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, has_fit_parameter
 from ..utils import check_array, check_random_state
 from ._function_transformer import FunctionTransformer
 
@@ -45,27 +44,26 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
     transformer : object, (default=None)
         Estimator object such as derived from ``TransformerMixin``. Cannot be
-        set at the same time as ``func`` and ``inverse_func``. If ``None`` and
-        ``func`` and ``inverse_func`` are ``None`` as well, the transformer
-        will be an identity transformer. The transformer will be cloned during
-        fitting.
+        set at the same time as ``func`` and ``inverse_func``. If
+        ``transformer`` is ``None`` as well as ``func`` and ``inverse_func``,
+        the transformer will be an identity transformer. Note that the
+        transformer will be cloned during fitting.
 
     func : function, optional
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
-        the same time as ``transformer`` is ``None`` as well. If ``None`` and
-        ``transformer`` is ``None`` as well, the function used will be the
-        identity function.
+        the same time as ``transformer``. If ``func`` is ``None``, the function
+        used will be the identity function.
 
     inverse_func : function, optional
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time as ``transformer`` is ``None`` as well. If ``None`` and
-        ``transformer`` as well, the function used will be the identity
-        function. The inverse function is used to return to the same space of
-        the original training labels during prediction.
+        the same time as ``transformer`` as well. If ``inverse_func is
+        ``None``, the function used will be the identity function. The inverse
+        function is used to return to the same space of the original training
+        labels during prediction.
 
     check_inverse : bool, (default=True)
         Whether to check that ``transform`` followed by ``inverse_transform``
-        or ``func`` followed by ``inverse_func`` leads to the original data.
+        or ``func`` followed by ``inverse_func`` leads to the original targets.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -126,7 +124,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         self.check_inverse = check_inverse
         self.random_state = random_state
 
-    def _fit_transformer(self, y, sample_weight):
+    def _fit_transformer(self, y):
         if (self.transformer is not None and
                 (self.func is not None or self.inverse_func is not None)):
             raise ValueError("Both 'transformer' and functions 'func'/"
@@ -136,11 +134,11 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             self.transformer_ = FunctionTransformer(
                 func=self.func, inverse_func=self.inverse_func, validate=False)
-        fit_parameters = signature(self.transformer_.fit).parameters
-        if "sample_weight" in fit_parameters:
-            self.transformer_.fit(y, sample_weight=sample_weight)
-        else:
-            self.transformer_.fit(y)
+        # XXX: sample_weight is not currently passed to the
+        # transformer. However, if transformer starts using sample_weight, the
+        # code should be modified accordingly. At the time to consider the
+        # sample_prop feature, it is also a good use case to be considered.
+        self.transformer_.fit(y)
         if self.check_inverse:
             random_state = check_random_state(self.random_state)
             n_subsample = min(10, y.shape[0])
@@ -179,23 +177,36 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
         y = check_array(y, ensure_2d=False)
+
+        # transformer are designed to modify X which is a 2d dimensional, we
+        # need to modify y accordingly.
         if y.ndim == 1 and self.func is None:
             y_2d = y.reshape(-1, 1)
         else:
             y_2d = y
-        self._fit_transformer(y_2d, sample_weight)
-        from ..linear_model import LinearRegression
+        self._fit_transformer(y_2d)
+
         if self.regressor is None:
+            from ..linear_model import LinearRegression
             self.regressor_ = LinearRegression()
         else:
             self.regressor_ = clone(self.regressor)
-        if sample_weight is not None:
-            self.regressor_.fit(
-                X, self.transformer_.fit_transform(y_2d).squeeze(),
-                sample_weight=sample_weight)
-        else:
-            self.regressor_.fit(
-                X, self.transformer_.fit_transform(y_2d).squeeze())
+
+        support_sample_weight = has_fit_parameter(self.regressor_,
+                                                  'sample_weight')
+        if not support_sample_weight and sample_weight is not None:
+            raise ValueError("The regressor {} does not support sample "
+                             "weight.".format(
+                                 self.regressor_.__class__.__name__))
+        if support_sample_weight:
+            if sample_weight is None:
+                current_sample_weight = np.ones((y.shape[0],))
+            else:
+                current_sample_weight = sample_weight
+
+        self.regressor_.fit(
+            X, self.transformer_.fit_transform(y_2d).squeeze(),
+            sample_weight=current_sample_weight)
 
         return self
 

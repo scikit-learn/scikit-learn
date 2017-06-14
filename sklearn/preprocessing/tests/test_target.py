@@ -48,6 +48,17 @@ def test_transform_target_regressor_invertible():
     regr.fit(X, y)
 
 
+def _check_standard_scaler(y, y_pred):
+    y_mean = np.mean(y, axis=0)
+    y_std = np.std(y, axis=0)
+    assert_allclose((y - y_mean) / y_std, y_pred)
+
+
+def _check_max_abs_scaler(y, y_pred):
+    max_abs = np.abs(y).max(axis=0)
+    assert_allclose(y / max_abs, y_pred)
+
+
 def test_transform_target_regressor_friedman():
     X = friedman[0]
     y = friedman[1]
@@ -56,8 +67,8 @@ def test_transform_target_regressor_friedman():
                                     func=np.log, inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     y_tran = np.ravel(regr.transformer_.transform(y))
-    assert_array_almost_equal(np.log(y), y_tran)
-    assert_array_almost_equal(y, np.ravel(regr.transformer_.inverse_transform(
+    assert_allclose(np.log(y), y_tran)
+    assert_allclose(y, np.ravel(regr.transformer_.inverse_transform(
         y_tran.reshape(-1, 1))))
     assert_equal(y.shape, y_pred.shape)
     assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
@@ -73,19 +84,17 @@ def test_transform_target_regressor_friedman():
         assert_equal(y.shape, y_pred.shape)
         y_tran = np.ravel(regr.transformer_.transform(y.reshape(-1, 1)))
         if issubclass(StandardScaler, transformer.__class__):
-            y_mean = np.mean(y)
-            y_std = np.std(y)
-            assert_array_almost_equal((y - y_mean) / y_std, y_tran)
-        assert_array_almost_equal(
-            y, regr.transformer_.inverse_transform(
-                y_tran.reshape(-1, 1)).squeeze())
+            _check_standard_scaler(y, y_tran)
+        else:
+            _check_max_abs_scaler(y, y_tran)
         assert_equal(y.shape, y_pred.shape)
+        assert_allclose(y, regr.transformer_.inverse_transform(
+                y_tran.reshape(-1, 1)).squeeze())
         lr = LinearRegression()
         transformer2 = clone(transformer)
         lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)).squeeze())
-        assert_allclose(y_pred,
-                        transformer2.inverse_transform(
-                            lr.predict(X).reshape(-1, 1)).squeeze())
+        assert_allclose(y_pred, transformer2.inverse_transform(
+            lr.predict(X).reshape(-1, 1)).squeeze())
         assert_array_equal(regr.regressor_.coef_.squeeze(),
                            lr.coef_.squeeze())
 
@@ -99,8 +108,8 @@ def test_transform_target_regressor_multioutput():
                                     func=np.log, inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     y_tran = regr.transformer_.transform(y)
-    assert_array_almost_equal(np.log(y), y_tran)
-    assert_array_almost_equal(y, regr.transformer_.inverse_transform(y_tran))
+    assert_allclose(np.log(y), y_tran)
+    assert_allclose(y, regr.transformer_.inverse_transform(y_tran))
     assert_equal(y.shape, y_pred.shape)
     assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
     lr = LinearRegression().fit(X, regr.func(y))
@@ -115,12 +124,11 @@ def test_transform_target_regressor_multioutput():
         assert_equal(y.shape, y_pred.shape)
         y_tran = regr.transformer_.transform(y)
         if issubclass(StandardScaler, transformer.__class__):
-            y_mean = np.mean(y, axis=0)
-            y_std = np.std(y, axis=0)
-            assert_array_almost_equal((y - y_mean) / y_std, y_tran)
-        assert_array_almost_equal(y, regr.transformer_.inverse_transform(
-            y_tran))
+            _check_standard_scaler(y, y_tran)
+        else:
+            _check_max_abs_scaler(y, y_tran)
         assert_equal(y.shape, y_pred.shape)
+        assert_allclose(y, regr.transformer_.inverse_transform(y_tran))
         transformer2 = clone(transformer)
         lr.fit(X, transformer2.fit_transform(y))
         assert_allclose(y_pred, transformer2.inverse_transform(lr.predict(X)))

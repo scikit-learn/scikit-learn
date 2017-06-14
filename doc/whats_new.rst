@@ -31,10 +31,10 @@ Changelog
 New features
 ............
 
-   - Added the :class:`preprocessing.TransformTargetRegressor` transforms
-     the target y before fitting a regression model. The predictions are
-     mapped back to the original space via an inverse transform.
-     :issue:`9041` by `Andreas Müller`_ and
+   - Added the :class:`preprocessing.TransformTargetRegressor` which
+     transforms the target y before fitting a regression model. The
+     predictions are mapped back to the original space via an inverse
+     transform. :issue:`9041` by `Andreas Müller`_ and
      :user:`Guillaume Lemaitre <glemaitre>`.
 
    - Validation that input data contains no NaN or inf can now be suppressed
