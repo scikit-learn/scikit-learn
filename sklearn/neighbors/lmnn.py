@@ -22,7 +22,7 @@ from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms
 from ..utils.fixes import sp_version
-from ..utils.random import choice, check_random_state
+from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y
 from ..exceptions import DataDimensionalityWarning
@@ -155,7 +155,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
     >>> knn.fit(lmnn.transform(X), y) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print(knn.score(lmnn.transform(X)), y)
+    >>> print(knn.score(lmnn.transform(X), y))
     1.0
 
 
@@ -725,9 +725,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     if len(ii) > self.max_constraints:
                         dims = (len(ind_out), len(ind_in))
                         ind = np.ravel_multi_index((ii, jj), dims=dims)
-                        ind_sampled = choice(ind, self.max_constraints,
-                                             replace=False,
-                                             random_state=self.random_state_)
+                        ind_sampled = self.random_state_.choice(
+                            ind, self.max_constraints, replace=False)
                         ii, jj = np.unravel_index(ind_sampled, dims=dims)
 
                     imp_row = ind_out[ii]
@@ -759,9 +758,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     if len(ii) > self.max_constraints:
                         dims = (len(ind_out), len(ind_in))
                         ind = np.ravel_multi_index((ii, jj), dims=dims)
-                        ind_sampled = choice(len(ind), self.max_constraints,
-                                             replace=False,
-                                             random_state=self.random_state_)
+                        ind_sampled = self.random_state_.choice(
+                            len(ind), self.max_constraints, replace=False)
                         dd = np.asarray(dd)[ind_sampled]
                         ind_sampled = ind[ind_sampled]
                         ii, jj = np.unravel_index(ind_sampled, dims=dims)
