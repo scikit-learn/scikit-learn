@@ -437,6 +437,8 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+_ALPHA_MIN = 1e-10
+
 
 class BaseDiscreteNB(BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
@@ -460,6 +462,16 @@ class BaseDiscreteNB(BaseNB):
                                      np.log(self.class_count_.sum()))
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+
+    def _check_alpha(self):
+        if self.alpha < 0:
+            raise ValueError('Smoothing parameter alpha = %e. '
+                             'alpha must be >= 0!' % self.alpha)
+        if self.alpha < _ALPHA_MIN:
+            warnings.warn('alpha too small will result in numeric errors, '
+                          'setting alpha = %e' % _ALPHA_MIN)
+            return _ALPHA_MIN
+        return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -539,7 +551,8 @@ class BaseDiscreteNB(BaseNB):
         # be called by the user explicitly just once after several consecutive
         # calls to partial_fit and prior any call to predict[_[log_]proba]
         # to avoid computing the smooth log probas at each call to partial fit
-        self._update_feature_log_prob()
+        alpha = self._check_alpha()
+        self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
@@ -589,7 +602,8 @@ class BaseDiscreteNB(BaseNB):
         self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                        dtype=np.float64)
         self._count(X, Y)
-        self._update_feature_log_prob()
+        alpha = self._check_alpha()
+        self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
@@ -605,9 +619,6 @@ class BaseDiscreteNB(BaseNB):
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
-
-
-_ALPHA_MIN = 1e-10
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -687,20 +698,9 @@ class MultinomialNB(BaseDiscreteNB):
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
-        self._alpha = alpha
+        self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-
-    @property
-    def alpha(self):
-        if self._alpha < 0:
-            raise ValueError('Smoothing parameter alpha = %e. '
-                             'alpha must be >= 0!' % self._alpha)
-        if self._alpha < _ALPHA_MIN:
-            warnings.warn('alpha too small will result in numeric errors, '
-                          'setting alpha = %e' % _ALPHA_MIN)
-            return _ALPHA_MIN
-        return self._alpha
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -709,9 +709,9 @@ class MultinomialNB(BaseDiscreteNB):
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
-    def _update_feature_log_prob(self):
+    def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_fc = self.feature_count_ + alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
         self.feature_log_prob_ = (np.log(smoothed_fc) -
@@ -799,21 +799,10 @@ class BernoulliNB(BaseDiscreteNB):
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
                  class_prior=None):
-        self._alpha = alpha
+        self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-
-    @property
-    def alpha(self):
-        if self._alpha < 0:
-            raise ValueError('Smoothing parameter alpha = %e. '
-                             'alpha must be >= 0!' % self._alpha)
-        if self._alpha < _ALPHA_MIN:
-            warnings.warn('alpha too small will result in numeric errors, '
-                          'setting alpha = %e' % _ALPHA_MIN)
-            return _ALPHA_MIN
-        return self._alpha
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -822,10 +811,10 @@ class BernoulliNB(BaseDiscreteNB):
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
-    def _update_feature_log_prob(self):
+    def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + self.alpha
-        smoothed_cc = self.class_count_ + self.alpha * 2
+        smoothed_fc = self.feature_count_ + alpha
+        smoothed_cc = self.class_count_ + alpha * 2
 
         self.feature_log_prob_ = (np.log(smoothed_fc) -
                                   np.log(smoothed_cc.reshape(-1, 1)))
