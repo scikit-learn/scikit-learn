@@ -85,6 +85,7 @@ Enhancements
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
+
    - :class:`pipeline.Pipeline` allows to cache transformers
      within a pipeline by using the ``memory`` constructor parameter.
      :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -212,6 +213,8 @@ Enhancements
    - Make it possible to load a chunk of an svmlight formatted file by
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
+   - Add support for sparse multilabel ``y`` in :class:`NeighborsBase`
+     :issue:`8057` by :user:`Aman Dalmia <dalmia>`.
 
 Bug fixes
 .........
