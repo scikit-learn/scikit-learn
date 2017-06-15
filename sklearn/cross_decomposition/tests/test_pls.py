@@ -282,10 +282,10 @@ def test_univariate_pls_regression():
     clf = pls_.PLSRegression()
     # Compare 1d to column vector
     # issue #8856
-    ndim_predict_1D = clf.fit(X, Y[:, 0]).predict(X).ndim
-    ndim_predict_2D = clf.fit(X, Y[:, :1]).predict(X).ndim
-    assert_equal(ndim_predict_1D, 1)
-    assert_equal(ndim_predict_2D, 2)
+    ndim_predict_1d = clf.fit(X, Y[:, 0]).predict(X).ndim
+    ndim_predict_2d = clf.fit(X, Y[:, :1]).predict(X).ndim
+    assert_equal(ndim_predict_1d, 1)
+    assert_equal(ndim_predict_2d, 2)
 
 def test_predict_transform_copy():
     # check that the "copy" keyword works
