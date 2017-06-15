@@ -813,12 +813,12 @@ def test_dtype_match():
         ridge_64.fit(X_64, y_64)
         coef_64 = ridge_64.coef_
 
-        # Do all the checks at once, like this is easier to debug
-        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
-
         # Do the actual checks at once for easier debug
-        assert_equal(coef_32.dtype, X_32.dtype)
-        assert_equal(coef_64.dtype, X_64.dtype)
+        assert coef_32.dtype == X_32.dtype
+        assert coef_64.dtype == X_64.dtype
+        assert ridge_32.predict(X_32).dtype == X_32.dtype
+        assert ridge_64.predict(X_64).dtype == X_64.dtype
+        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
 
 
 def test_dtype_match_cholesky():
@@ -844,6 +844,8 @@ def test_dtype_match_cholesky():
     coef_64 = ridge_64.coef_
 
     # Do all the checks at once, like this is easier to debug
-    assert_equal(coef_32.dtype, X_32.dtype)
-    assert_equal(coef_64.dtype, X_64.dtype)
+    assert coef_32.dtype == X_32.dtype
+    assert coef_64.dtype == X_64.dtype
+    assert ridge_32.predict(X_32).dtype == X_32.dtype
+    assert ridge_64.predict(X_64).dtype == X_64.dtype
     assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
