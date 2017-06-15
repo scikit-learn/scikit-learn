@@ -15,8 +15,8 @@ __all__ = ['sample_without_replacement', 'choice']
 
 # This is a backport of np.random.choice from numpy 1.7
 # The function can be removed when we bump the requirements to >=1.7
-@deprecated("sklearn.utils.random.choice was deprecated in version 0.19"
-            "and will be removed in 0.21. Use np.random.choice or"
+@deprecated("sklearn.utils.random.choice was deprecated in version 0.19 "
+            "and will be removed in 0.21. Use np.random.choice or "
             "np.random.RandomState.choice instead.")
 def choice(a, size=None, replace=True, p=None, random_state=None):
     """

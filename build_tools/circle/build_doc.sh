@@ -105,7 +105,7 @@ conda update --yes --quiet conda
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx pillow
+  cython nose coverage matplotlib sphinx=1.5 pillow
 source activate testenv
 
 # Build and install scikit-learn in dev mode
