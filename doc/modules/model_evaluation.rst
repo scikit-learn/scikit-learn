@@ -255,6 +255,14 @@ Some also work in the multilabel case:
    recall_score
    zero_one_loss
 
+Some are typically used for ranking:
+
+.. autosummary::
+   :template: function.rst
+
+   dcg_score
+   ndcg_score
+
 And some work with binary and multilabel (but not multiclass) problems:
 
 .. autosummary::
@@ -466,7 +474,7 @@ and inferred labels::
     for an example of classification report usage for text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
 
@@ -602,7 +610,7 @@ binary classification and multilabel indicator format.
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
 
@@ -681,7 +689,7 @@ Here are some small examples in binary classification::
   >>> threshold
   array([ 0.35,  0.4 ,  0.8 ])
   >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-  0.79...
+  0.83...
 
 
 
