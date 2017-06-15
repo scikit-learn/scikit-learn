@@ -70,6 +70,9 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
+# Outlier detection estimators
+OUTLIER_DETECTION = ['EllipticEnvelope', 'OneClassSVM',
+                     'LocalOutlierFactor', 'IsolationForest']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -210,6 +213,23 @@ def _yield_clustering_checks(name, clusterer):
     yield check_non_transformer_estimators_n_iter
 
 
+def _yield_outliers_checks(name, estimator):
+    # test if NotFittedError is raised
+    yield check_estimators_unfitted
+
+    # predict and decision_function are private in LocalOutlierFactor
+    if name != 'LocalOutlierFactor':
+        yield check_outliers_train
+        # test outlier detection estimators can handle non-array data
+        yield check_classifier_data_not_an_array
+        # test if scores_samples is a monotonic transformation of
+        # decision_function
+        yield check_decision_scores_consistency
+        # test that predict returns int and decision_function and score_samples
+        # return float
+        yield check_outliers_output_dtypes
+
+
 def _yield_all_checks(name, estimator):
     for check in _yield_non_meta_checks(name, estimator):
         yield check
@@ -224,6 +244,9 @@ def _yield_all_checks(name, estimator):
             yield check
     if isinstance(estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, estimator):
+            yield check
+    if name in OUTLIER_DETECTION:
+        for check in _yield_outliers_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
@@ -1360,6 +1383,64 @@ def check_classifiers_train(name, classifier_orig):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
+def check_outliers_train(name, estimator_orig):
+    X, _ = make_blobs(n_samples=300, random_state=0)
+    X = shuffle(X, random_state=7)
+    n_samples, n_features = X.shape
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    # fit
+    estimator.fit(X)
+    # with lists
+    estimator.fit(X.tolist())
+
+    # all outlier detection estimators have a predict, a decision_function
+    # and a score_samples method, except LocalOutlierFactor where they are
+    # private
+    y_pred = estimator.predict(X)
+    assert_equal(y_pred.shape, (n_samples,))
+    # training set performance
+    # TODO
+
+    # raises error on malformed input for predict
+    assert_raises(ValueError, estimator.predict, X.T)
+
+    # decision_function agrees with predict
+    decision = estimator.decision_function(X)
+    assert_equal(decision.shape, (n_samples,))
+    dec_pred = (decision > 0).astype(np.int)
+    assert_array_equal(dec_pred, y_pred == 1)
+
+    # raises error on malformed input for decision_function
+    assert_raises(ValueError, estimator.decision_function, X.T)
+
+    # decision_function is a translation of score_samples
+    y_scores = estimator.score_samples(X)
+    assert_equal(y_scores.shape, (n_samples,))
+    y_dec = y_scores - estimator.offset_
+    assert_array_equal(y_dec, decision)
+    assert_array_equal(np.argsort(y_scores), np.argsort(decision))
+
+    # raises error on malformed input for score_samples
+    assert_raises(ValueError, estimator.score_samples, X.T)
+
+    # contamination parameter (not for OneClassSVM which has the nu parameter)
+    if hasattr(estimator, "contamination"):
+        # proportion of outliers equal to contamination parameter when not
+        # set to 'auto'
+        contamination = 0.1
+        estimator.set_params(contamination=contamination)
+        estimator.fit(X)
+        y_pred = estimator.predict(X)
+        assert_equal(np.mean(y_pred != 1), contamination)
+
+        # raises error when contamination is a scalar and not in [0,1]
+        for contamination in [-0.5, 2.3]:
+            estimator.set_params(contamination=contamination)
+            assert_raises(ValueError, estimator.fit, X)
+
+
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit"""
@@ -1997,3 +2078,47 @@ def check_decision_proba_consistency(name, estimator_orig):
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
+
+
+def check_decision_scores_consistency(name, estimator_orig):
+    # Check that decision_function and score_samples methods of an outlier
+    # detection estimator have outputs with perfect rank correlation.
+
+    centers = [(2, 2), (4, 4)]
+    X, _ = make_blobs(n_samples=100, random_state=0, n_features=4,
+                      centers=centers, cluster_std=1.0, shuffle=True)
+    X_test = np.random.randn(20, 2) + 4
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    estimator.fit(X)
+    a = estimator.score_samples(X_test)
+    b = estimator.decision_function(X_test)
+    assert_array_equal(rankdata(a), rankdata(b))
+
+
+def check_outliers_output_dtypes(name, estimator_orig):
+    """Check output types of outlier detection estimators.
+
+    Check that the predict method of outlier detection estimators returns
+    int. Check also that decision_function and score_samples methods return
+    float. Note that all outlier detection estimators have a predict, a
+    decision_function and a score_samples method, except LocalOutlierFactor
+    where they are private.
+    """
+
+    # Toy sample
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]]
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    estimator.fit(X)
+
+    y_pred = estimator.predict(X)
+    assert_equal(y_pred.dtype, np.dtype('int'))
+
+    decision = estimator.decision_function(X)
+    assert_equal(decision.dtype, np.dtype('float'))
+
+    score = estimator.score_samples(X)
+    assert_equal(score.dtype, np.dtype('float'))
