@@ -34,9 +34,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn import manifold, datasets
 from time import time
 
-# Next line to silence pyflakes. This import is needed.
-from mpl_toolkits.mplot3d import Axes3D  # noqa
-
 n_samples = 500
 n_components = 2
 (fig, subplots) = plt.subplots(2, 5, figsize=(15, 8))
