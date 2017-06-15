@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 
@@ -558,24 +559,28 @@ def test_alpha():
     # Test sparse X
     X = scipy.sparse.csr_matrix(X)
     nb = BernoulliNB(alpha=0.)
-    nb.fit(X, y)
+    assert_warns(UserWarning, nb.fit, X, y)
     prob = np.array([[1, 0], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     nb = MultinomialNB(alpha=0.)
-    nb.fit(X, y)
+    assert_warns(UserWarning, nb.fit, X, y)
     prob = np.array([[2./3, 1./3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test for alpha < 0
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
+    expected_msg = ('Smoothing parameter alpha = -1.000000e-01. '
+                    'alpha must be >= 0!')
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
-    assert_raises(ValueError, b_nb.fit, X, y)
-    assert_raises(ValueError, m_nb.fit, X, y)
+    assert_raise_message(ValueError, expected_msg, b_nb.fit, X, y)
+    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
 
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
-    assert_raises(ValueError, b_nb.partial_fit, X, y)
-    assert_raises(ValueError, m_nb.partial_fit, X, y, classes=[0, 1])
+    assert_raise_message(ValueError, expected_msg, b_nb.partial_fit,
+                         X, y, classes=[0, 1])
+    assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
+                         X, y, classes=[0, 1])
