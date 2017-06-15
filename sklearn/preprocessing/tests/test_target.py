@@ -25,9 +25,9 @@ def test_transform_target_regressor_error():
     regr = TransformTargetRegressor(regressor=LinearRegression(),
                                     transformer=StandardScaler(),
                                     func=np.exp, inverse_func=np.log)
-    assert_raises_regex(ValueError, "Both 'transformer' and functions"
-                        " 'func'/'inverse_func' cannot be set at the"
-                        " same time.", regr.fit, X, y)
+    assert_raises_regex(ValueError, "'transformer' and functions"
+                        " 'func'/'inverse_func' cannot both be set.",
+                        regr.fit, X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
     regr = TransformTargetRegressor(regressor=Lasso(),
@@ -83,8 +83,7 @@ def test_transform_target_regressor_friedman():
         assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
         lr = LinearRegression().fit(X, regr.func(y_2d.squeeze()))
         assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
-        assert_array_equal(regr.regressor_.coef_.ravel(),
-                           lr.coef_.ravel())
+        assert_allclose(regr.regressor_.coef_.ravel(), lr.coef_.ravel())
         # StandardScaler support 1d array while MaxAbsScaler support only 2d
         # array
         for transformer in (StandardScaler(), MaxAbsScaler()):
@@ -111,5 +110,5 @@ def test_transform_target_regressor_friedman():
                 y_lr_pred = y_lr_pred.reshape(-1, 1)
             assert_allclose(y_pred, transformer2.inverse_transform(
                 y_lr_pred).squeeze())
-            assert_array_equal(regr.regressor_.coef_.squeeze(),
-                               lr.coef_.squeeze())
+            assert_allclose(regr.regressor_.coef_.squeeze(),
+                            lr.coef_.squeeze())

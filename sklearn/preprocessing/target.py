@@ -80,7 +80,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         Fitted regressor.
 
     transformer_ : object
-        Used transformer in ``fit`` and ``predict``.
+        Transformer used in ``fit`` and ``predict``.
 
     Examples
     --------
@@ -129,8 +129,8 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     def _fit_transformer(self, y):
         if (self.transformer is not None and
                 (self.func is not None or self.inverse_func is not None)):
-            raise ValueError("Both 'transformer' and functions 'func'/"
-                             "'inverse_func' cannot be set at the same time.")
+            raise ValueError("'transformer' and functions 'func'/"
+                             "'inverse_func' cannot both be set.")
         elif self.transformer is not None:
             self.transformer_ = clone(self.transformer)
         else:

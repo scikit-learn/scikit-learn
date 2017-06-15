@@ -16,21 +16,22 @@ prediction, and the transformer that will be applied to the target variable::
 
   >>> import numpy as np
   >>> from sklearn.datasets import load_boston
-  >>> from sklearn import preprocessing
+  >>> from sklearn.preprocessing import (TransformTargetRegressor,
+  ...                                    QuantileTransformer)
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
   >>> boston = load_boston()
   >>> X = boston.data
   >>> y = boston.target
-  >>> transformer = preprocessing.StandardScaler()
+  >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
-  >>> regr = preprocessing.TransformTargetRegressor(regressor=regressor,
+  >>> regr = TransformTargetRegressor(regressor=regressor,
   ...                                               transformer=transformer)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.64
+  R2 score: 0.67
 
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
@@ -43,7 +44,7 @@ functions can be passed, defining the transformation and its inverse mapping::
 
 Subsequently, the object is created as::
 
-  >>> regr = preprocessing.TransformTargetRegressor(regressor=regressor,
+  >>> regr = TransformTargetRegressor(regressor=regressor,
   ...                                               func=func,
   ...                                               inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
@@ -51,13 +52,13 @@ Subsequently, the object is created as::
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: 0.65
 
-By default, the provided function are checked at each fit to be the inverse of
+By default, the provided functions are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
 ``check_inverse`` to ``False``::
 
   >>> def inverse_func(x):
   ...     return x
-  >>> regr = preprocessing.TransformTargetRegressor(regressor=regressor,
+  >>> regr = TransformTargetRegressor(regressor=regressor,
   ...                                               func=func,
   ...                                               inverse_func=inverse_func,
   ...                                               check_inverse=False)
