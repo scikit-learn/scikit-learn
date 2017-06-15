@@ -66,6 +66,17 @@ class ColumnTransformer(FeatureUnion):
            [ 0.5,  0.5,  0. ,  1. ]])
 
     """
+
+    @property
+    def _transformers(self):
+        return [(name, trans) for name, trans, col in self.transformer_list]
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformer_list = [
+            (name, trans, col) for ((name, trans), (_, _, col))
+            in zip(value, self.transformer_list)]
+
     def _iter(self, X=None, skip_none=True):
         """Generate (name, trans, column, weight) tuples
         """

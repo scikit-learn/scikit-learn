@@ -639,6 +639,14 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self.transformer_weights = transformer_weights
         self._validate_transformers()
 
+    @property
+    def _transformers(self):
+        return self.transformer_list
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformer_list[:] = value
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -653,7 +661,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params('transformer_list', deep=deep)
+        return self._get_params('_transformers', deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -664,7 +672,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         -------
         self
         """
-        self._set_params('transformer_list', **kwargs)
+        self._set_params('_transformers', **kwargs)
         return self
 
     def _validate_transformers(self):

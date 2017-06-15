@@ -8,6 +8,8 @@ from scipy import sparse
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import SkipTest
@@ -297,7 +299,7 @@ def test_make_column_transformer():
     assert_equal(columns, (['second'], 'first'))
 
 
-def test_make_union_kwargs():
+def test_make_column_transformer_kwargs():
     scaler = StandardScaler()
     norm = Normalizer()
     ct = make_column_transformer({scaler: 'first', norm: ['second']}, n_jobs=3)
@@ -313,3 +315,37 @@ def test_make_union_kwargs():
         make_column_transformer, {scaler: 'first', norm: ['second']},
         transformer_weights={'pca': 10, 'Transf': 1}
     )
+
+
+def test_column_transformer_get_set_params():
+    ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
+                            ('trans2', StandardScaler(), [1])])
+
+    exp = {'n_jobs': 1,
+           'trans1': ct.transformer_list[0][1],
+           'trans1__copy': True,
+           'trans1__with_mean': True,
+           'trans1__with_std': True,
+           'trans2': ct.transformer_list[1][1],
+           'trans2__copy': True,
+           'trans2__with_mean': True,
+           'trans2__with_std': True,
+           'transformer_list': ct.transformer_list,
+           'transformer_weights': None}
+
+    assert_dict_equal(ct.get_params(), exp)
+
+    ct.set_params(trans1__with_mean=False)
+    assert_false(ct.get_params()['trans1__with_mean'])
+
+    ct.set_params(trans1=None)
+    exp = {'n_jobs': 1,
+           'trans1': None,
+           'trans2': ct.transformer_list[1][1],
+           'trans2__copy': True,
+           'trans2__with_mean': True,
+           'trans2__with_std': True,
+           'transformer_list': ct.transformer_list,
+           'transformer_weights': None}
+
+    assert_dict_equal(ct.get_params(), exp)
