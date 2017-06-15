@@ -1,0 +1,103 @@
+.. currentmodule:: sklearn
+
+.. _changes_0_8:
+
+Version 0.8
+===========
+
+**May 11, 2011**
+
+scikit-learn 0.8 was released on May 2011, one month after the first
+"international" `scikit-learn coding sprint
+<https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
+marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
+:ref:`cross_decomposition`, :ref:`NMF`, initial support for Python 3 and by important
+enhancements and bug fixes.
+
+
+Changelog
+---------
+
+Several new modules where introduced during this release:
+
+  - New :ref:`hierarchical_clustering` module by Vincent Michel,
+    `Bertrand Thirion`_, `Alexandre Gramfort`_ and `Gael Varoquaux`_.
+
+  - :ref:`kernel_pca` implementation by `Mathieu Blondel`_
+
+  - :ref:`labeled_faces_in_the_wild` by `Olivier Grisel`_.
+
+  - New :ref:`cross_decomposition` module by `Edouard Duchesnay`_.
+
+  - :ref:`NMF` module `Vlad Niculae`_
+
+  - Implementation of the :ref:`oracle_approximating_shrinkage` algorithm by
+    :user:`Virgile Fritsch <VirgileFritsch>` in the :ref:`covariance` module.
+
+
+Some other modules benefited from significant improvements or cleanups.
+
+
+  - Initial support for Python 3: builds and imports cleanly,
+    some modules are usable while others have failing tests by `Fabian Pedregosa`_.
+
+  - :class:`decomposition.PCA` is now usable from the Pipeline object by `Olivier Grisel`_.
+
+  - Guide :ref:`performance-howto` by `Olivier Grisel`_.
+
+  - Fixes for memory leaks in libsvm bindings, 64-bit safer BallTree by Lars Buitinck.
+
+  - bug and style fixing in :ref:`k_means` algorithm by Jan Schlüter.
+
+  - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
+
+  - Implemented ``transform``, ``predict_log_proba`` in
+    :class:`discriminant_analysis.LinearDiscriminantAnalysis` By `Mathieu Blondel`_.
+
+  - Refactoring in the :ref:`svm` module and bug fixes by `Fabian Pedregosa`_,
+    `Gael Varoquaux`_ and Amit Aides.
+
+  - Refactored SGD module (removed code duplication, better variable naming),
+    added interface for sample weight by `Peter Prettenhofer`_.
+
+  - Wrapped BallTree with Cython by Thouis (Ray) Jones.
+
+  - Added function :func:`svm.l1_min_c` by Paolo Losi.
+
+  - Typos, doc style, etc. by `Yaroslav Halchenko`_, `Gael Varoquaux`_,
+    `Olivier Grisel`_, Yann Malet, `Nicolas Pinto`_, Lars Buitinck and
+    `Fabian Pedregosa`_.
+
+
+People
+-------
+
+People that made this release possible preceded by number of commits:
+
+
+   - 159  `Olivier Grisel`_
+   - 96  `Gael Varoquaux`_
+   - 96  `Vlad Niculae`_
+   - 94  `Fabian Pedregosa`_
+   - 36  `Alexandre Gramfort`_
+   - 32  Paolo Losi
+   - 31  `Edouard Duchesnay`_
+   - 30  `Mathieu Blondel`_
+   - 25  `Peter Prettenhofer`_
+   - 22  `Nicolas Pinto`_
+   - 11  :user:`Virgile Fritsch <VirgileFritsch>`
+   -  7  Lars Buitinck
+   -  6  Vincent Michel
+   -  5  `Bertrand Thirion`_
+   -  4  Thouis (Ray) Jones
+   -  4  Vincent Schut
+   -  3  Jan Schlüter
+   -  2  Julien Miotte
+   -  2  `Matthieu Perrot`_
+   -  2  Yann Malet
+   -  2  `Yaroslav Halchenko`_
+   -  1  Amit Aides
+   -  1  `Andreas Müller`_
+   -  1  Feth Arezki
+   -  1  Meng Xinfan
+

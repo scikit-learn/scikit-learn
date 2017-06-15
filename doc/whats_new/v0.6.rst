@@ -1,0 +1,102 @@
+.. currentmodule:: sklearn
+
+.. _changes_0_6:
+
+Version 0.6
+===========
+
+**December 21, 2010**
+
+scikit-learn 0.6 was released on December 2010. It is marked by the
+inclusion of several new modules and a general renaming of old
+ones. It is also marked by the inclusion of new example, including
+applications to real-world datasets.
+
+
+Changelog
+---------
+
+  - New `stochastic gradient
+    <http://scikit-learn.org/stable/modules/sgd.html>`_ descent
+    module by Peter Prettenhofer. The module comes with complete
+    documentation and examples.
+
+  - Improved svm module: memory consumption has been reduced by 50%,
+    heuristic to automatically set class weights, possibility to
+    assign weights to samples (see
+    :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py` for an example).
+
+  - New :ref:`gaussian_process` module by Vincent Dubourg. This module
+    also has great documentation and some very neat examples. See
+    example_gaussian_process_plot_gp_regression.py or
+    example_gaussian_process_plot_gp_probabilistic_classification_after_regression.py
+    for a taste of what can be done.
+
+  - It is now possible to use liblinear’s Multi-class SVC (option
+    multi_class in :class:`svm.LinearSVC`)
+
+  - New features and performance improvements of text feature
+    extraction.
+
+  - Improved sparse matrix support, both in main classes
+    (:class:`grid_search.GridSearchCV`) as in modules
+    sklearn.svm.sparse and sklearn.linear_model.sparse.
+
+  - Lots of cool new examples and a new section that uses real-world
+    datasets was created. These include:
+    :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
+    :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
+    :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
+    others.
+
+  - Faster :ref:`least_angle_regression` algorithm. It is now 2x
+    faster than the R version on worst case and up to 10x times faster
+    on some cases.
+
+  - Faster coordinate descent algorithm. In particular, the full path
+    version of lasso (:func:`linear_model.lasso_path`) is more than
+    200x times faster than before.
+
+  - It is now possible to get probability estimates from a
+    :class:`linear_model.LogisticRegression` model.
+
+  - module renaming: the glm module has been renamed to linear_model,
+    the gmm module has been included into the more general mixture
+    model and the sgd module has been included in linear_model.
+
+  - Lots of bug fixes and documentation improvements.
+
+
+People
+------
+
+People that made this release possible preceded by number of commits:
+
+   * 207  `Olivier Grisel`_
+
+   * 167 `Fabian Pedregosa`_
+
+   * 97 `Peter Prettenhofer`_
+
+   * 68 `Alexandre Gramfort`_
+
+   * 59  `Mathieu Blondel`_
+
+   * 55  `Gael Varoquaux`_
+
+   * 33  Vincent Dubourg
+
+   * 21  `Ron Weiss`_
+
+   * 9  Bertrand Thirion
+
+   * 3  `Alexandre Passos`_
+
+   * 3  Anne-Laure Fouque
+
+   * 2  Ronan Amicel
+
+   * 1 `Christian Osendorfer`_
+
+

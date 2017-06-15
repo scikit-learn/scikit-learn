@@ -1,0 +1,118 @@
+.. currentmodule:: sklearn
+
+.. _changes_0_5:
+
+Version 0.5
+===========
+
+**October 11, 2010**
+
+Changelog
+---------
+
+New classes
+-----------
+
+    - Support for sparse matrices in some classifiers of modules
+      ``svm`` and ``linear_model`` (see :class:`svm.sparse.SVC`,
+      :class:`svm.sparse.SVR`, :class:`svm.sparse.LinearSVC`,
+      :class:`linear_model.sparse.Lasso`, :class:`linear_model.sparse.ElasticNet`)
+
+    - New :class:`pipeline.Pipeline` object to compose different estimators.
+
+    - Recursive Feature Elimination routines in module
+      :ref:`feature_selection`.
+
+    - Addition of various classes capable of cross validation in the
+      linear_model module (:class:`linear_model.LassoCV`, :class:`linear_model.ElasticNetCV`,
+      etc.).
+
+    - New, more efficient LARS algorithm implementation. The Lasso
+      variant of the algorithm is also implemented. See
+      :class:`linear_model.lars_path`, :class:`linear_model.Lars` and
+      :class:`linear_model.LassoLars`.
+
+    - New Hidden Markov Models module (see classes
+      :class:`hmm.GaussianHMM`, :class:`hmm.MultinomialHMM`,
+      :class:`hmm.GMMHMM`)
+
+    - New module feature_extraction (see :ref:`class reference
+      <feature_extraction_ref>`)
+
+    - New FastICA algorithm in module sklearn.fastica
+
+
+Documentation
+-------------
+
+    - Improved documentation for many modules, now separating
+      narrative documentation from the class reference. As an example,
+      see `documentation for the SVM module
+      <http://scikit-learn.org/stable/modules/svm.html>`_ and the
+      complete `class reference
+      <http://scikit-learn.org/stable/modules/classes.html>`_.
+
+Fixes
+-----
+
+    - API changes: adhere variable names to PEP-8, give more
+      meaningful names.
+
+    - Fixes for svm module to run on a shared memory context
+      (multiprocessing).
+
+    - It is again possible to generate latex (and thus PDF) from the
+      sphinx docs.
+
+Examples
+--------
+
+    - new examples using some of the mlcomp datasets:
+      ``sphx_glr_auto_examples_mlcomp_sparse_document_classification.py`` (since removed) and
+      :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+
+    - Many more examples. `See here
+      <http://scikit-learn.org/stable/auto_examples/index.html>`_
+      the full list of examples.
+
+
+External dependencies
+---------------------
+
+    - Joblib is now a dependency of this package, although it is
+      shipped with (sklearn.externals.joblib).
+
+Removed modules
+---------------
+
+    - Module ann (Artificial Neural Networks) has been removed from
+      the distribution. Users wanting this sort of algorithms should
+      take a look into pybrain.
+
+Misc
+----
+
+    - New sphinx theme for the web page.
+
+
+Authors
+-------
+
+The following is a list of authors for this release, preceded by
+number of commits:
+
+     * 262  Fabian Pedregosa
+     * 240  Gael Varoquaux
+     * 149  Alexandre Gramfort
+     * 116  Olivier Grisel
+     *  40  Vincent Michel
+     *  38  Ron Weiss
+     *  23  Matthieu Perrot
+     *  10  Bertrand Thirion
+     *   7  Yaroslav Halchenko
+     *   9  VirgileFritsch
+     *   6  Edouard Duchesnay
+     *   4  Mathieu Blondel
+     *   1  Ariel Rokem
+     *   1  Matthieu Brucher
+

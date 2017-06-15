@@ -1,0 +1,141 @@
+.. currentmodule:: sklearn
+
+.. _changes_0_18_1:
+
+Version 0.18.1
+==============
+
+**November 11, 2016**
+
+.. topic:: Last release with Python 2.6 support
+
+    Scikit-learn 0.18 is the last major release of scikit-learn to support Python 2.6.
+    Later versions of scikit-learn will require Python 2.7 or above.
+
+
+Changelog
+---------
+
+Enhancements
+............
+
+   - Improved ``sample_without_replacement`` speed by utilizing
+     numpy.random.permutation for most cases. As a result,
+     samples may differ in this release for a fixed random state.
+     Affected estimators:
+
+     - :class:`ensemble.BaggingClassifier`
+     - :class:`ensemble.BaggingRegressor`
+     - :class:`linear_model.RANSACRegressor`
+     - :class:`model_selection.RandomizedSearchCV`
+     - :class:`random_projection.SparseRandomProjection`
+
+     This also affects the :meth:`datasets.make_classification`
+     method.
+
+Bug fixes
+.........
+
+   - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
+     parameters were not being utilised by :class:`manifold.TSNE`.
+     :issue:`6497` by :user:`Sebastian Säger <ssaeger>`
+
+   - Fix bug for svm's decision values when ``decision_function_shape``
+     is ``ovr`` in :class:`svm.SVC`.
+     :class:`svm.SVC`'s decision_function was incorrect from versions
+     0.17.0 through 0.18.0.
+     :issue:`7724` by `Bing Tian Dai`_
+
+   - Attribute ``explained_variance_ratio`` of
+     :class:`discriminant_analysis.LinearDiscriminantAnalysis` calculated
+     with SVD and Eigen solver are now of the same length. :issue:`7632`
+     by :user:`JPFrancoia <JPFrancoia>`
+
+   - Fixes issue in :ref:`univariate_feature_selection` where score
+     functions were not accepting multi-label targets. :issue:`7676`
+     by :user:`Mohammed Affan <affanv14>`
+
+   - Fixed setting parameters when calling ``fit`` multiple times on
+     :class:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
+
+   - Fixes issue in ``partial_fit`` method of
+     :class:`multiclass.OneVsRestClassifier` when number of classes used in
+     ``partial_fit`` was less than the total number of classes in the
+     data. :issue:`7786` by `Srivatsan Ramesh`_
+
+   - Fixes issue in :class:`calibration.CalibratedClassifierCV` where
+     the sum of probabilities of each class for a data was not 1, and
+     ``CalibratedClassifierCV`` now handles the case where the training set
+     has less number of classes than the total data. :issue:`7799` by
+     `Srivatsan Ramesh`_
+
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
+   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
+     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. :issue:`7301`
+     by :user:`Nelson Liu <nelson-liu>`.
+
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
+
+   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
+     attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
+     Krivich <kiote>`.
+
+   - :class:`sklearn.linear_model.LogisticRegressionCV` now correctly handles
+     string labels. :issue:`5874` by `Raghav RV`_.
+
+   - Fixed a bug where :func:`sklearn.model_selection.train_test_split` raised
+     an error when ``stratify`` is a list of string labels. :issue:`7593` by
+     `Raghav RV`_.
+
+   - Fixed a bug where :class:`sklearn.model_selection.GridSearchCV` and
+     :class:`sklearn.model_selection.RandomizedSearchCV` were not pickleable
+     because of a pickling bug in ``np.ma.MaskedArray``. :issue:`7594` by
+     `Raghav RV`_.
+
+   - All cross-validation utilities in :mod:`sklearn.model_selection` now
+     permit one time cross-validation splitters for the ``cv`` parameter. Also
+     non-deterministic cross-validation splitters (where multiple calls to
+     ``split`` produce dissimilar splits) can be used as ``cv`` parameter.
+     The :class:`sklearn.model_selection.GridSearchCV` will cross-validate each
+     parameter setting on the split produced by the first ``split`` call
+     to the cross-validation splitter.  :issue:`7660` by `Raghav RV`_.
+
+API changes summary
+-------------------
+
+Trees and forests
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. :issue:`7301` by :user:`Nelson
+     Liu <nelson-liu>`.
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe.
+     :issue:`7680` by :user:`Ibraim Ganiev <olologin>`.
+
+
+Linear, kernelized and related models
+
+   - Length of ``explained_variance_ratio`` of
+     :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+     changed for both Eigen and SVD solvers. The attribute has now a length
+     of min(n_components, n_classes - 1). :issue:`7632`
+     by :user:`JPFrancoia <JPFrancoia>`
+
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     ``n_features > n_samples``. :issue:`6178` by `Bertrand Thirion`_
+

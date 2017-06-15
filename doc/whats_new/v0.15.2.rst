@@ -1,0 +1,48 @@
+.. currentmodule:: sklearn
+
+.. _changes_0_15_2:
+
+Version 0.15.2
+==============
+
+**September 4, 2014**
+
+Bug fixes
+---------
+
+  - Fixed handling of the ``p`` parameter of the Minkowski distance that was
+    previously ignored in nearest neighbors models. By :user:`Nikolay
+    Mayorov <nmayorov>`.
+
+  - Fixed duplicated alphas in :class:`linear_model.LassoLars` with early
+    stopping on 32 bit Python. By `Olivier Grisel`_ and `Fabian Pedregosa`_.
+
+  - Fixed the build under Windows when scikit-learn is built with MSVC while
+    NumPy is built with MinGW. By `Olivier Grisel`_ and :user:`Federico
+    Vaggi <FedericoV>`.
+
+  - Fixed an array index overflow bug in the coordinate descent solver. By
+    `Gael Varoquaux`_.
+
+  - Better handling of numpy 1.9 deprecation warnings. By `Gael Varoquaux`_.
+
+  - Removed unnecessary data copy in :class:`cluster.KMeans`.
+    By `Gael Varoquaux`_.
+
+  - Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
+    By Calvin Giles.
+
+  - The ``transform`` of :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+    now projects the input on the most discriminant directions. By Martin Billinger.
+
+  - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
+
+  - Performance optimization in :class:`isotonic.IsotonicRegression`.
+    By Robert Bradshaw.
+
+  - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
+    running the tests. By `Joel Nothman`_.
+
+  - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
+    :user:`Matt Pico <MattpSoftware>`, and others.
+
