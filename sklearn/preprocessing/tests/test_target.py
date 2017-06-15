@@ -2,7 +2,6 @@ import numpy as np
 
 from sklearn.base import clone
 
-from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
