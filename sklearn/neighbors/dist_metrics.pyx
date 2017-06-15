@@ -1095,19 +1095,16 @@ cdef class PyFuncDistance(DistanceMetric):
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1 with gil:
-        cdef np.ndarray x1arr
-        cdef np.ndarray x2arr
-        with gil:
-            x1arr = _buffer_to_ndarray(x1, size)
-            x2arr = _buffer_to_ndarray(x2, size)
-            d = self.func(x1arr, x2arr, **self.kwargs)
-            try:
-                # Cython generates code here that results in a TypeError
-                # if d is the wrong type.
-                return d
-            except TypeError:
-                raise TypeError("Custom distance function must accept two "
-                                "vectors and return a float.")
+        cdef np.ndarray x1arr = _buffer_to_ndarray(x1, size)
+        cdef np.ndarray x2arr = _buffer_to_ndarray(x2, size)
+        d = self.func(x1arr, x2arr, **self.kwargs)
+        try:
+            # Cython generates code here that results in a TypeError
+            # if d is the wrong type.
+            return d
+        except TypeError:
+            raise TypeError("Custom distance function must accept two "
+                            "vectors and return a float.")
             
 
 
