@@ -257,7 +257,6 @@ Bug fixes
      failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and 
      :user:`Herilalaina Rakotoarison <herilalaina>`.
 
-   - Fixed a bug where :func:`sklearn.datasets.make_moons` gives an
    - Fixed a bug where :func:`datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
