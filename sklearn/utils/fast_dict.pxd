@@ -10,10 +10,8 @@ from libcpp.map cimport map as cpp_map
 # Import the C-level symbols of numpy
 cimport numpy as np
 
-DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
 
 ###############################################################################
