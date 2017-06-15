@@ -174,8 +174,10 @@ def test_spectral_clustering_solvers():
     # Based on toy example from plot_segmentation_toy.py
 
     try:
-        # Optional package pyamg needs to be installed for this test to run
+        # Testing amg solver requires optional package pyamg
         from pyamg import smoothed_aggregation_solver
+        # Silence unused import warning
+        smoothed_aggregation_solver
         amg_loaded = True
     except ImportError:
         amg_loaded = False
