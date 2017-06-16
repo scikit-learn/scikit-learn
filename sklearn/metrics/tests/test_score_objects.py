@@ -225,10 +225,10 @@ def test_check_scoring_and_check_multimetric_scoring():
 
         if 'acc' in scoring:
             assert_almost_equal(scorers['acc'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 2./3.)
+                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
         if 'accuracy' in scoring:
             assert_almost_equal(scorers['accuracy'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 2./3.)
+                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
         if 'precision' in scoring:
             assert_almost_equal(scorers['precision'](
                 estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)

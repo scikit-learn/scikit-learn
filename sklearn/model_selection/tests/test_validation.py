@@ -331,7 +331,7 @@ def test_cross_validate_multiple_metric():
     reg = Ridge(random_state=0)
 
     # Compute train and test mse/r2 scores
-    cv=KFold(n_splits=5)
+    cv = KFold(n_splits=5)
     mse_scorer = check_scoring(reg, 'neg_mean_squared_error')
     r2_scorer = check_scoring(reg, 'r2')
     train_mse_scores = []
@@ -369,7 +369,7 @@ def test_cross_validate_multiple_metric():
     for return_train_score in (True, False):
         for scoring in all_scoring:
             cv_results = cross_validate(reg, X, y, cv=5, scoring=scoring,
-                                         return_train_score=return_train_score)
+                                        return_train_score=return_train_score)
             assert_true(isinstance(cv_results, dict))
             assert_equal(set(cv_results.keys()),
                          keys_with_train if return_train_score
