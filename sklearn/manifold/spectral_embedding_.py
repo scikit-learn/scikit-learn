@@ -16,7 +16,6 @@ from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils.graph import graph_laplacian
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -235,8 +234,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
 
-    laplacian, dd = graph_laplacian(adjacency,
-                                    normed=norm_laplacian, return_diag=True)
+    laplacian, dd = sparse.csgraph.laplacian(adjacency, normed=norm_laplacian,
+                                             return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes

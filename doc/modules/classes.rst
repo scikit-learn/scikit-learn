@@ -821,6 +821,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.dcg_score
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -828,6 +829,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -1059,7 +1061,6 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.NearestCentroid
    neighbors.BallTree
    neighbors.KDTree
-   neighbors.LSHForest
    neighbors.DistanceMetric
    neighbors.KernelDensity
    neighbors.LocalOutlierFactor
@@ -1198,6 +1199,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.PolynomialFeatures
+   preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
 
@@ -1211,6 +1213,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.maxabs_scale
    preprocessing.minmax_scale
    preprocessing.normalize
+   preprocessing.quantile_transform
    preprocessing.robust_scale
    preprocessing.scale
 

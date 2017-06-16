@@ -726,7 +726,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         return X
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply dimensionality reduction on X.
 
         X is projected on the first principal components previous extracted
