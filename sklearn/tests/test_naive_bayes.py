@@ -572,7 +572,7 @@ def test_alpha():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
     expected_msg = ('Smoothing parameter alpha = -1.0e-01. '
-                    'alpha must be >= 0!')
+                    'alpha should be > 0.')
     b_nb = BernoulliNB(alpha=-0.1)
     m_nb = MultinomialNB(alpha=-0.1)
     assert_raise_message(ValueError, expected_msg, b_nb.fit, X, y)
