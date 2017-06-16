@@ -18,7 +18,7 @@ License: BSD 3 clause
 """
 
 # name, c_type, np_type
-dtypes = [('', 'double', 'np.float64'),
+dtypes = [('64', 'double', 'np.float64'),
           ('32', 'float', 'np.float32')]
 
 def get_dispatch(dtypes):

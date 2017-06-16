@@ -14,7 +14,7 @@ from libc.time cimport time, time_t
 
 from .sgd_fast cimport LossFunction
 from .sgd_fast cimport Log, SquaredLoss
-from ..utils.seq_dataset cimport SequentialDataset
+from ..utils.seq_dataset cimport SequentialDataset64
 
 from libc.stdio cimport printf
 
@@ -155,7 +155,7 @@ cdef inline double _soft_thresholding(double x, double shrinkage) nogil:
     return fmax(x - shrinkage, 0) - fmax(- x - shrinkage, 0)
 
 
-def sag(SequentialDataset dataset,
+def sag(SequentialDataset64 dataset,
         np.ndarray[double, ndim=2, mode='c'] weights_array,
         np.ndarray[double, ndim=1, mode='c'] intercept_array,
         int n_samples,

@@ -6,7 +6,9 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 
-from sklearn.utils.seq_dataset import ArrayDataset, CSRDataset, ArrayDataset32
+from sklearn.utils.seq_dataset import ArrayDataset64 as ArrayDataset
+from sklearn.utils.seq_dataset import CSRDataset64 as CSRDataset
+from sklearn.utils.seq_dataset import ArrayDataset32
 
 from sklearn.datasets import load_iris
 

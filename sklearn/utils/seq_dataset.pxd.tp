@@ -13,7 +13,7 @@ between double braces are substituted in setup.py.
 """
 
 # name, c_type
-dtypes = [('', 'double'),
+dtypes = [('64', 'double'),
           ('32', 'float')]
 
 def get_dispatch(dtypes):

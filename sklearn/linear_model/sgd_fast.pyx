@@ -21,7 +21,7 @@ cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset
+from sklearn.utils.seq_dataset cimport SequentialDataset64
 
 np.import_array()
 
@@ -334,7 +334,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int penalty_type,
               double alpha, double C,
               double l1_ratio,
-              SequentialDataset dataset,
+              SequentialDataset64 dataset,
               int n_iter, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
@@ -361,8 +361,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-    dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+    dataset : SequentialDataset64
+        A concrete ``SequentialDataset64`` object.
     n_iter : int
         The number of iterations (epochs).
     fit_intercept : int
@@ -429,7 +429,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 int penalty_type,
                 double alpha, double C,
                 double l1_ratio,
-                SequentialDataset dataset,
+                SequentialDataset64 dataset,
                 int n_iter, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
                 double weight_pos, double weight_neg,
@@ -461,8 +461,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
-    dataset : SequentialDataset
-        A concrete ``SequentialDataset`` object.
+    dataset : SequentialDataset64
+        A concrete ``SequentialDataset64`` object.
     n_iter : int
         The number of iterations (epochs).
     fit_intercept : int
@@ -534,7 +534,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                int penalty_type,
                double alpha, double C,
                double l1_ratio,
-               SequentialDataset dataset,
+               SequentialDataset64 dataset,
                int n_iter, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
                double weight_pos, double weight_neg,
