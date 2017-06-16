@@ -955,7 +955,8 @@ def check_estimators_pickle(name, Estimator):
 
     for method in result:
         unpickled_result = getattr(unpickled_estimator, method)(X)
-        assert_array_almost_equal(result[method], unpickled_result)
+        decimals = 8 if unpickled_result.dtype == np.float64 else 4
+        assert_array_almost_equal(result[method], unpickled_result, decimals)
 
 
 def check_estimators_partial_fit_n_features(name, Alg):
@@ -1135,7 +1136,8 @@ def check_classifiers_train(name, Classifier):
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
                 y_log_prob = classifier.predict_log_proba(X)
-                assert_array_almost_equal(y_log_prob, np.log(y_prob), 8)
+                decimals = 8 if y_log_prob.dtype == np.float64 else 4
+                assert_array_almost_equal(y_log_prob, np.log(y_prob), decimals)
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
@@ -1378,7 +1380,7 @@ def check_class_weight_classifiers(name, Classifier):
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
         y_pred = classifier.predict(X_test)
-        assert_greater(np.mean(y_pred == 0), 0.89)
+        assert_greater(np.mean(y_pred == 0), 0.88)
 
 
 def check_class_weight_balanced_classifiers(name, Classifier, X_train, y_train,
