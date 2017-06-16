@@ -45,38 +45,29 @@ def test_column_transformer():
     X_res_first2D = X_res_first1D.reshape(-1, 1)
     X_res_both = X_array
 
-    # scalar
-    ct = ColumnTransformer([('trans', Trans(), 0)])
-    assert_array_equal(ct.fit_transform(X_array), X_res_first1D)
-    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first1D)
+    cases = [
+        # single column 1D / 2D
+        (0, X_res_first1D),
+        ([0], X_res_first2D),
+        # list-like
+        ([0, 1], X_res_both),
+        (np.array([0, 1]), X_res_both),
+        # slice
+        (slice(0, 1), X_res_first2D),
+        (slice(0, 2), X_res_both),
+        # boolean mask
+        (np.array([True, False]), X_res_first2D),
+    ]
 
-    ct = ColumnTransformer([('trans', Trans(), [0])])
-    assert_array_equal(ct.fit_transform(X_array), X_res_first2D)
-    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first2D)
-
-    # list
-    ct = ColumnTransformer([('trans', Trans(), [0, 1])])
-    assert_array_equal(ct.fit_transform(X_array), X_res_both)
-    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    for selection, res in cases:
+        ct = ColumnTransformer([('trans', Trans(), selection)])
+        assert_array_equal(ct.fit_transform(X_array), res)
+        assert_array_equal(ct.fit(X_array).transform(X_array), res)
 
     ct = ColumnTransformer([('trans1', Trans(), [0]),
                             ('trans2', Trans(), [1])])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
-
-    # slice
-    ct = ColumnTransformer([('trans', Trans(), slice(0, 1))])
-    assert_array_equal(ct.fit_transform(X_array), X_res_first2D)
-    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first2D)
-
-    ct = ColumnTransformer([('trans', Trans(), slice(0, 2))])
-    assert_array_equal(ct.fit_transform(X_array), X_res_both)
-    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
-
-    # boolean mask
-    ct = ColumnTransformer([('trans', Trans(), np.array([True, False]))])
-    assert_array_equal(ct.fit_transform(X_array), X_res_first2D)
-    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first2D)
 
     # test with transformer_weights
     transformer_weights = {'trans1': .1, 'trans2': 10}
@@ -108,45 +99,41 @@ def test_column_transformer_dataframe():
     X_res_first2D = X_res_first1D.reshape(-1, 1)
     X_res_both = X_array
 
-    # String keys: label based
+    cases = [
+        # String keys: label based
 
-    # scalar
-    ct = ColumnTransformer([('trans', Trans(), 'first')])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first1D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first1D)
+        # scalar
+        ('first', X_res_first1D),
+        # list
+        (['first'], X_res_first2D),
+        (['first', 'second'], X_res_both),
+        # slice
+        (slice('first', 'second'), X_res_both),
 
-    # list
-    ct = ColumnTransformer([('trans', Trans(), ['first'])])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first2D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first2D)
+        # int keys: positional
 
-    ct = ColumnTransformer([('trans', Trans(), ['first', 'second'])])
-    assert_array_equal(ct.fit_transform(X_df), X_res_both)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
+        # scalar
+        (0, X_res_first1D),
+        # list
+        ([0], X_res_first2D),
+        ([0, 1], X_res_both),
+        (np.array([0, 1]), X_res_both),
+        # slice
+        (slice(0, 1), X_res_first2D),
+        (slice(0, 2), X_res_both),
+
+        # boolean mask
+        (np.array([True, False]), X_res_first2D),
+        (pd.Series([True, False], index=['first', 'second']), X_res_first2D),
+    ]
+
+    for selection, res in cases:
+        ct = ColumnTransformer([('trans', Trans(), selection)])
+        assert_array_equal(ct.fit_transform(X_df), res)
+        assert_array_equal(ct.fit(X_df).transform(X_df), res)
 
     ct = ColumnTransformer([('trans1', Trans(), ['first']),
                             ('trans2', Trans(), ['second'])])
-    assert_array_equal(ct.fit_transform(X_df), X_res_both)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
-
-    # slice
-    ct = ColumnTransformer([('trans', Trans(), slice('first', 'second'))])
-    assert_array_equal(ct.fit_transform(X_df), X_res_both)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
-
-    # int keys: positional
-
-    # scalar
-    ct = ColumnTransformer([('trans', Trans(), 0)])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first1D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first1D)
-
-    # list
-    ct = ColumnTransformer([('trans', Trans(), [0])])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first2D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first2D)
-
-    ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
 
@@ -154,25 +141,6 @@ def test_column_transformer_dataframe():
                             ('trans2', Trans(), [1])])
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
-
-    # slice
-    ct = ColumnTransformer([('trans', Trans(), slice(0, 1))])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first2D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first2D)
-
-    ct = ColumnTransformer([('trans', Trans(), slice(0, 2))])
-    assert_array_equal(ct.fit_transform(X_df), X_res_both)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
-
-    # boolean mask
-    ct = ColumnTransformer([('trans', Trans(), np.array([True, False]))])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first2D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first2D)
-
-    s_mask = pd.Series([True, False], index=['first', 'second'])
-    ct = ColumnTransformer([('trans', Trans(), s_mask)])
-    assert_array_equal(ct.fit_transform(X_df), X_res_first2D)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first2D)
 
     # test with transformer_weights
     transformer_weights = {'trans1': .1, 'trans2': 10}

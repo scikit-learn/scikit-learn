@@ -117,7 +117,8 @@ Often it is easiest to preprocess data before applying scikit-learn methods,
 for example using `pandas <http://pandas.pydata.org/>`__.
 The :class:`~sklearn.experimental.ColumnTransformer` is a convenient way to perform heterogeneous
 preprocessing on data columns within a scikit-learn pipeline (for example,
-when you want to adjust preprocessing parameters within a grid search).
+when you want to adjust preprocessing parameters within a grid search or to
+avoid leaking statistics from test data to training data).
 The :class:`~sklearn.experimental.ColumnTransformer` works on arrays, sparse matrices
 and pandas dataframes.
 
@@ -164,9 +165,10 @@ In the above example, the ``CountVectorizer`` expects a 1D array as input and
 therefore the columns were specified as a scalar (``'city'``). Other transformers
 can expect 2D data, and in that case you need to specify the column as a list (``['city']``).
 
-Next to a scalar or a single item list, the column selection can be specified
-as a list of multiple items, a slice or a boolean mask. For more details, see
-the :class:`~sklearn.experimental.ColumnTransformer` docstring.
+Apart from a scalar or a single item list, the column selection can be specified
+as a list of multiple items, an integer array, a slice or a boolean mask.
+Strings can reference columns if the input is a DataFrame, integers are alway
+interpreted as the positional columns.
 
 .. topic:: Examples:
 

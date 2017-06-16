@@ -22,13 +22,15 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
 
 
 class ColumnTransformer(FeatureUnion):
-    """Applies transformers to columns of an array or pandas DataFrame
-    (EXPERIMENTAL).
+    """Applies transformers to columns of an array or pandas DataFrame.
 
-    This estimator applies transformer objects to columns of the input,
-    then concatenates the results. This is useful for heterogeneous or
-    columnar data, to combine several feature extraction mechanisms into a
-    single transformer.
+    EXPERIMENTAL
+
+    This estimator allows different columns or column subsets of the input
+    to be transformed separately and the results combined into a single
+    feature space.
+    This is useful for heterogeneous or columnar data, to combine several
+    feature extraction mechanisms into a single transformer.
 
     Read more in the :ref:`User Guide <column_transformer>`.
 
@@ -36,14 +38,14 @@ class ColumnTransformer(FeatureUnion):
     ----------
     transformer_list : list of tuples
         List of (name, transformer, column) tuples specifying the transformer
-        objects to be applied to subsets of the data. The columns can be
-        specified as a scalar or slice/list (for multiple columns) of integer
-        or string values, or a boolean mask. Integers are interpreted as the
-        positional columns, strings as the column labels of `X`.
+        objects to be applied to subsets of the data.
+        Specifying the column as a scalar will pass a 1d array or pandas Series
+        to the transformer. Specifying the columns as a list, int array, slice
+        or boolean mask will pass a 2d array or DataFrame. Strings can
+        reference columns if the input is a DataFrame, integers are always
+        interpreted as the positional columns.
         When passing a single column to a transformer that expects 2D input
         data, the column should be specified a list of one element.
-        Subselections of a pandas DataFrames are passed through to the
-        the transformers as pandas objects.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -81,7 +83,8 @@ class ColumnTransformer(FeatureUnion):
         """Generate (name, trans, column, weight) tuples
         """
         get_weight = (self.transformer_weights or {}).get
-        return ((name, trans, _get_column(X, column), get_weight(name))
+        return ((name, trans, _get_column(X, column) if X is not None else X,
+                 get_weight(name))
                 for name, trans, column in self.transformer_list
                 if not skip_none or trans is not None)
 
@@ -112,7 +115,7 @@ class ColumnTransformer(FeatureUnion):
         try:
             return super(ColumnTransformer, self).fit(X, y=y)
         except ValueError as e:
-            if "Got X with X.ndim=1. Reshape your data" in str(e):
+            if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
                 raise
@@ -141,7 +144,7 @@ class ColumnTransformer(FeatureUnion):
             return super(ColumnTransformer, self).fit_transform(X, y=y,
                                                                 **fit_params)
         except ValueError as e:
-            if "Got X with X.ndim=1. Reshape your data" in str(e):
+            if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
                 raise
@@ -166,10 +169,27 @@ class ColumnTransformer(FeatureUnion):
         try:
             return super(ColumnTransformer, self).transform(X)
         except ValueError as e:
-            if "Got X with X.ndim=1. Reshape your data" in str(e):
+            if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
                 raise
+
+
+def _check_key_type(key, superclass):
+    """
+    Check that scalar, list or slice is of certain type.
+
+    """
+    if isinstance(key, superclass):
+        return True
+    if isinstance(key, slice):
+        return (isinstance(key.start, (superclass, type(None))) and
+                isinstance(key.stop, (superclass, type(None))))
+    if isinstance(key, list):
+        return all(isinstance(x, superclass) for x in key)
+    if hasattr(key, 'dtype'):
+        return key.dtype.kind == 'i'
+    return False
 
 
 def _get_column(X, key):
@@ -192,23 +212,10 @@ def _get_column(X, key):
           can use any hashable object as key).
 
     """
-    if X is None:
-        return X
-
     # check whether we have string column names or integers
-    if (isinstance(key, int)
-            or (isinstance(key, list)
-                and all(isinstance(col, int) for col in key))
-            or (isinstance(key, slice)
-                and isinstance(key.start, (int, type(None)))
-                and isinstance(key.stop, (int, type(None))))):
+    if _check_key_type(key, int):
         column_names = False
-    elif (isinstance(key, six.string_types)
-            or (isinstance(key, list)
-                and all(isinstance(col, six.string_types) for col in key))
-            or (isinstance(key, slice)
-                and isinstance(key.start, (six.string_types, type(None)))
-                and isinstance(key.stop, (six.string_types, type(None))))):
+    elif _check_key_type(key, six.string_types):
         column_names = True
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool):
         # boolean mask
