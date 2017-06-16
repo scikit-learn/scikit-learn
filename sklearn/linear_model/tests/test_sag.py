@@ -8,9 +8,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.linear_model.sag import get_auto_step_size
-from sklearn.linear_model.sag_fast import _multinomial_grad_loss_all_samples
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model.base import make_dataset
 from sklearn.linear_model.logistic import _multinomial_loss_grad
 
 from sklearn.utils.fixes import logsumexp
@@ -21,7 +19,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import compute_class_weight
-from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
 from sklearn.datasets import make_blobs, load_iris
 from sklearn.base import clone
@@ -757,37 +754,6 @@ def test_step_size_alpha_error():
 
     clf2 = Ridge(fit_intercept=fit_intercept, solver='sag', alpha=alpha)
     assert_raise_message(ZeroDivisionError, msg, clf2.fit, X, y)
-
-
-def test_multinomial_loss():
-    # test if the multinomial loss and gradient computations are consistent
-    X, y = iris.data, iris.target.astype(np.float64)
-    n_samples, n_features = X.shape
-    n_classes = len(np.unique(y))
-
-    rng = check_random_state(42)
-    weights = rng.randn(n_features, n_classes)
-    intercept = rng.randn(n_classes)
-    sample_weights = rng.randn(n_samples)
-    np.abs(sample_weights, sample_weights)
-
-    # compute loss and gradient like in multinomial SAG
-    dataset, _ = make_dataset(X, y, sample_weights, random_state=42)
-    loss_1, grad_1 = _multinomial_grad_loss_all_samples(dataset, weights,
-                                                        intercept, n_samples,
-                                                        n_features, n_classes)
-    # compute loss and gradient like in multinomial LogisticRegression
-    lbin = LabelBinarizer()
-    Y_bin = lbin.fit_transform(y)
-    weights_intercept = np.vstack((weights, intercept)).T.ravel()
-    loss_2, grad_2, _ = _multinomial_loss_grad(weights_intercept, X, Y_bin,
-                                               0.0, sample_weights)
-    grad_2 = grad_2.reshape(n_classes, -1)
-    grad_2 = grad_2[:, :-1].T
-
-    # comparison
-    assert_array_almost_equal(grad_1, grad_2)
-    assert_almost_equal(loss_1, loss_2)
 
 
 def test_multinomial_loss_ground_truth():
