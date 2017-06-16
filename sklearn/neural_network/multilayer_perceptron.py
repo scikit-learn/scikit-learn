@@ -762,7 +762,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations.
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
@@ -1136,7 +1139,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations.
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
