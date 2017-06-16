@@ -135,10 +135,10 @@ def test_check_array():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
-    # ensure_2d (False case)
+    # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
-    # ensure_2d (True case)
+    # ensure_2d=True
     assert_raises(ValueError, check_array, [0, 1, 2], ensure_2d=True)
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
