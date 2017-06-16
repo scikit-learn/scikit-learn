@@ -30,7 +30,6 @@ print(__doc__)
 import matplotlib.pyplot as plt
 
 from matplotlib.ticker import NullFormatter
-from mpl_toolkits.mplot3d import Axes3D
 from sklearn import manifold, datasets
 from time import time
 
