@@ -9,9 +9,17 @@ different columns.
 
 
 import numpy as np
+from scipy import sparse
 
+from ..base import clone, TransformerMixin
+from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..pipeline import FeatureUnion, _name_estimators
+from ..pipeline import (
+    _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
+from ..utils import tosequence
+from ..utils.metaestimators import _BaseComposition
+from ..utils.validation import check_is_fitted
+
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
 
@@ -21,7 +29,7 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "item instead of a scalar.")
 
 
-class ColumnTransformer(FeatureUnion):
+class ColumnTransformer(_BaseComposition, TransformerMixin):
     """Applies transformers to columns of an array or pandas DataFrame.
 
     EXPERIMENTAL
@@ -36,7 +44,7 @@ class ColumnTransformer(FeatureUnion):
 
     Parameters
     ----------
-    transformer_list : list of tuples
+    transformers : list of tuples
         List of (name, transformer, column) tuples specifying the transformer
         objects to be applied to subsets of the data.
         Specifying the column as a scalar will pass a 1d array or pandas Series
@@ -54,6 +62,12 @@ class ColumnTransformer(FeatureUnion):
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
+    Attributes
+    ----------
+    transformers_ : list
+        The collection of fitted transformers as tuples of
+        (name, fitted_transformer, column)
+
     Examples
     --------
     >>> from sklearn.experimental import ColumnTransformer
@@ -69,30 +83,107 @@ class ColumnTransformer(FeatureUnion):
 
     """
 
+    def __init__(self, transformers, n_jobs=1, transformer_weights=None):
+        self.transformers = tosequence(transformers)
+        self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
+        self._validate_transformers()
+
     @property
     def _transformers(self):
-        return [(name, trans) for name, trans, col in self.transformer_list]
+        """
+        Internal list of transformer only containing the name and
+        transformers, since BaseComposition expects lists of tuples of len 2
+        """
+        return [(name, trans) for name, trans, col in self.transformers]
 
     @_transformers.setter
     def _transformers(self, value):
-        self.transformer_list = [
+        self.transformers = [
             (name, trans, col) for ((name, trans), (_, _, col))
-            in zip(value, self.transformer_list)]
+            in zip(value, self.transformers)]
 
-    def _iter(self, X=None, skip_none=True):
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        return self._get_params('_transformers', deep=deep)
+
+    def set_params(self, **kwargs):
+        """Set the parameters of this estimator.
+
+        Valid parameter keys can be listed with ``get_params()``.
+
+        Returns
+        -------
+        self
+        """
+        self._set_params('_transformers', **kwargs)
+        return self
+
+    def _iter(self, X=None, skip_none=True, fitted=False):
         """Generate (name, trans, column, weight) tuples
         """
+        if fitted:
+            transformers = self.transformers_
+        else:
+            transformers = self.transformers
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, _get_column(X, column) if X is not None else X,
                  get_weight(name))
-                for name, trans, column in self.transformer_list
+                for name, trans, column in transformers
                 if not skip_none or trans is not None)
 
-    def _update_transformer_list(self, transformers):
+    def _validate_transformers(self):
+        names, transformers, _, _ = zip(*self._iter(skip_none=False))
+
+        # validate names
+        self._validate_names(names)
+
+        # validate estimators
+        for t in transformers:
+            if t is None:
+                continue
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
+                raise TypeError("All estimators should implement fit and "
+                                "transform. '%s' (type %s) doesn't" %
+                                (t, type(t)))
+
+    def get_feature_names(self):
+        """Get feature names from all transformers.
+
+        Returns
+        -------
+        feature_names : list of strings
+            Names of the features produced by transform.
+        """
+        check_is_fitted(self, 'transformers_')
+        feature_names = []
+        for name, trans, _, _ in self._iter(fitted=True):
+            if not hasattr(trans, 'get_feature_names'):
+                raise AttributeError("Transformer %s (type %s) does not "
+                                     "provide get_feature_names."
+                                     % (str(name), type(trans).__name__))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
+        return feature_names
+
+    def _update_fitted_transformers(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [
+        self.transformers_ = [
             (name, None if old is None else next(transformers), column)
-            for name, old, column in self.transformer_list
+            for name, old, column in self.transformers
         ]
 
     def fit(self, X, y=None):
@@ -111,14 +202,20 @@ class ColumnTransformer(FeatureUnion):
         -------
         self : ColumnTransformer
             This estimator
+
         """
+        self._validate_transformers()
         try:
-            return super(ColumnTransformer, self).fit(X, y=y)
+            transformers = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_one_transformer)(clone(trans), X_sel, y)
+                for _, trans, X_sel, _ in self._iter(X=X))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
                 raise
+        self._update_fitted_transformers(transformers)
+        return self
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all transformers, transform the data and concatenate results.
@@ -139,15 +236,30 @@ class ColumnTransformer(FeatureUnion):
             sum of n_components (output dimension) over transformers. If
             one result is a sparse matrix, everything will be converted to
             sparse matrices.
+
         """
+        self._validate_transformers()
         try:
-            return super(ColumnTransformer, self).fit_transform(X, y=y,
-                                                                **fit_params)
+            result = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_transform_one)(clone(trans), weight, X_sel, y,
+                                            **fit_params)
+                for name, trans, X_sel, weight in self._iter(X=X))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
                 raise
+
+        if not result:
+            # All transformers are None
+            return np.zeros((X.shape[0], 0))
+        Xs, transformers = zip(*result)
+        self._update_fitted_transformers(transformers)
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -165,14 +277,27 @@ class ColumnTransformer(FeatureUnion):
             sum of n_components (output dimension) over transformers. If
             one result is a sparse matrix, everything will be converted to
             sparse matrices.
+
         """
+        check_is_fitted(self, 'transformers_')
         try:
-            return super(ColumnTransformer, self).transform(X)
+            Xs = Parallel(n_jobs=self.n_jobs)(
+                delayed(_transform_one)(trans, weight, X_sel)
+                for name, trans, X_sel, weight in self._iter(X=X, fitted=True))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
                 raise
+
+        if not Xs:
+            # All transformers are None
+            return np.zeros((X.shape[0], 0))
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
 
 
 def _check_key_type(key, superclass):
@@ -285,14 +410,13 @@ def make_column_transformer(transformers, **kwargs):
     ...     {StandardScaler(): ['numerical_column'],
     ...      OneHotEncoder(): ['categorical_column']})
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1,
-         transformer_list=[('onehotencoder',
-                            OneHotEncoder(...),
-                            ['categorical_column']),
-                           ('standardscaler',
-                            StandardScaler(...),
-                            ['numerical_column'])],
-         transformer_weights=None)
+    ColumnTransformer(n_jobs=1, transformer_weights=None,
+         transformers=[('onehotencoder',
+                        OneHotEncoder(...),
+                        ['categorical_column']),
+                       ('standardscaler',
+                        StandardScaler(...),
+                        ['numerical_column'])])
 
     """
     n_jobs = kwargs.pop('n_jobs', 1)

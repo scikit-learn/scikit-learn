@@ -237,7 +237,7 @@ def test_column_transformer_error_msg_1D():
             raise ValueError("specific message")
 
     col_trans = ColumnTransformer([('trans', TransRaise(), 0)])
-    for func in [col_trans.fit, col_trans.transform, col_trans.fit_transform]:
+    for func in [col_trans.fit, col_trans.fit_transform]:
         assert_raise_message(ValueError, "specific message", func, X_array)
 
 
@@ -261,7 +261,7 @@ def test_make_column_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
     ct = make_column_transformer({scaler: 'first', norm: ['second']})
-    names, transformers, columns = zip(*ct.transformer_list)
+    names, transformers, columns = zip(*ct.transformers)
     assert_equal(names, ("normalizer", "standardscaler"))
     assert_equal(transformers, (norm, scaler))
     assert_equal(columns, (['second'], 'first'))
@@ -272,9 +272,9 @@ def test_make_column_transformer_kwargs():
     norm = Normalizer()
     ct = make_column_transformer({scaler: 'first', norm: ['second']}, n_jobs=3)
     assert_equal(
-        ct.transformer_list,
+        ct.transformers,
         make_column_transformer({scaler: 'first',
-                                 norm: ['second']}).transformer_list)
+                                 norm: ['second']}).transformers)
     assert_equal(ct.n_jobs, 3)
     # invalid keyword parameters should raise an error message
     assert_raise_message(
@@ -290,15 +290,15 @@ def test_column_transformer_get_set_params():
                             ('trans2', StandardScaler(), [1])])
 
     exp = {'n_jobs': 1,
-           'trans1': ct.transformer_list[0][1],
+           'trans1': ct.transformers[0][1],
            'trans1__copy': True,
            'trans1__with_mean': True,
            'trans1__with_std': True,
-           'trans2': ct.transformer_list[1][1],
+           'trans2': ct.transformers[1][1],
            'trans2__copy': True,
            'trans2__with_mean': True,
            'trans2__with_std': True,
-           'transformer_list': ct.transformer_list,
+           'transformers': ct.transformers,
            'transformer_weights': None}
 
     assert_dict_equal(ct.get_params(), exp)
@@ -309,11 +309,11 @@ def test_column_transformer_get_set_params():
     ct.set_params(trans1=None)
     exp = {'n_jobs': 1,
            'trans1': None,
-           'trans2': ct.transformer_list[1][1],
+           'trans2': ct.transformers[1][1],
            'trans2__copy': True,
            'trans2__with_mean': True,
            'trans2__with_std': True,
-           'transformer_list': ct.transformer_list,
+           'transformers': ct.transformers,
            'transformer_weights': None}
 
     assert_dict_equal(ct.get_params(), exp)

@@ -639,14 +639,6 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self.transformer_weights = transformer_weights
         self._validate_transformers()
 
-    @property
-    def _transformers(self):
-        return self.transformer_list
-
-    @_transformers.setter
-    def _transformers(self, value):
-        self.transformer_list[:] = value
-
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -661,7 +653,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        return self._get_params('_transformers', deep=deep)
+        return self._get_params('transformer_list', deep=deep)
 
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
@@ -672,11 +664,11 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         -------
         self
         """
-        self._set_params('_transformers', **kwargs)
+        self._set_params('transformer_list', **kwargs)
         return self
 
     def _validate_transformers(self):
-        names, transformers, _, _ = zip(*self._iter(skip_none=False))
+        names, transformers = zip(*self.transformer_list)
 
         # validate names
         self._validate_names(names)
@@ -691,14 +683,14 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
 
-    def _iter(self, X=None, skip_none=True):
+    def _iter(self):
         """
-        Generate (name, trans, data, weight) tuples excluding None transformers
+        Generate (name, trans, weight) tuples excluding None transformers
         """
         get_weight = (self.transformer_weights or {}).get
-        return ((name, trans, X, get_weight(name))
+        return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
-                if not skip_none or trans is not None)
+                if trans is not None)
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -709,7 +701,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             Names of the features produced by transform.
         """
         feature_names = []
-        for name, trans, _, _ in self._iter():
+        for name, trans, weight in self._iter():
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
@@ -736,8 +728,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans, X_sel, y)
-            for _, trans, X_sel, _ in self._iter(X=X))
+            delayed(_fit_one_transformer)(trans, X, y)
+            for _, trans, _ in self._iter())
         self._update_transformer_list(transformers)
         return self
 
@@ -760,9 +752,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, X_sel, y,
+            delayed(_fit_transform_one)(trans, weight, X, y,
                                         **fit_params)
-            for name, trans, X_sel, weight in self._iter(X=X))
+            for name, trans, weight in self._iter())
 
         if not result:
             # All transformers are None
@@ -790,8 +782,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, weight, X_sel)
-            for name, trans, X_sel, weight in self._iter(X=X))
+            delayed(_transform_one)(trans, weight, X)
+            for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
