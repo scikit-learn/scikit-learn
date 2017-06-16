@@ -386,9 +386,9 @@ def test_cross_validate_multiple_metric():
             assert type(cv_results['score_time'] == np.ndarray)
 
             # Ensure all the times are within sane limits
-            assert np.all(cv_results['fit_time'] > 0)
+            assert np.all(cv_results['fit_time'] >= 0)
             assert np.all(cv_results['fit_time'] < 10)
-            assert np.all(cv_results['score_time'] > 0)
+            assert np.all(cv_results['score_time'] >= 0)
             assert np.all(cv_results['score_time'] < 10)
 
             if return_train_score:
