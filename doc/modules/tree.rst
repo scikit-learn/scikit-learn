@@ -126,17 +126,17 @@ Using the Iris dataset, we can construct a tree as follows::
 
 Once trained, we can export the tree in `Graphviz
 <http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. Below is an example export of a tree trained on the entire
-iris dataset::
+exporter. If you use the `conda<http://conda.io>`_ the graphviz binaries together 
+with the python library can be installed with 
 
-    >>> with open("iris.dot", 'w') as f:
-    ...     f = tree.export_graphviz(clf, out_file=f)
+    conda install graphviz
+    pip install graphviz 
+   
+Alternatively binaries for graphviz can be downloaded from the graphviz project homepage. 
 
-Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
-supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
+Below is an example graphviz export of the above tree trained on the entire
+iris dataset; the results are saved in an output file `iris.pdf`::
 
-Alternatively, if we have Python module ``graphviz`` installed, we can generate
-a PDF file directly in Python::
 
     >>> import graphviz # doctest: +SKIP
     >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
