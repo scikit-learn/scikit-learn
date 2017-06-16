@@ -465,11 +465,11 @@ class BaseDiscreteNB(BaseNB):
 
     def _check_alpha(self):
         if self.alpha < 0:
-            raise ValueError('Smoothing parameter alpha = %e. '
+            raise ValueError('Smoothing parameter alpha = %.1e. '
                              'alpha must be >= 0!' % self.alpha)
         if self.alpha < _ALPHA_MIN:
             warnings.warn('alpha too small will result in numeric errors, '
-                          'setting alpha = %e' % _ALPHA_MIN)
+                          'setting alpha = %.1e' % _ALPHA_MIN)
             return _ALPHA_MIN
         return self.alpha
 
