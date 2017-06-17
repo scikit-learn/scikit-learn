@@ -995,14 +995,14 @@ def test_algo_auto_metrics():
     Xcsr = csr_matrix(X)
 
     # Metric which don't required any additional parameter
-    unsupported_metric = ['mahalanobis', 'wminkowski', 'seuclidean']
+    _metrics = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
-        if metric not in unsupported_metric:
+        if metric not in _metrics:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(X)
             nn.kneighbors(X)
     for metric in VALID_METRICS_SPARSE['brute']:
-        if metric not in unsupported_metric:
+        if metric not in _metrics:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
             if metric != "precomputed":
