@@ -450,6 +450,12 @@ API changes summary
      :class:`multiclass.OneVsOneClassifier` is now ``(n_samples,)`` to conform
      to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
 
+   - The ``iid`` parameter of :class:`model_selection.GridSearchCV` and
+     :class:`model_selection.RandomizedSearchCV` has been deprecated and will
+     be removed in version 0.21. Future behavior will be the current default
+     behavior (equivalent to ``iid=True``).
+     :issue:`#9085` by :user:`Laurent Direr<ldirer>`.
+
    - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
    - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
