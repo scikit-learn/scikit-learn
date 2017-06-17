@@ -990,32 +990,40 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
-def test_algo_auto_metrics():
+def test_unsupported_metric_for_auto():
+    # Test unsupported metric for 'auto' algorithm
     X = rng.rand(12, 12)
     Xcsr = csr_matrix(X)
 
     # Metric which don't required any additional parameter
     _metrics = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
-        if metric not in _metrics:
+        if metric != 'precomputed' and metric not in _metrics:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(X)
             nn.kneighbors(X)
+        elif metric == 'precomputed':
+            X_precomputed = rng.random_sample((10, 4))
+            Y_precomputed = rng.random_sample((3, 4))
+            DXX = metrics.pairwise_distances(X_precomputed, metric='euclidean')
+            DYX = metrics.pairwise_distances(Y_precomputed, X_precomputed,
+                                             metric='euclidean')
+            nb_p = neighbors.NearestNeighbors(n_neighbors=3)
+            nb_p.fit(DXX)
+            nb_p.kneighbors(DYX)
+
     for metric in VALID_METRICS_SPARSE['brute']:
-        if metric not in _metrics:
+        if metric != 'precomputed' and metric not in _metrics:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
-            if metric != "precomputed":
-                nn.kneighbors(Xcsr)
-            else:
-                nn.kneighbors(X)
+            nn.kneighbors(Xcsr)
 
     # Metric with parameter
     VI = np.dot(X, X.T)
-    metrics = [('seuclidean', dict(V=rng.rand(12))),
-               ('wminkowski', dict(w=rng.rand(12))),
-               ('mahalanobis', dict(VI=VI))]
-    for metric, params in metrics:
+    list_metrics = [('seuclidean', dict(V=rng.rand(12))),
+                    ('wminkowski', dict(w=rng.rand(12))),
+                    ('mahalanobis', dict(VI=VI))]
+    for metric, params in list_metrics:
         nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                         metric=metric,
                                         metric_params=params).fit(X)

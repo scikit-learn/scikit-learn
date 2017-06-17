@@ -425,9 +425,10 @@ and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
 ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
 ``'ball_tree'``. It selects ``'brute'`` if :math:`k < N/2` and the
 ``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of
-``'kd_tree'`` or ``'ball_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the
-same order as the number of training points, and that ``leaf_size`` is
-close to its default value of ``30``.
+``'kd_tree'`` or ``'ball_tree'``. It selects ``'brute'`` if :math:`k >= N/2`.
+This choice is based on the assumption that the number of query points is at
+least the same order as the number of training points, and that ``leaf_size``
+is close to its default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------
