@@ -19,6 +19,7 @@ from sklearn.metrics.pairwise import (pairwise_distances,
                                       PAIRWISE_DISTANCE_FUNCTIONS)
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
+from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -990,19 +991,35 @@ def test_callable_metric():
 
 
 def test_algo_auto_metrics():
-    X = rng.rand(12, 3)
+    X = rng.rand(12, 12)
     Xcsr = csr_matrix(X)
-    Valid_Metrics = dict(dense = ['precomputed', 'sqeuclidean',
-                             'yule', 'cosine', 'correlation'],
-                         sparse=PAIRWISE_DISTANCE_FUNCTIONS.keys())
-    for metric in Valid_Metrics['dense']:
+
+    # Metric which don't required any additional parameter
+    unsupported_metric = ['mahalanobis', 'wminkowski', 'seuclidean']
+    for metric in VALID_METRICS['brute']:
+        if metric not in unsupported_metric:
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(X)
+            nn.kneighbors(X)
+    for metric in VALID_METRICS_SPARSE['brute']:
+        if metric not in unsupported_metric:
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(Xcsr)
+            if metric != "precomputed":
+                nn.kneighbors(Xcsr)
+            else:
+                nn.kneighbors(X)
+
+    # Metric with parameter
+    VI = np.dot(X, X.T)
+    metrics = [('seuclidean', dict(V=rng.rand(12))),
+               ('wminkowski', dict(w=rng.rand(12))),
+               ('mahalanobis', dict(VI=VI))]
+    for metric, params in metrics:
         nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
-                                        metric=metric).fit(X)
-        assert_true(nn._fit_method, 'brute')
-    for metric in Valid_Metrics['sparse']:
-        nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
-                                        metric=metric).fit(Xcsr)
-        assert_true(nn._fit_method, 'brute')
+                                        metric=metric,
+                                        metric_params=params).fit(X)
+        nn.kneighbors(X)
 
 
 def test_metric_params_interface():
