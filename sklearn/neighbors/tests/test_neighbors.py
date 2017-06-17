@@ -990,8 +990,7 @@ def test_callable_metric():
     assert_array_almost_equal(dist1, dist2)
 
 
-def test_unsupported_metric_for_auto():
-    # Test unsupported metric for 'auto' algorithm
+def test_valid_brute_metric_for_auto_algorithm():
     X = rng.rand(12, 12)
     Xcsr = csr_matrix(X)
 
