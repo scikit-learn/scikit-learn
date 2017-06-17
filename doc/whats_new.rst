@@ -743,6 +743,23 @@ Model evaluation and meta-estimators
      ``test_size`` and ``train_size`` parameter will change, such that
      specifying ``train_size`` alone will cause ``test_size`` to be the
      remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
+   - The ``decision_function`` output shape for binary classification in
+     :class:`multiclass.OneVsRestClassifier` and
+     :class:`multiclass.OneVsOneClassifier` is now ``(n_samples,)`` to conform
+     to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
+
+   - The ``iid`` parameter of :class:`model_selection.GridSearchCV` and
+     :class:`model_selection.RandomizedSearchCV` has been deprecated and will
+     be removed in version 0.21. Future behavior will be the current default
+     behavior (equivalent to ``iid=True``).
+     :issue:`#9085` by :user:`Laurent Direr<ldirer>`.
+
+   - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
+
+   - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
+     parameter and sets the ``threshold_`` attribute during the call to
+     ``fit``, and no longer during the call to ``transform```, by `Andreas
+     Müller`_.
 
    - :class:`multiclass.OneVsRestClassifier` now has ``partial_fit``,
      ``decision_function`` and ``predict_proba`` methods only when the
