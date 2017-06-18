@@ -67,7 +67,7 @@ New features
      normalization based on quantiles.
      :issue:`8363` by :user:`Denis Engemann <dengemann>`,
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
-     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
+     :user:`Thierry Guillemot <tguillemot>`, and `Gael Varoquaux`_.
 
    - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
      compute Discounted cumulative gain (DCG) and Normalized discounted
