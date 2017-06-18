@@ -3,7 +3,7 @@
 Large Margin Nearest Neighbor Dimensionality Reduction
 ======================================================
 
-Sample usage of Large Margin Nearest Neighbors for dimensionality reduction.
+Sample usage of Large Margin Nearest Neighbor for dimensionality reduction.
 """
 
 # Author: John Chiotellis <johnyc.code@gmail.com>

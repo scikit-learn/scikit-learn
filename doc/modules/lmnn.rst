@@ -26,14 +26,14 @@ In the beginning of the algorithm each training sample fixes :math:`k`
 target neighbors, namely :math:`k` nearest training samples according to some
 initial - most commonly the Euclidean - metric that share the same label.
 The first goal is to find a metric such that the distances of each sample to
-each target neighbors are minimized.
+its target neighbors are minimized.
 
 The second goal of the algorithm is to create a large margin between the
 farthest target neighbor of each sample and data samples that belong to
 different classes. Data samples from different classes that violate this
 margin are called impostors.
 
-Combined with a nearest neighbors classifier (:class:`lmnn.KNeighborsClassifier`)
+Combined with a nearest neighbors classifier (:class:`classification.KNeighborsClassifier`)
 this method is attractive for classification because it requires no
 modification or extension for multi-class (as opposed to binary) problems
 and only a single parameter (``n_neighbors``) has to be selected by the user
@@ -63,9 +63,9 @@ Dimensionality reduction
 
 :class:`lmnn.LargeMarginNearestNeighbor` can be used to
 perform supervised dimensionality reduction, by projecting the input data to a
-linear subspace consisting of the directions which maximize the separation
-between classes (in a precise sense discussed in the mathematics section
-below).
+linear subspace consisting of the directions which maximize the nearest
+neighbor classification accuracy and therefore the separation between
+clusters of samples of the same class.
 
 This is implemented in :func:`lmnn.LargeMarginNearestNeighbor.transform`.
 The desired dimensionality can be set using the ``n_features_out`` parameter
@@ -98,15 +98,15 @@ that pulls target neighbors together and the push loss that pushes impostors
     \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1]
 
 
-The term in the push loss, namely :math:`[x]_+ = \max(0, x)` is called the
-hingle loss.
+The term inside the sum of the push loss is called the hingle loss and
+the notation amounts to :math:`[x]_+ = \max(0, x)`.
 The parameter :math:`\mu` is a trade-off between penalizing large distances
 between target neighbors and penalizing margin violations. In practice,
 the two terms are weighted equally.
 
 To use this model for classification, we just need to use a nearest neighbors
-classifier (:func:`KNeighborsClassifier`) after we apply the linear
-transformation :math:`L` found by LMNN to the data.
+classifier (:class:`classification.KNeighborsClassifier`) on the data
+transformed by the linear transformation :math:`L` found by LMNN.
 
 The loss function is not convex in :math:`L`, but there is an alternative
 formulation:
