@@ -150,7 +150,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfectly maching labelings have a score of 1 even
+    Perfectly matching labelings have a score of 1 even
 
       >>> from sklearn.metrics.cluster import adjusted_rand_score
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 1])
