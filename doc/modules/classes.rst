@@ -40,6 +40,9 @@ Functions
    :template: function.rst
 
    base.clone
+   config_context
+   set_config
+   get_config
 
 
 .. _cluster_ref:
@@ -818,6 +821,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.dcg_score
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -825,6 +829,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -1056,7 +1061,6 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.NearestCentroid
    neighbors.BallTree
    neighbors.KDTree
-   neighbors.LSHForest
    neighbors.DistanceMetric
    neighbors.KernelDensity
    neighbors.LocalOutlierFactor
@@ -1195,6 +1199,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.PolynomialFeatures
+   preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
 
@@ -1208,6 +1213,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.maxabs_scale
    preprocessing.minmax_scale
    preprocessing.normalize
+   preprocessing.quantile_transform
    preprocessing.robust_scale
    preprocessing.scale
 
@@ -1354,11 +1360,30 @@ Low-level methods
    :toctree: generated/
    :template: function.rst
 
+   utils.assert_all_finite
+   utils.as_float_array
+   utils.check_X_y
+   utils.check_array
+   utils.check_consistent_length
    utils.check_random_state
+   utils.indexable
+   utils.class_weight.compute_class_weight
+   utils.class_weight.compute_sample_weight
    utils.estimator_checks.check_estimator
+   utils.extmath.safe_sparse_dot
    utils.resample
+   utils.safe_indexing
    utils.shuffle
-
+   utils.sparsefuncs.mean_variance_axis
+   utils.sparsefuncs.incr_mean_variance_axis
+   utils.sparsefuncs.inplace_column_scale
+   utils.sparsefuncs.inplace_row_scale
+   utils.sparsefuncs.inplace_swap_row
+   utils.sparsefuncs.inplace_swap_column
+   utils.validation.check_is_fitted
+   utils.validation.check_symmetric
+   utils.validation.column_or_1d
+   utils.validation.has_fit_parameter
 
 Recently deprecated
 ===================

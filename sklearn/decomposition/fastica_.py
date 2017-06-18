@@ -16,7 +16,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six import moves
 from ..utils import check_array, as_float_array, check_random_state
-from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
@@ -74,7 +73,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w /= np.sqrt((w ** 2).sum())
 
         for i in moves.xrange(max_iter):
-            gwtx, g_wtx = g(fast_dot(w.T, X), fun_args)
+            gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
 
@@ -103,12 +102,12 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     del w_init
     p_ = float(X.shape[1])
     for ii in moves.xrange(max_iter):
-        gwtx, g_wtx = g(fast_dot(W, X), fun_args)
-        W1 = _sym_decorrelation(fast_dot(gwtx, X.T) / p_
+        gwtx, g_wtx = g(np.dot(W, X), fun_args)
+        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
-        lim = max(abs(abs(np.diag(fast_dot(W1, W.T))) - 1))
+        lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
             break
@@ -345,7 +344,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if whiten:
         if compute_sources:
-            S = fast_dot(fast_dot(W, K), X).T
+            S = np.dot(np.dot(W, K), X).T
         else:
             S = None
         if return_X_mean:
@@ -361,7 +360,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     else:
         if compute_sources:
-            S = fast_dot(W, X).T
+            S = np.dot(W, X).T
         else:
             S = None
         if return_X_mean:
@@ -551,7 +550,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         if self.whiten:
             X -= self.mean_
 
-        return fast_dot(X, self.components_.T)
+        return np.dot(X, self.components_.T)
 
     def inverse_transform(self, X, copy=True):
         """Transform the sources back to the mixed data (apply mixing matrix).
@@ -571,7 +570,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
-        X = fast_dot(X, self.mixing_.T)
+        X = np.dot(X, self.mixing_.T)
         if self.whiten:
             X += self.mean_
 
