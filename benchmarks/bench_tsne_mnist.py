@@ -17,13 +17,19 @@ import argparse
 from sklearn.externals.joblib import Memory
 from sklearn.datasets import fetch_mldata
 from sklearn.manifold import TSNE
-from sklearn.manifold.t_sne import trustworthiness
+from sklearn.neighbors import NearestNeighbors
 from sklearn.decomposition import PCA
 from sklearn.utils import check_array
 from sklearn.utils import shuffle as _shuffle
 
 
-memory = Memory('mnist_tsne_benchmark_data', mmap_mode='r')
+LOG_DIR = "mnist_tsne_output"
+if not os.path.exists(LOG_DIR):
+    os.mkdir(LOG_DIR)
+
+
+memory = Memory(os.path.join(LOG_DIR, 'mnist_tsne_benchmark_data'),
+                mmap_mode='r')
 
 
 @memory.cache
@@ -41,6 +47,20 @@ def load_data(dtype=np.float32, order='C', shuffle=True, seed=0):
     # Normalize features
     X /= 255
     return X, y
+
+
+def precision_at_k(X, X_embedded, k=5):
+    """Compute the precision at k for the dataset.
+    """
+
+    knn = NearestNeighbors(n_neighbors=k, n_jobs=-1)
+    _, neighbors_X = knn.fit(X).kneighbors()
+    _, neighbors_X_embedded = knn.fit(X_embedded).kneighbors()
+
+    precisions = [len(np.intersect1d(X_n, Xe_n)) / k
+                  for X_n, Xe_n in zip(neighbors_X, neighbors_X_embedded)]
+
+    return np.mean(precisions)
 
 
 def tsne_fit_transform(model, data):
@@ -83,7 +103,7 @@ if __name__ == "__main__":
     # Put TSNE in methods
     if isinstance(args.n_jobs, int):
         tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
-                    verbose=args.verbose, n_jobs=args.n_jobs)
+                    verbose=args.verbose, n_jobs=args.n_jobs, n_iter=1000)
         methods += [("sklearn TSNE",
                      lambda data: tsne_fit_transform(tsne, data))]
     elif isinstance(args.n_jobs, list):
@@ -133,21 +153,23 @@ $ cd ..
 
     results = []
     basename, _ = os.path.splitext(__file__)
-    log_filename = basename + '.json'
+    log_filename = os.path.join(LOG_DIR, basename + '.json')
     for n in data_size:
         X_train = X[:n]
         n = X_train.shape[0]
         for name, method in methods:
             print("Fitting {} on {} samples...".format(name, n))
             t0 = time()
+            np.save("dump_X.npy", X_train)
             X_embedded, n_iter = method(X_train)
             duration = time() - t0
-            tw = trustworthiness(X_train, X_embedded)
+            precision_5 = precision_at_k(X_train, X_embedded, k=5)
             print("Fitting {} on {} samples took {:.3f}s in {:d} iterations, "
-                  "trustworthiness: {:0.3f}".format(
-                      name, n, duration, n_iter, tw))
+                  "precision at 5: {:0.3f}".format(
+                      name, n, duration, n_iter, precision_5))
             results.append(dict(method=name, duration=duration, n_samples=n))
             with open(log_filename, 'w', encoding='utf-8') as f:
                 json.dump(results, f)
-            np.save('mnist_{}_{}.npy'.format(name.replace("/", '-'), n),
+            np.save(os.path.join(LOG_DIR, 'mnist_{}_{}.npy'
+                                 .format(name.replace("/", '-'), n)),
                     X_embedded)

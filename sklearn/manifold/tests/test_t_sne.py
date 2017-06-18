@@ -263,7 +263,7 @@ def test_optimization_minimizes_kl_divergence():
     random_state = check_random_state(0)
     X, _ = make_blobs(n_features=3, random_state=random_state)
     kl_divergences = []
-    for n_iter in [200, 250, 300]:
+    for n_iter in [250, 300, 350]:
         tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
                     n_iter=n_iter, random_state=0)
         tsne.fit_transform(X)
@@ -550,51 +550,6 @@ def test_barnes_hut_angle():
         P = squareform(P)
         Pbh = Pbh.toarray()
         assert_array_almost_equal(Pbh, P, decimal=5)
-        assert_array_almost_equal(gradex, gradbh, decimal=5)
-
-
-def test_quadtree_similar_point():
-    # Introduce a point into a quad tree where a similar point already exists.
-    # Test will hang if it doesn't complete.
-    Xs = []
-
-    # check the case where points are actually different
-    Xs.append(np.array([[1, 2], [3, 4]], dtype=np.float32))
-    # check the case where points are the same on X axis
-    Xs.append(np.array([[1.0, 2.0], [1.0, 3.0]], dtype=np.float32))
-    # check the case where points are arbitrarily close on X axis
-    Xs.append(np.array([[1.00001, 2.0], [1.00002, 3.0]], dtype=np.float32))
-    # check the case where points are the same on Y axis
-    Xs.append(np.array([[1.0, 2.0], [3.0, 2.0]], dtype=np.float32))
-    # check the case where points are arbitrarily close on Y axis
-    Xs.append(np.array([[1.0, 2.00001], [3.0, 2.00002]], dtype=np.float32))
-    # check the case where points are arbitrarily close on both axes
-    Xs.append(np.array([[1.00001, 2.00001], [1.00002, 2.00002]],
-              dtype=np.float32))
-
-    # check the case where points are arbitrarily close on both axes
-    # close to machine epsilon - x axis
-    Xs.append(np.array([[1, 0.0003817754041], [2, 0.0003817753750]],
-              dtype=np.float32))
-
-    # check the case where points are arbitrarily close on both axes
-    # close to machine epsilon - y axis
-    Xs.append(np.array([[0.0003817754041, 1.0], [0.0003817753750, 2.0]],
-              dtype=np.float32))
-
-    for X in Xs:
-        counts = np.zeros(3, dtype='int64')
-        _barnes_hut_tsne.check_quadtree(X, counts)
-        m = "Tree consistency failed: unexpected number of points at root node"
-        assert_equal(counts[0], counts[1], m)
-        m = "Tree consistency failed: unexpected number of points on the tree"
-        assert_equal(counts[0], counts[2], m)
-
-
-def test_index_offset():
-    # Make sure translating between 1D and N-D indices are preserved
-    assert_equal(_barnes_hut_tsne.test_index2offset(), 1)
-    assert_equal(_barnes_hut_tsne.test_index_offset(), 1)
 
 
 @skip_if_32bit
@@ -602,8 +557,8 @@ def test_n_iter_without_progress():
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
-    tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e7,
-                random_state=1, method='exact', n_iter=200)
+    tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
+                random_state=1, method='exact', n_iter=300)
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -649,7 +604,7 @@ def test_min_grad_norm():
         start_grad_norm = line.find('gradient norm')
         if start_grad_norm >= 0:
             line = line[start_grad_norm:]
-            line = line.replace('gradient norm = ', '')
+            line = line.replace('gradient norm = ', '').split(' ')[0]
             gradient_norm_values.append(float(line))
 
     # Compute how often the gradient norm is smaller than min_grad_norm

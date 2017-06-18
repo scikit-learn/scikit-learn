@@ -30,6 +30,7 @@ from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
+EXPLORATION_N_ITER = 250
 
 
 def _joint_probabilities(distances, desired_perplexity, verbose):
@@ -395,11 +396,15 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
     gains = np.ones_like(p)
     error = np.finfo(np.float).max
     best_error = np.finfo(np.float).max
-    best_iter = it
+    best_iter = i = it
 
     tic = time()
     for i in range(it, n_iter):
-        new_error, grad = objective(p, *args, **kwargs)
+        try:
+            new_error, grad = objective(p, *args, **kwargs)
+        except AssertionError:
+            np.save("dump_X_embedded.npy", p)
+            raise
         grad_norm = linalg.norm(grad)
 
         inc = update * grad < 0.0
@@ -755,8 +760,8 @@ class TSNE(BaseEstimator):
             raise ValueError("early_exaggeration must be at least 1, but is {}"
                              .format(self.early_exaggeration))
 
-        if self.n_iter < 200:
-            raise ValueError("n_iter should be at least 200")
+        if self.n_iter < 250:
+            raise ValueError("n_iter should be at least 250")
 
         if self.method == "exact":
             if self.metric == "precomputed":
@@ -878,7 +883,6 @@ class TSNE(BaseEstimator):
 
         opt_args = {"it": 0,
                     "learning_rate": self.learning_rate,
-                    "n_iter_without_progress": self.n_iter_without_progress,
                     "verbose": self.verbose, "n_iter_check": 50,
                     "kwargs": dict(skip_num_points=skip_num_points)}
         if self.method == 'barnes_hut':
@@ -887,7 +891,7 @@ class TSNE(BaseEstimator):
                     self.n_components]
 
             opt_args['args'] = args
-            opt_args['n_iter_without_progress'] = 30
+            opt_args['n_iter_without_progress'] = EXPLORATION_N_ITER
             # Don't always calculate the cost since that calculation
             # can be nearly as expensive as the gradient
             opt_args['objective_error'] = _kl_divergence_error
@@ -897,15 +901,14 @@ class TSNE(BaseEstimator):
             obj_func = _kl_divergence
             opt_args['args'] = [P, degrees_of_freedom, n_samples,
                                 self.n_components]
+            opt_args['n_iter_without_progress'] = self.n_iter_without_progress
             opt_args['min_error_diff'] = 0.0
             opt_args['min_grad_norm'] = self.min_grad_norm
 
         # Learning schedule (part 1): do 250 iteration with lower momentum but
         # higher learning rate controlled via the early exageration parameter
-        exploration_n_iter = 250
-        opt_args['n_iter'] = exploration_n_iter
+        opt_args['n_iter'] = EXPLORATION_N_ITER
         opt_args['momentum'] = 0.5
-        opt_args['n_iter_without_progress'] = exploration_n_iter
         P *= self.early_exaggeration
 
         params, kl_divergence, it = _gradient_descent(obj_func, params,
@@ -917,11 +920,12 @@ class TSNE(BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self.n_iter - exploration_n_iter
-        if it < exploration_n_iter or remaining > 0:
+        remaining = self.n_iter - EXPLORATION_N_ITER
+        if it < EXPLORATION_N_ITER or remaining > 0:
             opt_args['n_iter'] = self.n_iter
             opt_args['it'] = it + 1
             opt_args['momentum'] = 0.8
+            opt_args['n_iter_without_progress'] = self.n_iter_without_progress
             params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                           **opt_args)
 
