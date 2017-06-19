@@ -1736,6 +1736,6 @@ def test_32bits_arch():
     clf = DecisionTreeClassifier(random_state=0)
     clf.fit(X[train_index], y[train_index])
     proba = clf.predict_proba(X[test_index])
-    assert_array_equal(proba, np.array([[1., 0.]
-                                        [0., 1.]
+    assert_array_equal(proba, np.array([[1., 0.],
+                                        [0., 1.],
                                         [1., 0.]]))
