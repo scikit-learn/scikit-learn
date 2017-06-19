@@ -77,10 +77,11 @@ New features
 Enhancements
 ............
 
+   - :func:`metrics.matthews_corrcoef` now support multiclass classification.
+     :issue:`8094` by :user:`Jon Crall <Erotemic>`.
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
-
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
@@ -402,6 +403,11 @@ Bug fixes
    - :class:`multiclass.OneVsOneClassifier`'s ``partial_fit`` now ensures all
      classes are provided up-front. :issue:`6250` by
      :user:`Asish Panda <kaichogami>`.
+
+   - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
+     hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
+     by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
+
 
 API changes summary
 -------------------
