@@ -400,6 +400,10 @@ Bug fixes
      reused the same estimator for each parameter value.
      :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
 
+   - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
+     hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
+     by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
+
 API changes summary
 -------------------
 
