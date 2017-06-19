@@ -1249,68 +1249,30 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     return out[0], out[1]
 
 
-def _aggregate_score_dicts(scores, shape=None, transpose=False):
+def _aggregate_score_dicts(scores):
     """Aggregate the list of dict to dict of np ndarray
 
     The aggregated output of _fit_and_score will be a list of dict
     of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
     Convert it to a dict of array {'prec': np.array([0.1 ...]), ...}
 
-    If shape is set, the individual numpy arrays are reshaped accordingly
-
-    If transpose is set, the individual arrays are transposed after reshaping
-    This is useful if the the scores are not ordered first by cv splits.
-
     Parameters
     ----------
 
     scores : list of dict
         List of dicts of the scores for all scorers. This is a flat list,
-        assumed originally to be of row major order. See ``transpose``
-        parameter if it is ordered in column major order.
-
-    shape : tuple
-        This specifies how the scores are ordered and to what shape it must
-        be formed.
-
-    transpose : bool, default False
-        Whether to transpose the final numpy arrays after reshaping them. This
-        is useful if the data is arranged in a column major ordering, where
-        a simple reshape cannot recover the shape of the output array.
-
-        See the below example to understand the need for transpose better.
+        assumed originally to be of row major order.
 
     Example
     -------
 
-    >>> scores = [{'a': 1, 'b':1}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
-    ...           {'a': 4, 'b':4}, {'a': 5, 'b':5}, {'a': 6, 'b':6},
-    ...           {'a': 7, 'b':7}, {'a': 8, 'b':8}, {'a': 9, 'b':9},
+    >>> scores = [{'a': 1, 'b':10}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
     ...           {'a': 10, 'b': 10}]                         # doctest: +SKIP
-    >>> _aggregate_score_dicts(scores,                        # doctest: +SKIP
-    ...                        shape=(2, 5), transpose=False)
-    {'a': array([[1, 2, 3, 4, 5],
-                 [6, 7, 8, 9, 10]]),
-     'b': array([[1, 2, 3, 4, 5],
-                 [6, 7, 8, 9, 10]])}
-    >>> _aggregate_score_dicts(scores,                        # doctest: +SKIP
-    ...                        shape=(2, 5), transpose=True)
-    {'a': array([[1, 6], [2, 7], [3, 8], [4, 9], [5, 10]]),
-     'b': array([[1, 6], [2, 7], [3, 8], [4, 9], [5, 10]])}
+    >>> _aggregate_score_dicts(scores)                        # doctest: +SKIP
+    {'a': array([1, 2, 3, 10]),
+     'b': array([10, 2, 3, 10])}
     """
-    if shape is None:
-        shape = (len(scores), )
-    else:
-        if np.product(shape) != len(scores):
-            raise ValueError("Shape must conform to the size of the scores")
-
     out = {}
-
     for key in scores[0]:
-        key_scores = np.asarray([score[key] for score in scores])
-        key_scores = key_scores.reshape(shape)
-        if transpose:
-            key_scores = key_scores.T
-        out[key] = key_scores
-
+        out[key] = np.asarray([score[key] for score in scores])
     return out

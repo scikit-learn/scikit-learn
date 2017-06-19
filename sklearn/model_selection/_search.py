@@ -656,9 +656,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
-            # Reshape here and not at `_aggregate_score_dicts(..., shape=...)`
-            # as fit_time / score_time are not dicts and hence do not get
-            # passed into _aggregate_score_dicts
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
             array = np.array(array, dtype=np.float64).reshape(n_candidates,
                                                               n_splits)
