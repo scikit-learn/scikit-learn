@@ -19,6 +19,7 @@ import operator
 import warnings
 
 import numpy as np
+from scipy.stats import rankdata
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
@@ -29,7 +30,6 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
-from ..utils.fixes import rankdata
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
@@ -386,7 +386,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.fit_params = fit_params if fit_params is not None else {}
+        self.fit_params = fit_params
         self.iid = iid
         self.refit = refit
         self.cv = cv
@@ -562,7 +562,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
-        if self.fit_params:
+        if self.fit_params is not None:
             warnings.warn('"fit_params" as a constructor argument was '
                           'deprecated in version 0.19 and will be removed '
                           'in version 0.21. Pass fit parameters to the '
@@ -600,8 +600,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
                                   error_score=self.error_score)
-          for train, test in cv.split(X, y, groups)
-          for parameters in candidate_params)
+          for parameters, (train, test) in product(candidate_params,
+                                                   cv.split(X, y, groups)))
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -615,8 +615,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
-            array = np.array(array, dtype=np.float64).reshape(n_splits,
-                                                              n_candidates).T
+            array = np.array(array, dtype=np.float64).reshape(n_candidates,
+                                                              n_splits)
             if splits:
                 for split_i in range(n_splits):
                     results["split%d_%s"
@@ -636,7 +636,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Computed the (weighted) mean and std for test scores alone
         # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[::n_candidates],
+        test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
 
         _store('test_score', test_scores, splits=True, rank=True,
@@ -753,6 +753,14 @@ class GridSearchCV(BaseSearchCV):
         ``scorer(estimator, X, y)``.
         If ``None``, the ``score`` method of the estimator is used.
 
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+        .. deprecated:: 0.19
+           ``fit_params`` as a constructor argument was deprecated in version
+           0.19 and will be removed in version 0.21. Pass fit parameters to
+           the ``fit`` method instead.
+
     n_jobs : int, default=1
         Number of jobs to run in parallel.
 
@@ -828,7 +836,7 @@ class GridSearchCV(BaseSearchCV):
                          kernel='rbf', max_iter=-1, probability=False,
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
-           fit_params={}, iid=..., n_jobs=1,
+           fit_params=None, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
     >>> sorted(clf.cv_results_.keys())
@@ -1009,6 +1017,14 @@ class RandomizedSearchCV(BaseSearchCV):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
         If ``None``, the ``score`` method of the estimator is used.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+        .. deprecated:: 0.19
+           ``fit_params`` as a constructor argument was deprecated in version
+           0.19 and will be removed in version 0.21. Pass fit parameters to
+           the ``fit`` method instead.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.

@@ -142,8 +142,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             lambda dy: np.sum(np.abs(dy), axis=1)
 
-        NOTE: residual_metric is deprecated from 0.18 and will be removed in 0.20
-        Use ``loss`` instead.
+        .. deprecated:: 0.18
+           ``residual_metric`` is deprecated from 0.18 and will be removed in
+           0.20. Use ``loss`` instead.
 
     loss : string, callable, optional, default "absolute_loss"
         String inputs, "absolute_loss" and "squared_loss" are supported which

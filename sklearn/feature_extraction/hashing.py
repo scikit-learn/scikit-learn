@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numbers
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -53,11 +54,17 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
+    alternate_sign : boolean, optional, default True
+        When True, an alternating sign is added to the features as to
+        approximately conserve the inner product in the hashed space even for
+        small n_features. This approach is similar to sparse random projection.
     non_negative : boolean, optional, default False
-        Whether output matrices should contain non-negative values only;
-        effectively calls abs on the matrix prior to returning it.
-        When True, output values can be interpreted as frequencies.
-        When False, output values will have expected value zero.
+        When True, an absolute value is applied to the features matrix prior to
+        returning it. When used in conjunction with alternate_sign=True, this
+        significantly reduces the inner product preservation property.
+        .. deprecated:: 0.19
+            This option will be removed in 0.21.
+
 
     Examples
     --------
@@ -77,12 +84,17 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, non_negative=False):
+                 dtype=np.float64, alternate_sign=True, non_negative=False):
         self._validate_params(n_features, input_type)
+        if non_negative:
+            warnings.warn("the option non_negative=True has been deprecated"
+                          " in 0.19 and will be removed"
+                          " in version 0.21.", DeprecationWarning)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
+        self.alternate_sign = alternate_sign
         self.non_negative = non_negative
 
     @staticmethod
@@ -139,7 +151,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
-            _hashing.transform(raw_X, self.n_features, self.dtype)
+            _hashing.transform(raw_X, self.n_features, self.dtype,
+                               self.alternate_sign)
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
@@ -148,6 +161,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
+
         if self.non_negative:
             np.abs(X.data, X.data)
         return X

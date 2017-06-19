@@ -15,6 +15,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         (parts based on earlier work by Mathieu Blondel)
 #
 # License: BSD 3 clause
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -26,9 +27,9 @@ from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array, check_consistent_length
-from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils.extmath import safe_sparse_dot
+from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
 from .externals import six
 
@@ -386,7 +387,7 @@ class GaussianNB(BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = in1d(unique_y, classes)
+        unique_y_in_classes = np.in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError("The target label(s) %s in y do not exist in the "
@@ -436,6 +437,8 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+_ALPHA_MIN = 1e-10
+
 
 class BaseDiscreteNB(BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
@@ -460,6 +463,16 @@ class BaseDiscreteNB(BaseNB):
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
+    def _check_alpha(self):
+        if self.alpha < 0:
+            raise ValueError('Smoothing parameter alpha = %.1e. '
+                             'alpha should be > 0.' % self.alpha)
+        if self.alpha < _ALPHA_MIN:
+            warnings.warn('alpha too small will result in numeric errors, '
+                          'setting alpha = %.1e' % _ALPHA_MIN)
+            return _ALPHA_MIN
+        return self.alpha
+
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -483,13 +496,13 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        classes : array-like, shape = [n_classes], optional (default=None)
+        classes : array-like, shape = [n_classes] (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples], optional (default=None)
+        sample_weight : array-like, shape = [n_samples] (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -538,7 +551,8 @@ class BaseDiscreteNB(BaseNB):
         # be called by the user explicitly just once after several consecutive
         # calls to partial_fit and prior any call to predict[_[log_]proba]
         # to avoid computing the smooth log probas at each call to partial fit
-        self._update_feature_log_prob()
+        alpha = self._check_alpha()
+        self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
@@ -554,7 +568,7 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        sample_weight : array-like, shape = [n_samples], optional (default=None)
+        sample_weight : array-like, shape = [n_samples], (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -588,7 +602,8 @@ class BaseDiscreteNB(BaseNB):
         self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                        dtype=np.float64)
         self._count(X, Y)
-        self._update_feature_log_prob()
+        alpha = self._check_alpha()
+        self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
@@ -694,9 +709,9 @@ class MultinomialNB(BaseDiscreteNB):
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
-    def _update_feature_log_prob(self):
+    def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_fc = self.feature_count_ + alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
         self.feature_log_prob_ = (np.log(smoothed_fc) -
@@ -796,10 +811,10 @@ class BernoulliNB(BaseDiscreteNB):
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
-    def _update_feature_log_prob(self):
+    def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + self.alpha
-        smoothed_cc = self.class_count_ + self.alpha * 2
+        smoothed_fc = self.feature_count_ + alpha
+        smoothed_cc = self.class_count_ + alpha * 2
 
         self.feature_log_prob_ = (np.log(smoothed_fc) -
                                   np.log(smoothed_cc.reshape(-1, 1)))

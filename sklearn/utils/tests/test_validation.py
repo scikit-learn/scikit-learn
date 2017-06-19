@@ -30,13 +30,14 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
+    assert_all_finite,
 )
+import sklearn
 
 from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
-
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -526,3 +527,12 @@ def test_check_dataframe_fit_attribute():
         check_consistent_length(X_df)
     except ImportError:
         raise SkipTest("Pandas not found")
+
+
+def test_suppress_validation():
+    X = np.array([0, np.inf])
+    assert_raises(ValueError, assert_all_finite, X)
+    sklearn.set_config(assume_finite=True)
+    assert_all_finite(X)
+    sklearn.set_config(assume_finite=False)
+    assert_raises(ValueError, assert_all_finite, X)

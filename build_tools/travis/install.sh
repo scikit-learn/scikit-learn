@@ -13,40 +13,29 @@
 
 set -e
 
-# Fix the compilers to workaround avoid having the Python 3.4 build
-# lookup for g++44 unexpectedly.
-export CC=gcc
-export CXX=g++
-
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
 
+export CC=/usr/lib/ccache/gcc
+export CXX=/usr/lib/ccache/g++
+# Useful for debugging how ccache is used
+# export CCACHE_LOGFILE=/tmp/ccache.log
+# ~60M is used by .ccache when compiling from scratch at the time of writing
+ccache --max-size 100M --show-stats
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
     deactivate
 
-    # Use the miniconda installer for faster download / install of conda
-    # itself
-    pushd .
-    cd
-    mkdir -p download
-    cd download
-    echo "Cached in $HOME/download :"
-    ls -l
-    echo
-    if [[ ! -f miniconda.sh ]]
-        then
-        wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
-            -O miniconda.sh
-        fi
-    chmod +x miniconda.sh && ./miniconda.sh -b
-    cd ..
-    export PATH=/home/travis/miniconda/bin:$PATH
+    # Install miniconda
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+        -O miniconda.sh
+    MINICONDA_PATH=/home/travis/miniconda
+    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+    export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
-    popd
 
     # Configure the conda environment and put it in the path using the
     # provided versions
@@ -111,8 +100,10 @@ try:
 except ImportError:
     pass
 "
-
     python setup.py develop
+    ccache --show-stats
+    # Useful for debugging how ccache is used
+    # cat $CCACHE_LOGFILE
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

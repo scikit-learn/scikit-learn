@@ -18,16 +18,17 @@ from abc import ABCMeta
 
 import numpy as np
 import scipy.sparse as sp
-
-from .base import BaseEstimator, clone
+from abc import ABCMeta, abstractmethod
+from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin
-from .externals import six
-from .externals.joblib import Parallel, delayed
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.multiclass import check_classification_targets
+from .externals.joblib import Parallel, delayed
+from .externals import six
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain"]
 
@@ -60,8 +61,9 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
-
+class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
+                                              MetaEstimatorMixin)):
+    @abstractmethod
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -152,6 +154,9 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
                          multi_output=True,
                          accept_sparse=True)
 
+        if isinstance(self, ClassifierMixin):
+            check_classification_targets(y)
+
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
                              "multi-output regression but has only one.")
@@ -218,6 +223,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     def __init__(self, estimator, n_jobs=1):
         super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
 
+    @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
         """Incrementally fit the model to data.
         Fit a separate model for each output variable.
