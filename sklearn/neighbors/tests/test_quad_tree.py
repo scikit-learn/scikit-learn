@@ -40,17 +40,45 @@ def test_quadtree_similar_point():
 
 def test_quad_tree_pickle():
     np.random.seed(0)
-    X = np.random.random((10, 3))
 
-    tree = QuadTree(n_dimensions=2, verbose=0)
-    tree.build_tree(X)
+    for n_dimensions in (2, 3):
+        X = np.random.random((10, n_dimensions))
 
-    def check_pickle_protocol(protocol):
-        s = pickle.dumps(tree, protocol=protocol)
-        bt2 = pickle.loads(s)
+        tree = QuadTree(n_dimensions=n_dimensions, verbose=0)
+        tree.build_tree(X)
 
-        for x in X:
-            assert tree.get_cell(x) == bt2.get_cell(x)
+        def check_pickle_protocol(protocol):
+            s = pickle.dumps(tree, protocol=protocol)
+            bt2 = pickle.loads(s)
 
-    for protocol in (0, 1, 2):
-        yield check_pickle_protocol, protocol
+            for x in X:
+                cell_x_tree = tree.get_cell(x)
+                cell_x_bt2 = bt2.get_cell(x)
+                assert cell_x_tree == cell_x_bt2
+
+        for protocol in (0, 1, 2):
+            yield check_pickle_protocol, protocol
+
+
+def test_qt_insert_duplicate():
+    np.random.seed(0)
+
+    def check_insert_duplicate(n_dimensions=2):
+
+        X = np.random.random((10, n_dimensions))
+        Xd = np.r_[X, X[:5]]
+        tree = QuadTree(n_dimensions=n_dimensions, verbose=0)
+        tree.build_tree(Xd)
+
+        cumulative_size = tree.cumulative_size
+        leafs = tree.leafs
+
+        # Assert that the first 5 are indeed duplicated and that the next
+        # ones are single point leaf
+        for i, x in enumerate(X):
+            cell_id = tree.get_cell(x)
+            assert leafs[cell_id]
+            assert cumulative_size[cell_id] == 1 + (i < 5)
+
+    for n_dimensions in (2, 3):
+        yield check_insert_duplicate, n_dimensions

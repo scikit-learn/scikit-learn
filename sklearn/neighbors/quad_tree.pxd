@@ -18,10 +18,13 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 # It allows us to write printf debugging lines
 # and remove them at compile time
 cdef enum:
-    DEBUGFLAG = 0
+    DEBUGFLAG = 1
 
 cdef float EPSILON = 1e-6
 
+# XXX: Careful to not change the order of the arguments. It is important to
+# have is_leaf and max_width consecutive as it permits to avoid padding by
+# the compiler and keep the size coherent for both C and numpy data structures.
 cdef struct Cell:
     # Base storage stucture for cells in a QuadTree object
 
@@ -29,21 +32,24 @@ cdef struct Cell:
     SIZE_t parent              # Parent cell of this cell
     SIZE_t[8] children         # Array pointing to childrens of this cell
     
+    # Cell description
+    SIZE_t cell_id             # Id of the cell in the cells array in the Tree
+    SIZE_t point_index         # Index of the point at this cell (only defined
+                               # in non empty leaf)
+    bint is_leaf               # Does this cell have children?
+    DTYPE_t max_width          # The value of the maximum width w
+    SIZE_t depth               # Depth of the cell in the tree
+    SIZE_t cumulative_size     # Number of points included in the subtree with
+                               # this cell as a root.
+
+    # Internal constants
+    DTYPE_t[3] center          # Store the center for quick split of cells
+    DTYPE_t[3] barycenter      # Keep track of the center of mass of the cell
+
     # Cell boundaries
     DTYPE_t[3] min_bounds      # Inferior boundaries of this cell (inclusive)
     DTYPE_t[3] max_bounds      # Superior boundaries of this cell (exclusive)
-    DTYPE_t[3] center          # Store the center for quick split of cells
-    
-    # Cell description
-    SIZE_t cell_id             # Id of the cell in the cells array in the Tree
-    DTYPE_t max_width          # The value of the maximum width w
-    DTYPE_t[3] barycenter      # Keep track of the center of mass of the cell
-    SIZE_t point_index         # Index of the point at this cell (only defined in non empty leaf)
-    bint is_leaf          # Does this cell have children?
-    SIZE_t depth            # Depth of the cell in the tree
-    SIZE_t cumulative_size  # Number of points including all cell below this one
-    # cdef long size             # Number of points at this cell
-   
+
 
 cdef class QuadTree:
     # The QuadTree object is a quad tree structure constructed by inserting

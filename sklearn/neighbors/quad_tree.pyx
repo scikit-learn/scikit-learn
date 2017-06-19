@@ -16,6 +16,7 @@ from ..utils import check_array
 
 import numpy as np
 cimport numpy as np
+np.import_array()
 
 cdef extern from "math.h":
     float fabsf(float x) nogil
@@ -29,34 +30,32 @@ cdef extern from "numpy/arrayobject.h":
 
 cdef SIZE_t DEFAULT = <SIZE_t>(-1)
 
+
 # Repeat struct definition for numpy
 CELL_DTYPE = np.dtype({
-    'names': ['parent', 'children', 'min_bounds', 'max_bounds', 'center',
-              'cell_id', 'max_width', 'barycenter', 'point_index', 'is_leaf',
-              'depth', 'cumulative_size'],
-    'formats': [np.intp, np.intp, np.float64, np.float64, np.float64, np.intp,
-                np.float64, np.float64, np.intp, np.bool, np.intp, np.intp],
+    'names': ['parent', 'children', 'cell_id', 'point_index', 'is_leaf',
+              'max_width', 'depth', 'cumulative_size', 'center', 'barycenter',
+              'min_bounds', 'max_bounds'],
+    'formats': [np.intp, (np.intp, 8), np.intp, np.intp, np.int32, np.float32, 
+                np.intp, np.intp, (np.float32, 3), (np.float32, 3),
+                (np.float32, 3), (np.float32, 3)],
     'offsets': [
         <Py_ssize_t> &(<Cell*> NULL).parent,
         <Py_ssize_t> &(<Cell*> NULL).children,
-        <Py_ssize_t> &(<Cell*> NULL).min_bounds,
-        <Py_ssize_t> &(<Cell*> NULL).max_bounds,
-        <Py_ssize_t> &(<Cell*> NULL).center,
         <Py_ssize_t> &(<Cell*> NULL).cell_id,
-        <Py_ssize_t> &(<Cell*> NULL).max_width,
-        <Py_ssize_t> &(<Cell*> NULL).barycenter,
         <Py_ssize_t> &(<Cell*> NULL).point_index,
         <Py_ssize_t> &(<Cell*> NULL).is_leaf,
+        <Py_ssize_t> &(<Cell*> NULL).max_width,
         <Py_ssize_t> &(<Cell*> NULL).depth,
-        <Py_ssize_t> &(<Cell*> NULL).cumulative_size
+        <Py_ssize_t> &(<Cell*> NULL).cumulative_size,
+        <Py_ssize_t> &(<Cell*> NULL).center,
+        <Py_ssize_t> &(<Cell*> NULL).barycenter,
+        <Py_ssize_t> &(<Cell*> NULL).min_bounds,
+        <Py_ssize_t> &(<Cell*> NULL).max_bounds,
     ]
 })
 
-
-cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
-                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
-    return <DTYPE_t[:X.shape[0], :X.shape[1]:1]> (<DTYPE_t*> X.data)
-
+assert CELL_DTYPE.itemsize == sizeof(Cell)
 
 
 cdef class QuadTree:
@@ -80,6 +79,14 @@ cdef class QuadTree:
         """Destructor."""
         # Free all inner structures
         free(self.cells)
+
+    property cumulative_size:
+        def __get__(self):
+            return self._get_cell_ndarray()['cumulative_size'][:self.cell_count]
+
+    property leafs:
+        def __get__(self):
+            return self._get_cell_ndarray()['is_leaf'][:self.cell_count]
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
@@ -122,8 +129,8 @@ cdef class QuadTree:
     cdef int check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
                                   ) nogil except -1:
         if self.verbose >= 10:
-            printf("[QuadTree] Checking point (%f, %f, %f) in cell %i "
-                    "([%f/%f, %f/%f, %f/%f], size %i)\n",
+            printf("[QuadTree] Checking point (%f, %f, %f) in cell %li "
+                    "([%f/%f, %f/%f, %f/%f], size %li)\n",
                     point[0], point[1], point[2], cell.cell_id,
                     cell.min_bounds[0], cell.max_bounds[0], cell.min_bounds[1],
                     cell.max_bounds[1], cell.min_bounds[2], cell.max_bounds[2],
@@ -134,7 +141,7 @@ cdef class QuadTree:
                     cell.max_bounds[i] <= point[i]):
                 with gil:
                     msg = "[QuadTree] InsertionError: point out of cell boundary.\n"
-                    msg += "Axis %i: cell [%f, %f]; point %f\n"
+                    msg += "Axis %li: cell [%f, %f]; point %f\n"
                     
                     msg %= i, cell.min_bounds[i],  cell.max_bounds[i], point[i]
                     raise ValueError(msg)
@@ -150,7 +157,7 @@ cdef class QuadTree:
         cdef SIZE_t n_point = cell.cumulative_size
 
         if self.verbose >= 10:
-            printf("[QuadTree] Inserting depth %i\n", cell.depth)
+            printf("[QuadTree] Inserting depth %li\n", cell.depth)
 
         # Assert that the point is in the right range
         if DEBUGFLAG:
@@ -165,7 +172,7 @@ cdef class QuadTree:
                 cell.barycenter[i] = point[i]
             cell.point_index = point_index
             if self.verbose >= 10:
-                printf("[QuadTree] inserted point in cell %i\n", cell_id)
+                printf("[QuadTree] inserted point in cell %li\n", cell_id)
             return cell_id
 
         # If the cell is not a leaf, update cell internals and
@@ -181,7 +188,7 @@ cdef class QuadTree:
             # Insert child in the correct subtree
             selected_child = self.select_child(point, cell)
             if self.verbose >= 10:
-                printf("[QuadTree] selected child %i\n", selected_child)
+                printf("[QuadTree] selected child %li\n", selected_child)
             if selected_child == -1:
                 self.n_points += 1
                 return self.insert_point_in_new_child(point, cell, point_index)
@@ -264,7 +271,7 @@ cdef class QuadTree:
             # Assert that the point is in the right range
             self.check_point_in_cell(point, child)
         if self.verbose >= 10:
-            printf("[QuadTree] inserted point %i in new child %i\n", point_index, cell_id)
+            printf("[QuadTree] inserted point %li in new child %li\n", point_index, cell_id)
 
         return cell_id
             
@@ -331,7 +338,6 @@ cdef class QuadTree:
         # Create the initial node with boundaries from the dataset
         self._init_root(min_bounds, max_bounds)
 
-        # cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(X)
         for i in range(n_samples):
             for j in range(self.n_dimensions):
                 pt[j] = X[i, j]
@@ -361,19 +367,23 @@ cdef class QuadTree:
         plt.show()
 
     def check_coherence(self):
-        for c in self.cells[:self.cell_count]:
-            self.check_point_in_cell(c.barycenter, &c)
-            if not c.is_leaf:
+        for cell in self.cells[:self.cell_count]:
+            self.check_point_in_cell(cell.barycenter, &cell)
+            if not cell.is_leaf:
                 n_points = 0
                 for idx in range(self.n_cells_per_cell):
-                    if c.children[idx] != -1:
-                        child = self.cells[c.children[idx]]
+                    child_id = cell.children[idx]
+                    if child_id != -1:
+                        child = self.cells[child_id]
                         n_points += child.cumulative_size
-                if n_points != c.cumulative_size:
+                        assert child.cell_id == child_id, (
+                            "Cell id not correctly initiliazed.")
+                if n_points != cell.cumulative_size:
                     raise RuntimeError(
                         "Cell {} is incoherent. Size={} but found {} points "
                         "in children. ({})"
-                        .format(c.cell_id, c.cumulative_size, n_points, c.children))
+                        .format(cell.cell_id, cell.cumulative_size,
+                                n_points, cell.children))
         if self.n_points != self.cells[0].cumulative_size:
             raise RuntimeError(
                 "QuadTree is incoherent. Size={} but found {} points "
@@ -457,24 +467,28 @@ cdef class QuadTree:
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0) nogil except -1:
         cdef:
             SIZE_t selected_child
-            Cell* cell = &self.cells[0]
+            Cell* cell = &self.cells[cell_id]
 
         if cell.is_leaf:
             if self.is_duplicate(cell.barycenter, point):
+                if self.verbose > 99:
+                    printf("[QuadTree] Found point in cell: %li\n", cell.cell_id)
                 return cell_id
             with gil:
                 raise ValueError("Query point not in the Tree.")
 
         selected_child = self.select_child(point, cell)
         if selected_child > 0:
+            if self.verbose > 99:
+                printf("[QuadTree] Selected_child: %li\n", selected_child)
             return self._get_cell(point, selected_child)
         with gil:
             raise ValueError("Query point not in the Tree.")
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
-        return (QuadTree, (self.n_dimensions, self.verbose,
-                           self.__getstate__()))
+        return (QuadTree, (self.n_dimensions, self.verbose),
+                           self.__getstate__())
 
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
@@ -482,6 +496,8 @@ cdef class QuadTree:
         # capacity is infered during the __setstate__ using nodes
         d["max_depth"] = self.max_depth
         d["cell_count"] = self.cell_count
+        d["capacity"] = self.capacity
+        d["n_points"] = self.n_points
         d["cells"] = self._get_cell_ndarray()
         return d
 
@@ -489,6 +505,8 @@ cdef class QuadTree:
         """Setstate re-implementation, for unpickling."""
         self.max_depth = d["max_depth"]
         self.cell_count = d["cell_count"]
+        self.capacity = d["capacity"]
+        self.n_points = d["n_points"]
 
         if 'cells' not in d:
             raise ValueError('You have loaded Tree version which '
@@ -504,6 +522,7 @@ cdef class QuadTree:
         self.capacity = cell_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
+
         cells = memcpy(self.cells, (<np.ndarray> cell_ndarray).data,
                        self.capacity * sizeof(Cell))
 
@@ -520,7 +539,7 @@ cdef class QuadTree:
         strides[0] = sizeof(Cell)
         cdef np.ndarray arr
         Py_INCREF(CELL_DTYPE)
-        arr = PyArray_NewFromDescr(np.ndarray, <np.dtype> CELL_DTYPE, 1, shape,
+        arr = PyArray_NewFromDescr(np.ndarray, CELL_DTYPE, 1, shape,
                                    strides, <void*> self.cells,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
