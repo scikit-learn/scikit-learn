@@ -250,6 +250,8 @@ def test_nystroem_callable():
         return np.dot(X, Y.T)
 
     # if degree, gamma or coef0 is passed, we raise a warning
-    ny = Nystroem(kernel=linear_kernel, gamma=1)
     msg = "Passing gamma, coef0 or degree to Nystroem"
-    assert_warns_message(DeprecationWarning, msg, ny.fit, X)
+    params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
+    for param in params:
+        ny = Nystroem(kernel=linear_kernel, **param)
+        assert_warns_message(DeprecationWarning, msg, ny.fit, X)
