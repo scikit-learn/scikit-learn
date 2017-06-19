@@ -170,12 +170,17 @@ See :ref:`scoring_parameter` for more details.
 Specifying multiple metrics for evaluation
 ------------------------------------------
 
-``GridSearchCV`` and ``RandomizedSearchCV`` allows specifying multiple metrics
+``GridSearchCV`` and ``RandomizedSearchCV`` allow specifying multiple metrics
 for the ``scoring`` parameter.
 
 Multimetric scoring can either be specified as a list of strings of predefined
 scores names or a dict mapping the scorer name to the scorer function and/or
 the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
+
+When specifying multiple metrics, the ``refit`` parameter must be set to the
+metric (string) for which the ``best_params_`` will be found and used to build
+the ``best_estimator_`` on the whole dataset. If that is not needed, ``refit``
+can be set to ``False``.
 
 See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation`
 for an example usage.
