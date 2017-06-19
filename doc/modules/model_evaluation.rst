@@ -223,7 +223,6 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
-   matthews_corrcoef
    precision_recall_curve
    roc_curve
 
@@ -236,6 +235,7 @@ Others also work in the multiclass case:
    cohen_kappa_score
    confusion_matrix
    hinge_loss
+   matthews_corrcoef
 
 
 Some also work in the multilabel case:
@@ -909,13 +909,39 @@ for binary classes.  Quoting Wikipedia:
     prediction, 0 an average random prediction and -1 an inverse prediction.
     The statistic is also known as the phi coefficient."
 
-If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
-number of true positives, true negatives, false positives and false negatives,
-the MCC coefficient is defined as
+
+In the binary (two-class) case, :math:`tp`, :math:`tn`, :math:`fp` and
+:math:`fn` are respectively the number of true positives, true negatives, false
+positives and false negatives, the MCC is defined as
 
 .. math::
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
+
+In the multiclass case, the Matthews correlation coefficient can be `defined
+<http://rk.kvl.dk/introduction/index.html>`_ in terms of a
+:func:`confusion_matrix` :math:`C` for :math:`K` classes.  To simplify the
+definition consider the following intermediate variables:
+
+* :math:`t_k=\sum_{i}^{K} C_{ik}` the number of times class :math:`k` truly occurred,
+* :math:`p_k=\sum_{i}^{K} C_{ki}` the number of times class :math:`k` was predicted,
+* :math:`c=\sum_{k}^{K} C_{kk}` the total number of samples correctly predicted,
+* :math:`s=\sum_{i}^{K} \sum_{j}^{K} C_{ij}` the total number of samples.
+
+Then the multiclass MCC is defined as:
+
+.. math::
+    MCC = \frac{
+        c \times s - \sum_{k}^{K} p_k \times t_k
+    }{\sqrt{
+        (s^2 - \sum_{k}^{K} p_k^2) \times
+        (s^2 - \sum_{k}^{K} t_k^2)
+    }}
+
+When there are more than two labels, the value of the MCC will no longer range
+between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
+depending on the number and distribution of ground true labels. The maximum
+value is always +1.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
