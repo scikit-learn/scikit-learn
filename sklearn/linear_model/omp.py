@@ -6,7 +6,6 @@
 # License: BSD 3 clause
 
 import warnings
-from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import linalg
@@ -18,12 +17,7 @@ from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
 
-import scipy
-solve_triangular_args = {}
-if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
-    # check_finite=False is an optimization available only in scipy >=0.12
-    solve_triangular_args = {'check_finite': False}
-
+solve_triangular_args = {'check_finite': False}
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.

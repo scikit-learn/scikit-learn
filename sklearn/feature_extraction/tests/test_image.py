@@ -5,19 +5,14 @@
 import numpy as np
 import scipy as sp
 from scipy import ndimage
+from scipy.sparse.csgraph import connected_components
 
 from numpy.testing import assert_raises
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.graph import connected_components
-from sklearn.utils.testing import SkipTest, assert_equal, assert_true
-from sklearn.utils.fixes import sp_version
-
-if sp_version < (0, 12):
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
-                   "thus does not include the scipy.misc.face() image.")
+from sklearn.utils.testing import assert_equal, assert_true
 
 
 def test_img_to_graph():
