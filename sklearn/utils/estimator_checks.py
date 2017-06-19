@@ -1149,7 +1149,8 @@ def check_classifiers_train(name, classifier_orig):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
-def check_classifiers_multilabel_representation_invariance(name, classifier_orig):
+def check_classifiers_multilabel_representation_invariance(name,
+                                                           classifier_orig):
 
     if name not in MULTI_OUTPUT:
         raise SkipTest
