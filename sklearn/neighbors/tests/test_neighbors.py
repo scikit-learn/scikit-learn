@@ -1000,7 +1000,7 @@ def test_valid_brute_metric_for_auto_algorithm():
     # but not ball_tree (so we actually test something)
     assert_in("cosine", VALID_METRICS['brute'])
     assert_false("cosine" in VALID_METRICS['ball_tree'])
-    
+
     # Metric which don't required any additional parameter
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
