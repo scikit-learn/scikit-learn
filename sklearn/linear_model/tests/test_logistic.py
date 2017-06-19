@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import raises
 
@@ -87,6 +88,18 @@ def test_error():
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), X_sp, Y2)
+
+
+def test_lr_liblinear_warning():
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+
+    for LR in [LogisticRegression(solver='liblinear', n_jobs=2),
+               LogisticRegressionCV(solver='liblinear', n_jobs=2)]:
+        assert_warns_message(UserWarning,
+                             "With 'solver'='liblinear', 'n_jobs' != 1 "
+                             "has no effect. Got 'n_jobs'=2.",
+                             LR.fit, iris.data, target)
 
 
 def test_predict_iris():
