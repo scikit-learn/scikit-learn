@@ -53,7 +53,8 @@ from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
 from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from sklearn.datasets import load_iris, load_boston, make_blobs, \
+    make_multilabel_classification
 
 
 BOSTON = None
@@ -115,12 +116,13 @@ def _yield_classifier_checks(name, classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in
-        ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
+    yield check_classifiers_multilabel_representation_invariance
+
+    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
         # TODO some complication with -1 label
        name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
-            # We don't raise a warning in these classifiers, as
-            # the column y interface is used by the forests.
+        # We don't raise a warning in these classifiers, as
+        # the column y interface is used by the forests.
 
         yield check_supervised_y_2d
     # test if NotFittedError is raised
@@ -1147,7 +1149,37 @@ def check_classifiers_train(name, classifier_orig):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_classifiers_multilabel_representation_invariance(name, Classifier):
+
+    if name not in MULTI_OUTPUT:
+        raise SkipTest
+
+    X, y = make_multilabel_classification(n_samples=100,
+                                          n_features=20,
+                                          n_classes=5,
+                                          n_labels=3,
+                                          length=50,
+                                          allow_unlabeled=True,
+                                          random_state=0)
+    X_train, y_train = X[:80], y[:80]
+    X_test = X[80:]
+
+    y_train_ll = y_train.tolist()
+    y_train_la = list(y_train)
+
+    classifier = Classifier()
+
+    set_testing_parameters(classifier)
+    set_random_state(classifier)
+
+    y_pred = classifier.fit(X_train, y_train).predict(X_test)
+    y_pred_ll = classifier.fit(X_train, y_train_ll).predict(X_test)
+    y_pred_la = classifier.fit(X_train, y_train_la).predict(X_test)
+    assert_array_equal(y_pred, y_pred_la)
+    assert_array_equal(y_pred, y_pred_ll)
+
+
+@ignore_warnings(category=DeprecationWarning)
 def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit"""
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
