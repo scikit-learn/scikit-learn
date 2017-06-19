@@ -66,7 +66,9 @@ def _safe_tags(estimator, key=None):
     if hasattr(estimator, "_get_tags"):
         if key is not None:
             return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
-        return estimator._get_tags()
+        tags = estimator._get_tags()
+        return {key: tags.get(key, _DEFAULT_TAGS[key])
+                for key in _DEFAULT_TAGS.keys()}
     if key is not None:
         return _DEFAULT_TAGS[key]
     return _DEFAULT_TAGS
