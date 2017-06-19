@@ -393,7 +393,8 @@ class ClassifierChain(BaseEstimator):
 
         If order is 'random' a random ordering will be used.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, optional (
+    default=None)
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
@@ -408,7 +409,7 @@ class ClassifierChain(BaseEstimator):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-        Used to generate random chain orders.
+        The random number generator is used to generate random chain orders.
 
     Attributes
     ----------
@@ -440,7 +441,9 @@ class ClassifierChain(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
         Y : array-like, shape (n_samples, n_classes)
+            The target values.
 
         Returns
         -------
@@ -469,6 +472,7 @@ class ClassifierChain(BaseEstimator):
             Y_pred_chain = Y[:, self.order_]
             if sp.issparse(X):
                 X_aug = sp.hstack((X, Y_pred_chain), format='lil')
+                X_aug = X_aug.tocsr()
             else:
                 X_aug = np.hstack((X, Y_pred_chain))
 
