@@ -202,7 +202,7 @@ predefined scorer names::
     >>> scoring = ['precision_macro', 'recall_macro']
     >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
-    ...                         cv=5)
+    ...                         cv=5, return_train_score=False)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
@@ -221,10 +221,13 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
     array([ 0.97...,  0.97...,  0.99...,  0.98...,  0.98...])
 
-Note that if you want train scores, fit times or score times even for a single
-metric scorer, provide a singleton list or dict::
-    >>> scoring = ['roc_auc']    # or
-    >>> scoring = {'ROC-AUC': 'roc_auc'}
+This also works for single metric evaluation::
+
+    >>> scores = cross_validate(clf, iris.data, iris.target,
+    ...                         scoring='precision_macro')
+    >>> sorted(scores.keys())
+    ['fit_time', 'score_time', 'test_score', 'train_score']
+
 
 Obtaining predictions by cross-validation
 -----------------------------------------
