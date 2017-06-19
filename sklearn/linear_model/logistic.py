@@ -1045,9 +1045,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
-            'saga' are faster for large ones. 'liblinear' doesn't work with
-            'n_jobs'. It will use only one process even when 'multi_class' is
-            specified.
+            'saga' are faster for large ones.
         - For multiclass problems, only 'newton-cg', 'sag', 'saga' and 'lbfgs'
             handle multinomial loss; 'liblinear' is limited to one-versus-rest
             schemes.
@@ -1089,11 +1087,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default: 1
-        Number of CPU cores used when parallelizing over classes
-        if multi_class='ovr'".
-        If given a value of -1, all cores are used.
-        This parameter is ignored when the solver is 'liblinear' regardless of
-        whether 'multi_class' is specified or not.
+        Number of CPU cores used when parallelizing over classes if
+        multi_class='ovr'". This parameter is ignored when the ``solver``is set
+        to 'liblinear' regardless of whether 'multi_class' is specified or
+        not. If given a value of -1, all cores are used.
 
     Attributes
     ----------
@@ -1217,10 +1214,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                              self.dual)
 
         if self.solver == 'liblinear':
-            if self.n_jobs != -1:
-                warnings.warn(
-                    "You're using the liblinear solver, n_jobs "
-                    "(set to {0}) will be ignored".format(self.n_jobs))
+            if self.n_jobs != 1:
+                warnings.warn("'n_jobs' > 1 does not have any effect when"
+                              " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+                              " = {}.".format(self.n_jobs))
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
