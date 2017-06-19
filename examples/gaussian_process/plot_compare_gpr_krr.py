@@ -91,7 +91,7 @@ stime = time.time()
 y_kr = kr.predict(X_plot)
 print("Time for KRR prediction: %.3f" % (time.time() - stime))
 
-# Predict using kernel ridge
+# Predict using gaussian process regressor
 stime = time.time()
 y_gpr = gpr.predict(X_plot, return_std=False)
 print("Time for GPR prediction: %.3f" % (time.time() - stime))

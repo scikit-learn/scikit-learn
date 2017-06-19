@@ -60,7 +60,7 @@ wyy = wa * xx - wclf.intercept_[0] / ww[1]
 # plot separating hyperplanes and samples
 h0 = plt.plot(xx, yy, 'k-', label='no weights')
 h1 = plt.plot(xx, wyy, 'k--', label='with weights')
-plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors='k')
 plt.legend()
 
 plt.axis('tight')

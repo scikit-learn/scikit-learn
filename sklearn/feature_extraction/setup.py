@@ -11,8 +11,9 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
 
     config.add_extension('_hashing',
-                         sources=['_hashing.c'],
+                         sources=['_hashing.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
+    config.add_subpackage("tests")
 
     return config

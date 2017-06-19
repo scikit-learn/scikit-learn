@@ -2,10 +2,9 @@
 # License: BSD 3 clause
 
 from .stochastic_gradient import BaseSGDClassifier
-from ..feature_selection.from_model import _LearntSelectorMixin
 
 
-class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
+class Perceptron(BaseSGDClassifier):
     """Perceptron
 
     Read more in the :ref:`User Guide <perceptron>`.
@@ -31,9 +30,12 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     shuffle : bool, optional, default True
         Whether or not the training data should be shuffled after each epoch.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level
@@ -84,7 +86,7 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     References
     ----------
 
-    http://en.wikipedia.org/wiki/Perceptron and references therein.
+    https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  n_iter=5, shuffle=True, verbose=0, eta0=1.0, n_jobs=1,

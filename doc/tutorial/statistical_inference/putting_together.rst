@@ -11,7 +11,7 @@ Pipelining
 We have seen that some estimators can transform data and that some estimators
 can predict variables. We can also create combined estimators:
 
-.. image:: ../../auto_examples/images/plot_digits_pipe_001.png
+.. image:: /auto_examples/images/sphx_glr_plot_digits_pipe_001.png
    :target: ../../auto_examples/plot_digits_pipe.html
    :scale: 65
    :align: right
@@ -36,7 +36,7 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. |prediction| image:: ../../images/plot_face_recognition_1.png
    :scale: 50
- 
+
 .. |eigenfaces| image:: ../../images/plot_face_recognition_2.png
    :scale: 50
 
@@ -49,7 +49,7 @@ The dataset used in this example is a preprocessed excerpt of the
 
      - |eigenfaces|
 
-   * 
+   *
 
      - **Prediction**
 

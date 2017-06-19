@@ -57,7 +57,8 @@ def _not_in_sphinx():
 
 ###############################################################################
 # Reuters Dataset related routines
-###############################################################################
+# --------------------------------
+#
 
 
 class ReutersParser(html_parser.HTMLParser):
@@ -187,9 +188,11 @@ def stream_reuters_documents(data_path=None):
 
 ###############################################################################
 # Main
-###############################################################################
+# ----
+#
 # Create the vectorizer and limit the number of features to a reasonable
 # maximum
+
 vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
                                non_negative=True)
 
@@ -318,7 +321,7 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 
 ###############################################################################
 # Plot results
-###############################################################################
+# ------------
 
 
 def plot_accuracy(x, y, x_legend):

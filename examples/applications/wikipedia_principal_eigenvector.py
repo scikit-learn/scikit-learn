@@ -8,7 +8,7 @@ graph is to compute the principal eigenvector of the adjacency matrix
 so as to assign to each vertex the values of the components of the first
 eigenvector as a centrality score:
 
-    http://en.wikipedia.org/wiki/Eigenvector_centrality
+    https://en.wikipedia.org/wiki/Eigenvector_centrality
 
 On the graph of webpages and links those values are called the PageRank
 scores by Google.
@@ -20,7 +20,7 @@ this eigenvector centrality.
 The traditional way to compute the principal eigenvector is to use the
 power iteration method:
 
-    http://en.wikipedia.org/wiki/Power_iteration
+    https://en.wikipedia.org/wiki/Power_iteration
 
 Here the computation is achieved thanks to Martinsson's Randomized SVD
 algorithm implemented in the scikit.
@@ -179,7 +179,7 @@ t0 = time()
 U, s, V = randomized_svd(X, 5, n_iter=3)
 print("done in %0.3fs" % (time() - t0))
 
-# print the names of the wikipedia related strongest components of the the
+# print the names of the wikipedia related strongest components of the
 # principal singular vector which should be similar to the highest eigenvector
 print("Top wikipedia pages according to principal singular vectors")
 pprint([names[i] for i in np.abs(U.T[0]).argsort()[-10:]])

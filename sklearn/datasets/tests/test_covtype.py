@@ -3,7 +3,6 @@
 Skipped if covtype is not already downloaded to data_home.
 """
 
-import errno
 from sklearn.datasets import fetch_covtype
 from sklearn.utils.testing import assert_equal, SkipTest
 
@@ -15,9 +14,8 @@ def fetch(*args, **kwargs):
 def test_fetch():
     try:
         data1 = fetch(shuffle=True, random_state=42)
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            raise SkipTest("Covertype dataset can not be loaded.")
+    except IOError:
+        raise SkipTest("Covertype dataset can not be loaded.")
 
     data2 = fetch(shuffle=True, random_state=37)
 

@@ -3,6 +3,8 @@ from __future__ import print_function
 from collections import defaultdict
 from time import time
 
+import six
+
 import numpy as np
 from numpy import random as nr
 
@@ -23,7 +25,7 @@ def compute_bench(samples_range, features_range):
             print('Iteration %03d of %03d' % (it, max_it))
             print('==============================')
             print()
-            data = nr.random_integers(-50, 50, (n_samples, n_features))
+            data = nr.randint(-50, 51, (n_samples, n_features))
 
             print('K-Means')
             tstart = time()
@@ -102,15 +104,15 @@ if __name__ == '__main__':
     results = compute_bench(samples_range, features_range)
     results_2 = compute_bench_2(chunks)
 
-    max_time = max([max(i) for i in [t for (label, t) in results.iteritems()
-                         if "speed" in label]])
+    max_time = max([max(i) for i in [t for (label, t) in six.iteritems(results)
+                                     if "speed" in label]])
     max_inertia = max([max(i) for i in [
-                        t for (label, t) in results.iteritems()
-                            if "speed" not in label]])
+        t for (label, t) in six.iteritems(results)
+        if "speed" not in label]])
 
     fig = plt.figure('scikit-learn K-Means benchmark results')
     for c, (label, timings) in zip('brcy',
-                                    sorted(results.iteritems())):
+                                   sorted(six.iteritems(results))):
         if 'speed' in label:
             ax = fig.add_subplot(2, 2, 1, projection='3d')
             ax.set_zlim3d(0.0, max_time * 1.1)
@@ -127,7 +129,7 @@ if __name__ == '__main__':
 
     i = 0
     for c, (label, timings) in zip('br',
-                                   sorted(results_2.iteritems())):
+                                   sorted(six.iteritems(results_2))):
         i += 1
         ax = fig.add_subplot(2, 2, i + 2)
         y = np.asarray(timings)

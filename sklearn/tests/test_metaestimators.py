@@ -39,7 +39,8 @@ DELEGATING_METAESTIMATORS = [
                   skip_methods=['transform', 'inverse_transform', 'score']),
     DelegatorData('BaggingClassifier', BaggingClassifier,
                   skip_methods=['transform', 'inverse_transform', 'score',
-                                'predict_proba', 'predict_log_proba', 'predict'])
+                                'predict_proba', 'predict_log_proba',
+                                'predict'])
 ]
 
 

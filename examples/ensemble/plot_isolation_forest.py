@@ -14,7 +14,7 @@ number of splittings required to isolate a sample is equivalent to the path
 length from the root node to the terminating node.
 
 This path length, averaged over a forest of such random trees, is a measure
-of abnormality and our decision function.
+of normality and our decision function.
 
 Random partitioning produces noticeable shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path lengths

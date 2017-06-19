@@ -9,17 +9,16 @@ License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
 import warnings
-import sys
 
 import numpy as np
 from scipy import sparse
+from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
-from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -117,7 +116,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    return_distance: bool (optional)
+    return_distance : bool (optional)
         If True, return the distance between the clusters.
 
     Returns
@@ -542,10 +541,13 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_clusters : int or ndarray
         The number of clusters to form.
 
-    children : list of pairs. Length of n_nodes
-        The children of each non-leaf node. Values less than `n_samples` refer
-        to leaves of the tree. A greater value `i` indicates a node with
-        children `children[i - n_samples]`.
+    children : 2D array, shape (n_nodes-1, 2)
+        The children of each non-leaf node. Values less than `n_samples`
+        correspond to leaves of the tree which are the original samples.
+        A node `i` greater than or equal to `n_samples` is a non-leaf
+        node and has children `children_[i - n_samples]`. Alternatively
+        at the i-th iteration, children[i][0] and children[i][1]
+        are merged to form node `n_samples + i`
 
     n_leaves : int
         Number of leaves of the tree.
@@ -607,7 +609,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of joblib.Memory or string (optional)
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -658,7 +661,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
-                 memory=Memory(cachedir=None, verbose=0),
+                 memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
         self.n_clusters = n_clusters
@@ -683,8 +686,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
-        if isinstance(memory, six.string_types):
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError("'memory' should either be a string or"
+                             " a sklearn.externals.joblib.Memory"
+                             " instance, got 'memory={!r}' instead.".format(
+                                 type(memory)))
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
@@ -738,7 +748,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             labels = _hierarchical.hc_get_heads(parents, copy=False)
             # copy to avoid holding a reference on the original array
             labels = np.copy(labels[:n_samples])
-            # Reasign cluster numbers
+            # Reassign cluster numbers
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
 
@@ -769,7 +779,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of joblib.Memory or string, optional
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.

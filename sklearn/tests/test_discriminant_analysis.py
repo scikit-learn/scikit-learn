@@ -1,6 +1,4 @@
-import sys
 import numpy as np
-from nose import SkipTest
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -19,16 +17,6 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
 
 
-# import reload
-version = sys.version_info
-if version[0] == 3:
-    # Python 3+ import for reload. Builtin in Python2
-    if version[1] == 3:
-        reload = None
-    else:
-        from importlib import reload
-
-
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype='f')
 y = np.array([1, 1, 1, 2, 2, 2])
@@ -39,7 +27,7 @@ X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
 # Data is just 9 separable points in the plane
 X6 = np.array([[0, 0], [-2, -2], [-2, -1], [-1, -1], [-1, -2],
-              [1, 3], [1, 2], [2, 1], [2, 2]])
+               [1, 3], [1, 2], [2, 1], [2, 2]])
 y6 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2])
 y7 = np.array([1, 2, 3, 2, 3, 1, 2, 3, 1])
 
@@ -163,19 +151,23 @@ def test_lda_explained_variance_ratio():
     # Also tests whether the explained_variance_ratio_ formed by the
     # eigen solver is the same as the explained_variance_ratio_ formed
     # by the svd solver
-    n_features = 2
-    n_classes = 2
-    n_samples = 1000
-    X, y = make_blobs(n_samples=n_samples, n_features=n_features,
-                      centers=n_classes, random_state=11)
+
+    state = np.random.RandomState(0)
+    X = state.normal(loc=0, scale=100, size=(40, 20))
+    y = state.randint(0, 3, size=(40,))
 
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
+    assert_equal(clf_lda_eigen.explained_variance_ratio_.shape, (2,),
+                 "Unexpected length for explained_variance_ratio_")
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
+    assert_equal(clf_lda_svd.explained_variance_ratio_.shape, (2,),
+                 "Unexpected length for explained_variance_ratio_")
+
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
                               clf_lda_eigen.explained_variance_ratio_)
 
@@ -311,31 +303,6 @@ def test_qda_regularization():
         clf.fit(X5, y5)
     y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)
-
-
-def test_deprecated_lda_qda_deprecation():
-    if reload is None:
-        raise SkipTest("Can't reload module on Python3.3")
-
-    def import_lda_module():
-        import sklearn.lda
-        # ensure that we trigger DeprecationWarning even if the sklearn.lda
-        # was loaded previously by another test.
-        reload(sklearn.lda)
-        return sklearn.lda
-
-    lda = assert_warns(DeprecationWarning, import_lda_module)
-    assert lda.LDA is LinearDiscriminantAnalysis
-
-    def import_qda_module():
-        import sklearn.qda
-        # ensure that we trigger DeprecationWarning even if the sklearn.qda
-        # was loaded previously by another test.
-        reload(sklearn.qda)
-        return sklearn.qda
-
-    qda = assert_warns(DeprecationWarning, import_qda_module)
-    assert qda.QDA is QuadraticDiscriminantAnalysis
 
 
 def test_covariance():

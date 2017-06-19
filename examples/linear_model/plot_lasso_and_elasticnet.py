@@ -28,12 +28,12 @@ coef[inds[10:]] = 0  # sparsify coef
 y = np.dot(X, coef)
 
 # add noise
-y += 0.01 * np.random.normal((n_samples,))
+y += 0.01 * np.random.normal(size=n_samples)
 
 # Split data in train set and test set
 n_samples = X.shape[0]
-X_train, y_train = X[:n_samples / 2], y[:n_samples / 2]
-X_test, y_test = X[n_samples / 2:], y[n_samples / 2:]
+X_train, y_train = X[:n_samples // 2], y[:n_samples // 2]
+X_test, y_test = X[n_samples // 2:], y[n_samples // 2:]
 
 ###############################################################################
 # Lasso

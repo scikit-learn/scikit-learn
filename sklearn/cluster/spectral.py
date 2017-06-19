@@ -12,7 +12,6 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import check_array
-from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
 from ..manifold import spectral_embedding
@@ -39,9 +38,11 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
-    random_state: int seed, RandomState instance, or None (default)
-        A pseudo random number generator used for the initialization of the
-        of the rotation matrix
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -88,7 +89,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     # search easier.
     norm_ones = np.sqrt(n_samples)
     for i in range(vectors.shape[1]):
-        vectors[:, i] = (vectors[:, i] / norm(vectors[:, i])) \
+        vectors[:, i] = (vectors[:, i] / np.linalg.norm(vectors[:, i])) \
             * norm_ones
         if vectors[0, i] != 0:
             vectors[:, i] = -1 * vectors[:, i] * np.sign(vectors[0, i])
@@ -194,10 +195,13 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used for the initialization
-        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
-        and by the K-Means initialization.
+    random_state : int, RandomState instance or None, optional, default: None
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
+        the K-Means initialization. If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -305,10 +309,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
 
-    gamma : float
-        Scaling factor of RBF, polynomial, exponential chi^2 and
-        sigmoid affinity kernel. Ignored for
-        ``affinity='nearest_neighbors'``.
+    gamma : float, default=1.0
+        Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
+        Ignored for ``affinity='nearest_neighbors'``.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
@@ -326,10 +329,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used for the initialization
-        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
-        and by the K-Means initialization.
+    random_state : int, RandomState instance or None, optional, default: None
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
+        the K-Means initialization.  If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -351,6 +357,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
     affinity_matrix_ : array-like, shape (n_samples, n_samples)
@@ -368,7 +378,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     similarity matrix that is well suited for the algorithm by
     applying the Gaussian (RBF, heat) kernel::
 
-        np.exp(- X ** 2 / (2. * delta ** 2))
+        np.exp(- dist_matrix ** 2 / (2. * delta ** 2))
+
+    Where ``delta`` is a free parameter representing the width of the Gaussian
+    kernel.
 
     Another alternative is to take a symmetric version of the k
     nearest neighbors connectivity matrix of the points.
@@ -395,7 +408,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10,
                  eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1,
-                 kernel_params=None):
+                 kernel_params=None, n_jobs=1):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.random_state = random_state
@@ -408,6 +421,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.degree = degree
         self.coef0 = coef0
         self.kernel_params = kernel_params
+        self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         """Creates an affinity matrix for X using the selected affinity,
@@ -428,7 +442,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                           "set ``affinity=precomputed``.")
 
         if self.affinity == 'nearest_neighbors':
-            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True)
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True,
+                                            n_jobs=self.n_jobs)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X

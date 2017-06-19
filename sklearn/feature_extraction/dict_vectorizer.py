@@ -13,7 +13,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
-from ..utils.fixes import frombuffer_empty
 
 
 def _tosequence(X):
@@ -37,6 +36,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     a feature "f" that can take on the values "ham" and "spam" will become two
     features in the output, one signifying "f=ham", the other "f=spam".
 
+    However, note that this transformer will only do a binary one-hot encoding
+    when feature values are of type string. If categorical features are
+    represented as numeric values such as int, the DictVectorizer can be
+    followed by OneHotEncoder to complete binary one-hot encoding.
+
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
 
@@ -47,13 +51,13 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     dtype : callable, optional
         The type of feature values. Passed to Numpy array/scipy.sparse matrix
         constructors as the dtype argument.
-    separator: string, optional
+    separator : string, optional
         Separator string used when constructing new features for one-hot
         coding.
-    sparse: boolean, optional.
+    sparse : boolean, optional.
         Whether transform should produce scipy.sparse matrices.
         True by default.
-    sort: boolean, optional.
+    sort : boolean, optional.
         Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
         True by default.
 
@@ -178,7 +182,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         if len(indptr) == 1:
             raise ValueError("Sample sequence X is empty.")
 
-        indices = frombuffer_empty(indices, dtype=np.intc)
+        indices = np.frombuffer(indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 

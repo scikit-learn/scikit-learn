@@ -8,7 +8,7 @@ The `Johnson-Lindenstrauss lemma`_ states that any high dimensional
 dataset can be randomly projected into a lower dimensional Euclidean
 space while controlling the distortion in the pairwise distances.
 
-.. _`Johnson-Lindenstrauss lemma`: http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+.. _`Johnson-Lindenstrauss lemma`: https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
 
 Theoretical bounds
@@ -44,7 +44,7 @@ dimensions ``n_components`` for a given number of samples ``n_samples``
 Empirical validation
 ====================
 
-We validate the above bounds on the the digits dataset or on the 20 newsgroups
+We validate the above bounds on the digits dataset or on the 20 newsgroups
 text document (TF-IDF word frequencies) dataset:
 
 - for the digits dataset, some 8x8 gray level pixels data for 500

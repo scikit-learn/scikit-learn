@@ -30,7 +30,7 @@ cdef class ArrayDataset(SequentialDataset):
     cdef np.ndarray Y
     cdef np.ndarray sample_weights
     cdef Py_ssize_t n_features
-    cdef int X_stride
+    cdef np.npy_intp X_stride
     cdef double *X_data_ptr
     cdef double *Y_data_ptr
     cdef np.ndarray feature_indices
