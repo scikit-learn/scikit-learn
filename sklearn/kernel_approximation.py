@@ -517,5 +517,14 @@ class Nystroem(BaseEstimator, TransformerMixin):
             for param in (KERNEL_PARAMS[self.kernel]):
                 if getattr(self, param) is not None:
                     params[param] = getattr(self, param)
+        else:
+            if (self.gamma is not None or
+                    self.coef0 is not None or
+                    self.degree is not None):
+                warnings.warn(
+                    "Passing gamma, coef0 or degree to Nystroem when using a"
+                    " callable kernel is deprecated in version 0.19 and will"
+                    " raise an error in 0.21, as they are ignored. Use "
+                    "kernel_params instead.", DeprecationWarning)
 
         return params

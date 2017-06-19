@@ -5,13 +5,14 @@ from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 from sklearn.utils.testing import assert_less_equal
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
 rng = np.random.RandomState(0)
@@ -169,6 +170,26 @@ def test_nystroem_approximation():
         assert_equal(X_transformed.shape, (X.shape[0], 2))
 
 
+def test_nystroem_default_parameters():
+    rnd = np.random.RandomState(42)
+    X = rnd.uniform(size=(10, 4))
+
+    # rbf kernel should behave as gamma=None by default
+    # aka gamma = 1 / n_features
+    nystroem = Nystroem(n_components=10)
+    X_transformed = nystroem.fit_transform(X)
+    K = rbf_kernel(X, gamma=None)
+    K2 = np.dot(X_transformed, X_transformed.T)
+    assert_array_almost_equal(K, K2)
+
+    # chi2 kernel should behave as gamma=1 by default
+    nystroem = Nystroem(kernel='chi2', n_components=10)
+    X_transformed = nystroem.fit_transform(X)
+    K = chi2_kernel(X, gamma=1)
+    K2 = np.dot(X_transformed, X_transformed.T)
+    assert_array_almost_equal(K, K2)
+
+
 def test_nystroem_singular_kernel():
     # test that nystroem works with singular kernel matrix
     rng = np.random.RandomState(0)
@@ -204,6 +225,7 @@ def test_nystroem_callable():
     X = rnd.uniform(size=(n_samples, 4))
 
     def logging_histogram_kernel(x, y, log):
+        print(x.shape)
         """Histogram kernel that writes to a log."""
         log.append(1)
         return np.minimum(x, y).sum()
@@ -214,3 +236,8 @@ def test_nystroem_callable():
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+
+    # if degree, gamma or coef0 is passed, we raise a warning
+    ny = Nystroem(kernel=rbf_kernel, gamma=1)
+    ny.fit(X)
+    # assert_warns_message(DeprecationWarning, "asdf", ny.fit, X)
