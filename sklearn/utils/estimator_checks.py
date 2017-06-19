@@ -298,7 +298,8 @@ def set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
     params = estimator.get_params()
-    if ("n_iter" in params and estimator.__class__.__name__ != "TSNE"):
+    name = estimator.__class__.__name__
+    if ("n_iter" in params and name != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -329,17 +330,22 @@ def set_checking_parameters(estimator):
     if hasattr(estimator, "n_components"):
         estimator.n_components = 2
 
+    if name != 'TruncatedSVD':
+        # TruncatedSVD doesn't run with n_components = n_features
+        # This is ugly :-/
+        estimator.n_components = 1
+
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = min(estimator.n_clusters, 2)
 
     if hasattr(estimator, "n_best"):
         estimator.n_best = 1
 
-    if estimator.__class__.__name__ == "SelectFdr":
+    if name == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
         estimator.set_params(alpha=.5)
 
-    if estimator.__class__.__name__ == "TheilSenRegressor":
+    if name == "TheilSenRegressor":
         estimator.max_subpopulation = 100
 
     if isinstance(estimator, BaseRandomProjection):
@@ -1097,7 +1103,8 @@ def check_classifiers_train(name, classifier_orig):
             X -= X.min()
         set_random_state(classifier)
         # raises error on malformed input for fit
-        assert_raises(ValueError, classifier.fit, X, y[:-1])
+        if tags["input_validation"]:
+            assert_raises(ValueError, classifier.fit, X, y[:-1])
 
         # fit
         classifier.fit(X, y)
