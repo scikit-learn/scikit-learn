@@ -121,9 +121,9 @@ def test_ovr_partial_fit_exceptions():
     # A new class value which was not in the first call of partial_fit
     # It should raise ValueError
     y1 = [5] + y[7:-1]
-    assert_raises_regex(ValueError, "Mini-batch contains \[.+\] while classes"
-                                    " must be subset of \[.+\]",
-                        ovr.partial_fit, X=X[7:], y=y1)
+    assert_raises_regexp(ValueError, "Mini-batch contains \[.+\] while classes"
+                                     " must be subset of \[.+\]",
+                         ovr.partial_fit, X=X[7:], y=y1)
 
 
 def test_ovr_ovo_regressor():
