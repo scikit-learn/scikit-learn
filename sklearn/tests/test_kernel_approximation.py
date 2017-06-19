@@ -166,7 +166,8 @@ def test_nystroem_approximation():
     assert_equal(X_transformed.shape, (X.shape[0], 2))
 
     # test callable kernel
-    linear_kernel = lambda X, Y: np.dot(X, Y.T)
+    def linear_kernel(X, Y):
+        return np.dot(X, Y.T)
     trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 2))
@@ -234,7 +235,6 @@ def test_nystroem_callable():
     X = rnd.uniform(size=(n_samples, 4))
 
     def logging_histogram_kernel(x, y, log):
-        print(x.shape)
         """Histogram kernel that writes to a log."""
         log.append(1)
         return np.minimum(x, y).sum()
@@ -246,7 +246,10 @@ def test_nystroem_callable():
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
 
+    def linear_kernel(X, Y):
+        return np.dot(X, Y.T)
+
     # if degree, gamma or coef0 is passed, we raise a warning
-    ny = Nystroem(kernel=rbf_kernel, gamma=1)
-    ny.fit(X)
-    # assert_warns_message(DeprecationWarning, "asdf", ny.fit, X)
+    ny = Nystroem(kernel=linear_kernel, gamma=1)
+    msg = "Passing gamma, coef0 or degree to Nystroem"
+    assert_warns_message(DeprecationWarning, msg, ny.fit, X)
