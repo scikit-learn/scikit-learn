@@ -297,6 +297,9 @@ def test_set_params():
     eclf1 = VotingClassifier([('lr', clf1), ('rf', clf2)], voting='soft',
                              weights=[1, 2])
     eclf1.fit(X, y)
+    assert_true('lr' in eclf1.named_estimators_)
+    assert_true(eclf1.named_estimators_.lr is eclf1.estimators_[0])
+
     eclf2 = VotingClassifier([('lr', clf1), ('nb', clf3)], voting='soft',
                              weights=[1, 2])
     eclf2.set_params(nb=clf2).fit(X, y)
