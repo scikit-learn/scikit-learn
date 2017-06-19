@@ -209,7 +209,7 @@ Enhancements
 
 Bug fixes
 .........
-   - Fixed a bug where :class:`_PLS` returns a 2D-array when a 1D-array is expected
+   - Fixed a bug where :class:`PLSRegression` returns a 2D-array when a 1D-array is expected
      :issue:`8856` by :user:`Jean-Baptiste Delafosse <jbDelafosse>`.
 
    - :func:`metrics.average_precision_score` no longer linearly
