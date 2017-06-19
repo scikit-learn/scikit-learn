@@ -220,7 +220,7 @@ Bug fixes
      by the change in recall since the last operating point, as per the
      `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
      (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
-     `Nick Dingwall`_ and `Gael Varoquaux`_.
+     :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
    - Fixed a bug in :class:`covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
