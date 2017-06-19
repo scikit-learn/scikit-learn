@@ -58,6 +58,19 @@ from ..datasets import load_iris, load_boston, make_blobs, make_multilabel_class
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
+MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
+                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
+                'GaussianProcessRegressor',
+                'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
+                'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
+                'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
+                'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
+                'RANSACRegressor', 'RadiusNeighborsRegressor',
+                'RandomForestRegressor', 'Ridge', 'RidgeCV']
+MULTI_OUTPUT_CLASSIFIER = ['DecisionTreeClassifier', 'RadiusNeighborsClassifier',
+                           'ExtraTreeClassifier', 'ExtraTreesClassifier',
+                           'KNeighborsClassifier', 'OneVsRestClassifier',
+                           'RandomForestClassifier']
 
 
 def _safe_tags(estimator, key=None):
@@ -1800,7 +1813,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
 
 def check_classifiers_multilabel_representation_invariance(name,
                                                            classifier_orig):
-    if name not in MULTI_OUTPUT:
+    if name not in MULTI_OUTPUT_CLASSIFIER:
         raise SkipTest
 
     X, y = make_multilabel_classification(n_samples=100, n_features=20,

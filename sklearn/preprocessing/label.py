@@ -644,7 +644,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         y_n_classes = y.shape[1] if hasattr(y, 'shape') else len(y[0])
         if classes.size != y_n_classes:
             raise ValueError("classes {0} mismatch with the labels {1}"
-                             "found in the data".format(classes,
+                             " found in the data".format(classes,
                                                         unique_labels(y)))
 
     if y_type in ("binary", "multiclass"):

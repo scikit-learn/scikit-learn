@@ -34,7 +34,6 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
 
-
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
 
@@ -418,6 +417,7 @@ def test_check_estimator():
     check_estimator(LogisticRegression(C=0.01))
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+    check_estimator(RandomForestClassifier())
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier)

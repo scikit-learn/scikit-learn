@@ -24,6 +24,7 @@ from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
 from sklearn.preprocessing.label import _encode
 
+from sklearn.utils.testing import assert_raises, assert_raise_message
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -602,6 +603,14 @@ def test_label_binarize_multilabel():
 def test_invalid_input_label_binarize():
     with pytest.raises(ValueError):
         label_binarize([0, 2], classes=[0, 2], pos_label=0, neg_label=1)
+    assert_raises(ValueError, label_binarize, [0, 2], classes=[0, 2],
+                  pos_label=0, neg_label=1)
+    assert_raise_message(ValueError, "continuous target data is not "
+                         "supported with label binarization", label_binarize,
+                         [1.2, 2.7], classes=[0, 1])
+    assert_raise_message(ValueError, "classes [1 2 3] mismatch with the "
+                                     "labels [0 1] found in the data",
+                         label_binarize, [[1, 3]], classes=[1, 2, 3])
 
 
 def test_inverse_binarize_multiclass():
