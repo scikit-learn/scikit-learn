@@ -77,10 +77,11 @@ New features
 Enhancements
 ............
 
+   - :func:`metrics.matthews_corrcoef` now support multiclass classification.
+     :issue:`8094` by :user:`Jon Crall <Erotemic>`.
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
-
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
