@@ -44,7 +44,6 @@ cimport numpy as np
 import numpy as np
 from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
-from cython cimport floating
 
 from .sgd_fast cimport LossFunction
 from .sgd_fast cimport Log, SquaredLoss
@@ -62,15 +61,23 @@ cdef void raise_infinite_error(int n_iter):
 
 
 {{for name, c_type in get_dispatch(dtypes)}}
+
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite{{name}}({{c_type}}) nogil
 
+{{endfor}}
+
+{{for name, c_type in get_dispatch(dtypes)}}
 
 cdef inline {{c_type}} fmax{{name}}({{c_type}} x, {{c_type}} y) nogil:
     if x > y:
         return x
     return y
 
+{{endfor}}
+
+
+{{for name, c_type in get_dispatch(dtypes)}}
 
 cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
     """Computes the sum of arr assuming arr is in the log domain.
@@ -93,6 +100,10 @@ cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
 
     return log(out) + vmax
 
+{{endfor}}
+
+
+{{for name, c_type in get_dispatch(dtypes)}}
 
 cdef class MultinomialLogLoss{{name}}:
     cdef {{c_type}} _loss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
@@ -194,11 +205,17 @@ cdef class MultinomialLogLoss{{name}}:
     def __reduce__(self):
         return MultinomialLogLoss{{name}}, ()
 
+{{endfor}}
 
-cdef inline double _soft_thresholding{{name}}(double x, double shrinkage) nogil:
+{{for name, c_type in get_dispatch(dtypes)}}
+
+cdef inline {{c_type}} _soft_thresholding{{name}}({{c_type}} x, {{c_type}} shrinkage) nogil:
     return fmax{{name}}(x - shrinkage, 0) - fmax{{name}}(- x - shrinkage, 0)
 
+{{endfor}}
 
+
+{{for name, c_type in get_dispatch(dtypes)}}
 def sag{{name}}(SequentialDataset{{name}} dataset,
         np.ndarray[{{c_type}}, ndim=2, mode='c'] weights_array,
         np.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_array,
@@ -312,6 +329,9 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
     cdef np.ndarray[{{c_type}}, ndim=1] gradient_array = \
         np.zeros(n_classes, dtype=np.{{c_type}}, order="c")
     cdef {{c_type}}* gradient = <{{c_type}}*> gradient_array.data
+
+    # Intermediate variable that need declaration since cython cannot infer when templating
+    cdef {{c_type}} val
 
     # Bias correction term in saga
     cdef {{c_type}} gradient_correction
@@ -498,6 +518,10 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 
     return num_seen, n_iter
 
+{{endfor}}
+
+
+{{for name, c_type in get_dispatch(dtypes)}}
 
 cdef {{c_type}} scale_weights{{name}}({{c_type}}* weights, {{c_type}} wscale, int n_features,
                           int n_samples, int n_classes, int sample_itr,
@@ -529,6 +553,10 @@ cdef {{c_type}} scale_weights{{name}}({{c_type}}* weights, {{c_type}} wscale, in
     # reset wscale to 1.0
     return 1.0
 
+{{endfor}}
+
+
+{{for name, c_type in get_dispatch(dtypes)}}
 
 cdef void lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                                 int n_samples, int n_classes, int sample_itr,
@@ -548,7 +576,7 @@ cdef void lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz
     1 (this is done at the end of each epoch).
     """
     cdef int feature_ind, class_ind, idx, f_idx, lagged_ind, last_update_ind
-    cdef {{c_type}} cum_sum, grad_step, prox_step
+    cdef {{c_type}} cum_sum, grad_step, prox_step, cum_sum_prox
     for feature_ind in range(xnnz):
         if not reset:
             feature_ind = x_ind_ptr[feature_ind]
@@ -611,6 +639,10 @@ cdef void lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz
         if prox:
             cumulative_sums_prox[sample_itr - 1] = 0.0
 
+{{endfor}}
+
+
+{{for name, c_type in get_dispatch(dtypes)}}
 
 cdef void predict_sample{{name}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnnz,
                                  {{c_type}}* w_data_ptr, {{c_type}} wscale,
@@ -657,5 +689,6 @@ cdef void predict_sample{{name}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnn
                           x_data_ptr[j])
 
         prediction[class_ind] = wscale * innerprod + intercept[class_ind]
+
 
 {{endfor}}
