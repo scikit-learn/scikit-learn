@@ -186,16 +186,16 @@ The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
   fit-times and score-times.
 
 For single metric evaluataion, where the scoring parameter is a string,
-callable or None, the keys will be - ``[test_score, , fit_time, score_time]``
+callable or None, the keys will be - ``['test_score', 'fit_time', 'score_time']``
 
 And for multiple metric evaluation, the return is a dict with the following
-keys - ``[test_<scrorer1_name>, test_<scorer2_name>, test_<scorer...>, fit_time, score_time]``
+keys - ``['test_<scrorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
 
-Additionally setting ``return_train_<scorer_name>`` to ``True`` adds train
-score keys for all the scorers.
+Additionally setting ``return_train_score`` to ``True`` adds train score keys
+for all the scorers.
 
-The multiple metrics can be specified either as a ``list``, ``tuple`` or
-``set`` of predefined scorer names::
+The multiple metrics can be specified either as a list, tuple or set of
+predefined scorer names::
 
     >>> from sklearn.model_selection import cross_validate
     >>> from sklearn.metrics import recall_score
