@@ -27,7 +27,6 @@ from .testing import assert_warns_message
 from .testing import set_random_state
 from .testing import SkipTest
 from .testing import ignore_warnings
-from .testing import assert_dict_equal
 from .testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
@@ -54,7 +53,56 @@ from .import shuffle
 from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import load_iris, load_boston, make_blobs
+from ..datasets import load_iris, load_boston, make_blobs, make_multilabel_classification
+
+####
+# import struct
+#
+# from sklearn.externals.six.moves import zip
+# from sklearn.externals.joblib import hash, Memory
+# from sklearn.utils.testing import assert_raises
+# from sklearn.utils.testing import assert_raises_regex
+# from sklearn.utils.testing import assert_raise_message
+# from sklearn.utils.testing import assert_equal
+# from sklearn.utils.testing import assert_not_equal
+# from sklearn.utils.testing import assert_true
+# from sklearn.utils.testing import assert_false
+# from sklearn.utils.testing import assert_in
+# from sklearn.utils.testing import assert_array_equal
+# from sklearn.utils.testing import assert_allclose
+# from sklearn.utils.testing import assert_allclose_dense_sparse
+# from sklearn.utils.testing import assert_warns_message
+# from sklearn.utils.testing import META_ESTIMATORS
+# from sklearn.utils.testing import set_random_state
+# from sklearn.utils.testing import assert_greater
+# from sklearn.utils.testing import assert_greater_equal
+# from sklearn.utils.testing import SkipTest
+# from sklearn.utils.testing import ignore_warnings
+# from sklearn.utils.testing import assert_dict_equal
+# from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+#
+#
+# from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
+#                           TransformerMixin, ClusterMixin, BaseEstimator)
+# from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+#
+# from sklearn.random_projection import BaseRandomProjection
+# from sklearn.feature_selection import SelectKBest
+# from sklearn.svm.base import BaseLibSVM
+# from sklearn.linear_model.stochastic_gradient import BaseSGD
+# from sklearn.pipeline import make_pipeline
+# from sklearn.exceptions import ConvergenceWarning
+# from sklearn.exceptions import DataConversionWarning
+# from sklearn.exceptions import SkipTestWarning
+# from sklearn.model_selection import train_test_split
+#
+# from sklearn.utils import shuffle
+# from sklearn.utils.fixes import signature
+# from sklearn.utils.validation import has_fit_parameter, _num_samples
+# from sklearn.preprocessing import StandardScaler
+# from sklearn.datasets import load_iris, load_boston, make_blobs, \
+#     make_multilabel_classification
+###
 
 
 BOSTON = None
@@ -131,6 +179,14 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_regression_target
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
+    yield check_classifiers_multilabel_representation_invariance
+
+    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
+        # TODO some complication with -1 label
+       name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+        # We don't raise a warning in these classifiers, as
+        # the column y interface is used by the forests.
+
         yield check_supervised_y_2d
     if tags["requires_fit"]:
         yield check_estimators_unfitted
@@ -1789,6 +1845,37 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
         for contamination in [-0.5, 2.3]:
             estimator.set_params(contamination=contamination)
             assert_raises(ValueError, estimator.fit, X)
+
+
+
+def check_classifiers_multilabel_representation_invariance(name, Classifier):
+
+    if name not in MULTI_OUTPUT:
+        raise SkipTest
+
+    X, y = make_multilabel_classification(n_samples=100,
+                                          n_features=20,
+                                          n_classes=5,
+                                          n_labels=3,
+                                          length=50,
+                                          allow_unlabeled=True,
+                                          random_state=0)
+    X_train, y_train = X[:80], y[:80]
+    X_test = X[80:]
+
+    y_train_ll = y_train.tolist()
+    y_train_la = list(y_train)
+
+    classifier = Classifier()
+
+    set_testing_parameters(classifier)
+    set_random_state(classifier)
+
+    y_pred = classifier.fit(X_train, y_train).predict(X_test)
+    y_pred_ll = classifier.fit(X_train, y_train_ll).predict(X_test)
+    y_pred_la = classifier.fit(X_train, y_train_la).predict(X_test)
+    assert_array_equal(y_pred, y_pred_la)
+    assert_array_equal(y_pred, y_pred_ll)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
