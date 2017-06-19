@@ -24,13 +24,14 @@ def _check_predict_proba(clf, X, y):
     log_proba = clf.predict_log_proba(X)
 
     y = np.atleast_1d(y)
+    ndim = y.ndim
     if y.ndim == 1:
         y = np.reshape(y, (-1, 1))
 
     n_outputs = y.shape[1]
     n_samples = len(X)
 
-    if n_outputs == 1:
+    if n_outputs == 1 and not ndim == 2:
         proba = [proba]
         log_proba = [log_proba]
 
@@ -476,6 +477,22 @@ def test_constant_strategy_multioutput():
     assert_array_equal(clf.predict(X),
                        np.hstack([np.ones((n_samples, 1)),
                                   np.zeros((n_samples, 1))]))
+    _check_predict_proba(clf, X, y)
+
+
+def test_constant_strategy_y2d():
+    X = [[0], [0], [0], [0]]  # ignored
+    y = np.array([[2],
+                  [1],
+                  [2],
+                  [2]])
+
+    n_samples = len(X)
+
+    clf = DummyClassifier(strategy="constant", random_state=0,
+                          constant=[1])
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(X), np.ones((n_samples, 1)))
     _check_predict_proba(clf, X, y)
 
 
