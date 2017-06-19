@@ -12,7 +12,6 @@ from inspect import signature
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
-<<<<<<< HEAD
 import joblib
 
 from . import IS_PYPY
@@ -1799,8 +1798,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             assert_raises(ValueError, estimator.fit, X)
 
 
-
-def check_classifiers_multilabel_representation_invariance(name, Classifier):
+def check_classifiers_multilabel_representation_invariance(name, classifier_orig):
 
     if name not in MULTI_OUTPUT:
         raise SkipTest
@@ -1816,9 +1814,7 @@ def check_classifiers_multilabel_representation_invariance(name, Classifier):
     y_train_list_of_lists = y_train.tolist()
     y_train_list_of_arrays = list(y_train)
 
-    classifier = Classifier()
-
-    set_testing_parameters(classifier)
+    classifier = clone(classifier_orig)
     set_random_state(classifier)
 
     y_pred = classifier.fit(X_train, y_train).predict(X_test)
