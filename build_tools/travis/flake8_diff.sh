@@ -75,7 +75,7 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     fi
     echo -e "\nLast 2 commits in $LOCAL_BRANCH_REF:"
     echo '--------------------------------------------------------------------------------'
-    git log -2 $LOCAL_BRANCH_REF
+    git --no-pager log -2 $LOCAL_BRANCH_REF
 
     REMOTE_MASTER_REF="$REMOTE/master"
     # Make sure that $REMOTE_MASTER_REF is a valid reference
@@ -97,7 +97,7 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     echo -e "\nCommon ancestor between $LOCAL_BRANCH_REF ($LOCAL_BRANCH_SHORT_HASH)"\
          "and $REMOTE_MASTER_REF ($REMOTE_MASTER_SHORT_HASH) is $COMMIT_SHORT_HASH:"
     echo '--------------------------------------------------------------------------------'
-    git show --no-patch $COMMIT_SHORT_HASH
+    git --no-pager show --no-patch $COMMIT_SHORT_HASH
 
     COMMIT_RANGE="$COMMIT_SHORT_HASH..$LOCAL_BRANCH_SHORT_HASH"
 
@@ -137,8 +137,12 @@ check_files() {
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals and doc/sphinxext/sphinx_gallery has been modified"
 else
-    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"
+    # Default ignore PEP8 violations are from flake8 3.3.0
+    DEFAULT_IGNORED_PEP8=E121,E123,E126,E226,E24,E704,W503,W504
+    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)" \
+           --ignore $DEFAULT_IGNORED_PEP8
     # Examples are allowed to not have imports at top of file
-    check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" --ignore=E402
+    check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" \
+           --ignore $DEFAULT_IGNORED_PEP8 --ignore E402
 fi
 echo -e "No problem detected by flake8\n"

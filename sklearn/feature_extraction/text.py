@@ -131,12 +131,24 @@ class VectorizerMixin(object):
         min_n, max_n = self.ngram_range
         if max_n != 1:
             original_tokens = tokens
-            tokens = []
+            if min_n == 1:
+                # no need to do any slicing for unigrams
+                # just iterate through the original tokens
+                tokens = list(original_tokens)
+                min_n += 1
+            else:
+                tokens = []
+
             n_original_tokens = len(original_tokens)
+
+            # bind method outside of loop to reduce overhead
+            tokens_append = tokens.append
+            space_join = " ".join
+
             for n in xrange(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(" ".join(original_tokens[i: i + n]))
+                    tokens_append(space_join(original_tokens[i: i + n]))
 
         return tokens
 
@@ -146,11 +158,21 @@ class VectorizerMixin(object):
         text_document = self._white_spaces.sub(" ", text_document)
 
         text_len = len(text_document)
-        ngrams = []
         min_n, max_n = self.ngram_range
+        if min_n == 1:
+            # no need to do any slicing for unigrams
+            # iterate through the string
+            ngrams = list(text_document)
+            min_n += 1
+        else:
+            ngrams = []
+
+        # bind method outside of loop to reduce overhead
+        ngrams_append = ngrams.append
+
         for n in xrange(min_n, min(max_n + 1, text_len + 1)):
             for i in xrange(text_len - n + 1):
-                ngrams.append(text_document[i: i + n])
+                ngrams_append(text_document[i: i + n])
         return ngrams
 
     def _char_wb_ngrams(self, text_document):
@@ -164,15 +186,19 @@ class VectorizerMixin(object):
 
         min_n, max_n = self.ngram_range
         ngrams = []
+
+        # bind method outside of loop to reduce overhead
+        ngrams_append = ngrams.append
+
         for w in text_document.split():
             w = ' ' + w + ' '
             w_len = len(w)
             for n in xrange(min_n, max_n + 1):
                 offset = 0
-                ngrams.append(w[offset:offset + n])
+                ngrams_append(w[offset:offset + n])
                 while offset + n < w_len:
                     offset += 1
-                    ngrams.append(w[offset:offset + n])
+                    ngrams_append(w[offset:offset + n])
                 if offset == 0:   # count a short word (w_len < n) only once
                     break
         return ngrams
