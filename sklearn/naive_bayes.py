@@ -15,6 +15,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         (parts based on earlier work by Mathieu Blondel)
 #
 # License: BSD 3 clause
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -606,6 +607,9 @@ class BaseDiscreteNB(BaseNB):
     intercept_ = property(_get_intercept)
 
 
+_ALPHA_MIN = 1e-10
+
+
 class MultinomialNB(BaseDiscreteNB):
     """
     Naive Bayes classifier for multinomial models
@@ -683,9 +687,20 @@ class MultinomialNB(BaseDiscreteNB):
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
-        self.alpha = alpha
+        self._alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+
+    @property
+    def alpha(self):
+        if self._alpha < 0:
+            raise ValueError('Smoothing parameter alpha = %e. '
+                             'alpha must be >= 0!' % self._alpha)
+        if self._alpha < _ALPHA_MIN:
+            warnings.warn('alpha too small will result in numeric errors, '
+                          'setting alpha = %e' % _ALPHA_MIN)
+            return _ALPHA_MIN
+        return self._alpha
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -784,10 +799,21 @@ class BernoulliNB(BaseDiscreteNB):
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
                  class_prior=None):
-        self.alpha = alpha
+        self._alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+
+    @property
+    def alpha(self):
+        if self._alpha < 0:
+            raise ValueError('Smoothing parameter alpha = %e. '
+                             'alpha must be >= 0!' % self._alpha)
+        if self._alpha < _ALPHA_MIN:
+            warnings.warn('alpha too small will result in numeric errors, '
+                          'setting alpha = %e' % _ALPHA_MIN)
+            return _ALPHA_MIN
+        return self._alpha
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
