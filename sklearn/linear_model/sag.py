@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 from .base import make_dataset
-from .sag_fast import sag
+from .sag_fast import sag64 as sag
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
 from ..utils.extmath import row_norms
