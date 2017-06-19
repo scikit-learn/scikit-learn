@@ -68,7 +68,10 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-
+MULTI_OUTPUT_CLASSIFIER = ['DecisionTreeClassifier', 'RadiusNeighborsClassifier',
+                           'ExtraTreeClassifier', 'ExtraTreesClassifier',
+                           'KNeighborsClassifier', 'OneVsRestClassifier',
+                           'RandomForestClassifier']
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
@@ -1152,7 +1155,7 @@ def check_classifiers_train(name, classifier_orig):
 def check_classifiers_multilabel_representation_invariance(name,
                                                            classifier_orig):
 
-    if name not in MULTI_OUTPUT:
+    if name not in MULTI_OUTPUT_CLASSIFIER:
         raise SkipTest
 
     X, y = make_multilabel_classification(n_samples=100, n_features=20,

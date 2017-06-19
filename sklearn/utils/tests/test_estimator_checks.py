@@ -20,7 +20,6 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
 
-
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
 
@@ -193,6 +192,7 @@ def test_check_estimator():
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+    check_estimator(RandomForestClassifier())
 
 
 def test_check_estimator_clones():
