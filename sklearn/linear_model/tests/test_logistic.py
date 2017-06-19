@@ -1144,6 +1144,11 @@ def test_dtype_match():
     for solver in ['saga', ]:
         for multi_class in ['ovr', 'multinomial']:
 
+            # Check accuracy consistency
+            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_64.fit(X_64, y_64)
+            lr_64_coef = lr_64.coef_
+
             # Check type consistency
             lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
             lr_32.fit(X_32, y_32)
@@ -1153,11 +1158,6 @@ def test_dtype_match():
             lr_32_sparse = LogisticRegression(solver=solver,
                                               multi_class=multi_class)
             lr_32_sparse.fit(X_sparse_32, y_32)
-
-            # Check accuracy consistency
-            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
-            lr_64.fit(X_64, y_64)
-            lr_64_coef = lr_64.coef_
 
             # Do all asserts at once (it facilitate to interactive type check)
             assert_equal(lr_32_coef.dtype, X_32.dtype)
