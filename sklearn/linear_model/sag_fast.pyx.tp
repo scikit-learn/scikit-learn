@@ -653,3 +653,5 @@ cdef void predict_sample{{name}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnn
                           x_data_ptr[j])
 
         prediction[class_ind] = wscale * innerprod + intercept[class_ind]
+
+{{endfor}}

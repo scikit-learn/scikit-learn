@@ -5,6 +5,7 @@ import numpy
 
 from sklearn._build_utils import get_blas_info
 
+from Cython import Tempita as tempita
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
