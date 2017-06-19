@@ -15,7 +15,7 @@ relevant variables depends on the sparsity of the ground truth, the
 number of samples, the number of features, the conditioning of the
 design matrix on the signal subspace, the amount of noise, and the
 absolute value of the smallest non-zero coefficient [Wainwright2006]
-(http://statistics.berkeley.edu/tech-reports/709.pdf).
+(http://statistics.berkeley.edu/sites/default/files/tech-reports/709.pdf).
 
 Here we keep all parameters constant and vary the conditioning of the
 design matrix. For a well-conditioned design matrix (small mutual
@@ -55,7 +55,6 @@ from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.utils.extmath import pinvh
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -63,7 +62,7 @@ def mutual_incoherence(X_relevant, X_irelevant):
     """Mutual incoherence, as defined by formula (26a) of [Wainwright2006].
     """
     projector = np.dot(np.dot(X_irelevant.T, X_relevant),
-                       pinvh(np.dot(X_relevant.T, X_relevant)))
+                       linalg.pinvh(np.dot(X_relevant.T, X_relevant)))
     return np.max(np.abs(projector).sum(axis=1))
 
 

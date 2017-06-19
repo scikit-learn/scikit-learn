@@ -15,7 +15,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
@@ -26,11 +25,11 @@ def _generate_hypercube(samples, dimensions, rng):
     """Returns distinct binary samples of length dimensions
     """
     if dimensions > 30:
-        return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
+        return np.hstack([rng.randint(2, size=(samples, dimensions - 30)),
                           _generate_hypercube(samples, 30, rng)])
-    out = astype(sample_without_replacement(2 ** dimensions, samples,
-                                            random_state=rng),
-                 dtype='>u4', copy=False)
+    out = sample_without_replacement(2 ** dimensions, samples,
+                                     random_state=rng).astype(dtype='>u4',
+                                                              copy=False)
     out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
     return out
 
@@ -584,7 +583,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     n_samples : int, optional (default=100)
         The total number of points generated.
 
-    shuffle: bool, optional (default=True)
+    shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
 
     noise : double or None (default=None)
@@ -631,7 +630,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     """Make two interleaving half circles
 
     A simple toy dataset to visualize clustering and classification
-    algorithms.
+    algorithms. Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -643,8 +642,6 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
-
-    Read more in the :ref:`User Guide <sample_generators>`.
 
     Returns
     -------
@@ -667,8 +664,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples_in, dtype=np.intp),
-                   np.ones(n_samples_out, dtype=np.intp)])
+    y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
+                   np.ones(n_samples_in, dtype=np.intp)])
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
@@ -697,10 +694,10 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         (default=3)
         The number of centers to generate, or the fixed center locations.
 
-    cluster_std: float or sequence of floats, optional (default=1.0)
+    cluster_std : float or sequence of floats, optional (default=1.0)
         The standard deviation of the clusters.
 
-    center_box: pair of floats (min, max), optional (default=(-10.0, 10.0))
+    center_box : pair of floats (min, max), optional (default=(-10.0, 10.0))
         The bounding box for each cluster center when centers are
         generated at random.
 
@@ -1052,7 +1049,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_samples : int
         number of samples to generate
 
-    n_components:  int,
+    n_components :  int,
         number of components in the dictionary
 
     n_features : int
@@ -1061,18 +1058,21 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs : int
         number of active (non-zero) coefficients in each sample
 
-    random_state: int or RandomState instance, optional (default=None)
-        seed used by the pseudo random number generator
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
-    data: array of shape [n_features, n_samples]
+    data : array of shape [n_features, n_samples]
         The encoded signal (Y).
 
-    dictionary: array of shape [n_features, n_components]
+    dictionary : array of shape [n_features, n_components]
         The dictionary with normalized components (D).
 
-    code: array of shape [n_components, n_samples]
+    code : array of shape [n_components, n_samples]
         The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X).
 
@@ -1192,11 +1192,12 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
 
     Parameters
     ----------
-    dim: integer, optional (default=1)
+    dim : integer, optional (default=1)
         The size of the random matrix to generate.
 
-    alpha: float between 0 and 1, optional (default=0.95)
-        The probability that a coefficient is non zero (see notes).
+    alpha : float between 0 and 1, optional (default=0.95)
+        The probability that a coefficient is zero (see notes). Larger values
+        enforce more sparsity.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1293,7 +1294,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     ----------
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
            Chapter 10, 2009.
-           http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
+           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
     """
     generator = check_random_state(random_state)
 

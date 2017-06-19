@@ -29,6 +29,17 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
+def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
+    kde = KernelDensity(kernel=kernel, bandwidth=bandwidth,
+                        atol=atol, rtol=rtol)
+    log_dens = kde.fit(X).score_samples(Y)
+    assert_allclose(np.exp(log_dens), dens_true,
+                    atol=atol, rtol=max(1E-7, rtol))
+    assert_allclose(np.exp(kde.score(Y)),
+                    np.prod(dens_true),
+                    atol=atol, rtol=max(1E-7, rtol))
+
+
 def test_kernel_density(n_samples=100, n_features=3):
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)
@@ -39,20 +50,11 @@ def test_kernel_density(n_samples=100, n_features=3):
         for bandwidth in [0.01, 0.1, 1]:
             dens_true = compute_kernel_slow(Y, X, kernel, bandwidth)
 
-            def check_results(kernel, bandwidth, atol, rtol):
-                kde = KernelDensity(kernel=kernel, bandwidth=bandwidth,
-                                    atol=atol, rtol=rtol)
-                log_dens = kde.fit(X).score_samples(Y)
-                assert_allclose(np.exp(log_dens), dens_true,
-                                atol=atol, rtol=max(1E-7, rtol))
-                assert_allclose(np.exp(kde.score(Y)),
-                                np.prod(dens_true),
-                                atol=atol, rtol=max(1E-7, rtol))
-
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
                     for breadth_first in (True, False):
-                        yield (check_results, kernel, bandwidth, atol, rtol)
+                        yield (check_results, kernel, bandwidth, atol, rtol,
+                               X, Y, dens_true)
 
 
 def test_kernel_density_sampling(n_samples=100, n_features=3):

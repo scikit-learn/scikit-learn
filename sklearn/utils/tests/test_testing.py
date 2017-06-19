@@ -1,50 +1,35 @@
 import warnings
 import unittest
 import sys
-
-from nose.tools import assert_raises
+import numpy as np
+from scipy import sparse
 
 from sklearn.utils.testing import (
-    _assert_less,
-    _assert_greater,
+    assert_raises,
+    assert_less,
+    assert_greater,
     assert_less_equal,
     assert_greater_equal,
     assert_warns,
     assert_no_warnings,
     assert_equal,
     set_random_state,
-    assert_raise_message)
+    assert_raise_message,
+    assert_allclose_dense_sparse,
+    ignore_warnings)
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-try:
-    from nose.tools import assert_less
 
-    def test_assert_less():
-        # Check that the nose implementation of assert_less gives the
-        # same thing as the scikit's
-        assert_less(0, 1)
-        _assert_less(0, 1)
-        assert_raises(AssertionError, assert_less, 1, 0)
-        assert_raises(AssertionError, _assert_less, 1, 0)
+def test_assert_less():
+    assert_less(0, 1)
+    assert_raises(AssertionError, assert_less, 1, 0)
 
-except ImportError:
-    pass
 
-try:
-    from nose.tools import assert_greater
-
-    def test_assert_greater():
-        # Check that the nose implementation of assert_less gives the
-        # same thing as the scikit's
-        assert_greater(1, 0)
-        _assert_greater(1, 0)
-        assert_raises(AssertionError, assert_greater, 0, 1)
-        assert_raises(AssertionError, _assert_greater, 0, 1)
-
-except ImportError:
-    pass
+def test_assert_greater():
+    assert_greater(1, 0)
+    assert_raises(AssertionError, assert_greater, 0, 1)
 
 
 def test_assert_less_equal():
@@ -66,6 +51,26 @@ def test_set_random_state():
     set_random_state(lda, 3)
     set_random_state(tree, 3)
     assert_equal(tree.random_state, 3)
+
+
+def test_assert_allclose_dense_sparse():
+    x = np.arange(9).reshape(3, 3)
+    msg = "Not equal to tolerance "
+    y = sparse.csc_matrix(x)
+    for X in [x, y]:
+        # basic compare
+        assert_raise_message(AssertionError, msg, assert_allclose_dense_sparse,
+                             X, X * 2)
+        assert_allclose_dense_sparse(X, X)
+
+    assert_raise_message(ValueError, "Can only compare two sparse",
+                         assert_allclose_dense_sparse, x, y)
+
+    A = sparse.diags(np.ones(5), offsets=0).tocsr()
+    B = sparse.csr_matrix(np.ones((1, 5)))
+
+    assert_raise_message(AssertionError, "Arrays are not equal",
+                         assert_allclose_dense_sparse, B, A)
 
 
 def test_assert_raise_message():
@@ -96,10 +101,102 @@ def test_assert_raise_message():
                   "test", _no_raise)
 
 
+def test_ignore_warning():
+    # This check that ignore_warning decorateur and context manager are working
+    # as expected
+    def _warning_function():
+        warnings.warn("deprecation warning", DeprecationWarning)
+
+    def _multiple_warning_function():
+        warnings.warn("deprecation warning", DeprecationWarning)
+        warnings.warn("deprecation warning")
+
+    # Check the function directly
+    assert_no_warnings(ignore_warnings(_warning_function))
+    assert_no_warnings(ignore_warnings(_warning_function,
+                                       category=DeprecationWarning))
+    assert_warns(DeprecationWarning, ignore_warnings(_warning_function,
+                                                     category=UserWarning))
+    assert_warns(UserWarning,
+                 ignore_warnings(_multiple_warning_function,
+                                 category=DeprecationWarning))
+    assert_warns(DeprecationWarning,
+                 ignore_warnings(_multiple_warning_function,
+                                 category=UserWarning))
+    assert_no_warnings(ignore_warnings(_warning_function,
+                                       category=(DeprecationWarning,
+                                                 UserWarning)))
+
+    # Check the decorator
+    @ignore_warnings
+    def decorator_no_warning():
+        _warning_function()
+        _multiple_warning_function()
+
+    @ignore_warnings(category=(DeprecationWarning, UserWarning))
+    def decorator_no_warning_multiple():
+        _multiple_warning_function()
+
+    @ignore_warnings(category=DeprecationWarning)
+    def decorator_no_deprecation_warning():
+        _warning_function()
+
+    @ignore_warnings(category=UserWarning)
+    def decorator_no_user_warning():
+        _warning_function()
+
+    @ignore_warnings(category=DeprecationWarning)
+    def decorator_no_deprecation_multiple_warning():
+        _multiple_warning_function()
+
+    @ignore_warnings(category=UserWarning)
+    def decorator_no_user_multiple_warning():
+        _multiple_warning_function()
+
+    assert_no_warnings(decorator_no_warning)
+    assert_no_warnings(decorator_no_warning_multiple)
+    assert_no_warnings(decorator_no_deprecation_warning)
+    assert_warns(DeprecationWarning, decorator_no_user_warning)
+    assert_warns(UserWarning, decorator_no_deprecation_multiple_warning)
+    assert_warns(DeprecationWarning, decorator_no_user_multiple_warning)
+
+    # Check the context manager
+    def context_manager_no_warning():
+        with ignore_warnings():
+            _warning_function()
+
+    def context_manager_no_warning_multiple():
+        with ignore_warnings(category=(DeprecationWarning, UserWarning)):
+            _multiple_warning_function()
+
+    def context_manager_no_deprecation_warning():
+        with ignore_warnings(category=DeprecationWarning):
+            _warning_function()
+
+    def context_manager_no_user_warning():
+        with ignore_warnings(category=UserWarning):
+            _warning_function()
+
+    def context_manager_no_deprecation_multiple_warning():
+        with ignore_warnings(category=DeprecationWarning):
+            _multiple_warning_function()
+
+    def context_manager_no_user_multiple_warning():
+        with ignore_warnings(category=UserWarning):
+            _multiple_warning_function()
+
+    assert_no_warnings(context_manager_no_warning)
+    assert_no_warnings(context_manager_no_warning_multiple)
+    assert_no_warnings(context_manager_no_deprecation_warning)
+    assert_warns(DeprecationWarning, context_manager_no_user_warning)
+    assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
+    assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
+
+
 # This class is inspired from numpy 1.7 with an alteration to check
 # the reset warning filters after calls to assert_warns.
 # This assert_warns behavior is specific to scikit-learn because
-#`clean_warning_registry()` is called internally by assert_warns
+# `clean_warning_registry()` is called internally by assert_warns
 # and clears all previous filters.
 class TestWarns(unittest.TestCase):
     def test_warn(self):

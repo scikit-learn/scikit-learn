@@ -9,25 +9,27 @@ The dataset is provided by Phillips et. al. (2006).
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <http://www.iucnredlist.org/details/3038/0>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
-References:
+References
+----------
 
- * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
-   S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-   190:231-259, 2006.
+`"Maximum entropy modeling of species geographic distributions"
+<http://rob.schapire.net/papers/ecolmod.pdf>`_ S. J. Phillips,
+R. P. Anderson, R. E. Schapire - Ecological Modelling, 190:231-259, 2006.
 
-Notes:
+Notes
+-----
 
- * See examples/applications/plot_species_distribution_modeling.py
-   for an example of using this dataset
+For an example of using this dataset, see
+:ref:`examples/applications/plot_species_distribution_modeling.py
+<sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
 """
 
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -50,11 +52,12 @@ except ImportError:
 
 import numpy as np
 
-from sklearn.datasets.base import get_data_home, Bunch
+from sklearn.datasets.base import get_data_home
+from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
-DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
+DIRECTORY_URL = "http://biodiversityinformatics.amnh.org/open_source/maxent/"
 
 SAMPLES_URL = DIRECTORY_URL + "samples.zip"
 COVERAGES_URL = DIRECTORY_URL + "coverages.zip"
@@ -139,9 +142,9 @@ def fetch_species_distributions(data_home=None,
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -182,11 +185,11 @@ def fetch_species_distributions(data_home=None,
     The two species are:
 
     - `"Bradypus variegatus"
-      <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+      <http://www.iucnredlist.org/details/3038/0>`_ ,
       the Brown-throated Sloth.
 
     - `"Microryzomys minutus"
-      <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+      <http://www.iucnredlist.org/details/13408/0>`_ ,
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
 
@@ -194,16 +197,16 @@ def fetch_species_distributions(data_home=None,
     ----------
 
     * `"Maximum entropy modeling of species geographic distributions"
-      <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+      <http://rob.schapire.net/papers/ecolmod.pdf>`_
       S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
       190:231-259, 2006.
 
     Notes
     -----
 
-    * See examples/applications/plot_species_distribution_modeling.py
-      for an example of using this dataset with scikit-learn
-
+    * For an example of using this dataset with scikit-learn, see
+      :ref:`examples/applications/plot_species_distribution_modeling.py
+      <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
     """
     data_home = get_data_home(data_home)
     if not exists(data_home):
@@ -222,6 +225,9 @@ def fetch_species_distributions(data_home=None,
     archive_path = _pkl_filepath(data_home, DATA_ARCHIVE_NAME)
 
     if not exists(archive_path):
+        if not download_if_missing:
+            raise IOError("Data not found and `download_if_missing` is False")
+
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
         X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))

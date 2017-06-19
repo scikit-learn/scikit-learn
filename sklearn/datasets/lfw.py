@@ -23,10 +23,8 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from os import listdir, makedirs, remove
+from os import listdir, makedirs, remove, rename
 from os.path import join, exists, isdir
-
-from sklearn.utils import deprecated
 
 import logging
 import numpy as np
@@ -36,7 +34,8 @@ try:
 except ImportError:
     import urllib
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 from ..externals.joblib import Memory
 
 from ..externals.six import b
@@ -98,8 +97,11 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
-                logger.warning("Downloading LFW data (~200MB): %s", archive_url)
-                urllib.urlretrieve(archive_url, archive_path)
+                archive_path_temp = archive_path + ".tmp"
+                logger.warning("Downloading LFW data (~200MB): %s",
+                               archive_url)
+                urllib.urlretrieve(archive_url, archive_path_temp)
+                rename(archive_path_temp, archive_path)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -195,7 +197,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
         folder_path = join(data_folder_path, person_name)
         if not isdir(folder_path):
             continue
-        paths = [join(folder_path, f) for f in listdir(folder_path)]
+        paths = [join(folder_path, f) for f in sorted(listdir(folder_path))]
         n_pictures = len(paths)
         if n_pictures >= min_faces_per_person:
             person_name = person_name.replace('_', ' ')
@@ -243,13 +245,13 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     (gallery).
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Parameters
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     funneled : boolean, optional, default: True
         Download and use the funneled variant of the dataset.
@@ -264,7 +266,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
     slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
@@ -281,13 +283,13 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     dataset.data : numpy array of shape (13233, 2914)
         Each row corresponds to a ravelled face image of original size 62 x 47
-        pixels. Changing the ``slice_`` or resize parameters will change the shape
-        of the output.
+        pixels. Changing the ``slice_`` or resize parameters will change the
+        shape of the output.
 
     dataset.images : numpy array of shape (13233, 62, 47)
         Each row is a face image corresponding to one of the 5749 people in
-        the dataset. Changing the ``slice_`` or resize parameters will change the shape
-        of the output.
+        the dataset. Changing the ``slice_`` or resize parameters will change
+        the shape of the output.
 
     dataset.target : numpy array of shape (13233,)
         Labels associated to each face image. Those labels range from 0-5748
@@ -373,17 +375,6 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
-@deprecated("Function 'load_lfw_people' has been deprecated in 0.17 and will be "
-            "removed in 0.19."
-            "Use fetch_lfw_people(download_if_missing=False) instead.")
-def load_lfw_people(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_people(download_if_missing=False)
-
-    Check fetch_lfw_people.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_people(download_if_missing=download_if_missing, **kwargs)
-
-
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
@@ -409,7 +400,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
     The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 74.
+    arguments reduce them to 62 x 47.
 
     Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
 
@@ -423,7 +414,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By
-        default all scikit learn data is stored in '~/scikit_learn_data'
+        default all scikit-learn data is stored in '~/scikit_learn_data'
         subfolders.
 
     funneled : boolean, optional, default: True
@@ -435,7 +426,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
     slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
@@ -450,17 +441,19 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     -------
     The data is returned as a Bunch object with the following attributes:
 
-    data : numpy array of shape (2200, 5828)
+    data : numpy array of shape (2200, 5828). Shape depends on ``subset``.
         Each row corresponds to 2 ravel'd face images of original size 62 x 47
-        pixels. Changing the ``slice_`` or resize parameters will change the shape
-        of the output.
+        pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
+        will change the shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47)
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on
+            ``subset``.
         Each row has 2 face images corresponding to same or different person
-        from the dataset containing 5749 people. Changing the ``slice_`` or resize
-        parameters will change the shape of the output.
+        from the dataset containing 5749 people. Changing the ``slice_``,
+        ``resize`` or ``subset`` parameters will change the shape of the
+        output.
 
-    target : numpy array of shape (2200,)
+    target : numpy array of shape (2200,). Shape depends on ``subset``.
         Labels associated to each pair of images. The two label values being
         different persons or the same person.
 
@@ -498,14 +491,3 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     return Bunch(data=pairs.reshape(len(pairs), -1), pairs=pairs,
                  target=target, target_names=target_names,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
-
-
-@deprecated("Function 'load_lfw_pairs' has been deprecated in 0.17 and will be "
-            "removed in 0.19."
-            "Use fetch_lfw_pairs(download_if_missing=False) instead.")
-def load_lfw_pairs(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_pairs(download_if_missing=False)
-
-    Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_pairs(download_if_missing=download_if_missing, **kwargs)

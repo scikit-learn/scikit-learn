@@ -88,8 +88,8 @@ def fit(
         set to polynomial), 3 by default.
 
     gamma : float64, optional
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF). 0.1 by default.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float64, optional
         Independent parameter in poly/sigmoid kernel. 0 by default.
@@ -287,7 +287,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     Parameters
     ----------
-    X: array-like, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float, size=[n_samples, n_features]
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
@@ -295,7 +295,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     degree : int
         Degree of the polynomial kernel.
     gamma : float
-        Gamma parameter in RBF kernel.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
 
@@ -363,7 +364,7 @@ def predict_proba(
 
     Parameters
     ----------
-    X: array-like, dtype=float
+    X : array-like, dtype=float
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
 
     Returns
@@ -477,9 +478,9 @@ def cross_validation(
     Parameters
     ----------
 
-    X: array-like, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float, size=[n_samples, n_features]
 
-    Y: array, dtype=float, size=[n_samples]
+    Y : array, dtype=float, size=[n_samples]
         target vector
 
     svm_type : {0, 1, 2, 3, 4}
@@ -494,8 +495,8 @@ def cross_validation(
         set to polynomial)
 
     gamma : float
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF)
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float
         Independent parameter in poly/sigmoid kernel.

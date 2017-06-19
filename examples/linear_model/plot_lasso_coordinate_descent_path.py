@@ -40,7 +40,7 @@ print("Computing regularization path using the elastic net...")
 alphas_enet, coefs_enet, _ = enet_path(
     X, y, eps=eps, l1_ratio=0.8, fit_intercept=False)
 
-print("Computing regularization path using the positve elastic net...")
+print("Computing regularization path using the positive elastic net...")
 alphas_positive_enet, coefs_positive_enet, _ = enet_path(
     X, y, eps=eps, l1_ratio=0.8, positive=True, fit_intercept=False)
 

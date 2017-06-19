@@ -1,12 +1,12 @@
 import numpy as np
 from scipy import sparse as sp
 
-from nose.tools import assert_raises, assert_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection.base import SelectorMixin
 from sklearn.utils import check_array
+from sklearn.utils.testing import assert_raises, assert_equal
 
 
 class StepSelector(SelectorMixin, BaseEstimator):

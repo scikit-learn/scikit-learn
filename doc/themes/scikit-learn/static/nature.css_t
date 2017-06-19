@@ -40,8 +40,7 @@ ul.horizontal, ul.horizontal li {
 
 
 div.header {
-    /* for the logo to correctly expand when showing results
-       but remain cut when not */
+    /* Don't leave a fixed height. It won't allow the header to expand when search results appear. */
 }
 
 
@@ -94,6 +93,110 @@ div.navbar ul li a:hover {
     color: #EEE;
 }
 
+div.navbar div.nav-icon a,
+div.navbar div.nav-icon a:link,
+div.navbar div.nav-icon a:visited,
+div.navbar div.nav-icon a:hover {
+    color: white;
+    text-decoration: none;
+}
+div.navbar div.nav-icon {
+    display: none;
+}
+/* Nav bar collapses for mobile phones and shows the hamburger */
+@media screen and (max-width: 680px) {
+    div.header {
+      height: 60px;
+    }
+    div.navbar div.nav-icon {
+        position: absolute;
+        display: inline-block;
+        right: 0;
+        top: 12px;
+        margin-right: 10px;
+        background: #ff9c34;
+        padding: 5px 10px;
+        border-radius: 5px;
+        z-index: 10;
+    }
+    div.navbar ul li {
+        display: none;
+    }
+    div.navbar ul {
+        visibilty: hidden;
+        background: #FFFFFF;
+    }
+    div.navbar.responsive > ul li.btn-li {
+        margin-left: 6px;
+    }
+    div.navbar.responsive > ul li.btn-li + li {
+        margin-top: -5px;
+    }
+    div.navbar.responsive > ul {
+        visiblity: visible;
+        position: absolute;
+        right: 0;
+        top: 10px;
+        margin-right: 10px;
+        background: #ff9c34;
+        z-index: 9;
+    }
+    div.navbar.responsive > ul li {
+        display: flex;
+        justify-content: flex-start;
+        visibility: visible;
+        width: 130px;
+    }
+    div.navbar .dropdown-menu li {
+        white-space: normal;
+    }
+    div.navbar div.nav-icon .hamburger-line {
+        background: white;
+        width: 20px;
+        height: 2px;
+        margin-bottom: 5px;
+        -webkit-transition: .1s ease-in-out;
+        -moz-transition: .1s ease-in-out;
+        -o-transition: .1s ease-in-out;
+        transition: .1s ease-in-out;
+    }
+    div.navbar div.nav-icon .hamburger-line:nth-child(1) {
+        margin-top: 5px;
+        -webkit-transform-origin: left center;
+        -moz-transform-origin: left center;
+        -o-transform-origin: left center;
+        transform-origin: left center;
+    }
+    div.navbar div.nav-icon .hamburger-line:nth-child(2) {
+        -webkit-transform-origin: left center;
+        -moz-transform-origin: left center;
+        -o-transform-origin: left center;
+        transform-origin: left center;
+    }
+    div.navbar div.nav-icon .hamburger-line:nth-child(3) {
+        -webkit-transform-origin: left center;
+        -moz-transform-origin: left center;
+        -o-transform-origin: left center;
+        transform-origin: left center;
+    }
+    div.navbar.responsive div.nav-icon .hamburger-line:nth-child(1) {
+        -webkit-transform: rotate(45deg);
+        -moz-transform: rotate(45deg);
+        -o-transform: rotate(45deg);
+        transform: rotate(45deg);
+    }
+    div.navbar.responsive div.nav-icon .hamburger-line:nth-child(2) {
+        width: 0;
+        opacity: 0%;
+    }
+    div.navbar.responsive div.nav-icon .hamburger-line:nth-child(3) {
+        -webkit-transform: rotate(-45deg);
+        -moz-transform: rotate(-45deg);
+        -o-transform: rotate(-45deg);
+        transform: rotate(-45deg);
+    }
+}
+
 /*-------------------------------------------------------------*/
 /* The next few elements have to do with the gsc (referring to */
 /* Google's custom search bar */
@@ -104,20 +207,40 @@ div.navbar ul li a:hover {
 }
 
 .search_form {
-    margin-top: -23px;
-    /*The min-height is added here, to prevent the element from shrinking
-    too much, while the scripts are still loading the search-bar.
-    Without it, layout glitches occur, as the element keeps dynamically
-    changing it's size while its loading-contents adjusts into position.*/
+    margin-top: -40px;
     min-height: 42px;
 }
 
 #cse .gsc-clear-button {
     width: 50px;
+    position: relative;
+    top: -2px;
 }
 
 .gsc-branding {
-    display: none;
+    display: none !important;
+}
+
+form.gsc-search-box {
+    padding: 0 !important;
+}
+
+input.gsc-search-button {
+    position: relative;
+    top: -4px;
+    border-radius: 5px !important;
+    border-color: #FFFFFF !important;
+    background-color: #ff9c34 !important;
+}
+
+a.gs-title, a.gs-title > b{
+    color: blue !important;
+}
+
+.gsc-results .gsc-cursor-box .gsc-cursor-current-page {
+    border-color: white !important;
+    background-color: #ff9c34 !important;
+    color: white !important;
 }
 
 /*---------------------------------------------------------------*/
@@ -436,7 +559,7 @@ div.body p, div.body dd, div.body li {
     line-height: 1.5em;
 }
 
-div.admonition p.admonition-title + p {
+div.admonition p.admonition-title + p, div.deprecated p {
     display: inline;
 }
 
@@ -447,6 +570,30 @@ div.highlight{
 div.highlight a {
     text-decoration: underline;
 }
+
+div.highlight:hover span.copybutton {
+    background-color: #3F556B;
+}
+
+div.highlight:hover span.copybutton:hover {
+    background-color: #20252B;
+}
+
+@media (min-width: 1060px) {
+    div.highlight:hover span.copybutton:after{
+	background: #3F556B;
+	border-radius: 5px;
+	color: white;
+	content: attr(title);
+	left: 110%;
+	padding: 5px 15px;
+	position: absolute;
+	z-index: 98;
+	width: 140px;
+	top: -10px;
+    }
+}
+
 
 div.note {
     background-color: #eee;
@@ -468,7 +615,7 @@ div.topic {
     -moz-border-radius: 4px;
 }
 
-div.admonition {
+div.admonition, div.deprecated {
     margin-bottom: 10px;
     margin-top: 10px;
     padding: 7px;
@@ -476,7 +623,7 @@ div.admonition {
     -moz-border-radius: 4px;
 }
 
-div.warning {
+div.warning, div.deprecated {
     color: #b94a48;
     background-color: #F3E5E5;
     border: 1px solid #eed3d7;
@@ -674,6 +821,8 @@ div.sprint-wrapper:hover {
 }
 
 /*-----------------------The Examples Gallery-------------------------------*/
+
+div.sphx-glr-footer .container  {width: auto;}
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {
@@ -1086,6 +1235,7 @@ div.navbar ul.dropdown-menu li a.btn {
   vertical-align: middle;
   padding: 0;
   padding-left: 4px;
+  font-size: 8px;
 }
 
 .navbar .btn-group .btn {
@@ -1095,10 +1245,6 @@ div.navbar ul.dropdown-menu li a.btn {
 .navbar .btn-group.open .btn.dropdown-toggle {
   background-color: transparent;
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
-}
-
-a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
-  vertical-align: baseline;
 }
 
 li#other-versions {
@@ -1168,7 +1314,7 @@ li#other-versions {
   color: #fff;
   vertical-align: middle;
   border-top-color: rgb(255, 255, 255);
-  padding-bottom: 8px;
+  padding-bottom: 5px;
 }
 
 .navbar .dropdown-menu .divider {

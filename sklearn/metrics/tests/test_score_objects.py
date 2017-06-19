@@ -1,4 +1,8 @@
 import pickle
+import tempfile
+import shutil
+import os
+import numbers
 
 import numpy as np
 
@@ -9,11 +13,12 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score)
-from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -30,20 +35,72 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.externals import joblib
 
 
-REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error',
-                      'median_absolute_error']
+REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error',
+                      'neg_mean_squared_error', 'neg_mean_squared_log_error',
+                      'neg_median_absolute_error', 'mean_absolute_error',
+                      'mean_squared_error', 'median_absolute_error']
 
 CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'log_loss',
-               'adjusted_rand_score'  # not really, but works
-               ]
+               'neg_log_loss', 'log_loss']
+
+# All supervised cluster scorers (They behave like classification metric)
+CLUSTER_SCORERS = ["adjusted_rand_score",
+                   "homogeneity_score",
+                   "completeness_score",
+                   "v_measure_score",
+                   "mutual_info_score",
+                   "adjusted_mutual_info_score",
+                   "normalized_mutual_info_score",
+                   "fowlkes_mallows_score"]
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
+
+
+def _make_estimators(X_train, y_train, y_ml_train):
+    # Make estimators that make sense to test various scoring methods
+    sensible_regr = DummyRegressor(strategy='median')
+    sensible_regr.fit(X_train, y_train)
+    sensible_clf = DecisionTreeClassifier(random_state=0)
+    sensible_clf.fit(X_train, y_train)
+    sensible_ml_clf = DecisionTreeClassifier(random_state=0)
+    sensible_ml_clf.fit(X_train, y_ml_train)
+    return dict(
+        [(name, sensible_regr) for name in REGRESSION_SCORERS] +
+        [(name, sensible_clf) for name in CLF_SCORERS] +
+        [(name, sensible_clf) for name in CLUSTER_SCORERS] +
+        [(name, sensible_ml_clf) for name in MULTILABEL_ONLY_SCORERS]
+    )
+
+
+X_mm, y_mm, y_ml_mm = None, None, None
+ESTIMATORS = None
+TEMP_FOLDER = None
+
+
+def setup_module():
+    # Create some memory mapped data
+    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
+    TEMP_FOLDER = tempfile.mkdtemp(prefix='sklearn_test_score_objects_')
+    X, y = make_classification(n_samples=30, n_features=5, random_state=0)
+    _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
+                                             random_state=0)
+    filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
+    joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
+    ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
+
+
+def teardown_module():
+    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
+    # GC closes the mmap file descriptors
+    X_mm, y_mm, y_ml_mm, ESTIMATORS = None, None, None, None
+    shutil.rmtree(TEMP_FOLDER)
 
 
 class EstimatorWithoutFit(object):
@@ -91,7 +148,7 @@ def test_all_scorers_repr():
 def test_check_scoring():
     # Test all branches of check_scoring
     estimator = EstimatorWithoutFit()
-    pattern = (r"estimator should a be an estimator implementing 'fit' method,"
+    pattern = (r"estimator should be an estimator implementing 'fit' method,"
                r" .* was passed")
     assert_raises_regexp(TypeError, pattern, check_scoring, estimator)
 
@@ -214,7 +271,7 @@ def test_thresholded_scorers():
     assert_almost_equal(score1, score2)
     assert_almost_equal(score1, score3)
 
-    logscore = get_scorer('log_loss')(clf, X_test, y_test)
+    logscore = get_scorer('neg_log_loss')(clf, X_test, y_test)
     logloss = log_loss(y_test, clf.predict_proba(X_test))
     assert_almost_equal(-logscore, logloss)
 
@@ -282,16 +339,16 @@ def test_thresholded_scorers_multilabel_indicator_data():
     assert_almost_equal(score1, score2)
 
 
-def test_unsupervised_scorers():
+def test_supervised_cluster_scorers():
     # Test clustering scorers against gold standard labeling.
-    # We don't have any real unsupervised Scorers yet.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     km = KMeans(n_clusters=3)
     km.fit(X_train)
-    score1 = get_scorer('adjusted_rand_score')(km, X_test, y_test)
-    score2 = adjusted_rand_score(y_test, km.predict(X_test))
-    assert_almost_equal(score1, score2)
+    for name in CLUSTER_SCORERS:
+        score1 = get_scorer(name)(km, X_test, y_test)
+        score2 = getattr(cluster_module, name)(y_test, km.predict(X_test))
+        assert_almost_equal(score1, score2)
 
 
 @ignore_warnings
@@ -324,18 +381,7 @@ def test_scorer_sample_weight():
     sample_weight[:10] = 0
 
     # get sensible estimators for each metric
-    sensible_regr = DummyRegressor(strategy='median')
-    sensible_regr.fit(X_train, y_train)
-    sensible_clf = DecisionTreeClassifier(random_state=0)
-    sensible_clf.fit(X_train, y_train)
-    sensible_ml_clf = DecisionTreeClassifier(random_state=0)
-    sensible_ml_clf.fit(X_train, y_ml_train)
-    estimator = dict([(name, sensible_regr)
-                      for name in REGRESSION_SCORERS] +
-                     [(name, sensible_clf)
-                      for name in CLF_SCORERS] +
-                     [(name, sensible_ml_clf)
-                      for name in MULTILABEL_ONLY_SCORERS])
+    estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
         if name in MULTILABEL_ONLY_SCORERS:
@@ -361,3 +407,51 @@ def test_scorer_sample_weight():
             assert_true("sample_weight" in str(e),
                         "scorer {0} raises unhelpful exception when called "
                         "with sample weights: {1}".format(name, str(e)))
+
+
+@ignore_warnings  # UndefinedMetricWarning for P / R scores
+def check_scorer_memmap(scorer_name):
+    scorer, estimator = SCORERS[scorer_name], ESTIMATORS[scorer_name]
+    if scorer_name in MULTILABEL_ONLY_SCORERS:
+        score = scorer(estimator, X_mm, y_ml_mm)
+    else:
+        score = scorer(estimator, X_mm, y_mm)
+    assert isinstance(score, numbers.Number), scorer_name
+
+
+def test_scorer_memmap_input():
+    # Non-regression test for #6147: some score functions would
+    # return singleton memmap when computed on memmap data instead of scalar
+    # float values.
+    for name in SCORERS.keys():
+        yield check_scorer_memmap, name
+
+
+def test_deprecated_names():
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LogisticRegression(random_state=0)
+    clf.fit(X_train, y_train)
+
+    for name in ('mean_absolute_error', 'mean_squared_error',
+                 'median_absolute_error', 'log_loss'):
+        warning_msg = "Scoring method %s was renamed to" % name
+        for scorer in (get_scorer(name), SCORERS[name]):
+            assert_warns_message(DeprecationWarning,
+                                 warning_msg,
+                                 scorer, clf, X, y)
+
+        assert_warns_message(DeprecationWarning,
+                             warning_msg,
+                             cross_val_score, clf, X, y, scoring=name)
+
+
+def test_scoring_is_not_metric():
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         LogisticRegression(), f1_score)
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         LogisticRegression(), roc_auc_score)
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         Ridge(), r2_score)
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         KMeans(), cluster_module.adjusted_rand_score)

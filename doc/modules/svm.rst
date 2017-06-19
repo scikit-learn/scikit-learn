@@ -28,7 +28,8 @@ The advantages of support vector machines are:
 The disadvantages of support vector machines include:
 
     - If the number of features is much greater than the number of
-      samples, the method is likely to give poor performances.
+      samples, avoid over-fitting in choosing :ref:`svm_kernels` and regularization
+      term is crucial.
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
@@ -51,7 +52,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -77,7 +78,7 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
 
@@ -181,7 +182,7 @@ for these classifiers.
 
 This might be made more clear by an example:
 
-Consider a three class problem with with class 0 having three support vectors
+Consider a three class problem with class 0 having three support vectors
 :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
 :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
 support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
@@ -238,9 +239,13 @@ and use ``decision_function`` instead of ``predict_proba``.
 
  * Wu, Lin and Weng,
    `"Probability estimates for multi-class classification by pairwise coupling"
-   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_.
+   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
-
+ 
+ 
+ * Platt
+   `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
+   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`.
 
 Unbalanced problems
 --------------------
@@ -254,7 +259,7 @@ classes or certain individual samples keywords ``class_weight`` and
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
    :align: center
    :scale: 75
@@ -266,7 +271,7 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
-.. figure:: ../auto_examples/svm/images/plot_weighted_samples_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
@@ -274,12 +279,12 @@ set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_iris.py`,
- * :ref:`example_svm_plot_separating_hyperplane.py`,
- * :ref:`example_svm_plot_separating_hyperplane_unbalanced.py`
- * :ref:`example_svm_plot_svm_anova.py`,
- * :ref:`example_svm_plot_svm_nonlinear.py`
- * :ref:`example_svm_plot_weighted_samples.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`,
 
 
 .. _svm_regression:
@@ -322,7 +327,7 @@ floating point values instead of integer values::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_svm_regression.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
 
 
@@ -341,7 +346,7 @@ will only take as input an array X, as there are no class labels.
 
 See, section :ref:`outlier_detection` for more details on this usage.
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -349,8 +354,8 @@ See, section :ref:`outlier_detection` for more details on this usage.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_oneclass.py`
- * :ref:`example_applications_plot_species_distribution_modeling.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
+ * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
 
 Complexity
@@ -380,7 +385,7 @@ Tips on Practical Use
   * **Avoiding data copy**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
     :class:`NuSVR`, if the data passed to certain methods is not C-ordered
     contiguous, and double precision, it will be copied before calling the
-    underlying C implementation. You can check whether a give numpy array is
+    underlying C implementation. You can check whether a given numpy array is
     C-contiguous by inspecting its ``flags`` attribute.
 
     For :class:`LinearSVC` (and :class:`LogisticRegression
@@ -443,7 +448,7 @@ The *kernel function* can be any of the following:
   * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
     :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
+  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
   * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
@@ -498,7 +503,7 @@ instance that will use that kernel::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`.
+ * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
@@ -516,7 +521,7 @@ test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto',
+        decision_function_shape='ovr', degree=3, gamma='auto',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
@@ -540,7 +545,7 @@ is advised to use :class:`sklearn.model_selection.GridSearchCV` with
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_rbf_parameters.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
 
 .. _svm_mathematical_formulation:
 
@@ -556,7 +561,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_001.png
    :align: center
    :scale: 75
 
@@ -588,7 +593,7 @@ Its dual is
 
 where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
 :math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
-:math:`Q_{ij} \equiv y_i y_j K(x_i, x_j)` Where :math:`K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
+:math:`Q_{ij} \equiv y_i y_j K(x_i, x_j)`, where :math:`K(x_i, x_j) = \phi (x_i)^T \phi (x_j)`
 is the kernel. Here training vectors are implicitly mapped into a higher
 (maybe infinite) dimensional space by the function :math:`\phi`.
 
@@ -600,8 +605,11 @@ The decision function is:
 .. note::
 
     While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
-    regularization parameter, most other estimators use ``alpha``. The relation
-    between both is :math:`C = \frac{n\_samples}{alpha}`.
+    regularization parameter, most other estimators use ``alpha``. The exact
+    equivalence between the amount of regularization of two models depends on
+    the exact objective function optimized by the model. For example, when the
+    estimator used is :class:`sklearn.linear_model.Ridge <ridge>` regression,
+    the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 
@@ -613,14 +621,14 @@ term :math:`\rho` :
 .. topic:: References:
 
  * `"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_
-   I Guyon, B Boser, V Vapnik - Advances in neural information
-   processing 1993,
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_,
+   I. Guyon, B. Boser, V. Vapnik - Advances in neural information
+   processing 1993.
 
 
  * `"Support-vector networks"
-   <http://www.springerlink.com/content/k238jx04hm87j80g/>`_
-   C. Cortes, V. Vapnik, Machine Leaming, 20, 273-297 (1995)
+   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
+   C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
 
@@ -681,9 +689,9 @@ term :math:`\rho`
 .. topic:: References:
 
  * `"A Tutorial on Support Vector Regression"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.114.4288>`_
-   Alex J. Smola, Bernhard Schölkopf -Statistics and Computing archive
-   Volume 14 Issue 3, August 2004, p. 199-222  
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.114.4288>`_,
+   Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
+   Volume 14 Issue 3, August 2004, p. 199-222. 
 
 
 .. _svm_implementation_details:
@@ -702,10 +710,10 @@ computations. These libraries are wrapped using C and Cython.
   For a description of the implementation and details of the algorithms
   used, please refer to
 
-    - `LIBSVM: a library for Support Vector Machines
-      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+    - `LIBSVM: A Library for Support Vector Machines
+      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
-      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_
+      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
 
 
