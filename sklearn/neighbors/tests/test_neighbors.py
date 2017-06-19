@@ -14,7 +14,9 @@ from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
@@ -994,10 +996,15 @@ def test_valid_brute_metric_for_auto_algorithm():
     X = rng.rand(12, 12)
     Xcsr = csr_matrix(X)
 
+    # check that there is a metric that is valid for brute
+    # but not ball_tree (so we actually test something)
+    assert_in("cosine", VALID_METRICS['brute'])
+    assert_false("cosine" in VALID_METRICS['ball_tree'])
+    
     # Metric which don't required any additional parameter
-    _metrics = ['mahalanobis', 'wminkowski', 'seuclidean']
+    require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
-        if metric != 'precomputed' and metric not in _metrics:
+        if metric != 'precomputed' and metric not in require_params:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(X)
             nn.kneighbors(X)
@@ -1012,7 +1019,7 @@ def test_valid_brute_metric_for_auto_algorithm():
             nb_p.kneighbors(DYX)
 
     for metric in VALID_METRICS_SPARSE['brute']:
-        if metric != 'precomputed' and metric not in _metrics:
+        if metric != 'precomputed' and metric not in require_params:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
             nn.kneighbors(Xcsr)
