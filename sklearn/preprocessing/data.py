@@ -2462,19 +2462,11 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    classes : 'auto', 2D array of ints or strings or both.
+    categories : 'auto', 2D array of ints or strings or both.
         Values per feature.
 
         - 'auto' : Determine classes automatically from the training data.
         - array: ``classes[i]`` holds the classes expected in the ith column.
-
-    categorical_features : 'all' or array of indices or mask
-        Specify what features are treated as categorical.
-
-        - 'all' (default): All features are treated as categorical.
-        - array of indices: Array of categorical feature indices.
-        - mask: Array of length n_features and with dtype=bool.
-        Non-categorical features are always stacked to the right of the matrix.
 
     dtype : number type, default=np.float
         Desired dtype of output.
@@ -2486,14 +2478,6 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         Whether to raise an error or ignore if a unknown categorical feature is
         present during transform.
 
-    Attributes
-    ----------
-    label_encoders_ : list of size n_features.
-        The :class:`sklearn.preprocessing.LabelEncoder` objects used to encode
-        the features. ``self.label_encoders[i]_`` is the LabelEncoder object
-        used to encode the ith column. The unique features found on column
-        ``i`` can be accessed using ``self.label_encoders_[i].classes_``.
-
     Examples
     --------
     Given a dataset with three features and two samples, we let the encoder
@@ -2503,9 +2487,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     >>> enc = CategoricalEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    CategoricalEncoder(categorical_features='all', classes='auto',
-              dtype=<... 'numpy.float64'>, handle_unknown='error',
-              sparse=True)
+    CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+              handle_unknown='error', sparse=True)
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
@@ -2517,10 +2500,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
 
-    def __init__(self, classes='auto', categorical_features="all",
-                 dtype=np.float64, sparse=True, handle_unknown='error'):
-        self.classes = classes
-        self.categorical_features = categorical_features
+    def __init__(self, categories='auto', dtype=np.float64, sparse=True,
+                 handle_unknown='error'):
+        self.categories = categories
         self.dtype = dtype
         self.sparse = sparse
         self.handle_unknown = handle_unknown
@@ -2543,12 +2525,10 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                         "'ignore', got %s")
             raise ValueError(template % self.handle_unknown)
 
-        X = check_array(X, dtype=np.object, accept_sparse='csc')
+        X = check_array(X, dtype=np.object, accept_sparse='csc', copy=True)
         n_samples, n_features = X.shape
 
-        _apply_selected(X, self._fit, dtype=self.dtype,
-                        selected=self.categorical_features, copy=True,
-                        return_val=False)
+        self._fit(X)
         return self
 
     def _fit(self, X):
@@ -2557,21 +2537,20 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype=np.object)
         n_samples, n_features = X.shape
 
-        self.label_encoders_ = [LabelEncoder() for i in range(n_features)]
+        self._label_encoders_ = [LabelEncoder() for i in range(n_features)]
 
         for i in range(n_features):
-            le = self.label_encoders_[i]
-            if self.classes == 'auto':
+            le = self._label_encoders_[i]
+            if self.categories == 'auto':
                 le.fit(X[:, i])
             else:
-                le.classes_ = np.array(self.classes[i])
+                le.classes_ = np.array(self.categories[i])
 
     def transform(self, X, y=None):
         """Encode the selected categorical features using the one-hot scheme.
         """
-        X = check_array(X, dtype=np.object)
-        return _apply_selected(X, self._transform, copy=True,
-                               selected=self.categorical_features)
+        X = check_array(X, dtype=np.object, copy=True)
+        return self._transform(X)
 
     def _transform(self, X):
         "Assumes `X` contains only categorical features."
@@ -2582,30 +2561,12 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         X_mask = np.ones_like(X, dtype=np.bool)
 
         for i in range(n_features):
-            if np_version < (1, 8):
-                # in1d is not supported for object datatype in np < 1.8
-                valid_mask = np.ones_like(X[:, i], dtype=np.bool)
-                found_classes = set(np.unique(X[:, i]))
-                valid_classes = set(self.label_encoders_[i].classes_)
-                invalid_classes = found_classes - valid_classes
-
-                for item in invalid_classes:
-                    mask = X[:, i] == item
-                    np.logical_not(mask, mask)
-                    np.logical_and(valid_mask, mask, valid_mask)
-
-            else:
-                valid_mask = np.in1d(X[:, i], self.label_encoders_[i].classes_)
+            valid_mask = np.in1d(X[:, i], self._label_encoders_[i].classes_)
 
             if not np.all(valid_mask):
                 if self.handle_unknown == 'error':
-                    if np_version < (1, 8):
-                        valid_classes = set(self.label_encoders_[i].classes_)
-                        diff = set(X[:, i]) - valid_classes
-                        diff = list(diff)
-                    else:
-                        diff = np.setdiff1d(X[:, i],
-                                            self.label_encoders_[i].classes_)
+                    diff = np.setdiff1d(X[:, i],
+                                        self._label_encoders_[i].classes_)
                     msg = 'Unknown feature(s) %s in column %d' % (diff, i)
                     raise ValueError(msg)
                 else:
@@ -2613,11 +2574,11 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    X[:, i][~valid_mask] = self.label_encoders_[i].classes_[0]
-            X_int[:, i] = self.label_encoders_[i].transform(X[:, i])
+                    X[:, i][~valid_mask] = self._label_encoders_[i].classes_[0]
+            X_int[:, i] = self._label_encoders_[i].transform(X[:, i])
 
         mask = X_mask.ravel()
-        n_values = [le.classes_.shape[0] for le in self.label_encoders_]
+        n_values = [le.classes_.shape[0] for le in self._label_encoders_]
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
         self.feature_indices_ = indices

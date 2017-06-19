@@ -1954,16 +1954,14 @@ def test_one_hot_encoder_unknown_transform():
     assert_raises(ValueError, oh.transform, y)
 
 
-def check_categorical(X, cat_mask):
-    cat_idx = np.where(cat_mask)
-
-    enc = CategoricalEncoder(categorical_features=cat_mask)
+def check_categorical(X):
+    enc = CategoricalEncoder()
     Xtr1 = enc.fit_transform(X)
 
-    enc = CategoricalEncoder(categorical_features=cat_idx)
+    enc = CategoricalEncoder()
     Xtr2 = enc.fit_transform(X)
 
-    enc = CategoricalEncoder(categorical_features=cat_mask, sparse=False)
+    enc = CategoricalEncoder(sparse=False)
     Xtr3 = enc.fit_transform(X)
 
     assert_allclose(Xtr1.toarray(), Xtr2.toarray())
@@ -1977,11 +1975,11 @@ def check_categorical(X, cat_mask):
 def test_categorical_encoder():
     X = [['abc', 1, 55], ['def', 2, 55]]
 
-    Xtr = check_categorical(X, [True, False, False])
-    assert_allclose(Xtr, [[1, 0, 1, 55], [0, 1, 2, 55]])
+    Xtr = check_categorical(np.array(X)[:, [0]])
+    assert_allclose(Xtr, [[1, 0], [0, 1]])
 
-    Xtr = check_categorical(X, [True, True, False])
-    assert_allclose(Xtr, [[1, 0, 1, 0,  55], [0, 1, 0, 1, 55]])
+    Xtr = check_categorical(np.array(X)[:, [0, 1]])
+    assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
     Xtr = CategoricalEncoder().fit_transform(X)
     assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
