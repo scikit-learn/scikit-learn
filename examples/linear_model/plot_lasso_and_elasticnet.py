@@ -32,8 +32,8 @@ y += 0.01 * np.random.normal((n_samples,))
 
 # Split data in train set and test set
 n_samples = X.shape[0]
-X_train, y_train = X[:n_samples / 2], y[:n_samples / 2]
-X_test, y_test = X[n_samples / 2:], y[n_samples / 2:]
+X_train, y_train = X[:n_samples // 2], y[:n_samples // 2]
+X_test, y_test = X[n_samples // 2:], y[n_samples // 2:]
 
 ###############################################################################
 # Lasso

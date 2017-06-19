@@ -54,7 +54,7 @@ threshold = estimator.tree_.threshold
 
 # The tree structure can be traversed to compute various properties such
 # as the depth of each node and whether or not it is a leaf.
-node_depth = np.zeros(shape=n_nodes)
+node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
 is_leaves = np.zeros(shape=n_nodes, dtype=bool)
 stack = [(0, -1)]  # seed is the root node id and its parent depth
 while len(stack) > 0:
