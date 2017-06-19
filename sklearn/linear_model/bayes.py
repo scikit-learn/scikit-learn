@@ -387,7 +387,7 @@ class ARDRegression(LinearModel, RegressorMixin):
     Their beta is our ``self.alpha_``
     Their alpha is our ``self.lambda_``
     ARD is a little different than the slide: only dimensions/features for
-    ``which self.lambda_ < self.threshold_lambda`` are kept and the rest are
+    which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
 
