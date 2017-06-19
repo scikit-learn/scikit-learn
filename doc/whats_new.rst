@@ -399,6 +399,10 @@ Bug fixes
      reused the same estimator for each parameter value.
      :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
 
+   - :class:`multiclass.OneVsOneClassifier`'s ``partial_fit`` now ensures all
+     classes are provided up-front. :issue:`6250` by
+     :user:`Asish Panda <kaichogami>`.
+
 API changes summary
 -------------------
 
