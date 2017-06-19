@@ -317,3 +317,19 @@ def test_column_transformer_get_set_params():
            'transformer_weights': None}
 
     assert_dict_equal(ct.get_params(), exp)
+
+
+def test_column_transformer_named_estimators():
+    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+    ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
+                            ('trans2', StandardScaler(with_std=False), [1])])
+    assert_false(hasattr(ct, 'transformers_'))
+    ct.fit(X_array)
+    assert_true(hasattr(ct, 'transformers_'))
+    assert_true(isinstance(ct.named_transformers_['trans1'], StandardScaler))
+    assert_true(isinstance(ct.named_transformers_.trans1, StandardScaler))
+    assert_true(isinstance(ct.named_transformers_['trans2'], StandardScaler))
+    assert_true(isinstance(ct.named_transformers_.trans2, StandardScaler))
+    assert_false(ct.named_transformers_.trans2.with_std)
+    # check it are fitted transformers
+    assert_equal(ct.named_transformers_.trans1.mean_, 1.)

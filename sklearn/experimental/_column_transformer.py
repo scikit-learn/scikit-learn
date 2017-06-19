@@ -17,6 +17,7 @@ from ..externals import six
 from ..pipeline import (
     _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
 from ..utils import tosequence
+from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted
 
@@ -66,7 +67,12 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     ----------
     transformers_ : list
         The collection of fitted transformers as tuples of
-        (name, fitted_transformer, column)
+        (name, fitted_transformer, column).
+
+    named_transformers_ : bunch object, a dictionary with attribute access
+        Read-only attribute to access any transformer by given name.
+        Keys are transformer names and values are the fitted transformer
+        objects.
 
     Examples
     --------
@@ -93,7 +99,8 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     def _transformers(self):
         """
         Internal list of transformer only containing the name and
-        transformers, since BaseComposition expects lists of tuples of len 2
+        transformers. This is for the implementation of get_params via
+        BaseComposition._get_params which expects lists of tuples of len 2.
         """
         return [(name, trans) for name, trans, col in self.transformers]
 
@@ -159,6 +166,18 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
                 raise TypeError("All estimators should implement fit and "
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
+
+    @ property
+    def named_transformers_(self):
+        """
+        Read-only attribute to access any transformer by given name.
+        Keys are transformer names and values are the fitted transformer
+        objects.
+
+        """
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict([(name, trans) for name, trans, _
+                             in self.transformers_]))
 
     def get_feature_names(self):
         """Get feature names from all transformers.
