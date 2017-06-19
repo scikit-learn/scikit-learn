@@ -1,6 +1,7 @@
 {{py:
 
 """
+
 Template file for easily generate fused types consistent code using Tempita
 (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
 
@@ -18,20 +19,22 @@ Authors: Danny Sullivan <dbsullivan23@gmail.com>
 License: BSD 3 clause
 """
 
-# name, c_type, np_type
-dtypes = [('64', 'double', 'np.float64'),
-          ('32', 'float', 'np.float32')]
+# name, c_type
+dtypes = [('64', 'double'),
+          ('32', 'float')]
 
 def get_dispatch(dtypes):
-    for name, c_type, np_type in dtypes:
-  yield name, c_type, np_type
+    for name, c_type in dtypes:
+        yield name, c_type
 
 }}
+
 
 """
 SAG and SAGA implementation
 WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 """
+#------------------------------------------------------------------------------
 
 # cython: cdivision=True
 # cython: boundscheck=False
@@ -41,13 +44,14 @@ cimport numpy as np
 import numpy as np
 from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
+from cython cimport floating
 
 from .sgd_fast cimport LossFunction
 from .sgd_fast cimport Log, SquaredLoss
+
 from ..utils.seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 from libc.stdio cimport printf
-
 
 cdef void raise_infinite_error(int n_iter):
     raise ValueError("Floating-point under-/overflow occurred at "
@@ -56,8 +60,8 @@ cdef void raise_infinite_error(int n_iter):
                      "or MinMaxScaler might help." % (n_iter + 1))
 
 
-{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
+{{for name, c_type in get_dispatch(dtypes)}}
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite{{name}}({{c_type}}) nogil
 
