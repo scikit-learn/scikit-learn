@@ -330,7 +330,7 @@ def set_checking_parameters(estimator):
     if hasattr(estimator, "n_components"):
         estimator.n_components = 2
 
-    if name != 'TruncatedSVD':
+    if name == 'TruncatedSVD':
         # TruncatedSVD doesn't run with n_components = n_features
         # This is ugly :-/
         estimator.n_components = 1
