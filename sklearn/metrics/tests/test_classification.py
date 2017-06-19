@@ -355,6 +355,37 @@ def test_matthews_corrcoef_against_numpy_corrcoef():
                         np.corrcoef(y_true, y_pred)[0, 1], 10)
 
 
+def test_matthews_corrcoef_against_jurman():
+    # Check that the multiclass matthews_corrcoef agrees with the definition
+    # presented in Jurman, Riccadonna, Furlanello, (2012). A Comparison of MCC
+    # and CEN Error Measures in MultiClass Prediction
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=20)
+    y_pred = rng.randint(0, 2, size=20)
+    sample_weight = rng.rand(20)
+
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    N = len(C)
+    cov_ytyp = sum([
+        C[k, k] * C[m, l] - C[l, k] * C[k, m]
+        for k in range(N) for m in range(N) for l in range(N)
+    ])
+    cov_ytyt = sum([
+        C[:, k].sum() *
+        np.sum([C[g, f] for f in range(N) for g in range(N) if f != k])
+        for k in range(N)
+    ])
+    cov_ypyp = np.sum([
+        C[k, :].sum() *
+        np.sum([C[f, g] for f in range(N) for g in range(N) if f != k])
+        for k in range(N)
+    ])
+    mcc_jurman = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+    mcc_ours = matthews_corrcoef(y_true, y_pred, sample_weight)
+
+    assert_almost_equal(mcc_ours, mcc_jurman, 10)
+
+
 def test_matthews_corrcoef():
     rng = np.random.RandomState(0)
     y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
@@ -364,8 +395,8 @@ def test_matthews_corrcoef():
 
     # corrcoef, when the two vectors are opposites of each other, should be -1
     y_true_inv = ["b" if i == "a" else "a" for i in y_true]
-
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
+
     y_true_inv2 = label_binarize(y_true, ["a", "b"])
     y_true_inv2 = np.where(y_true_inv2, 'a', 'b')
     assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
@@ -396,6 +427,61 @@ def test_matthews_corrcoef():
     # and hence the mcc will not be a perfect 0 as in the previous case
     assert_raises(AssertionError, assert_almost_equal,
                   matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.)
+
+
+def test_matthews_corrcoef_multiclass():
+    rng = np.random.RandomState(0)
+    ord_a = ord('a')
+    n_classes = 4
+    y_true = [chr(ord_a + i) for i in rng.randint(0, n_classes, size=20)]
+
+    # corrcoef of same vectors must be 1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
+
+    # with multiclass > 2 it is not possible to achieve -1
+    y_true = [0, 0, 1, 1, 2, 2]
+    y_pred_bad = [2, 2, 0, 0, 1, 1]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred_bad), -.5)
+
+    # Maximizing false positives and negatives minimizes the MCC
+    # The minimum will be different for depending on the input
+    y_true = [0, 0, 1, 1, 2, 2]
+    y_pred_min = [1, 1, 0, 0, 0, 0]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred_min),
+                        -12 / np.sqrt(24 * 16))
+
+    # Zero variance will result in an mcc of zero and a Runtime Warning
+    y_true = [0, 1, 2]
+    y_pred = [3, 3, 3]
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, y_true, y_pred)
+    assert_almost_equal(mcc, 0.0)
+
+    # These two vectors have 0 correlation and hence mcc should be 0
+    y_1 = [0, 1, 2, 0, 1, 2, 0, 1, 2]
+    y_2 = [1, 1, 1, 2, 2, 2, 0, 0, 0]
+    assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.)
+
+    # We can test that binary assumptions hold using the multiclass computation
+    # by masking the weight of samples not in the first two classes
+
+    # Masking the last label should let us get an MCC of -1
+    y_true = [0, 0, 1, 1, 2]
+    y_pred = [1, 1, 0, 0, 2]
+    sample_weight = [1, 1, 1, 1, 0]
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred, sample_weight), -1)
+
+    # For the zero vector case, the corrcoef cannot be calculated and should
+    # result in a RuntimeWarning
+    y_true = [0, 0, 1, 2]
+    y_pred = [0, 0, 1, 2]
+    sample_weight = [1, 1, 0, 0]
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, y_true, y_pred,
+                               sample_weight)
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
 
 
 def test_precision_recall_f1_score_multiclass():
@@ -575,6 +661,33 @@ def test_confusion_matrix_multiclass_subset_labels():
     # check for exception when none of the specified labels are in y_true
     assert_raises(ValueError, confusion_matrix, y_true, y_pred,
                   labels=[extra_label, extra_label + 1])
+
+
+def test_confusion_matrix_dtype():
+    y = [0, 1, 1]
+    weight = np.ones(len(y))
+    # confusion_matrix returns int64 by default
+    cm = confusion_matrix(y, y)
+    assert_equal(cm.dtype, np.int64)
+    # The dtype of confusion_matrix is always 64 bit
+    for dtype in [np.bool_, np.int32, np.uint64]:
+        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        assert_equal(cm.dtype, np.int64)
+    for dtype in [np.float32, np.float64, None, object]:
+        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        assert_equal(cm.dtype, np.float64)
+
+    # np.iinfo(np.uint32).max should be accumulated correctly
+    weight = np.ones(len(y), dtype=np.uint32) * 4294967295
+    cm = confusion_matrix(y, y, sample_weight=weight)
+    assert_equal(cm[0, 0], 4294967295)
+    assert_equal(cm[1, 1], 8589934590)
+
+    # np.iinfo(np.int64).max should cause an overflow
+    weight = np.ones(len(y), dtype=np.int64) * 9223372036854775807
+    cm = confusion_matrix(y, y, sample_weight=weight)
+    assert_equal(cm[0, 0], 9223372036854775807)
+    assert_equal(cm[1, 1], -2)
 
 
 def test_classification_report_multiclass():

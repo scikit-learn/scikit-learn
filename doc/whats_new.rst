@@ -53,7 +53,7 @@ New features
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
-   - The new solver ``mu`` implements a Multiplicate Update in
+   - The new solver ``'mu'`` implements a Multiplicate Update in
      :class:`decomposition.NMF`, allowing the optimization of all
      beta-divergences, including the Frobenius norm, the generalized
      Kullback-Leibler divergence and the Itakura-Saito divergence.
@@ -68,7 +68,7 @@ New features
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
 
-   - Added solver ``saga`` that implements the improved version of Stochastic
+   - Added solver ``'saga'`` that implements the improved version of Stochastic
      Average Gradient, in :class:`linear_model.LogisticRegression` and
      :class:`linear_model.Ridge`. It allows the use of L1 penalty with
      multinomial logistic loss, and behaves marginally better than 'sag'
@@ -82,13 +82,19 @@ New features
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
      :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
 
+   - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
+     compute Discounted cumulative gain (DCG) and Normalized discounted
+     cumulative gain (NDCG).
+     :issue:`7739` by :user:`David Gasquez <davidgasquez>`.
+
 Enhancements
 ............
 
+   - :func:`metrics.matthews_corrcoef` now support multiclass classification.
+     :issue:`8094` by :user:`Jon Crall <Erotemic>`.
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
-
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
@@ -116,7 +122,7 @@ Enhancements
      :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
      kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
      the transform function should not check whether ``X < 0`` but whether ``X <
-     -self.skewedness``. :issue:`7573` by `Romain Brault`_.
+     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -208,20 +214,29 @@ Enhancements
      :class:`linear_model.LogisticRegression` when using newton-cg
      solver. :issue:`8835` by :user:`Joan Massich <massich>`.
 
+   - Prevent cast from float32 to float64 in
+     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
+     :class:`sklearn.linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
+     by :user:`Joan Massich <massich>`, :user:`Nicolas Cordier <ncordier>`
+
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
      :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
+
+   - Make it possible to load a chunk of an svmlight formatted file by
+     passing a range of bytes to :func:`datasets.load_svmlight_file`.
+     :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
 
 Bug fixes
 .........
 
-   - :func:`metrics.ranking.average_precision_score` no longer linearly
+   - :func:`metrics.average_precision_score` no longer linearly
      interpolates between operating points, and instead weighs precisions
      by the change in recall since the last operating point, as per the
      `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
      (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
      `Nick Dingwall`_ and `Gael Varoquaux`_.
 
-   - Fixed a bug in :class:`sklearn.covariance.MinCovDet` where inputting data
+   - Fixed a bug in :class:`covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
      ``_c_step`` to throw an exception.
      :issue:`3367` by :user:`Jeremy Steward <ThatGeoGuy>`
@@ -375,10 +390,32 @@ Bug fixes
      with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
    - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
-     :issue:`#8936` by :user:`mlewis1729 <mlewis1729>`
+     :issue:`8936` by :user:`mlewis1729 <mlewis1729>`
 
    - Add ``shuffle`` parameter to :func:`model_selection.train_test_split`.
-     :issue:`#8845` by  :user:`themrmax <themrmax>`
+     :issue:`8845` by  :user:`themrmax <themrmax>`
+
+   - Fix AIC/BIC criterion computation in :class:`linear_model.LassoLarsIC`.
+     :issue:`9022` by `Alexandre Gramfort`_ and :user:`Mehmet Basbug <mehmetbasbug>`.
+
+   - Fix bug where stratified CV splitters did not work with
+     :class:`linear_model.LassoCV`. :issue:`8973` by
+     :user:`Paulo Haddad <paulochf>`.
+
+   - Fixed a bug in :class:`linear_model.RandomizedLasso`,
+     :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
+     :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,
+     where the parameter ``precompute`` were not used consistently accross
+     classes, and some values proposed in the docstring could raise errors.
+     :issue:`5359` by `Tom Dupre la Tour`_.
+
+   - Fixed a bug where :func:`model_selection.validation_curve`
+     reused the same estimator for each parameter value.
+     :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
+
+   - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
+     hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
+     by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
 API changes summary
 -------------------
@@ -426,6 +463,11 @@ API changes summary
      :func:`model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
+   - The ``decision_function`` output shape for binary classification in
+     :class:`multiclass.OneVsRestClassifier` and
+     :class:`multiclass.OneVsOneClassifier` is now ``(n_samples,)`` to conform
+     to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
+
    - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
    - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
@@ -445,6 +487,11 @@ API changes summary
      **sklearn.utils.estimator_checks** to check their consistency.
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
 
+   - In version 0.21, the default behavior of splitters that use the
+     ``test_size`` and ``train_size`` parameter will change, such that
+     specifying ``train_size`` alone will cause ``test_size`` to be the
+     remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
+
    - All tree based estimators now accept a ``min_impurity_decrease``
      parameter in lieu of the ``min_impurity_split``, which is now deprecated.
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
@@ -457,7 +504,11 @@ API changes summary
 
    - :class:`cluster.bicluster.SpectralCoclustering` and
      :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
-     :issue:`6126` by `Andreas Müller`_.
+     :issue:`6126` by :user:ldirer
+
+   - :class:`neighbors.LSHForest` has been deprecated and will be
+     removed in 0.21 due to poor performance.
+     :issue:`8996` by `Andreas Müller`_.
 
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
      for scikit-learn. The following backported functions in
@@ -490,7 +541,7 @@ API changes summary
      - ``utils.random.choice``
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
-
+     - ``neighbors.approximate.LSHForest``
 
 .. _changes_0_18_1:
 
@@ -4854,7 +4905,7 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`sphx_glr_auto_examples_applications_face_recognition.py`,
+    :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
     :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
     :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
     :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and

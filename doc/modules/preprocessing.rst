@@ -549,7 +549,7 @@ in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`sphx_glr_auto_examples_missing_values.py`
+estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. _polynomial_features:
 

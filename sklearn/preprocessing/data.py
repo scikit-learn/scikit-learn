@@ -117,8 +117,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     To avoid memory copy the caller should pass a CSC matrix.
 
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     See also
     --------
@@ -248,8 +249,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -409,8 +411,9 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
@@ -506,8 +509,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
@@ -713,8 +717,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, copy=True):
@@ -845,8 +850,9 @@ def maxabs_scale(X, axis=0, copy=True):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
 
@@ -939,7 +945,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for an example.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     https://en.wikipedia.org/wiki/Median_(statistics)
     https://en.wikipedia.org/wiki/Interquartile_range
@@ -1089,8 +1097,9 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     To avoid memory copy the caller should pass a CSR matrix.
 
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     See also
     --------
@@ -1311,8 +1320,10 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
     """
     if norm not in ('l1', 'l2', 'max'):
         raise ValueError("'%s' is not a supported norm" % norm)
@@ -1396,8 +1407,10 @@ class Normalizer(BaseEstimator, TransformerMixin):
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
 
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
 
     See also
     --------
@@ -2026,9 +2039,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
-
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
     def __init__(self, n_quantiles=1000, output_distribution='uniform',
@@ -2410,9 +2423,9 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
     Notes
     -----
-    See examples/preprocessing/plot_all_scaling.py for a comparison of the
-    different scalers, transformers, and normalizers.
-
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
