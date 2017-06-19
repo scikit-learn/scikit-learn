@@ -129,10 +129,10 @@ Once trained, we can export the tree in `Graphviz
 exporter. If you use the `conda<http://conda.io>`_ package manager, the graphviz binaries  
 and the python package can be installed with 
 
-    conda install graphviz
-    pip install graphviz 
+    conda install python-graphviz
    
-Alternatively binaries for graphviz can be downloaded from the graphviz project homepage. 
+Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
+and the Python wrapper installed from pypi with `pip install graphviz`. 
 
 Below is an example graphviz export of the above tree trained on the entire
 iris dataset; the results are saved in an output file `iris.pdf`::
