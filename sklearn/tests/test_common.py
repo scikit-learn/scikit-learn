@@ -82,8 +82,8 @@ def test_all_estimators():
         else:
             estimator = Estimator()
 
+        set_checking_parameters(estimator)
         for check in _yield_all_checks(name, estimator):
-            set_checking_parameters(estimator)
             yield _named_check(check, name), name, estimator
 
 
