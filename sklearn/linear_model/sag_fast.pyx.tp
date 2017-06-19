@@ -222,19 +222,19 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
         int n_samples,
         int n_features,
         int n_classes,
-        {{c_type}} tol,
+        double tol,
         int max_iter,
         str loss_function,
-        {{c_type}} step_size,
-        {{c_type}} alpha,
-        {{c_type}} beta,
+        double step_size,
+        double alpha,
+        double beta,
         np.ndarray[{{c_type}}, ndim=2, mode='c'] sum_gradient_init,
         np.ndarray[{{c_type}}, ndim=2, mode='c'] gradient_memory_init,
         np.ndarray[bint, ndim=1, mode='c'] seen_init,
         int num_seen,
         bint fit_intercept,
         np.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_sum_gradient_init,
-        {{c_type}} intercept_decay,
+        double intercept_decay,
         bint saga,
         bint verbose):
     """Stochastic Average Gradient (SAG) and SAGA solvers.
@@ -264,6 +264,16 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
     cdef {{c_type}} y
     # the sample weight
     cdef {{c_type}} sample_weight
+    # # _step_size
+    # cdef {{c_type}} _step_size = <{{c_type}}> __step_size
+    # # alpha
+    # cdef {{c_type}} alpha = <{{c_type}}> _alpha
+    # # beta
+    # cdef {{c_type}} beta = <{{c_type}}> _beta
+    # # tol
+    # cdef {{c_type}} tol = <{{c_type}}> _tol
+    # # intercept_decay
+    # cdef {{c_type}} intercept_decay = <{{c_type}}> _intercept_decay
 
     # helper variable for indexes
     cdef int f_idx, s_idx, feature_ind, class_ind, j
