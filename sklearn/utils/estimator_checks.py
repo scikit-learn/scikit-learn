@@ -68,10 +68,9 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-MULTI_OUTPUT_CLASSIFIER = ['DecisionTreeClassifier', 'RadiusNeighborsClassifier',
-                           'ExtraTreeClassifier', 'ExtraTreesClassifier',
-                           'KNeighborsClassifier', 'OneVsRestClassifier',
-                           'RandomForestClassifier']
+MULTI_OUTPUT_CLASSIFIER = ['DecisionTreeClassifier', 'ExtraTreeClassifier',
+                           'ExtraTreesClassifier', 'KNeighborsClassifier',
+                           'OneVsRestClassifier', 'RandomForestClassifier']
 
 def _yield_non_meta_checks(name, estimator):
     yield check_estimators_dtypes
