@@ -333,3 +333,17 @@ def test_column_transformer_named_estimators():
     assert_false(ct.named_transformers_.trans2.with_std)
     # check it are fitted transformers
     assert_equal(ct.named_transformers_.trans1.mean_, 1.)
+
+
+def test_column_transformer_cloning():
+    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+
+    ct = ColumnTransformer([('trans', StandardScaler(), [0])])
+    ct.fit(X_array)
+    assert_false(hasattr(ct.transformers[0][1], 'mean_'))
+    assert_true(hasattr(ct.transformers_[0][1], 'mean_'))
+
+    ct = ColumnTransformer([('trans', StandardScaler(), [0])])
+    ct.fit_transform(X_array)
+    assert_false(hasattr(ct.transformers[0][1], 'mean_'))
+    assert_true(hasattr(ct.transformers_[0][1], 'mean_'))
