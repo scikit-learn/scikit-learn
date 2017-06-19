@@ -714,8 +714,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  n_iter=self.iterated_power,
                                  random_state=random_state)
 
-        self.explained_variance_ = exp_var = (S ** 2) / n_samples
-        full_var = np.var(X, axis=0).sum()
+        self.explained_variance_ = exp_var = (S ** 2) / (n_samples - 1)
+        full_var = np.var(X, ddof=1, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
         self.singular_values_ = S  # Store the singular values.
 
