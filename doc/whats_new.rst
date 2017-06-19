@@ -259,6 +259,10 @@ Bug fixes
    - Fixed a bug where :func:`linear_model.RANSACRegressor.fit` may run until
      ``max_iter`` if finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
 
+   - Fixed a bug where :class:`sklearn.naive_bayes.MultinomialNB` and :class:`sklearn.naive_bayes.BernoulliNB`
+     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and 
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
+
    - Fixed a bug where :func:`datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
