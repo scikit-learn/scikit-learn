@@ -476,6 +476,7 @@ def test_pca_score_equal():
     # specially designed for issue #7568, #8541, #8544
     digits = datasets.load_digits()
     X_digits = digits.data
+
     pca1 = PCA(n_components=30, svd_solver='full')
     pca1.fit(X_digits)
     score1 = pca1.score(X_digits)
@@ -485,6 +486,7 @@ def test_pca_score_equal():
     pca3 = PCA(n_components=30, svd_solver='randomized')
     pca3.fit(X_digits)
     score3 = pca3.score(X_digits)
+
     assert_almost_equal(score1, score2)
     assert_almost_equal(score1, score3, decimal=1)
 
