@@ -1140,12 +1140,14 @@ def test_dtype_match():
     y_64 = np.array(Y1).astype(np.float64)
     X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
 
-    for solver in ['newton-cg', 'saga']:
+    # for solver in ['newton-cg', 'saga']:
+    for solver in ['saga', ]:
         for multi_class in ['ovr', 'multinomial']:
 
             # Check type consistency
             lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
             lr_32.fit(X_32, y_32)
+            lr_32_coef = lr_32.coef_
 
             # check consistency with sparsity
             lr_32_sparse = LogisticRegression(solver=solver,
@@ -1155,9 +1157,10 @@ def test_dtype_match():
             # Check accuracy consistency
             lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
             lr_64.fit(X_64, y_64)
+            lr_64_coef = lr_64.coef_
 
             # Do all asserts at once (it facilitate to interactive type check)
-            assert_equal(lr_32.coef_.dtype, X_32.dtype)
-            assert_equal(lr_64.coef_.dtype, X_64.dtype)
+            assert_equal(lr_32_coef.dtype, X_32.dtype)
+            assert_equal(lr_64_coef.dtype, X_64.dtype)
             assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
-            assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))
+            assert_almost_equal(lr_32_coef, lr_64_coef.astype(np.float32))
