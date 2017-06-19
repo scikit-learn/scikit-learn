@@ -1798,8 +1798,8 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             assert_raises(ValueError, estimator.fit, X)
 
 
-def check_classifiers_multilabel_representation_invariance(name, classifier_orig):
-
+def check_classifiers_multilabel_representation_invariance(name,
+                                                           classifier_orig):
     if name not in MULTI_OUTPUT:
         raise SkipTest
 
