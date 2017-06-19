@@ -13,7 +13,8 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.multiclass import (check_classification_targets,
+                                      type_of_target)
 from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
@@ -103,6 +104,10 @@ def test_ovr_partial_fit():
                                              random_state=0))
     pred1 = ovr1.fit(X, y).predict(X)
     assert_equal(np.mean(pred == y), np.mean(pred1 == y))
+
+    # test partial_fit only exists if estimator has it:
+    ovr = OneVsRestClassifier(SVC())
+    assert_false(hasattr(ovr, "partial_fit"))
 
 
 def test_ovr_partial_fit_exceptions():
@@ -246,6 +251,9 @@ def test_ovr_binary():
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
         assert_equal(set(y_pred), set("eggs"))
+        if hasattr(base_clf, 'decision_function'):
+            dec = clf.decision_function(X)
+            assert_equal(dec.shape, (5,))
 
         if test_predict_proba:
             X_test = np.array([[0, 0, 4]])
@@ -428,7 +436,8 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    for base_classifier in [SVC(kernel='linear', random_state=0), LinearSVC(random_state=0)]:
+    for base_classifier in [SVC(kernel='linear', random_state=0),
+                            LinearSVC(random_state=0)]:
         # SVC has sparse coef with sparse input data
 
         ovr = OneVsRestClassifier(base_classifier)
@@ -439,7 +448,8 @@ def test_ovr_coef_():
             assert_equal(shape[0], n_classes)
             assert_equal(shape[1], iris.data.shape[1])
             # don't densify sparse coefficients
-            assert_equal(sp.issparse(ovr.estimators_[0].coef_), sp.issparse(ovr.coef_))
+            assert_equal(sp.issparse(ovr.estimators_[0].coef_),
+                         sp.issparse(ovr.coef_))
 
 
 def test_ovr_coef_exceptions():
@@ -508,11 +518,21 @@ def test_ovo_partial_fit_predict():
     assert_equal(len(ovo1.estimators_), len(np.unique(iris.target)))
     assert_greater(np.mean(iris.target == pred1), 0.65)
 
+    # test partial_fit only exists if estimator has it:
+    ovr = OneVsOneClassifier(SVC())
+    assert_false(hasattr(ovr, "partial_fit"))
+
 
 def test_ovo_decision_function():
     n_samples = iris.data.shape[0]
 
     ovo_clf = OneVsOneClassifier(LinearSVC(random_state=0))
+    # first binary
+    ovo_clf.fit(iris.data, iris.target == 0)
+    decisions = ovo_clf.decision_function(iris.data)
+    assert_equal(decisions.shape, (n_samples,))
+
+    # then multi-class
     ovo_clf.fit(iris.data, iris.target)
     decisions = ovo_clf.decision_function(iris.data)
 
@@ -606,6 +626,24 @@ def test_ovo_string_y():
     assert_array_equal(y, ovo.predict(X))
 
 
+def test_ovo_one_class():
+    # Test error for OvO with one class
+    X = np.eye(4)
+    y = np.array(['a'] * 4)
+
+    ovo = OneVsOneClassifier(LinearSVC())
+    assert_raise_message(ValueError, "when only one class", ovo.fit, X, y)
+
+
+def test_ovo_float_y():
+    # Test that the OvO errors on float targets
+    X = iris.data
+    y = iris.data[:, 0]
+
+    ovo = OneVsOneClassifier(LinearSVC())
+    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+
+
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
@@ -632,6 +670,15 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ecoc_float_y():
+    # Test that the OCC errors on float targets
+    X = iris.data
+    y = iris.data[:, 0]
+
+    ovo = OutputCodeClassifier(LinearSVC())
+    assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
 
 
 def test_pairwise_indices():
