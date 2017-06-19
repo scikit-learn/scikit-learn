@@ -12,6 +12,7 @@ from inspect import signature
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
+<<<<<<< HEAD
 import joblib
 
 from . import IS_PYPY
@@ -54,55 +55,6 @@ from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..datasets import load_iris, load_boston, make_blobs, make_multilabel_classification
-
-####
-# import struct
-#
-# from sklearn.externals.six.moves import zip
-# from sklearn.externals.joblib import hash, Memory
-# from sklearn.utils.testing import assert_raises
-# from sklearn.utils.testing import assert_raises_regex
-# from sklearn.utils.testing import assert_raise_message
-# from sklearn.utils.testing import assert_equal
-# from sklearn.utils.testing import assert_not_equal
-# from sklearn.utils.testing import assert_true
-# from sklearn.utils.testing import assert_false
-# from sklearn.utils.testing import assert_in
-# from sklearn.utils.testing import assert_array_equal
-# from sklearn.utils.testing import assert_allclose
-# from sklearn.utils.testing import assert_allclose_dense_sparse
-# from sklearn.utils.testing import assert_warns_message
-# from sklearn.utils.testing import META_ESTIMATORS
-# from sklearn.utils.testing import set_random_state
-# from sklearn.utils.testing import assert_greater
-# from sklearn.utils.testing import assert_greater_equal
-# from sklearn.utils.testing import SkipTest
-# from sklearn.utils.testing import ignore_warnings
-# from sklearn.utils.testing import assert_dict_equal
-# from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-#
-#
-# from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
-#                           TransformerMixin, ClusterMixin, BaseEstimator)
-# from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
-#
-# from sklearn.random_projection import BaseRandomProjection
-# from sklearn.feature_selection import SelectKBest
-# from sklearn.svm.base import BaseLibSVM
-# from sklearn.linear_model.stochastic_gradient import BaseSGD
-# from sklearn.pipeline import make_pipeline
-# from sklearn.exceptions import ConvergenceWarning
-# from sklearn.exceptions import DataConversionWarning
-# from sklearn.exceptions import SkipTestWarning
-# from sklearn.model_selection import train_test_split
-#
-# from sklearn.utils import shuffle
-# from sklearn.utils.fixes import signature
-# from sklearn.utils.validation import has_fit_parameter, _num_samples
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.datasets import load_iris, load_boston, make_blobs, \
-#     make_multilabel_classification
-###
 
 
 BOSTON = None
@@ -1853,12 +1805,9 @@ def check_classifiers_multilabel_representation_invariance(name, Classifier):
     if name not in MULTI_OUTPUT:
         raise SkipTest
 
-    X, y = make_multilabel_classification(n_samples=100,
-                                          n_features=20,
-                                          n_classes=5,
-                                          n_labels=3,
-                                          length=50,
-                                          allow_unlabeled=True,
+    X, y = make_multilabel_classification(n_samples=100, n_features=20,
+                                          n_classes=5, n_labels=3,
+                                          length=50, allow_unlabeled=True,
                                           random_state=0)
 
     X_train, y_train = X[:80], y[:80]
@@ -1874,11 +1823,11 @@ def check_classifiers_multilabel_representation_invariance(name, Classifier):
 
     y_pred = classifier.fit(X_train, y_train).predict(X_test)
 
-    y_pred_list_of_lists = classifier.fit(X_train, y_train_list_of_lists)\
-        .predict(X_test)
+    y_pred_list_of_lists = classifier.fit(
+        X_train, y_train_list_of_lists).predict(X_test)
 
-    y_pred_list_of_arrays = classifier.fit(X_train, y_train_list_of_arrays)\
-        .predict(X_test)
+    y_pred_list_of_arrays = classifier.fit(
+        X_train, y_train_list_of_arrays).predict(X_test)
 
     assert_array_equal(y_pred, y_pred_list_of_arrays)
     assert_array_equal(y_pred, y_pred_list_of_lists)
