@@ -856,7 +856,7 @@ class GridSearchCV(BaseSearchCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    refit : boolean, or string default=True
+    refit : boolean, or string, default=True
         Refit an estimator using the best found parameters on the whole
         dataset.
 
@@ -868,10 +868,9 @@ class GridSearchCV(BaseSearchCV):
         attribute and permits using ``predict`` directly on this
         ``GridSearchCV`` instance.
 
-        Also for the multiple metric evaluation, the attributes
-        ``best_index_``, ``best_score_`` and ``best_parameters_`` will only be
-        available if ``refit`` is set and all of them will be for that
-        specified scorer.
+        Also for multiple metric evaluation, the attributes ``best_index_``,
+        ``best_score_`` and ``best_parameters_`` will only be available if
+        ``refit`` is set and all of them will be for that specified scorer.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.

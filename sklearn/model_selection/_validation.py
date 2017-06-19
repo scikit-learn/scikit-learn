@@ -37,7 +37,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score=False):
+                   pre_dispatch='2*n_jobs', return_train_score=True):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -115,28 +115,31 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    return_train_score : boolean, default False
+    return_train_score : boolean, default True
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
 
     Returns
     -------
-    scores : array of float or dict of float arrays, array shape=(n_splits,)
+    scores : dict of float arrays of shape=(n_splits,)
         Array of scores of the estimator for each run of the cross validation.
 
-        For multi-metric evaluation, a dict of arrays containing the score/time
-        arrays for each scorer is returned. The possible keys for this ``dict``
-        are:
+        A dict of arrays containing the score/time arrays for each scorer is
+        returned. The possible keys for this ``dict`` are:
 
-            - ``test_score`` The score array for test scores on each cv split.
-            - ``train_score`` The score array for train scores on each cv
-              split. This is available only if ``return_train_score`` parameter
-              is ``True``.
-            - ``fit_time`` The time for fitting the estimator on the train
-              set for each cv split.
-            - ``score_time`` The time for scoring the estimator on the test
-              set for each cv split. (Note time for scoring on the train set
-              is not included even if ``return_train_score`` is set to ``True``
+            ``test_score``
+                The score array for test scores on each cv split.
+            ``train_score``
+                The score array for train scores on each cv split.
+                This is available only if ``return_train_score`` parameter
+                is ``True``.
+            ``fit_time``
+                The time for fitting the estimator on the train
+                set for each cv split.
+            ``score_time``
+                The time for scoring the estimator on the test set for each
+                cv split. (Note time for scoring on the train set is not
+                included even if ``return_train_score`` is set to ``True``
 
     Examples
     --------
@@ -150,16 +153,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
 
-    >>> # single metric evaluation using cross_validate
+    # single metric evaluation using cross_validate
     >>> cv_results = cross_validate(lasso, X, y)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     array([ 0.33...,  0.08...,  0.03...])
 
-    >>> # Multiple metric evaluation using cross_validate
-    >>> # (Please refer the ``scoring`` parameter doc for more information)
-    >>> scores = cross_validate(lasso, X, y, return_train_score=True,
+    # Multiple metric evaluation using cross_validate
+    # (Please refer the ``scoring`` parameter doc for more information)
+    >>> scores = cross_validate(lasso, X, y,
     ...                         scoring=('r2', 'neg_mean_squared_error'))
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
     [-3635.5... -3573.3... -6114.7...]
@@ -311,6 +314,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     cv_results = cross_validate(estimator=estimator, X=X, y=y, groups=groups,
                                 scoring={'score': scorer}, cv=cv,
+                                return_train_score=False,
                                 n_jobs=n_jobs, verbose=verbose,
                                 fit_params=fit_params,
                                 pre_dispatch=pre_dispatch)
