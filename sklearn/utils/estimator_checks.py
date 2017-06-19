@@ -53,8 +53,8 @@ from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
 from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs, \
-    make_multilabel_classification
+from sklearn.datasets import load_iris, load_boston, make_blobs
+from sklearn.datasets import make_multilabel_classification
 
 
 BOSTON = None
@@ -1154,12 +1154,9 @@ def check_classifiers_multilabel_representation_invariance(name, Classifier):
     if name not in MULTI_OUTPUT:
         raise SkipTest
 
-    X, y = make_multilabel_classification(n_samples=100,
-                                          n_features=20,
-                                          n_classes=5,
-                                          n_labels=3,
-                                          length=50,
-                                          allow_unlabeled=True,
+    X, y = make_multilabel_classification(n_samples=100, n_features=20,
+                                          n_classes=5, n_labels=3,
+                                          length=50, allow_unlabeled=True,
                                           random_state=0)
 
     X_train, y_train = X[:80], y[:80]
@@ -1175,11 +1172,11 @@ def check_classifiers_multilabel_representation_invariance(name, Classifier):
 
     y_pred = classifier.fit(X_train, y_train).predict(X_test)
 
-    y_pred_list_of_lists = classifier.fit(X_train, y_train_list_of_lists)\
-        .predict(X_test)
+    y_pred_list_of_lists = classifier.fit(
+        X_train, y_train_list_of_lists).predict(X_test)
 
-    y_pred_list_of_arrays = classifier.fit(X_train, y_train_list_of_arrays)\
-        .predict(X_test)
+    y_pred_list_of_arrays = classifier.fit(
+        X_train, y_train_list_of_arrays).predict(X_test)
 
     assert_array_equal(y_pred, y_pred_list_of_arrays)
     assert_array_equal(y_pred, y_pred_list_of_lists)
