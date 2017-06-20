@@ -49,18 +49,12 @@ def load_data(dtype=np.float32, order='C', shuffle=True, seed=0):
     return X, y
 
 
-def precision_at_k(X, X_embedded, k=5):
-    """Compute the precision at k for the dataset.
-    """
-
-    knn = NearestNeighbors(n_neighbors=k, n_jobs=-1)
+def nn_accuracy(X, X_embedded, k=1):
+    """Accuracy of the first nearest neighbor"""
+    knn = NearestNeighbors(n_neighbors=1, n_jobs=-1)
     _, neighbors_X = knn.fit(X).kneighbors()
     _, neighbors_X_embedded = knn.fit(X_embedded).kneighbors()
-
-    precisions = [len(np.intersect1d(X_n, Xe_n)) / k
-                  for X_n, Xe_n in zip(neighbors_X, neighbors_X_embedded)]
-
-    return np.mean(precisions)
+    return np.mean(neighbors_X == neighbors_X_embedded)
 
 
 def tsne_fit_transform(model, data):
@@ -163,9 +157,9 @@ $ cd ..
             np.save("dump_X.npy", X_train)
             X_embedded, n_iter = method(X_train)
             duration = time() - t0
-            precision_5 = precision_at_k(X_train, X_embedded, k=5)
+            precision_5 = nn_accuracy(X_train, X_embedded)
             print("Fitting {} on {} samples took {:.3f}s in {:d} iterations, "
-                  "precision at 5: {:0.3f}".format(
+                  "nn accuracy: {:0.3f}".format(
                       name, n, duration, n_iter, precision_5))
             results.append(dict(method=name, duration=duration, n_samples=n))
             with open(log_filename, 'w', encoding='utf-8') as f:
